@@ -35,6 +35,18 @@ const OPERATION_MULTISELECT = {
   ],
 };
 
+/** Level 2: which kind of number a question uses. Each question uses exactly one, so this is a pool (R19). */
+const NUMBER_MULTISELECT = {
+  key: "l2numbers", tab: "questions" as const,
+  label: "Sizes Of Number",
+  options: [
+    { value: "num-mixed",      label: "Tenths (e.g. 4.8 and 0.39)",        defaultActive: true },
+    { value: "num-below1",     label: "Both Below 1 (e.g. 0.38 and 0.72)", defaultActive: true },
+    { value: "num-hundredths", label: "Hundredths (e.g. 0.048)",           defaultActive: true },
+    { value: "num-whole",      label: "Whole Numbers",                      defaultActive: true },
+  ],
+};
+
 const LEVEL3_MULTISELECT = {
   key: "l3type", tab: "questions" as const,
   label: "Question Types",
@@ -56,7 +68,7 @@ const TOOL_CONFIG: ToolConfig = {
       multiSelect: OPERATION_MULTISELECT,
       difficultySettings: {
         level1: { multiSelect: OPERATION_MULTISELECT },
-        level2: { multiSelect: OPERATION_MULTISELECT },
+        level2: { multiSelect: [OPERATION_MULTISELECT, NUMBER_MULTISELECT] },
         level3: {
           multiSelect: LEVEL3_MULTISELECT,
           variables: [
@@ -84,8 +96,7 @@ const TOOL_CONFIG: ToolConfig = {
 
 const isAlreadyRounded = (num: number): boolean => {
   if (num === 0) return true;
-  const magnitude = Math.floor(Math.log10(Math.abs(num)));
-  return Number.isInteger(num / Math.pow(10, magnitude));
+  return Number(num.toPrecision(1)) === num;   // 0.3 and 0.07 count as rounded (dividing by 0.1 or 0.01 does not, in floating point)
 };
 
 /** Every valid division of a level, grouped by its estimated answer. Picking an answer first, then a pair that gives it,
@@ -118,11 +129,11 @@ const getLevel1Divisions = () => {
   }
   return (level1Divisions = m);
 };
-let level2Divisions: Map<number, DivisionPair[]> | null = null;
+let level2Divisions: { decimal: Map<number, DivisionPair[]>; whole: Map<number, DivisionPair[]> } | null = null;
 const getLevel2Divisions = () => {
   if (level2Divisions) return level2Divisions;
-  const m = new Map<number, DivisionPair[]>();
-  const add = (n1: number, n2: number) => {
+  const decimal = new Map<number, DivisionPair[]>(), whole = new Map<number, DivisionPair[]>();
+  const add = (m: Map<number, DivisionPair[]>, n1: number, n2: number) => {
     if (isAlreadyRounded(n1) || isAlreadyRounded(n2)) return;
     const r1 = roundTo1SF(n1), r2 = roundTo1SF(n2);
     if (r1 === 0 || r2 === 0) return;
@@ -130,9 +141,9 @@ const getLevel2Divisions = () => {
     if (Math.abs(r1 / r2 - answer) > 0.0001 || answer <= 0 || answer >= 10000) return;
     addPair(m, answer, [n1, n2]);
   };
-  for (let a = 10; a <= 100; a++) for (let b = 10; b <= 99; b++) add(a / 10, b / 100);     // decimals: 1.0 to 10.0 by a number below 1
-  for (let a = 10; a <= 108; a++) for (let b = 10; b <= 108; b++) add(a, b);               // whole numbers
-  return (level2Divisions = m);
+  for (let a = 10; a <= 100; a++) for (let b = 10; b <= 99; b++) add(decimal, a / 10, b / 100);     // decimals: 1.0 to 10.0 by a number below 1
+  for (let a = 10; a <= 108; a++) for (let b = 10; b <= 108; b++) add(whole, a, b);                  // whole numbers
+  return (level2Divisions = { decimal, whole });
 };
 
 // Plain unicode symbol for display strings
@@ -211,12 +222,62 @@ const generateLevel1 = (op: string): AnyQuestion => {
 
 // ── 6. Level 2 generator ──────────────────────────────────────────────────────
 
-const generateLevel2 = (op: string): AnyQuestion => {
-  for (let att = 0; att < 50; att++) {
-    const useDecimals = Math.random() > 0.3;
-    let num1 = 0, num2 = 0;
+/** A decimal below 1 whose first significant figure is the `tenths` or the hundredths digit, with a second digit (never a multiple of
+ *  10 of its place, never a leading 9 rounding up): 0.38, 0.72 or 0.048, 0.082. Built from digits, so there is no floating-point drift. */
+const smallDecimal = (hundredths: boolean): number => {
+  for (;;) {
+    const d1 = 1 + Math.floor(Math.random() * 9), d2 = 1 + Math.floor(Math.random() * 9);
+    if (d1 === 9 && d2 >= 5) continue;
+    return Number(((d1 * 10 + d2) / (hundredths ? 1000 : 100)).toFixed(3));
+  }
+};
+/** A tenths-scale partner for a hundredths number: 3.7, 0.62 or 14.6. */
+const partnerDecimal = (): number => {
+  const pick = Math.random();
+  if (pick < 0.4) return smallDecimal(false);
+  const whole = 1 + Math.floor(Math.random() * 9), tenth = 1 + Math.floor(Math.random() * 9);
+  return Number((whole + tenth / 10).toFixed(1)) * (pick < 0.7 ? 1 : 10);
+};
+const hasAtMost2SF = (q: number) => Number(q.toPrecision(2)) === Number(q.toPrecision(12));
+
+/** The two numbers for the "Both Below 1" and "Hundredths" number types. Division keeps only pairs whose estimate is a short, exact decimal. */
+const pickSmallDecimals = (kind: string, op: string): [number, number] | null => {
+  const draw = (): [number, number] => {
+    if (kind === "num-below1") return [smallDecimal(false), smallDecimal(false)];
+    const small = smallDecimal(true), other = Math.random() < 0.3 ? smallDecimal(true) : partnerDecimal();
+    return Math.random() < 0.5 ? [small, other] : [other, small];
+  };
+  for (let i = 0; i < 60; i++) {
+    const [a, b] = draw();
+    if (a === b || isAlreadyRounded(a) || isAlreadyRounded(b)) continue;
+    const r1 = roundTo1SF(a), r2 = roundTo1SF(b);
+    if (op === "subtract" && r1 <= r2) continue;
     if (op === "divide") {
-      [num1, num2] = pickDivision(getLevel2Divisions());
+      const q = r1 / r2;
+      if (!hasAtMost2SF(q) || q < 0.01 || q >= 10000 || r1 === r2) continue;
+    }
+    return [a, b];
+  }
+  return null;
+};
+
+/** An estimate shown without float noise or an exponent: 0.012, 0.45, 2.5, 1,200. */
+const formatEstimate = (n: number): string => {
+  const v = Number(n.toPrecision(12));
+  return Math.abs(v) >= 1000 ? formatNumber(Math.round(v)) : String(v);
+};
+
+const generateLevel2 = (op: string, numberType = "num-mixed"): AnyQuestion => {
+  for (let att = 0; att < 50; att++) {
+    const small = numberType === "num-below1" || numberType === "num-hundredths";
+    const useDecimals = numberType === "num-mixed" || (numberType !== "num-whole" && !small);
+    let num1 = 0, num2 = 0;
+    if (small) {
+      const pair = pickSmallDecimals(numberType, op);
+      if (!pair) continue;
+      [num1, num2] = pair;
+    } else if (op === "divide") {
+      [num1, num2] = pickDivision(getLevel2Divisions()[useDecimals ? "decimal" : "whole"]);
     } else if (useDecimals) {
       if (op === "multiply" || op === "divide") {
         num1 = Math.round((Math.random() * 9 + 1) * 10) / 10;
@@ -228,9 +289,8 @@ const generateLevel2 = (op: string): AnyQuestion => {
       }
     } else {
       if (op === "add" || op === "subtract") {
-        const mag = Math.pow(10, Math.floor(Math.random() * 2) + 1);
-        num1 = Math.floor(Math.random() * 9 + 1) * mag;
-        num2 = Math.floor(Math.random() * 9 + 1) * mag;
+        num1 = Math.floor(Math.random() * 890) + 12;
+        num2 = Math.floor(Math.random() * 890) + 12;
       } else {
         num1 = Math.floor(Math.random() * 99) + 10;
         num2 = Math.floor(Math.random() * 99) + 10;
@@ -244,11 +304,14 @@ const generateLevel2 = (op: string): AnyQuestion => {
     else if (op === "subtract") { if (r1 <= r2) continue; answer = r1 - r2; }
     else if (op === "multiply") answer = r1 * r2;
     else { if (r2 === 0) continue; answer = r1 / r2; }
-    const ans1dp = Math.round(answer * 10) / 10;
-    if (Math.abs(answer - ans1dp) > 0.0001) continue;
-    answer = ans1dp;
+    if (small) answer = Number(answer.toPrecision(12));
+    else {
+      const ans1dp = Math.round(answer * 10) / 10;
+      if (Math.abs(answer - ans1dp) > 0.0001) continue;
+      answer = ans1dp;
+    }
     if (answer <= 0 || answer >= 10000 || isNaN(answer)) continue;
-    const fa = answer >= 1000 ? formatNumber(Math.round(answer)) : Number.isInteger(answer) ? formatNumber(answer) : answer.toFixed(1);
+    const fa = small ? formatEstimate(answer) : answer >= 1000 ? formatNumber(Math.round(answer)) : Number.isInteger(answer) ? formatNumber(answer) : answer.toFixed(1);
     const sym = getOpSym(op);
     const latexSym = getOpLatex(op);
     const id = Math.floor(Math.random() * 1_000_000);
@@ -506,7 +569,7 @@ const generateQuestion = (
 ): AnyQuestion => {
   if ((tool as ToolType) === "orderOfOperations") return generateOrder(level, multiSelectValues);
   if (level === "level1") return generateLevel1(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
-  if (level === "level2") return generateLevel2(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
+  if (level === "level2") return generateLevel2(pickActive(multiSelectValues, OPERATION_MULTISELECT.options), pickActive(multiSelectValues, NUMBER_MULTISELECT.options));
   return generateLevel3(pickActive(multiSelectValues, LEVEL3_MULTISELECT.options), !!variables["bothSidesExpr"]);
 };
 

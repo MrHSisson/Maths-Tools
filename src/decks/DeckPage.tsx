@@ -62,7 +62,7 @@ function DeckIndex() {
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-6xl">
-        <Link to="/?tab=decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
+        <Link to="/deck-gallery" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
           <Link to="/decks/library" className="ml-auto rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
@@ -339,11 +339,11 @@ function PublishedView({ id }: { id: string }) {
       <div className="max-w-md rounded-2xl border border-slate-300 bg-white p-6 text-center shadow-card">
         <h1 className="text-xl font-semibold text-slate-900">{deck === "missing" ? "This deck isn't published" : "Decks can't be loaded here"}</h1>
         <p className="mt-1 text-sm text-slate-500">{deck === "missing" ? "It may not be ready yet, or it has been taken down." : "Published decks come from the website, so they need a connection."}</p>
-        <Link to="/?tab=decks" className="mt-4 inline-block rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">See the decks</Link>
+        <Link to="/deck-gallery" className="mt-4 inline-block rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">See the decks</Link>
       </div>
     </div>
   );
-  return <Player deck={deck} badge="Published" backTo="/?tab=decks" />;
+  return <Player deck={deck} badge="Published" backTo="/deck-gallery" />;
 }
 
 export default function DeckPage() {

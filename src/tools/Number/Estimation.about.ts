@@ -6,6 +6,7 @@ export const ABOUT: ToolAbout = {
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "operation": "Which operations come up.",
+    "l2numbers": "The kind of numbers in a Level 2 question.",
     "l3type": "The kind of fraction question.",
     "bothSidesExpr": "Switch on to allow an expression on both sides of the fraction bar.",
     "order1": "Which operations sit with the addition or subtraction.",
@@ -17,7 +18,7 @@ export const ABOUT: ToolAbout = {
       purpose: "Round each number to 1 significant figure, then calculate.",
       levels: [
         "Two whole numbers between 10 and 999, one operation",
-        "Two numbers including decimals, one operation",
+        "Two numbers including decimals (also below 1), one operation",
         "Fraction questions that need estimating and simplifying",
       ],
     },

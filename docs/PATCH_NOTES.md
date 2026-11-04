@@ -29,6 +29,60 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-04 — Deck editor layout warnings
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/layoutAudit.ts` (new), `src/decks/Editor.tsx`, `docs/reference/decks.md`, `docs/FEATURES.md`.
+
+- **The editor now flags layout problems on the open slide** (Harry's request): text that spills below its box, runs off the slide, or overlaps other text. An amber "layout warning" button by the zoom controls lists them; clicking one selects the element, and flagged elements get a dashed amber outline. Only text is judged, so shapes and lines behind text (the false alarms the command-line check gives on Fractional Powers) are not flagged. The terminal check (`npm run deck -- check <id> --layout`, `scripts/deckLayoutSmoke.mjs`) now follows the same rules (text against text only; it also catches text off the left or top edge), so Fractional Powers no longer reports the box-behind-equation overlaps and all four decks pass.
+- Checked in a headless browser: no warning on Fractional Powers slide 8; overfilling a text box on an Estimation slide raised one. Not tried on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)" (layout warnings appended to it).
+
+## 2026-11-04 — Never three Depth slides in a row; Estimation decimals reordered
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/deckChecks.ts`, `src/tests/deckDepthRun.test.ts`, `docs/design/DECK_BUILD_CHECKLIST.md`, `src/decks/data/estimation.json`.
+
+- **New deck rule (Harry): never three Depth slides back to back.** The deck check now reports a run of three (`deckDepthRun.test.ts`); the checklist lists it. Only Estimation broke it (Does the size make sense? / Over or under? / Make an estimate of 0.3): *Does the size make sense?* now sits between the decimals whiteboards and the book activity.
+- **Estimation decimals:** the "dividing by less than 1 makes the answer bigger" discussion now comes before the eight whiteboard questions.
+- Pushed to the shared copy with the whole-deck overwrite (slide order is not merged: the stored order wins), after confirming the shared copy matched my pull.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
+
+## 2026-11-04 — Deck editor Pen: palm rejection
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
+
+- **With the Pen on, the side of the hand no longer selects boxes.** Cause: a touch the pen layer ignored still bubbled to the canvas, which started a box-select and deselected. Now the pen layer always swallows touches, and a contact that is large (over 32px) or lands within 0.8 s of the stylus touching or hovering is dropped completely (no draw, no pan, no pinch). One finger still pans and two still zoom when no stylus is near.
+- Checked with simulated pointer events only; not yet tried with a real stylus and hand.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
+
+## 2026-11-04 — Estimation Level 2: decimals below 1 and hundredths
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/tools/Number/Estimation.tsx` (+ `.about.ts`), `src/tests/estimationLevel2.test.ts`, `src/decks/data/estimation.json`, `specs/decks/estimation-y9.md`.
+
+- **New Level 2 pool, Sizes Of Number** (all on by default): *Tenths* (the old mix, 4.8 × 0.39), *Both Below 1* (0.38 × 0.72), *Hundredths* (a number whose first significant figure is in the hundredths place, 0.048, with a tenths-scale partner) and *Whole Numbers*. Answers for the new types are exact (0.0007, 0.18); division only offers pairs with a short exact estimate (0.6 ÷ 0.08 = 7.5).
+- **Fixes on the way:** Whole Numbers add/subtract used to build multiples of 10 that were always rejected and fell back to 42 × 1.9; `isAlreadyRounded` mis-read 0.3 and 0.07 through floating point.
+- **Estimation deck, inside the existing Decimals section (still 53 slides):** the whiteboard set before the generator is now eight questions (tenths, both below 1, hundredths; each operation), and the Decimals book activity is a hand-written **4 × 4 set of 16** (`y9-bd1…16`, four steps of four), no longer generated. The rounding set gains 0.073 and 0.087. The generator slides pick up the new Sizes Of Number by default. Pulled Harry's shared copy first (it matched the repo apart from one flag). **Not pushed to the shared copy**: `npm run deck -- push estimation` is still to do.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
+
+## 2026-11-03 — Decks get their own page; deck cards full width on a phone; dashboard review
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/components/LandingPage.tsx`, `DecksPage.tsx` (new), `DecksTab.tsx`, `DeckGallery.tsx`, `src/App.tsx`, `src/decks/DeckPage.tsx`, `AdminGate.tsx`, `docs/TASKS.md`.
+
+- **Decks are no longer a tab.** The landing page keeps the three subject tabs (GCSE Maths, A-Level, Computer Science); a **Decks** button in the header, beside the menu (not inside it), opens the Decks page at `/deck-gallery`. The old `/?tab=decks` address redirects there, and the deck player's and editor's back links go to it. The search box is now always shown on the landing page.
+- **Deck cards on a phone** are the full width of the screen and centred, with the slide preview scaling to the card (`FitPreview`); tablet and laptop keep the fixed 296px cards.
+- **Dashboard review (findings, not yet acted on):** the generated facts and the doc paths are current. Found: the "Move planning docs" task was finished weeks ago (removed); no live tool has a Review status set (0 of 47 reviewed; one game is "in progress"); `ratio-manipulation` and `rounding` notes still hold retired fields that nothing displays; the Techniques pathway still needs its `techniques` fact; the dashboard has no view of decks.
+- **Dashboard: new Decks section** (side menu / bottom bar): every deck with strand, tool, slide count, published date and slides by kind, searchable and filterable, with a side panel offering Play and Edit (`src/admin/DecksSection.tsx`). Read from the decks, nothing typed.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-04 — Decks page, dashboard Decks section, Estimation decimals, Pen palm rejection, Depth-run rule (Claude Code)".
+
 ## 2026-11-03 — Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands
 
 Branch `claude/blissful-albattani-afnvgf`. Areas: `src/shared/estimationOrder.ts`, `src/tools/Number/EstimationOrder.ts` (+ `Estimation.tsx`, `.about.ts`), `src/decks/data/estimation.json`, `src/decks/SlideCanvas.tsx`, `PrintSlidesDialog.tsx`, `slidePrint.ts`, `NumberGrid.tsx`, `src/shared/components/InkOverlay.tsx`, `src/components/DecksTab.tsx`.

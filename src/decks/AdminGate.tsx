@@ -25,7 +25,7 @@ export function AdminGate({ what, children }: { what: string; children: ReactNod
         {wrong && <p role="alert" className="mt-2 text-sm font-semibold text-red-600">That password isn't right.</p>}
         <div className="mt-4 flex items-center gap-3">
           <button type="submit" className="rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Open</button>
-          <Link to="/?tab=decks" className="text-sm font-semibold text-slate-500 hover:text-slate-800">Back to decks</Link>
+          <Link to="/deck-gallery" className="text-sm font-semibold text-slate-500 hover:text-slate-800">Back to decks</Link>
         </div>
       </form>
     </div>

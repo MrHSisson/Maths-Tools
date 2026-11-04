@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Home, RefreshCw, AlertTriangle, LayoutGrid, ListChecks, Sparkles, BookOpen } from "lucide-react";
+import { Home, RefreshCw, AlertTriangle, LayoutGrid, Presentation, ListChecks, Sparkles, BookOpen } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { useLayoutMode } from "../shared/layoutMode";
 import { useDevMode, setDevMode } from "../devMode";
@@ -9,12 +9,14 @@ import { emptyStore, type NoteStore } from "./notes";
 import { BuildGuidePage, FeaturesPage } from "./DevelopmentsPage";
 import { DevelopmentsTab } from "./PlanPages";
 import { ToolsSection } from "./ToolsSection";
+import { DecksSection } from "./DecksSection";
 import { ToolProfile } from "./ToolProfile";
 import { loadNotes, saveNote, type NotesMode } from "./notesApi";
 
-type Section = "tools" | "developments" | "features" | "guide";
+type Section = "tools" | "decks" | "developments" | "features" | "guide";
 const NAV: { key: Section; label: string; short: string; Icon: typeof LayoutGrid }[] = [
   { key: "tools", label: "Tools", short: "Tools", Icon: LayoutGrid },
+  { key: "decks", label: "Decks", short: "Decks", Icon: Presentation },
   { key: "developments", label: "Developments", short: "Plan", Icon: ListChecks },
   { key: "features", label: "Features", short: "Features", Icon: Sparkles },
   { key: "guide", label: "How a tool is built", short: "Guide", Icon: BookOpen },
@@ -74,6 +76,7 @@ export default function AdminPage() {
         </div>
       )}
       {section === "tools" && <ToolsSection store={store} phone={phone} onOpen={open} />}
+      {section === "decks" && <DecksSection />}
       {section === "developments" && <DevelopmentsTab onOpen={open} />}
       {section === "features" && <FeaturesPage />}
       {section === "guide" && <BuildGuidePage />}
@@ -90,7 +93,7 @@ export default function AdminPage() {
             <button onClick={() => void refresh()} aria-label="Refresh" className={iconBtn}><RefreshCw size={18} className={loading ? "animate-spin" : ""} /></button>
           </header>
           <main className="px-4 pb-24 pt-4">{body}</main>
-          <nav aria-label="Dashboard section" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-slate-200 bg-white">
+          <nav aria-label="Dashboard section" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white">
             {NAV.map(n => (
               <button key={n.key} onClick={() => setSection(n.key)} aria-current={section === n.key ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 py-2 text-xs font-semibold ${section === n.key ? "text-blue-900" : "text-slate-500"}`}>

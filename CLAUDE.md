@@ -312,6 +312,7 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 **Whole-lesson decks** (`decks.md`)
 - **R42** Author at least five distinct, fixed questions per skill-practice slide, varying examples deliberately within its brief, with correct answers and working that matches the referenced generator’s method, labels, notation and reveal steps. Misconception notes are optional; if supplied, verify the wrong method gives a different result. Short diagnostics and exit tickets can stay short.
 - **R43** A slide brief is optional: one or two sentences in `Slide.brief` saying what the slide’s questions test, or the key skill. When planning a lesson, write one for each question slide (not every slide) before authoring its questions; Harry’s own briefs and constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display. Choose the question presentation independently: Full-width, Workspace right or Workspace left; fixed sets and live generators share these layouts. Depth cards remain standalone full-slide question/answer faces, with no split stepper or workspace.
+- **R44** Never put three Depth slides back to back in a deck (two at most); break a run with practice, a discussion or a book activity. The deck check reports it.
 
 ## TypeScript / build rules
 

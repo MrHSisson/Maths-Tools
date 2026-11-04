@@ -15,6 +15,7 @@ const TOOL_ROUTES = [...ALL_TOOLS, ...PAGES].map((tool) => ({
 }));
 
 const DeckPage = lazy(() => import('./decks/DeckPage'));
+const DecksPage = lazy(() => import('./components/DecksPage'));
 
 function LoadingFallback() {
   return (
@@ -70,6 +71,7 @@ function App() {
           {TOOL_ROUTES.map(({ path, Component }) => (
             <Route key={path} path={path} element={<Component />} />
           ))}
+          <Route path="/deck-gallery" element={<DecksPage />} />
           <Route path="/decks" element={<DeckPage />} />
           <Route path="/decks/:id" element={<DeckPage />} />
           {ALIASES.map(({ from, to }) => (

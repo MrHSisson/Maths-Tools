@@ -40,6 +40,12 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   const checkMaths = (where: string, text: string) => { for (const m of text.matchAll(MATHS)) renders(where, m[1]); };
 
   if (new Set(deck.slides.map((s) => s.id)).size !== deck.slides.length) problems.push("slide ids are not unique");
+  // Never three Depth slides back to back: a run of them is a quiz, not a lesson. Put practice, a discussion or a book activity between them.
+  let depthRun = 0;
+  for (const [i, slide] of deck.slides.entries()) {
+    depthRun = slide.family === "depth" ? depthRun + 1 : 0;
+    if (depthRun === 3) problems.push(`${at(slide, i)}: three Depth slides in a row; put something else between them`);
+  }
   const questionIds = new Set<string>();
   const used = new Set<string>();             // numbers the deck's own content asks about
   const depthCards: { where: string; q: CuratedQuestion }[] = [];

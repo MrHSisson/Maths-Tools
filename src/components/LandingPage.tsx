@@ -1,18 +1,15 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, ChevronDown, ChevronRight, Columns, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronRight, Columns, Presentation, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-const DecksTab = lazy(() => import('./DecksTab'));   // its slide previews load only when the tab is opened
 import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, type ViewOverride } from '../shared/layoutMode';
 import { resetAboutSeen } from '../shared/about';
 
 // Top-level subjects, in display order. Categories declare their subject in the
 // registry (default "GCSE Maths"); the landing page groups them into bands.
 const SUBJECTS = ['GCSE Maths', 'A-Level', 'Computer Science'] as const;
-// The tabs: the subjects, then Decks (published lessons, and the way into the deck editor).
-const TABS = [...SUBJECTS, 'Decks'] as const;
 
 // Strand dot colours are derived from theme.border by name, so list them literally for Tailwind to find:
 // bg-amber-500 bg-blue-500 bg-cyan-500 bg-emerald-500 bg-lime-500 bg-pink-500 bg-purple-500 bg-rose-500 bg-slate-500 bg-violet-500
@@ -226,7 +223,9 @@ export default function LandingPage(): JSX.Element {
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const [subjectFilter, setSubjectFilter] = useState<string>(() => (new URLSearchParams(window.location.search).get('tab') === 'decks' ? 'Decks' : 'GCSE Maths'));
+  const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
+  // the old /?tab=decks address now lands on the Decks page
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'decks') navigate('/deck-gallery', { replace: true }); }, [navigate]);
   const [query, setQuery] = useState('');
   const openTool = (_id: string, path: string) => navigate(path);
   const q = query.trim().toLowerCase();
@@ -277,6 +276,10 @@ export default function LandingPage(): JSX.Element {
               </div>
             </div>
 
+            <div className="flex items-center gap-1 sm:gap-2">
+            <a href="/deck-gallery" onClick={(e) => { e.preventDefault(); navigate('/deck-gallery'); }} className="flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white hover:bg-blue-800">
+              <Presentation size={20} /><span>Decks</span>
+            </a>
             {/* Menu — developing tools (needs the password, src/devAccess.ts) and "view as" (phone / tablet / laptop); room for more settings later */}
             <div className="relative" ref={menuRef}>
               <button
@@ -375,6 +378,7 @@ export default function LandingPage(): JSX.Element {
                 </div>
               )}
             </div>
+            </div>
           </div>
         </div>
       </header>
@@ -386,7 +390,7 @@ export default function LandingPage(): JSX.Element {
           <p className="hidden sm:block mt-3 text-slate-500 text-lg">Interactive tools for teaching and practice.</p>
 
           {/* Search — filters the tool cards below by name, description or group */}
-          <div className={`flex justify-center mt-6 sm:mt-8 ${subjectFilter === 'Decks' ? 'hidden' : ''}`}>
+          <div className={`flex justify-center mt-6 sm:mt-8 `}>
             <div className="relative w-full max-w-xl">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
               <input
@@ -407,7 +411,7 @@ export default function LandingPage(): JSX.Element {
 
           {/* Subject — two quiet tabs */}
           <div className="flex justify-center gap-8 mt-6 sm:mt-8 border-b border-slate-200">
-            {TABS.map((k) => (
+            {SUBJECTS.map((k) => (
               <button key={k} onClick={() => setSubjectFilter(k)}
                 className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${subjectFilter === k ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
                 {k}
@@ -420,8 +424,7 @@ export default function LandingPage(): JSX.Element {
       {/* Main Content — grouped into subject bands (GCSE Maths / A-Level / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
 
-        {subjectFilter === 'Decks' && <Suspense fallback={<p className="mt-8 text-slate-500">Loading…</p>}><DecksTab /></Suspense>}
-        {subjectFilter !== 'Decks' && q && totalShown === 0 && (
+        {q && totalShown === 0 && (
           <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
         )}
         {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {

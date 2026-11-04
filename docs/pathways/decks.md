@@ -1,6 +1,6 @@
 # Decks
 - **Status:** building
-- **Updated:** 2026-11-03
+- **Updated:** 2026-11-04
 
 ## Intention
 Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them.
@@ -26,7 +26,9 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Manipulating ratios book work (2026-11-01): Worksheets 1 and 2 became hand-written nine-question book work slides (`mr-w1`, `mr-w2`; `specs/decks/_check/ratio-bookwork-build.py`); Worksheet 3 stays pinned. In the repo copy only: the decks service was returning 500, so it still has to reach Harry (File → Import slides, or a push).
 - Taught Estimation and the book-work pass (2026-11-03): the Estimation deck now splits adding and subtracting (own book activity) from a "Multiplying and dividing" half (calculators out; whiteboards and book work × and ÷ only), with fresh product questions, and a closing **Order of operations** section on a new Estimation sub-tool (`orderOfOperations`, engine `src/shared/estimationOrder.ts`). Fractional powers' three book-work slides are hand-written 3 × 4 sets in difficulty ladders. Book work (hand-written grids and generated book activities) is drawn by one open-row cell (`BookCell`), Auto fills 70% of a cell (`BOOK_FILL`), and `align` centres questions in their cells; other elements keep their own Auto rule.
 - Print slides (2026-11-03): File → Print slides… (and a player button) prints chosen slides, all or key points, 1, 2, 4 or 8 to an A4 sheet. Primes sieve: primes can only be circled, Check 11 shows the sieve can stop, the duplicate sieve slide went. The pen no longer turns a dot beside writing into a button press.
-- Deck categories (2026-11-03): a deck can be filed under a strand (About the deck); the landing Decks tab (published, plus unpublished with Developing tools on) and the deck editor's list share one strand-grouped card layout (`src/components/DeckGallery.tsx`).
+- Deck categories (2026-11-03): a deck can be filed under a strand (About the deck); the Decks page, `/deck-gallery`, opened from a Decks button in the landing header (published, plus unpublished with Developing tools on) and the deck editor's list share one strand-grouped card layout (`src/components/DeckGallery.tsx`).
+- Decks page and Pen (2026-11-04): Decks are no longer a tab of the landing page: a Decks button in the landing header opens `/deck-gallery` (old `/?tab=decks` redirects); deck cards are full width on a phone. The dashboard has a Decks section (`src/admin/DecksSection.tsx`). The editor's Pen has palm rejection. The deck check reports three Depth slides in a row (rule R44).
+- Estimation decimals (2026-11-04): Level 2 gained the Sizes Of Number pool (tenths, both below 1, hundredths, whole numbers); the Decimals section has the "dividing by less than 1" discussion, then eight whiteboard questions, then a hand-written 4 × 4 book set of 16 (`y9-bd1…16`). Pushed to the shared copy.
 - Lessons pilots (dev-gated): Indices (2 lessons) and Rounding (2 lessons); Fractions +/- has a Teach tab. Nothing live yet.
 
 ## Next steps

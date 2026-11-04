@@ -1,11 +1,12 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import { SlideCanvas } from '../decks/SlideCanvas';
-import { DECK_STRANDS, type Slide } from '../decks/types';
+import { CANVAS_W, DECK_STRANDS, type Slide } from '../decks/types';
+
 
 // The one way decks are laid out: a card per deck (its first slide, its title and an (i) for the details), grouped under a heading per
-// strand. The landing page's Decks tab and the deck editor's list both draw this, so the two always mirror each other: the tab shows the
+// strand. The Decks page and the deck editor's list both draw this, so the two always mirror each other: the page shows the
 // published decks (and, with Developing tools on, the rest), the editor shows every deck.
 
 export interface GalleryDeck {
@@ -18,16 +19,32 @@ export interface GalleryDeck {
   action?: ReactNode;
 }
 
-/** Every card is the same fixed width, so a row of them lines up and the gaps stay even however many decks there are. */
+/** The preview scales to the width its box is given, so on a phone the card (full width) shows a full-width slide. */
+function FitPreview({ slide }: { slide: Slide }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(272);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => setW(el.clientWidth || 272);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return <div ref={ref} className="w-full"><SlideCanvas slide={slide} scale={w / CANVAS_W} /></div>;
+}
+
+/** On a tablet or laptop every card is the same fixed width, so a row of them lines up and the gaps stay even; on a phone each is the full width. */
 function DeckCard({ d }: { d: GalleryDeck }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="w-[296px] max-w-full shrink-0 rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
+    <div className="w-full sm:w-[296px] sm:shrink-0 rounded-2xl border border-slate-300 bg-white p-3 shadow-card">
       <div className="relative">
         <Link to={`/decks/${d.id}`} aria-label={`Play ${d.title}`} className="block overflow-hidden rounded-lg border border-slate-200 hover:shadow-lift transition-shadow">
           {d.preview
-            ? <SlideCanvas slide={d.preview} scale={0.17} />
-            : <span className="flex h-[153px] w-[272px] items-center justify-center px-4 text-center text-lg font-semibold text-slate-800">{d.title}</span>}
+            ? <FitPreview slide={d.preview} />
+            : <span className="flex aspect-video w-full items-center justify-center px-4 text-center text-lg font-semibold text-slate-800">{d.title}</span>}
         </Link>
         {d.badge && <span className="pointer-events-none absolute left-2 top-3 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-slate-500 shadow-sm">{d.badge}</span>}
       </div>
@@ -59,7 +76,7 @@ export function DeckSections({ decks }: { decks: GalleryDeck[] }) {
         return (
           <section key={strand}>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{strand}</h3>
-            <div className="flex flex-wrap gap-4">{inStrand.map((d) => <DeckCard key={d.id} d={d} />)}</div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">{inStrand.map((d) => <DeckCard key={d.id} d={d} />)}</div>
           </section>
         );
       })}
