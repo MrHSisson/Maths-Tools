@@ -69,13 +69,10 @@ Question sets have five fixed questions with working that matches the generator.
 | 0.48, 0.82, 3.7, 0.039, 14.6, 0.073, 0.087 | Fixed question set |
 | Repeat practice: Rounding, Significant Figures, 1 s.f., decimals, Level 2 | Live generator |
 | Worked: 6.1 ÷ 0.48 | Board |
-| 4.8 × 0.39, 8.2 − 3.7, 3.9 + 0.82, 7.2 × 0.31, 6.1 ÷ 0.48 | Fixed question set |
+| 8.2 − 3.7, 3.9 + 0.82, 4.8 × 0.39, 0.42 × 0.67, 0.031 + 0.74, 0.056 × 8.2, 9.4 ÷ 0.31, 0.63 ÷ 0.082 (tenths, both below 1, hundredths) | Fixed question set (8) |
 | Dividing by less than 1 makes the answer bigger | Split discussion |
 | Repeat practice: Estimation, Level 2, all four operations | Live generator |
-| Worked: 0.073 × 0.84 (both below 1, first significant figure in the hundredths place) | Board |
-| 0.42 × 0.67, 0.83 − 0.38, 0.031 + 0.74, 0.056 × 8.2, 0.63 ÷ 0.082, 0.18 ÷ 0.041 | Fixed question set |
-| Repeat practice: Estimation, Level 2, Sizes Of Number Both Below 1 and Hundredths | Live generator |
-| Book activity: Level 2, 8 questions | Book activity |
+| Book activity: 16 hand-written questions, 4 × 4, in four steps of four (tenths, both below 1, hundredths, harder hundredths; + − × ÷ each time) | Book work (grid) |
 | Depth: *Does the size make sense?* | Depth card |
 | Depth: *Over or under?* | Depth card |
 | Depth: *Make an estimate of 0.3* | Depth card |

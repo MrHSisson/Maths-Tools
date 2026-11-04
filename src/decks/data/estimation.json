@@ -2715,30 +2715,6 @@
      "items": [
       {
        "version": 2,
-       "id": "y9-pe-1",
-       "title": "Estimate $4.8 \\times 0.39$",
-       "tool": "estimation",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $4.8 \\times 0.39$"
-       ],
-       "answer": [
-        "$\\approx 2$"
-       ],
-       "explanation": [
-        "Original: $4.8 \\times 0.39$",
-        "Round to 1 s.f.: $4.8 \\to 5, \\quad 0.39 \\to 0.4$",
-        "Calculate: $5 \\times 0.4 = 2$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
        "id": "y9-pe-2",
        "title": "Estimate $8.2 - 3.7$",
        "tool": "estimation",
@@ -2787,22 +2763,94 @@
       },
       {
        "version": 2,
-       "id": "y9-pe-4",
-       "title": "Estimate $7.2 \\times 0.31$",
+       "id": "y9-pe-1",
+       "title": "Estimate $4.8 \\times 0.39$",
        "tool": "estimation",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $7.2 \\times 0.31$"
+        "Estimate: $4.8 \\times 0.39$"
        ],
        "answer": [
-        "$\\approx 2.1$"
+        "$\\approx 2$"
        ],
        "explanation": [
-        "Original: $7.2 \\times 0.31$",
-        "Round to 1 s.f.: $7.2 \\to 7, \\quad 0.31 \\to 0.3$",
-        "Calculate: $7 \\times 0.3 = 2.1$"
+        "Original: $4.8 \\times 0.39$",
+        "Round to 1 s.f.: $4.8 \\to 5, \\quad 0.39 \\to 0.4$",
+        "Calculate: $5 \\times 0.4 = 2$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-1",
+       "title": "Estimate $0.42 \\times 0.67$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.42 \\times 0.67$"
+       ],
+       "answer": [
+        "$\\approx 0.28$"
+       ],
+       "explanation": [
+        "Original: $0.42 \\times 0.67$",
+        "Round to 1 s.f.: $0.42 \\to 0.4, \\quad 0.67 \\to 0.7$",
+        "Calculate: $0.4 \\times 0.7 = 0.28$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-3",
+       "title": "Estimate $0.031 + 0.74$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.031 + 0.74$"
+       ],
+       "answer": [
+        "$\\approx 0.73$"
+       ],
+       "explanation": [
+        "Original: $0.031 + 0.74$",
+        "Round to 1 s.f.: $0.031 \\to 0.03, \\quad 0.74 \\to 0.7$",
+        "Calculate: $0.03 + 0.7 = 0.73$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-4",
+       "title": "Estimate $0.056 \\times 8.2$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.056 \\times 8.2$"
+       ],
+       "answer": [
+        "$\\approx 0.48$"
+       ],
+       "explanation": [
+        "Original: $0.056 \\times 8.2$",
+        "Round to 1 s.f.: $0.056 \\to 0.06, \\quad 8.2 \\to 8$",
+        "Calculate: $0.06 \\times 8 = 0.48$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -2832,12 +2880,36 @@
        "expectedErrors": [],
        "followUp": "",
        "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-ds-5",
+       "title": "Estimate $0.63 \\div 0.082$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate: $0.63 \\div 0.082$"
+       ],
+       "answer": [
+        "$\\approx 7.5$"
+       ],
+       "explanation": [
+        "Original: $0.63 \\div 0.082$",
+        "Round to 1 s.f.: $0.63 \\to 0.6, \\quad 0.082 \\to 0.08$",
+        "Calculate: $0.6 \\div 0.08 = 7.5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
       }
      ],
      "id": "est-p-dec-1"
     }
    ],
-   "brief": "Each operation once with decimals, ending on division by a number below one. Five fixed Level 2 questions, answers to one decimal place."
+   "brief": "Eight fixed Level 2 questions: tenths decimals, then both numbers below 1, then numbers whose first significant figure is in the hundredths place (0.031, 0.056), ending on division by a number below one. Each operation appears."
   },
   {
    "id": "est-discuss-bigger",
@@ -2981,93 +3053,289 @@
    "brief": "Repeat practice with decimals, all four operations. Estimation, Level 2, default options."
   },
   {
-   "id": "est-board-small",
-   "family": "teach",
-   "title": "Estimate $0.073 \\times 0.84$",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Estimate $0.073 \\times 0.84$",
-     "size": 64,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "est-board-small-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 165,
-     "w": 1400,
-     "h": 60,
-     "text": "Round each number to 1 s.f. first, even when it starts 0.0",
-     "size": 40,
-     "colour": "#64748b",
-     "id": "est-board-small-2"
-    },
-    {
-     "kind": "board",
-     "x": 100,
-     "y": 250,
-     "w": 1400,
-     "h": 210,
-     "grid": {
-      "head": [
-       "Calculation",
-       "Round each number",
-       "Estimate",
-       "Calculator"
-      ],
-      "given": 1,
-      "rows": [
-       [
-        "$0.073 \\times 0.84$",
-        "$0.07 \\times 0.8$",
-        "$0.048$",
-        "$0.05146$"
-       ]
-      ]
-     },
-     "fill": "structure",
-     "size": 46,
-     "id": "est-board-small-3"
-    }
-   ]
-  },
-  {
-   "id": "est-p-small",
+   "id": "est-book-dec",
    "family": "practice",
-   "title": "Estimate with decimals below 1",
+   "title": "Book activity: decimals",
+   "brief": "Hand-written book work, 16 questions in a 4 × 4 grid, in four steps of four (+, −, ×, ÷ each time): tenths decimals, both numbers below 1, hundredths, then harder hundredths.",
    "els": [
     {
-     "kind": "questions",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "size": 46,
+     "kind": "grid",
+     "x": 20,
+     "y": 40,
+     "w": 1560,
+     "h": 830,
+     "bank": [],
+     "cols": 4,
      "items": [
       {
        "version": 2,
-       "id": "y9-ds-1",
-       "title": "Estimate $0.42 \\times 0.67$",
+       "id": "y9-bd1",
+       "title": "Estimate $2.7 + 6.4$",
        "tool": "estimation",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $0.42 \\times 0.67$"
+        "Estimate:",
+        "$2.7 + 6.4$"
+       ],
+       "answer": [
+        "$\\approx 9$"
+       ],
+       "explanation": [
+        "Original: $2.7 + 6.4$",
+        "Round to 1 s.f.: $2.7 \\to 3, \\quad 6.4 \\to 6$",
+        "Calculate: $3 + 6 = 9$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd2",
+       "title": "Estimate $9.2 - 4.8$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$9.2 - 4.8$"
+       ],
+       "answer": [
+        "$\\approx 4$"
+       ],
+       "explanation": [
+        "Original: $9.2 - 4.8$",
+        "Round to 1 s.f.: $9.2 \\to 9, \\quad 4.8 \\to 5$",
+        "Calculate: $9 - 5 = 4$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd3",
+       "title": "Estimate $6.3 \\times 0.78$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$6.3 \\times 0.78$"
+       ],
+       "answer": [
+        "$\\approx 4.8$"
+       ],
+       "explanation": [
+        "Original: $6.3 \\times 0.78$",
+        "Round to 1 s.f.: $6.3 \\to 6, \\quad 0.78 \\to 0.8$",
+        "Calculate: $6 \\times 0.8 = 4.8$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd4",
+       "title": "Estimate $8.1 \\div 0.39$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$8.1 \\div 0.39$"
+       ],
+       "answer": [
+        "$\\approx 20$"
+       ],
+       "explanation": [
+        "Original: $8.1 \\div 0.39$",
+        "Round to 1 s.f.: $8.1 \\to 8, \\quad 0.39 \\to 0.4$",
+        "Calculate: $8 \\div 0.4 = 20$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd5",
+       "title": "Estimate $0.34 + 0.58$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.34 + 0.58$"
+       ],
+       "answer": [
+        "$\\approx 0.9$"
+       ],
+       "explanation": [
+        "Original: $0.34 + 0.58$",
+        "Round to 1 s.f.: $0.34 \\to 0.3, \\quad 0.58 \\to 0.6$",
+        "Calculate: $0.3 + 0.6 = 0.9$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd6",
+       "title": "Estimate $0.91 - 0.43$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.91 - 0.43$"
+       ],
+       "answer": [
+        "$\\approx 0.5$"
+       ],
+       "explanation": [
+        "Original: $0.91 - 0.43$",
+        "Round to 1 s.f.: $0.91 \\to 0.9, \\quad 0.43 \\to 0.4$",
+        "Calculate: $0.9 - 0.4 = 0.5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd7",
+       "title": "Estimate $0.28 \\times 0.73$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.28 \\times 0.73$"
+       ],
+       "answer": [
+        "$\\approx 0.21$"
+       ],
+       "explanation": [
+        "Original: $0.28 \\times 0.73$",
+        "Round to 1 s.f.: $0.28 \\to 0.3, \\quad 0.73 \\to 0.7$",
+        "Calculate: $0.3 \\times 0.7 = 0.21$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd8",
+       "title": "Estimate $0.64 \\div 0.82$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.64 \\div 0.82$"
+       ],
+       "answer": [
+        "$\\approx 0.75$"
+       ],
+       "explanation": [
+        "Original: $0.64 \\div 0.82$",
+        "Round to 1 s.f.: $0.64 \\to 0.6, \\quad 0.82 \\to 0.8$",
+        "Calculate: $0.6 \\div 0.8 = 0.75$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd9",
+       "title": "Estimate $0.047 + 0.62$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.047 + 0.62$"
+       ],
+       "answer": [
+        "$\\approx 0.65$"
+       ],
+       "explanation": [
+        "Original: $0.047 + 0.62$",
+        "Round to 1 s.f.: $0.047 \\to 0.05, \\quad 0.62 \\to 0.6$",
+        "Calculate: $0.05 + 0.6 = 0.65$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd10",
+       "title": "Estimate $0.083 - 0.031$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.083 - 0.031$"
+       ],
+       "answer": [
+        "$\\approx 0.05$"
+       ],
+       "explanation": [
+        "Original: $0.083 - 0.031$",
+        "Round to 1 s.f.: $0.083 \\to 0.08, \\quad 0.031 \\to 0.03$",
+        "Calculate: $0.08 - 0.03 = 0.05$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd11",
+       "title": "Estimate $0.068 \\times 4.2$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.068 \\times 4.2$"
        ],
        "answer": [
         "$\\approx 0.28$"
        ],
        "explanation": [
-        "Original: $0.42 \\times 0.67$",
-        "Round to 1 s.f.: $0.42 \\to 0.4, \\quad 0.67 \\to 0.7$",
-        "Calculate: $0.4 \\times 0.7 = 0.28$"
+        "Original: $0.068 \\times 4.2$",
+        "Round to 1 s.f.: $0.068 \\to 0.07, \\quad 4.2 \\to 4$",
+        "Calculate: $0.07 \\times 4 = 0.28$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -3076,118 +3344,123 @@
       },
       {
        "version": 2,
-       "id": "y9-ds-2",
-       "title": "Estimate $0.83 - 0.38$",
+       "id": "y9-bd12",
+       "title": "Estimate $0.37 \\div 0.079$",
        "tool": "estimation",
        "level": "level2",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Estimate: $0.83 - 0.38$"
-       ],
-       "answer": [
-        "$\\approx 0.4$"
-       ],
-       "explanation": [
-        "Original: $0.83 - 0.38$",
-        "Round to 1 s.f.: $0.83 \\to 0.8, \\quad 0.38 \\to 0.4$",
-        "Calculate: $0.8 - 0.4 = 0.4$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ds-3",
-       "title": "Estimate $0.031 + 0.74$",
-       "tool": "estimation",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $0.031 + 0.74$"
-       ],
-       "answer": [
-        "$\\approx 0.73$"
-       ],
-       "explanation": [
-        "Original: $0.031 + 0.74$",
-        "Round to 1 s.f.: $0.031 \\to 0.03, \\quad 0.74 \\to 0.7$",
-        "Calculate: $0.03 + 0.7 = 0.73$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ds-4",
-       "title": "Estimate $0.056 \\times 8.2$",
-       "tool": "estimation",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $0.056 \\times 8.2$"
-       ],
-       "answer": [
-        "$\\approx 0.48$"
-       ],
-       "explanation": [
-        "Original: $0.056 \\times 8.2$",
-        "Round to 1 s.f.: $0.056 \\to 0.06, \\quad 8.2 \\to 8$",
-        "Calculate: $0.06 \\times 8 = 0.48$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ds-5",
-       "title": "Estimate $0.63 \\div 0.082$",
-       "tool": "estimation",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $0.63 \\div 0.082$"
-       ],
-       "answer": [
-        "$\\approx 7.5$"
-       ],
-       "explanation": [
-        "Original: $0.63 \\div 0.082$",
-        "Round to 1 s.f.: $0.63 \\to 0.6, \\quad 0.082 \\to 0.08$",
-        "Calculate: $0.6 \\div 0.08 = 7.5$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "y9-ds-6",
-       "title": "Estimate $0.18 \\div 0.041$",
-       "tool": "estimation",
-       "level": "level2",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $0.18 \\div 0.041$"
+        "Estimate:",
+        "$0.37 \\div 0.079$"
        ],
        "answer": [
         "$\\approx 5$"
        ],
        "explanation": [
-        "Original: $0.18 \\div 0.041$",
-        "Round to 1 s.f.: $0.18 \\to 0.2, \\quad 0.041 \\to 0.04$",
-        "Calculate: $0.2 \\div 0.04 = 5$"
+        "Original: $0.37 \\div 0.079$",
+        "Round to 1 s.f.: $0.37 \\to 0.4, \\quad 0.079 \\to 0.08$",
+        "Calculate: $0.4 \\div 0.08 = 5$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd13",
+       "title": "Estimate $0.052 \\times 0.38$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.052 \\times 0.38$"
+       ],
+       "answer": [
+        "$\\approx 0.02$"
+       ],
+       "explanation": [
+        "Original: $0.052 \\times 0.38$",
+        "Round to 1 s.f.: $0.052 \\to 0.05, \\quad 0.38 \\to 0.4$",
+        "Calculate: $0.05 \\times 0.4 = 0.02$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd14",
+       "title": "Estimate $6.2 \\div 0.031$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$6.2 \\div 0.031$"
+       ],
+       "answer": [
+        "$\\approx 200$"
+       ],
+       "explanation": [
+        "Original: $6.2 \\div 0.031$",
+        "Round to 1 s.f.: $6.2 \\to 6, \\quad 0.031 \\to 0.03$",
+        "Calculate: $6 \\div 0.03 = 200$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd15",
+       "title": "Estimate $0.092 - 0.036$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.092 - 0.036$"
+       ],
+       "answer": [
+        "$\\approx 0.05$"
+       ],
+       "explanation": [
+        "Original: $0.092 - 0.036$",
+        "Round to 1 s.f.: $0.092 \\to 0.09, \\quad 0.036 \\to 0.04$",
+        "Calculate: $0.09 - 0.04 = 0.05$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "y9-bd16",
+       "title": "Estimate $0.043 \\div 0.081$",
+       "tool": "estimation",
+       "level": "level2",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Estimate:",
+        "$0.043 \\div 0.081$"
+       ],
+       "answer": [
+        "$\\approx 0.5$"
+       ],
+       "explanation": [
+        "Original: $0.043 \\div 0.081$",
+        "Round to 1 s.f.: $0.043 \\to 0.04, \\quad 0.081 \\to 0.08$",
+        "Calculate: $0.04 \\div 0.08 = 0.5$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -3195,64 +3468,8 @@
        "status": "ready"
       }
      ],
-     "id": "est-p-small-1"
-    }
-   ],
-   "brief": "Decimals below 1: both numbers below 1, and numbers whose first significant figure is in the hundredths place (0.031, 0.056). Two multiplications, a subtraction, an addition and two divisions, answers exact."
-  },
-  {
-   "id": "est-gen-small",
-   "family": "practice",
-   "title": "Whiteboards: decimals below 1",
-   "els": [
-    {
-     "id": "est-gen-small-1",
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "estimation",
-     "preset": {
-      "sub": "estimation",
-      "level": "level2",
-      "multiSelect": {
-       "num-mixed": false,
-       "num-below1": true,
-       "num-hundredths": true,
-       "num-whole": false
-      }
-     },
-     "seed": 17,
-     "presentation": "whiteboard",
-     "visualiser": true
-    }
-   ],
-   "brief": "Repeat practice with decimals below 1 and hundredths. Estimation, Level 2, Sizes Of Number: Both Below 1 and Hundredths, all four operations."
-  },
-  {
-   "id": "est-book-dec",
-   "family": "practice",
-   "title": "Book activity: decimals",
-   "brief": "Independent practice in books. Twelve Level 2 estimation questions, all four operations with decimals, three columns (3 × 4).",
-   "els": [
-    {
-     "kind": "worksheet",
-     "x": 40,
-     "y": 40,
-     "w": 1520,
-     "h": 820,
-     "tool": "estimation",
-     "preset": {
-      "sub": "estimation",
-      "level": "level2"
-     },
-     "count": 12,
-     "cols": 3,
-     "seed": 31,
      "id": "est-book-dec-2",
-     "fixed": true,
-     "size": 60
+     "fixed": false
     }
    ]
   },
