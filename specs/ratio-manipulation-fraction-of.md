@@ -15,7 +15,7 @@
 - Numerical method is a variable defaulting off at Levels 1 and 2 and **on at Level 3**.
 - **Fraction to Ratio** Level 1 takes a fraction of the total or of the other part. **Simplifying** can mix Simplest Form, 1 : n and n : 1.
 - **Depth bank:** 21 items. **Deck:** the Manipulating ratios deck (47 slides, three A4 worksheets) is built on this tool.
-- **Still to do:** recalibrate after the Level 3 weighting fix (the mix of total and part questions is now even). The Level 2 and 3 Fraction to Ratio builders are not yet shared with the deck builder (Level 1 and Forming Ratios are).
+- **Still to do:** recalibrate after the Level 3 weighting fix (the mix of total and part questions is now even).
 - Generator slides in decks now draw ratio-table and fraction-bar working, and set a long worded question smaller so it fits.
 
 ## 1. The structure
