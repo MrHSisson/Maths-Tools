@@ -387,6 +387,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const pinch = useRef<{ d0: number; z0: number; u: { x: number; y: number } } | null>(null);
   const focus = useRef<{ u: { x: number; y: number }; at: { x: number; y: number } } | null>(null);
   const penSeen = useRef(false);
+  // Palm rejection: with the Pen on, a hand resting on the screen must do nothing. A contact is a palm when it is large, or when it lands
+  // while the stylus is touching or hovering (or just was); such contacts are swallowed here and never reach the slide.
+  const lastPenAt = useRef(0);
+  const palms = useRef(new Set<number>());
+  const PALM_SIZE = 32, PALM_WINDOW_MS = 800;                  // css px; a finger tip is about 10 to 20
+  const isPalm = (e: React.PointerEvent) => Math.max(e.width, e.height) > PALM_SIZE || performance.now() - lastPenAt.current < PALM_WINDOW_MS;
   /** Zoom to `z`, keeping the slide point `u` under the screen point `at`. */
   const [focusTick, setFocusTick] = useState(0);                    // changes on every zoom or pan, so the scroll below runs even when the zoom itself stays the same (two fingers panning)
   const zoomKeeping = (z: number, u: { x: number; y: number }, at: { x: number; y: number }) => { focus.current = { u, at }; setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z))); setFocusTick((t) => t + 1); };
@@ -413,8 +419,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     return () => el.removeEventListener("wheel", wheel);
   }, []);
   const touchDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "pen") penSeen.current = true;
+    if (e.pointerType === "pen") { penSeen.current = true; lastPenAt.current = performance.now(); }
     if (e.pointerType !== "touch") return;
+    if (pen && isPalm(e)) { palms.current.add(e.pointerId); e.stopPropagation(); return; }
     touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (touches.current.size === 2) {                               // a second finger: this is a pinch, so drop whatever the first finger had begun
       const [a, b] = [...touches.current.values()];
@@ -426,6 +433,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     }
   };
   const touchMove = (e: React.PointerEvent) => {
+    if (e.pointerType === "pen") lastPenAt.current = performance.now();          // hovering counts, so a palm that lands next to the pen is caught
+    if (palms.current.has(e.pointerId)) { e.stopPropagation(); return; }
     const was = touches.current.get(e.pointerId);
     if (e.pointerType !== "touch" || !was) return;
     touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -440,6 +449,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     }
   };
   const touchUp = (e: React.PointerEvent) => {
+    if (palms.current.delete(e.pointerId)) { e.stopPropagation(); return; }
     touches.current.delete(e.pointerId);
     if (touches.current.size < 2) pinch.current = null;
   };
@@ -464,8 +474,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     return { ...sl, els: kept.length ? sl.els.map((e) => (e === ink ? { ...ink, strokes: kept } : e)) : sl.els.filter((e) => e !== ink) };
   }));
   const penDown = (e: React.PointerEvent) => {
-    if (!pen || pinch.current || (e.pointerType === "touch" && penSeen.current)) return;
-    e.stopPropagation(); e.preventDefault();
+    if (!pen) return;
+    e.stopPropagation();                                          // with the Pen on, nothing under it may react (no box-select, no deselect)
+    if (pinch.current || (e.pointerType === "touch" && penSeen.current)) return;
+    e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const p = toCanvas(e);
     if (pen.erase) { inking.current = { erasedFrom: deckRef.current }; eraseAt(p.x, p.y); }

@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-04 — Deck editor Pen: palm rejection
+
+Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
+
+- **With the Pen on, the side of the hand no longer selects boxes.** Cause: a touch the pen layer ignored still bubbled to the canvas, which started a box-select and deselected. Now the pen layer always swallows touches, and a contact that is large (over 32px) or lands within 0.8 s of the stylus touching or hovering is dropped completely (no draw, no pan, no pinch). One finger still pans and two still zoom when no stylus is near.
+- Checked with simulated pointer events only; not yet tried with a real stylus and hand.
+
+Agent: Claude Code
+Notes: planner Build Log block not written; add it next session.
+
 ## 2026-11-04 — Estimation Level 2: decimals below 1 and hundredths
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/tools/Number/Estimation.tsx` (+ `.about.ts`), `src/tests/estimationLevel2.test.ts`, `src/decks/data/estimation.json`, `specs/decks/estimation-y9.md`.
