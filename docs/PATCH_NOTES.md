@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Primes and divisibility: no Check 11, steady sieve, a key point for every rule
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/NumberGrid.tsx`, `src/shared/numberGrid.ts`, `src/decks/flowchart.ts` (new), the live deck `primes-divisibility` (pulled, changed, pushed; repo snapshot refreshed), tests, docs.
+
+- **Check 11 is removed from the sieve** (the button, the dashed 11 multiples and the message, with its logic and tests). Why the sieve can stop is left to the discussion slide that follows ("To find the primes up to 100 we sieve with 2, 3, 5 and 7... Why can we stop?"), which already says it. A prime can still only be circled.
+- **The sieve no longer jumps.** The buttons sat in a row that could wrap onto a second line, and the Check 11 message appeared under the grid, so the grid resized as buttons were pressed. The row is now always there at one fixed height and never wraps. Checked in a browser at 1366, 1024 and 390 wide: pressing every prime, Finish and Clear gives one grid position throughout.
+- **Every divisibility rule has its own key point slide** (6 new slides, 35 to 41): 2, 5 and 10 (before the last-digit board), 3 (before "The rule for 3"), 11 and 7 (before their boards). Each has the rule, an example and what it implies. **The rules that are a process (3, 11 and 7) have a flowchart**, revealed a step per click; the one for 7 includes the loop for a long number. The slides are the `language` family, so Print slides → Key points picks them up.
+- **A reusable flowchart helper** (`flowchartEls`), built from ordinary shape, text and line elements, so the parts can be moved by hand in the editor.
+- Checked: deck content and layout checks pass on all 41 slides (before pushing, and the live copy passes `check --live`); flowchart and sieve tests pass. My first example for 7 reused a number a Depth card already uses, so the example is 301 (30 − 2 × 1 = 28).
+- Not done: the new slides have no worked questions of their own (the existing sets follow); 2, 5 and 10 are three separate short slides, easy to merge into one if you prefer.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Deck list waits for the shared copies too
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.
