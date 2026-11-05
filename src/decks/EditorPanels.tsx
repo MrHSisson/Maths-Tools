@@ -65,7 +65,7 @@ export function Swatches({ value, onChange, none }: { value?: string; onChange: 
 export function Num({ label, value, onChange, min }: { label: string; value: number; onChange: (n: number) => void; min?: number }) {
   return (
     <label className="flex items-center gap-1 text-xs text-slate-500">{label}
-      <input type="number" value={Math.round(value)} min={min} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n)) onChange(n); }} className={`${input} w-20`} />
+      <input type="number" value={Math.round(value)} min={min} onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n)) onChange(n); }} className={`${input.replace("w-full ", "")} w-[4.5rem]`} />
     </label>
   );
 }

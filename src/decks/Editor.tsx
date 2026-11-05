@@ -4,7 +4,7 @@ import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, SlidersHorizontal, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
   Printer,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
@@ -23,7 +23,7 @@ import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./rela
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
 import { useShownSize } from "./shownSize";
 import { BarProps, BoardProps, GeneratorProps, NumberGridProps, RatioTableProps, Label, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
-import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
+import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, RibbonGroup, RibbonPanel, RibbonTabs, ShortcutsDialog, KIND_NAME, Section, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
 import { INK, LAYOUTS } from "./layouts";
@@ -107,6 +107,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
+  const [ribbonTab, setRibbonTab] = usePref<"home" | "insert" | "design" | "arrange">("ribbon-tab", "home");           // which ribbon tab is showing, and whether it is folded away
+  const [ribbonOpen, setRibbonOpen] = usePref("ribbon-open", true);
   const [leftPref, setLeftPref] = usePref("left-open", true);          // panel sizes and views are remembered on this device
   const [rightPref, setRightPref] = usePref("right-open", true);
   // On a phone the slide gets the screen: both panels start shut and only one opens at a time (not remembered).
@@ -663,7 +665,6 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const hist = { canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
   const isBuilt = !!builtDeck(deck.id);
   const group = chosen.length > 1 ? unionBox(chosen.map(bbox)) : null;
-  const on = (b: boolean) => (b ? "!bg-slate-800 !text-white" : "");
 
   const present = () => { stopEditing(); onPresent(deckRef.current, si); };
   const openThread = () => { stopEditing(); setLessonMap(true); };
@@ -731,89 +732,143 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     ([["left", <AlignLeft size={16} />, "Align left"], ["center", <AlignCenter size={16} />, "Centre"], ["right", <AlignRight size={16} />, "Align right"]] as const).map(([a, icon, t]) => (
       <button key={a} className={`${toolBtn} ${iconOn(value === a)}`} title={t} aria-label={t} aria-pressed={value === a} onClick={() => onChange(a)}>{icon}</button>
     ));
-  /** The per-element extras that used to live only in the properties panel, as one "Style" menu beside the quick controls. */
-  const styleMenu = one && (one.kind === "text" || one.kind === "shape" || one.kind === "line" || one.kind === "grid" || one.kind === "worksheet") && (
-    <Menu wide label="Style" title="More settings for this element" button={<><SlidersHorizontal size={16} /><span className="hidden 2xl:inline">Style</span></>}>
-      {() => (
-        <div className="space-y-2 p-2 text-sm">
-          {one.kind === "text" && (
-            <>
-              <div className="flex flex-wrap gap-1">
-                <button className={small} onClick={() => startEditing(one.id)}><Type size={12} />Type on the slide</button>
-                <button className={small} onPointerDown={(e) => e.preventDefault()} onClick={() => setEquation({ mode: "insert", latex: "" })}><Sigma size={12} />Insert equation</button>
-              </div>
-              <button className={`${small} ${on(!!one.middle)}`} aria-pressed={!!one.middle} onClick={() => setEl(one.id, { middle: !one.middle })}>Middle (centre vertically)</button>
-            </>
-          )}
-          {one.kind === "shape" && (
-            <>
-              <div className="flex gap-1">{(["rect", "ellipse"] as const).map((sh) => <button key={sh} className={`${small} ${on(one.shape === sh)}`} onClick={() => setEl(one.id, { shape: sh })}>{sh === "rect" ? "Rectangle" : "Ellipse"}</button>)}</div>
-              <div className="flex gap-2"><Num label="Outline" value={one.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(one.id, { strokeWidth })} />
-                {one.shape === "rect" && <Num label="Corners" value={one.radius ?? 0} min={0} onChange={(radius) => setEl(one.id, { radius })} />}</div>
-            </>
-          )}
-          {one.kind === "line" && <Num label="Thickness" value={one.width ?? 6} min={1} onChange={(width) => setEl(one.id, { width })} />}
-          {one.kind === "grid" && <Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} />}
-          {(one.kind === "grid" || one.kind === "worksheet") && (
-            <div><div className="mb-1 text-xs font-semibold text-slate-500">Questions in their cells</div>
-              <div className="flex gap-1">{(["left", "center"] as const).map((al) => <button key={al} className={`${small} ${on((one.align ?? "left") === al)}`} aria-pressed={(one.align ?? "left") === al} onClick={() => setEl(one.id, { align: al === "left" ? undefined : al })}>{al === "left" ? "Left" : "Centred"}</button>)}</div></div>
-          )}
-        </div>
-      )}
-    </Menu>
-  );
-  /** The quick controls for what is selected; the rest (cells, questions, click order, position) stay in the properties panel. */
-  const quick = one && (
-    <div className="flex shrink-0 items-center gap-0.5">
-      <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
-      {answerToggle}
-      {sizeControl}
-      {one.kind === "text" && <>
-        <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
-        {alignButtons(one.align ?? "left", (a) => setEl(one.id, { align: a }))}
-        {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
-      </>}
-      {one.kind === "maths" && <>
-        <button className={toolBtn} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={16} />Edit</button>
-        {alignButtons(one.align ?? "center", (a) => setEl(one.id, { align: a }))}
-        {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
-      </>}
-      {one.kind === "shape" && <>
-        {colourMenu("Fill", one.fill, (fill) => setEl(one.id, { fill }), true, <PaintBucket size={16} />)}
-        {colourMenu("Outline", one.stroke, (stroke) => setEl(one.id, { stroke }), true, <Square size={16} />)}
-      </>}
-      {one.kind === "line" && <>
-        {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
-        <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
-      </>}
-      {styleMenu}
-      {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
-      {one.kind === "depth" && <><button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit card</button><button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Replace size={16} />Change card</button></>}
-      {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
-    </div>
-  );
-  const many = chosen.length > 1 && <span className="mr-1 whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{chosen.length} selected</span>;
+  const hint = (text: string) => <span className="max-w-[16rem] px-1 text-xs leading-tight text-slate-500">{text}</span>;
+  const textBtn = (label: string, icon: ReactNode, onClick: () => void, extra = "", title?: string) => <button className={`${toolBtn} ${extra}`} onClick={onClick} title={title ?? label}>{icon}<span className="hidden lg:inline">{label}</span></button>;
 
-  const alignRow = (
-    <>
-      <Label>{chosen.length > 1 ? "Line up the selection" : "Line up on the slide"}</Label>
-      <div className="flex flex-wrap gap-1">
-        {([["left", <AlignStartVertical size={14} />, "Left edges"], ["centre", <AlignCenterVertical size={14} />, "Centres (across)"], ["right", <AlignEndVertical size={14} />, "Right edges"],
-          ["top", <AlignStartHorizontal size={14} />, "Tops"], ["middle", <AlignCenterHorizontal size={14} />, "Middles (down)"], ["bottom", <AlignEndHorizontal size={14} />, "Bottoms"]] as const).map(([how, icon, title]) => (
-          <button key={how} className={small} title={title} onClick={() => doAlign(how)}>{icon}</button>
-        ))}
-        {chosen.length > 2 && <>
-          <button className={small} title="Space evenly across" onClick={() => doDistribute("x")}><AlignHorizontalDistributeCenter size={14} /></button>
-          <button className={small} title="Space evenly down" onClick={() => doDistribute("y")}><AlignVerticalDistributeCenter size={14} /></button>
+  // ── Home: the selection's own formatting, in labelled groups ──
+  const formatGroups = (() => {
+    if (chosen.length > 1) return <RibbonGroup label="Selection"><span className="whitespace-nowrap px-1 text-sm font-semibold text-slate-700">{chosen.length} selected</span>{hint("Line them up on the Arrange tab.")}</RibbonGroup>;
+    if (!one) return <RibbonGroup label="Format">{hint("Click something on the slide to change its text size, colour and more.")}</RibbonGroup>;
+    const kindBadge = <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>;
+    return (
+      <>
+        {sized && <RibbonGroup label="Font">{kindBadge}{answerToggle}{sizeControl}
+          {one.kind === "text" && <>
+            <button className={`${toolBtn} ${iconOn(!!one.bold)}`} title="Bold" aria-label="Bold" aria-pressed={!!one.bold} onClick={() => setEl(one.id, { bold: !one.bold })}><Bold size={16} /></button>
+            {colourMenu("Text colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+          </>}
+          {one.kind === "maths" && colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+        </RibbonGroup>}
+        {(one.kind === "text" || one.kind === "maths") && <RibbonGroup label="Paragraph">
+          {alignButtons(one.align ?? (one.kind === "maths" ? "center" : "left"), (a) => setEl(one.id, { align: a }))}
+          {one.kind === "text" && <button className={`${toolBtn} ${iconOn(!!one.middle)}`} title="Centre the text vertically in its box" aria-pressed={!!one.middle} onClick={() => setEl(one.id, { middle: !one.middle })}>Middle</button>}
+        </RibbonGroup>}
+        {one.kind === "text" && <RibbonGroup label="Text">
+          {textBtn("Type", <Type size={16} />, () => startEditing(one.id), "", "Type on the slide")}
+          {textBtn("Equation", <Sigma size={16} />, () => setEquation({ mode: "insert", latex: "" }), "", "Insert an equation into the text")}
+        </RibbonGroup>}
+        {one.kind === "maths" && <RibbonGroup label="Equation">{textBtn("Edit", <Sigma size={16} />, () => setEquation({ mode: "edit", id: one.id, latex: one.latex }), "", "Edit the equation")}</RibbonGroup>}
+        {one.kind === "shape" && <>
+          <RibbonGroup label="Colours">{colourMenu("Fill", one.fill, (fill) => setEl(one.id, { fill }), true, <PaintBucket size={16} />)}{colourMenu("Outline", one.stroke, (stroke) => setEl(one.id, { stroke }), true, <Square size={16} />)}</RibbonGroup>
+          <RibbonGroup label="Shape">
+            {(["rect", "ellipse"] as const).map((sh) => <button key={sh} className={`${toolBtn} ${iconOn(one.shape === sh)}`} aria-pressed={one.shape === sh} onClick={() => setEl(one.id, { shape: sh })}>{sh === "rect" ? <Square size={16} /> : <Circle size={16} />}<span className="hidden lg:inline">{sh === "rect" ? "Rectangle" : "Ellipse"}</span></button>)}
+            <Num label="Outline" value={one.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(one.id, { strokeWidth })} />
+            {one.shape === "rect" && <Num label="Corners" value={one.radius ?? 0} min={0} onChange={(radius) => setEl(one.id, { radius })} />}
+          </RibbonGroup>
         </>}
-      </div>
-      <Label>Layer</Label>
-      <div className="flex flex-wrap gap-1">
-        <button className={small} onClick={() => layer("front")}><ChevronsUp size={12} />Front</button>
-        <button className={small} onClick={() => layer("up")}><ArrowUp size={12} />Forward</button>
-        <button className={small} onClick={() => layer("down")}><ArrowDown size={12} />Back</button>
-        <button className={small} onClick={() => layer("back")}><ChevronsDown size={12} />Behind all</button>
-      </div>
+        {one.kind === "line" && <RibbonGroup label="Line">
+          {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
+          <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
+          <Num label="Thickness" value={one.width ?? 6} min={1} onChange={(width) => setEl(one.id, { width })} />
+        </RibbonGroup>}
+        {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid" || one.kind === "depth" || one.kind === "generator" || one.kind === "worksheet") && <RibbonGroup label="Questions">
+          {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && textBtn("Edit questions", <Pencil size={16} />, () => { void openQuestions(one); })}
+          {one.kind === "depth" && <>{textBtn("Edit card", <Pencil size={16} />, () => { void openQuestions(one); })}{textBtn("Change card", <Replace size={16} />, () => setDepthSwap(one.id))}</>}
+          {(one.kind === "generator" || one.kind === "worksheet") && textBtn("Configure", <Dices size={16} />, () => { stopEditing(); setGenerator(one); })}
+          {one.kind === "grid" && <Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} />}
+          {(one.kind === "grid" || one.kind === "worksheet") && (["left", "center"] as const).map((al) => <button key={al} className={`${toolBtn} ${iconOn((one.align ?? "left") === al)}`} aria-pressed={(one.align ?? "left") === al} title={`Questions ${al === "left" ? "at the left of" : "centred in"} their cells`} onClick={() => setEl(one.id, { align: al === "left" ? undefined : al })}>{al === "left" ? <AlignLeft size={16} /> : <AlignCenter size={16} />}</button>)}
+        </RibbonGroup>}
+        {!sized && one.kind !== "shape" && one.kind !== "line" && one.kind !== "questions" && one.kind !== "practice" && one.kind !== "grid" && one.kind !== "depth" && one.kind !== "generator" && one.kind !== "worksheet" && <RibbonGroup label={KIND_NAME[one.kind] ?? one.kind}>{hint(one.kind === "image" ? "Drag a corner to resize; Shift stretches it." : "Its settings are in the panel on the right.")}</RibbonGroup>}
+      </>
+    );
+  })();
+
+  const setTimerMinutes = (m: number) => setSlide((sl) => { const { timer: _t, ...rest } = sl; void _t; return m ? { ...rest, timer: { minutes: m, ...(sl.timer?.auto === false ? { auto: false } : {}) } } : rest; });
+  const arrangeBtn = (title: string, icon: ReactNode, run: () => void, disabled = false) => <button key={title} className={toolBtn} title={title} aria-label={title} disabled={disabled} onClick={run}>{icon}</button>;
+  const none = chosen.length === 0;
+
+  const ribbonBody = ribbonTab === "home" ? (
+    <>
+      <RibbonGroup label="Undo"><button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)" aria-label="Undo"><Undo2 size={16} /></button>
+        <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button></RibbonGroup>
+      <RibbonGroup label="Slides">
+        <Menu wide title="Add a slide after this one" button={<><Plus size={16} />New slide</>}>{(close) => slideLayouts(close)}</Menu>
+        <button className={toolBtn} onClick={() => goSlide(si - 1)} disabled={si === 0} title="Previous slide (Page Up)" aria-label="Previous slide"><ChevronLeft size={16} /></button>
+        <span className="whitespace-nowrap px-0.5 text-sm tabular-nums text-slate-600">{si + 1} / {deck.slides.length}</span>
+        <button className={toolBtn} onClick={() => goSlide(si + 1)} disabled={si === deck.slides.length - 1} title="Next slide (Page Down)" aria-label="Next slide"><ChevronRight size={16} /></button>
+      </RibbonGroup>
+      <RibbonGroup label="Edit">
+        <button className={toolBtn} onClick={duplicateSel} disabled={none} title="Duplicate (Ctrl+D)" aria-label="Duplicate"><Copy size={16} /></button>
+        <button className={`${toolBtn} hover:text-red-700`} onClick={deleteSel} disabled={none} title="Delete (Del)" aria-label="Delete"><Trash2 size={16} /></button>
+      </RibbonGroup>
+      {none && hasAnswers && <RibbonGroup label="Show">{answerToggle}</RibbonGroup>}
+      {formatGroups}
+    </>
+  ) : ribbonTab === "insert" ? (
+    <>
+      <RibbonGroup label="Basics">
+        {BASIC.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.note} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden lg:inline">{a.label}</span></button>)}
+        <button className={`${toolBtn} ${iconOn(!!pen)}`} aria-pressed={!!pen} title="Write or draw on the slide with a pen. It is saved with the slide (Esc to stop)" aria-label="Pen"
+          onClick={() => { stopEditing(); setSel([]); setPen((p) => (p ? null : { colour: PEN_COLORS[0], width: 9, erase: false })); }}><PenLine size={16} /><span className="hidden lg:inline">Pen</span></button>
+      </RibbonGroup>
+      <RibbonGroup label="Shapes and lines">{SHAPES.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.label} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}</RibbonGroup>
+      <RibbonGroup label="Lesson pieces">{PIECES.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={PIECE_NOTE[a.label] ?? a.label} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}</RibbonGroup>
+    </>
+  ) : ribbonTab === "design" ? (
+    <>
+      <RibbonGroup label="This slide">
+        <input value={slide.title} onChange={(e) => setSlide((sl) => ({ ...sl, title: e.target.value }))} className={`${input} !w-44`} aria-label="Slide title" placeholder="Slide title (for the list)" title="The slide's name in the slide list" />
+        <Menu label="Kind of slide" title="The kind of slide sets its colour in the slide list" button={<><span className="h-2.5 w-2.5 rounded-full" style={{ background: FAMILY_STYLE[slide.family].colour }} />{FAMILY_STYLE[slide.family].label}</>}>
+          {(close) => (Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => <MenuItem key={f} icon={<span className="h-2.5 w-2.5 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />} label={FAMILY_STYLE[f].label} checked={slide.family === f} onClick={() => { close(); setSlide((sl) => ({ ...sl, family: f })); }} />)}
+        </Menu>
+      </RibbonGroup>
+      <RibbonGroup label="Notes">
+        <Menu wide label="Slide brief" title="What this slide's questions test, or the key skill" button={<><FileText size={16} />Brief{slide.brief ? " •" : ""}</>}>
+          {() => <div className="p-2"><textarea value={slide.brief ?? ""} rows={4} onChange={(e) => setSlide((sl) => ({ ...sl, brief: e.target.value || undefined }))} className={input} placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" /></div>}
+        </Menu>
+      </RibbonGroup>
+      <RibbonGroup label="Timer">
+        <select aria-label="Slide timer" className={`${input} !w-auto`} value={slide.timer?.minutes ?? 0} onChange={(e) => setTimerMinutes(Number(e.target.value))} title="A timer line shows along the bottom of the slide. In the player, press T to start one on any slide.">
+          <option value={0}>No timer</option>{TIMER_MINUTES.map((m) => <option key={m} value={m}>{m} minute{m > 1 ? "s" : ""}</option>)}
+        </select>
+        {slide.timer && <label className="flex items-center gap-1.5 whitespace-nowrap px-1 text-xs text-slate-600"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={slide.timer.auto !== false}
+          onChange={(e) => setSlide((sl) => (sl.timer ? { ...sl, timer: { minutes: sl.timer.minutes, ...(e.target.checked ? {} : { auto: false }) } } : sl))} />Starts with the slide</label>}
+      </RibbonGroup>
+      <RibbonGroup label="Deck">
+        <Menu wide label="About the deck" title="Where the deck is filed, and what it covers" button={<><Layers size={16} />About the deck</>}>
+          {() => (
+            <div className="space-y-2 p-2 text-sm">
+              <div className="text-xs font-semibold text-slate-500">Strand (where it is filed on the Decks tab)</div>
+              <div className="flex flex-wrap gap-1">{DECK_STRANDS.map((st) => <button key={st} onClick={() => apply((d) => ({ ...d, strand: d.strand === st ? undefined : st }))} aria-pressed={deck.strand === st} className={`${small} ${deck.strand === st ? "ring-2 ring-blue-500" : ""}`}>{st}</button>)}</div>
+              <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." aria-label="Deck summary" />
+            </div>
+          )}
+        </Menu>
+      </RibbonGroup>
+    </>
+  ) : (
+    <>
+      <RibbonGroup label="Line up">
+        {([["left", <AlignStartVertical size={16} />, "Left edges"], ["centre", <AlignCenterVertical size={16} />, "Centres (across)"], ["right", <AlignEndVertical size={16} />, "Right edges"],
+          ["top", <AlignStartHorizontal size={16} />, "Tops"], ["middle", <AlignCenterHorizontal size={16} />, "Middles (down)"], ["bottom", <AlignEndHorizontal size={16} />, "Bottoms"]] as const).map(([how, icon, title]) => arrangeBtn(title, icon, () => doAlign(how), none))}
+        {arrangeBtn("Space evenly across", <AlignHorizontalDistributeCenter size={16} />, () => doDistribute("x"), chosen.length < 3)}
+        {arrangeBtn("Space evenly down", <AlignVerticalDistributeCenter size={16} />, () => doDistribute("y"), chosen.length < 3)}
+      </RibbonGroup>
+      <RibbonGroup label="Layer">
+        {([["front", <ChevronsUp size={16} />, "Bring to front"], ["up", <ArrowUp size={16} />, "Forward one"], ["down", <ArrowDown size={16} />, "Back one"], ["back", <ChevronsDown size={16} />, "Send behind all"]] as const).map(([how, icon, title]) => arrangeBtn(title, icon, () => layer(how), none))}
+      </RibbonGroup>
+      <RibbonGroup label="Size and position">
+        {one ? <>
+          <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
+          <Num label="W" value={one.w} onChange={(w) => setEl(one.id, { w })} /><Num label="H" value={one.h} onChange={(h) => setEl(one.id, { h })} />
+        </> : hint("Select one thing on the slide.")}
+      </RibbonGroup>
+      <RibbonGroup label="Reveal">
+        {one ? <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={`${input} !w-auto`} aria-label="Appears when presenting" title="When this appears in the player">
+          <option value={0}>Appears with the slide</option>
+          {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Appears on click {n}</option>)}
+        </select> : hint("Select one thing on the slide.")}
+      </RibbonGroup>
     </>
   );
 
@@ -926,43 +981,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { void onImage(e.target.files?.[0]); e.target.value = ""; }} />
       </div>
 
-      {/* toolbar: undo, new slide, insert; then the selection's own quick controls; then the panels */}
-      <div role="toolbar" aria-label="Slide tools" className="no-scrollbar flex items-center gap-0.5 overflow-x-auto border-b border-slate-200 bg-white px-2 py-1 sm:px-3">
-        <button className={toolBtn} onClick={undo} disabled={!hist.canUndo} title="Undo (Ctrl+Z)" aria-label="Undo"><Undo2 size={16} /></button>
-        <button className={toolBtn} onClick={redo} disabled={!hist.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><Redo2 size={16} /></button>
-        <BarDivider />
-        <Menu wide title="Add a slide after this one" button={<><Plus size={16} />New slide</>}>{(close) => slideLayouts(close)}</Menu>
-        <BarDivider />
-        {BASIC.slice(0, 2).map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.note} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}
-        <Menu wide title="Image, shapes, questions and pictures" label="Insert" button={<><ImageIcon size={16} /><span className="hidden xl:inline">Insert</span></>}>
-          {(close) => (
-            <>
-              {BASIC.slice(2).map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={a.note} onClick={() => { close(); a.run(); }} />)}
-              <MenuHeading>Shapes and lines</MenuHeading>
-              {SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
-              <MenuHeading>Questions, tables and pictures</MenuHeading>
-              {PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
-            </>
-          )}
-        </Menu>
-        <button className={`${toolBtn} ${iconOn(!!pen)}`} aria-pressed={!!pen} title="Write or draw on the slide with a pen. It is saved with the slide (Esc to stop)" aria-label="Pen"
-          onClick={() => { stopEditing(); setSel([]); setPen((p) => (p ? null : { colour: PEN_COLORS[0], width: 9, erase: false })); }}><PenLine size={16} /><span className="hidden xl:inline">Pen</span></button>
-        <BarDivider />
-        {!chosen.length && (
-          <div className="flex shrink-0 items-center gap-0.5 text-sm text-slate-600">
-            <button className={toolBtn} onClick={() => goSlide(si - 1)} disabled={si === 0} title="Previous slide (Page Up)" aria-label="Previous slide"><ChevronLeft size={16} /></button>
-            <span className="whitespace-nowrap px-1 tabular-nums">Slide {si + 1} of {deck.slides.length}</span>
-            <button className={toolBtn} onClick={() => goSlide(si + 1)} disabled={si === deck.slides.length - 1} title="Next slide (Page Down)" aria-label="Next slide"><ChevronRight size={16} /></button>
-          </div>
-        )}
-        {!chosen.length && answerToggle}
-        {quick}{many}
-        {chosen.length > 0 && <>
-          <Menu wide label="Arrange" title="Line up, space out and layer" button={<><Layers size={16} /><span className="hidden 2xl:inline">Arrange</span></>}>{() => <div className="px-2 pb-2">{alignRow}</div>}</Menu>
-          <button className={toolBtn} onClick={duplicateSel} title="Duplicate (Ctrl+D)" aria-label="Duplicate"><Copy size={16} /></button>
-          <button className={`${toolBtn} hover:text-red-700`} onClick={deleteSel} title="Delete (Del)" aria-label="Delete"><Trash2 size={16} /></button>
-        </>}
-      </div>
+      {/* the ribbon: Home (formatting what is selected), Insert, Design (the slide) and Arrange */}
+      <RibbonTabs tabs={[{ key: "home", label: "Home" }, { key: "insert", label: "Insert" }, { key: "design", label: "Design" }, { key: "arrange", label: "Arrange" }]} value={ribbonTab} onChange={setRibbonTab} open={ribbonOpen} onToggle={() => setRibbonOpen(!ribbonOpen)} />
+      {ribbonOpen && <RibbonPanel>{ribbonBody}</RibbonPanel>}
 
       <div className="flex min-h-0 flex-1">
         {/* slide strip */}
@@ -1068,43 +1089,16 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           {!chosen.length && (
             <>
               <div className="font-semibold text-slate-900">Slide {si + 1} of {deck.slides.length}</div>
-              <p className="mt-0.5 text-xs text-slate-500">Click something on the slide to change it. Move, copy or delete the slide from the Slide menu.</p>
-              <Section id="slide" title="This slide" defaultOpen>
-                <Label>Title (for the slide list)</Label>
-                <input value={slide.title} onChange={(e) => setSlide((s) => ({ ...s, title: e.target.value }))} className={input} />
-                <Label>Brief (optional)</Label>
-                <textarea value={slide.brief ?? ""} rows={2} onChange={(e) => setSlide((s) => ({ ...s, brief: e.target.value || undefined }))} className={input}
-                  placeholder="What should this slide's questions test, or the key skill?" aria-label="Slide brief" />
-                <Label>Timer</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select aria-label="Slide timer" className={`${input} !w-auto`} value={slide.timer?.minutes ?? 0}
-                    onChange={(e) => { const m = Number(e.target.value); setSlide((s) => { const { timer: _t, ...rest } = s; void _t; return m ? { ...rest, timer: { minutes: m, ...(s.timer?.auto === false ? { auto: false } : {}) } } : rest; }); }}>
-                    <option value={0}>No timer</option>{TIMER_MINUTES.map((m) => <option key={m} value={m}>{m} minute{m > 1 ? "s" : ""}</option>)}
-                  </select>
-                  {slide.timer && <label className="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={slide.timer.auto !== false}
-                    onChange={(e) => setSlide((s) => (s.timer ? { ...s, timer: { minutes: s.timer.minutes, ...(e.target.checked ? {} : { auto: false }) } } : s))} />Starts when the slide appears</label>}
-                </div>
-                <p className="mt-1 text-xs text-slate-500">A timer line shows along the bottom of the slide. In the player, press T or the clock button to start one on any slide.</p>
-                <Label>Kind of slide (its colour)</Label>
-                <div className="flex flex-wrap gap-1">{(Object.keys(FAMILY_STYLE) as DeckFamily[]).map((f) => (
-                  <button key={f} onClick={() => setSlide((s) => ({ ...s, family: f }))} className={`${small} ${slide.family === f ? "ring-2 ring-blue-500" : ""}`}>
-                    <span className="h-2 w-2 rounded-full" style={{ background: FAMILY_STYLE[f].colour }} />{FAMILY_STYLE[f].label}</button>))}</div>
-              </Section>
+              <p className="mt-0.5 text-xs text-slate-500">Click something on the slide to edit what is in it. Text size, colour and shapes are on the Home tab; the slide's title, brief and timer on Design; line-up, layers and position on Arrange.</p>
               <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
-              </Section>
-              <Section id="deck" title="About the deck">
-                <Label>Strand (where it is filed on the Decks tab)</Label>
-                <div className="mb-2 flex flex-wrap gap-1">{DECK_STRANDS.map((s) => (
-                  <button key={s} onClick={() => apply((d) => ({ ...d, strand: d.strand === s ? undefined : s }))} aria-pressed={deck.strand === s} className={`${small} ${deck.strand === s ? "ring-2 ring-blue-500" : ""}`}>{s}</button>))}</div>
-                <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." />
               </Section>
             </>
           )}
           {chosen.length > 1 && (
             <>
               <div className="font-semibold text-slate-900">{chosen.length} selected</div>
-              <p className="mt-0.5 text-xs text-slate-500">Line up, layer, copy or delete them from the bar above.</p>
+              <p className="mt-0.5 text-xs text-slate-500">Line them up and layer them on the Arrange tab; copy or delete them on Home.</p>
               <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
               </Section>
@@ -1113,7 +1107,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           {one && (
             <>
               <div className="font-semibold capitalize text-slate-900">{KIND_NAME[one.kind] ?? one.kind}</div>
-              {(one.kind === "shape" || one.kind === "line" || one.kind === "image") && <p className="mt-1 text-xs text-slate-500">{one.kind === "image" ? "Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it)." : "Colour, outline and shape are in the bar above."}</p>}
+              {(one.kind === "shape" || one.kind === "line" || one.kind === "image") && <p className="mt-1 text-xs text-slate-500">{one.kind === "image" ? "Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it)." : "Colour, outline and shape are on the Home tab."}</p>}
               {one.kind === "text" && (
                 <>
                   <Label>Text</Label>
@@ -1145,18 +1139,6 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
               </div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
-              <Section id="presenting" title="Click order" badge={one.step ? `On click ${one.step}` : "With the slide"}>
-                <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input} aria-label="Appears when presenting">
-                  <option value={0}>Appears with the slide</option>
-                  {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Appears on click {n}</option>)}
-                </select>
-              </Section>
-              <Section id="position" title="Position and size" badge={`${Math.round(one.w)} × ${Math.round(one.h)}`}>
-                <div className="grid grid-cols-2 gap-1">
-                  <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
-                  <Num label="W" value={one.w} onChange={(ww) => setEl(one.id, { w: ww })} /><Num label="H" value={one.h} onChange={(h) => setEl(one.id, { h })} />
-                </div>
-              </Section>
               <Section id="objects" title="On this slide" badge={`${slide.els.length}`}>
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
               </Section>

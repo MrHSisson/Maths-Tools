@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, Copy, GripVertical, List, Search, Trash2, LayoutGrid, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, ChevronUp, Copy, GripVertical, List, Search, Trash2, LayoutGrid, X } from "lucide-react";
 import { misconceptionLabel } from "../shared/misconceptions";
 import { SlideCanvas } from "./SlideCanvas";
 import { CANVAS_W, FAMILY_STYLE, type DeckElement, type Slide } from "./types";
@@ -234,3 +234,34 @@ const SHORTCUTS: [string, string][] = [
   ["Arrows (Shift = 1)", "Nudge the selection"], ["Alt while dragging", "Place freely (no snapping)"], ["Ctrl+D", "Duplicate"], ["Ctrl+C / Ctrl+V", "Copy and paste, also between decks"], ["Ctrl+V with a picture copied", "Paste it onto the slide (or drop an image file)"],
   ["Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"], ["Page Up / Page Down", "Previous / next slide"], ["Delete", "Delete the selection"], ["\\", "Hide or show both side panels"], ["?", "Show these shortcuts"],
 ];
+
+// ── The ribbon: tabs across the top, each holding labelled groups of controls (like PowerPoint) ──
+
+export interface RibbonTab<K extends string> { key: K; label: string }
+
+/** The tab strip. Choosing a tab opens the ribbon if it was folded away; the chevron folds it to just the tabs. */
+export function RibbonTabs<K extends string>({ tabs, value, onChange, open, onToggle }: { tabs: RibbonTab<K>[]; value: K; onChange: (k: K) => void; open: boolean; onToggle: () => void }) {
+  return (
+    <div role="tablist" aria-label="Editor ribbon" className="no-scrollbar flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-slate-200 bg-white px-2 sm:px-3">
+      {tabs.map((t) => (
+        <button key={t.key} role="tab" aria-selected={value === t.key} onClick={() => { onChange(t.key); if (!open) onToggle(); }}
+          className={`-mb-px h-9 shrink-0 border-b-2 px-3 text-sm font-semibold ${value === t.key ? "border-blue-800 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{t.label}</button>
+      ))}
+      <button type="button" onClick={onToggle} aria-label={open ? "Fold the ribbon away" : "Show the ribbon"} aria-expanded={open} title={open ? "Fold the ribbon away" : "Show the ribbon"}
+        className="ml-auto shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
+    </div>
+  );
+}
+
+/** The row under the tabs that scrolls sideways on a narrow screen. */
+export const RibbonPanel = ({ children }: { children: ReactNode }) => (
+  <div role="tabpanel" className="no-scrollbar flex shrink-0 items-stretch overflow-x-auto border-b border-slate-200 bg-white px-1 py-1 sm:px-2">{children}</div>
+);
+
+/** A labelled group of controls: the controls in a row, the group's name beneath. */
+export const RibbonGroup = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="flex shrink-0 flex-col justify-between border-r border-slate-200 px-2 last:border-r-0">
+    <div className="flex min-h-9 flex-1 items-center gap-0.5">{children}</div>
+    <div className="pt-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+  </div>
+);

@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Deck editor: PowerPoint-style ribbon, right panel emptied of settings
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `src/decks/EditorPanels.tsx`, `docs/reference/decks.md`.
+
+- **The top bar is now a ribbon with four tabs and labelled groups** (Harry's request: "more like PowerPoint"). **Home**: undo, slides (new slide, previous / next), edit (duplicate, delete), then the selection's groups: Font (size, Auto, bold, colour), Paragraph (align, Middle), Text, Equation, shape colours and shape, line, questions. **Insert**: basics, shapes and lines, lesson pieces, all as buttons. **Design**: the slide's title, kind, brief, timer and About the deck. **Arrange**: line up, layer, size and position, and when it appears. A chevron folds the ribbon to just the tabs; the open tab is remembered.
+- **The right panel keeps only content:** the text itself, board / ratio table / number grid / bar / generator / worksheet setup, and the list of what is on the slide. Slide settings, deck settings, click order and position moved out of it.
+- Checked in a browser at 1366, 1024 and 390 wide: all four tabs open, the ribbon folds, no page overflow, no errors; a selected board still gets its cell editor in the panel. Looked at the Home, Design, Arrange and Insert tabs at laptop size only.
+- Not done: widening the panel for table headers; the click-through menu for rare features (not wanted for now).
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Decks: the command line works on the live copy; repo backup
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `scripts/deck.mjs`, `scripts/deckLayoutSmoke.mjs`, `docs/reference/decks.md`, `docs/design/DECK_BUILD_CHECKLIST.md`.
