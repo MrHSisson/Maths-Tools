@@ -37,20 +37,22 @@ export function Lines({ text }: { text: string }) {
   return <>{text.split("\n").map((line, i) => <div key={i} style={{ minHeight: "1.25em" }}><InlineMath text={line} /></div>)}</>;
 }
 
-export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; size: number }) {
+/** `size` is the body text; the header row is `headSize` (by default 0.8 of it), so the two can be fitted on their own. Each cell's content sits in a
+ *  `data-cell` box so the fit can see how tall it really is. */
+export function Board({ grid, fill, size, headSize }: { grid: BoardGrid; fill: FillMode; size: number; headSize?: number }) {
   const given = grid.given ?? 1;
   const rowH = `${100 / (grid.rows.length + 1)}%`;
   return (
     <table style={{ width: "100%", height: "100%", borderCollapse: "collapse", fontSize: size, tableLayout: "fixed" }}>
       <thead>
-        <tr style={{ height: rowH }}>{grid.head.map((h, i) => <th key={i} style={{ border: "2px solid #cbd5e1", background: "#f1f5f9", padding: "0 0.5em", textAlign: "left", fontWeight: 600, color: "#1e293b", fontSize: "0.8em", lineHeight: 1.15 }}><InlineMath text={h} /></th>)}</tr>
+        <tr style={{ height: rowH }}>{grid.head.map((h, i) => <th key={i} style={{ border: "2px solid #cbd5e1", background: "#f1f5f9", padding: "0 0.5em", textAlign: "left", fontWeight: 600, color: "#1e293b", fontSize: headSize ?? size * 0.8, lineHeight: 1.15 }}><div data-cell=""><InlineMath text={h} /></div></th>)}</tr>
       </thead>
       <tbody>
         {grid.rows.map((row, r) => (
           <tr key={r} style={{ height: rowH }}>
             {row.map((cell, c) => {
               const shown = fill === "filled" || (fill === "structure" && c < given);
-              return <td key={c} style={{ border: "2px solid #cbd5e1", padding: "0 0.5em", color: "#0f172a" }}>{shown ? <InlineMath text={cell} /> : null}</td>;
+              return <td key={c} style={{ border: "2px solid #cbd5e1", padding: "0 0.5em", color: "#0f172a" }}><div data-cell="">{shown ? <InlineMath text={cell} /> : null}</div></td>;
             })}
           </tr>
         ))}
@@ -62,22 +64,30 @@ export function Board({ grid, fill, size }: { grid: BoardGrid; fill: FillMode; s
 /** Long worded questions (the ratio ones are two sentences) are set smaller so they still fit once the working opens beneath them. */
 const wordedSize = (lines: string[]) => { const n = Math.max(...lines.map((l) => l.replace(/\$/g, "").length)); return n <= 60 ? 50 : n <= 90 ? 40 : n <= 120 ? 34 : 30; };
 
-/** A board that shrinks its text until every cell holds it (never above its size), unless the size was set by hand. The fit is measured on
+/** A board that fits its text to its cells (never above its size), unless the size was set by hand. The fit is measured on
  *  the filled-in table, so revealing the cells never changes the size. */
 function BoardEl({ el, fill }: { el: Extract<DeckElement, { kind: "board" }>; fill: FillMode }) {
   const measure = useRef<HTMLDivElement>(null);
-  const fitted = useFitSize(el.size ?? 46, 20, `${JSON.stringify(el.grid)}|${el.size}|${el.w}|${el.h}`,
-    () => {
-      const w = measure.current, t = w?.querySelector("table");
-      return !!w && !!t && (t.offsetHeight > w.clientHeight + 1 || [...w.querySelectorAll("td,th")].some((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1));
-    },
-    () => { const t = measure.current?.querySelector("table"); return t ? [t] : []; }, !!el.fixed);
-  const size = el.fixed ? el.size ?? 46 : fitted;
+  // The header row and the body are fitted separately, each to its own cells, so a long heading never shrinks the numbers (or the other way round).
+  // A cell is too big when its text is taller than FIT_FILL of its row, or wider than its column.
+  const tooBig = (part: "th" | "td") => {
+    const w = measure.current;
+    if (!w) return false;
+    const rowH = w.clientHeight / (el.grid.rows.length + 1);
+    return [...w.querySelectorAll<HTMLElement>(`${part} > [data-cell]`)].some((d) => d.offsetHeight > rowH * FIT_FILL + 1 || d.scrollWidth > (d.parentElement?.clientWidth ?? 0) - 1);
+  };
+  const watch = () => { const t = measure.current?.querySelector("table"); return t ? [t] : []; };
+  const key = `${JSON.stringify(el.grid)}|${el.size}|${el.w}|${el.h}`;
+  const headStart = Math.round((el.size ?? 46) * 0.8);
+  const body = useFitSize(el.size ?? 46, 20, `${key}|b`, () => tooBig("td"), watch, !!el.fixed);
+  const head = useFitSize(headStart, 16, `${key}|h`, () => tooBig("th"), watch, !!el.fixed);
+  const size = el.fixed ? el.size ?? 46 : body;
+  const headSize = el.fixed ? size * 0.8 : head;
   useReportSize(el.id, size);
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {!el.fixed && <div ref={measure} aria-hidden style={{ position: "absolute", inset: 0, visibility: "hidden", pointerEvents: "none" }}><Board grid={el.grid} fill="filled" size={fitted} /></div>}
-      <Board grid={el.grid} fill={fill} size={size} />
+      {!el.fixed && <div ref={measure} aria-hidden style={{ position: "absolute", inset: 0, visibility: "hidden", pointerEvents: "none" }}><Board grid={el.grid} fill="filled" size={body} headSize={head} /></div>}
+      <Board grid={el.grid} fill={fill} size={size} headSize={headSize} />
     </div>
   );
 }
@@ -243,7 +253,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
 
 /** How much of its cell the text of a book activity or grid fills while Auto is on: the largest size at which the question (and, on its own,
  *  the answer) takes up no more than this share of the cell's width and height. Change this one number to make Auto bigger or smaller. */
-const BOOK_FILL = 0.7;
+const BOOK_FILL = 0.75;
 /** Where Auto starts looking, a size no cell will reach. */
 const BOOK_AUTO_MAX = 160;
 
@@ -401,18 +411,28 @@ const partOverflows = (cells: Element[], part: "q" | "a", padY = 0, fill = 1) =>
   return !!p && (p.scrollWidth > p.clientWidth + 1 || p.offsetHeight > c.clientHeight * fill - padY + 1);
 });
 
+/** What the fit search has found so far. */
+interface FitState { key: string; lo: number; hi: number; size: number }
+
 /** The largest font size, from `start` down to `min`, at which `overflows()` is false. Re-fits whenever `key` changes or the
  *  measured content changes size (KaTeX arriving, a font loading). Hand-set sizes (`fixed`) skip it. */
 function useFitSize(start: number, min: number, key: string, overflows: () => boolean, watch: () => Element[], off = false): number {
   key = `${key}|${start}`;
-  const [state, setState] = useState({ key, size: start });
+  // A bisection between `lo` (a size known to fit, or the floor) and `hi` (the most it could be): the largest whole size that fits, found in a handful of
+  // passes that all happen before the browser paints. `size` is what is drawn (and so measured) on each pass.
+  const fresh = (): FitState => ({ key, lo: min, hi: Math.max(min, start), size: Math.max(min, start) });
+  const [state, setState] = useState<FitState>(fresh);
   const [tick, setTick] = useState(0);
-  const size = off ? start : state.key === key ? state.size : start;
+  const cur = state.key === key ? state : null;
+  const size = off ? start : cur ? (cur.lo >= cur.hi ? cur.lo : cur.size) : Math.max(min, start);
   useLayoutEffect(() => {
     if (off) return;
-    if (state.key !== key) { setState({ key, size: start }); return; }
-    if (size > min && overflows()) setState({ key, size: Math.max(min, Math.floor(size * 0.93)) });
-  }, [off, key, size, min, start, tick]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: overflows and state are read fresh on each pass
+    if (!cur) { setState(fresh()); return; }
+    if (cur.lo >= cur.hi) { if (cur.lo > min && overflows()) setState(fresh()); return; }   // settled; only a change in what it holds (maths arriving, a font loading) starts the search again
+    const fits = !overflows();
+    const lo = fits ? cur.size : cur.lo, hi = fits ? cur.hi : cur.size - 1;
+    setState({ key, lo, hi, size: lo >= hi ? lo : Math.ceil((lo + hi) / 2) });
+  }, [off, key, size, min, start, tick, state]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: overflows is read fresh on each pass
   useEffect(() => {
     if (off || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => setTick((t) => t + 1));
@@ -443,12 +463,15 @@ function FitShareProvider({ children }: { children: ReactNode }) {
   return <FitShareCtx.Provider value={value}>{children}</FitShareCtx.Provider>;
 }
 
+/** How much of its box Auto lets text and equations fill (the height; text wraps to the full width). The one number to change to make Auto bigger or smaller. */
+const FIT_FILL = 0.75;
+
 /** A text box that shrinks its text to fit the box (never above the element's size), unless its size was set by hand. */
 function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
   const share = useContext(FitShareCtx);
   const measure = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
   const fitted = useFitSize(el.size, 20, `${el.text}|${el.size}|${el.bold}|${el.w}|${el.h}`,
-    () => { const o = measure.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
+    () => { const o = measure.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight * FIT_FILL + 1 || i.scrollWidth > o.clientWidth + 1); },
     () => (inner.current ? [inner.current] : []), !!el.fixed);
   const role = roleOf(el.size);
   useEffect(() => {
@@ -532,7 +555,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
 function MathsEl({ el }: { el: Extract<DeckElement, { kind: "maths" }> }) {
   const box = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
   const size = useFitSize(el.size, 20, `${el.latex}|${el.size}|${el.w}|${el.h}`,
-    () => { const o = box.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight + 1 || i.scrollWidth > o.clientWidth + 1); },
+    () => { const o = box.current, i = inner.current; return !!o && !!i && (i.scrollHeight > o.clientHeight * FIT_FILL + 1 || i.scrollWidth > o.clientWidth * FIT_FILL + 1); },
     () => (inner.current ? [inner.current] : []), !!el.fixed);
   useReportSize(el.id, size);
   return (

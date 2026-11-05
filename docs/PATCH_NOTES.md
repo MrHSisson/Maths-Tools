@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Deck Auto text sizing reworked: 75% fill, exact fit, boards fitted by part
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/SlideCanvas.tsx`, `docs/reference/decks.md`.
+
+- **Auto now fills about 75% of the box** (text and equations by height, book work by cell), instead of packing to the edge (`FIT_FILL`, `BOOK_FILL`). Text still never goes above the size set.
+- **Exact fit:** the search finds the largest whole size that fits (bisection) instead of stepping down 7% at a time, and only restarts when the content changes (maths or a font arriving).
+- **Boards (example tables) fit the header row and the body separately**, so a long heading no longer shrinks the numbers or the reverse. Measured on primes slide 18: header 32px, numbers 43px.
+- Same-role text boxes still share the smallest size (kept for consistency). Ratio tables still scale as one piece. Not changed: questions/generator sizing, and Auto is still the default for new elements.
+- Checked: `tsc`, lint, deck layout check on three decks (no spills). Numbers are smaller than before on some slides by design; not yet reviewed by eye.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Print slides: copies of each slide, even spacing, cut lines
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/slidePrint.ts`, `src/decks/PrintSlidesDialog.tsx`, `src/tests/slidePrint.test.ts`, `docs/reference/decks.md`, `docs/FEATURES.md`.

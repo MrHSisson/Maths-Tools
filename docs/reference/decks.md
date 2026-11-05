@@ -241,11 +241,11 @@ Text that has a predetermined size fits its box by default, and any of it can be
 
 | Element | Auto | `fixed` (by hand) |
 |---|---|---|
-| `text` | shrinks until it fits (down to 20, no smaller); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
-| `maths` | shrinks until the equation fits its box | exactly `size` |
-| `grid` (quickfire, retrieval, exit ticket, hand-written book work) | drawn in the same cells as a book activity (`BookCell`); is the largest size at which the question (and, separately, the answer) fills no more than 70% of its cell's width and height (`BOOK_FILL`), whatever `size` was saved | exactly `size` (the question is drawn at 0.7 of it) |
-| `worksheet` (book activity) | is the largest size at which the question (and, separately, the answer) fills no more than 70% of its cell's width and height (`BOOK_FILL` in `SlideCanvas.tsx`: change that one number to make Auto bigger or smaller) (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
-| `board` | shrinks until every cell holds its text, measured on the filled-in table so revealing does not change it | exactly `size` |
+| `text` | is the largest whole size (found by bisection, not 7% steps; down to 20) at which the text is no taller than 75% of its box (`FIT_FILL` in `SlideCanvas.tsx`: the one number to change); boxes with the same role (titles 60 and over, body 40 to 59, labels under 40) share the smallest | exactly `size`; the content check reports a text that does not fit |
+| `maths` | the largest size at which the equation fills no more than 75% of its box (`FIT_FILL`) | exactly `size` |
+| `grid` (quickfire, retrieval, exit ticket, hand-written book work) | drawn in the same cells as a book activity (`BookCell`); is the largest size at which the question (and, separately, the answer) fills no more than 75% of its cell's width and height (`BOOK_FILL`), whatever `size` was saved | exactly `size` (the question is drawn at 0.7 of it) |
+| `worksheet` (book activity) | is the largest size at which the question (and, separately, the answer) fills no more than 75% of its cell's width and height (`BOOK_FILL` in `SlideCanvas.tsx`: change that one number to make Auto bigger or smaller) (a book-work sum stays on one line: `.deck-nowrap`) | exactly `size` |
+| `board` | the **header row and the body are fitted separately** (a long heading does not shrink the numbers, nor the reverse); each cell's text is at most 75% of its row's height and fits its column, measured on the filled-in table so revealing does not change it | exactly `size` |
 | `questions` | shrinks from `size` (capped at 64) until the question and working fit | exactly `size` (to 140), no cap and no shrink |
 | `generator` | a long worded question is set smaller (`wordedSize`) | the question at exactly `size`, the working at about 0.45 of it |
 | `ratioTable` | scales down to fit its box | no scale-down: the cell text is exactly `size` |
