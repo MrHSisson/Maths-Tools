@@ -2,7 +2,7 @@
 // elements (so it saves, shares, undoes and prints like anything else, and each part can be moved by hand afterwards). Pure layout sums only.
 import type { DeckElement } from "./types";
 
-export type FlowKind = "step" | "decision" | "yes" | "no" | "start";
+type FlowKind = "step" | "decision" | "yes" | "no" | "start";
 export interface FlowNode {
   id: string; text: string; kind: FlowKind;
   /** Grid position: columns and rows count from 0, and a column may be fractional (0.5 sits between columns 0 and 1). */
@@ -15,8 +15,8 @@ export interface FlowNode {
   w?: number; h?: number;
 }
 /** `route` says how an arrow bends when its ends are not in line: "hv" leaves sideways, then turns up or down into the target; "vh" leaves up or down, then turns sideways into it. */
-export interface FlowEdge { from: string; to: string; label?: string; route?: "hv" | "vh" }
-export interface FlowArea { x: number; y: number; w: number; h: number }
+interface FlowEdge { from: string; to: string; label?: string; route?: "hv" | "vh" }
+interface FlowArea { x: number; y: number; w: number; h: number }
 
 const STYLE: Record<FlowKind, { fill: string; stroke: string; text: string; shape: "rect" | "ellipse" }> = {
   start: { fill: "#dbeafe", stroke: "#1e3a8a", text: "#0f172a", shape: "rect" },

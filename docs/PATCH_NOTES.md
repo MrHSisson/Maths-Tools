@@ -39,7 +39,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/flowchart.ts`, `src/deck
 - Checked in a browser: after the first click on the 7 slide only the first box shows; the bar is 402 px wide with the leave button; two timer rows. Layout check passes on the deck (40 slides).
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Full-screen controls: a steady, movable bar with a Slide options pop-out; deck list tidied; primes deck trimmed
 
@@ -52,7 +52,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/PlayerBar.tsx` (new), `s
 - Checked in a browser at 1366 wide: the bar is the same size on four different slides; the pop-out shows the board's fill-in group on a board slide and a note on one without; dragging works and survives a reload; the right edge stops at the ink pencil's corner; no overlap with the pencil or the open ink hotbar. Not looked at on a phone or tablet.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Primes and divisibility: no Check 11, steady sieve, a key point for every rule
 
@@ -66,7 +66,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/NumberGrid.tsx`, `src/sh
 - Not done: the new slides have no worked questions of their own (the existing sets follow); 2, 5 and 10 are three separate short slides, easy to merge into one if you prefer.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Deck list waits for the shared copies too
 
@@ -76,7 +76,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/ref
 - Checked with the cloud simulated: with a delayed newer title the old title never appears; unreachable, the list opens from the device in about 0.3 s. Not tried against the real service.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Deck editor: one-row menus, grouped dropdowns, content in popovers
 
@@ -88,7 +88,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/
 - Checked in a browser at 1366, 1024 and 390 wide: all tabs, folding, no overflow, no errors; saw the board popover and the Tables dropdown at laptop size. Not looked at by eye on a phone or tablet.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Deck editor: PowerPoint-style ribbon, right panel emptied of settings
 
@@ -100,7 +100,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/
 - Not done: widening the panel for table headers; the click-through menu for rare features (not wanted for now).
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Decks: the command line works on the live copy; repo backup
 
@@ -113,7 +113,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `scripts/deck.mjs`, `scripts/deckLa
 - Checked against a fake of the service: live check, backup (written / kept / up to date), publish sending the live copy, and `--layout` drawing a 3-slide live copy rather than the repo's 35. Not run against the real service.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Decks: shared version history (rollback for the live copy)
 
@@ -126,7 +126,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `api/decks.ts`, `api/_decks.ts`, `s
 - Not done yet from the plan: the CLI reading and writing the live copy directly, and a repo backup snapshot on publish. A deleted deck keeps no snapshot.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Decks: the shared copy is the live one (step 1: no stale flash)
 
@@ -137,7 +137,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/ref
 - **Still to do from the agreed plan:** the CLI (`pull`/`push`/`check`) reading and writing the live copy directly, a repo backup snapshot written on publish, and cloud-side version history so a bad edit can be rolled back. The repo JSON is still the first-run fallback and what CI reads.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Deck editor: hotbar sorted into categories, panel slimmed
 
@@ -150,7 +150,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `docs/refer
 - Not done (asked to leave): the click-through menu for rarely used features (timer, brief, click order, position, layout). Checked at 1366, 1024 and 390 wide: Insert has 13 items, no page overflow. Not reviewed by eye on a phone or tablet.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Deck Auto text sizing reworked: 75% fill, exact fit, boards fitted by part
 
@@ -163,7 +163,7 @@ Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/SlideCanvas.tsx`, `docs/
 - Checked: `tsc`, lint, deck layout check on three decks (no spills). Numbers are smaller than before on some slides by design; not yet reviewed by eye.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session.
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
 
 ## 2026-11-05 — Print slides: copies of each slide, even spacing, cut lines
 

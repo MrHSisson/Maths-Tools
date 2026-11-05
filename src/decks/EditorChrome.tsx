@@ -237,7 +237,7 @@ const SHORTCUTS: [string, string][] = [
 
 // ── The ribbon: tabs across the top, each holding labelled groups of controls (like PowerPoint) ──
 
-export interface RibbonTab<K extends string> { key: K; label: string }
+interface RibbonTab<K extends string> { key: K; label: string }
 
 /** The tab strip. Choosing a tab opens the ribbon if it was folded away; the chevron folds it to just the tabs. */
 export function RibbonTabs<K extends string>({ tabs, value, onChange, open, onToggle, lead, trail }: { tabs: RibbonTab<K>[]; value: K; onChange: (k: K) => void; open: boolean; onToggle: () => void; lead?: ReactNode; trail?: ReactNode }) {
