@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Plus, Printer } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
@@ -306,7 +306,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>}
       {full && (
-        <PlayerBar visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
+        <PlayerBar visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} onLeave={toggleFull} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
           {(close) => (
             <div className="space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">This slide</div>
@@ -318,14 +318,13 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
                 <button className={`${iconBtn} flex-1`} onClick={() => { close(); void printSheet(here[0].el, "answers"); }}><Printer size={16} />Answer sheet</button>
               </div>}
               <div>
-                <div className="mb-1 text-sm font-semibold text-slate-700">Timer</div>
-                <div className="flex flex-wrap gap-1.5">{TIMER_MINUTES.map((m) => <button key={m} className={iconBtn} onClick={() => { timer.start(m); close(); }}>{m} min</button>)}</div>
+                <div className="mb-1 text-sm font-semibold text-slate-700">Timer (minutes)</div>
+                <div className="grid grid-cols-5 gap-1.5">{TIMER_MINUTES.map((m) => <button key={m} className={`${iconBtn} !px-0`} onClick={() => { timer.start(m); close(); }} aria-label={`${m} minute timer`}>{m}</button>)}</div>
               </div>
               <div className="flex gap-2 border-t border-slate-200 pt-3">
                 <button className={`${iconBtn} flex-1`} onClick={() => { close(); setJump(true); }}><ListOrdered size={16} />Jump to a slide</button>
                 <button className={`${iconBtn} flex-1`} onClick={() => { close(); setPrintSlidesOpen(true); }}><Printer size={16} />Print slides</button>
               </div>
-              <button className={`${iconBtn} w-full`} onClick={() => { close(); toggleFull(); }}><Minimize size={16} />Leave full screen</button>
             </div>
           )}
         </PlayerBar>

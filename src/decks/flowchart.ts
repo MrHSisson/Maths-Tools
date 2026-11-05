@@ -7,7 +7,7 @@ export interface FlowNode {
   id: string; text: string; kind: FlowKind;
   /** Grid position: columns and rows count from 0, and a column may be fractional (0.5 sits between columns 0 and 1). */
   col: number; row: number;
-  /** The click on which it (and the arrow into it) appears in the player; omit to show it from the start. */
+  /** The click on which it appears in the player; omit to show it from the start. An arrow appears on the later of its two ends' clicks, so one looping back to an earlier box waits for the box it leaves. */
   step?: number;
   /** Text size in slide units (default 36). */
   size?: number;
@@ -69,17 +69,18 @@ export function flowchartEls(prefix: string, nodes: FlowNode[], edges: FlowEdge[
     els.push({ id: `${prefix}-t-${n.id}`, kind: "text", x: Math.round(b.x + b.w * inset), y: Math.round(b.y + 4), w: Math.round(b.w * (1 - 2 * inset)), h: Math.round(b.h - 8), text: n.text, size: n.size ?? 36, fixed: true, bold: n.kind === "yes" || n.kind === "no", colour: st.text, align: "center", middle: true, ...stepOf(n.step) });
   }
   edges.forEach((e, i) => {
-    const a = box[e.from], b = box[e.to], to = byId.get(e.to);
-    if (!a || !b || !to) throw new Error(`flowchart ${prefix}: edge ${e.from} -> ${e.to} names a node that is not there`);
+    const a = box[e.from], b = box[e.to], to = byId.get(e.to), from = byId.get(e.from);
+    if (!a || !b || !to || !from) throw new Error(`flowchart ${prefix}: edge ${e.from} -> ${e.to} names a node that is not there`);
     const pts = routeEdge(a, b, e.route);
+    const at = Math.max(from.step ?? 0, to.step ?? 0);                    // an arrow waits until both of its ends are on the slide
     for (let k = 0; k < pts.length - 1; k++) {
       const p = pts[k], q = pts[k + 1], last = k === pts.length - 2;
-      els.push({ id: `${prefix}-a-${i}-${k}`, kind: "line", x: Math.round(p.x), y: Math.round(p.y), w: Math.round(q.x - p.x), h: Math.round(q.y - p.y), colour: LINE, width: LINE_W, ...(last ? { arrow: true } : {}), ...stepOf(to.step) });
+      els.push({ id: `${prefix}-a-${i}-${k}`, kind: "line", x: Math.round(p.x), y: Math.round(p.y), w: Math.round(q.x - p.x), h: Math.round(q.y - p.y), colour: LINE, width: LINE_W, ...(last ? { arrow: true } : {}), ...stepOf(at) });
     }
     if (e.label) {
       const p = pts[0], q = pts[1], vertical = Math.abs(q.x - p.x) < 1;
       const yes = /^yes/i.test(e.label);
-      els.push({ id: `${prefix}-l-${i}`, kind: "text", x: Math.round(vertical ? p.x + 14 : (p.x + q.x) / 2 - 40), y: Math.round(vertical ? (p.y + q.y) / 2 - 20 : p.y - 48), w: 80, h: 40, text: e.label, size: 30, fixed: true, bold: true, colour: yes ? "#15803d" : "#b91c1c", align: vertical ? "left" : "center", ...stepOf(to.step) });
+      els.push({ id: `${prefix}-l-${i}`, kind: "text", x: Math.round(vertical ? p.x + 14 : (p.x + q.x) / 2 - 40), y: Math.round(vertical ? (p.y + q.y) / 2 - 20 : p.y - 48), w: 80, h: 40, text: e.label, size: 30, fixed: true, bold: true, colour: yes ? "#15803d" : "#b91c1c", align: vertical ? "left" : "center", ...stepOf(at) });
     }
   });
   return els;

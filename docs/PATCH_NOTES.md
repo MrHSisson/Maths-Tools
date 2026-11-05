@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Flowchart loop arrow timing; Leave full screen back on the bar; timer in two rows
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/flowchart.ts`, `src/decks/PlayerBar.tsx`, `src/decks/DeckPage.tsx`, the live deck `primes-divisibility`, tests, docs.
+
+- **A flowchart arrow now appears on the later of its two ends' clicks.** The loop arrow on the key point for 7 pointed into the first box, so it appeared with that box on the first click, long before the box it leaves existed. It now arrives with that box (click 4); fixed in the live deck too (two pieces of that arrow), and a test covers it.
+- **Leave full screen is on the bar again** (always one click away, no longer inside Slide options).
+- **The timer buttons in Slide options are two rows of five** (1 to 10 minutes).
+- Checked in a browser: after the first click on the 7 slide only the first box shows; the bar is 402 px wide with the leave button; two timer rows. Layout check passes on the deck (40 slides).
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Full-screen controls: a steady, movable bar with a Slide options pop-out; deck list tidied; primes deck trimmed
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/PlayerBar.tsx` (new), `src/decks/DeckPage.tsx`, `src/shared/components/InkOverlay.tsx` (a `data-ink-bar` marker only), the live deck `primes-divisibility`, `docs/reference/decks.md`.

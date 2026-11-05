@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, GripVertical, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, Minimize, SlidersHorizontal } from "lucide-react";
 import { usePref } from "./EditorChrome";
 
-// The full-screen controls: one small bar that is the same on every slide (grip, Back, the count, Next, Slide options), so it never changes size
+// The full-screen controls: one small bar that is the same on every slide (grip, Back, the count, Next, Slide options, Leave full screen), so it never changes size
 // as slides with and without boards come and go. What a slide can offer (how much is filled in, a timer, jumping, printing, leaving full screen)
 // is in the Slide options pop-out. The bar is dragged along the bottom by its grip, and keeps clear of the ink pencil and the ink hotbar.
 
@@ -30,9 +30,9 @@ export function liftAbove(bar: { left: number; right: number; height: number }, 
   return lift;
 }
 
-export function PlayerBar({ visible, count, onBack, onNext, backDisabled, nextDisabled, btn, children }: {
+export function PlayerBar({ visible, count, onBack, onNext, onLeave, backDisabled, nextDisabled, btn, children }: {
   /** Fades out when false (the bar is hidden after the mouse rests); it stays while the pop-out is open or the bar is being dragged. */
-  visible: boolean; count: string; onBack: () => void; onNext: () => void; backDisabled: boolean; nextDisabled: boolean; btn: string;
+  visible: boolean; count: string; onBack: () => void; onNext: () => void; onLeave: () => void; backDisabled: boolean; nextDisabled: boolean; btn: string;
   /** The pop-out's contents; given `close` to shut it. */
   children: (close: () => void) => ReactNode;
 }) {
@@ -78,6 +78,7 @@ export function PlayerBar({ visible, count, onBack, onNext, backDisabled, nextDi
       <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{count}</span>
       <button className={btn} onClick={onNext} disabled={nextDisabled} aria-label="Next"><ChevronRight size={20} /></button>
       <button className={`${btn} ${open ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label="Slide options" title="Options for this slide"><SlidersHorizontal size={18} />Slide options</button>
+      <button className={btn} onClick={onLeave} aria-label="Leave full screen" title="Leave full screen (Esc)"><Minimize size={18} /></button>
       {open && (
         <div role="dialog" aria-label="Slide options" onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-full mb-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-300 bg-white p-3 text-sm shadow-lift"
           style={{ width: Math.min(POP_W, vp.w - 2 * MARGIN), ...(popLeft ? { left: 0 } : { right: 0 }) }}>

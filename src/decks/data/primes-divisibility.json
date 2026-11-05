@@ -3251,6 +3251,7 @@
    "id": "p-b-eleven",
    "family": "teach",
    "title": "The rule for 11",
+   "built": "m97mmp",
    "els": [
     {
      "kind": "text",
@@ -3320,8 +3321,7 @@
      "size": 46,
      "id": "p-b-eleven-3"
     }
-   ],
-   "built": "m97mmp"
+   ]
   },
   {
    "id": "p-set-f",
@@ -3859,7 +3859,7 @@
      "h": -254,
      "colour": "#475569",
      "width": 5,
-     "step": 1
+     "step": 4
     },
     {
      "id": "p-kp-7-a-3-1",
@@ -3871,7 +3871,7 @@
      "colour": "#475569",
      "width": 5,
      "arrow": true,
-     "step": 1
+     "step": 4
     },
     {
      "id": "p-kp-7-a-4-0",

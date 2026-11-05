@@ -38,6 +38,12 @@ describe("flowchart layout", () => {
     expect(els.find((e) => e.id === "t-a-1-1")).toMatchObject({ step: 3 });    // the arrow into "Divisible" arrives with it
     expect(new Set(els.map((e) => e.id)).size).toBe(els.length);
   });
+  it("an arrow looping back to an earlier box waits for the box it leaves", () => {
+    const loop: FlowNode[] = [{ id: "a", text: "Double", kind: "step", col: 0, row: 0, step: 1 }, { id: "b", text: "Check", kind: "decision", col: 0, row: 1, step: 3 }, { id: "r", text: "Again", kind: "step", col: 1, row: 1, step: 4 }];
+    const els = flowchartEls("t", loop, [{ from: "a", to: "b" }, { from: "r", to: "a", route: "vh" }], area);
+    expect(els.find((e) => e.id === "t-a-0-0")).toMatchObject({ step: 3 });
+    for (const id of ["t-a-1-0", "t-a-1-1"]) expect(els.find((e) => e.id === id)).toMatchObject({ step: 4 });   // not step 1, when the box it points to appears
+  });
   it("names a missing node instead of drawing nonsense", () => {
     expect(() => flowchartEls("t", nodes, [{ from: "a", to: "zzz" }], area)).toThrow(/zzz/);
   });
