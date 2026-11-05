@@ -1,9 +1,11 @@
-// Decks are data. The shared copy (what Harry sees and edits) is the master; src/decks/data/<id>.json is its snapshot
-// in the repo and what a fresh device starts from.
+// Decks are data. The shared copy (what Harry sees and edits) is the LIVE one and the master; src/decks/data/<id>.json is its snapshot
+// in the repo: git's backup and history of it, what the tests read, and the first-run fallback on a fresh device.
+//   npm run deck -- check <id|all> --live  check the LIVE copy(ies) directly: nothing is read from or written to the repo (add --layout to measure every slide too)
+//   npm run deck -- backup [<id>|all]     write the live copy(ies) into src/decks/data as the repo snapshot (commit it); a file with unpushed edits is left alone
 //   npm run deck -- pull <id>             write the shared copy to src/decks/data/<id>.json (always do this before changing a deck)
 //   npm run deck -- push <id>             send src/decks/data/<id>.json to the shared copy (devices pick it up the next time they open decks)
 //   npm run deck -- list                  every shared deck
-//   npm run deck -- publish <id>          publish src/decks/data/<id>.json: a read-only copy for the Decks tab (only when Harry asks; unpublish <id> takes it down)
+//   npm run deck -- publish <id>          publish the LIVE copy: a read-only copy for the Decks tab, then back it up into the repo (only when Harry asks; unpublish <id> takes it down; --file publishes the file instead)
 //   npm run deck -- build <script> [--replace]   run a build script (see src/decks/builder.ts), check the deck and write src/decks/data/<id>.json
 //   npm run deck -- preflight <tool-id>   BEFORE building on a tool: is it ready for a deck (draws everywhere, mixes fairly, has Depth, has a fixed-question builder)?
 //   npm run deck -- diff <id>             which slides were edited in the editor since the last build, and which were added there (pull first)
@@ -30,6 +32,34 @@ const remote = () => {
   return { base: process.env.DECKS_URL ?? "https://maths-tools-phi.vercel.app/api/decks", headers: { "x-admin-key": key, "content-type": "application/json" } };
 };
 
+/** The live (shared) copy of a deck, or null when there is none. */
+async function fetchLive(i) {
+  const { base, headers } = remote();
+  const res = await fetch(`${base}?id=${encodeURIComponent(i)}`, { headers });
+  if (res.status === 404) return null;
+  if (!res.ok) fail(`could not read the live copy of ${i}: ${res.status}`);
+  return res.json();
+}
+/** Every live deck id. */
+async function liveIds() {
+  const { base, headers } = remote();
+  const res = await fetch(base, { headers });
+  if (!res.ok) fail(`could not list the live decks: ${res.status}`);
+  return Object.keys((await res.json()).index.decks);
+}
+const stripStamp = (d) => { const { updatedAt: _t, ...rest } = d; return JSON.stringify(rest); };
+/** Writes the live copy into the repo as its snapshot, unless the file holds edits that were never pushed (it differs from the version it was pulled at). */
+function writeSnapshot(deck) {
+  const f = file(deck.id), b = baseFile(deck.id);
+  if (existsSync(f) && existsSync(b) && stripStamp(JSON.parse(readFileSync(f, "utf8"))) !== stripStamp(JSON.parse(readFileSync(b, "utf8")))) return "kept (has unpushed edits: push or discard them first)";
+  const { updatedAt: _t, ...snapshot } = deck;
+  mkdirSync("src/decks/data", { recursive: true });
+  const text = JSON.stringify(snapshot, null, 1) + "\n";
+  if (existsSync(f) && readFileSync(f, "utf8") === text) return "already up to date";
+  writeFileSync(f, text);
+  return "written";
+}
+
 /** TypeScript from the command line through Vite's own loader (the same one the app and tests use). */
 async function withVite(fn) {
   const { createServer } = await import("vite");
@@ -53,7 +83,7 @@ async function withServer(fn) {
   } finally { try { process.kill(-dev.pid); } catch { dev.kill(); } }
 }
 const runScript = (script, scriptArgs, url, extraEnv = {}) => new Promise((resolve) => spawn("node", [script, ...scriptArgs], { stdio: "inherit", env: { ...process.env, SMOKE_URL: url, ...extraEnv } }).on("exit", (code) => resolve(code ?? 1)));
-const layoutCheck = (deckId) => withServer((url) => runScript("scripts/deckLayoutSmoke.mjs", [deckId], url));
+const layoutCheck = (deckId, deckFile) => withServer((url) => runScript("scripts/deckLayoutSmoke.mjs", [deckId], url, deckFile ? { DECK_FILE: deckFile } : {}));
 
 if (cmd === "list") {
   const { base, headers } = remote();
@@ -92,10 +122,24 @@ if (cmd === "list") {
   console.log(`pushed ${id}: ${final.slides.length} slides${out.merged ? ` (merged with changes saved since the pull; ${out.conflicts?.length ? `${out.conflicts.length} clash${out.conflicts.length > 1 ? "es" : ""} resolved in Harry's favour: ${out.conflicts.slice(0, 8).join(", ")}` : "no clashes"})` : ""}`);
 } else if ((cmd === "publish" || cmd === "unpublish") && id) {
   const { base, headers } = remote();
-  const body = cmd === "publish" ? { publish: { ...JSON.parse(readFileSync(file(id), "utf8")), updatedAt: new Date().toISOString() }, by: "Claude" } : { unpublish: id, by: "Claude" };
+  let live = null;
+  if (cmd === "publish" && !flags.has("--file")) { live = await fetchLive(id); if (!live) fail(`publish ${id}: there is no live copy of it. Push it first, or use --file to publish ${file(id)}`); }
+  const body = cmd === "publish" ? { publish: { ...(live ?? JSON.parse(readFileSync(file(id), "utf8"))), updatedAt: new Date().toISOString() }, by: "Claude" } : { unpublish: id, by: "Claude" };
   const res = await fetch(base, { method: "POST", headers, body: JSON.stringify(body) });
   if (!res.ok) fail(`${cmd} ${id}: ${res.status} ${await res.text()}`);
-  console.log(`${cmd === "publish" ? "published" : "unpublished"} ${id}`);
+  console.log(`${cmd === "publish" ? "published" : "unpublished"} ${id}${live ? " (the live copy)" : ""}`);
+  if (live) console.log(`repo snapshot: ${writeSnapshot(live)} (${file(id)}); commit it so git keeps what was published`);
+} else if (cmd === "backup") {
+  const ids = !id || id === "all" ? await liveIds() : [id];
+  const counts = {};
+  for (const i of ids) {
+    const deck = await fetchLive(i);
+    if (!deck) { console.log(`${i}: no live copy`); continue; }
+    const r = writeSnapshot(deck);
+    counts[r.split(" ")[0]] = (counts[r.split(" ")[0]] ?? 0) + 1;
+    if (r !== "already up to date") console.log(`${i}: ${r}`);
+  }
+  console.log(`backup: ${Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ") || "nothing to do"}. Commit src/decks/data to keep the snapshot in git.`);
 } else if (cmd === "build" && id) {
   const script = path.resolve(id);
   if (!existsSync(script)) fail(`build: ${script} not found`);
@@ -122,13 +166,23 @@ if (cmd === "list") {
   });
   process.exit(problems ? 1 : 0);
 } else if (cmd === "check" && id) {
-  const ids = id === "all" ? readdirSync("src/decks/data").filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, "")) : [id];
+  const live = flags.has("--live");
+  const ids = id === "all" ? (live ? await liveIds() : readdirSync("src/decks/data").filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, ""))) : [id];
+  const decks = {};
+  for (const i of ids) {
+    if (live) { decks[i] = await fetchLive(i); if (!decks[i]) fail(`check: no live copy of ${i}`); }
+    else { if (!existsSync(file(i))) fail(`check: ${file(i)} not found`); decks[i] = JSON.parse(readFileSync(file(i), "utf8")); }
+  }
   let bad = 0;
   await withVite(async (load) => {
     const { checkDeckContent } = await load("/src/decks/deckChecks.ts");
-    for (const i of ids) { if (!existsSync(file(i))) fail(`check: ${file(i)} not found`); bad += print(i, await checkDeckContent(JSON.parse(readFileSync(file(i), "utf8")))); }
+    for (const i of ids) bad += print(live ? `${i} (live)` : i, await checkDeckContent(decks[i]));
   });
-  if (flags.has("--layout")) for (const i of ids) bad += (await layoutCheck(i)) ? 1 : 0;
+  if (flags.has("--layout")) for (const i of ids) {
+    let f;
+    if (live) { mkdirSync(".deck-work", { recursive: true }); f = `.deck-work/${i}.live.json`; writeFileSync(f, JSON.stringify(decks[i])); }     // the layout check draws this copy, not the repo's
+    bad += (await layoutCheck(i, f)) ? 1 : 0;
+  }
   process.exit(bad ? 1 : 0);
 } else if (cmd === "diff" && id) {
   // which slides were changed in the editor since the last build, and which were added there (pull first)
@@ -232,4 +286,4 @@ export default () => ({
   });
   console.log(bad ? `verify ${id}: ${bad} part${bad > 1 ? "s" : ""} need attention` : `verify ${id}: everything passes`);
   process.exit(bad ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | build <script> [--replace] | check <id|all> [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | new <id> <tool-id>");
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | backup [<id>|all] | build <script> [--replace] | check <id|all> [--live] [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | new <id> <tool-id>");

@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Decks: the command line works on the live copy; repo backup
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `scripts/deck.mjs`, `scripts/deckLayoutSmoke.mjs`, `docs/reference/decks.md`, `docs/design/DECK_BUILD_CHECKLIST.md`.
+
+- **`npm run deck -- check <id|all> --live`** checks the live (shared) copy directly, without reading or writing the repo; with `--layout` it draws the live copy (the smoke script takes `DECK_FILE`).
+- **`npm run deck -- backup [<id>|all]`** writes the live copies into `src/decks/data` as the repo snapshot. A file with unpushed edits is left alone and reported, so a backup can never overwrite work in progress.
+- **`publish <id>`** now publishes the live copy (what Harry sees), not the repo file (`--file` for the old behaviour), then backs it up into the repo. Commit the snapshot.
+- Together with the earlier steps (waiting for the shared copy on open, and the shared version history) this completes the agreed plan: the shared copy is the live master, the repo is a backup and the fallback.
+- Checked against a fake of the service: live check, backup (written / kept / up to date), publish sending the live copy, and `--layout` drawing a 3-slide live copy rather than the repo's 35. Not run against the real service.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Decks: shared version history (rollback for the live copy)
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `api/decks.ts`, `api/_decks.ts`, `src/decks/cloud.ts`, `src/decks/VersionsDialog.tsx`, `src/tests/decksHistory.test.ts`, `docs/reference/decks.md`.

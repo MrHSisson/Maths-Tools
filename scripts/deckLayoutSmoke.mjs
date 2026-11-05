@@ -8,7 +8,10 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
 const base = process.env.SMOKE_URL ?? "http://127.0.0.1:5173";
 const id = process.argv[2] ?? "estimation";
-const slides = JSON.parse(fs.readFileSync(`src/decks/data/${id}.json`, "utf8")).slides;
+// DECK_FILE: draw this copy (the live one, fetched by `deck check --live`) instead of the repo's; the page is told it is the shared copy.
+const deckFile = process.env.DECK_FILE;
+const liveDeck = deckFile ? JSON.parse(fs.readFileSync(deckFile, "utf8")) : null;
+const slides = (liveDeck ?? JSON.parse(fs.readFileSync(`src/decks/data/${id}.json`, "utf8"))).slides;
 const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
 
 const measure = () => {
@@ -38,7 +41,12 @@ const problems = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
   await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1")); // the working copy needs Developing-tools mode
-  await page.route("**/api/decks*", (r) => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
+  await page.route("**/api/decks*", (r) => {
+    if (!liveDeck) return r.fulfill({ status: 503, contentType: "application/json", body: "{}" });
+    const stamp = "2099-01-01T00:00:00.000Z";             // newer than anything on the device, so the page takes it as the shared copy
+    const body = new URL(r.request().url()).searchParams.get("id") ? { ...liveDeck, updatedAt: stamp } : { index: { decks: { [id]: { updatedAt: stamp } } }, questions: { questions: {} } };
+    return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  });
   for (let s = 1; s <= slides.length; s++) {
     await page.goto(`${base}/decks/${id}?s=${s}`);
     await page.waitForFunction(() => [...document.querySelectorAll("div")].some((d) => d.style.width === "1600px" && d.style.height === "900px"), null, { timeout: 20000 }).catch(() => {});

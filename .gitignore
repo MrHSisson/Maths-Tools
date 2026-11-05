@@ -9,3 +9,4 @@ specs/exam/sources/
 
 # local base of each pulled deck, for merging pushes (scripts/deck.mjs)
 .deck-base/
+.deck-work/
