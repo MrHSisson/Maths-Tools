@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Deck editor: hotbar sorted into categories, panel slimmed
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
+
+- **Insert** is one grouped menu (Image; Shapes and lines; Questions, tables and pictures). Text, Equation and Pen stay as direct buttons.
+- **Style** menu in the hotbar for the extras that were only in the right panel: type on the slide, insert equation, middle (text); shape type, outline width, corners (shapes); thickness (lines); columns and cell position (grids, book activities).
+- **The right panel no longer repeats the bar:** duplicate / delete, size and Auto, bold, align, colour, shape and line settings and "Line up and layer" are gone from it. It keeps the text itself, the board / ratio / number-grid / bar / generator setup, click order, position and size, and the slide's object list.
+- **Turning Auto off keeps the size on screen** (it becomes the hand-set size).
+- Not done (asked to leave): the click-through menu for rarely used features (timer, brief, click order, position, layout). Checked at 1366, 1024 and 390 wide: Insert has 13 items, no page overflow. Not reviewed by eye on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Deck Auto text sizing reworked: 75% fill, exact fit, boards fitted by part
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/SlideCanvas.tsx`, `docs/reference/decks.md`.

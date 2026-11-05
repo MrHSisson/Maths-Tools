@@ -4,7 +4,7 @@ import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, MoveUpRight,
   AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Shapes, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, SlidersHorizontal, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
   Printer,
 } from "lucide-react";
 import { MathRenderer } from "../shared/components/MathRenderer";
@@ -731,7 +731,38 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     ([["left", <AlignLeft size={16} />, "Align left"], ["center", <AlignCenter size={16} />, "Centre"], ["right", <AlignRight size={16} />, "Align right"]] as const).map(([a, icon, t]) => (
       <button key={a} className={`${toolBtn} ${iconOn(value === a)}`} title={t} aria-label={t} aria-pressed={value === a} onClick={() => onChange(a)}>{icon}</button>
     ));
-  /** The quick controls for what is selected; the full set stays in the properties panel. */
+  /** The per-element extras that used to live only in the properties panel, as one "Style" menu beside the quick controls. */
+  const styleMenu = one && (one.kind === "text" || one.kind === "shape" || one.kind === "line" || one.kind === "grid" || one.kind === "worksheet") && (
+    <Menu wide label="Style" title="More settings for this element" button={<><SlidersHorizontal size={16} /><span className="hidden 2xl:inline">Style</span></>}>
+      {() => (
+        <div className="space-y-2 p-2 text-sm">
+          {one.kind === "text" && (
+            <>
+              <div className="flex flex-wrap gap-1">
+                <button className={small} onClick={() => startEditing(one.id)}><Type size={12} />Type on the slide</button>
+                <button className={small} onPointerDown={(e) => e.preventDefault()} onClick={() => setEquation({ mode: "insert", latex: "" })}><Sigma size={12} />Insert equation</button>
+              </div>
+              <button className={`${small} ${on(!!one.middle)}`} aria-pressed={!!one.middle} onClick={() => setEl(one.id, { middle: !one.middle })}>Middle (centre vertically)</button>
+            </>
+          )}
+          {one.kind === "shape" && (
+            <>
+              <div className="flex gap-1">{(["rect", "ellipse"] as const).map((sh) => <button key={sh} className={`${small} ${on(one.shape === sh)}`} onClick={() => setEl(one.id, { shape: sh })}>{sh === "rect" ? "Rectangle" : "Ellipse"}</button>)}</div>
+              <div className="flex gap-2"><Num label="Outline" value={one.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(one.id, { strokeWidth })} />
+                {one.shape === "rect" && <Num label="Corners" value={one.radius ?? 0} min={0} onChange={(radius) => setEl(one.id, { radius })} />}</div>
+            </>
+          )}
+          {one.kind === "line" && <Num label="Thickness" value={one.width ?? 6} min={1} onChange={(width) => setEl(one.id, { width })} />}
+          {one.kind === "grid" && <Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} />}
+          {(one.kind === "grid" || one.kind === "worksheet") && (
+            <div><div className="mb-1 text-xs font-semibold text-slate-500">Questions in their cells</div>
+              <div className="flex gap-1">{(["left", "center"] as const).map((al) => <button key={al} className={`${small} ${on((one.align ?? "left") === al)}`} aria-pressed={(one.align ?? "left") === al} onClick={() => setEl(one.id, { align: al === "left" ? undefined : al })}>{al === "left" ? "Left" : "Centred"}</button>)}</div></div>
+          )}
+        </div>
+      )}
+    </Menu>
+  );
+  /** The quick controls for what is selected; the rest (cells, questions, click order, position) stay in the properties panel. */
   const quick = one && (
     <div className="flex shrink-0 items-center gap-0.5">
       <span className="mr-1 hidden whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 xl:inline">{KIND_NAME[one.kind] ?? one.kind}</span>
@@ -755,6 +786,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {colourMenu("Colour", one.colour ?? INK, (colour) => setEl(one.id, { colour: colour ?? INK }))}
         <button className={`${toolBtn} ${iconOn(!!one.arrow)}`} title="Arrowhead" aria-label="Arrowhead" aria-pressed={!!one.arrow} onClick={() => setEl(one.id, { arrow: !one.arrow })}><MoveUpRight size={16} /></button>
       </>}
+      {styleMenu}
       {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && <button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit questions</button>}
       {one.kind === "depth" && <><button className={toolBtn} onClick={() => { void openQuestions(one); }}><Pencil size={16} />Edit card</button><button className={toolBtn} onClick={() => setDepthSwap(one.id)}><Replace size={16} />Change card</button></>}
       {(one.kind === "generator" || one.kind === "worksheet") && <button className={toolBtn} onClick={() => { stopEditing(); setGenerator(one); }}><Dices size={16} />Configure</button>}
@@ -901,15 +933,20 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         <BarDivider />
         <Menu wide title="Add a slide after this one" button={<><Plus size={16} />New slide</>}>{(close) => slideLayouts(close)}</Menu>
         <BarDivider />
-        {BASIC.map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.note} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}
-        <Menu title="Rectangles, ellipses, lines and arrows" label="Shapes" button={<><Shapes size={16} /><span className="hidden xl:inline">Shapes</span></>}>
-          {(close) => SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
+        {BASIC.slice(0, 2).map((a) => <button key={a.label} className={toolBtn} onClick={a.run} title={a.note} aria-label={`Add ${a.label.toLowerCase()}`}>{a.icon}<span className="hidden xl:inline">{a.label}</span></button>)}
+        <Menu wide title="Image, shapes, questions and pictures" label="Insert" button={<><ImageIcon size={16} /><span className="hidden xl:inline">Insert</span></>}>
+          {(close) => (
+            <>
+              {BASIC.slice(2).map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={a.note} onClick={() => { close(); a.run(); }} />)}
+              <MenuHeading>Shapes and lines</MenuHeading>
+              {SHAPES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} onClick={() => { close(); a.run(); }} />)}
+              <MenuHeading>Questions, tables and pictures</MenuHeading>
+              {PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
+            </>
+          )}
         </Menu>
         <button className={`${toolBtn} ${iconOn(!!pen)}`} aria-pressed={!!pen} title="Write or draw on the slide with a pen. It is saved with the slide (Esc to stop)" aria-label="Pen"
           onClick={() => { stopEditing(); setSel([]); setPen((p) => (p ? null : { colour: PEN_COLORS[0], width: 9, erase: false })); }}><PenLine size={16} /><span className="hidden xl:inline">Pen</span></button>
-        <Menu wide title="Questions, generators and boards from the site" label="Questions" button={<><MessagesSquare size={16} /><span className="hidden xl:inline">Questions</span></>}>
-          {(close) => PIECES.map((a) => <MenuItem key={a.label} icon={a.icon} label={a.label} note={PIECE_NOTE[a.label]} onClick={() => { close(); a.run(); }} />)}
-        </Menu>
         <BarDivider />
         {!chosen.length && (
           <div className="flex shrink-0 items-center gap-0.5 text-sm text-slate-600">
@@ -1066,12 +1103,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           )}
           {chosen.length > 1 && (
             <>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold text-slate-900">{chosen.length} selected</span>
-                <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
-                <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
-              </div>
-              <Section id="arrange-many" title="Line up and layer" defaultOpen>{alignRow}</Section>
+              <div className="font-semibold text-slate-900">{chosen.length} selected</div>
+              <p className="mt-0.5 text-xs text-slate-500">Line up, layer, copy or delete them from the bar above.</p>
               <Section id="objects" title="On this slide" defaultOpen badge={`${slide.els.length}`}>
                 <ObjectList els={slide.els} selected={selSet} onSelect={pickFromList} onLayer={layerOne} />
               </Section>
@@ -1079,64 +1112,23 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           )}
           {one && (
             <>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold capitalize text-slate-900">{KIND_NAME[one.kind] ?? one.kind}</span>
-                <button className={`${small} ml-auto`} onClick={duplicateSel} title="Duplicate (Ctrl+D)"><Copy size={12} /></button>
-                <button className={small} onClick={deleteSel} title="Delete"><Trash2 size={12} /></button>
-              </div>
+              <div className="font-semibold capitalize text-slate-900">{KIND_NAME[one.kind] ?? one.kind}</div>
+              {(one.kind === "shape" || one.kind === "line" || one.kind === "image") && <p className="mt-1 text-xs text-slate-500">{one.kind === "image" ? "Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it)." : "Colour, outline and shape are in the bar above."}</p>}
               {one.kind === "text" && (
                 <>
                   <Label>Text</Label>
-                  <div className="flex flex-wrap gap-1">
-                    <button className={small} onClick={() => startEditing(one.id)}><Type size={12} />Type on the slide</button>
-                    <button className={small} onPointerDown={(e) => e.preventDefault()} onClick={() => setEquation({ mode: "insert", latex: "" })}><Sigma size={12} />Insert equation</button>
-                  </div>
-                  <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} mt-2 ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
+                  <textarea value={one.text} rows={4} onChange={(e) => setEl(one.id, { text: e.target.value })} className={`${input} ${inlineErrors(one.text).length ? "border-red-400" : ""}`} />
                   {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
-                  <div className="mt-2 flex items-center gap-2">
-                    <Num label="Size" value={sizeNow} min={12} onChange={setSize} />
-                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={toggleAuto}>Auto size</button>
-                    <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
-                  </div>
                   {one.size < MIN_TEXT && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "left") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
-                    <button className={`${small} ${on(!!one.middle)}`} onClick={() => setEl(one.id, { middle: !one.middle })}>Middle</button>
-                  </div>
-                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
                 </>
               )}
               {one.kind === "maths" && (
                 <>
                   <div className="mt-2 rounded-lg bg-slate-50 px-2 py-2 text-2xl"><MathRenderer latex={one.latex} /></div>
                   <button className={`${small} mt-2`} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={12} />Edit equation</button>
-                  <div className="mt-2 flex items-center gap-2"><Num label="Size" value={sizeNow} min={12} onChange={setSize} />
-                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the equation to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={toggleAuto}>Auto size</button></div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "center") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
-                  </div>
-                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
-                </>
-              )}
-              {one.kind === "shape" && (
-                <>
-                  <Label>Shape</Label>
-                  <div className="flex gap-1">{(["rect", "ellipse"] as const).map((s) => <button key={s} className={`${small} ${on(one.shape === s)}`} onClick={() => setEl(one.id, { shape: s })}>{s === "rect" ? "Rectangle" : "Ellipse"}</button>)}</div>
-                  <Label>Fill</Label><Swatches value={one.fill} none onChange={(fill) => setEl(one.id, { fill })} />
-                  <Label>Outline</Label><Swatches value={one.stroke} none onChange={(stroke) => setEl(one.id, { stroke })} />
-                  <div className="mt-2 flex gap-2"><Num label="Outline" value={one.strokeWidth ?? 4} min={0} onChange={(strokeWidth) => setEl(one.id, { strokeWidth })} />
-                    {one.shape === "rect" && <Num label="Corners" value={one.radius ?? 0} min={0} onChange={(radius) => setEl(one.id, { radius })} />}</div>
-                </>
-              )}
-              {one.kind === "line" && (
-                <>
-                  <Label>Colour</Label><Swatches value={one.colour} onChange={(colour) => setEl(one.id, { colour: colour ?? INK })} />
-                  <div className="mt-2 flex items-center gap-2"><Num label="Thickness" value={one.width ?? 6} min={1} onChange={(width) => setEl(one.id, { width })} />
-                    <button className={`${small} ${on(!!one.arrow)}`} onClick={() => setEl(one.id, { arrow: !one.arrow })}>Arrowhead</button></div>
                 </>
               )}
               {one.kind === "worksheet" && <SheetProps el={one} set={(p) => setEl(one.id, p)} canPin={pinnedSheets(deck).length < MAX_PINNED} />}
-              {one.kind === "image" && <p className="mt-2 text-xs text-slate-500">Drag a corner to resize; the picture keeps its shape (hold Shift to stretch it).</p>}
               {one.kind === "board" && <BoardProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(p) => setEl(one.id, p)} />}
               {one.kind === "numberGrid" && <NumberGridProps el={one} set={(p) => setEl(one.id, p)} />}
@@ -1151,20 +1143,14 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 <div className="font-semibold">{one.kind === "questions" ? one.items.length : one.kind === "grid" ? (one.items ?? one.bank).length : one.bank.length} questions</div>
                 <p className="mt-1 text-xs text-slate-500">Questions written for this slide, with their answers and working.</p>
                 <button className={`${small} mt-3 min-h-11 w-full justify-center`} onClick={() => { void openQuestions(one); }}>Edit questions…</button>
-                {one.kind === "grid" && <div className="mt-3"><Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} /></div>}
               </div>}
-              {(one.kind === "grid" || one.kind === "worksheet") && <div className="mt-3"><Label>Questions in their cells</Label>
-                <div className="flex gap-1">{(["left", "center"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "left") === a)}`} aria-pressed={(one.align ?? "left") === a} onClick={() => setEl(one.id, { align: a === "left" ? undefined : a })}>{a === "left" ? "Left" : "Centred"}</button>)}</div></div>}
               {(one.kind === "generator" || one.kind === "worksheet") && <GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />}
-              {sized && !["text", "maths"].includes(sized.kind) && <div className="mt-3 flex items-center gap-2"><Num label={answerMode ? "Answer size" : "Text size"} value={sizeNow} min={12} onChange={setSize} />
-                {sized.kind !== "bar" && <button className={`${small} ${on(!isFixed)}`} title={sized.kind === "generator" || sized.kind === "questions" ? "Set the question text to suit its length automatically. Setting a size by hand keeps it exactly as set." : "Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set."} onClick={toggleAuto}>Auto size</button>}</div>}
               <Section id="presenting" title="Click order" badge={one.step ? `On click ${one.step}` : "With the slide"}>
                 <select value={one.step ?? 0} onChange={(e) => setEl(one.id, { step: Number(e.target.value) || undefined })} className={input} aria-label="Appears when presenting">
                   <option value={0}>Appears with the slide</option>
                   {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Appears on click {n}</option>)}
                 </select>
               </Section>
-              <Section id="arrange-one" title="Line up and layer">{alignRow}</Section>
               <Section id="position" title="Position and size" badge={`${Math.round(one.w)} × ${Math.round(one.h)}`}>
                 <div className="grid grid-cols-2 gap-1">
                   <Num label="X" value={one.x} onChange={(x) => setEl(one.id, { x })} /><Num label="Y" value={one.y} onChange={(y) => setEl(one.id, { y })} />
