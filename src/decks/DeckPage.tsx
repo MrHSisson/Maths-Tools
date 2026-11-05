@@ -51,7 +51,16 @@ function DeckIndex() {
   const navigate = useNavigate();
   const [, refresh] = useState(0);
   const cloud = useCloudState();
-  useEffect(() => { void syncFromCloud().then((changed) => { if (changed) refresh((n) => n + 1); }); }, []);
+  // The shared copies are the live ones: wait for them (a moment at most; offline, the device's copies are used) so a deck's older title or
+  // preview is not shown and then swapped.
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    let on = true;
+    const done = () => { if (on) { refresh((n) => n + 1); setSynced(true); } };
+    const stop = window.setTimeout(done, LIVE_WAIT_MS);
+    void syncFromCloud().catch(() => false).then(() => { window.clearTimeout(stop); done(); });
+    return () => { on = false; window.clearTimeout(stop); };
+  }, []);
   const published = usePublishedIndex();
   const decks = allDecks();
   const create = () => {
@@ -71,12 +80,12 @@ function DeckIndex() {
         <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
         {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
         <div className="mt-6">
-          <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
+          {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
             id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
             badge: published?.[deck.id] ? undefined : "Not published",
             notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],
             action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
-          }))} />
+          }))} />}
         </div>
       </div>
     </div>

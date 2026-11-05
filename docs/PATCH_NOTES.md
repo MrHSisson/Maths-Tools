@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Deck list waits for the shared copies too
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.
+
+- **The deck editor's list showed the old title and preview, then swapped them.** Cause: the list drew the device's copy (or the repo's) at once and only then pulled the shared copy, so a title Harry had changed (the capitalised titles) showed in its old form first. My earlier fix covered opening one deck but not the list. The list now says "Loading the latest decks…" for a moment (4 s at most; offline it uses the device's copies) and then draws the shared copies only.
+- Checked with the cloud simulated: with a delayed newer title the old title never appears; unreachable, the list opens from the device in about 0.3 s. Not tried against the real service.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Deck editor: one-row menus, grouped dropdowns, content in popovers
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `docs/reference/decks.md`.
