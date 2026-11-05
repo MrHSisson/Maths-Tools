@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Decks: shared version history (rollback for the live copy)
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `api/decks.ts`, `api/_decks.ts`, `src/decks/cloud.ts`, `src/decks/VersionsDialog.tsx`, `src/tests/decksHistory.test.ts`, `docs/reference/decks.md`.
+
+- **The service now keeps rollback points of every deck.** Before a spell of editing changes the stored deck, it keeps the deck as it stood (at most one every 10 minutes, the last 40; a save that changes nothing makes none). They are the same on every device, unlike the old device-only versions.
+- **File → Version history** lists them first ("Shared history"), then the device's own. Restore puts one back as your next save, so Undo reverses it.
+- This is the safety net for the shared copy being the live one: a bad edit by either of us can be rolled back.
+- Checked with the blob store simulated (snapshot content, burst grouping, gap, no-change saves, key checks) and in the browser with the history stubbed. **Not tried against the real storage, which only the deployed site has**: please try it once after deploy.
+- Not done yet from the plan: the CLI reading and writing the live copy directly, and a repo backup snapshot on publish. A deleted deck keeps no snapshot.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Decks: the shared copy is the live one (step 1: no stale flash)
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.

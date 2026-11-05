@@ -58,3 +58,18 @@ export async function fetchDeck(id: string): Promise<DeckDef | null> {
     return res.ok && fromService(res) ? ((await res.json()) as DeckDef) : null;
   } catch { return null; }
 }
+
+/** One rollback point of the live copy (kept by the service before a burst of edits). `savedAt` is when that version was last saved. */
+export interface HistoryEntry { key: string; at: string; savedAt: string; title: string; slides: number }
+export async function fetchHistory(id: string): Promise<HistoryEntry[] | null> {
+  try {
+    const res = await fetch(`${URL_}?history=${encodeURIComponent(id)}`, { headers });
+    return res.ok && fromService(res) ? ((await res.json()) as { entries: HistoryEntry[] }).entries : null;
+  } catch { return null; }
+}
+export async function fetchSnapshot(id: string, key: string): Promise<DeckDef | null> {
+  try {
+    const res = await fetch(`${URL_}?history=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`, { headers });
+    return res.ok && fromService(res) ? ((await res.json()) as DeckDef) : null;
+  } catch { return null; }
+}

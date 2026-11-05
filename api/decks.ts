@@ -5,6 +5,8 @@
 //                                           the response then carries `merged: true` and the merged `deck`. Without `base` the deck replaces the stored one.
 // POST /api/decks {remove: <id>}          → delete a deck (a built deck goes back to its original)
 // POST /api/decks {question}              → save one question; {removeQuestion: <id>} → drop one
+// GET  /api/decks?history=<id>            → { entries }: the shared version history of a deck, newest first (snapshots kept automatically)
+// GET  /api/decks?history=<id>&key=<key>  → one snapshot (a deck), to restore from; the client restores it as an ordinary save
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next)
 // GET  /api/decks?published=<id>          → one published deck, a frozen copy
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
@@ -13,7 +15,7 @@
 // a deck is its own blob, written with its ETag too (a save is merged into what is stored, retried if another save got in first).
 import { del, get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
 import { mergeDecks } from "./_deckMerge.js";
-import { checkDeck, checkQuestion, deckPath, emptyIndex, emptyPublished, emptyQuestions, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
+import { checkDeck, checkQuestion, deckPath, emptyHistory, emptyIndex, historyIndexPath, historyWith, shouldSnapshot, snapshotKey, snapshotPath, validSnapshotKey, type DeckHistory, type HistoryEntry, emptyPublished, emptyQuestions, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
 
 const INDEX = "decks-index.json";
 const QUESTIONS = "deck-questions.json";
@@ -56,6 +58,21 @@ async function update<T>(path: string, empty: () => T, change: (v: T) => T): Pro
   return null;
 }
 
+/** Keeps `previous` (the stored deck as it stood before this save) as a rollback point, if the last one is old enough. Never fails the save. */
+async function snapshotBefore(id: string, previous: Record<string, unknown> | null, after: Record<string, unknown>, now: string) {
+  if (!previous || JSON.stringify(previous) === JSON.stringify(after)) return;          // nothing changed: nothing to roll back to
+  try {
+    const { value: hist } = await readJson<DeckHistory>(historyIndexPath(id), emptyHistory);
+    if (!shouldSnapshot(hist, Date.parse(now))) return;
+    const key = snapshotKey(now);
+    await put(snapshotPath(id, key), JSON.stringify(previous), { access: "private", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
+    const entry: HistoryEntry = { key, at: now, savedAt: typeof previous.updatedAt === "string" ? previous.updatedAt : now, title: typeof previous.title === "string" ? previous.title.slice(0, 200) : id, slides: Array.isArray(previous.slides) ? previous.slides.length : 0 };
+    let dropped: string[] = [];
+    await update(historyIndexPath(id), emptyHistory, (h) => { const r = historyWith(h, entry, undefined); dropped = r.dropped; return r.history; });
+    for (const k of dropped) { try { await del(snapshotPath(id, k)); } catch { /* already gone */ } }
+  } catch { /* the save has happened; a missed snapshot is not worth failing it */ }
+}
+
 export async function GET(req: Request) {
   const published = new URL(req.url).searchParams.get("published");
   if (published !== null) {                          // the one part anyone may read
@@ -66,6 +83,18 @@ export async function GET(req: Request) {
   }
   const denied = authorised(req);
   if (denied) return denied;
+  const hist = new URL(req.url).searchParams.get("history");
+  if (hist !== null) {
+    if (!validId(hist)) return json({ error: "Bad id" }, 400);
+    const key = new URL(req.url).searchParams.get("key");
+    if (key !== null) {
+      if (!validSnapshotKey(key)) return json({ error: "Bad key" }, 400);
+      const { value } = await readJson<unknown>(snapshotPath(hist, key), () => null);
+      return value ? json(value) : json({ error: "Not found" }, 404);
+    }
+    const { value } = await readJson<DeckHistory>(historyIndexPath(hist), emptyHistory);
+    return json({ entries: [...value.entries].reverse() });
+  }
   const id = new URL(req.url).searchParams.get("id");
   if (id !== null) {
     if (!validId(id)) return json({ error: "Bad id" }, 400);
@@ -91,9 +120,11 @@ export async function POST(req: Request) {
     const incoming = JSON.parse(checked.body) as Record<string, unknown>;
     const base = isDeckLike(body.base) ? body.base : null;
     const winner = by === "Claude" ? "current" : "incoming";          // Harry's version wins when both changed the very same thing
+    let previous: Record<string, unknown> | null = null;
     let saved: { deck: Record<string, unknown>; summary: { id: string; title: string; summary: string; slides: unknown[]; updatedAt?: string }; merged: boolean; conflicts: string[] } | null = null;
     for (let attempt = 0; attempt < 4 && !saved; attempt++) {
       const { value: current, etag } = await readJson<Record<string, unknown> | null>(deckPath(id), () => null);
+      previous = current;
       const result = current ? mergeDecks(base, incoming, current, winner) : { deck: incoming, conflicts: [] as string[], merged: false };
       const next = result.merged ? { ...result.deck, updatedAt: now } : result.deck;     // a merged deck is newer than both inputs, so every device picks it up
       const rechecked = checkDeck(next);
@@ -104,6 +135,7 @@ export async function POST(req: Request) {
       }
     }
     if (!saved) return json({ error: "Could not save — please try again" }, 409);
+    await snapshotBefore(id, previous, saved.deck, now);
     const index = await update(INDEX, emptyIndex, (i) => indexWith(i, saved!.summary, by, now));
     return index ? json({ saved: true, entry: index.decks[id], merged: saved.merged, conflicts: saved.conflicts, ...(saved.merged ? { deck: saved.deck } : {}) }) : json({ error: "Could not save — please try again" }, 409);
   }
