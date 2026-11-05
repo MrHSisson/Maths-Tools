@@ -370,7 +370,7 @@ export function InkOverlay() {
 
       {/* opener */}
       {!open && (
-        <button onClick={() => { setOpen(true); setMode("pen"); }} title="Write on the page"
+        <button data-ink-bar onClick={() => { setOpen(true); setMode("pen"); }} title="Write on the page"
           style={typeof window !== "undefined" && window.innerWidth <= 640
             // phone: a slim tab on the right edge, mid-screen, clear of the fixed bottom bar and the step buttons above it
             ? { position: "fixed", right: 0, top: "42%", zIndex: 2003, width: 30, height: 48, borderRadius: "14px 0 0 14px", border: "none", cursor: "pointer", background: "rgba(45,51,64,0.88)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }
@@ -440,7 +440,7 @@ export function InkOverlay() {
           </div>
         );
         return (
-          <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
+          <div ref={barRef} data-ink-bar onPointerDown={(e) => e.stopPropagation()}
             style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v || twoRow ? "column" : "row", alignItems: "center", gap: twoRow ? 6 : 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", width: "max-content", height: "max-content", maxWidth: vp.w - 16, maxHeight: vp.h - 16, flexWrap: "wrap", justifyContent: "center" }}>
             {twoRow ? (
               // phone, flat bar: two deliberate rows — tools and close above, the colours spread beneath

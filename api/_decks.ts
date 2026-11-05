@@ -79,6 +79,33 @@ export function publishedWithout(index: PublishedIndex, id: string): PublishedIn
   return { version: 1, decks: rest };
 }
 
+// ── Shared version history: a rollback for the live copy ──
+// Before a burst of edits changes the stored deck, the deck as it stood is kept as a snapshot (history/<id>/<key>.json), listed in
+// history/<id>/index.json. At most one snapshot every SNAPSHOT_GAP_MS, so typing does not fill the store, and only the latest MAX_SNAPSHOTS are kept.
+
+export const SNAPSHOT_GAP_MS = 10 * 60 * 1000;
+export const MAX_SNAPSHOTS = 40;
+export interface HistoryEntry { key: string; at: string; savedAt: string; title: string; slides: number }
+export interface DeckHistory { version: 1; entries: HistoryEntry[] }              // oldest first
+export const emptyHistory = (): DeckHistory => ({ version: 1, entries: [] });
+export const historyIndexPath = (id: string) => `history/${id}/index.json`;
+export const snapshotPath = (id: string, key: string) => `history/${id}/${key}.json`;
+export const validSnapshotKey = (key: unknown): key is string => typeof key === "string" && /^[0-9TZ-]{10,40}$/.test(key);
+export const snapshotKey = (now: string) => now.replace(/[:.]/g, "-");
+
+/** A new snapshot is due when there is none yet, or the newest is older than the gap. */
+export function shouldSnapshot(h: DeckHistory, nowMs: number): boolean {
+  const newest = h.entries[h.entries.length - 1];
+  return !newest || nowMs - Date.parse(newest.at) >= SNAPSHOT_GAP_MS;
+}
+
+/** Adds an entry, returning the new history and the keys that fell off the end (their blobs are deleted). */
+export function historyWith(h: DeckHistory, entry: HistoryEntry, max = MAX_SNAPSHOTS): { history: DeckHistory; dropped: string[] } {
+  const all = [...h.entries.filter((e) => e.key !== entry.key), entry];
+  const dropped = all.slice(0, Math.max(0, all.length - max)).map((e) => e.key);
+  return { history: { version: 1, entries: all.slice(all.length - Math.min(max, all.length)) }, dropped };
+}
+
 /** A question must have an id, its maths and an answer; anything larger than a question could be is refused. */
 export function checkQuestion(input: unknown): { id: string; q: Record<string, unknown> } | null {
   if (!input || typeof input !== "object") return null;

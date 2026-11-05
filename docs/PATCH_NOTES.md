@@ -29,6 +29,154 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Flowchart loop arrow timing; Leave full screen back on the bar; timer in two rows
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/flowchart.ts`, `src/decks/PlayerBar.tsx`, `src/decks/DeckPage.tsx`, the live deck `primes-divisibility`, tests, docs.
+
+- **A flowchart arrow now appears on the later of its two ends' clicks.** The loop arrow on the key point for 7 pointed into the first box, so it appeared with that box on the first click, long before the box it leaves existed. It now arrives with that box (click 4); fixed in the live deck too (two pieces of that arrow), and a test covers it.
+- **Leave full screen is on the bar again** (always one click away, no longer inside Slide options).
+- **The timer buttons in Slide options are two rows of five** (1 to 10 minutes).
+- Checked in a browser: after the first click on the 7 slide only the first box shows; the bar is 402 px wide with the leave button; two timer rows. Layout check passes on the deck (40 slides).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Full-screen controls: a steady, movable bar with a Slide options pop-out; deck list tidied; primes deck trimmed
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/PlayerBar.tsx` (new), `src/decks/DeckPage.tsx`, `src/shared/components/InkOverlay.tsx` (a `data-ink-bar` marker only), the live deck `primes-divisibility`, `docs/reference/decks.md`.
+
+- **The full-screen bar no longer changes size.** It used to gain and lose the fill-in group depending on the slide, so it jumped. It is now always a grip, Back, the count, Next and **Slide options**; the fill-in group, timer, Jump to a slide, Print slides, the grids and sheets, and Leave full screen are in the Slide options pop-out.
+- **It can be dragged along the bottom** by its grip, and the place is remembered. It stops short of the ink pencil's corner and rises above the ink pencil or hotbar if one is in its way.
+- **The deck list no longer shows the description and the "Up to date with your other devices" line** under its title.
+- **Primes and divisibility (live deck, now 40 slides):** the discussion on why the rule for 3 works was removed (Harry's call), and the key point for 11 was rewritten to be clearer: the rule states the starting sign and when to stop, the flowchart shows "+ − + − …", and there is a second example with a negative result (3619, ignore the minus sign). The worked-example slide for 11 has the same wording.
+- Checked in a browser at 1366 wide: the bar is the same size on four different slides; the pop-out shows the board's fill-in group on a board slide and a note on one without; dragging works and survives a reload; the right edge stops at the ink pencil's corner; no overlap with the pencil or the open ink hotbar. Not looked at on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Primes and divisibility: no Check 11, steady sieve, a key point for every rule
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/NumberGrid.tsx`, `src/shared/numberGrid.ts`, `src/decks/flowchart.ts` (new), the live deck `primes-divisibility` (pulled, changed, pushed; repo snapshot refreshed), tests, docs.
+
+- **Check 11 is removed from the sieve** (the button, the dashed 11 multiples and the message, with its logic and tests). Why the sieve can stop is left to the discussion slide that follows ("To find the primes up to 100 we sieve with 2, 3, 5 and 7... Why can we stop?"), which already says it. A prime can still only be circled.
+- **The sieve no longer jumps.** The buttons sat in a row that could wrap onto a second line, and the Check 11 message appeared under the grid, so the grid resized as buttons were pressed. The row is now always there at one fixed height and never wraps. Checked in a browser at 1366, 1024 and 390 wide: pressing every prime, Finish and Clear gives one grid position throughout.
+- **Every divisibility rule has its own key point slide** (6 new slides, 35 to 41): 2, 5 and 10 (before the last-digit board), 3 (before "The rule for 3"), 11 and 7 (before their boards). Each has the rule, an example and what it implies. **The rules that are a process (3, 11 and 7) have a flowchart**, revealed a step per click; the one for 7 includes the loop for a long number. The slides are the `language` family, so Print slides → Key points picks them up.
+- **A reusable flowchart helper** (`flowchartEls`), built from ordinary shape, text and line elements, so the parts can be moved by hand in the editor.
+- Checked: deck content and layout checks pass on all 41 slides (before pushing, and the live copy passes `check --live`); flowchart and sieve tests pass. My first example for 7 reused a number a Depth card already uses, so the example is 301 (30 − 2 × 1 = 28).
+- Not done: the new slides have no worked questions of their own (the existing sets follow); 2, 5 and 10 are three separate short slides, easy to merge into one if you prefer.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Deck list waits for the shared copies too
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.
+
+- **The deck editor's list showed the old title and preview, then swapped them.** Cause: the list drew the device's copy (or the repo's) at once and only then pulled the shared copy, so a title Harry had changed (the capitalised titles) showed in its old form first. My earlier fix covered opening one deck but not the list. The list now says "Loading the latest decks…" for a moment (4 s at most; offline it uses the device's copies) and then draws the shared copies only.
+- Checked with the cloud simulated: with a delayed newer title the old title never appears; unreachable, the list opens from the device in about 0.3 s. Not tried against the real service.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Deck editor: one-row menus, grouped dropdowns, content in popovers
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `docs/reference/decks.md`.
+
+- **The double menu stack is gone:** the File / Edit / Insert / Slide / Layout / View bar under the title is removed. **File** now leads the tab row and **View** ends it; Edit moved to Home (copy, paste, duplicate, delete, Select), Slide to Home (a Slide menu), Layout to Design, and Insert was a copy of the Insert tab.
+- **Grouped dropdowns, a condensed ribbon:** Insert has Basics, then **Shapes**, **Questions** and **Tables** dropdowns (tables, ratio tables, number grids and bar models are under Tables). Arrange is **Align**, **Layer** and **Size** menus plus Reveal.
+- **The right panel is only "On this slide".** A table's cells, the generator and worksheet settings and a text box's words now open as popovers from the ribbon (Edit table, Settings, Edit text).
+- Checked in a browser at 1366, 1024 and 390 wide: all tabs, folding, no overflow, no errors; saw the board popover and the Tables dropdown at laptop size. Not looked at by eye on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Deck editor: PowerPoint-style ribbon, right panel emptied of settings
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `src/decks/EditorPanels.tsx`, `docs/reference/decks.md`.
+
+- **The top bar is now a ribbon with four tabs and labelled groups** (Harry's request: "more like PowerPoint"). **Home**: undo, slides (new slide, previous / next), edit (duplicate, delete), then the selection's groups: Font (size, Auto, bold, colour), Paragraph (align, Middle), Text, Equation, shape colours and shape, line, questions. **Insert**: basics, shapes and lines, lesson pieces, all as buttons. **Design**: the slide's title, kind, brief, timer and About the deck. **Arrange**: line up, layer, size and position, and when it appears. A chevron folds the ribbon to just the tabs; the open tab is remembered.
+- **The right panel keeps only content:** the text itself, board / ratio table / number grid / bar / generator / worksheet setup, and the list of what is on the slide. Slide settings, deck settings, click order and position moved out of it.
+- Checked in a browser at 1366, 1024 and 390 wide: all four tabs open, the ribbon folds, no page overflow, no errors; a selected board still gets its cell editor in the panel. Looked at the Home, Design, Arrange and Insert tabs at laptop size only.
+- Not done: widening the panel for table headers; the click-through menu for rare features (not wanted for now).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Decks: the command line works on the live copy; repo backup
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `scripts/deck.mjs`, `scripts/deckLayoutSmoke.mjs`, `docs/reference/decks.md`, `docs/design/DECK_BUILD_CHECKLIST.md`.
+
+- **`npm run deck -- check <id|all> --live`** checks the live (shared) copy directly, without reading or writing the repo; with `--layout` it draws the live copy (the smoke script takes `DECK_FILE`).
+- **`npm run deck -- backup [<id>|all]`** writes the live copies into `src/decks/data` as the repo snapshot. A file with unpushed edits is left alone and reported, so a backup can never overwrite work in progress.
+- **`publish <id>`** now publishes the live copy (what Harry sees), not the repo file (`--file` for the old behaviour), then backs it up into the repo. Commit the snapshot.
+- Together with the earlier steps (waiting for the shared copy on open, and the shared version history) this completes the agreed plan: the shared copy is the live master, the repo is a backup and the fallback.
+- Checked against a fake of the service: live check, backup (written / kept / up to date), publish sending the live copy, and `--layout` drawing a 3-slide live copy rather than the repo's 35. Not run against the real service.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Decks: shared version history (rollback for the live copy)
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `api/decks.ts`, `api/_decks.ts`, `src/decks/cloud.ts`, `src/decks/VersionsDialog.tsx`, `src/tests/decksHistory.test.ts`, `docs/reference/decks.md`.
+
+- **The service now keeps rollback points of every deck.** Before a spell of editing changes the stored deck, it keeps the deck as it stood (at most one every 10 minutes, the last 40; a save that changes nothing makes none). They are the same on every device, unlike the old device-only versions.
+- **File → Version history** lists them first ("Shared history"), then the device's own. Restore puts one back as your next save, so Undo reverses it.
+- This is the safety net for the shared copy being the live one: a bad edit by either of us can be rolled back.
+- Checked with the blob store simulated (snapshot content, burst grouping, gap, no-change saves, key checks) and in the browser with the history stubbed. **Not tried against the real storage, which only the deployed site has**: please try it once after deploy.
+- Not done yet from the plan: the CLI reading and writing the live copy directly, and a repo backup snapshot on publish. A deleted deck keeps no snapshot.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Decks: the shared copy is the live one (step 1: no stale flash)
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.
+
+- **A deck now waits for the shared (cloud) copy before it shows**, instead of showing the repo or device copy and swapping when the cloud one arrived. It says "Loading the latest copy…" for a moment (4 s at most; offline it opens straight from the device's copy). Opening straight into the editor (`?edit=1`) now gets the latest copy too; before, it started from the older one and only noticed after 20 s.
+- Checked with the cloud simulated (delayed newer copy: the old one is never shown; unreachable: opens from the device in about 0.3 s).
+- **Still to do from the agreed plan:** the CLI (`pull`/`push`/`check`) reading and writing the live copy directly, a repo backup snapshot written on publish, and cloud-side version history so a bad edit can be rolled back. The repo JSON is still the first-run fallback and what CI reads.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Deck editor: hotbar sorted into categories, panel slimmed
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
+
+- **Insert** is one grouped menu (Image; Shapes and lines; Questions, tables and pictures). Text, Equation and Pen stay as direct buttons.
+- **Style** menu in the hotbar for the extras that were only in the right panel: type on the slide, insert equation, middle (text); shape type, outline width, corners (shapes); thickness (lines); columns and cell position (grids, book activities).
+- **The right panel no longer repeats the bar:** duplicate / delete, size and Auto, bold, align, colour, shape and line settings and "Line up and layer" are gone from it. It keeps the text itself, the board / ratio / number-grid / bar / generator setup, click order, position and size, and the slide's object list.
+- **Turning Auto off keeps the size on screen** (it becomes the hand-set size).
+- Not done (asked to leave): the click-through menu for rarely used features (timer, brief, click order, position, layout). Checked at 1366, 1024 and 390 wide: Insert has 13 items, no page overflow. Not reviewed by eye on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Deck Auto text sizing reworked: 75% fill, exact fit, boards fitted by part
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/SlideCanvas.tsx`, `docs/reference/decks.md`.
+
+- **Auto now fills about 75% of the box** (text and equations by height, book work by cell), instead of packing to the edge (`FIT_FILL`, `BOOK_FILL`). Text still never goes above the size set.
+- **Exact fit:** the search finds the largest whole size that fits (bisection) instead of stepping down 7% at a time, and only restarts when the content changes (maths or a font arriving).
+- **Boards (example tables) fit the header row and the body separately**, so a long heading no longer shrinks the numbers or the reverse. Measured on primes slide 18: header 32px, numbers 43px.
+- Same-role text boxes still share the smallest size (kept for consistency). Ratio tables still scale as one piece. Not changed: questions/generator sizing, and Auto is still the default for new elements.
+- Checked: `tsc`, lint, deck layout check on three decks (no spills). Numbers are smaller than before on some slides by design; not yet reviewed by eye.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-05 — Print slides, Auto text sizing, deck editor ribbon, live deck copy and rollback, full-screen bar, primes deck (Claude Code)".
+
+## 2026-11-05 — Print slides: copies of each slide, even spacing, cut lines
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/slidePrint.ts`, `src/decks/PrintSlidesDialog.tsx`, `src/tests/slidePrint.test.ts`, `docs/reference/decks.md`, `docs/FEATURES.md`.
+
+- **Copies of each slide (1 to 8)** in File → Print slides…: the same slide prints repeatedly, for cutting up and handing out.
+- **Even spacing:** the page is shared into equal slots and each slide is centred in its slot, so 2 to an A4 sheet cuts exactly in half with both pieces identical (before, both sat at the top with spare paper at the bottom).
+- **Cut lines** (on by default): a faint dashed line between slides, only as far as the filled slots. Borders are now off by default (still available).
+- Checked with `tsc` and `slidePrint.test.ts`; not yet looked at in a real print preview.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (planner not opened).
+
 ## 2026-11-04 — Deck editor layout warnings
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/layoutAudit.ts` (new), `src/decks/Editor.tsx`, `docs/reference/decks.md`, `docs/FEATURES.md`.

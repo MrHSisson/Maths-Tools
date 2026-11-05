@@ -5,10 +5,7 @@
 export const GRID_MAX = 100;
 /** The primes the sieve needs up to 100: sieving stops at 7 because 11 × 11 is already past 100. */
 export const SIEVE_PRIMES: readonly number[] = [2, 3, 5, 7];
-export const PRIME_COLOURS: Record<number, string> = { 2: "#2563eb", 3: "#16a34a", 5: "#ea580c", 7: "#9333ea", 11: "#0d9488" };
-/** The next prime after the sieve's last. It is checked at the end to show that nothing is left to cross out: 11 × 11 is past 100 and
- *  every smaller multiple of 11 was crossed out by 2, 3, 5 or 7. */
-export const CHECK_PRIME = 11;
+export const PRIME_COLOURS: Record<number, string> = { 2: "#2563eb", 3: "#16a34a", 5: "#ea580c", 7: "#9333ea" };
 /** Primes left over once the sieve has run, circled in this colour; 1 is crossed out in grey. */
 const LEFTOVER_COLOUR = "#1e3a8a";
 const ONE_COLOUR = "#64748b";
@@ -23,13 +20,6 @@ export const multiplesOf = (p: number, max = GRID_MAX): number[] => Array.from({
 export function tapMark(n: number, active: number): GridMark {
   if (isPrime(n)) return { colour: PRIME_COLOURS[n] ?? LEFTOVER_COLOUR, circle: true };
   return { colour: PRIME_COLOURS[active] ?? LEFTOVER_COLOUR, circle: false };
-}
-
-/** Checking 11: its multiples up to 100 (not 11 itself), and which of them are not yet crossed out. When none is left, there is nothing
- *  new to cross out and the sieve can stop. */
-export function checkEleven(marks: GridMarks): { multiples: number[]; notYet: number[] } {
-  const multiples = multiplesOf(CHECK_PRIME).filter((n) => n !== CHECK_PRIME);
-  return { multiples, notYet: multiples.filter((n) => !marks.has(n)) };
 }
 
 /** One mark on one number. `colour` decides the ink; `circle` is a ring (the prime itself) and otherwise a scribble. */

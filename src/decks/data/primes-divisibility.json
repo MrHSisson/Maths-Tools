@@ -1,13 +1,15 @@
 {
  "id": "primes-divisibility",
- "title": "Prime numbers and divisibility",
+ "title": "Prime Numbers & Divisibility",
  "strand": "Number",
  "summary": "The sieve of Eratosthenes, then divisibility rules for 2, 3, 5 and 10, with 11 and 7 as stretch.",
+ "questionVersion": 2,
  "slides": [
   {
    "id": "p-title",
    "family": "structure",
    "title": "Prime numbers and divisibility",
+   "built": "15thfgp",
    "els": [
     {
      "kind": "text",
@@ -15,7 +17,7 @@
      "y": 290,
      "w": 1400,
      "h": 170,
-     "text": "Prime numbers and divisibility",
+     "text": "Prime Numbers and Divisibility",
      "size": 120,
      "colour": "#0f172a",
      "bold": true,
@@ -35,8 +37,7 @@
      "align": "center",
      "id": "p-title-2"
     }
-   ],
-   "built": "15thfgp"
+   ]
   },
   {
    "id": "p-obj",
@@ -1080,6 +1081,168 @@
    "built": "1yswkv1"
   },
   {
+   "id": "p-kp-2",
+   "family": "language",
+   "title": "Divisible by 2",
+   "els": [
+    {
+     "id": "p-kp-2-1",
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-2-2",
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Divisible by 2",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-2-3",
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 190,
+     "text": "A number is divisible by 2 if its last digit is even: 0, 2, 4, 6 or 8.",
+     "size": 52,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-2-4",
+     "kind": "text",
+     "x": 100,
+     "y": 600,
+     "w": 1400,
+     "h": 230,
+     "text": "Only the last digit matters. $346$ ends in 6, so it is divisible by 2. $347$ ends in 7, so it is not.",
+     "size": 44,
+     "colour": "#334155",
+     "step": 1
+    }
+   ]
+  },
+  {
+   "id": "p-kp-5",
+   "family": "language",
+   "title": "Divisible by 5",
+   "els": [
+    {
+     "id": "p-kp-5-1",
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-5-2",
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Divisible by 5",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-5-3",
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 190,
+     "text": "A number is divisible by 5 if its last digit is 0 or 5.",
+     "size": 52,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-5-4",
+     "kind": "text",
+     "x": 100,
+     "y": 600,
+     "w": 1400,
+     "h": 230,
+     "text": "The 5 times table always ends in 0 or 5, and nothing else does. $245$ is divisible by 5; $246$ is not.",
+     "size": 44,
+     "colour": "#334155",
+     "step": 1
+    }
+   ]
+  },
+  {
+   "id": "p-kp-10",
+   "family": "language",
+   "title": "Divisible by 10",
+   "els": [
+    {
+     "id": "p-kp-10-1",
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-10-2",
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Divisible by 10",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-10-3",
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 190,
+     "text": "A number is divisible by 10 if its last digit is 0.",
+     "size": 52,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-10-4",
+     "kind": "text",
+     "x": 100,
+     "y": 600,
+     "w": 1400,
+     "h": 230,
+     "text": "So a number divisible by 10 is divisible by 2 and by 5 as well. $370$ is divisible by 10, 2 and 5. $375$ is divisible by 5 only.",
+     "size": 44,
+     "colour": "#334155",
+     "step": 1
+    }
+   ]
+  },
+  {
    "id": "p-b-last",
    "family": "teach",
    "title": "The last digit",
@@ -1169,7 +1332,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "p-b-last-3"
+     "id": "p-b-last-3",
+     "fixed": false
     }
    ],
    "built": "19px29k"
@@ -1354,6 +1518,254 @@
    "built": "1n014f8"
   },
   {
+   "id": "p-kp-3",
+   "family": "language",
+   "title": "Divisible by 3",
+   "els": [
+    {
+     "id": "p-kp-3-1",
+     "kind": "text",
+     "x": 70,
+     "y": 70,
+     "w": 560,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-3-2",
+     "kind": "text",
+     "x": 70,
+     "y": 120,
+     "w": 560,
+     "h": 110,
+     "text": "Divisible by 3",
+     "size": 80,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-3-3",
+     "kind": "text",
+     "x": 70,
+     "y": 260,
+     "w": 560,
+     "h": 330,
+     "text": "A number is divisible by 3 if the sum of its digits is divisible by 3.",
+     "size": 40,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-3-4",
+     "kind": "text",
+     "x": 70,
+     "y": 620,
+     "w": 560,
+     "h": 230,
+     "text": "Check the sum in the 3 times table. If the sum is still large, add its digits again.\n$132$: $1 + 3 + 2 = 6$, and 6 is in the 3 times table, so 132 is divisible by 3.",
+     "size": 36,
+     "colour": "#334155"
+    },
+    {
+     "id": "p-kp-3-div",
+     "kind": "line",
+     "x": 650,
+     "y": 70,
+     "w": 0,
+     "h": 760,
+     "colour": "#e2e8f0",
+     "width": 4
+    },
+    {
+     "id": "p-kp-3-s-a",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 690,
+     "y": 140,
+     "w": 400,
+     "h": 100,
+     "fill": "#dbeafe",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 1
+    },
+    {
+     "id": "p-kp-3-s-d",
+     "kind": "shape",
+     "shape": "ellipse",
+     "x": 690,
+     "y": 375,
+     "w": 400,
+     "h": 150,
+     "fill": "#ede9fe",
+     "stroke": "#7c3aed",
+     "strokeWidth": 4,
+     "step": 2
+    },
+    {
+     "id": "p-kp-3-s-y",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 720,
+     "y": 655,
+     "w": 340,
+     "h": 110,
+     "fill": "#dcfce7",
+     "stroke": "#15803d",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-s-n",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1160,
+     "y": 395,
+     "w": 340,
+     "h": 110,
+     "fill": "#fee2e2",
+     "stroke": "#b91c1c",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-t-a",
+     "kind": "text",
+     "x": 710,
+     "y": 144,
+     "w": 360,
+     "h": 92,
+     "text": "Add up all the digits",
+     "size": 34,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 1
+    },
+    {
+     "id": "p-kp-3-t-d",
+     "kind": "text",
+     "x": 754,
+     "y": 379,
+     "w": 272,
+     "h": 142,
+     "text": "Is the sum in the 3 times table?",
+     "size": 32,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-3-t-y",
+     "kind": "text",
+     "x": 737,
+     "y": 659,
+     "w": 306,
+     "h": 102,
+     "text": "Divisible by 3",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#14532d",
+     "align": "center",
+     "middle": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-t-n",
+     "kind": "text",
+     "x": 1177,
+     "y": 399,
+     "w": 306,
+     "h": 102,
+     "text": "Not divisible by 3",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#7f1d1d",
+     "align": "center",
+     "middle": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-a-0-0",
+     "kind": "line",
+     "x": 890,
+     "y": 248,
+     "w": 0,
+     "h": 119,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-3-a-1-0",
+     "kind": "line",
+     "x": 890,
+     "y": 533,
+     "w": 0,
+     "h": 114,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-l-1",
+     "kind": "text",
+     "x": 904,
+     "y": 570,
+     "w": 80,
+     "h": 40,
+     "text": "Yes",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#15803d",
+     "align": "left",
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-a-2-0",
+     "kind": "line",
+     "x": 1098,
+     "y": 450,
+     "w": 54,
+     "h": 0,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-3-l-2",
+     "kind": "text",
+     "x": 1085,
+     "y": 402,
+     "w": 80,
+     "h": 40,
+     "text": "No",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#b91c1c",
+     "align": "center",
+     "step": 3
+    }
+   ]
+  },
+  {
    "id": "p-b-three",
    "family": "teach",
    "title": "The rule for 3",
@@ -1436,128 +1848,11 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "p-b-three-3"
+     "id": "p-b-three-3",
+     "fixed": false
     }
    ],
    "built": "1jjopu8"
-  },
-  {
-   "id": "p-disc-why",
-   "family": "discussion",
-   "title": "Discuss",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 660,
-     "h": 50,
-     "text": "DISCUSS",
-     "size": 30,
-     "colour": "#be185d",
-     "bold": true,
-     "id": "p-disc-why-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 170,
-     "w": 660,
-     "h": 300,
-     "text": "$10$ is $9 + 1$. $100$ is $99 + 1$. $1000$ is $999 + 1$. What does that tell us about the 3 times table?",
-     "size": 48,
-     "colour": "#0f172a",
-     "id": "p-disc-why-2"
-    },
-    {
-     "kind": "line",
-     "x": 800,
-     "y": 100,
-     "w": 0,
-     "h": 720,
-     "colour": "#e2e8f0",
-     "width": 4,
-     "id": "p-disc-why-3"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 520,
-     "w": 660,
-     "h": 50,
-     "text": "KEY POINT",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 1,
-     "id": "p-disc-why-4"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 580,
-     "w": 660,
-     "h": 260,
-     "text": "Each place value is one more than a number in the 3 times table. So each digit counts only for itself: add the digits and see if the total is in the 3 times table.",
-     "size": 44,
-     "colour": "#0f172a",
-     "bold": true,
-     "step": 1,
-     "id": "p-disc-why-5"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 100,
-     "w": 640,
-     "h": 50,
-     "text": "QUESTION",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 2,
-     "id": "p-disc-why-6"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 170,
-     "w": 640,
-     "h": 260,
-     "text": "What remainder does $100$ leave when divided by 3?",
-     "size": 52,
-     "colour": "#0f172a",
-     "step": 2,
-     "id": "p-disc-why-7"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 520,
-     "w": 640,
-     "h": 50,
-     "text": "ANSWER",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 3,
-     "id": "p-disc-why-8"
-    },
-    {
-     "kind": "maths",
-     "x": 860,
-     "y": 580,
-     "w": 640,
-     "h": 200,
-     "latex": "1",
-     "size": 96,
-     "colour": "#1e3a8a",
-     "align": "left",
-     "step": 3,
-     "id": "p-disc-why-9"
-    }
-   ],
-   "built": "1xs9cog"
   },
   {
    "id": "p-set-d",
@@ -2214,7 +2509,9 @@
       }
      ],
      "cols": 3,
-     "id": "p-book-2"
+     "id": "p-book-2",
+     "fixed": false,
+     "size": 110
     }
    ],
    "built": "ch2vkp"
@@ -2467,7 +2764,8 @@
      },
      "fill": "structure",
      "size": 46,
-     "id": "p-b-39-3"
+     "id": "p-b-39-3",
+     "fixed": true
     }
    ],
    "built": "1kk1z67"
@@ -2702,9 +3000,258 @@
    "built": "jyl9tq"
   },
   {
+   "id": "p-kp-11",
+   "family": "language",
+   "title": "Divisible by 11",
+   "els": [
+    {
+     "id": "p-kp-11-1",
+     "kind": "text",
+     "x": 70,
+     "y": 70,
+     "w": 560,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-11-2",
+     "kind": "text",
+     "x": 70,
+     "y": 120,
+     "w": 560,
+     "h": 110,
+     "text": "Divisible by 11",
+     "size": 80,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-11-3",
+     "kind": "text",
+     "x": 70,
+     "y": 260,
+     "w": 560,
+     "h": 330,
+     "text": "Add and subtract the digits in turn, starting with add. If the answer is 0 or in the 11 times table, the number is divisible by 11.",
+     "size": 40,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-11-4",
+     "kind": "text",
+     "x": 70,
+     "y": 620,
+     "w": 560,
+     "h": 230,
+     "text": "$253$: $2 - 5 + 3 = 0$, so 253 is divisible by 11.\n$3619$: $3 - 6 + 1 - 9 = -11$. Ignore the minus sign, so 3619 is divisible by 11 too.",
+     "size": 36,
+     "colour": "#334155"
+    },
+    {
+     "id": "p-kp-11-div",
+     "kind": "line",
+     "x": 650,
+     "y": 70,
+     "w": 0,
+     "h": 760,
+     "colour": "#e2e8f0",
+     "width": 4
+    },
+    {
+     "id": "p-kp-11-s-a",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 680,
+     "y": 125,
+     "w": 420,
+     "h": 130,
+     "fill": "#dbeafe",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 1
+    },
+    {
+     "id": "p-kp-11-s-d",
+     "kind": "shape",
+     "shape": "ellipse",
+     "x": 690,
+     "y": 370,
+     "w": 400,
+     "h": 160,
+     "fill": "#ede9fe",
+     "stroke": "#7c3aed",
+     "strokeWidth": 4,
+     "step": 2
+    },
+    {
+     "id": "p-kp-11-s-y",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 720,
+     "y": 655,
+     "w": 340,
+     "h": 110,
+     "fill": "#dcfce7",
+     "stroke": "#15803d",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-s-n",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1160,
+     "y": 395,
+     "w": 340,
+     "h": 110,
+     "fill": "#fee2e2",
+     "stroke": "#b91c1c",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-t-a",
+     "kind": "text",
+     "x": 701,
+     "y": 129,
+     "w": 378,
+     "h": 122,
+     "text": "Add and subtract the digits in turn: + − + − …",
+     "size": 34,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 1
+    },
+    {
+     "id": "p-kp-11-t-d",
+     "kind": "text",
+     "x": 754,
+     "y": 374,
+     "w": 272,
+     "h": 152,
+     "text": "Is the answer 0 or in the 11 times table?",
+     "size": 30,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-11-t-y",
+     "kind": "text",
+     "x": 737,
+     "y": 659,
+     "w": 306,
+     "h": 102,
+     "text": "Divisible by 11",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#14532d",
+     "align": "center",
+     "middle": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-t-n",
+     "kind": "text",
+     "x": 1177,
+     "y": 399,
+     "w": 306,
+     "h": 102,
+     "text": "Not divisible by 11",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#7f1d1d",
+     "align": "center",
+     "middle": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-a-0-0",
+     "kind": "line",
+     "x": 890,
+     "y": 263,
+     "w": 0,
+     "h": 99,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-11-a-1-0",
+     "kind": "line",
+     "x": 890,
+     "y": 538,
+     "w": 0,
+     "h": 109,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-l-1",
+     "kind": "text",
+     "x": 904,
+     "y": 573,
+     "w": 80,
+     "h": 40,
+     "text": "Yes",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#15803d",
+     "align": "left",
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-a-2-0",
+     "kind": "line",
+     "x": 1098,
+     "y": 450,
+     "w": 54,
+     "h": 0,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-11-l-2",
+     "kind": "text",
+     "x": 1085,
+     "y": 402,
+     "w": 80,
+     "h": 40,
+     "text": "No",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#b91c1c",
+     "align": "center",
+     "step": 3
+    }
+   ]
+  },
+  {
    "id": "p-b-eleven",
    "family": "teach",
    "title": "The rule for 11",
+   "built": "m97mmp",
    "els": [
     {
      "kind": "text",
@@ -2724,7 +3271,7 @@
      "y": 165,
      "w": 1400,
      "h": 60,
-     "text": "Add and subtract the digits in turn, starting with add.",
+     "text": "Starting with add: + − + − … Is the answer 0 or in the 11 times table?",
      "size": 40,
      "colour": "#64748b",
      "id": "p-b-eleven-2"
@@ -2774,8 +3321,7 @@
      "size": 46,
      "id": "p-b-eleven-3"
     }
-   ],
-   "built": "m97mmp"
+   ]
   },
   {
    "id": "p-set-f",
@@ -2983,6 +3529,432 @@
     }
    ],
    "built": "1ozjp0y"
+  },
+  {
+   "id": "p-kp-7",
+   "family": "language",
+   "title": "Divisible by 7",
+   "els": [
+    {
+     "id": "p-kp-7-1",
+     "kind": "text",
+     "x": 70,
+     "y": 70,
+     "w": 560,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true
+    },
+    {
+     "id": "p-kp-7-2",
+     "kind": "text",
+     "x": 70,
+     "y": 120,
+     "w": 560,
+     "h": 110,
+     "text": "Divisible by 7",
+     "size": 80,
+     "colour": "#0f172a",
+     "bold": true
+    },
+    {
+     "id": "p-kp-7-3",
+     "kind": "text",
+     "x": 70,
+     "y": 260,
+     "w": 560,
+     "h": 330,
+     "text": "A number is divisible by 7 if doubling the last digit and subtracting it from the rest gives 0 or a number in the 7 times table.",
+     "size": 40,
+     "colour": "#0f172a"
+    },
+    {
+     "id": "p-kp-7-4",
+     "kind": "text",
+     "x": 70,
+     "y": 620,
+     "w": 560,
+     "h": 230,
+     "text": "$301$: $30 - 2 \\times 1 = 28$, and 28 is in the 7 times table, so 301 is divisible by 7. Ignore a minus sign.",
+     "size": 36,
+     "colour": "#334155"
+    },
+    {
+     "id": "p-kp-7-div",
+     "kind": "line",
+     "x": 650,
+     "y": 70,
+     "w": 0,
+     "h": 760,
+     "colour": "#e2e8f0",
+     "width": 4
+    },
+    {
+     "id": "p-kp-7-s-a",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 690,
+     "y": 88,
+     "w": 400,
+     "h": 100,
+     "fill": "#dbeafe",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 1
+    },
+    {
+     "id": "p-kp-7-s-b",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 690,
+     "y": 244,
+     "w": 400,
+     "h": 100,
+     "fill": "#dbeafe",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 2
+    },
+    {
+     "id": "p-kp-7-s-d1",
+     "kind": "shape",
+     "shape": "ellipse",
+     "x": 700,
+     "y": 385,
+     "w": 380,
+     "h": 130,
+     "fill": "#ede9fe",
+     "stroke": "#7c3aed",
+     "strokeWidth": 4,
+     "step": 3
+    },
+    {
+     "id": "p-kp-7-s-r",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1160,
+     "y": 400,
+     "w": 340,
+     "h": 100,
+     "fill": "#dbeafe",
+     "stroke": "#1e3a8a",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-s-d2",
+     "kind": "shape",
+     "shape": "ellipse",
+     "x": 700,
+     "y": 541,
+     "w": 380,
+     "h": 130,
+     "fill": "#ede9fe",
+     "stroke": "#7c3aed",
+     "strokeWidth": 4,
+     "step": 5
+    },
+    {
+     "id": "p-kp-7-s-y",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 720,
+     "y": 712,
+     "w": 340,
+     "h": 100,
+     "fill": "#dcfce7",
+     "stroke": "#15803d",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-s-n",
+     "kind": "shape",
+     "shape": "rect",
+     "x": 1160,
+     "y": 556,
+     "w": 340,
+     "h": 100,
+     "fill": "#fee2e2",
+     "stroke": "#b91c1c",
+     "strokeWidth": 4,
+     "radius": 18,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-t-a",
+     "kind": "text",
+     "x": 710,
+     "y": 92,
+     "w": 360,
+     "h": 92,
+     "text": "Double the last digit",
+     "size": 36,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 1
+    },
+    {
+     "id": "p-kp-7-t-b",
+     "kind": "text",
+     "x": 710,
+     "y": 248,
+     "w": 360,
+     "h": 92,
+     "text": "Subtract it from the rest of the number",
+     "size": 32,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-7-t-d1",
+     "kind": "text",
+     "x": 761,
+     "y": 389,
+     "w": 258,
+     "h": 122,
+     "text": "Is the answer two digits or fewer?",
+     "size": 28,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-7-t-r",
+     "kind": "text",
+     "x": 1177,
+     "y": 404,
+     "w": 306,
+     "h": 92,
+     "text": "Use the answer as the new number",
+     "size": 30,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-t-d2",
+     "kind": "text",
+     "x": 761,
+     "y": 545,
+     "w": 258,
+     "h": 122,
+     "text": "Is it 0 or in the 7 times table?",
+     "size": 28,
+     "fixed": true,
+     "bold": false,
+     "colour": "#0f172a",
+     "align": "center",
+     "middle": true,
+     "step": 5
+    },
+    {
+     "id": "p-kp-7-t-y",
+     "kind": "text",
+     "x": 737,
+     "y": 716,
+     "w": 306,
+     "h": 92,
+     "text": "Divisible by 7",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#14532d",
+     "align": "center",
+     "middle": true,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-t-n",
+     "kind": "text",
+     "x": 1177,
+     "y": 560,
+     "w": 306,
+     "h": 92,
+     "text": "Not divisible by 7",
+     "size": 36,
+     "fixed": true,
+     "bold": true,
+     "colour": "#7f1d1d",
+     "align": "center",
+     "middle": true,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-a-0-0",
+     "kind": "line",
+     "x": 890,
+     "y": 196,
+     "w": 0,
+     "h": 40,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 2
+    },
+    {
+     "id": "p-kp-7-a-1-0",
+     "kind": "line",
+     "x": 890,
+     "y": 352,
+     "w": 0,
+     "h": 25,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 3
+    },
+    {
+     "id": "p-kp-7-a-2-0",
+     "kind": "line",
+     "x": 1088,
+     "y": 450,
+     "w": 64,
+     "h": 0,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-l-2",
+     "kind": "text",
+     "x": 1080,
+     "y": 402,
+     "w": 80,
+     "h": 40,
+     "text": "No",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#b91c1c",
+     "align": "center",
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-a-3-0",
+     "kind": "line",
+     "x": 1330,
+     "y": 392,
+     "w": 0,
+     "h": -254,
+     "colour": "#475569",
+     "width": 5,
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-a-3-1",
+     "kind": "line",
+     "x": 1330,
+     "y": 138,
+     "w": -232,
+     "h": 0,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 4
+    },
+    {
+     "id": "p-kp-7-a-4-0",
+     "kind": "line",
+     "x": 890,
+     "y": 523,
+     "w": 0,
+     "h": 10,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 5
+    },
+    {
+     "id": "p-kp-7-l-4",
+     "kind": "text",
+     "x": 904,
+     "y": 508,
+     "w": 80,
+     "h": 40,
+     "text": "Yes",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#15803d",
+     "align": "left",
+     "step": 5
+    },
+    {
+     "id": "p-kp-7-a-5-0",
+     "kind": "line",
+     "x": 890,
+     "y": 679,
+     "w": 0,
+     "h": 25,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-l-5",
+     "kind": "text",
+     "x": 904,
+     "y": 672,
+     "w": 80,
+     "h": 40,
+     "text": "Yes",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#15803d",
+     "align": "left",
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-a-6-0",
+     "kind": "line",
+     "x": 1088,
+     "y": 606,
+     "w": 64,
+     "h": 0,
+     "colour": "#475569",
+     "width": 5,
+     "arrow": true,
+     "step": 6
+    },
+    {
+     "id": "p-kp-7-l-6",
+     "kind": "text",
+     "x": 1080,
+     "y": 558,
+     "w": 80,
+     "h": 40,
+     "text": "No",
+     "size": 30,
+     "fixed": true,
+     "bold": true,
+     "colour": "#b91c1c",
+     "align": "center",
+     "step": 6
+    }
+   ]
   },
   {
    "id": "p-b-seven",
@@ -3235,6 +4207,7 @@
    "id": "p-q-exit",
    "family": "retrieval",
    "title": "Exit ticket",
+   "built": "vw3cai",
    "els": [
     {
      "kind": "text",
@@ -3370,10 +4343,10 @@
        "followUp": "",
        "status": "ready"
       }
-     ]
+     ],
+     "fixed": false
     }
-   ],
-   "built": "vw3cai"
+   ]
   },
   {
    "id": "p-sum",
@@ -3406,6 +4379,5 @@
    ],
    "built": "19m0aff"
   }
- ],
- "questionVersion": 2
+ ]
 }

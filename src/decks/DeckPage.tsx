@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Minimize, Pencil, Plus, Printer } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Plus, Printer } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
@@ -8,7 +8,9 @@ import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
 import type { Stroke } from "../shared/components/BoardTools";
 import { DECK_PAGE } from "./theme";
+import { PlayerBar } from "./PlayerBar";
 import { TimerLine, TimerMenu, useTimer } from "./Timer";
+import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
@@ -17,7 +19,6 @@ import { fetchPublishedDeck, usePublishedIndex } from "./published";
 import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
-import { useCloudState } from "./cloud";
 import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
 import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
@@ -50,8 +51,16 @@ function useFit(ref: React.RefObject<HTMLDivElement | null>) {
 function DeckIndex() {
   const navigate = useNavigate();
   const [, refresh] = useState(0);
-  const cloud = useCloudState();
-  useEffect(() => { void syncFromCloud().then((changed) => { if (changed) refresh((n) => n + 1); }); }, []);
+  // The shared copies are the live ones: wait for them (a moment at most; offline, the device's copies are used) so a deck's older title or
+  // preview is not shown and then swapped.
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    let on = true;
+    const done = () => { if (on) { refresh((n) => n + 1); setSynced(true); } };
+    const stop = window.setTimeout(done, LIVE_WAIT_MS);
+    void syncFromCloud().catch(() => false).then(() => { window.clearTimeout(stop); done(); });
+    return () => { on = false; window.clearTimeout(stop); };
+  }, []);
   const published = usePublishedIndex();
   const decks = allDecks();
   const create = () => {
@@ -68,15 +77,13 @@ function DeckIndex() {
           <Link to="/decks/library" className="ml-auto rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
-        <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
-        {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
         <div className="mt-6">
-          <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
+          {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
             id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
             badge: published?.[deck.id] ? undefined : "Not published",
             notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],
             action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
-          }))} />
+          }))} />}
         </div>
       </div>
     </div>
@@ -299,15 +306,28 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>}
       {full && (
-        <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-2xl bg-white/90 p-1.5 shadow-lift backdrop-blur transition-opacity duration-300" style={{ opacity: nudge ? 1 : 0, pointerEvents: nudge ? "auto" : "none" }}>
-          <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
-          <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{index + 1} / {total}</span>
-          <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
-          {boards.length > 0 && fillGroup}
-          <TimerMenu className={iconBtn} up open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
-          <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide"><ListOrdered size={18} /></button>
-          <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
-        </div>
+        <PlayerBar visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} onLeave={toggleFull} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
+          {(close) => (
+            <div className="space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">This slide</div>
+              {boards.length > 0 ? <div><div className="mb-1 text-sm font-semibold text-slate-700">How much is filled in</div>{fillGroup}</div>
+                : <p className="text-sm text-slate-500">Nothing on this slide to fill in.</p>}
+              {deck.slides[index].els.some((e) => e.kind === "numberGrid") && <button className={`${iconBtn} w-full`} onClick={() => { close(); printPrintable(hundredSquareSheet()); }}><Printer size={16} />Print 1 to 100 grids</button>}
+              {here.length > 0 && <div className="flex gap-2">
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); void printSheet(here[0].el, "questions"); }}><Printer size={16} />Print sheet</button>
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); void printSheet(here[0].el, "answers"); }}><Printer size={16} />Answer sheet</button>
+              </div>}
+              <div>
+                <div className="mb-1 text-sm font-semibold text-slate-700">Timer (minutes)</div>
+                <div className="grid grid-cols-5 gap-1.5">{TIMER_MINUTES.map((m) => <button key={m} className={`${iconBtn} !px-0`} onClick={() => { timer.start(m); close(); }} aria-label={`${m} minute timer`}>{m}</button>)}</div>
+              </div>
+              <div className="flex gap-2 border-t border-slate-200 pt-3">
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); setJump(true); }}><ListOrdered size={16} />Jump to a slide</button>
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); setPrintSlidesOpen(true); }}><Printer size={16} />Print slides</button>
+              </div>
+            </div>
+          )}
+        </PlayerBar>
       )}
       {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
@@ -315,14 +335,27 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   );
 }
 
+/** The longest the first open waits for the shared copy before using the device's. */
+const LIVE_WAIT_MS = 4000;
+
 function DeckView({ id }: { id: string }) {
   const [params, setParams] = useSearchParams();
   const editing = params.get("edit") === "1";
   const [deck, setDeck] = useState(() => loadDeck(id));
   const s = Number(params.get("s") ?? 1);
+  // The shared copy is the live one. The first time this deck is opened, wait for it (a moment at most: offline, the device's copy is used) so the
+  // device's older copy is never shown and then swapped for the shared one.
+  const [loaded, setLoaded] = useState<string | null>(null);
+  useEffect(() => {
+    let on = true;
+    const stop = window.setTimeout(() => { if (on) { setDeck(loadDeck(id)); setLoaded(id); } }, LIVE_WAIT_MS);
+    void syncFromCloud(id).catch(() => false).then(() => { window.clearTimeout(stop); if (on) { setDeck(loadDeck(id)); setLoaded(id); } });
+    return () => { on = false; window.clearTimeout(stop); };
+  }, [id]);
   useEffect(() => { setDeck(loadDeck(id)); }, [id, editing]);
-  // a newer copy saved on another device replaces this one (not while editing, so nothing is pulled from under the teacher)
-  useEffect(() => { if (!editing) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]);
+  // a newer copy saved on another device replaces this one when leaving the editor (not while editing, so nothing is pulled from under the teacher)
+  useEffect(() => { if (!editing && loaded === id) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-sync on leaving the editor, not when the first load finishes
+  if (loaded !== id) return <div className="flex min-h-screen items-center justify-center" style={{ background: DECK_PAGE }}><p className="font-medium text-slate-500" role="status">Loading the latest copy…</p></div>;
   if (!deck) return <div className="p-8"><Link to="/decks" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
   if (editing) return <Editor start={deck} startIndex={Math.max(0, (Number.isFinite(s) ? s : 1) - 1)} onPresent={(d, i) => { setDeck(d); clearInk(); setParams({ s: String(i + 1) }); }} />;
   return <Player deck={deck} badge="Working copy" onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;
