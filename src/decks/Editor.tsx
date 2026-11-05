@@ -706,7 +706,13 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     ? (sized2.answerFixed || shownAnswerSize === undefined ? sized2.answerSize ?? DEFAULT_SIZE[sized2.kind] ?? 46 : shownAnswerSize)
     : (sized2.fixed || shownSize === undefined ? sized2.size ?? DEFAULT_SIZE[sized2.kind] ?? 46 : shownSize)) : 0;
   const setSize = (n: number) => { if (sized2) setEl(sized2.id, (answerMode ? { answerSize: n, answerFixed: true } : sized2.kind === "bar" ? { size: n } : { size: n, fixed: true }) as Partial<DeckElement>); };
-  const toggleAuto = () => { if (sized2) setEl(sized2.id, (answerMode ? { answerFixed: !sized2.answerFixed } : { fixed: !sized2.fixed }) as Partial<DeckElement>); };
+  // Turning Auto off keeps the size on screen: the number that was shown becomes the hand-set size, so nothing jumps and the box and the number agree.
+  const toggleAuto = () => {
+    if (!sized2) return;
+    const now = Math.round(sizeNow);
+    setEl(sized2.id, (answerMode ? (sized2.answerFixed ? { answerFixed: false } : { answerFixed: true, answerSize: now })
+      : (sized2.fixed ? { fixed: false } : { fixed: true, size: now })) as Partial<DeckElement>);
+  };
   const answerToggle = hasAnswers && (
     <div className="flex h-9 shrink-0 items-center rounded-lg border border-slate-300 p-0.5 text-sm" role="group" aria-label="Show on the slide" title="Switch the slide between its questions and its answers, to set the size of each">
       {([[false, "Questions"], [true, "Answers"]] as const).map(([v, label]) => (
@@ -1089,7 +1095,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   {inlineErrors(one.text).map((er, i) => <div key={i} className="text-xs text-red-600">{er}</div>)}
                   <div className="mt-2 flex items-center gap-2">
                     <Num label="Size" value={sizeNow} min={12} onChange={setSize} />
-                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button>
+                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the text to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={toggleAuto}>Auto size</button>
                     <button className={`${small} ${on(!!one.bold)}`} onClick={() => setEl(one.id, { bold: !one.bold })}>Bold</button>
                   </div>
                   {one.size < MIN_TEXT && <div className="mt-1 text-xs text-amber-700">Smaller than {MIN_TEXT}: hard to read from the back of the room.</div>}
@@ -1105,7 +1111,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                   <div className="mt-2 rounded-lg bg-slate-50 px-2 py-2 text-2xl"><MathRenderer latex={one.latex} /></div>
                   <button className={`${small} mt-2`} onClick={() => setEquation({ mode: "edit", id: one.id, latex: one.latex })}><Sigma size={12} />Edit equation</button>
                   <div className="mt-2 flex items-center gap-2"><Num label="Size" value={sizeNow} min={12} onChange={setSize} />
-                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the equation to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={() => setEl(one.id, { fixed: !one.fixed })}>Auto size</button></div>
+                    <button className={`${small} ${on(!one.fixed)}`} title="Fit the equation to its box: this size is the most it will be. Setting a size by hand keeps it exactly as set." onClick={toggleAuto}>Auto size</button></div>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {(["left", "center", "right"] as const).map((a) => <button key={a} className={`${small} ${on((one.align ?? "center") === a)}`} onClick={() => setEl(one.id, { align: a })}>{a === "center" ? "Centre" : a[0].toUpperCase() + a.slice(1)}</button>)}
                   </div>
