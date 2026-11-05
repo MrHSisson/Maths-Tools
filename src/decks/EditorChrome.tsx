@@ -18,7 +18,7 @@ export function usePref<T>(key: string, initial: T): [T, (v: T) => void] {
 
 /** A dropdown that closes on an outside click or Esc. `children` receives `close` so a menu item can shut it. The list is
  *  positioned on the screen (not inside its parent), so a narrow or scrolling panel never clips it. */
-export function Menu({ button, title, label, align = "left", wide, up, full, bare, children }: { button: ReactNode; title?: string; label?: string; align?: "left" | "right"; wide?: boolean; up?: boolean; full?: boolean; bare?: boolean; children: (close: () => void) => ReactNode }) {
+export function Menu({ button, title, label, align = "left", wide, panel, up, full, bare, children }: { button: ReactNode; title?: string; label?: string; align?: "left" | "right"; wide?: boolean; panel?: boolean; up?: boolean; full?: boolean; bare?: boolean; children: (close: () => void) => ReactNode }) {
   const [pos, setPos] = useState<CSSProperties | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const open = pos !== null;
@@ -32,7 +32,7 @@ export function Menu({ button, title, label, align = "left", wide, up, full, bar
   const toggle = () => {
     if (open) { setPos(null); return; }
     const r = ref.current?.getBoundingClientRect(); if (!r) return;
-    const w = Math.min(window.innerWidth - 16, full ? Math.max(r.width, wide ? 320 : 240) : wide ? 320 : 240);
+    const w = Math.min(window.innerWidth - 16, panel ? 460 : full ? Math.max(r.width, wide ? 320 : 240) : wide ? 320 : 240);
     const left = Math.max(8, Math.min(window.innerWidth - w - 8, align === "right" ? r.right - w : r.left));
     setPos(up ? { left, width: w, bottom: window.innerHeight - r.top + 4, maxHeight: r.top - 12 } : { left, width: w, top: r.bottom + 4, maxHeight: window.innerHeight - r.bottom - 12 });
   };
@@ -240,13 +240,18 @@ const SHORTCUTS: [string, string][] = [
 export interface RibbonTab<K extends string> { key: K; label: string }
 
 /** The tab strip. Choosing a tab opens the ribbon if it was folded away; the chevron folds it to just the tabs. */
-export function RibbonTabs<K extends string>({ tabs, value, onChange, open, onToggle }: { tabs: RibbonTab<K>[]; value: K; onChange: (k: K) => void; open: boolean; onToggle: () => void }) {
+export function RibbonTabs<K extends string>({ tabs, value, onChange, open, onToggle, lead, trail }: { tabs: RibbonTab<K>[]; value: K; onChange: (k: K) => void; open: boolean; onToggle: () => void; lead?: ReactNode; trail?: ReactNode }) {
   return (
-    <div role="tablist" aria-label="Editor ribbon" className="no-scrollbar flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-slate-200 bg-white px-2 sm:px-3">
+    <div className="flex shrink-0 items-center gap-0.5 border-b border-slate-200 bg-white px-2 sm:px-3">
+      {lead}
+      {lead && <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" />}
+      <div role="tablist" aria-label="Editor ribbon" className="no-scrollbar flex min-w-0 items-center gap-0.5 overflow-x-auto">
       {tabs.map((t) => (
         <button key={t.key} role="tab" aria-selected={value === t.key} onClick={() => { onChange(t.key); if (!open) onToggle(); }}
           className={`-mb-px h-9 shrink-0 border-b-2 px-3 text-sm font-semibold ${value === t.key ? "border-blue-800 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{t.label}</button>
       ))}
+      </div>
+      {trail}
       <button type="button" onClick={onToggle} aria-label={open ? "Fold the ribbon away" : "Show the ribbon"} aria-expanded={open} title={open ? "Fold the ribbon away" : "Show the ribbon"}
         className="ml-auto shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
     </div>

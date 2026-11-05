@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Deck editor: one-row menus, grouped dropdowns, content in popovers
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `docs/reference/decks.md`.
+
+- **The double menu stack is gone:** the File / Edit / Insert / Slide / Layout / View bar under the title is removed. **File** now leads the tab row and **View** ends it; Edit moved to Home (copy, paste, duplicate, delete, Select), Slide to Home (a Slide menu), Layout to Design, and Insert was a copy of the Insert tab.
+- **Grouped dropdowns, a condensed ribbon:** Insert has Basics, then **Shapes**, **Questions** and **Tables** dropdowns (tables, ratio tables, number grids and bar models are under Tables). Arrange is **Align**, **Layer** and **Size** menus plus Reveal.
+- **The right panel is only "On this slide".** A table's cells, the generator and worksheet settings and a text box's words now open as popovers from the ribbon (Edit table, Settings, Edit text).
+- Checked in a browser at 1366, 1024 and 390 wide: all tabs, folding, no overflow, no errors; saw the board popover and the Tables dropdown at laptop size. Not looked at by eye on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Deck editor: PowerPoint-style ribbon, right panel emptied of settings
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `src/decks/EditorChrome.tsx`, `src/decks/EditorPanels.tsx`, `docs/reference/decks.md`.
