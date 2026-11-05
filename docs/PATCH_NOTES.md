@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Full-screen controls: a steady, movable bar with a Slide options pop-out; deck list tidied; primes deck trimmed
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/PlayerBar.tsx` (new), `src/decks/DeckPage.tsx`, `src/shared/components/InkOverlay.tsx` (a `data-ink-bar` marker only), the live deck `primes-divisibility`, `docs/reference/decks.md`.
+
+- **The full-screen bar no longer changes size.** It used to gain and lose the fill-in group depending on the slide, so it jumped. It is now always a grip, Back, the count, Next and **Slide options**; the fill-in group, timer, Jump to a slide, Print slides, the grids and sheets, and Leave full screen are in the Slide options pop-out.
+- **It can be dragged along the bottom** by its grip, and the place is remembered. It stops short of the ink pencil's corner and rises above the ink pencil or hotbar if one is in its way.
+- **The deck list no longer shows the description and the "Up to date with your other devices" line** under its title.
+- **Primes and divisibility (live deck, now 40 slides):** the discussion on why the rule for 3 works was removed (Harry's call), and the key point for 11 was rewritten to be clearer: the rule states the starting sign and when to stop, the flowchart shows "+ − + − …", and there is a second example with a negative result (3619, ignore the minus sign). The worked-example slide for 11 has the same wording.
+- Checked in a browser at 1366 wide: the bar is the same size on four different slides; the pop-out shows the board's fill-in group on a board slide and a note on one without; dragging works and survives a reload; the right edge stops at the ink pencil's corner; no overlap with the pencil or the open ink hotbar. Not looked at on a phone or tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Primes and divisibility: no Check 11, steady sieve, a key point for every rule
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/NumberGrid.tsx`, `src/shared/numberGrid.ts`, `src/decks/flowchart.ts` (new), the live deck `primes-divisibility` (pulled, changed, pushed; repo snapshot refreshed), tests, docs.

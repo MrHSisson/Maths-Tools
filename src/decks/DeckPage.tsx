@@ -8,7 +8,9 @@ import { hundredSquareSheet, printPrintable } from "../shared/printables";
 import { getInk, setInk, strokesFromSlide, strokesToSlide, type InkFrame } from "../shared/inkBridge";
 import type { Stroke } from "../shared/components/BoardTools";
 import { DECK_PAGE } from "./theme";
+import { PlayerBar } from "./PlayerBar";
 import { TimerLine, TimerMenu, useTimer } from "./Timer";
+import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
@@ -17,7 +19,6 @@ import { fetchPublishedDeck, usePublishedIndex } from "./published";
 import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
-import { useCloudState } from "./cloud";
 import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
 import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
@@ -50,7 +51,6 @@ function useFit(ref: React.RefObject<HTMLDivElement | null>) {
 function DeckIndex() {
   const navigate = useNavigate();
   const [, refresh] = useState(0);
-  const cloud = useCloudState();
   // The shared copies are the live ones: wait for them (a moment at most; offline, the device's copies are used) so a deck's older title or
   // preview is not shown and then swapped.
   const [synced, setSynced] = useState(false);
@@ -77,8 +77,6 @@ function DeckIndex() {
           <Link to="/decks/library" className="ml-auto rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
-        <p className="mt-1 text-slate-500">Every deck, published or not. Open one to teach from your working copy, press Edit to change any slide, and publish from the editor's File menu when it is ready for everyone.</p>
-        {cloud.message && <p className={`mt-1 text-xs ${cloud.mode === "shared" ? "text-emerald-700" : "text-slate-400"}`}>{cloud.message}</p>}
         <div className="mt-6">
           {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
             id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
@@ -308,15 +306,29 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>}
       {full && (
-        <div className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-2xl bg-white/90 p-1.5 shadow-lift backdrop-blur transition-opacity duration-300" style={{ opacity: nudge ? 1 : 0, pointerEvents: nudge ? "auto" : "none" }}>
-          <button className={iconBtn} onClick={backward} disabled={index === 0 && beat === 0} aria-label="Back"><ChevronLeft size={20} /></button>
-          <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{index + 1} / {total}</span>
-          <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
-          {boards.length > 0 && fillGroup}
-          <TimerMenu className={iconBtn} up open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
-          <button className={iconBtn} onClick={() => setJump((v) => !v)} aria-label="Jump to a slide"><ListOrdered size={18} /></button>
-          <button className={iconBtn} onClick={toggleFull} aria-label="Leave full screen"><Minimize size={18} /></button>
-        </div>
+        <PlayerBar visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
+          {(close) => (
+            <div className="space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">This slide</div>
+              {boards.length > 0 ? <div><div className="mb-1 text-sm font-semibold text-slate-700">How much is filled in</div>{fillGroup}</div>
+                : <p className="text-sm text-slate-500">Nothing on this slide to fill in.</p>}
+              {deck.slides[index].els.some((e) => e.kind === "numberGrid") && <button className={`${iconBtn} w-full`} onClick={() => { close(); printPrintable(hundredSquareSheet()); }}><Printer size={16} />Print 1 to 100 grids</button>}
+              {here.length > 0 && <div className="flex gap-2">
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); void printSheet(here[0].el, "questions"); }}><Printer size={16} />Print sheet</button>
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); void printSheet(here[0].el, "answers"); }}><Printer size={16} />Answer sheet</button>
+              </div>}
+              <div>
+                <div className="mb-1 text-sm font-semibold text-slate-700">Timer</div>
+                <div className="flex flex-wrap gap-1.5">{TIMER_MINUTES.map((m) => <button key={m} className={iconBtn} onClick={() => { timer.start(m); close(); }}>{m} min</button>)}</div>
+              </div>
+              <div className="flex gap-2 border-t border-slate-200 pt-3">
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); setJump(true); }}><ListOrdered size={16} />Jump to a slide</button>
+                <button className={`${iconBtn} flex-1`} onClick={() => { close(); setPrintSlidesOpen(true); }}><Printer size={16} />Print slides</button>
+              </div>
+              <button className={`${iconBtn} w-full`} onClick={() => { close(); toggleFull(); }}><Minimize size={16} />Leave full screen</button>
+            </div>
+          )}
+        </PlayerBar>
       )}
       {printSlidesOpen && <PrintSlidesDialog deck={deck} onClose={() => setPrintSlidesOpen(false)} />}
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
