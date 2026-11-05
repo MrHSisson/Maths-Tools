@@ -12,8 +12,8 @@ export const PRINT_LAYOUTS: Record<PerPage, { cols: number; rows: number; landsc
   8: { cols: 2, rows: 4, landscape: false, label: "8 per page (2 × 4)" },
 };
 
-export const PAGE_MARGIN_MM = 10;
-export const PAGE_GAP_MM = 4;
+export const PAGE_MARGIN_MM = 6;
+export const PAGE_GAP_MM = 3;
 const A4 = { w: 210, h: 297 };
 const MM_PX = 96 / 25.4;
 
@@ -61,3 +61,12 @@ export function pagesOf<T>(items: T[], per: PerPage): T[][] {
 /** The families that hold the points worth sticking in: what to learn and what to remember. */
 export const KEY_FAMILIES: DeckFamily[] = ["teach", "language"];
 export const keyPointSlides = (deck: Pick<DeckDef, "slides">): number[] => deck.slides.flatMap((s: Slide, i) => (KEY_FAMILIES.includes(s.family) ? [i] : []));
+
+/** Where a slide sits in its slot: `centre` (every piece cuts out identical) or `edges` (outer rows and columns pushed to the page edge, so the spare paper falls between slides, at the cut, rather than round the outside). */
+export type Spread = "centre" | "edges";
+export function slotAlign(per: PerPage, index: number, spread: Spread): { alignSelf: string; justifySelf: string } {
+  if (spread === "centre") return { alignSelf: "center", justifySelf: "center" };
+  const l = PRINT_LAYOUTS[per], r = Math.floor(index / l.cols), c = index % l.cols;
+  const pick = (i: number, n: number) => (n < 2 ? "center" : i === 0 ? "start" : i === n - 1 ? "end" : "center");
+  return { alignSelf: pick(r, l.rows), justifySelf: pick(c, l.cols) };
+}

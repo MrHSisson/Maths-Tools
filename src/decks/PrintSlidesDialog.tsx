@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Printer, X } from "lucide-react";
 import { SlideCanvas } from "./SlideCanvas";
 import { FAMILY_STYLE, type DeckDef } from "./types";
-import { KEY_FAMILIES, MAX_COPIES, PAGE_MARGIN_MM, PER_PAGE, PRINT_LAYOUTS, cellSize, cutLines, keyPointSlides, pagesOf, repeatSlides, type PerPage } from "./slidePrint";
+import { KEY_FAMILIES, MAX_COPIES, PAGE_MARGIN_MM, PER_PAGE, PRINT_LAYOUTS, cellSize, cutLines, keyPointSlides, pagesOf, repeatSlides, slotAlign, type Spread, type PerPage } from "./slidePrint";
 import { small } from "./EditorPanels";
 
 // File → Print slides…: choose slides (all, just the key points, or your own pick), how many go on a sheet of A4 (1, 2, 4 or 8), and print.
@@ -18,6 +18,7 @@ export function PrintSlidesDialog({ deck, onClose }: { deck: Pick<DeckDef, "slid
   const [borders, setBorders] = useState(false);
   const [cutMarks, setCutMarks] = useState(true);
   const [copies, setCopies] = useState(1);
+  const [spread, setSpread] = useState<Spread>("centre");
   const [printing, setPrinting] = useState(false);
   const chosen = deck.slides.filter((_, i) => picked.has(i));
   const total = chosen.length * copies;
@@ -66,6 +67,7 @@ export function PrintSlidesDialog({ deck, onClose }: { deck: Pick<DeckDef, "slid
         <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">On each sheet</div>
         <div className="mt-1 flex flex-wrap gap-1">{PER_PAGE.map((p) => <button key={p} className={choice(per === p)} onClick={() => setPer(p)}>{PRINT_LAYOUTS[p].label}</button>)}
           <button className={choice(borders)} onClick={() => setBorders((b) => !b)} title="A thin line round each slide">Borders</button>
+          <button className={choice(spread === "edges")} onClick={() => setSpread((v) => (v === "edges" ? "centre" : "edges"))} title="Push slides to the outer edges of the sheet, so less paper is wasted round the outside (pieces are then mirror images rather than identical)">Fill to edges</button>
           <button className={choice(cutMarks)} onClick={() => setCutMarks((b) => !b)} title="A faint dashed line between the slides, to cut along">Cut lines</button></div>
         <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Copies of each slide</div>
         <div className="mt-1 flex flex-wrap gap-1">{Array.from({ length: MAX_COPIES }, (_, k) => k + 1).map((n) => <button key={n} className={choice(copies === n)} onClick={() => setCopies(n)}>{n}</button>)}</div>
@@ -75,18 +77,18 @@ export function PrintSlidesDialog({ deck, onClose }: { deck: Pick<DeckDef, "slid
           <button className={`${small} !bg-blue-900 !text-white`} disabled={chosen.length === 0 || printing} onClick={() => setPrinting(true)}><Printer size={12} />{printing ? "Preparing…" : "Print"}</button>
         </div>
       </div>
-      {printing && createPortal(<PrintArea slides={repeatSlides(chosen, copies)} per={per} borders={borders} cutMarks={cutMarks} />, document.body)}
+      {printing && createPortal(<PrintArea slides={repeatSlides(chosen, copies)} per={per} borders={borders} cutMarks={cutMarks} spread={spread} />, document.body)}
     </div>
   );
 }
 
 /** The pages, off screen until the browser prints, when everything else on the page is hidden. */
-function PrintArea({ slides, per, borders, cutMarks }: { slides: DeckDef["slides"]; per: PerPage; borders: boolean; cutMarks: boolean }) {
+function PrintArea({ slides, per, borders, cutMarks, spread }: { slides: DeckDef["slides"]; per: PerPage; borders: boolean; cutMarks: boolean; spread: Spread }) {
   const l = PRINT_LAYOUTS[per], cell = cellSize(per);
   const pages = pagesOf(slides, per);
   const css = `
     #slide-print { position: fixed; left: -99999px; top: 0; }
-    .sp-page { display: grid; grid-template-columns: repeat(${l.cols}, ${cell.slotWMm}mm); grid-auto-rows: ${cell.slotHMm}mm; place-items: center; align-content: start; justify-content: start; position: relative; width: ${cell.usableW}mm; height: ${cell.usableH}mm; overflow: hidden; }
+    .sp-page { display: grid; grid-template-columns: repeat(${l.cols}, ${cell.slotWMm}mm); grid-auto-rows: ${cell.slotHMm}mm; align-content: start; justify-content: start; position: relative; width: ${cell.usableW}mm; height: ${cell.usableH}mm; overflow: hidden; }
     .sp-cut { position: absolute; border: 0 dashed #b8c0cc; pointer-events: none; }
     .sp-cell { width: ${cell.wMm}mm; height: ${cell.hMm}mm; overflow: hidden; position: relative; contain: strict; ${borders ? "outline: 0.3mm solid #94a3b8; outline-offset: -0.15mm;" : ""} }
     @media print {
@@ -103,7 +105,7 @@ function PrintArea({ slides, per, borders, cutMarks }: { slides: DeckDef["slides
       <style>{css}</style>
       {pages.map((pg, i) => (
         <div key={i} className="sp-page">
-          {pg.map((s, j) => <div key={`${s.id}-${j}`} className="sp-cell"><SlideCanvas slide={s} scale={cell.scale} /></div>)}
+          {pg.map((s, j) => <div key={`${s.id}-${j}`} className="sp-cell" style={slotAlign(per, j, spread)}><SlideCanvas slide={s} scale={cell.scale} /></div>)}
           {cutMarks && cutLines(per, pg.length).map((c, k) => c.y1 === c.y2
             ? <div key={k} className="sp-cut" style={{ left: `${c.x1}mm`, width: `${c.x2 - c.x1}mm`, top: `${c.y1}mm`, borderTopWidth: "0.25mm" }} />
             : <div key={k} className="sp-cut" style={{ top: `${c.y1}mm`, height: `${c.y2 - c.y1}mm`, left: `${c.x1}mm`, borderLeftWidth: "0.25mm" }} />)}
