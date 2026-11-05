@@ -329,7 +329,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** sticking key slides into books, or handing out a whole lesson's slides. **How it works:** File → **Print slides…** in the editor, or **Print slides** in the player, lists every slide with a tick box; **All slides**, **Key points** (the teach and key language slides) or **None** set them quickly. Choose 1, 2, 4 or 8 to a sheet of A4 (8 is two columns by four rows; 2 stacks two portrait; 4 and 1 turn the page landscape so the slides fill it), with an optional thin border to cut along. The slides print exactly as they look on screen, with answers hidden."
+     "s": "**For:** sticking key slides into books, or handing out a whole lesson's slides. **How it works:** File → **Print slides…** in the editor, or **Print slides** in the player, lists every slide with a tick box; **All slides**, **Key points** (the teach and key language slides) or **None** set them quickly. Choose 1, 2, 4 or 8 to a sheet of A4 (8 is two columns by four rows; 2 stacks two portrait; 4 and 1 turn the page landscape so the slides fill it), with **Copies of each slide** (1 to 8, to print the same slide repeatedly), faint dashed **Cut lines** between slides (each slide centred in an equal part of the sheet, so a sheet cuts into identical pieces) and an optional thin border. The slides print exactly as they look on screen, with answers hidden."
     }
    ]
   },
