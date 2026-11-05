@@ -315,14 +315,27 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   );
 }
 
+/** The longest the first open waits for the shared copy before using the device's. */
+const LIVE_WAIT_MS = 4000;
+
 function DeckView({ id }: { id: string }) {
   const [params, setParams] = useSearchParams();
   const editing = params.get("edit") === "1";
   const [deck, setDeck] = useState(() => loadDeck(id));
   const s = Number(params.get("s") ?? 1);
+  // The shared copy is the live one. The first time this deck is opened, wait for it (a moment at most: offline, the device's copy is used) so the
+  // device's older copy is never shown and then swapped for the shared one.
+  const [loaded, setLoaded] = useState<string | null>(null);
+  useEffect(() => {
+    let on = true;
+    const stop = window.setTimeout(() => { if (on) { setDeck(loadDeck(id)); setLoaded(id); } }, LIVE_WAIT_MS);
+    void syncFromCloud(id).catch(() => false).then(() => { window.clearTimeout(stop); if (on) { setDeck(loadDeck(id)); setLoaded(id); } });
+    return () => { on = false; window.clearTimeout(stop); };
+  }, [id]);
   useEffect(() => { setDeck(loadDeck(id)); }, [id, editing]);
-  // a newer copy saved on another device replaces this one (not while editing, so nothing is pulled from under the teacher)
-  useEffect(() => { if (!editing) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]);
+  // a newer copy saved on another device replaces this one when leaving the editor (not while editing, so nothing is pulled from under the teacher)
+  useEffect(() => { if (!editing && loaded === id) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-sync on leaving the editor, not when the first load finishes
+  if (loaded !== id) return <div className="flex min-h-screen items-center justify-center" style={{ background: DECK_PAGE }}><p className="font-medium text-slate-500" role="status">Loading the latest copy…</p></div>;
   if (!deck) return <div className="p-8"><Link to="/decks" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
   if (editing) return <Editor start={deck} startIndex={Math.max(0, (Number.isFinite(s) ? s : 1) - 1)} onPresent={(d, i) => { setDeck(d); clearInk(); setParams({ s: String(i + 1) }); }} />;
   return <Player deck={deck} badge="Working copy" onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;

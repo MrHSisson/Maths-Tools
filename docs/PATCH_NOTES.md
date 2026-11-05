@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Decks: the shared copy is the live one (step 1: no stale flash)
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/DeckPage.tsx`, `docs/reference/decks.md`.
+
+- **A deck now waits for the shared (cloud) copy before it shows**, instead of showing the repo or device copy and swapping when the cloud one arrived. It says "Loading the latest copy…" for a moment (4 s at most; offline it opens straight from the device's copy). Opening straight into the editor (`?edit=1`) now gets the latest copy too; before, it started from the older one and only noticed after 20 s.
+- Checked with the cloud simulated (delayed newer copy: the old one is never shown; unreachable: opens from the device in about 0.3 s).
+- **Still to do from the agreed plan:** the CLI (`pull`/`push`/`check`) reading and writing the live copy directly, a repo backup snapshot written on publish, and cloud-side version history so a bad edit can be rolled back. The repo JSON is still the first-run fallback and what CI reads.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-05 — Deck editor: hotbar sorted into categories, panel slimmed
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/Editor.tsx`, `docs/reference/decks.md`.
