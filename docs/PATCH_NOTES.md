@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-05 — Print slides: copies of each slide, even spacing, cut lines
+
+Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/slidePrint.ts`, `src/decks/PrintSlidesDialog.tsx`, `src/tests/slidePrint.test.ts`, `docs/reference/decks.md`, `docs/FEATURES.md`.
+
+- **Copies of each slide (1 to 8)** in File → Print slides…: the same slide prints repeatedly, for cutting up and handing out.
+- **Even spacing:** the page is shared into equal slots and each slide is centred in its slot, so 2 to an A4 sheet cuts exactly in half with both pieces identical (before, both sat at the top with spare paper at the bottom).
+- **Cut lines** (on by default): a faint dashed line between slides, only as far as the filled slots. Borders are now off by default (still available).
+- Checked with `tsc` and `slidePrint.test.ts`; not yet looked at in a real print preview.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (planner not opened).
+
 ## 2026-11-04 — Deck editor layout warnings
 
 Branch `ccr-14b1aa72-aohwgk`. Areas: `src/decks/layoutAudit.ts` (new), `src/decks/Editor.tsx`, `docs/reference/decks.md`, `docs/FEATURES.md`.

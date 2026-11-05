@@ -17,14 +17,38 @@ export const PAGE_GAP_MM = 4;
 const A4 = { w: 210, h: 297 };
 const MM_PX = 96 / 25.4;
 
-/** The size of one slide on the page, in millimetres, and the scale to draw the 1600 × 900 canvas at (in CSS pixels). */
+/**
+ * The size of one slide on the page, in millimetres, and the scale to draw the 1600 × 900 canvas at (in CSS pixels).
+ * The usable area is shared out in equal slots (usableW / cols by usableH / rows); a slide is centred in its slot with
+ * PAGE_GAP_MM of air to the slot edge on each side, so cutting along the slot boundaries (the cut lines) leaves every piece
+ * the same, with the slide in the middle of it. Two to an A4 portrait page therefore cut exactly in half.
+ */
 export function cellSize(per: PerPage) {
   const l = PRINT_LAYOUTS[per];
   const pageW = l.landscape ? A4.h : A4.w, pageH = l.landscape ? A4.w : A4.h;
   const usableW = pageW - 2 * PAGE_MARGIN_MM, usableH = pageH - 2 * PAGE_MARGIN_MM;
-  const w = Math.min((usableW - PAGE_GAP_MM * (l.cols - 1)) / l.cols, ((usableH - PAGE_GAP_MM * (l.rows - 1)) / l.rows) * (CANVAS_W / CANVAS_H));
+  const slotW = usableW / l.cols, slotH = usableH / l.rows;
+  const w = Math.min(slotW - PAGE_GAP_MM, (slotH - PAGE_GAP_MM) * (CANVAS_W / CANVAS_H));
   const h = (w * CANVAS_H) / CANVAS_W;
-  return { wMm: w, hMm: h, scale: (w * MM_PX) / CANVAS_W, usableW, usableH };
+  return { wMm: w, hMm: h, slotWMm: slotW, slotHMm: slotH, scale: (w * MM_PX) / CANVAS_W, usableW, usableH };
+}
+
+/** Each slide `copies` times in a row (1 to MAX_COPIES), so the same slide can fill a sheet for cutting up. */
+export const MAX_COPIES = 8;
+export function repeatSlides<T>(items: T[], copies: number): T[] {
+  const n = Math.max(1, Math.min(MAX_COPIES, Math.floor(copies) || 1));
+  return items.flatMap((x) => Array.from({ length: n }, () => x));
+}
+
+/** Where the cut lines go on a page holding `count` slides: positions (mm from the top-left of the usable area) of lines between neighbouring slots, each only as long as the filled slots. */
+export function cutLines(per: PerPage, count: number) {
+  const l = PRINT_LAYOUTS[per], c = cellSize(per);
+  const rowsUsed = Math.ceil(count / l.cols);
+  const colsUsed = Math.min(l.cols, count);
+  const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let r = 1; r < rowsUsed; r++) lines.push({ x1: 0, y1: r * c.slotHMm, x2: colsUsed * c.slotWMm, y2: r * c.slotHMm });
+  for (let k = 1; k < colsUsed; k++) lines.push({ x1: k * c.slotWMm, y1: 0, x2: k * c.slotWMm, y2: rowsUsed * c.slotHMm });
+  return lines;
 }
 
 /** Slides split into pages of `per`. */
