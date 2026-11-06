@@ -65,7 +65,7 @@ function subToolCount(src) {
 //   workshop   internal build pages (templates, libraries, technique previews) — not for teachers
 const KIND_OVERRIDES = {
   "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop", "further-mechanics": "workshop",
-  visualiser: "sandbox", "network-sandbox": "sandbox",
+  visualiser: "sandbox", "name-wheel": "sandbox", "advent-calendar": "sandbox", "network-sandbox": "sandbox",
 };
 function kindOf(t) {
   if (KIND_OVERRIDES[t.id]) return KIND_OVERRIDES[t.id];

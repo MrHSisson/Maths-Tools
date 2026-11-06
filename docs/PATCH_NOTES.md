@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-06 — Name Wheel and Advent Calendar (Classroom, dev-gated)
+
+Branch `claude/gifted-pasteur-8ubr0a` (the same session as the Further Mechanics entry below). Areas: `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **Two classroom sandboxes, rebuilt in React from Harry's standalone HTML files.** Name Wheel: a wheel with extra entries per name, a chance column, paste-a-list, shuffle, a tick sound, six themes, a picked-so-far list and a "remove from wheel" prompt after each spin. Advent Calendar: 25 doors that swing open, a name or a greeting behind each, teacher controls to paste names, shuffle, open all and close all.
+- Both keep their names on the device only (localStorage, same keys as the originals) and send nothing anywhere. Both are in the Classroom category with `enabled: false`, so they are listed only in Developing-tools mode; the dashboard files them as sandboxes.
+- Kept from the originals: the festive look (Advent Calendar; Name Wheel's Christmas theme is the default) and the behaviour. Changed: Georgia in place of the Fraunces web font (the site loads no web fonts), no fixed `showEditor` setting, and a name-wheel label threshold that is now a fixed 100 entries.
+- Checked in a browser at 390 and 1366 wide: names land on doors, open-all and the saved state survive a reload, a spin ends in the prompt and removes the winner's row, no sideways scroll, no console errors.
+
+Deliberately not done: no About panel, no print, no phone-specific layout beyond responsive widths; the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-06 — Further Mechanics space (AQA 7367 MA–ME), dev-gated
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `specs/exam/spec/aqa-mechanics.md`, `src/tools/FurtherMechanics/` (page and data), `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
