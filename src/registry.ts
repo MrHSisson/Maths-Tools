@@ -35,7 +35,7 @@ interface ToolMeta {
 interface CategoryMeta {
   name: string;
   /** Top-level subject the landing page groups this category under.
-   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands; "All subjects" for a strand every subject tab shows (Classroom, Workshop). */
+   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands; "Classroom" for the Classroom tab (the Visualiser, classroom sandboxes and the Workshop pages). */
   subject?: string;
   tools: ToolMeta[];
 }
@@ -165,7 +165,7 @@ export const CATEGORIES: CategoryMeta[] = [
   },
   {
     name: 'Classroom',
-    subject: 'All subjects',
+    subject: 'Classroom',
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'name-wheel', path: '/name-wheel', name: 'Name Wheel', description: 'Spin a wheel to pick a name at random, with extra entries per name, six themes and a list of who has been picked. The list stays on this device.', enabled: false, load: () => import('./tools/TeacherTools/NameWheel') },
@@ -174,7 +174,7 @@ export const CATEGORIES: CategoryMeta[] = [
   },
   {
     name: 'Workshop',
-    subject: 'All subjects',
+    subject: 'Classroom',
     tools: [
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'skills', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },

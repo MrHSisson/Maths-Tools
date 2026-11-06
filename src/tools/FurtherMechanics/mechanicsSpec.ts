@@ -2,11 +2,11 @@
 // Source of truth for the wording: specs/exam/spec/aqa-mechanics.md (AQA 7367 v1.1 and AS 7366 v1.2).
 // This file adds the AS/A2 split, the link back to the legacy AQA M1–M5 papers, and the resources found for each chapter.
 
-export type LegacyModule = "M1" | "M2" | "M3" | "M4";
+type LegacyModule = "M1" | "M2" | "M3" | "M4";
 
 /** supported: the legacy AQA papers show this content in that module. revised: the first (Gemini) mapping said otherwise.
  *  unverified: nothing found either way (no AQA M4 / M5 papers on PMT). */
-export type MapStatus = "supported" | "revised" | "unverified";
+type MapStatus = "supported" | "revised" | "unverified";
 
 export interface Statement {
   ref: string;

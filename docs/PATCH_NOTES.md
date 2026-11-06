@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-06 — Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`, `src/registry.ts`, `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/FurtherMechanics/`, `CLAUDE.md`.
+
+- **Classroom is its own landing tab.** The Visualiser, the classroom sandboxes and the Workshop pages no longer repeat at the bottom of GCSE Maths, A-Level and Computer Science: the strands that were subject "All subjects" are now subject "Classroom", and the tab row has four tabs (it scrolls sideways on a phone). Workshop still shows only in Developing-tools mode.
+- **Name Wheel redone in the site's own style** (page background, white cards with the soft border and shadow, blue-900 buttons, pill and underline controls, a fixed bottom Spin bar on a phone), dropping the festive look; four colour sets, Festive being one. **Several wheels can be saved**: a row of pills switches between them, with New wheel, rename, duplicate and delete (with a confirm). Each wheel keeps its own names, entries, colours and picked list; the list from the earlier single-wheel version is carried over as the first wheel. Stored on this device only.
+- **Further Mechanics stripped to a landing page.** Five chapter cards (with an A-level / AS switch; a chapter with no AS content is greyed) open to that chapter's statements, each with its AS or A2 tag, the printed formula, the legacy module and an (i) for the note on why. The stat tiles, the check write-up and the general links moved behind one "Older papers and question banks" card. Styled like the rest of the site; no longer the look of the supplied file. Still Developing-tools only.
+- Checked in a browser at 390 and 1366 wide: the tabs, the Classroom tab's contents, two wheels surviving a reload, a spin, the AS filter, no sideways scroll, no console errors.
+
+Not done: the Advent Calendar keeps the festive look it was built with (it is a Christmas tool); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-06 — Name Wheel and Advent Calendar (Classroom, dev-gated)
 
 Branch `claude/gifted-pasteur-8ubr0a` (the same session as the Further Mechanics entry below). Areas: `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
