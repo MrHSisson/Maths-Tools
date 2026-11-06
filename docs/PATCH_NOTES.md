@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-06 — Further Mechanics space (AQA 7367 MA–ME), dev-gated
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `specs/exam/spec/aqa-mechanics.md`, `src/tools/FurtherMechanics/` (page and data), `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **The spec is in the repo.** `specs/exam/spec/aqa-mechanics.md` holds the 25 mechanics statements (MA 2, MB 4, MC 7, MD 6, ME 6) quoted from the AQA A-level (7367) and AS (7366) specifications, with an AS / A2 column: 16 are in AS and 9 are A2 only (MD4 to MD6 and all of ME); MB1 to MB3, MC1 and MC7 are in both but without resolving, or without Fd cos θ, at AS.
+- **A new space for it, `/further-mechanics`.** One page, a card per chapter: each statement with its AS or A2 badge, the AS limit, the printed formula, and the legacy AQA module it came from; a year filter (all / AS only) and a chapter filter; the question banks found for each chapter (45 links, each opened and returning 200). Developing-tools only: the registry entry is `enabled: false` (listed on the landing page only in Developing-tools mode, category "Further Mechanics" under A-Level) and the page asks for the Developing tools password itself. No question tools yet; each chapter card says "Tool: not built yet".
+- **The first legacy map (made by Gemini) was checked** against the AQA legacy M1, M2 and M3 combined papers on PMT. Most of it holds; vertical circles, work by a variable force and centres of mass by integration moved from M4 to M2, impulse moved to M3, MC7 (Power) was missing, every topic-pack link was dead, and nothing in M4 / M5 could be checked (PMT has no AQA M4 / M5 papers; its M3 and M4 topic pages are Edexcel). The findings are on the page.
+- Checked in a browser at 390, 1024 and 1366 wide: the password gate shows, 25 statements show, 16 under AS only, ME hides under AS only, no horizontal scroll, no console errors; with Developing tools off the landing page does not list it.
+
+Deliberately not done: no pathway or task added (waiting for Harry); the planner Build Log, Handoff note and the dashboard note for this entry were not written; the legacy mapping for M4 is still unverified; no question generators.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (see "Deliberately not done").
+
 ## 2026-11-05 — Flowchart loop arrow timing; Leave full screen back on the bar; timer in two rows
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/flowchart.ts`, `src/decks/PlayerBar.tsx`, `src/decks/DeckPage.tsx`, the live deck `primes-divisibility`, tests, docs.

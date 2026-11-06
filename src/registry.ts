@@ -143,6 +143,13 @@ export const CATEGORIES: CategoryMeta[] = [
     ],
   },
   {
+    name: 'Further Mechanics',
+    subject: 'A-Level',
+    tools: [
+      { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME) chapter by chapter: AS and A2 content, the link back to the legacy M1–M3 papers and their question banks. Planning space for the Further Mechanics tools.', enabled: false, load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
+    ],
+  },
+  {
     name: 'Computer Science',
     subject: 'Computer Science',
     tools: [
