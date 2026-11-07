@@ -2,53 +2,20 @@
 // Source of truth for the wording: specs/exam/spec/aqa-mechanics.md (AQA 7367 v1.1 and AS 7366 v1.2).
 // This file adds the AS/A2 split, the link back to the legacy AQA M1–M5 papers, and the resources found for each chapter.
 
-type LegacyModule = "M1" | "M2" | "M3" | "M4";
-
-/** supported: the legacy AQA papers show this content in that module. revised: the first (Gemini) mapping said otherwise.
- *  unverified: nothing found either way (no AQA M4 / M5 papers on PMT). */
-type MapStatus = "supported" | "revised" | "unverified";
-
-export interface Statement {
-  ref: string;
-  text: string;
-  /** a printed formula, as in the spec */
-  formula?: string;
-  /** in the AS spec (7366)? false = A2 only */
-  as: boolean;
-  /** what AS leaves out of a statement that is in both */
-  asLimit?: string;
-  legacy: LegacyModule[];
-  status: MapStatus;
-  /** the first mapping, when the check changed it */
-  was?: string;
-  note?: string;
-}
-
-export interface Resource {
-  label: string;
-  url: string;
-  /** where it comes from, so a teacher knows which board's wording to expect */
-  from: "AQA legacy" | "AQA Further" | "Edexcel legacy" | "Other";
-}
-
-export interface Chapter {
-  id: "MA" | "MB" | "MC" | "MD" | "ME";
-  name: string;
-  statements: Statement[];
-  resources: Resource[];
-}
+import type { SpecChapter, SpecResource } from "../../shared/components/SpecLanding";
 
 const P = "https://pmt.physicsandmathstutor.com/download/Maths/A-level/";
 const enc = (path: string) => P + path.split("/").map(encodeURIComponent).join("/");
-const aqaFm = (name: string): Resource => ({ label: name, from: "AQA Further", url: enc(`Further/Mechanics/AQA/Cheat-Sheets/${name}.pdf`) });
-const m1 = (name: string): Resource => ({ label: name, from: "AQA legacy", url: enc(`M1/Topic-Qs/AQA/${name}.pdf`) });
-const m2 = (name: string): Resource => ({ label: name, from: "AQA legacy", url: enc(`M2/Topic-Qs/AQA/${name}.pdf`) });
-const edx = (mod: "M1" | "M3" | "M4", name: string): Resource => ({ label: name, from: "Edexcel legacy", url: enc(`${mod}/Topic-Qs/Edexcel-Set-1/${name}.pdf`) });
+const aqaFm = (name: string): SpecResource => ({ label: name, from: "AQA Further", url: enc(`Further/Mechanics/AQA/Cheat-Sheets/${name}.pdf`) });
+const m1 = (name: string): SpecResource => ({ label: name, from: "AQA legacy", url: enc(`M1/Topic-Qs/AQA/${name}.pdf`) });
+const m2 = (name: string): SpecResource => ({ label: name, from: "AQA legacy", url: enc(`M2/Topic-Qs/AQA/${name}.pdf`) });
+const edx = (mod: "M1" | "M3" | "M4", name: string): SpecResource => ({ label: name, from: "Edexcel legacy", url: enc(`${mod}/Topic-Qs/Edexcel-Set-1/${name}.pdf`) });
 
-export const CHAPTERS: Chapter[] = [
+export const CHAPTERS: SpecChapter[] = [
   {
     id: "MA",
     name: "Dimensional analysis",
+    tools: [],
     statements: [
       { ref: "MA1", text: "Finding dimensions of quantities; checking for dimensional consistency.", as: true, legacy: ["M3"], status: "supported", note: "AQA M3 papers open with dimensions questions." },
       { ref: "MA2", text: "Prediction of formulae; finding powers in potential formulae.", as: true, legacy: ["M3"], status: "supported", note: "e.g. the period of a pendulum predicted from its dimensions." },
@@ -58,6 +25,7 @@ export const CHAPTERS: Chapter[] = [
   {
     id: "MB",
     name: "Momentum and collisions",
+    tools: [],
     statements: [
       { ref: "MB1", text: "Conservation of momentum for linear motion and cases where velocities are given as one or two dimensional vectors (problems which require resolving).", as: true, asLimit: "resolving not required", legacy: ["M1", "M3"], status: "supported", note: "M1 for straight-line collisions; M3 for two dimensions." },
       { ref: "MB2", text: "Coefficient of restitution and Newton's Experimental Law. Use in direct collisions and impacts with a fixed smooth surface. Problems which require resolving.", as: true, asLimit: "resolving not required", legacy: ["M3"], status: "supported" },
@@ -73,6 +41,7 @@ export const CHAPTERS: Chapter[] = [
   {
     id: "MC",
     name: "Work, energy and power",
+    tools: [],
     statements: [
       { ref: "MC1", text: "Work done by a force acting in the direction of motion or directly opposing the motion.", formula: "WD = Fd cos θ", as: true, asLimit: "no Fd cos θ", legacy: ["M2"], status: "supported" },
       { ref: "MC2", text: "Gravitational potential energy. Use in conservation of energy problems.", as: true, legacy: ["M2"], status: "supported" },
@@ -92,6 +61,7 @@ export const CHAPTERS: Chapter[] = [
   {
     id: "MD",
     name: "Circular motion",
+    tools: [],
     statements: [
       { ref: "MD1", text: "Motion of a particle moving in a circle with constant speed (knowledge of radians assumed).", as: true, legacy: ["M2"], status: "supported" },
       { ref: "MD2", text: "Understand the definition of angular speed. Use both radians and revolutions per unit time.", as: true, legacy: ["M2"], status: "supported" },
@@ -109,6 +79,7 @@ export const CHAPTERS: Chapter[] = [
   {
     id: "ME",
     name: "Centres of mass and moments",
+    tools: [],
     statements: [
       { ref: "ME1", text: "Centre of mass for a system of particles.", as: false, legacy: ["M2"], status: "supported" },
       { ref: "ME2", text: "Centre of mass for a composite body.", as: false, legacy: ["M2"], status: "supported" },
@@ -127,7 +98,7 @@ export const CHAPTERS: Chapter[] = [
 ];
 
 /** Whole-qualification resources, not tied to one chapter. */
-export const GENERAL_RESOURCES: Resource[] = [
+export const GENERAL_RESOURCES: SpecResource[] = [
   { label: "AQA M1 past papers, combined", from: "AQA legacy", url: enc("M1/Papers-AQA/Combined QP - M1 AQA.pdf") },
   { label: "AQA M2 past papers, combined", from: "AQA legacy", url: enc("M2/Papers-AQA/Combined QP - M2 AQA.pdf") },
   { label: "AQA M3 past papers, combined", from: "AQA legacy", url: enc("M3/Papers-AQA/Combined QP - M3 AQA.pdf") },

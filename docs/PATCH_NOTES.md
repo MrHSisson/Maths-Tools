@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Decision Maths landing page and legacy D1 / D2 map; shared spec landing page
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/SpecLanding.tsx` (new), `src/tools/Decision/decisionSpec.ts` and `DecisionOverview.tsx` (new), `src/tools/FurtherMechanics/`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **A Decision Maths landing page, `/decision-overview`** (Developing-tools only, in the Decision Mathematics strand; asks for the password itself). Seven chapter cards (DA Graphs, DB Networks, DC Network flows, DD Linear programming, DE Critical path analysis, DF Game theory, DG Binary operations) with an A-level / AS switch; a chapter opens to its statements (AS or A2 tag, legacy module, an (i) for why), the tools built for it and its question banks. The tools come from the registry, so a chapter's state (Live, Partly live, In development, Not built yet) is never typed; the page links to each tool.
+- **The old course is two modules, D1 and D2, and they were mapped** by reading the AQA D1 and D2 combined papers on PMT (keyword counts, not a question-by-question read). D1: graphs, MST, route inspection, TSP bounds, graphical LP. D2: simplex, critical path with cascade diagrams and resource histograms, network flows, game theory. **Not found in either (so new to 7367): planar graphs and Euler's formula (DA3), Kuratowski (DA4), isomorphism (DA7), dominated strategies (DF4), games as linear programmes (DF6), upper and lower capacities and restricted nodes (DC6, DC7), and all of binary operations and groups (DG).** Legacy content the spec no longer asks for (sorting, bin packing, Dijkstra, matchings, allocation, dynamic programming) is listed under "Not in the current spec". All 74 links across both spaces were opened and return 200.
+- **Further Mechanics and Decision now share one page component**, `SpecLanding` (the look, the AS filter, the chapter view, the papers view), each supplying only its data and words; the Further Mechanics page looks and behaves as before.
+- Checked in a browser at 390 and 1366 wide: the password gate, seven chapters, AS filter, the Networks chapter listing its three tools with Live / Dev, the not-in-spec list, mechanics unchanged, no sideways scroll, no console errors.
+
+Deliberately not done: no pathway or task added for Decision (waiting for Harry); the Decision tools themselves were not touched; the network notation of the legacy CPA questions (arc or node) could not be read from the text; the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-07 — Balloons rise when the wheel picks a name
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Balloons.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`.
