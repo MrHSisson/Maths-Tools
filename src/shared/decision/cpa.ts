@@ -467,9 +467,9 @@ export function levelSchedule(acts: CpaActivity[], t: CpaTimes, limit: number): 
 
 // ── The levelling method students use (specs/resource-levelling.md: "The method") ───────────────────────────────────────
 /** A clash: a run of times where the activities running need more workers than the limit (`ids`: the ones running at its first moment). */
-export interface LevelClash { from: number; to: number; need: number; ids: string[] }
+interface LevelClash { from: number; to: number; need: number; ids: string[] }
 /** One option on the ranked list: hold `held` back until `wait` finishes (at `until`), and its quick sum. */
-export interface LevelOption {
+interface LevelOption {
   held: string; wait: string; until: number;
   /** where it finishes once held back (knock-ons from its own predecessors included) and its latest finish time without a limit */
   newFinish: number; lft: number; float: number;
@@ -479,7 +479,7 @@ export interface LevelOption {
   holds: Record<string, number>;
 }
 /** One option tried: the hold-back and its knock-ons followed through. */
-export interface LevelTry {
+interface LevelTry {
   option: LevelOption;
   starts: Record<string, number>;
   /** activities (other than the one held) that now start later than they did, because something they wait for finishes later */
@@ -490,7 +490,7 @@ export interface LevelTry {
   /** the options from that clash that joined the list */
   added: LevelOption[];
 }
-export interface LevelMethod {
+interface LevelMethod {
   limit: number;
   unlimited: number;
   /** the number of separate clashes (runs over the limit) in the earliest-start histogram, and the first one */

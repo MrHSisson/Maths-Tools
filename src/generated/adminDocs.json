@@ -1284,7 +1284,7 @@
   {
    "id": "resource-levelling",
    "title": "Resource histogram and resource levelling",
-   "status": "idea",
+   "status": "building",
    "measure": "",
    "updated": "2026-11-07",
    "sections": [
@@ -1313,6 +1313,12 @@
         "**Not built:** \"tick the correct histogram\". Worker allocation is untouched. Heavy-task queue questions are parked.",
         "Real-question data is stored for tests only: `src/tests/fixtures/levelling-real.json`."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-07 (session 1 of 3): levelling engine and generator built. `levelMethod` (quick sums, ranked list, tries) sits beside `levelSchedule` in `cpa.ts`; `cpaLevel` has the three levels and filters (`levelLevel`); the levelling tab has *Ask for*, *Workers per activity (Level 3)* and *Most tries (Level 3)*; `src/tests/levellingMethod.test.ts` covers the fixture, random networks and the level invariants. Decisions: Levels 1 and 2 need exactly 1 try (the spec table says 1-2 for Level 2; the kickoff's \"top option leaves no clash\" was followed); Level 2 workers are 1 to 4 each with the largest at least 3; \"new start of the last activity\" is only offered where one activity ends the project, which excludes the 10-12 activity networks, so Level 3 falls back to the time; the exam chains still use the old `levelType` question."
+       ]
       }
      ]
     },
@@ -1324,9 +1330,9 @@
        "t": "ul",
        "items": [
         "Histogram tab: the new stacking order in the renderer; merge Levels 1 and 2; the new Level 3 (cut the peak within float) with its walkthrough and floors.",
-        "Levelling tab: implement the method beside `levelSchedule`; the generation filters and three levels; the question options (wording, workers, Maximum tries).",
         "Levelling walkthrough: the six-step developing picture, the tries count, the model answer layout and the write-up.",
-        "Tests: invariants (method equals solver, filters hold, tries within the cap, quick-sum floor property); the real-question fixtures; update the old Level 3 assertions in `cpaSkills.test.ts`.",
+        "Session 2: the levelling walkthrough (use `level.method.tries` and `options`), then session 3: the histogram tab and the drawing order.",
+        "Check Level 3 generation time (a fit can take about a second); the Level 3 options show on every level of the tab (the shell cannot hide an option by level).",
         "Later, via `docs/pathways/decision-exam-questions.md`: a CPA corpus file and levelling exam parts (plan in the spec; not a priority)."
        ]
       }
