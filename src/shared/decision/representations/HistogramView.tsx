@@ -1,4 +1,4 @@
-import type { HistogramData, HistViewState } from "../cpa";
+import { histBaseAt, type HistogramData, type HistViewState } from "../cpa";
 import { tickStep } from "./GanttView";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -47,7 +47,9 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
   for (let t = 0; t <= T; t += step) ticks.push(t);
   if (ticks[ticks.length - 1] !== T) ticks.push(T);
   const drawn = new Set(view.blocks);
-  const H = bodyBottom + 46;
+  const H = bodyBottom + (view.totals ? 66 : 46);
+  const dim = new Set(view.dim ?? []);
+  const knock = new Set(view.knock ?? []);
 
   return (
     <svg
@@ -71,7 +73,17 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
       ))}
       <line x1={LEFT} y1={bodyBottom} x2={LEFT + PLOT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <line x1={LEFT} y1={TOP} x2={LEFT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
-      <text x={LEFT + PLOT / 2} y={bodyBottom + 38} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
+      <text x={LEFT + PLOT / 2} y={bodyBottom + (view.totals ? 58 : 38)} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
+      {/* the daily totals: the workers needed in each time unit, red where they are over the limit */}
+      {view.totals && (
+        <g>
+          <text x={LEFT - 8} y={bodyBottom + 36} textAnchor="end" fontSize={11} fontWeight={700} fill="#475569">Total</text>
+          {/* one number per stretch where the total stays the same (a long project would run the digits together) */}
+          {data.profile.reduce<{ from: number; to: number; v: number }[]>((runs, v, t) => { const l = runs[runs.length - 1]; if (l && l.v === v) l.to = t + 1; else runs.push({ from: t, to: t + 1, v }); return runs; }, []).map((r) => (
+            <text key={`tot${r.from}`} x={(x(r.from) + x(r.to)) / 2} y={bodyBottom + 36} textAnchor="middle" fontSize={x(r.to) - x(r.from) >= 9 ? 12 : 9} fontWeight={700} fill={limit !== undefined && r.v > limit ? RED : "#0f172a"}>{x(r.to) - x(r.from) >= 5.5 ? r.v : ""}</text>
+          ))}
+        </g>
+      )}
       <text x={14} y={TOP + (bodyBottom - TOP) / 2} textAnchor="middle" fontSize={13} fill="#334155" transform={`rotate(-90 14 ${TOP + (bodyBottom - TOP) / 2})`}>Workers</text>
 
       {data.blocks.map((b) => {
@@ -79,8 +91,9 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
         const cur = view.current === b.id;
         const wide = x(b.end) - x(b.start);
         const high = b.workers * cell;
-        const fill = b.moved ? AMBER_FILL : b.critical ? GREEN_FILL : SKY;
-        const stroke = cur ? BLUE : b.moved ? AMBER : b.critical ? GREEN : NAVY;
+        const kn = knock.has(b.id);
+        const fill = b.moved ? AMBER_FILL : kn ? "#fed7aa" : b.critical ? GREEN_FILL : SKY;
+        const stroke = cur ? BLUE : b.moved ? AMBER : kn ? "#ea580c" : b.critical ? GREEN : NAVY;
         const sw = cur ? 2.6 : 1.6;
         if (b.base && b.base.some((v) => v !== b.base![0])) {
           // a stepped block: the bottom edge follows the top of the blocks under it, so the block "jumps" where that changes height
@@ -88,7 +101,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
           b.base.forEach((v, i) => { const t = b.start + i; const last = segs[segs.length - 1]; if (last && last.base === v) last.to = t + 1; else segs.push({ from: t, to: t + 1, base: v }); });
           // each stretch where the block sits at one height is a rectangle of its own, labelled, so a block that drops is E and E
           return (
-            <g key={b.id}>
+            <g key={b.id} opacity={dim.has(b.id) ? 0.22 : 1}>
               {segs.map((g, i) => {
                 const w = x(g.to) - x(g.from);
                 return (
@@ -102,15 +115,32 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
           );
         }
         return (
-          <g key={b.id}>
+          <g key={b.id} opacity={dim.has(b.id) ? 0.22 : 1}>
             <rect x={x(b.start)} y={yOf(b.y + b.workers)} width={wide} height={high} fill={fill} stroke={stroke} strokeWidth={sw} />
             {wide >= 12 && <text x={x(b.start) + wide / 2} y={yOf(b.y + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={15} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
           </g>
         );
       })}
-      {(over ?? []).map((o, i) => (
-        <rect key={`o${i}`} x={x(o.from)} y={yOf(o.need)} width={x(o.to) - x(o.from)} height={(o.need - (limit ?? 0)) * cell} fill="#ef4444" fillOpacity={0.45} />
+      {(view.clash ? [view.clash] : over ?? []).map((o, i) => (
+        <g key={`o${i}`}>
+          <rect x={x(o.from)} y={yOf(o.need)} width={x(o.to) - x(o.from)} height={(o.need - (limit ?? 0)) * cell} fill="#ef4444" fillOpacity={0.45} />
+          {(view.clash || view.labelOver) && limit !== undefined && <text x={(x(o.from) + x(o.to)) / 2} y={yOf(o.need) - 5} textAnchor="middle" fontSize={12} fontWeight={700} fill={RED}>needs {o.need} / limit {limit}</text>}
+        </g>
       ))}
+      {/* the held block: dashed where it was, an arrow to where it is now */}
+      {view.ghost && (() => {
+        const g = view.ghost, nb = data.blocks.find((b) => b.id === g.id);
+        const gx = (x(g.start) + x(g.end)) / 2, gy = yOf(g.y + g.workers / 2);
+        const nx = nb ? (x(nb.start) + x(nb.end)) / 2 : gx, ny = nb ? yOf(histBaseAt(nb, nb.start) + nb.workers / 2) : gy;
+        return (
+          <g>
+            <defs><marker id="ghostArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill={AMBER} /></marker></defs>
+            <rect x={x(g.start)} y={yOf(g.y + g.workers)} width={x(g.end) - x(g.start)} height={g.workers * cell} fill="none" stroke={AMBER} strokeWidth={2} strokeDasharray="6 4" />
+            <text x={gx} y={gy + 5} textAnchor="middle" fontSize={14} fontStyle="italic" fill={AMBER}>{g.id}</text>
+            {nb && nx !== gx && <line x1={gx + 10} y1={gy - 12} x2={nx - 10} y2={ny - 12} stroke={AMBER} strokeWidth={2.2} markerEnd="url(#ghostArrow)" />}
+          </g>
+        );
+      })()}
       {limit !== undefined && (
         <g>
           <line x1={LEFT} y1={yOf(limit)} x2={LEFT + PLOT} y2={yOf(limit)} stroke={RED} strokeWidth={2.2} strokeDasharray="8 4" />

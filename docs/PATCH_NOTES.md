@@ -29,6 +29,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Resource levelling: the walkthrough (session 2 of 3)
+
+Branch `claude/new-session-6gg0my` (on top of session 1, which is not merged yet). Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, `docs/pathways/resource-levelling.md`.
+
+- **The Worked Example for Resource levelling follows the method, as the spec's six steps:** the histogram with a daily totals row and each clash labelled "needs 10 / limit 9"; the first clash with the other blocks dimmed (and the worker sum, "4 + 2 = 6 > 5", when tasks need several workers); a ranked quick-sum table (hold back, waits until, new finish, LFT, quick sum; the one tried is on top, ties marked); each try drawn as its own histogram with the held block ghosted at its old place and an arrow to its new place, knock-ons in amber-orange; at Level 3 an extra step for each knock-on clash, where its quick sums join the same list (the chips grow); the check ("2 options checked; the others can't beat 23"); and the final answer in the chosen wording with the levelled histogram, a write-up filled in from the template and the model answer as five short lines.
+- The cascade chart, network and float table are still on the left (switch with the arrows); the quick-sum table takes the place of that picture on its own step.
+- The picture got a dim set, a labelled clash band, a ghost-and-arrow, knock-on colouring, a totals row (one number per stretch of equal totals) and a histogram per try (`HistViewState`, `LevelData.tryHist`).
+- Tests: the walkthrough test checks the step order and count (6 steps at Levels 1 and 2), one step per try, a knock-on step between tries, each try picture hole-free and ending on its own finish, and the model-answer lines. Checked in a browser at Levels 2 and 3: no console errors.
+- The old greedy walkthrough is still used by the exam-style chains, which have no method data.
+
+Not done: the new stacking order for drawn histograms (critical path on the bottom row, then longest to shortest) and the histogram tab (session 3); the phone and tablet layouts of the new steps were not checked.
+
+Agent: Claude Code
+Notes: planner Build Log block not written yet for this session.
+
 ## 2026-11-07 — Resource levelling: the method, the three levels and the question options (session 1 of 3)
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/cpa.ts`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.

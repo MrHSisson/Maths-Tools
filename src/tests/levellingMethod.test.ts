@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { withSeededRandom } from "./seededRandom";
 import fixture from "./fixtures/levelling-real.json";
-import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, type CpaActivity } from "../shared/decision";
+import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, solveCpa, histBaseAt, type CpaActivity } from "../shared/decision";
 
 const toActs = (q: (typeof fixture.questions)[number]): CpaActivity[] => q.activities.map((a) => ({ id: a.id, duration: a.duration, workers: a.workers, preds: a.after }));
 const profileOf = (acts: CpaActivity[], st: Record<string, number>): number[] => {
@@ -104,4 +104,43 @@ describe("levelling — generated questions meet their level", () => {
       });
     }, 240_000);
   }
+});
+
+describe("levelling — the walkthrough follows the method", () => {
+  it("six kinds of step, one per try, knock-on steps between tries, and a levelled picture at the end", () => {
+    withSeededRandom(77, () => {
+      for (const lvl of [1, 2, 3, 3, 3] as const) {
+        const g = generateCpa(lvl === 1 ? 2 : lvl, "cpaLevel", { paths: "one", levelLevel: lvl, levelWording: (["time", "extra", "explain"] as const)[lvl % 3], histShape: "step" });
+        const L = g.data.extra!.level!, m = L.method!;
+        const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaLevel" } as never);
+        const phases = steps.map((s) => s.phase!);
+        expect(phases.slice(0, 3)).toEqual(["The histogram", "The first clash", "Quick sums"]);
+        expect(phases[phases.length - 2]).toBe("The check");
+        expect(phases[phases.length - 1]).toBe("Final answer");
+        expect(steps.filter((s) => s.phase!.startsWith("Try ")).length).toBe(m.tries.length);
+        expect(steps.filter((s) => s.phase!.startsWith("Clash left")).length).toBe(m.tries.length - 1);
+        if (lvl < 3) expect(steps.length).toBe(6);
+        // the quick-sum table is smallest first with the tried option on top
+        const q = steps[2].histView!.quick!;
+        expect(q.rows[0].tone).toBe("top");
+        expect(q.rows[0].cells[0]).toBe(m.tries[0].option.held);
+        // each try picture is that try's own, hole-free, and shows the held block ghosted
+        steps.filter((s) => s.phase!.startsWith("Try ")).forEach((s, k) => {
+          expect(s.histView!.which).toBe("try");
+          expect(s.histView!.tryIndex).toBe(k);
+          expect(s.histView!.ghost!.id).toBe(m.tries[k].option.held);
+          const h = L.tryHist![k];
+          for (let x = 0; x < h.T; x++) {
+            let top = 0;
+            for (const b of h.blocks.filter((y) => y.start <= x && x < y.end).sort((a, c) => histBaseAt(a, x) - histBaseAt(c, x))) { expect(histBaseAt(b, x)).toBe(top); top = histBaseAt(b, x) + b.workers; }
+          }
+          expect(h.T).toBe(m.tries[k].finish);
+        });
+        // the last try is clash-free and the answer text carries the finish
+        expect(steps[phases.indexOf("Final answer")].caption).toContain("Write it up");
+        expect(steps[steps.length - 1].histView!.which).toBe("after");
+        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 4);
+      }
+    });
+  }, 120_000);
 });

@@ -238,6 +238,27 @@ function WorkersTable({ p }: { p: DecisionProblem }) {
   );
 }
 
+// the times a profile is over the limit, as ranges with the workers needed
+function overRanges(profile: number[], limit: number): { from: number; to: number; need: number }[] {
+  const out: { from: number; to: number; need: number }[] = [];
+  profile.forEach((v, x) => { if (v <= limit) return; const l = out[out.length - 1]; if (l && l.to === x && l.need === v) l.to = x + 1; else out.push({ from: x, to: x + 1, need: v }); });
+  return out;
+}
+
+// Resource levelling: the quick sums of the options at a clash, smallest first (the top row is the one tried; "tie" rows have the same quick sum)
+function QuickSumTable({ quick }: { quick: NonNullable<NonNullable<SolveStep["histView"]>["quick"]> }) {
+  const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 13, padding: "3px 10px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
+  const cell = (tone: string): React.CSSProperties => ({ border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 14, fontFamily: serif, background: tone === "top" ? "#dcfce7" : tone === "tie" ? "#fef9c3" : "#fff", fontWeight: tone === "top" ? 700 : 400 });
+  return (
+    <table style={{ borderCollapse: "collapse" }}>
+      <tbody>
+        <tr>{quick.head.map((h) => <th key={h} style={head}>{h}</th>)}</tr>
+        {quick.rows.map((r, i) => <tr key={i}>{r.cells.map((c, j) => <td key={j} style={cell(r.tone)}>{c}</td>)}</tr>)}
+      </tbody>
+    </table>
+  );
+}
+
 // Resource levelling with floats: each activity's duration, earliest start, latest finish, float and workers
 function FloatTable({ p, current }: { p: DecisionProblem; current?: string }) {
   const d = p.cpa!;
@@ -385,9 +406,9 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       );
     }
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
-    const data = g.which === "after" ? lv.after : lv.before;
+    const data = g.which === "after" ? lv.after : g.which === "try" && lv.tryHist ? lv.tryHist[g.tryIndex ?? 0] : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
-    const axis = Math.max(lv.before.T, lv.after.T);
+    const axis = Math.max(lv.before.T, lv.after.T, ...(lv.tryHist ?? []).map((h) => h.T));
     // what the histogram is read against is one picture at a time, switched with < and > — the network, the cascade chart (floats dashed, on the same time axis) and
     // the table of floats — so each gets the whole height and the width it needs; the histogram being built stays in view below
     const cas = d.extra!.cascade;
@@ -396,7 +417,9 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       ...(cas ? [{ title: "Cascade chart", width: "min(92%, 900px)", body: <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} /> }] : []),
       { title: several ? "Floats and workers" : "Floats", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div> },
     ];
-    const cur = Math.min(refIdx, panels.length - 1);
+    // the quick-sum step swaps its table in for the reference picture
+    if (g.quick) panels.push({ title: "Quick sums", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><QuickSumTable quick={g.quick} /></FitBox></div> });
+    const cur = g.quick ? panels.length - 1 : Math.min(refIdx, panels.length - (g.quick ? 1 : 0) - 1);
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div style={{ flex: "6 1 0", minHeight: 0, display: "flex", flexDirection: "column", margin: "0 8px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
@@ -408,7 +431,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
           <div ref={panels[cur].ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{panels[cur].body}</div>
         </div>
         <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={axis} />
+          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? (g.which === "try" ? overRanges(data.profile, lv.limit) : lv.over) : undefined} axisT={axis} />
         </div>
       </div>
     );

@@ -334,7 +334,23 @@ export interface HistViewState {
   /** levelling, multiple choice: the option being checked (0, 1, 2) */
   option?: number;
   /** resource levelling: which histogram is on the picture (the one with no limit, or the levelled one), the limit line, and the times that need more workers than the limit */
-  which?: "before" | "after"; showLimit?: boolean; showOver?: boolean;
+  which?: "before" | "after" | "try"; showLimit?: boolean; showOver?: boolean;
+  /** which = "try": the histogram of this try (LevelData.tryHist) */
+  tryIndex?: number;
+  /** blocks drawn faint, so the ones that matter stand out */
+  dim?: string[];
+  /** knock-ons: blocks that start later only because something they wait for now finishes later */
+  knock?: string[];
+  /** one clash picked out and labelled "needs 10 / limit 9" (the others are not shaded) */
+  clash?: { from: number; to: number; need: number };
+  /** label every shaded clash "needs 10 / limit 9" */
+  labelOver?: boolean;
+  /** the row of daily totals beneath the histogram */
+  totals?: boolean;
+  /** the held block drawn dashed at its old place, with an arrow to where it is now */
+  ghost?: { id: string; start: number; end: number; workers: number; y: number };
+  /** the quick-sum table shown in place of the reference picture */
+  quick?: { head: string[]; rows: { cells: string[]; tone: "top" | "tie" | "normal" }[] };
 }
 
 /** Workers needed in each time unit, from the blocks (every block counts in every unit it covers). */
@@ -475,6 +491,8 @@ interface LevelOption {
   newFinish: number; lft: number; float: number;
   /** the quick sum: a floor on the finish time of any schedule that holds this activity back this way */
   quick: number;
+  /** the quick sum from this activity alone (the route it grew from may already have more) and the try whose clash it came from (-1: the first clash) */
+  own: number; parent: number;
   /** the holds this option stands for: activity → earliest it may start */
   holds: Record<string, number>;
 }
@@ -554,7 +572,7 @@ export function levelMethod(acts: CpaActivity[], t: CpaTimes, limit: number, cap
   let order = 0;
   const rank = new Map<LevelOption, number>();
   /** the options at a clash of schedule `st`: each activity running at its first moment, held until the next other one finishes */
-  const optionsAt = (clash: LevelClash, st: Record<string, number>, holds: Record<string, number>, floor: number): LevelOption[] => {
+  const optionsAt = (clash: LevelClash, st: Record<string, number>, holds: Record<string, number>, floor: number, parent: number): LevelOption[] => {
     const out: LevelOption[] = [];
     for (const x of clash.ids) {
       const others = clash.ids.filter((y) => y !== x);
@@ -564,7 +582,7 @@ export function levelMethod(acts: CpaActivity[], t: CpaTimes, limit: number, cap
       const nh = { ...holds, [x]: Math.max(holds[x] ?? 0, until) };
       const ns = holdSchedule(acts, nh);
       const newFinish = ns[x] + dur[x];
-      const o: LevelOption = { held: x, wait, until, newFinish, lft: t.lf[x], float: t.float[x], quick: Math.max(floor, T + Math.max(0, newFinish - t.lf[x])), holds: nh };
+      const o: LevelOption = { held: x, wait, until, newFinish, lft: t.lf[x], float: t.float[x], own: T + Math.max(0, newFinish - t.lf[x]), quick: Math.max(floor, T + Math.max(0, newFinish - t.lf[x])), parent, holds: nh };
       rank.set(o, order++);
       out.push(o);
     }
@@ -573,7 +591,7 @@ export function levelMethod(acts: CpaActivity[], t: CpaTimes, limit: number, cap
   const cmp = (a: LevelOption, b: LevelOption) =>
     a.quick - b.quick || Number(b.float > 0) - Number(a.float > 0) || b.float - a.float || a.held.localeCompare(b.held) || rank.get(a)! - rank.get(b)!;
   const key = (h: Record<string, number>) => Object.keys(h).sort().map((k) => `${k}:${h[k]}`).join(",");
-  const list = optionsAt(firstClash, root, {}, T);
+  const list = optionsAt(firstClash, root, {}, T, -1);
   base.options = [...list].sort(cmp);
   const seen = new Set(list.map((o) => key(o.holds)));
   let best = Infinity, bestStarts = root, bestQuick = T;
@@ -585,10 +603,11 @@ export function levelMethod(acts: CpaActivity[], t: CpaTimes, limit: number, cap
     const st = holdSchedule(acts, o.holds);
     const clash = firstClashOf(acts, st, limit);
     const finish = Math.max(...acts.map((a) => st[a.id] + dur[a.id]));
-    const knockOns = acts.filter((a) => a.id !== o.held && st[a.id] > root[a.id] && a.preds.some((q) => st[q] + dur[q] > root[q] + dur[q])).map((a) => a.id);
+    const from = o.parent < 0 ? root : base.tries[o.parent].starts;
+    const knockOns = acts.filter((a) => a.id !== o.held && st[a.id] > from[a.id] && a.preds.some((q) => st[q] + dur[q] > from[q] + dur[q])).map((a) => a.id);
     const added: LevelOption[] = [];
     if (clash) {
-      for (const c of optionsAt(clash, st, o.holds, o.quick)) { const k = key(c.holds); if (!seen.has(k)) { seen.add(k); list.push(c); added.push(c); } }
+      for (const c of optionsAt(clash, st, o.holds, o.quick, base.tries.length)) { const k = key(c.holds); if (!seen.has(k)) { seen.add(k); list.push(c); added.push(c); } }
     } else if (finish < best) { best = finish; bestStarts = st; bestQuick = o.quick; }
     base.tries.push({ option: o, starts: st, knockOns, finish, clash, added });
   }
@@ -607,6 +626,10 @@ interface LevelData {
   newTime: number;
   /** the method's working (quick sums, ranked list, tries) — present for the three-level questions */
   method?: LevelMethod;
+  /** the histogram of each try, in order (the three-level questions) */
+  tryHist?: HistogramData[];
+  /** what the question asks (the three-level questions) */
+  wording?: "time" | "extra" | "startLast" | "explain";
   /** what the histogram is read against: the cascade chart (floats dashed), a table of floats, or the network */
   ref?: "cascade" | "floats" | "network";
   /** "Which could be a correctly levelled histogram?": three options, one valid and two that break a rule (the limit, or an activity starting before the ones it follows are done) */
@@ -1119,7 +1142,13 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     stepStack(afterBlocks, T2, [], true);
     const afterProfile = histProfile(afterBlocks, T2);
     const after: HistogramData = { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile };
-    data.extra = { histogram: before, level: { limit, before, after, starts, delayed, over: overLimit(before.profile, limit), newTime: T2, ref: opts.levelRef ?? "cascade", method: m } };
+    data.extra = { histogram: before, level: { limit, before, after, starts, delayed, over: overLimit(before.profile, limit), newTime: T2, ref: opts.levelRef ?? "cascade", method: m, wording, tryHist: m.tries.map((tr) => {
+      const held = new Set(Object.keys(tr.option.holds));
+      const bl: HistBlock[] = acts.map((a) => ({ id: a.id, start: tr.starts[a.id], end: tr.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: held.has(a.id) }));
+      stepStack(bl, tr.finish, [], true);
+      const pr = histProfile(bl, tr.finish);
+      return { blocks: bl, T: tr.finish, peak: Math.max(...pr), profile: pr };
+    }) } };
     if ((opts.levelRef ?? "cascade") === "cascade") data.extra.cascade = cascadeData(acts, times, "early", "rows", "blocks");
     const several = wk !== "one";
     const clash = m.firstClash!;
