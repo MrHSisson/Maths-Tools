@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Name Wheel: settings hidden from the board
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/NameWheel.tsx`.
+
+- **The page shows only the wheel, Spin and who has been picked.** The saved-wheels pills, the names table, paste a list, colours, sound, shuffle and clear are in a Wheel settings dialog opened from a small, faint gear in the top-right corner (a full-screen sheet on a phone; Done, Escape or a tap outside closes it on larger screens). The gear is hidden while the wheel spins. Shuffle and "Clear the picked list" moved into the dialog; the wheel's name shows quietly under the title.
+- Checked in a browser at 390 and 1366 wide: no inputs or settings words on the page at the start, two wheels made and switched from the dialog, a spin, the picked list surviving a reload, no sideways scroll, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-07 — Advent Calendar: big reveal and doors that open on their date
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`.

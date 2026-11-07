@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Plus, Copy, Trash2, X } from "lucide-react";
+import { Home, Plus, Copy, Trash2, X, Settings } from "lucide-react";
 import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 
@@ -82,6 +82,7 @@ export default function NameWheel() {
   const [bulk, setBulk] = useState("");
   const [focusRow, setFocusRow] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotRef = useRef(0);
@@ -240,6 +241,12 @@ export default function NameWheel() {
 
   const closeDialog = useCallback(() => setResult(null), []);
   useEffect(() => {
+    if (!settingsOpen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setSettingsOpen(false); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [settingsOpen]);
+  useEffect(() => {
     if (!result) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeDialog(); };
     document.addEventListener("keydown", h);
@@ -249,7 +256,6 @@ export default function NameWheel() {
   const actions = (
     <>
       <button type="button" onClick={spin} disabled={!canSpin} className={`${primary} ${phone ? "flex-1" : "px-10"}`}>Spin</button>
-      <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle</button>
     </>
   );
 
@@ -260,7 +266,44 @@ export default function NameWheel() {
           <Home size={18} /> Home
         </button>
         <h1 className="text-3xl font-semibold text-slate-900">Name Wheel</h1>
+        {wheel.name.trim() && <p className="mt-1 text-slate-500">{wheel.name}</p>}
 
+        <div className="mx-auto mt-5 max-w-xl">
+          {/* the wheel */}
+          <div>
+            <div className="relative mx-auto aspect-square w-full max-w-[520px]">
+              <canvas ref={canvasRef} onClick={spin} aria-label="Name wheel. Click to spin." className="block h-full w-full cursor-pointer rounded-full shadow-lift" />
+              <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
+                <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
+              </svg>
+              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
+            </div>
+            <p className="mt-3 min-h-[1.75em] text-center text-xl font-semibold text-slate-800 [overflow-wrap:anywhere]" aria-hidden="true">{current}</p>
+            {!phone && <div className="mt-2 flex justify-center gap-3">{actions}</div>}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
+            <h2 className="text-sm font-semibold text-slate-900">Picked so far</h2>
+            {wheel.winners.length === 0
+              ? <p className="mt-1 text-sm italic text-slate-400">Nobody yet.</p>
+              : <ol className="mt-1.5 list-decimal pl-6 text-slate-800">{wheel.winners.map((w, i) => <li key={i}>{w}</li>)}</ol>}
+          </div>
+        </div>
+      </div>
+
+      <button type="button" onClick={() => setSettingsOpen(true)} disabled={spinning} aria-label="Wheel settings" title="Wheel settings"
+        className="fixed right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:hidden">
+        <Settings size={20} />
+      </button>
+
+      {/* Wheel settings: hidden from the board until opened from the small gear in the corner */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-5" onClick={e => { if (e.target === e.currentTarget) setSettingsOpen(false); }}>
+          <div role="dialog" aria-modal="true" aria-label="Wheel settings" className={`w-full max-w-2xl overflow-y-auto bg-white p-4 shadow-lift ${phone ? "h-full" : "max-h-[92vh] rounded-2xl border border-slate-300"}`}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900">Wheel settings</h2>
+              <button type="button" onClick={() => setSettingsOpen(false)} className={primary}>Done</button>
+            </div>
         {/* saved wheels */}
         <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Saved wheels">
           {store.wheels.map(w => (
@@ -276,22 +319,6 @@ export default function NameWheel() {
           </button>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          {/* the wheel */}
-          <div>
-            <div className="relative mx-auto aspect-square w-full max-w-[520px]">
-              <canvas ref={canvasRef} onClick={spin} aria-label="Name wheel. Click to spin." className="block h-full w-full cursor-pointer rounded-full shadow-lift" />
-              <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
-                <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
-              </svg>
-              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
-            </div>
-            <p className="mt-3 min-h-[1.75em] text-center text-xl font-semibold text-slate-800 [overflow-wrap:anywhere]" aria-hidden="true">{current}</p>
-            {!phone && <div className="mt-2 flex justify-center gap-3">{actions}</div>}
-          </div>
-
-          {/* names */}
-          <div className={`${card} p-4`}>
             <div className="flex items-center gap-2">
               <input value={wheel.name} onChange={e => patch({ name: e.target.value })} aria-label="Wheel name" placeholder="Wheel name"
                 className="min-w-0 flex-1 rounded-lg border border-transparent px-1.5 py-1 text-lg font-semibold text-slate-900 hover:border-slate-300 focus:border-slate-300" />
@@ -352,19 +379,13 @@ export default function NameWheel() {
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={store.sound} onChange={e => setStore(s => ({ ...s, sound: e.target.checked }))} /> Tick sound</label>
             </div>
-
-            <div className="mt-4 border-t border-slate-200 pt-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Picked so far</h2>
-                {wheel.winners.length > 0 && <button type="button" onClick={() => patch({ winners: [] })} className="text-sm font-semibold text-slate-500 hover:text-slate-800">Clear</button>}
-              </div>
-              {wheel.winners.length === 0
-                ? <p className="mt-1 text-sm italic text-slate-400">Nobody yet.</p>
-                : <ol className="mt-1.5 list-decimal pl-6 text-slate-800">{wheel.winners.map((w, i) => <li key={i}>{w}</li>)}</ol>}
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+              <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle the order</button>
+              <button type="button" onClick={() => patch({ winners: [] })} disabled={wheel.winners.length === 0} className={secondary}>Clear the picked list</button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {phone && <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white px-4 py-3">{actions}</div>}
 
