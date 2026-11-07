@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Confetti when a name is revealed (Name Wheel, Advent Calendar)
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Confetti.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`.
+
+- **A confetti burst when a name is revealed**: two fountains from the lower corners and a shower from the top, about four seconds, fading out. On the Name Wheel it uses the wheel's own colours and fires with each pick; on the Advent Calendar it uses gold, red, green and cream and fires when a door with a name opens (not for a greeting door). It never catches a tap, and nothing plays for a device set to reduced motion.
+- It is one shared component (`Confetti`) that any reveal can mount.
+- Checked in a browser at 390 and 1366 wide: nothing painted before a reveal, confetti painted after it and gone by the end, it ignores the pointer, none for a greeting door, none with reduced motion, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-07 — Name Wheel: settings hidden from the board
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/NameWheel.tsx`.

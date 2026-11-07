@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Lock, Settings } from "lucide-react";
+import { Confetti } from "../../shared/components/Confetti";
 
 // Advent Calendar: 25 doors, each hiding a name (or a greeting). Names are typed or pasted by the teacher and kept
 // on this device only (localStorage); nothing is sent anywhere. A door opens to a large reveal card so the whole class
@@ -261,6 +262,7 @@ export default function AdventCalendar() {
         </div>
       )}
 
+      {revealed !== null && assigned[revealed] && <Confetti key={revealed} colours={["#d9b45b", "#f1dc9b", "#a81f2e", "#1f7351", "#fbf5e6"]} />}
       {revealed !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5" style={{ background: "rgba(5,20,15,.82)" }}
           onClick={e => { if (e.target === e.currentTarget) closeReveal(); }}>
