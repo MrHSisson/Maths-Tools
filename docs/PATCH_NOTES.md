@@ -42,7 +42,7 @@ Branch `claude/new-session-6gg0my` (on top of session 1, which is not merged yet
 Not done: the new stacking order for drawn histograms (critical path on the bottom row, then longest to shortest) and the histogram tab (session 3); the phone and tablet layouts of the new steps were not checked.
 
 Agent: Claude Code
-Notes: planner Build Log block not written yet for this session.
+Notes: planner Build Log block "2026-11-07 — Resource levelling: the walkthrough, session 2 of 3 (Claude Code)".
 
 ## 2026-11-07 — Resource levelling: the method, the three levels and the question options (session 1 of 3)
 
