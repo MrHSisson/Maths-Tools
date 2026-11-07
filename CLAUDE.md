@@ -359,7 +359,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Geometry | `src/tools/Geometry/` | amber → orange |
 | Pure Mathematics (A-level) | `src/tools/Algebra/` (Factor Theorem, Partial Fractions, Binomial Expansion) | indigo → blue |
 | Decision Mathematics (A-level) | `src/tools/Decision/` | rose → red |
-| Classroom (Visualiser; shown on every subject tab) and Workshop (internal pages, Developing-tools mode only) | `src/tools/TeacherTools/` | violet → purple |
+| Classroom (Visualiser, Name Wheel, Advent Calendar; its own landing tab) and Workshop (internal pages, Developing-tools mode only, same tab) | `src/tools/TeacherTools/` | violet → purple |
 | Interactive Tools | `src/tools/Interactive/` | lime → green |
 | Computer Science, group "Binary & number bases" (procedural generators on ToolShell) beside group "Computer systems" (CSShell revision topics) | `src/tools/Binary/` and `src/tools/ComputerScience/` | slate → slate |
 | Computer Science | `src/tools/ComputerScience/` | slate → slate |

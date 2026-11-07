@@ -29,6 +29,127 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Landing page: subject drop-down on a phone
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`.
+
+- **On a phone the subject tabs (GCSE Maths, A-Level, Computer Science, Classroom) are a drop-down** instead of a row that scrolls sideways: one full-width button showing the current subject, opening a list of the four (large tap targets, a dot on the current one; a tap outside or Escape closes it). Tablet and laptop keep the underline tabs. It follows the "View as" setting (`useLayoutMode`).
+- Checked in a browser at 390, 1024 and 1366 wide: a drop-down only on the phone, four options, choosing Classroom shows its tools and closes the list, an outside tap closes it, tabs on tablet and laptop, no sideways scroll, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-07 — Decision Maths landing page and legacy D1 / D2 map; shared spec landing page
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/SpecLanding.tsx` (new), `src/tools/Decision/decisionSpec.ts` and `DecisionOverview.tsx` (new), `src/tools/FurtherMechanics/`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **A Decision Maths landing page, `/decision-overview`** (Developing-tools only, in the Decision Mathematics strand; asks for the password itself). Seven chapter cards (DA Graphs, DB Networks, DC Network flows, DD Linear programming, DE Critical path analysis, DF Game theory, DG Binary operations) with an A-level / AS switch; a chapter opens to its statements (AS or A2 tag, legacy module, an (i) for why), the tools built for it and its question banks. The tools come from the registry, so a chapter's state (Live, Partly live, In development, Not built yet) is never typed; the page links to each tool.
+- **The old course is two modules, D1 and D2, and they were mapped** by reading the AQA D1 and D2 combined papers on PMT (keyword counts, not a question-by-question read). D1: graphs, MST, route inspection, TSP bounds, graphical LP. D2: simplex, critical path with cascade diagrams and resource histograms, network flows, game theory. **Not found in either (so new to 7367): planar graphs and Euler's formula (DA3), Kuratowski (DA4), isomorphism (DA7), dominated strategies (DF4), games as linear programmes (DF6), upper and lower capacities and restricted nodes (DC6, DC7), and all of binary operations and groups (DG).** Legacy content the spec no longer asks for (sorting, bin packing, Dijkstra, matchings, allocation, dynamic programming) is listed under "Not in the current spec". All 74 links across both spaces were opened and return 200.
+- **Further Mechanics and Decision now share one page component**, `SpecLanding` (the look, the AS filter, the chapter view, the papers view), each supplying only its data and words; the Further Mechanics page looks and behaves as before.
+- **The year tabs read AS then A-level** on both landing pages (they were A-level then AS), and both now open on AS, the first tab.
+- Checked in a browser at 390 and 1366 wide: the password gate, seven chapters, AS filter, the Networks chapter listing its three tools with Live / Dev, the not-in-spec list, mechanics unchanged, no sideways scroll, no console errors.
+
+Deliberately not done: no pathway or task added for Decision (waiting for Harry); the Decision tools themselves were not touched; the network notation of the legacy CPA questions (arc or node) could not be read from the text; the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-07 — Balloons rise when the wheel picks a name
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Balloons.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`.
+
+- **Balloons float up the screen with the confetti when the Name Wheel reveals a pick**: 16 on a laptop and 10 on a phone, in the wheel's own colours, shaded with a highlight, a knot and a wavy string, swaying as they rise and leaving at the top over about ten seconds. They never catch a tap (the Remove and Keep buttons work underneath), and a device set to reduced motion gets none. It is a shared component (`Balloons`) like `Confetti`.
+- Checked in a browser at 390 and 1366 wide: nothing before a reveal, balloons painted during it and cleared by the end, none with reduced motion, no console errors.
+
+Not done: the Advent Calendar has confetti but no balloons (not asked for); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-07 — Confetti when a name is revealed (Name Wheel, Advent Calendar)
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Confetti.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`.
+
+- **A confetti burst when a name is revealed**: two fountains from the lower corners and a shower from the top, about four seconds, fading out. On the Name Wheel it uses the wheel's own colours and fires with each pick; on the Advent Calendar it uses gold, red, green and cream and fires when a door with a name opens (not for a greeting door). It never catches a tap, and nothing plays for a device set to reduced motion.
+- It is one shared component (`Confetti`) that any reveal can mount.
+- Checked in a browser at 390 and 1366 wide: nothing painted before a reveal, confetti painted after it and gone by the end, it ignores the pointer, none for a greeting door, none with reduced motion, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-07 — Name Wheel: settings hidden from the board
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/NameWheel.tsx`.
+
+- **The page shows only the wheel, Spin and who has been picked.** The saved-wheels pills, the names table, paste a list, colours, sound, shuffle and clear are in a Wheel settings dialog opened from a small, faint gear in the top-right corner (a full-screen sheet on a phone; Done, Escape or a tap outside closes it on larger screens). The gear is hidden while the wheel spins. Shuffle and "Clear the picked list" moved into the dialog; the wheel's name shows quietly under the title.
+- Checked in a browser at 390 and 1366 wide: no inputs or settings words on the page at the start, two wheels made and switched from the dialog, a spin, the picked list surviving a reload, no sideways scroll, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-07 — Advent Calendar: big reveal and doors that open on their date
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`.
+
+- **A big reveal.** Tapping a door swings it open and shows the name large on a card over the calendar, so the whole class can read it. The card has Done (or Escape, or a tap outside) and "Close this door again"; tapping an open door shows its card again. A door is no longer closed by tapping it.
+- **Doors that open on a schedule you set (optional, in Teacher controls, default off, remembered).** Harry's class starts on a Monday in November, so doors are not tied to December dates. With it on you pick the day door 1 opens (it defaults to today, or the coming Monday at a weekend) and whether to skip weekends (on by default); one more door opens each day (each school day). Doors stay shut until their day: dimmed with a lock, and tapping one says when it opens. The door backs show their day, today's door glows, the subtitle says "Today is door N" (or when door 1 opens), and the controls show when door 25 opens and how many can be opened today. Open all opens only the open doors. With it off, any door opens at any time and the backs say "Door N".
+- **The name entry and settings are hidden from the board.** The Teacher controls bar is gone from the page; everything (names, shuffle, schedule, open and close all) now sits in a dialog opened from a small, faint gear in the top-right corner (Done, Escape or a tap outside closes it). Nothing about names or controls shows while the calendar is on the board.
+- Kept: the festive background, snow and doors, and the names saved on this device only.
+- Checked in a browser (390 and 1366 wide) with the date fixed on a Saturday before the start, the Monday start, a Wednesday, a weekend and the second Monday (start Monday 9 November, school days): 0, 1, 3, 5 and 6 doors open, today's door marked only on school days, door 25 on Friday 11 December, the settings survive a reload, no sideways scroll, no console errors. (An earlier version of this entry tied doors to December 1 to 25; that did not fit a class starting in November.)
+
+Not done: no saved calendars and no restyle to the site chrome (not asked for); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-06 — Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`, `src/registry.ts`, `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/FurtherMechanics/`, `CLAUDE.md`.
+
+- **Classroom is its own landing tab.** The Visualiser, the classroom sandboxes and the Workshop pages no longer repeat at the bottom of GCSE Maths, A-Level and Computer Science: the strands that were subject "All subjects" are now subject "Classroom", and the tab row has four tabs (it scrolls sideways on a phone). Workshop still shows only in Developing-tools mode.
+- **Name Wheel redone in the site's own style** (page background, white cards with the soft border and shadow, blue-900 buttons, pill and underline controls, a fixed bottom Spin bar on a phone), dropping the festive look; four colour sets, Festive being one. **Several wheels can be saved**: a row of pills switches between them, with New wheel, rename, duplicate and delete (with a confirm). Each wheel keeps its own names, entries, colours and picked list; the list from the earlier single-wheel version is carried over as the first wheel. Stored on this device only.
+- **Further Mechanics stripped to a landing page.** Five chapter cards (with an A-level / AS switch; a chapter with no AS content is greyed) open to that chapter's statements, each with its AS or A2 tag, the printed formula, the legacy module and an (i) for the note on why. The stat tiles, the check write-up and the general links moved behind one "Older papers and question banks" card. Styled like the rest of the site; no longer the look of the supplied file. Still Developing-tools only.
+- Checked in a browser at 390 and 1366 wide: the tabs, the Classroom tab's contents, two wheels surviving a reload, a spin, the AS filter, no sideways scroll, no console errors.
+
+Not done: the Advent Calendar keeps the festive look it was built with (it is a Christmas tool); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-06 — Name Wheel and Advent Calendar (Classroom, dev-gated)
+
+Branch `claude/gifted-pasteur-8ubr0a` (the same session as the Further Mechanics entry below). Areas: `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **Two classroom sandboxes, rebuilt in React from Harry's standalone HTML files.** Name Wheel: a wheel with extra entries per name, a chance column, paste-a-list, shuffle, a tick sound, six themes, a picked-so-far list and a "remove from wheel" prompt after each spin. Advent Calendar: 25 doors that swing open, a name or a greeting behind each, teacher controls to paste names, shuffle, open all and close all.
+- Both keep their names on the device only (localStorage, same keys as the originals) and send nothing anywhere. Both are in the Classroom category with `enabled: false`, so they are listed only in Developing-tools mode; the dashboard files them as sandboxes.
+- Kept from the originals: the festive look (Advent Calendar; Name Wheel's Christmas theme is the default) and the behaviour. Changed: Georgia in place of the Fraunces web font (the site loads no web fonts), no fixed `showEditor` setting, and a name-wheel label threshold that is now a fixed 100 entries.
+- Checked in a browser at 390 and 1366 wide: names land on doors, open-all and the saved state survive a reload, a spin ends in the prompt and removes the winner's row, no sideways scroll, no console errors.
+
+Deliberately not done: no About panel, no print, no phone-specific layout beyond responsive widths; the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
+## 2026-11-06 — Further Mechanics space (AQA 7367 MA–ME), dev-gated
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `specs/exam/spec/aqa-mechanics.md`, `src/tools/FurtherMechanics/` (page and data), `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
+
+- **The spec is in the repo.** `specs/exam/spec/aqa-mechanics.md` holds the 25 mechanics statements (MA 2, MB 4, MC 7, MD 6, ME 6) quoted from the AQA A-level (7367) and AS (7366) specifications, with an AS / A2 column: 16 are in AS and 9 are A2 only (MD4 to MD6 and all of ME); MB1 to MB3, MC1 and MC7 are in both but without resolving, or without Fd cos θ, at AS.
+- **A new space for it, `/further-mechanics`.** One page, a card per chapter: each statement with its AS or A2 badge, the AS limit, the printed formula, and the legacy AQA module it came from; a year filter (all / AS only) and a chapter filter; the question banks found for each chapter (45 links, each opened and returning 200). Developing-tools only: the registry entry is `enabled: false` (listed on the landing page only in Developing-tools mode, category "Further Mechanics" under A-Level) and the page asks for the Developing tools password itself. No question tools yet; each chapter card says "Tool: not built yet".
+- **The first legacy map (made by Gemini) was checked** against the AQA legacy M1, M2 and M3 combined papers on PMT. Most of it holds; vertical circles, work by a variable force and centres of mass by integration moved from M4 to M2, impulse moved to M3, MC7 (Power) was missing, every topic-pack link was dead, and nothing in M4 / M5 could be checked (PMT has no AQA M4 / M5 papers; its M3 and M4 topic pages are Edexcel). The findings are on the page.
+- Checked in a browser at 390, 1024 and 1366 wide: the password gate shows, 25 statements show, 16 under AS only, ME hides under AS only, no horizontal scroll, no console errors; with Developing tools off the landing page does not list it.
+
+Deliberately not done: no pathway or task added (waiting for Harry); the planner Build Log, Handoff note and the dashboard note for this entry were not written; the legacy mapping for M4 is still unverified; no question generators.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (see "Deliberately not done").
+
 ## 2026-11-05 — Flowchart loop arrow timing; Leave full screen back on the bar; timer in two rows
 
 Branch `claude/hopeful-allen-l6enha`. Areas: `src/decks/flowchart.ts`, `src/decks/PlayerBar.tsx`, `src/decks/DeckPage.tsx`, the live deck `primes-divisibility`, tests, docs.

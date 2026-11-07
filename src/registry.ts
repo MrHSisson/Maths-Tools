@@ -35,7 +35,7 @@ interface ToolMeta {
 interface CategoryMeta {
   name: string;
   /** Top-level subject the landing page groups this category under.
-   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands; "All subjects" for a strand every subject tab shows (Classroom, Workshop). */
+   *  Defaults to "GCSE Maths" when omitted. Set "A-Level" for A-Level strands (Pure, Decision) and "Computer Science" for CS strands; "Classroom" for the Classroom tab (the Visualiser, classroom sandboxes and the Workshop pages). */
   subject?: string;
   tools: ToolMeta[];
 }
@@ -133,6 +133,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Decision Mathematics',
     subject: 'A-Level',
     tools: [
+      { id: 'decision-overview', path: '/decision-overview', name: 'Decision Overview', description: 'AQA 7367 Discrete (DA–DG) chapter by chapter: AS and A2 content, the link back to the legacy D1 and D2 papers, the tools built so far and their question banks. Planning space for the Decision tools.', enabled: false, load: () => import('./tools/Decision/DecisionOverview') },
       { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Free workspace for Decision Maths: load any graph from the shared bank, change weights, drag vertices, show the table — the same board that opens from every Decision question', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
       { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },
       { id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Upper bound (nearest neighbour), lower bound (deleted vertex) and the interval for the optimal tour of the travelling salesperson problem — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
@@ -140,6 +141,13 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
       { id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
       { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
+    ],
+  },
+  {
+    name: 'Further Mechanics',
+    subject: 'A-Level',
+    tools: [
+      { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME) chapter by chapter: AS and A2 content, the link back to the legacy M1–M3 papers and their question banks. Planning space for the Further Mechanics tools.', enabled: false, load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
     ],
   },
   {
@@ -158,14 +166,16 @@ export const CATEGORIES: CategoryMeta[] = [
   },
   {
     name: 'Classroom',
-    subject: 'All subjects',
+    subject: 'Classroom',
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
+      { id: 'name-wheel', path: '/name-wheel', name: 'Name Wheel', description: 'Spin a wheel to pick a name at random, with extra entries per name, six themes and a list of who has been picked. The list stays on this device.', enabled: false, load: () => import('./tools/TeacherTools/NameWheel') },
+      { id: 'advent-calendar', path: '/advent-calendar', name: 'Advent Calendar', description: 'A 25-door advent calendar with a pupil name (or a greeting) behind each door. The names stay on this device.', enabled: false, load: () => import('./tools/TeacherTools/AdventCalendar') },
     ],
   },
   {
     name: 'Workshop',
-    subject: 'All subjects',
+    subject: 'Classroom',
     tools: [
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', enabled: false, load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'skills', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
