@@ -668,8 +668,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     ...extra,
   });
   const dimmed = (keep: string[]) => ids.filter((id) => !keep.includes(id));
-  const sumText = (cs: string[]) => (several ? `${cs.map(wk).join(" + ")} = ${cs.reduce((n, c) => n + wk(c), 0)}` : `${cs.length}`);
-  const clashLine = (c: { ids: string[]; need: number }) => `${cpaList(c.ids)} cannot all run at the same time: ${several ? sumText(c.ids) : `that needs ${c.need} workers`} ${several ? `> ${lv.limit}` : `and only ${lv.limit} are available`}.`;
+  const clashLine = (c: { ids: string[]; need: number }) => `${cpaList(c.ids)} cannot all run together: ${several ? `${c.ids.map(wk).join(" + ")} = ${c.need}` : c.need} > ${lv.limit}.`;
   // every option that has joined the list so far, as chips (tried ones coloured by what they led to; the rest waiting)
   const everyOption: Opt[] = [...m.options, ...m.tries.flatMap((tr) => tr.added)];
   const chips = (upto: number, cur?: number) => {
@@ -698,19 +697,16 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const first = m.firstClash!;
   const firstBand = lv.over.find((o) => o.from === first.from) ?? { from: first.from, to: first.to, need: first.need };
   steps.push(mk(
-    `Without a limit the project takes ${T} ${u}. Draw the resource histogram with every activity at its earliest start, and the limit line at ${lv.limit}. Adding up the workers needed in each ${u1}: ${lv.over.map((o) => `from ${o.from} to ${o.to} it needs ${o.need}, more than ${lv.limit}`).join("; ")}. Each of those is a clash.`,
+    `No limit: ${T} ${u}. Over the limit: ${lv.over.map((o) => `${o.from}–${o.to} needs ${o.need}`).join("; ")}.`,
     "The histogram", { which: "before", showOver: true, labelOver: true },
   ));
   // 2. the first clash
-  steps.push(mk(
-    `Look at the first clash, from ${firstBand.from} to ${firstBand.to}. ${cpaList(first.ids)} are all running then, including any that started earlier. ${clashLine(first)} Something has to wait.`,
-    "The first clash", { which: "before", clash: firstBand, dim: dimmed(first.ids) },
-  ));
+  steps.push(mk(`First clash, ${firstBand.from}–${firstBand.to}: ${clashLine(first)}`, "The first clash", { which: "before", clash: firstBand, dim: dimmed(first.ids) }));
   // 3. the quick sums
   const top = m.options[0];
   const tied = m.options.filter((o) => o.quick === top.quick);
   steps.push(mk(
-    `An option holds one of them back until the next activity in the clash finishes. Its quick sum is ${T} (the time with no limit) + (its new finish − its latest finish time, LFT); if it would still finish by its LFT the time is unchanged. A quick sum is a floor: that option can finish later than its quick sum, never earlier. ${tied.length > 1 ? `${cpaList(tied.map((o) => o.held))} tie on ${top.quick}: take one with float, ${top.held} (float ${top.float}).` : `The smallest is hold ${top.held}, ${top.quick}.`} Try it first.`,
+    `Quick sum = ${T} + (new finish − LFT), or ${T} if it finishes by its LFT. Try the smallest${tied.length > 1 ? ` (tie: take one with float)` : ""}: hold ${top.held}, ${top.quick}.`,
     "Quick sums", { which: "before", showOver: true, labelOver: true, quick: rowsOf(m.options) }, top.held,
   ));
   // 4. each try (and, when a clash is left, the new clash and its quick sums joining the same list)
@@ -720,16 +716,11 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     const old = parent.blocks.find((b) => b.id === o.held)!;
     const st = tr.starts[o.held];
     const winner = !tr.clash && tr.finish === m.minimum && k === m.tries.length - 1;
-    const intro = k === 0 || o.parent === k - 1
-      ? `Try hold ${o.held}.`
-      : `The smallest on the whole list is now hold ${o.held} (${o.quick}), so go back to it.`;
-    const moved = `${o.held} waits until ${o.wait} finishes, at ${o.until}, so it runs from ${st} to ${st + d.acts.find((a) => a.id === o.held)!.duration}${o.newFinish > o.lft ? `, ${o.newFinish - o.lft} after its LFT of ${o.lft}` : `, still by its LFT of ${o.lft}`}.`;
-    const knock = tr.knockOns.length ? ` ${cpaList(tr.knockOns)} cannot start until ${tr.knockOns.length > 1 ? "their" : "its"} predecessors finish, so ${tr.knockOns.length > 1 ? "they start" : "it starts"} later too (a knock-on).` : " Nothing else has to move.";
-    const verdict = tr.clash
-      ? ` Check the histogram: there is still a clash from ${tr.clash.from} to ${tr.clash.to}, needing ${tr.clash.need} workers when only ${lv.limit} are available.`
-      : ` Check the histogram: it never goes above ${lv.limit}, so there is no clash left.${winner ? ` The finish, ${tr.finish}, equals its quick sum, so this is the minimum: no other option can do better.` : ""}`;
+    const back = k > 0 && o.parent !== k - 1 ? "Back to the list: " : "";
+    const knock = tr.knockOns.length ? ` Knock-on: ${cpaList(tr.knockOns)}.` : "";
+    const verdict = tr.clash ? ` Clash left, ${tr.clash.from}–${tr.clash.to}.` : ` No clash left${winner ? `: ${tr.finish} equals its quick sum, so it is the minimum.` : "."}`;
     steps.push(mk(
-      `${intro} ${moved}${knock}${verdict}`,
+      `${back}Hold ${o.held} until ${o.wait} finishes (${o.until}): it runs ${st}–${st + d.acts.find((a) => a.id === o.held)!.duration}.${knock}${verdict}`,
       `Try ${k + 1}: hold ${o.held}`,
       { which: "try", tryIndex: k, showOver: true, labelOver: true, knock: tr.knockOns, ghost: { id: o.held, start: old.start, end: old.end, workers: old.workers, y: histBaseAt(old, old.start) } },
       o.held,
@@ -738,7 +729,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     if (tr.clash && k < m.tries.length - 1) {
       const next = m.tries[k + 1].option;
       steps.push(mk(
-        `A knock-on clash. ${clashLine(tr.clash)} Do the quick sums at this clash and add them to the same list (an option cannot be lower than the ${o.quick} this route already has). Then always take the smallest on the whole list: that is hold ${next.held}, ${next.quick}.`,
+        `New clash, ${tr.clash.from}–${tr.clash.to}: ${clashLine(tr.clash)} Its quick sums join the list. Smallest overall: hold ${next.held}, ${next.quick}.`,
         `Clash left after try ${k + 1}`,
         { which: "try", tryIndex: k, clash: { from: tr.clash.from, to: tr.clash.to, need: tr.clash.need }, dim: dimmed(tr.clash.ids), quick: rowsOf(tr.added) },
         o.held,
@@ -750,7 +741,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const n = m.tries.length;
   const waiting = everyOption.filter((o) => !m.tries.some((tr) => tr.option === o));
   steps.push(mk(
-    `${n} option${n > 1 ? "s" : ""} checked. ${waiting.length ? `The others can't beat ${m.minimum}: their quick sums (${waiting.map((o) => `${o.held} until ${o.until}: ${o.quick}`).join(", ")}) are all ${m.minimum} or more, and an option never finishes below its quick sum.` : `Every option on the list was tried.`} So ${m.minimum} ${u} is the minimum.`,
+    `${n} option${n > 1 ? "s" : ""} tried.${waiting.length ? ` The others can't beat ${m.minimum}: each is at least ${Math.min(...waiting.map((o) => o.quick))}.` : ""}`,
     "The check", { which: "try", tryIndex: n - 1 }, undefined, { list: chips(n, n - 1) },
   ));
   // 6. the answer and the write-up
@@ -760,18 +751,19 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const sinks = d.acts.filter((a) => !d.acts.some((b) => b.preds.includes(a.id)));
   const extra = m.minimum - T;
   const ask = lv.wording ?? "time";
-  const answer = ask === "extra" ? `The minimum extra time is ${extra} ${extra === 1 ? u1 : u}.`
-    : ask === "startLast" && sinks.length === 1 ? `Activity ${sinks[0].id} starts at ${m.starts[sinks[0].id]}; the minimum completion time is ${m.minimum} ${u}.`
-    : `The minimum completion time is ${m.minimum} ${u}, ${extra} ${extra === 1 ? u1 : u} more than the ${T} with no limit.`;
+  const answer = ask === "extra" ? `Minimum extra time: ${extra} ${extra === 1 ? u1 : u}.`
+    : ask === "startLast" && sinks.length === 1 ? `${sinks[0].id} starts at ${m.starts[sinks[0].id]}; minimum completion time ${m.minimum} ${u}.`
+    : `Minimum completion time: ${m.minimum} ${u} (${extra} more than ${T}).`;
   const writeUp = `${cpaList(first.ids)} cannot run at the same time, as that needs ${first.need} workers and only ${lv.limit} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
   const model = [
     clashLine(first),
-    `Quick sums: ${m.options.map((o) => `${o.held} (until ${o.until}) ${o.quick}`).join(", ")}`,
-    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} until ${tr.option.until} → ${tr.clash ? `clash again from ${tr.clash.from} (needs ${tr.clash.need})` : `never above ${lv.limit} → ${tr.finish}`}`),
+    `Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}`,
+    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} → ${tr.clash ? `clash left (${tr.clash.from}–${tr.clash.to})` : `no clash → ${tr.finish}`}`),
     answer,
+    writeUp,
   ];
   steps.push(mk(
-    `${answer} Draw the levelled histogram once, to check it: it never goes above ${lv.limit}. (Other ways of delaying can give the same minimum; the finish time is what is fixed.) Write it up: “${writeUp}”`,
+    `${answer} Other ways of delaying can give the same minimum; the finish time is what is fixed.`,
     "Final answer", { which: "after" }, undefined,
     { runningTotal: ask === "extra" ? extra : m.minimum, totalLabel: ask === "extra" ? "Extra time" : "Minimum time", list: { title: "What to write", items: model.map((text) => ({ text, tone: "note" as const })) } },
   ));

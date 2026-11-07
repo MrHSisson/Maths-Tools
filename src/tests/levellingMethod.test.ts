@@ -137,9 +137,40 @@ describe("levelling — the walkthrough follows the method", () => {
           expect(h.T).toBe(m.tries[k].finish);
         });
         // the last try is clash-free and the answer text carries the finish
-        expect(steps[phases.indexOf("Final answer")].caption).toContain("Write it up");
+        expect(steps[steps.length - 1].list!.items[steps[steps.length - 1].list!.items.length - 1].text).toContain("The new minimum completion time is");
         expect(steps[steps.length - 1].histView!.which).toBe("after");
-        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 3);
+        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 4);
+      }
+    });
+  }, 120_000);
+});
+
+describe("drawing rule — critical activities on the bottom, then longest first, no holes", () => {
+  type B = { id: string; start: number; end: number; workers: number; y: number; base?: number[]; critical: boolean };
+  const check = (blocks: B[], T: number) => {
+    for (let t = 0; t < T; t++) {
+      const here = blocks.filter((b) => b.start <= t && t < b.end).sort((a, c) => histBaseAt(a, t) - histBaseAt(c, t));
+      let top = 0;
+      here.forEach((b, i) => {
+        expect(histBaseAt(b, t), `${b.id} at ${t}: no hole, no overhang`).toBe(top);
+        top += b.workers;
+        const below = here[i - 1];
+        if (below && !b.critical) expect(below.critical || below.end - below.start >= b.end - b.start, `${b.id} (shorter) above ${below.id} at ${t}`).toBe(true);
+        if (below && b.critical) expect(below.critical, `critical ${b.id} sits above a non-critical block`).toBe(true);
+      });
+    }
+  };
+  it("the drawn levelled histograms (every try and the final one) and the earliest-start histograms follow it", () => {
+    withSeededRandom(31, () => {
+      for (let i = 0; i < 6; i++) {
+        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, histShape: "step" });
+        const L = g.data.extra!.level!;
+        check(L.after.blocks, L.after.T);
+        L.tryHist!.forEach((h) => check(h.blocks, h.T));
+      }
+      for (let i = 0; i < 6; i++) {
+        const h = generateCpa(3, "cpaHistogram", { paths: "one", workers: "several", histShape: "step" }).data.extra!.histogram!;
+        check(h.blocks, h.T);
       }
     });
   }, 120_000);

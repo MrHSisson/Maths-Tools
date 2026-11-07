@@ -362,7 +362,9 @@ export const histBaseAt = (b: HistBlock, t: number): number => (b.base ? b.base[
 const isStepped = (b: HistBlock): boolean => !!b.base && b.base.some((v) => v !== b.base![0]);
 
 /**
- * (`byTime`: no activity is kept along the bottom for being critical — a levelled histogram is simply built in order of start time, each block dropping onto
+ * The drawing rule (specs/resource-levelling.md): the critical activities along the bottom, then the rest longest first, so shorter blocks end up on top
+ * and steps are rare; a block follows the stack beneath it, so there are never holes or overhangs.
+ * (`byTime`: no activity is kept along the bottom for being critical — the older levelling working is built in order of start time, each block dropping onto
  * whatever is below it and splitting where that changes height, which is the order the levelling working draws them in.)
  * Stack blocks the way a histogram is drawn on paper: the `fixed` ones along the bottom, then every other block on top of whatever is
  * already under it, so a block that spans a place where the stack below changes height has a STEPPED bottom edge (it "jumps up" or down).
@@ -372,7 +374,8 @@ function stepStack(blocks: HistBlock[], T: number, fixed: HistBlock[], byTime = 
   // the order a person draws it in: critical path 1 along the bottom (`fixed`), then the other critical activities, then everything else
   // by earliest start; each block drops onto whatever is already under it, so there is never a gap
   const rest = blocks.filter((b) => !fixed.includes(b))
-    .sort((a, b) => (byTime ? 0 : Number(b.critical) - Number(a.critical)) || a.start - b.start || a.id.localeCompare(b.id));
+    // the drawing rule: critical activities first (along the bottom), then the others longest first, so shorter blocks sit on top and steps are rare
+    .sort((a, b) => (byTime ? a.start - b.start : Number(b.critical) - Number(a.critical) || (b.end - b.start) - (a.end - a.start) || a.start - b.start) || a.id.localeCompare(b.id));
   const height = new Array<number>(T).fill(0);
   const put = (b: HistBlock) => {
     const base: number[] = [];
@@ -1137,13 +1140,13 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const readyAt = (a: CpaActivity) => Math.max(0, ...a.preds.map((q) => starts[q] + acts.find((x) => x.id === q)!.duration));
     const delayed = acts.filter((a) => starts[a.id] > readyAt(a)).map((a) => ({ id: a.id, from: readyAt(a), to: starts[a.id] }));
     const afterBlocks: HistBlock[] = acts.map((a) => ({ id: a.id, start: starts[a.id], end: starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: starts[a.id] > readyAt(a) }));
-    stepStack(afterBlocks, T2, [], true);
+    stepStack(afterBlocks, T2, [], false); // the drawing rule: critical along the bottom, then longest first
     const afterProfile = histProfile(afterBlocks, T2);
     const after: HistogramData = { blocks: afterBlocks, T: T2, peak: Math.max(...afterProfile), profile: afterProfile };
     data.extra = { histogram: before, level: { limit, before, after, starts, delayed, over: overLimit(before.profile, limit), newTime: T2, ref: opts.levelRef ?? "cascade", method: m, wording, tryHist: m.tries.map((tr) => {
       const held = new Set(Object.keys(tr.option.holds));
       const bl: HistBlock[] = acts.map((a) => ({ id: a.id, start: tr.starts[a.id], end: tr.starts[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: held.has(a.id) }));
-      stepStack(bl, tr.finish, [], true);
+      stepStack(bl, tr.finish, [], false);
       const pr = histProfile(bl, tr.finish);
       return { blocks: bl, T: tr.finish, peak: Math.max(...pr), profile: pr };
     }) } };

@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Resource levelling: shorter steps and the new drawing order
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/tests/levellingMethod.test.ts`, docs.
+
+- **The levelling steps are much shorter** (a line or two each): "No limit: 103 days. Over the limit: 45–55 needs 3", "First clash, 45–55: E, F and G cannot all run together: 3 > 2", "Hold D until B finishes (14): it runs 14–39. Knock-on: F, G and H. Clash left, 39–45." The write-up now sits with the model answer lines instead of in the step text.
+- **New drawing order** for the levelled pictures (every try and the final one) and the earliest-start histograms: critical activities along the bottom, then the others longest first, so shorter blocks sit on top. A block follows the stack under it (steps allowed, no holes, no overhangs). The older exam-chain levelling picture keeps its start-time order.
+- Tests: a drawing-rule test checks no holes or overhangs, critical blocks below everything else, and shorter blocks never under longer ones.
+
+Not done: the histogram tab itself (merge Levels 1 and 2, the cut-the-peak Level 3) and its walkthrough; the new steps on phone and tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-07 — Resource levelling: the walkthrough (session 2 of 3)
 
 Branch `claude/new-session-6gg0my` (on top of session 1, which is not merged yet). Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, `docs/pathways/resource-levelling.md`.
