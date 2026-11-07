@@ -3,14 +3,15 @@ import { Home, Lock } from "lucide-react";
 
 // Advent Calendar: 25 doors, each hiding a name (or a greeting). Names are typed or pasted by the teacher and kept
 // on this device only (localStorage); nothing is sent anywhere. A door opens to a large reveal card so the whole class
-// can read it. With "doors open on their date" on, only today's door and earlier can be opened (December 1 to 25).
+// can read it. With "open doors on a schedule" on, door 1 opens on a start date the teacher picks and one more door
+// opens each day after it (optionally skipping weekends); until a door's day arrives it stays shut.
 // Standalone classroom sandbox.
 
 const DOORS = 25;
 const KEY = "advent-calendar-v1";
 const GREETING = "Merry Christmas!";
 
-interface Saved { names: string[]; assigned: string[]; opened: number[]; lock: boolean }
+interface Saved { names: string[]; assigned: string[]; opened: number[]; lock: boolean; start: string; skipWeekends: boolean }
 
 const pad = (a: string[]) => { const r = a.slice(0, DOORS); while (r.length < DOORS) r.push(""); return r; };
 function shuffle<T>(arr: T[]): T[] {
@@ -26,13 +27,33 @@ function load(): Saved {
   const names = Array.isArray(s.names) ? s.names.map(String) : [];
   const assigned = Array.isArray(s.assigned) && s.assigned.length === DOORS ? s.assigned.map(String) : shuffle(pad(names));
   const opened = Array.isArray(s.opened) ? s.opened.filter(n => Number.isInteger(n) && n >= 0 && n < DOORS) : [];
-  return { names, assigned, opened, lock: s.lock === true };
+  const start = typeof s.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.start) ? s.start : isoDate(defaultStart());
+  return { names, assigned, opened, lock: s.lock === true, start, skipWeekends: s.skipWeekends !== false };
 }
 
-/** The last door that may be opened today: December's date, 0 before December. (Jan to Nov: nothing yet; after the 25th: all.) */
-function availableDoor(now: Date): number {
-  return now.getMonth() === 11 ? Math.min(DOORS, now.getDate()) : 0;
+const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const isoDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fromIso = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
+const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
+/** Today, or the coming Monday when today is a weekend: the usual first day of a class's calendar. */
+function defaultStart(): Date {
+  const d = midnight(new Date());
+  while (isWeekend(d)) d.setDate(d.getDate() + 1);
+  return d;
 }
+/** The day each door opens: door 1 on the start date, then one a day (or one a school day when weekends are skipped). */
+function doorDates(startIso: string, skipWeekends: boolean): Date[] {
+  const d = fromIso(startIso), out: Date[] = [];
+  if (skipWeekends) while (isWeekend(d)) d.setDate(d.getDate() + 1);
+  for (let i = 0; i < DOORS; i++) {
+    out.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+    if (skipWeekends) while (isWeekend(d)) d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+const short = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const long = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
 const CSS = `
 .adv-cell{position:relative;aspect-ratio:1/1.08;padding:0;border:0;background:none;perspective:700px;cursor:pointer;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
@@ -67,6 +88,8 @@ export default function AdventCalendar() {
   const [assigned, setAssigned] = useState(init.assigned);
   const [opened, setOpened] = useState(init.opened);
   const [lock, setLock] = useState(init.lock);
+  const [start, setStart] = useState(init.start);
+  const [skipWeekends, setSkipWeekends] = useState(init.skipWeekends);
   const [text, setText] = useState(init.names.join("\n"));
   const [randomise, setRandomise] = useState(true);
   const [status, setStatus] = useState("");
@@ -77,8 +100,8 @@ export default function AdventCalendar() {
   const doneRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify({ names, assigned, opened, lock })); } catch { /* private mode */ }
-  }, [names, assigned, opened, lock]);
+    try { localStorage.setItem(KEY, JSON.stringify({ names, assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
+  }, [names, assigned, opened, lock, start, skipWeekends]);
 
   // a day later when the page has been left open on a board: look again when it is next used
   useEffect(() => {
@@ -94,11 +117,16 @@ export default function AdventCalendar() {
     dur: 9 + Math.random() * 12, delay: -Math.random() * 20, drift: Math.random() * 60 - 30,
   })), []);
 
-  const available = availableDoor(now);
-  const inAdvent = now.getMonth() === 11 && now.getDate() <= DOORS;
-  const today = inAdvent ? now.getDate() : 0;
-  const isLocked = (day: number) => lock && day > available;
-  const daysToGo = inAdvent && today < DOORS ? DOORS - today : null;
+  const dates = useMemo(() => doorDates(start, skipWeekends), [start, skipWeekends]);
+  const todayMid = midnight(now).getTime();
+  const isLocked = (day: number) => lock && dates[day - 1].getTime() > todayMid;
+  const todayDoor = lock ? dates.findIndex(d => d.getTime() === todayMid) + 1 : 0;   // 0 when no door falls on today
+  const unlockedCount = lock ? dates.filter(d => d.getTime() <= todayMid).length : DOORS;
+  const doorLabel = (day: number) => (lock ? short(dates[day - 1]) : `Door ${day}`);
+  const subtitle = !lock ? "Open a door to see who’s behind it."
+    : todayMid < dates[0].getTime() ? `Door 1 opens on ${long(dates[0])}.`
+    : todayDoor ? `Today is door ${todayDoor}. Open a door to see who’s behind it.`
+    : "Open a door to see who’s behind it.";
 
   const say = (msg: string) => {
     setNotice(msg);
@@ -108,7 +136,7 @@ export default function AdventCalendar() {
 
   const press = (i: number) => {
     const day = i + 1;
-    if (isLocked(day)) { say(`Door ${day} opens on December ${day}.`); return; }
+    if (isLocked(day)) { say(`Door ${day} opens on ${long(dates[i])}.`); return; }
     setOpened(o => (o.includes(i) ? o : [...o, i]));
     setRevealed(i);
   };
@@ -130,7 +158,7 @@ export default function AdventCalendar() {
   const openAll = () => {
     const ids = Array.from({ length: DOORS }, (_, i) => i).filter(i => !isLocked(i + 1));
     setOpened(ids);
-    setStatus(lock && ids.length < DOORS ? `Opened doors 1 to ${ids.length}. The rest are locked until their date.` : "");
+    setStatus(lock && ids.length < DOORS ? `Opened ${ids.length} door${ids.length === 1 ? "" : "s"}. The rest are shut until their day.` : "");
   };
 
   const revealName = revealed === null ? "" : assigned[revealed] || GREETING;
@@ -152,7 +180,7 @@ export default function AdventCalendar() {
       <header className="relative mx-auto mb-6 max-w-3xl text-center">
         <h1 className="text-5xl font-bold leading-none text-[#f1dc9b] max-sm:text-4xl" style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
         <p className="mt-3 italic text-[#fbf5e6]/80">
-          {daysToGo !== null ? `${daysToGo} day${daysToGo === 1 ? "" : "s"} until Christmas Day. Open a door to see who’s behind it.` : "Open a door to see who’s behind it."}
+          {subtitle}
         </p>
         <p role="status" aria-live="polite" className="mt-2 min-h-[1.5em] text-sm font-semibold text-[#f1dc9b]">{notice}</p>
       </header>
@@ -164,13 +192,13 @@ export default function AdventCalendar() {
           const day = i + 1, name = assigned[i], isOpen = opened.includes(i), locked = isLocked(day);
           return (
             <button key={i} type="button" onClick={() => press(i)} aria-disabled={locked || undefined}
-              className={`adv-cell${day % 2 === 0 ? " green" : ""}${day === DOORS ? " final" : ""}${isOpen ? " open" : ""}${locked ? " locked" : ""}${day === today ? " today" : ""}`}
-              aria-label={locked ? `Door ${day}, locked until December ${day}` : isOpen ? `Door ${day}: ${name || GREETING} (tap to show again)` : `Door ${day}${day === today ? ", today" : ""} (tap to open)`}>
+              className={`adv-cell${day % 2 === 0 ? " green" : ""}${day === DOORS ? " final" : ""}${isOpen ? " open" : ""}${locked ? " locked" : ""}${day === todayDoor ? " today" : ""}`}
+              aria-label={locked ? `Door ${day}, opens on ${long(dates[i])}` : isOpen ? `Door ${day}: ${name || GREETING} (tap to show again)` : `Door ${day}${day === todayDoor ? ", today" : ""} (tap to open)`}>
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg p-1.5 text-center text-[#3a1017]"
                 style={{ background: "radial-gradient(circle at 50% 40%, #fffaf0 0%, #f6e7c1 70%, #ecd59a 100%)", boxShadow: "inset 0 4px 10px rgba(0,0,0,.35)" }}>
                 <span className="text-sm leading-none text-[#a81f2e]" aria-hidden="true">★</span>
                 <span className={name ? "font-bold leading-tight [overflow-wrap:anywhere]" : "italic leading-tight"} style={{ fontSize: name ? "clamp(.95rem, 2.9vw, 1.55rem)" : "clamp(.8rem, 2.2vw, 1.1rem)" }}>{name || GREETING}</span>
-                <span className="text-[11px] opacity-60">December {day}</span>
+                <span className="text-[11px] opacity-60">{doorLabel(day)}</span>
               </span>
               <span className="adv-door">
                 <span className="adv-num font-bold text-[#f1dc9b]" style={{ fontSize: "clamp(1.4rem, 4.8vw, 2.5rem)", textShadow: "0 1px 0 rgba(0,0,0,.35)" }}>{day}</span>
@@ -193,8 +221,18 @@ export default function AdventCalendar() {
             </label>
             <label className="mt-2 flex items-start gap-2 text-sm">
               <input type="checkbox" className="mt-1" checked={lock} onChange={e => setLock(e.target.checked)} />
-              <span>Doors open on their own date <span className="block text-[13px] text-[#fbf5e6]/70">Only today’s door and earlier can be opened, from December 1 to 25. Untick to open any door at any time.</span></span>
+              <span>Open doors on a schedule <span className="block text-[13px] text-[#fbf5e6]/70">Door 1 opens on the day you choose, then one more each day. Doors stay shut until their day. Untick to open any door at any time.</span></span>
             </label>
+            {lock && (
+              <div className="ml-6 mt-2 space-y-2 text-sm">
+                <label className="flex flex-wrap items-center gap-2">Door 1 opens on
+                  <input type="date" value={start} onChange={e => { if (e.target.value) setStart(e.target.value); }}
+                    className="rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-2 py-1 text-[#3a1017]" />
+                </label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={skipWeekends} onChange={e => setSkipWeekends(e.target.checked)} /> Skip weekends (school days only)</label>
+                <p className="text-[13px] text-[#fbf5e6]/70">Door 25 opens on {long(dates[DOORS - 1])}. {unlockedCount} of {DOORS} doors can be opened today.</p>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2.5">
               <button type="button" onClick={save} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Save names</button>
               <button type="button" onClick={reshuffle} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Reshuffle doors</button>
@@ -212,7 +250,7 @@ export default function AdventCalendar() {
           <div role="dialog" aria-modal="true" aria-labelledby="adv-reveal-name"
             className="adv-pop w-full max-w-[640px] rounded-2xl border-[3px] border-[#d9b45b] px-6 pb-6 pt-8 text-center text-[#3a1017]"
             style={{ background: "radial-gradient(circle at 50% 30%, #fffaf0 0%, #f6e7c1 80%)", boxShadow: "0 24px 60px rgba(0,0,0,.55)" }}>
-            <p className="text-lg italic text-[#a81f2e]"><span aria-hidden="true">★ </span>December {revealed + 1}<span aria-hidden="true"> ★</span></p>
+            <p className="text-lg italic text-[#a81f2e]"><span aria-hidden="true">★ </span>{lock ? long(dates[revealed]) : `Door ${revealed + 1}`}<span aria-hidden="true"> ★</span></p>
             <p id="adv-reveal-name" className="my-5 font-bold leading-tight [overflow-wrap:anywhere]"
               style={{ fontSize: assigned[revealed] ? "clamp(2.6rem, 11vw, 5.5rem)" : "clamp(2rem, 8vw, 3.5rem)", fontStyle: assigned[revealed] ? "normal" : "italic" }}>{revealName}</p>
             <div className="flex flex-wrap justify-center gap-2.5">
