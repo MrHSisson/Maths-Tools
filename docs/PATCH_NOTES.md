@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Balloons rise when the wheel picks a name
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Balloons.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`.
+
+- **Balloons float up the screen with the confetti when the Name Wheel reveals a pick**: 16 on a laptop and 10 on a phone, in the wheel's own colours, shaded with a highlight, a knot and a wavy string, swaying as they rise and leaving at the top over about ten seconds. They never catch a tap (the Remove and Keep buttons work underneath), and a device set to reduced motion gets none. It is a shared component (`Balloons`) like `Confetti`.
+- Checked in a browser at 390 and 1366 wide: nothing before a reveal, balloons painted during it and cleared by the end, none with reduced motion, no console errors.
+
+Not done: the Advent Calendar has confetti but no balloons (not asked for); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-07 — Confetti when a name is revealed (Name Wheel, Advent Calendar)
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/Confetti.tsx` (new), `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/TeacherTools/AdventCalendar.tsx`.

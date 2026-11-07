@@ -3,6 +3,7 @@ import { Home, Plus, Copy, Trash2, X, Settings } from "lucide-react";
 import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { Confetti } from "../../shared/components/Confetti";
+import { Balloons } from "../../shared/components/Balloons";
 
 // Name Wheel: pick a name at random from a list, with optional extra entries per name. Several wheels can be saved
 // (one per class, say) and are kept on this device only (localStorage); nothing is sent anywhere. Standalone classroom sandbox.
@@ -391,6 +392,7 @@ export default function NameWheel() {
       {phone && <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white px-4 py-3">{actions}</div>}
 
       {result && <Confetti key={wheel.winners.length} colours={palette.colours.map(c => c.bg)} />}
+      {result && <Balloons key={wheel.winners.length} colours={palette.colours.map(c => c.bg)} />}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-5" onClick={e => { if (e.target === e.currentTarget) closeDialog(); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="winner-name" className={`${card} w-full max-w-[420px] p-6 text-center shadow-lift`}>
