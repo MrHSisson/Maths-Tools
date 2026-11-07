@@ -817,7 +817,7 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
   return reduce(acts);
 }
 
-function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice, slack = 0, skip = false): CpaLayout | null {
+function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice, slack = 0, skip = false, pre?: (acts: CpaActivity[]) => boolean): CpaLayout | null {
   const [lo, hi] = COUNT_RANGE[level];
   if (acts.length < lo || acts.length > hi) return null;
   const hasSucc = new Set(acts.flatMap((a) => a.preds));
@@ -837,6 +837,7 @@ function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice,
   }
   if (level === 3 && !floats.some((f) => f > 0 && f <= 2)) return null; // a near-critical activity
   if (new Set(acts.map((a) => a.duration)).size < Math.min(4, acts.length)) return null;
+  if (pre && !pre(acts)) return null; // the question's own test, before the costly layout
   const layout = layoutCpa(acts);
   if (layout.crossings > CROSS_CAP[level] + slack || layoutIssues(layout).length) return null;
   if (layout.edges.filter((e) => e.routed).length > ROUTED_CAP[level] + slack) return null; // an arrow that has to go round the boxes: none at Level 1
@@ -921,10 +922,39 @@ function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string,
   return shuffled.map((o, i) => ({ label: (["A", "B", "C"] as const)[i], ...o }));
 }
 
+/** Resource levelling, the three levels: look for workers per activity and a limit that give a question of this level (see specs/resource-levelling.md). */
+function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "one" | "several" | "mixed", cap: number, histShape: HistShape, keepWorkers: boolean): { before: HistogramData; limit: number; m: LevelMethod; workers: Record<string, number> } | null {
+  const T = times.projectTime;
+  // several sets of workers per activity on the same network, before asking for a new network
+  for (let attempt = 0; attempt < (wk === "one" || keepWorkers ? 1 : 40); attempt++) {
+    if (!keepWorkers) acts.forEach((a) => { a.workers = wk === "one" ? 1 : wk === "several" ? randInt(2, 4) : randInt(1, 4); });
+    const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
+    if (lvl === 2 && maxW < 3) continue;
+    const before = histogramData(acts, times, "early", histShape);
+    if (!before || before.peak < 3 || before.peak > 10) continue;
+    // the limit is at least the biggest task, and the peak is at most 2 over it
+    const lo = Math.max(2, maxW, before.peak - 2), hi = before.peak - 1;
+    const limits = Array.from({ length: Math.max(0, hi - lo + 1) }, (_, k) => hi - k).sort(() => Math.random() - 0.5);
+    for (const limit of limits) {
+      if (countClashes(before.profile, limit) > 2) continue;
+      const m = levelMethod(acts, times, limit);
+      if (!m || !m.exact || m.minimum <= T) continue;
+      const tries = m.tries.length;
+      if (lvl < 3 ? tries !== 1 : tries < 2 || tries > cap) continue;
+      const truth = levelSchedule(acts, times, limit);
+      if (!truth || truth.makespan !== m.minimum) continue;
+      return { before, limit, m, workers: Object.fromEntries(acts.map((a) => [a.id, a.workers ?? 1])) };
+    }
+  }
+  return null;
+}
+const takeLevelStash = (): typeof levelStash.cur => levelStash.cur;
+const levelStash: { cur: { acts: CpaActivity[]; found: NonNullable<ReturnType<typeof searchLevel>> } | null } = { cur: null };
+
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown" && kind !== "cpaReason") || !(e instanceof Error) || e.message !== "histogram: no hole-free stack") throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown" && kind !== "cpaReason") || !(e instanceof Error) || (e.message !== "histogram: no hole-free stack" && !(kind === "cpaLevel" && opts.levelLevel && e.message === "critical path: no suitable network found"))) throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -933,6 +963,11 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   const range: [number, number] = (opts.size ?? (level === 1 ? "small" : "medium")) === "small" ? [1, 9] : [5, 25];
   const paths = opts.paths ?? "one";
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
+  // the three-level levelling questions test each network for a question of the level before laying it out
+  levelStash.cur = null;
+  const pre = kind === "cpaLevel" && opts.levelLevel && !opts.fixed
+    ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelMaxTries ?? 8, opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
+    : undefined;
   if (opts.fixed) { acts = opts.fixed.acts; layout = opts.fixed.layout; found = 99; }
   // keep the tidiest of several acceptable networks, rather than the first
   for (let attempt = 0; attempt < 4000 && found < (kind === "cpaLevel" && opts.levelLevel ? 3 : 8); attempt++) {
@@ -941,7 +976,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
     if (!c) continue;
     if (opts.singleEnd && c.filter((a) => !c.some((b) => b.preds.includes(a.id))).length !== 1) continue;
-    const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2, !!opts.skip);
+    const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2, !!opts.skip, pre);
     if (!l) continue;
     found++;
     const cost = layoutCost(l);
@@ -1072,31 +1107,11 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const sinks = acts.filter((a) => !acts.some((b) => b.preds.includes(a.id)));
     // the new start of the last activity is only unique when one activity ends the project; the 10–12 activity networks never do, so they ask for the time instead
     const wording = opts.levelWording === "startLast" && sinks.length !== 1 ? "time" : opts.levelWording ?? "time";
-    let found: { before: HistogramData; limit: number; m: LevelMethod } | null = null;
-    // the same network with a fresh set of workers per activity, a few times over, before asking for a new network
-    for (let attempt = 0; attempt < 40 && !found; attempt++) {
-      if (!opts.fixed) acts.forEach((a) => { a.workers = wk === "one" ? 1 : wk === "several" ? randInt(2, 4) : randInt(1, 4); });
-      const maxW = Math.max(...acts.map((a) => a.workers ?? 1));
-      if (lvl === 2 && maxW < 3) continue;
-      const before = histogramData(acts, times, "early", opts.histShape ?? "step");
-      if (!before || before.peak < 3 || before.peak > 10) continue;
-      // the limit is at least the biggest task, and the peak is at most 2 over it
-      const lo = Math.max(2, maxW, before.peak - 2), hi = before.peak - 1;
-      const limits = Array.from({ length: Math.max(0, hi - lo + 1) }, (_, k) => hi - k).sort(() => Math.random() - 0.5);
-      for (const limit of limits) {
-        if (countClashes(before.profile, limit) > 2) continue;
-        const m = levelMethod(acts, times, limit);
-        if (!m || !m.exact || m.minimum <= T) continue;
-        const tries = m.tries.length;
-        if (lvl < 3 ? tries !== 1 : tries < 2 || tries > cap) continue;
-        const truth = levelSchedule(acts, times, limit);
-        if (!truth || truth.makespan !== m.minimum) continue;
-        found = { before, limit, m };
-        break;
-      }
-    }
+    const stash = takeLevelStash();
+    const found = stash && stash.acts === acts ? stash.found : opts.fixed ? searchLevel(acts, times, lvl, wk, cap, opts.histShape ?? "step", true) : searchLevel(acts, times, lvl, wk, cap, opts.histShape ?? "step", false);
     if (!found) throw new Error("histogram: no hole-free stack");
     const { before, limit, m } = found;
+    acts.forEach((a) => { a.workers = found.workers[a.id]; });
     const starts = m.starts, T2 = m.minimum;
     const readyAt = (a: CpaActivity) => Math.max(0, ...a.preds.map((q) => starts[q] + acts.find((x) => x.id === q)!.duration));
     const delayed = acts.filter((a) => starts[a.id] > readyAt(a)).map((a) => ({ id: a.id, from: readyAt(a), to: starts[a.id] }));
