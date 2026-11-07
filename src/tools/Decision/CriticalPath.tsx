@@ -108,8 +108,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
-  const workers = pickOf(o.workersEach, sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one") === "several" ? "several" : "one";
+  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
   const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
@@ -131,6 +131,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     histStart: pickOf(o.histStart, "early") === "late" ? "late" : "early",
     partial: sub === "cascade" && lv !== 2 && pickOf(o.chartGiven, "blank") === "partial",
     cascadePasses: sub === "cascade" && lv === 2,
+    histLevel: sub === "histogram" && lv === 3 ? 3 : undefined,
+    histWorkers: pickOf(o.histWorkers, "one") as "one" | "several" | "mixed",
+    histCut: pickOf(o.histCut, "fewest") as "fewest" | "show" | "canFewer",
     levelLevel: lv,
     levelWorkers: pickOf(o.levelWorkers, "one") as "one" | "several" | "mixed",
     levelMaxTries: Number(pickOf(o.levelTries, "8")),
@@ -440,14 +443,18 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     // the network (with its times) above, the workers each activity needs when they differ, and the histogram being drawn
     const g = step?.histView ?? { blocks: [] };
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+    const cut = d.extra!.cut;
+    const cas = d.extra!.cascade;
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
-          <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+          {cut && cas
+            ? <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={d.times.projectTime} />
+            : <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />}
         </div>
         {several && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
         <div style={{ flex: "6 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={d.extra!.histogram!} view={g} unit={d.unit} />
+          <HistogramView data={cut && g.which === "try" ? cut.states[g.tryIndex ?? 0] : d.extra!.histogram!} view={g} unit={d.unit} />
         </div>
       </div>
     );
@@ -578,7 +585,7 @@ export default function App() {
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           level: ["One worker each: the first fix clears the clash", "Several workers each: the first fix clears the clash", "A fix causes a knock-on clash (10–12 activities)"],
-          histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
+          histogram: ["Draw it: one worker each", "Draw it: one to three workers each (10–12 activities)", "Cut the peak by sliding activities within their float"],
           shorten: ["One critical path: the longest critical activity is best", "Two critical paths: only an activity on both helps", "A near-critical path limits the saving (10–12 activities)"],
           alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either question"],
           cascade: ["Network with its times given: draw the chart, as early as possible", "Network without its times: find them, then draw the chart, as early as possible", "Network with its times given: draw the chart, as late as possible"],
@@ -691,54 +698,41 @@ export default function App() {
             ],
           },
           {
-            key: "workersEach",
-            label: "Workers per activity",
-            info: "How many workers each activity needs.",
+            key: "histSize",
+            label: "Network size (Level 1)",
+            info: "How many activities the Level 1 histogram has.",
             forSubTools: ["histogram"],
             multi: true,
-            defaultFor: (lv: number) => (lv === 3 ? "several" : "one"),
+            defaultFor: () => "n89",
             choices: [
-              { value: "one", label: "One each" },
-              { value: "several", label: "1 to 3 each" },
+              { value: "n89", label: "8–9 activities" },
+              { value: "n1012", label: "10–12 activities" },
             ],
           },
           {
-            key: "levelWording",
-            label: "Ask for",
-            info: "What the question asks once the limit forces extra time.",
-            forSubTools: ["level"],
-            multi: true,
-            defaultFor: () => "time",
-            choices: [
-              { value: "time", label: "Minimum time", sub: "The new completion time" },
-              { value: "extra", label: "Extra time", sub: "How much longer" },
-              { value: "startLast", label: "Last start", sub: "New start of the last activity (not Level 3)" },
-              { value: "explain", label: "Explain", sub: "The effect of the limit" },
-            ],
-          },
-          {
-            key: "levelWorkers",
+            key: "histWorkers",
             label: "Workers per activity (Level 3)",
-            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to four.",
-            forSubTools: ["level"],
+            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to three.",
+            forSubTools: ["histogram"],
             multi: true,
             defaultFor: () => "one",
             choices: [
               { value: "one", label: "One each" },
-              { value: "several", label: "2 to 4 each" },
-              { value: "mixed", label: "1 to 4 each" },
+              { value: "several", label: "2 to 3 each" },
+              { value: "mixed", label: "1 to 3 each" },
             ],
           },
           {
-            key: "levelTries",
-            label: "Most tries (Level 3)",
-            info: "The most options a Level 3 question may need trying before the answer is reached; up to 3 suits a first lesson on knock-ons.",
-            forSubTools: ["level"],
-            defaultFor: () => "8",
+            key: "histCut",
+            label: "Ask for (Level 3)",
+            info: "What a Level 3 question asks once the peak can be cut: the fewest workers, to show a number is enough, or whether one fewer will do. The first and last need a reason that no fewer will do, so a question without one asks to show.",
+            forSubTools: ["histogram"],
+            multi: true,
+            defaultFor: () => "fewest",
             choices: [
-              { value: "3", label: "Up to 3" },
-              { value: "5", label: "Up to 5" },
-              { value: "8", label: "Up to 8" },
+              { value: "fewest", label: "Fewest workers" },
+              { value: "show", label: "Show N is enough" },
+              { value: "canFewer", label: "Can it be N − 1?" },
             ],
           },
           {

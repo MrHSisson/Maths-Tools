@@ -175,3 +175,48 @@ describe("drawing rule — critical activities on the bottom, then longest first
     });
   }, 120_000);
 });
+
+describe("resource histogram, Level 3 — cut the peak within the float", () => {
+  const cases = [
+    { w: "one", ask: "fewest", start: "early" }, { w: "several", ask: "show", start: "early" }, { w: "mixed", ask: "canFewer", start: "late" }, { w: "one", ask: "fewest", start: "late" },
+  ] as const;
+  for (const c of cases) {
+    it(`${c.w} workers, ${c.ask}, ${c.start} start: the fewest is true, at most two activities move, the project time is unchanged, the floor proves it`, () => {
+      withSeededRandom(404, () => {
+        for (let i = 0; i < 5; i++) {
+          const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: c.w, histCut: c.ask, histStart: c.start });
+          const cut = g.data.extra!.cut!, acts = g.data.acts, times = g.data.times, T = times.projectTime;
+          const final = cut.states[cut.states.length - 1];
+          // the answer is the true least: the solver can do it with `best` and not with one fewer
+          expect(levelSchedule(acts, times, cut.best)?.makespan).toBe(T);
+          if (cut.best > Math.max(...acts.map((a) => a.workers ?? 1))) expect(levelSchedule(acts, times, cut.best - 1)?.makespan ?? Infinity).toBeGreaterThan(T);
+          expect(final.peak).toBe(cut.best);
+          expect(cut.states[0].peak).toBeGreaterThan(cut.best);
+          // every move stays inside the float, so nothing finishes after the minimum time, and precedence holds
+          const start = Object.fromEntries(final.blocks.map((b) => [b.id, b.start]));
+          for (const a of acts) {
+            expect(start[a.id]).toBeGreaterThanOrEqual(times.es[a.id]);
+            expect(start[a.id] + a.duration).toBeLessThanOrEqual(times.lf[a.id]);
+            a.preds.forEach((q) => expect(start[a.id]).toBeGreaterThanOrEqual(start[q] + acts.find((x) => x.id === q)!.duration));
+          }
+          expect(final.T).toBe(T);
+          expect(cut.moves.length).toBeLessThanOrEqual(2);
+          expect(cut.moves.length).toBeGreaterThan(0);
+          // one state per move, each a step further from the question's histogram
+          expect(cut.states.length).toBe(cut.moves.length + 1);
+          // the floor, when given, equals the answer (so nothing fewer is possible)
+          if (cut.floor) expect(cut.floor.value).toBe(cut.best);
+          if (cut.ask !== "show") expect(cut.floor).not.toBeNull();
+          expect(cut.target).toBe(cut.ask === "canFewer" ? cut.best - 1 : cut.best);
+          // the walkthrough: peak, what can slide, a step per move, the check, (why), the answer
+          const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+          expect(steps.map((s) => s.phase).slice(0, 2)).toEqual(["The peak", "What can slide"]);
+          expect(steps.filter((s) => s.phase!.startsWith("Slide") || s.phase!.startsWith("Knock-on")).length).toBe(cut.moves.length);
+          expect(steps[steps.length - 1].phase).toBe("Answer");
+          expect(steps.some((s) => s.phase === "Why no fewer")).toBe(cut.ask !== "show" && !!cut.floor);
+          expect(g.prompt).toContain(`${T}`);
+        }
+      });
+    }, 120_000);
+  }
+});

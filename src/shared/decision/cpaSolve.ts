@@ -536,6 +536,7 @@ function stepNote(b: { id: string; start: number; base?: number[] }): string {
 // ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──
 function solveHistogram(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
+  if (d.extra!.cut) return solveHistogramCut(p);
   const h = d.extra!.histogram!;
   const { times: t } = d;
   const all = fullGraph(d.acts);
@@ -561,8 +562,8 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
     `Put ${more ? "the first critical path" : "the critical activities"} along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. ${more ? "There is another critical path; its other activities have no float either, so they are drawn next, before the activities that have float." : "They have no float, so early and late starts are the same."}`,
     "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
   ));
-  // the order the histogram was stacked in: any other critical path next, then everything else from the earliest start
-  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => Number(b.critical) - Number(a.critical) || a.start - b.start || a.id.localeCompare(b.id));
+  // the order the histogram was stacked in: any other critical path next, then everything else longest first
+  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => Number(b.critical) - Number(a.critical) || (b.end - b.start) - (a.end - a.start) || a.start - b.start || a.id.localeCompare(b.id));
   let announced = false;
   for (const b of rest) {
     if (!announced && more && b.critical) {
@@ -583,6 +584,59 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
   steps.push(step(
     `Check: every activity is drawn once and labelled, there are no gaps under any block, and the histogram ends at ${h.T}. The most workers needed at once is ${h.peak}.`,
     "Check", { ...base, critical: crit, criticalArrows: critArrows }, undefined, { runningTotal: h.peak, totalLabel: "Most workers" },
+  ));
+  return steps;
+}
+
+// ── Resource histogram, Level 3: cut the peak by sliding activities within their float ──
+function solveHistogramCut(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const c = d.extra!.cut!;
+  const { times: t } = d;
+  const T = t.projectTime, u = d.unit;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  const ids = d.acts.map((a) => a.id);
+  const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: { ...base, current }, histView: { blocks: ids, which: "try", ...hist },
+    // the cascade chart with its float tails sits beside the histogram throughout
+    ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current },
+    ...extra,
+  });
+  const steps: SolveStep[] = [];
+  const before = c.states[0];
+  const inPeak = before.blocks.filter((b) => b.start < c.peak.to && c.peak.from < b.end).map((b) => b.id);
+  const slidable = inPeak.filter((id) => t.float[id] > 0);
+  steps.push(mk(`The peak: ${c.peak.need} workers, ${c.peak.from}–${c.peak.to}. Can it be cut without delaying the project?`, "The peak", { tryIndex: 0, peak: c.peak }));
+  steps.push(mk(
+    `Running at the peak: ${cpaList(inPeak)}. Only an activity with float can slide: ${slidable.length ? slidable.map((id) => `${id} (float ${t.float[id]})`).join(", ") : "none of these has float"}.`,
+    "What can slide", { tryIndex: 0, peak: c.peak, dim: ids.filter((id) => !inPeak.includes(id)) },
+  ));
+  c.moves.forEach((mv, i) => {
+    const old = c.states[i].blocks.find((b) => b.id === mv.id)!;
+    const last = i === c.moves.length - 1;
+    steps.push(mk(
+      mv.knock
+        ? `${mv.id} follows what was slid, so it moves from ${mv.from} to ${mv.to} (float is shared along a chain).${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`
+        : `Slide ${mv.id} from ${mv.from} to ${mv.to} (${Math.abs(mv.to - mv.from)} ${u}, within its float of ${mv.float}).${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`,
+      mv.knock ? `Knock-on: ${mv.id}` : `Slide ${mv.id}`,
+      { tryIndex: i + 1, knock: mv.knock ? [mv.id] : [], ghost: { id: mv.id, start: old.start, end: old.end, workers: old.workers, y: histBaseAt(old, old.start) } },
+      mv.id,
+    ));
+  });
+  const fin = c.states[c.states.length - 1];
+  steps.push(mk(`Check the histogram again: the most needed is now ${fin.peak}, and the project still finishes at ${T} ${u}.`, "Check", { tryIndex: c.states.length - 1 }));
+  if (c.floor && c.ask !== "show") {
+    steps.push(mk(
+      c.floor.kind === "workerDays"
+        ? `Why no fewer: the work is ${c.floor.total} worker-${u}. ${c.floor.total} ÷ ${T} = ${(c.floor.total! / T).toFixed(2)}, so at least ${c.floor.value} workers.`
+        : `Why no fewer: at time ${c.floor.at}, ${c.floor.value} workers are needed whatever we do, because the activities running then have to be (latest start to earliest finish).`,
+      "Why no fewer", { tryIndex: c.states.length - 1 },
+    ));
+  }
+  steps.push(mk(
+    c.ask === "canFewer" ? `No: ${c.best} is the least, so ${c.target} will not do.` : c.ask === "show" ? `Shown: ${c.best} workers is enough, and the project still finishes at ${T} ${u}.` : `The fewest is ${c.best} workers.`,
+    "Answer", { tryIndex: c.states.length - 1 }, undefined, { runningTotal: c.best, totalLabel: "Workers" },
   ));
   return steps;
 }

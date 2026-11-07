@@ -345,6 +345,8 @@ export interface HistViewState {
   clash?: { from: number; to: number; need: number };
   /** label every shaded clash "needs 10 / limit 9" */
   labelOver?: boolean;
+  /** the peak picked out: the top worker of the tallest stretch, labelled */
+  peak?: { from: number; to: number; need: number };
   /** the held block drawn dashed at its old place, with an arrow to where it is now */
   ghost?: { id: string; start: number; end: number; workers: number; y: number };
   /** the quick-sum table shown in place of the reference picture */
@@ -644,6 +646,59 @@ interface LevelChoice {
   note: string;
 }
 
+// ── Cut the peak within the float (Resource histogram, Level 3) ───────────────────────────────────────────────────────
+/** Fewest workers for the minimum time: slide activities within their float (and the ones they push), then check the totals again. */
+interface CutData {
+  ask: "fewest" | "show" | "canFewer";
+  /** fewest: the answer; show: the number to show it can be done with; canFewer: the smaller number asked about */
+  target: number;
+  /** the true least number of workers for the minimum time */
+  best: number;
+  start: "early" | "late";
+  /** the histogram the question gives (index 0) and after each move: the last is the answer */
+  states: HistogramData[];
+  moves: { id: string; from: number; to: number; float: number; knock: boolean }[];
+  /** what proves no fewer will do: worker-days ÷ time (rounded up), or the workers each activity must have running from its latest start to its earliest finish */
+  floor: { kind: "workerDays" | "mustRun"; value: number; total?: number; at?: number } | null;
+  peak: { from: number; to: number; need: number };
+}
+
+/** The fewest moves (at most `maxMoves` activities away from where `base` has them, pushed ones included) that bring the peak to `n` or less without the project finishing later. */
+function cutSearch(acts: CpaActivity[], t: CpaTimes, base: Record<string, number>, n: number, maxMoves: number): { starts: Record<string, number>; chosen: string[] } | null {
+  const dur = Object.fromEntries(acts.map((a) => [a.id, a.duration]));
+  const topo = fullGraph(acts).filter((a) => a.id !== START && a.id !== END);
+  const lsOf = (id: string) => t.lf[id] - dur[id];
+  const free = acts.filter((a) => t.float[a.id] > 0).map((a) => a.id);
+  const build = (pick: Record<string, number>): Record<string, number> | null => {
+    const st: Record<string, number> = {};
+    for (const a of topo) {
+      const ready = Math.max(0, ...a.preds.filter((q) => q !== START).map((q) => st[q] + dur[q]));
+      const want = pick[a.id] ?? Math.max(base[a.id], ready);
+      if (want < ready || want < t.es[a.id] || want > lsOf(a.id)) return null;
+      st[a.id] = want;
+    }
+    return st;
+  };
+  const peakOf = (st: Record<string, number>) => {
+    const T = t.projectTime;
+    let pk = 0;
+    for (let x = 0; x < T; x++) pk = Math.max(pk, acts.reduce((sum, a) => sum + (st[a.id] <= x && x < st[a.id] + dur[a.id] ? (a.workers ?? 1) : 0), 0));
+    return pk;
+  };
+  let best: { starts: Record<string, number>; chosen: string[]; moved: number } | null = null;
+  const consider = (pick: Record<string, number>) => {
+    const st = build(pick);
+    if (!st || peakOf(st) > n) return;
+    const moved = acts.filter((a) => st[a.id] !== base[a.id]).length;
+    if (moved === 0 || moved > maxMoves) return;
+    if (!best || moved < best.moved) best = { starts: st, chosen: Object.keys(pick), moved };
+  };
+  const range = (id: string) => Array.from({ length: lsOf(id) - t.es[id] + 1 }, (_, k) => t.es[id] + k).filter((v) => v !== base[id]);
+  for (const a of free) for (const v of range(a)) consider({ [a]: v });
+  if (maxMoves >= 2) for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) for (const v of range(free[i])) for (const w of range(free[j])) consider({ [free[i]]: v, [free[j]]: w });
+  return best ? { starts: (best as { starts: Record<string, number> }).starts, chosen: (best as { chosen: string[] }).chosen } : null;
+}
+
 // ── Explain and justify (written reasoning, marked against mark points) ─────
 interface ReasonMark { code: "M1" | "B1" | "E1" | "R1"; text: string }
 interface ReasonData {
@@ -721,6 +776,7 @@ interface CpaExtra {
   histogram?: HistogramData;
   /** Resource levelling: the limit, the histogram before and after, and what was delayed */
   level?: LevelData;
+  cut?: CutData;
   /** Cascade chart: the finished chart (the answer) */
   cascade?: CascadeData;
   /** Missing times: the activity whose duration is x, the critical path through it and the other durations on that path added up */
@@ -792,7 +848,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Cascade chart: the times are not given, so the passes come first */ cascadePasses?: boolean; /** Resource levelling: what the histogram is shown with */ levelRef?: "cascade" | "floats" | "network"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra"; /** Resource levelling, the three levels of specs/resource-levelling.md (when set, levelType is ignored): 1 one worker each and the top option clears the clash; 2 several workers, the same; 3 the top option leaves a clash (knock-on) */ levelLevel?: 1 | 2 | 3; /** Resource levelling, Level 3: workers per activity */ levelWorkers?: "one" | "several" | "mixed"; /** Resource levelling, Level 3: the most tries a question may need */ levelMaxTries?: number; /** Resource levelling: what is asked */ levelWording?: "time" | "extra" | "startLast" | "explain"; /** the network ends in one activity (nothing else is last) */ singleEnd?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Cascade chart: the times are not given, so the passes come first */ cascadePasses?: boolean; /** Resource levelling: what the histogram is shown with */ levelRef?: "cascade" | "floats" | "network"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra"; /** Resource levelling, the three levels of specs/resource-levelling.md (when set, levelType is ignored): 1 one worker each and the top option clears the clash; 2 several workers, the same; 3 the top option leaves a clash (knock-on) */ levelLevel?: 1 | 2 | 3; /** Resource levelling, Level 3: workers per activity */ levelWorkers?: "one" | "several" | "mixed"; /** Resource levelling, Level 3: the most tries a question may need */ levelMaxTries?: number; /** Resource levelling: what is asked */ levelWording?: "time" | "extra" | "startLast" | "explain"; /** Resource histogram level 3: cut the peak within the float (when 3, the options below apply; 1 and 2 are the drawing questions) */ histLevel?: 1 | 2 | 3; histWorkers?: "one" | "several" | "mixed"; histCut?: "fewest" | "show" | "canFewer"; /** the network ends in one activity (nothing else is last) */ singleEnd?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -1053,6 +1109,60 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       ? `The activity network represents ${subject}. The times are in ${unit}. Part of the cascade (Gantt) chart is already drawn, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Complete the chart, and show the float of each activity that has some.`
       : `The activity network represents ${subject}. The times are in ${unit}. Draw a cascade (Gantt) chart for the project, with every activity starting as ${cs.start === "early" ? "early" : "late"} as possible. Show the float of each activity that has some.`;
     answerText = `${opts.cascadePasses ? `Minimum time ${T} ${unit}. ` : ""}Critical ${several ? "activities (more than one critical path)" : "activities"} ${list(critical)}${several ? "" : `, end to end from 0 to ${T}`}. Floats: ${hasFloat.map((a) => `${a.id} ${times.float[a.id]}`).join(", ")}.`;
+  } else if (kind === "cpaHistogram" && opts.histLevel === 3) {
+    const wk = opts.histWorkers ?? "one";
+    if (!opts.fixed) acts.forEach((a) => { a.workers = wk === "one" ? 1 : wk === "several" ? randInt(2, 3) : randInt(1, 3); });
+    const start = opts.histStart === "late" ? "late" : "early";
+    const before = histogramData(acts, times, start, "step");
+    if (!before || before.peak < 3 || before.peak > 10) throw new Error("histogram: no hole-free stack");
+    const base = Object.fromEntries(before.blocks.map((b) => [b.id, b.start]));
+    // the true least number of workers for the minimum time (the exhaustive solver), going down from the peak
+    let best = before.peak;
+    for (let n = before.peak - 1; n >= Math.max(...acts.map((a) => a.workers ?? 1)); n--) {
+      const r = levelSchedule(acts, times, n);
+      if (r && r.makespan === T) best = n; else break;
+    }
+    if (best >= before.peak) throw new Error("histogram: no hole-free stack");
+    const cs = cutSearch(acts, times, base, best, 2); // at most two activities have to move
+    if (!cs) throw new Error("histogram: no hole-free stack");
+    // what proves no fewer will do
+    const total = acts.reduce((sum, a) => sum + a.duration * (a.workers ?? 1), 0);
+    const wd = Math.ceil(total / T);
+    const mustRun = Array.from({ length: T }, (_, x) => acts.reduce((sum, a) => sum + (times.lf[a.id] - a.duration <= x && x < times.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
+    const mr = Math.max(...mustRun);
+    const floor: CutData["floor"] = wd === best ? { kind: "workerDays", value: wd, total } : mr === best ? { kind: "mustRun", value: mr, at: mustRun.indexOf(mr) } : null;
+    const ask = opts.histCut && opts.histCut !== "show" && !floor ? "show" : opts.histCut ?? "fewest";
+    // the states: the histogram given, then after each move (the ones asked for first, then the ones they push)
+    const order = [...acts.filter((a) => cs.starts[a.id] !== base[a.id])].sort((a, b) => Number(!cs.chosen.includes(a.id)) - Number(!cs.chosen.includes(b.id)) || cs.starts[a.id] - cs.starts[b.id] || a.id.localeCompare(b.id));
+    const cur = { ...base };
+    const draw = (st: Record<string, number>, moved: Set<string>): HistogramData => {
+      const bl: HistBlock[] = acts.map((a) => ({ id: a.id, start: st[a.id], end: st[a.id] + a.duration, workers: a.workers ?? 1, y: 0, critical: times.float[a.id] === 0, moved: moved.has(a.id) }));
+      stepStack(bl, T, [], false);
+      const pr = histProfile(bl, T);
+      return { start, blocks: bl, T, peak: Math.max(...pr), profile: pr };
+    };
+    const states: HistogramData[] = [before];
+    const movedSoFar = new Set<string>();
+    const moves: CutData["moves"] = [];
+    for (const a of order) {
+      moves.push({ id: a.id, from: cur[a.id], to: cs.starts[a.id], float: times.float[a.id], knock: !cs.chosen.includes(a.id) });
+      cur[a.id] = cs.starts[a.id]; movedSoFar.add(a.id);
+      states.push(draw(cur, movedSoFar));
+    }
+    const pkAt = before.profile.indexOf(before.peak);
+    let pkTo = pkAt; while (pkTo < T && before.profile[pkTo] === before.peak) pkTo++;
+    const target = ask === "canFewer" ? best - 1 : best;
+    data.extra = { histogram: before, cascade: cascadeData(acts, times, start, "rows", "blocks"), cut: { ask, target, best, start, states, moves, floor, peak: { from: pkAt, to: pkTo, need: before.peak } } };
+    const several = wk !== "one";
+    const given = `${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} The resource histogram for the project, with every activity as ${start} as possible, is shown. Its peak needs ${before.peak} workers.`;
+    prompt = ask === "fewest" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Delaying activities within their float does not delay the project. Find the smallest number of workers with which the project can still be completed in the minimum time of ${T} ${unit}, and show how.`
+      : ask === "show" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project can be completed in the minimum time of ${T} ${unit} with only ${best} workers.`
+      : `The activity network represents ${subject}. The times are in ${unit}. ${given} Can the project be completed in the minimum time of ${T} ${unit} with only ${best - 1} workers? Give a reason.`;
+    const slide = moves.filter((m) => !m.knock).map((m) => `${m.id} from ${m.from} to ${m.to}`).join(" and ");
+    const why = floor ? (floor.kind === "workerDays" ? ` No fewer will do: the work is ${floor.total} worker-${unit} and ${floor.total} ÷ ${T} = ${(floor.total! / T).toFixed(2)}, so at least ${floor.value} workers are needed.` : ` No fewer will do: at time ${floor.at}, ${floor.value} workers are needed whatever happens, because those activities must be running then.`) : "";
+    answerText = ask === "canFewer" ? `No.${why}`
+      : ask === "show" ? `Slide ${slide}: the most workers needed at once is then ${best}, and the project still finishes at ${T}.`
+      : `${best} workers. Slide ${slide}${moves.some((m) => m.knock) ? `, which pushes ${moves.filter((m) => m.knock).map((m) => m.id).join(", ")}` : ""}; the project still finishes at ${T}.${why}`;
   } else if (kind === "cpaHistogram") {
     const several = opts.workers === "several";
     if (!opts.fixed) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });

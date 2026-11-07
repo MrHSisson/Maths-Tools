@@ -117,6 +117,12 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
           {(view.clash || view.labelOver) && limit !== undefined && <text x={(x(o.from) + x(o.to)) / 2} y={yOf(o.need) - 5} textAnchor="middle" fontSize={12} fontWeight={700} fill={RED}>needs {o.need} / limit {limit}</text>}
         </g>
       ))}
+      {view.peak && (
+        <g>
+          <rect x={x(view.peak.from)} y={yOf(view.peak.need)} width={x(view.peak.to) - x(view.peak.from)} height={cell} fill="#ef4444" fillOpacity={0.45} />
+          <text x={(x(view.peak.from) + x(view.peak.to)) / 2} y={yOf(view.peak.need) - 5} textAnchor="middle" fontSize={12} fontWeight={700} fill={RED}>peak {view.peak.need}</text>
+        </g>
+      )}
       {/* the held block: dashed where it was, an arrow to where it is now */}
       {view.ghost && (() => {
         const g = view.ghost, nb = data.blocks.find((b) => b.id === g.id);

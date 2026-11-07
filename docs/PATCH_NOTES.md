@@ -29,6 +29,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Resource histogram: the three levels and "cut the peak" (session 3 of 3)
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, docs.
+
+- **Resource histogram has three levels:** 1 draw it with one worker each (network size is now an option, 8–9 or 10–12 activities); 2 draw it with one to three workers each (10–12 activities); 3 **cut the peak within the float**.
+- **Level 3** shows the earliest-start (or latest-start) histogram and asks for the fewest workers that still finish in the minimum time, or to show that N is enough, or whether N − 1 will do. The answer is the true least (checked against the exhaustive solver), and at most two activities have to move. "Fewest" and "can it be N − 1?" are only asked when something proves no fewer will do: the worker-days floor (total work ÷ time, rounded up) or the must-run floor (workers an activity must have running from its latest start to its earliest finish); otherwise the question asks to show N is enough.
+- **The walkthrough:** the cascade chart with its float tails on top and the histogram below. Steps: the peak (highlighted), what can slide (only activities with float, the rest dimmed), each slide with the old place ghosted and an arrow, any knock-on in orange, the check, why no fewer, the answer.
+- **New Question Options (histogram tab):** *Network size (Level 1)*, *Workers per activity (Level 3)* (one / 2 to 3 / 1 to 3) and *Ask for (Level 3)*; the old *Workers per activity* option is replaced. *Start times* (early or late) applies to Level 3 too.
+- The Level 1 and 2 drawing walkthrough now draws the blocks in the new drawing order (critical along the bottom, then longest first).
+- Tests: four configurations of Level 3 (workers, wording, start): the least is true, the peak falls to it, every move stays in the float so the project time is unchanged, at most two moves, the floor equals the answer, and the walkthrough steps match.
+
+Not done: the must-run stretches are not shaded on the cascade chart (the floor is stated in words); the phone and tablet layouts of the new steps and of the levelling steps were not checked. Level 2 (several workers, 10–12 activities) can take a second or more to generate (as before: it needs a network whose histogram stacks).
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-07 — Resource levelling: shorter steps and the new drawing order
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/tests/levellingMethod.test.ts`, docs.
