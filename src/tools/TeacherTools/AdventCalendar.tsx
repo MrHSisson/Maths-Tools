@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Lock } from "lucide-react";
+import { Home, Lock, Settings } from "lucide-react";
 
 // Advent Calendar: 25 doors, each hiding a name (or a greeting). Names are typed or pasted by the teacher and kept
 // on this device only (localStorage); nothing is sent anywhere. A door opens to a large reveal card so the whole class
@@ -95,6 +95,7 @@ export default function AdventCalendar() {
   const [status, setStatus] = useState("");
   const [notice, setNotice] = useState("");
   const [revealed, setRevealed] = useState<number | null>(null);
+  const [controlsOpen, setControlsOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const noticeTimer = useRef(0);
   const doneRef = useRef<HTMLButtonElement>(null);
@@ -142,6 +143,12 @@ export default function AdventCalendar() {
   };
   const closeReveal = useCallback(() => setRevealed(null), []);
   useEffect(() => {
+    if (!controlsOpen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setControlsOpen(false); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [controlsOpen]);
+  useEffect(() => {
     if (revealed === null) return;
     doneRef.current?.focus();
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeReveal(); };
@@ -177,6 +184,10 @@ export default function AdventCalendar() {
       <button onClick={() => { window.location.href = "/"; }} className="relative mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#f1dc9b]">
         <Home size={18} /> Home
       </button>
+      <button type="button" onClick={() => setControlsOpen(true)} aria-label="Teacher controls" title="Teacher controls"
+        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
+        <Settings size={20} />
+      </button>
       <header className="relative mx-auto mb-6 max-w-3xl text-center">
         <h1 className="text-5xl font-bold leading-none text-[#f1dc9b] max-sm:text-4xl" style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
         <p className="mt-3 italic text-[#fbf5e6]/80">
@@ -209,10 +220,15 @@ export default function AdventCalendar() {
         })}
       </main>
 
-      <section className="relative mx-auto mt-7 max-w-3xl">
-        <details className="rounded-xl border border-[#d9b45b]/50 bg-[#082a1f]/70">
-          <summary className="cursor-pointer px-4 py-3 font-medium text-[#f1dc9b]">Teacher controls</summary>
-          <div className="px-4 pb-5">
+      {/* Teacher controls: hidden from the board until opened from the small gear in the corner */}
+      {controlsOpen && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-3 sm:items-center sm:p-5" onClick={e => { if (e.target === e.currentTarget) setControlsOpen(false); }}>
+          <div role="dialog" aria-modal="true" aria-label="Teacher controls" className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl border-2 border-[#d9b45b] bg-[#082a1f] p-5 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[#f1dc9b]">Teacher controls</h2>
+              <button type="button" onClick={() => setControlsOpen(false)} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Done</button>
+            </div>
+            <div>
             <p className="mb-2 text-sm leading-snug text-[#fbf5e6]/85">Type one name per line. The first {DOORS} names are used. Any doors left over show a Christmas greeting. Names stay on this device.</p>
             <textarea value={text} onChange={e => setText(e.target.value)} spellCheck={false} placeholder={"Amira\nBen\nChloe\n…"}
               className="min-h-[190px] w-full resize-y rounded-lg border border-[#d9b45b] bg-[#fbf5e6] p-3 text-base leading-relaxed text-[#3a1017]" />
@@ -240,9 +256,10 @@ export default function AdventCalendar() {
               <button type="button" onClick={() => { setOpened([]); setStatus("All doors closed."); }} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Close all</button>
             </div>
             <div role="status" aria-live="polite" className="mt-2.5 min-h-[1.3em] text-sm text-[#f1dc9b]">{status}</div>
+            </div>
           </div>
-        </details>
-      </section>
+        </div>
+      )}
 
       {revealed !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5" style={{ background: "rgba(5,20,15,.82)" }}
