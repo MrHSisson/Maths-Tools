@@ -4,7 +4,7 @@ import { Calculator, ChevronDown, ChevronRight, Columns, Presentation, FlaskConi
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { checkDevPassword } from '../devAccess';
-import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, type ViewOverride } from '../shared/layoutMode';
+import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, useLayoutMode, type ViewOverride } from '../shared/layoutMode';
 import { resetAboutSeen } from '../shared/about';
 
 // Top-level tabs, in display order. Categories declare their subject in the
@@ -216,6 +216,17 @@ export default function LandingPage(): JSX.Element {
   const menuRef = useRef<HTMLDivElement>(null);
   const viewOverride = useViewOverride();
   const swapSides = useSwapSides();
+  const { phone } = useLayoutMode();
+  const [subjectMenuOpen, setSubjectMenuOpen] = useState(false);
+  const subjectMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!subjectMenuOpen) return;
+    const close = (e: Event) => { if (subjectMenuRef.current && !subjectMenuRef.current.contains(e.target as Node)) setSubjectMenuOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setSubjectMenuOpen(false); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc); };
+  }, [subjectMenuOpen]);
   useEffect(() => {
     if (!menuOpen) return;
     const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) { setMenuOpen(false); setUnlockOpen(false); } };
@@ -411,15 +422,38 @@ export default function LandingPage(): JSX.Element {
             </div>
           </div>
 
-          {/* Subject — quiet tabs */}
-          <div className="flex gap-5 sm:gap-8 sm:justify-center overflow-x-auto whitespace-nowrap mt-6 sm:mt-8 border-b border-slate-200">
-            {SUBJECTS.map((k) => (
-              <button key={k} onClick={() => setSubjectFilter(k)}
-                className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${subjectFilter === k ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-                {k}
+          {/* Subject — a drop-down on a phone, quiet tabs elsewhere */}
+          {phone ? (
+            <div ref={subjectMenuRef} className="relative mt-6">
+              <button onClick={() => setSubjectMenuOpen(o => !o)} aria-haspopup="listbox" aria-expanded={subjectMenuOpen}
+                className="flex h-12 w-full items-center justify-between rounded-2xl border border-slate-300 bg-white px-4 text-base font-semibold text-blue-900 shadow-card">
+                <span>{subjectFilter}</span>
+                <ChevronDown size={20} className={`text-slate-400 transition-transform ${subjectMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            ))}
-          </div>
+              {subjectMenuOpen && (
+                <ul role="listbox" aria-label="Subject" className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-lift">
+                  {SUBJECTS.map((k) => (
+                    <li key={k} role="option" aria-selected={subjectFilter === k}>
+                      <button onClick={() => { setSubjectFilter(k); setSubjectMenuOpen(false); }}
+                        className={`flex h-12 w-full items-center justify-between px-4 text-left text-base font-semibold ${subjectFilter === k ? 'bg-slate-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'}`}>
+                        {k}
+                        {subjectFilter === k && <span className="h-2 w-2 rounded-full bg-blue-900" aria-hidden="true" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-center gap-8 mt-8 border-b border-slate-200">
+              {SUBJECTS.map((k) => (
+                <button key={k} onClick={() => setSubjectFilter(k)}
+                  className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${subjectFilter === k ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                  {k}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

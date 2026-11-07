@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Landing page: subject drop-down on a phone
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`.
+
+- **On a phone the subject tabs (GCSE Maths, A-Level, Computer Science, Classroom) are a drop-down** instead of a row that scrolls sideways: one full-width button showing the current subject, opening a list of the four (large tap targets, a dot on the current one; a tap outside or Escape closes it). Tablet and laptop keep the underline tabs. It follows the "View as" setting (`useLayoutMode`).
+- Checked in a browser at 390, 1024 and 1366 wide: a drop-down only on the phone, four options, choosing Classroom shows its tools and closes the list, an outside tap closes it, tabs on tablet and laptop, no sideways scroll, no console errors.
+
+Not done: the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-07 — Decision Maths landing page and legacy D1 / D2 map; shared spec landing page
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/shared/components/SpecLanding.tsx` (new), `src/tools/Decision/decisionSpec.ts` and `DecisionOverview.tsx` (new), `src/tools/FurtherMechanics/`, `src/registry.ts`, `src/tests/organisation.test.ts`, `scripts/toolFacts.mjs`.
