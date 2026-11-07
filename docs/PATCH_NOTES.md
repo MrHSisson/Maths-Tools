@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Advent Calendar: big reveal and doors that open on their date
+
+Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`.
+
+- **A big reveal.** Tapping a door swings it open and shows the name large on a card over the calendar, so the whole class can read it. The card has Done (or Escape, or a tap outside) and "Close this door again"; tapping an open door shows its card again. A door is no longer closed by tapping it.
+- **Doors that open on their date (optional, in Teacher controls, default off, remembered).** With it on, only today's door and earlier open, from December 1 to 25 (before December every door is locked; after the 25th all are open). A locked door is dimmed with a lock and says "Door N opens on December N" when tapped; Open all opens only the unlocked ones. Today's door glows, and the subtitle counts the days to Christmas Day during Advent.
+- Kept: the festive background, snow and doors, and the names saved on this device only.
+- Checked in a browser at 390 and 1366 wide with the date fixed at 5 December: 20 locked doors, today's door marked, a locked tap gives the notice and no card, reveal and close-again work, Open all opens five, the setting survives a reload, no sideways scroll, no console errors.
+
+Not done: no saved calendars and no restyle to the site chrome (not asked for); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-06 — Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`, `src/registry.ts`, `src/tools/TeacherTools/NameWheel.tsx`, `src/tools/FurtherMechanics/`, `CLAUDE.md`.
