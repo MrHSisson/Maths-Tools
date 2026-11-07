@@ -1,0 +1,1558 @@
+{
+ "note": "Internal reference data for tests only. Never served as questions. Numbers transcribed from past papers and textbooks; mark-scheme answers where supplied. Activities are continuous; 'after' lists immediate predecessors.",
+ "questions": [
+  {
+   "source": "AQA A-level pack",
+   "question": "Q2(c)",
+   "ask": "Find the minimum completion time with 4 workers",
+   "markSchemeAnswer": "96 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 8,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 10,
+     "workers": 2,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 8,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "D",
+     "duration": 14,
+     "workers": 3,
+     "after": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 10,
+     "workers": 2,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 16,
+     "workers": 3,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 16,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 18,
+     "workers": 2,
+     "after": [
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 12,
+     "workers": 1,
+     "after": [
+      "F",
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 14,
+     "workers": 3,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 6,
+     "workers": 4,
+     "after": [
+      "I",
+      "J"
+     ]
+    }
+   ],
+   "limit": 4,
+   "unlimitedTime": 60,
+   "minimumTime": 96,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 72,
+   "possibleRoutes": 98,
+   "fits": "beyond caps (spot it / queue)"
+  },
+  {
+   "source": "AQA A-level pack",
+   "question": "Q5(c)(ii)",
+   "ask": "Explain the effect of only 2 members on the minimum completion time",
+   "markSchemeAnswer": "66 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 7,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 6,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 15,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "D",
+     "duration": 9,
+     "workers": 1,
+     "after": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 8,
+     "workers": 1,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "C",
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 7,
+     "workers": 1,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 14,
+     "workers": 1,
+     "after": [
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 17,
+     "workers": 1,
+     "after": [
+      "F",
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 9,
+     "workers": 1,
+     "after": [
+      "H",
+      "I"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 8,
+     "workers": 1,
+     "after": [
+      "I"
+     ]
+    },
+    {
+     "id": "L",
+     "duration": 12,
+     "workers": 1,
+     "after": [
+      "J",
+      "K"
+     ]
+    }
+   ],
+   "limit": 2,
+   "unlimitedTime": 60,
+   "minimumTime": 66,
+   "clashes": 2,
+   "peakOverLimit": 1,
+   "flowchartTries": 1,
+   "possibleRoutes": 9,
+   "fits": "levelling L1"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q2(e)",
+   "ask": "New earliest start of J and minimum extra time with 9 workers",
+   "markSchemeAnswer": "J at 22; 5 days extra",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 4,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 4,
+     "workers": 2,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 6,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "D",
+     "duration": 9,
+     "workers": 4,
+     "after": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 6,
+     "workers": 2,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 5,
+     "workers": 4,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 1,
+     "workers": 3,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 4,
+     "workers": 3,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 5,
+     "workers": 5,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 1,
+     "workers": 6,
+     "after": [
+      "G",
+      "H",
+      "I"
+     ]
+    }
+   ],
+   "limit": 9,
+   "unlimitedTime": 18,
+   "minimumTime": 23,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 2,
+   "possibleRoutes": 5,
+   "fits": "levelling L2"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q9(e)",
+   "ask": "Minimum extra time with 7 workers",
+   "markSchemeAnswer": "1 day",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 5,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 8,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 7,
+     "workers": 3,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 8,
+     "workers": 4,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 10,
+     "workers": 2,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 3,
+     "workers": 3,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 3,
+     "workers": 4,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "F"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "G",
+      "H"
+     ]
+    }
+   ],
+   "limit": 7,
+   "unlimitedTime": 25,
+   "minimumTime": 26,
+   "clashes": 1,
+   "peakOverLimit": 2,
+   "flowchartTries": 1,
+   "possibleRoutes": 3,
+   "fits": "levelling L2"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q11",
+   "ask": "Minimum extra time with 3 workers",
+   "markSchemeAnswer": "3 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 2,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 8,
+     "workers": 3,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 2,
+     "workers": 2,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "F",
+      "G",
+      "H"
+     ]
+    }
+   ],
+   "limit": 3,
+   "unlimitedTime": 24,
+   "minimumTime": 27,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 3,
+   "possibleRoutes": 9,
+   "fits": "levelling L3"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q4(d)",
+   "ask": "Minimum extra time with 8 workers",
+   "markSchemeAnswer": "3 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 2,
+     "workers": 6,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 3,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 6,
+     "workers": 5,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 7,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 9,
+     "workers": 5,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "C",
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 3,
+     "workers": 4,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 2,
+     "workers": 4,
+     "after": [
+      "G"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 3,
+     "workers": 5,
+     "after": [
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "H",
+      "I"
+     ]
+    },
+    {
+     "id": "L",
+     "duration": 1,
+     "workers": 4,
+     "after": [
+      "J",
+      "K"
+     ]
+    }
+   ],
+   "limit": 8,
+   "unlimitedTime": 27,
+   "minimumTime": 30,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 2,
+   "possibleRoutes": 6,
+   "fits": "levelling L3"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q8(c)(ii)",
+   "ask": "Which activities are delayed and the extra time with 6 workers",
+   "markSchemeAnswer": "5 days (mark scheme also accepts C starting day 12)",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 2,
+     "workers": 4,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 7,
+     "workers": 3,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 5,
+     "workers": 4,
+     "after": [
+      "C",
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 2,
+     "workers": 1,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 8,
+     "workers": 2,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 6,
+     "workers": 2,
+     "after": [
+      "F",
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 2,
+     "workers": 5,
+     "after": [
+      "G",
+      "H",
+      "I"
+     ]
+    }
+   ],
+   "limit": 6,
+   "unlimitedTime": 22,
+   "minimumTime": 27,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 13,
+   "possibleRoutes": 45,
+   "fits": "beyond caps (spot it / queue)"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q1(f)",
+   "ask": "Minimum time with 2 workers (one each)",
+   "markSchemeAnswer": "34 hours (no extra time)",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 8,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 3,
+     "workers": 1,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "A",
+      "C"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 1,
+     "workers": 1,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 7,
+     "workers": 1,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 12,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 9,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 1,
+     "workers": 1,
+     "after": [
+      "I",
+      "J"
+     ]
+    }
+   ],
+   "limit": 2,
+   "unlimitedTime": 34,
+   "minimumTime": 34,
+   "clashes": 1,
+   "peakOverLimit": 1,
+   "flowchartTries": 1,
+   "possibleRoutes": 3,
+   "fits": "histogram L3 (fits in float)"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q14(e)(i)",
+   "ask": "New minimum time with 2 workers (one each)",
+   "markSchemeAnswer": "28 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 4,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 2,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "F"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 2,
+     "workers": 1,
+     "after": [
+      "H",
+      "I"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "G",
+      "J"
+     ]
+    }
+   ],
+   "limit": 2,
+   "unlimitedTime": 26,
+   "minimumTime": 28,
+   "clashes": 2,
+   "peakOverLimit": 1,
+   "flowchartTries": 3,
+   "possibleRoutes": 9,
+   "fits": "levelling L3"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q15(d)(i)",
+   "ask": "New minimum completion time with 2 workers (one each)",
+   "markSchemeAnswer": "31 days",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 2,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 1,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 5,
+     "workers": 1,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 3,
+     "workers": 1,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 2,
+     "workers": 1,
+     "after": [
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "F",
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 7,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 7,
+     "workers": 1,
+     "after": [
+      "I"
+     ]
+    },
+    {
+     "id": "L",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "I",
+      "J"
+     ]
+    },
+    {
+     "id": "M",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "J"
+     ]
+    }
+   ],
+   "limit": 2,
+   "unlimitedTime": 27,
+   "minimumTime": 31,
+   "clashes": 2,
+   "peakOverLimit": 1,
+   "flowchartTries": 4,
+   "possibleRoutes": 9,
+   "fits": "levelling L3"
+  },
+  {
+   "source": "Legacy pack",
+   "question": "Q17",
+   "ask": "Minimum overrun with 2 workers (one each)",
+   "markSchemeAnswer": "1 hour",
+   "activities": [
+    {
+     "id": "A",
+     "duration": 8,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 1,
+     "after": []
+    },
+    {
+     "id": "C",
+     "duration": 3,
+     "workers": 1,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "A",
+      "C"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 1,
+     "workers": 1,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 7,
+     "workers": 1,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 4,
+     "workers": 1,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 6,
+     "workers": 1,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 12,
+     "workers": 1,
+     "after": [
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 9,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    }
+   ],
+   "limit": 2,
+   "unlimitedTime": 30,
+   "minimumTime": 31,
+   "clashes": 1,
+   "peakOverLimit": 1,
+   "flowchartTries": 1,
+   "possibleRoutes": 3,
+   "fits": "levelling L1"
+  },
+  {
+   "source": "OUP textbook (computed; no answer sheet supplied)",
+   "question": "29.2B Q1 with 11 workers",
+   "ask": "Minimum time with 11 workers",
+   "markSchemeAnswer": null,
+   "activities": [
+    {
+     "id": "A",
+     "duration": 5,
+     "workers": 3,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 3,
+     "workers": 5,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 6,
+     "workers": 4,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 4,
+     "workers": 4,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 5,
+     "workers": 5,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 2,
+     "workers": 4,
+     "after": [
+      "D",
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 2,
+     "workers": 2,
+     "after": [
+      "E",
+      "F"
+     ]
+    }
+   ],
+   "limit": 11,
+   "unlimitedTime": 16,
+   "minimumTime": 18,
+   "clashes": 1,
+   "peakOverLimit": 5,
+   "flowchartTries": 8,
+   "possibleRoutes": null,
+   "fits": "levelling L3"
+  },
+  {
+   "source": "OUP textbook (computed; no answer sheet supplied)",
+   "question": "29.2B Q3 with 5 workers",
+   "ask": "Minimum time with 5 workers",
+   "markSchemeAnswer": null,
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 2,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 3,
+     "workers": 3,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 4,
+     "workers": 3,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 2,
+     "workers": 4,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 5,
+     "workers": 2,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 3,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 3,
+     "workers": 4,
+     "after": [
+      "I",
+      "J"
+     ]
+    }
+   ],
+   "limit": 5,
+   "unlimitedTime": 22,
+   "minimumTime": 26,
+   "clashes": 1,
+   "peakOverLimit": 3,
+   "flowchartTries": 40,
+   "possibleRoutes": null,
+   "fits": "beyond caps (spot it / queue)"
+  },
+  {
+   "source": "OUP textbook (computed; no answer sheet supplied)",
+   "question": "29.2B Q3 with 4 workers",
+   "ask": "Minimum time with 4 workers",
+   "markSchemeAnswer": null,
+   "activities": [
+    {
+     "id": "A",
+     "duration": 3,
+     "workers": 2,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 5,
+     "workers": 1,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 3,
+     "workers": 3,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 4,
+     "workers": 3,
+     "after": [
+      "B"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 3,
+     "workers": 2,
+     "after": [
+      "C"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 2,
+     "workers": 4,
+     "after": [
+      "D"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "E"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 5,
+     "workers": 2,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 3,
+     "workers": 1,
+     "after": [
+      "G",
+      "H"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 3,
+     "workers": 4,
+     "after": [
+      "I",
+      "J"
+     ]
+    }
+   ],
+   "limit": 4,
+   "unlimitedTime": 22,
+   "minimumTime": 28,
+   "clashes": 1,
+   "peakOverLimit": 4,
+   "flowchartTries": 66,
+   "possibleRoutes": null,
+   "fits": "beyond caps (spot it / queue)"
+  },
+  {
+   "source": "OUP textbook (computed; no answer sheet supplied)",
+   "question": "29.2B Q4 with 6 workers",
+   "ask": "Minimum time with 6 workers",
+   "markSchemeAnswer": null,
+   "activities": [
+    {
+     "id": "A",
+     "duration": 2,
+     "workers": 5,
+     "after": []
+    },
+    {
+     "id": "B",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "C",
+     "duration": 5,
+     "workers": 4,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "D",
+     "duration": 7,
+     "workers": 2,
+     "after": [
+      "A"
+     ]
+    },
+    {
+     "id": "E",
+     "duration": 8,
+     "workers": 3,
+     "after": [
+      "B",
+      "C"
+     ]
+    },
+    {
+     "id": "F",
+     "duration": 4,
+     "workers": 2,
+     "after": [
+      "C",
+      "D"
+     ]
+    },
+    {
+     "id": "G",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "E",
+      "F"
+     ]
+    },
+    {
+     "id": "H",
+     "duration": 2,
+     "workers": 3,
+     "after": [
+      "G"
+     ]
+    },
+    {
+     "id": "I",
+     "duration": 4,
+     "workers": 4,
+     "after": [
+      "G"
+     ]
+    },
+    {
+     "id": "J",
+     "duration": 2,
+     "workers": 2,
+     "after": [
+      "H",
+      "I"
+     ]
+    },
+    {
+     "id": "K",
+     "duration": 2,
+     "workers": 2,
+     "after": [
+      "I"
+     ]
+    },
+    {
+     "id": "L",
+     "duration": 1,
+     "workers": 3,
+     "after": [
+      "H",
+      "J"
+     ]
+    }
+   ],
+   "limit": 6,
+   "unlimitedTime": 24,
+   "minimumTime": 28,
+   "clashes": 2,
+   "peakOverLimit": 2,
+   "flowchartTries": 2,
+   "possibleRoutes": null,
+   "fits": "levelling L3"
+  }
+ ]
+}
