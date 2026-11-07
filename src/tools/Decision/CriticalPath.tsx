@@ -110,6 +110,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
   const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const workers = pickOf(o.workersEach, sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one") === "several" ? "several" : "one";
+  const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: size ?? (clockQ || CHART_SUBS.has(sub) ? "medium" : undefined),
@@ -130,7 +131,11 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     histStart: pickOf(o.histStart, "early") === "late" ? "late" : "early",
     partial: sub === "cascade" && lv !== 2 && pickOf(o.chartGiven, "blank") === "partial",
     cascadePasses: sub === "cascade" && lv === 2,
-    levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
+    levelLevel: lv,
+    levelWorkers: pickOf(o.levelWorkers, "one") as "one" | "several" | "mixed",
+    levelMaxTries: Number(pickOf(o.levelTries, "8")),
+    levelWording: levelWording as "time" | "extra" | "startLast" | "explain",
+    singleEnd: sub === "level" && levelWording === "startLast" && genLevel < 3,
     unknownBox: sub === "unknown" && lv === 2,
     unknownChoice: false,
     unknownWhere: pickOf(o.unknownWhere, "on") === "off" ? "off" : "on",
@@ -549,7 +554,7 @@ export default function App() {
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
-          level: ["The delays fit inside the float (8–9 activities)", "The project takes longer (8–9 activities, several workers each)", "Two or more delays (10–12 activities)"],
+          level: ["One worker each: the first fix clears the clash", "Several workers each: the first fix clears the clash", "A fix causes a knock-on clash (10–12 activities)"],
           histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
           shorten: ["One critical path: the longest critical activity is best", "Two critical paths: only an activity on both helps", "A near-critical path limits the saving (10–12 activities)"],
           alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either question"],
@@ -666,12 +671,51 @@ export default function App() {
             key: "workersEach",
             label: "Workers per activity",
             info: "How many workers each activity needs.",
-            forSubTools: ["histogram", "level"],
+            forSubTools: ["histogram"],
             multi: true,
-            defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
+            defaultFor: (lv: number) => (lv === 3 ? "several" : "one"),
             choices: [
               { value: "one", label: "One each" },
               { value: "several", label: "1 to 3 each" },
+            ],
+          },
+          {
+            key: "levelWording",
+            label: "Ask for",
+            info: "What the question asks once the limit forces extra time.",
+            forSubTools: ["level"],
+            multi: true,
+            defaultFor: () => "time",
+            choices: [
+              { value: "time", label: "Minimum time", sub: "The new completion time" },
+              { value: "extra", label: "Extra time", sub: "How much longer" },
+              { value: "startLast", label: "Last start", sub: "New start of the last activity (not Level 3)" },
+              { value: "explain", label: "Explain", sub: "The effect of the limit" },
+            ],
+          },
+          {
+            key: "levelWorkers",
+            label: "Workers per activity (Level 3)",
+            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to four.",
+            forSubTools: ["level"],
+            multi: true,
+            defaultFor: () => "one",
+            choices: [
+              { value: "one", label: "One each" },
+              { value: "several", label: "2 to 4 each" },
+              { value: "mixed", label: "1 to 4 each" },
+            ],
+          },
+          {
+            key: "levelTries",
+            label: "Most tries (Level 3)",
+            info: "The most options a Level 3 question may need trying before the answer is reached; up to 3 suits a first lesson on knock-ons.",
+            forSubTools: ["level"],
+            defaultFor: () => "8",
+            choices: [
+              { value: "3", label: "Up to 3" },
+              { value: "5", label: "Up to 5" },
+              { value: "8", label: "Up to 8" },
             ],
           },
           {

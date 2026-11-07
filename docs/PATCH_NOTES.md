@@ -29,6 +29,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-07 — Resource levelling: the method, the three levels and the question options (session 1 of 3)
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/cpa.ts`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.
+
+- **The levelling method is in the code** (`levelMethod`, beside `levelSchedule`): quick sum for each activity in the first clash, one ranked list (ties: has float, then larger float, then letter), try the smallest, and add the quick sums from any clash left. It returns the minimum, the number of tries and every try (the held activity, its knock-ons, the clash left, the options that joined the list), ready for the walkthrough in session 2. `levelSchedule` stays the ground truth and is now exported.
+- **Resource levelling has the spec's three levels.** Level 1: one worker each, the first option tried clears the clash. Level 2: one to four workers each (the largest needs at least 3), the same. Level 3: the first option leaves a clash (a knock-on), within the **Most tries** option. Every level: the limit forces extra time, at most 2 clashes, the peak at most 2 over the limit, the limit at least the biggest task. The old "two delays including a critical activity" rule is gone.
+- **New Question Options on the levelling tab:** *Ask for* (minimum time, extra time, new start of the last activity, explain the effect of the limit), *Workers per activity (Level 3)* (one / 2 to 4 / 1 to 4) and *Most tries (Level 3)* (3 / 5 / 8, default 8). The new start of the last activity needs a network that ends in one activity; the 10-12 activity networks never do, so Level 3 asks for the time instead. There is no "tick the correct histogram" wording. Answers show the delayed activities as "one valid way".
+- Level 1 and 2 labels on the tab changed to match; the exam-style chains still use the old levelling question and are untouched.
+- Tests: `src/tests/levellingMethod.test.ts` (new) checks the solver reproduces every real exam `minimumTime`, the method does for every levelling entry, the clash and peak counts match the fixture, the method equals the solver on random networks, and generated questions meet each level (filters, tries cap, no try below its quick sum, a clash-free try exactly on it). The old Level 3 assertions in `cpaSkills.test.ts` were replaced.
+- Known: the old walkthrough (`solveLevel`) still runs on the new questions but still narrates a greedy sweep; session 2 replaces it. A Level 3 question can take around a second to generate now and then (finding a network that fits all the filters).
+
+Not done: the histogram tab, the walkthrough and the drawing order (sessions 2 and 3); the planner Build Log was not written.
+
+Agent: Claude Code
+Notes: Build Log block not written (planner not reached this session).
+
 ## 2026-11-07 — Landing page: subject drop-down on a phone
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`.
