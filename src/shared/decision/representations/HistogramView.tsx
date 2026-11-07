@@ -47,7 +47,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
   for (let t = 0; t <= T; t += step) ticks.push(t);
   if (ticks[ticks.length - 1] !== T) ticks.push(T);
   const drawn = new Set(view.blocks);
-  const H = bodyBottom + (view.totals ? 66 : 46);
+  const H = bodyBottom + 46;
   const dim = new Set(view.dim ?? []);
   const knock = new Set(view.knock ?? []);
 
@@ -73,17 +73,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, mi
       ))}
       <line x1={LEFT} y1={bodyBottom} x2={LEFT + PLOT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <line x1={LEFT} y1={TOP} x2={LEFT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
-      <text x={LEFT + PLOT / 2} y={bodyBottom + (view.totals ? 58 : 38)} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
-      {/* the daily totals: the workers needed in each time unit, red where they are over the limit */}
-      {view.totals && (
-        <g>
-          <text x={LEFT - 8} y={bodyBottom + 36} textAnchor="end" fontSize={11} fontWeight={700} fill="#475569">Total</text>
-          {/* one number per stretch where the total stays the same (a long project would run the digits together) */}
-          {data.profile.reduce<{ from: number; to: number; v: number }[]>((runs, v, t) => { const l = runs[runs.length - 1]; if (l && l.v === v) l.to = t + 1; else runs.push({ from: t, to: t + 1, v }); return runs; }, []).map((r) => (
-            <text key={`tot${r.from}`} x={(x(r.from) + x(r.to)) / 2} y={bodyBottom + 36} textAnchor="middle" fontSize={x(r.to) - x(r.from) >= 9 ? 12 : 9} fontWeight={700} fill={limit !== undefined && r.v > limit ? RED : "#0f172a"}>{x(r.to) - x(r.from) >= 5.5 ? r.v : ""}</text>
-          ))}
-        </g>
-      )}
+      <text x={LEFT + PLOT / 2} y={bodyBottom + 38} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
       <text x={14} y={TOP + (bodyBottom - TOP) / 2} textAnchor="middle" fontSize={13} fill="#334155" transform={`rotate(-90 14 ${TOP + (bodyBottom - TOP) / 2})`}>Workers</text>
 
       {data.blocks.map((b) => {

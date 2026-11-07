@@ -139,7 +139,7 @@ describe("levelling — the walkthrough follows the method", () => {
         // the last try is clash-free and the answer text carries the finish
         expect(steps[phases.indexOf("Final answer")].caption).toContain("Write it up");
         expect(steps[steps.length - 1].histView!.which).toBe("after");
-        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 4);
+        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 3);
       }
     });
   }, 120_000);

@@ -345,8 +345,6 @@ export interface HistViewState {
   clash?: { from: number; to: number; need: number };
   /** label every shaded clash "needs 10 / limit 9" */
   labelOver?: boolean;
-  /** the row of daily totals beneath the histogram */
-  totals?: boolean;
   /** the held block drawn dashed at its old place, with an arrow to where it is now */
   ghost?: { id: string; start: number; end: number; workers: number; y: number };
   /** the quick-sum table shown in place of the reference picture */

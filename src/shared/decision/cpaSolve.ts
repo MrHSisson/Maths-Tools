@@ -662,7 +662,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const several = d.acts.some((a) => wk(a.id) > 1);
   type Opt = (typeof m.options)[number];
   const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
-    caption, phase, edgeStates: {}, cpaView: { ...base, current }, histView: { blocks: ids, showLimit: true, totals: true, ...hist },
+    caption, phase, edgeStates: {}, cpaView: { ...base, current }, histView: { blocks: ids, showLimit: true, ...hist },
     // the cascade chart and the float table stay beside the picture: every bar and float is there from the start
     ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current },
     ...extra,
@@ -698,7 +698,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const first = m.firstClash!;
   const firstBand = lv.over.find((o) => o.from === first.from) ?? { from: first.from, to: first.to, need: first.need };
   steps.push(mk(
-    `Without a limit the project takes ${T} ${u}. Draw the resource histogram with every activity at its earliest start, and the limit line at ${lv.limit}. The totals row adds up the workers needed in each ${u1}: ${lv.over.map((o) => `from ${o.from} to ${o.to} it needs ${o.need}, more than ${lv.limit}`).join("; ")}. Each of those is a clash.`,
+    `Without a limit the project takes ${T} ${u}. Draw the resource histogram with every activity at its earliest start, and the limit line at ${lv.limit}. Adding up the workers needed in each ${u1}: ${lv.over.map((o) => `from ${o.from} to ${o.to} it needs ${o.need}, more than ${lv.limit}`).join("; ")}. Each of those is a clash.`,
     "The histogram", { which: "before", showOver: true, labelOver: true },
   ));
   // 2. the first clash
@@ -726,8 +726,8 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     const moved = `${o.held} waits until ${o.wait} finishes, at ${o.until}, so it runs from ${st} to ${st + d.acts.find((a) => a.id === o.held)!.duration}${o.newFinish > o.lft ? `, ${o.newFinish - o.lft} after its LFT of ${o.lft}` : `, still by its LFT of ${o.lft}`}.`;
     const knock = tr.knockOns.length ? ` ${cpaList(tr.knockOns)} cannot start until ${tr.knockOns.length > 1 ? "their" : "its"} predecessors finish, so ${tr.knockOns.length > 1 ? "they start" : "it starts"} later too (a knock-on).` : " Nothing else has to move.";
     const verdict = tr.clash
-      ? ` Check the totals row: there is still a clash from ${tr.clash.from} to ${tr.clash.to}, needing ${tr.clash.need} workers when only ${lv.limit} are available.`
-      : ` Check the totals row: every total is ${lv.limit} or less, so there is no clash left.${winner ? ` The finish, ${tr.finish}, equals its quick sum, so this is the minimum: no other option can do better.` : ""}`;
+      ? ` Check the histogram: there is still a clash from ${tr.clash.from} to ${tr.clash.to}, needing ${tr.clash.need} workers when only ${lv.limit} are available.`
+      : ` Check the histogram: it never goes above ${lv.limit}, so there is no clash left.${winner ? ` The finish, ${tr.finish}, equals its quick sum, so this is the minimum: no other option can do better.` : ""}`;
     steps.push(mk(
       `${intro} ${moved}${knock}${verdict}`,
       `Try ${k + 1}: hold ${o.held}`,
@@ -765,10 +765,9 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     : `The minimum completion time is ${m.minimum} ${u}, ${extra} ${extra === 1 ? u1 : u} more than the ${T} with no limit.`;
   const writeUp = `${cpaList(first.ids)} cannot run at the same time, as that needs ${first.need} workers and only ${lv.limit} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
   const model = [
-    `Totals row (${u}: workers): ${lv.before.profile.reduce<{ from: number; to: number; v: number }[]>((r, v, x) => { const l = r[r.length - 1]; if (l && l.v === v) l.to = x + 1; else r.push({ from: x, to: x + 1, v }); return r; }, []).map((r) => `${r.from}–${r.to}: ${r.v}`).join(", ")}`,
     clashLine(first),
     `Quick sums: ${m.options.map((o) => `${o.held} (until ${o.until}) ${o.quick}`).join(", ")}`,
-    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} until ${tr.option.until} → ${tr.clash ? `clash again from ${tr.clash.from} (needs ${tr.clash.need})` : `totals all ≤ ${lv.limit} → ${tr.finish}`}`),
+    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} until ${tr.option.until} → ${tr.clash ? `clash again from ${tr.clash.from} (needs ${tr.clash.need})` : `never above ${lv.limit} → ${tr.finish}`}`),
     answer,
   ];
   steps.push(mk(
