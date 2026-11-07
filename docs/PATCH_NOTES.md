@@ -40,10 +40,10 @@ Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/cpa.ts`, `src/to
 - Tests: `src/tests/levellingMethod.test.ts` (new) checks the solver reproduces every real exam `minimumTime`, the method does for every levelling entry, the clash and peak counts match the fixture, the method equals the solver on random networks, and generated questions meet each level (filters, tries cap, no try below its quick sum, a clash-free try exactly on it). The old Level 3 assertions in `cpaSkills.test.ts` were replaced.
 - Known: the old walkthrough (`solveLevel`) still runs on the new questions but still narrates a greedy sweep; session 2 replaces it. A Level 3 question can take around a second to generate now and then (finding a network that fits all the filters).
 
-Not done: the histogram tab, the walkthrough and the drawing order (sessions 2 and 3); the planner Build Log was not written.
+Not done: the histogram tab, the walkthrough and the drawing order (sessions 2 and 3); the dashboard note for Critical Path.
 
 Agent: Claude Code
-Notes: Build Log block not written (planner not reached this session).
+Notes: planner Build Log block "2026-11-07 — Resource levelling: the quick-sum method, three levels and question options, session 1 of 3 (Claude Code)".
 
 ## 2026-11-07 — Landing page: subject drop-down on a phone
 
