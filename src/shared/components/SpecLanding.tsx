@@ -137,7 +137,7 @@ function StatementRow({ s }: { s: SpecStatement }) {
 function YearTabs({ year, setYear }: { year: Year; setYear: (y: Year) => void }) {
   return (
     <div className="flex gap-6 border-b border-slate-200" role="tablist" aria-label="Year">
-      {([["a2", "A-level"], ["as", "AS"]] as [Year, string][]).map(([k, label]) => (
+      {([["as", "AS"], ["a2", "A-level"]] as [Year, string][]).map(([k, label]) => (
         <button key={k} role="tab" aria-selected={year === k} onClick={() => setYear(k)}
           className={`-mb-px border-b-2 pb-3 text-base font-semibold transition-colors ${year === k ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
           {label}
@@ -150,7 +150,7 @@ function YearTabs({ year, setYear }: { year: Year; setYear: (y: Year) => void })
 export function SpecLanding(p: SpecLandingProps): JSX.Element {
   const devMode = useDevMode();
   const { phone } = useLayoutMode();
-  const [year, setYear] = useState<Year>("a2");
+  const [year, setYear] = useState<Year>("as");
   const [view, setView] = useState<View>({ kind: "home" });
   const [aboutOpen, setAboutOpen] = useState(false);
   useEffect(() => { window.scrollTo(0, 0); }, [view]);
