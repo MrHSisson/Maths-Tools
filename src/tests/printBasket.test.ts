@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { generateFromSeed, generateSeeded } from "../shared/seededGenerate";
 import { generateCpa } from "../shared/decision";
+import { TOOLS } from "../admin/facts";
 import { BASKET_MAX, addItem, decodeBasket, encodeBasket, hasItem, itemKey, loadBasket, mergeItems, previewOf, removeItem, saveBasket, type BasketItem } from "../shared/decision/printBasket";
 
 const item = (seed: number, over: Partial<BasketItem> = {}): BasketItem => ({ tab: "histogram", level: 3, seed, options: { histGiven: "true", histCut: "fewest" }, preview: "Delaying activities within their float…", ...over });
@@ -66,4 +67,10 @@ describe("print basket — a saved recipe rebuilds the same question", () => {
       expect(again.prompt).toBe(q.prompt);
     }
   }, 120_000);
+});
+
+describe("print basket — the dashboard knows which tools have it", () => {
+  it("Critical Path is read from the code as having the print basket, and no other tool is", () => {
+    expect(TOOLS.filter((t) => t.printBasket).map((t) => t.id)).toEqual(["critical-path"]);
+  });
 });

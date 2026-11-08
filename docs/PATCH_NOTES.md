@@ -50,6 +50,9 @@ Branch `claude/new-session-6gg0my` (one entry for the whole piece of work; it re
 - **Print this question** is an A4 sheet (Resource histogram and Resource levelling, any level): the question, a centred workers table, the network with times and the critical path, the cascade chart with floats, then the histograms (given, or blank to draw; Levels 1 and 2 leave the cascade chart off because it would show the drawing, and give the histogram the page). An answer sheet fills them in. Every one of 60 sheets rendered to A4 PDFs fit one page.
 - **Print basket:** an icon beside the pin (and *Add to print basket* in the burger menu) saves the question, with a message ("Added to print basket (3) · Open basket"). The basket (up to 30, kept in the browser) prints questions, answers or both, each on its own page. A saved question is only its recipe (tab, level, options, seed), so a basket can be carried to another device as a link; a damaged link is ignored. Meant for short-term use (a later change to how questions are generated would change a saved one).
 
+**Dashboard and docs**
+- **Print basket is a listed feature:** `docs/FEATURES.md` has "Print sheets and the print basket" (it shows on the dashboard's Features page), and the dashboard reads a new fact `printBasket` from the code (`scripts/toolFacts.mjs`, `src/admin/facts.ts`): it appears in the Feature tracker, each tool's profile and the Matrix; today only Critical Path Analysis has it. `docs/reference/shell-extras.md` documents `forLevels`, `questionSheet` and the step-list flags; the glossary, Decision shell plan, spec and pathway are updated.
+
 **Decision shell**
 - New option field `forLevels` (an option appears only at its level), step-list flags `maxHeight` and `prose`, and `config.questionSheet` (the print sheets and basket). Chips wrap and long lists scroll instead of pushing the buttons down.
 

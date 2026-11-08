@@ -35,6 +35,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 ### Printables
 **For:** ready-made sheets with no generated questions, for the class to fill in: blank number lines, place value tables, binary tables, ratio tables and coordinate grids. **How it works:** a "Printables" heading in the burger menu lists the sheets a tool offers; one click opens the A4 page ready to print. **Where:** only tools whose working is built on a blank the student fills in (a number line, place value table, ratio table or graph); the dashboard's Printables filter lists them.
 
+### Print sheets and the print basket
+**For:** handing students a question on paper, and collecting the questions you plan to print so you can come back to them in another session. **How it works:** a printer icon beside the pin saves the question on screen to the print basket (a message confirms it; the count shows on the icon; the same icon removes it). The burger menu's **Print basket (n)…** lists the saved questions (up to 30) and prints them as questions, answers or both, each on its own A4 page: the question, the network with its times and critical path, the cascade chart with its floats, then the histograms to draw (blank) or already drawn, with the workers table centred. An answer sheet has the histograms drawn and the answer. A saved question is just its recipe (tab, level, options and seed), so the basket stays in the browser after the tab closes and **Copy basket link** carries it to another device. **Where:** Critical Path Analysis, the Resource histogram and Resource levelling tabs (any level). **Status:** built for short-term use: a later change to how questions are generated would change a saved one.
+
 ## Controls — what a teacher can change
 
 ### Levels
