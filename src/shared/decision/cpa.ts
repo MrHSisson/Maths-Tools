@@ -286,7 +286,11 @@ export interface CascadeData {
   T: number;
 }
 /** What is drawn on one beat of the cascade chart (anything not listed is not yet drawn). */
-export interface GanttViewState { bars: string[]; floats: string[]; current?: string }
+export interface GanttViewState {
+  bars: string[]; floats: string[]; current?: string;
+  /** must-run windows (an activity is running in every schedule from its latest start to its earliest finish) shaded on their bars, and the time picked out */
+  mustRun?: { id: string; from: number; to: number }[]; mustRunAt?: number;
+}
 
 /** The cascade chart for a network: where every activity sits, from the same times the passes found. */
 function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStart, layout: CascadeLayout, style: CascadeStyle, firstPath: string[] = [], partial = false): CascadeData {
@@ -659,7 +663,7 @@ interface CutData {
   states: HistogramData[];
   moves: { id: string; from: number; to: number; float: number; knock: boolean }[];
   /** what proves no fewer will do: worker-days ÷ time (rounded up), or the workers each activity must have running from its latest start to its earliest finish */
-  floor: { kind: "workerDays" | "mustRun"; value: number; total?: number; at?: number } | null;
+  floor: { kind: "workerDays" | "mustRun"; value: number; total?: number; at?: number; /** must-run: the activities that must be running at `at` */ ids?: string[] } | null;
   peak: { from: number; to: number; need: number };
 }
 
@@ -1130,7 +1134,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const wd = Math.ceil(total / T);
     const mustRun = Array.from({ length: T }, (_, x) => acts.reduce((sum, a) => sum + (times.lf[a.id] - a.duration <= x && x < times.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
     const mr = Math.max(...mustRun);
-    const floor: CutData["floor"] = wd === best ? { kind: "workerDays", value: wd, total } : mr === best ? { kind: "mustRun", value: mr, at: mustRun.indexOf(mr) } : null;
+    const floor: CutData["floor"] = wd === best ? { kind: "workerDays", value: wd, total } : mr === best ? { kind: "mustRun", value: mr, at: mustRun.indexOf(mr), ids: acts.filter((a) => times.lf[a.id] - a.duration <= mustRun.indexOf(mr) && mustRun.indexOf(mr) < times.es[a.id] + a.duration).map((a) => a.id) } : null;
     const ask = opts.histCut && opts.histCut !== "show" && !floor ? "show" : opts.histCut ?? "fewest";
     // the states: the histogram given, then after each move (the ones asked for first, then the ones they push)
     const order = [...acts.filter((a) => cs.starts[a.id] !== base[a.id])].sort((a, b) => Number(!cs.chosen.includes(a.id)) - Number(!cs.chosen.includes(b.id)) || cs.starts[a.id] - cs.starts[b.id] || a.id.localeCompare(b.id));

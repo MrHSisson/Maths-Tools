@@ -99,6 +99,20 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
           </g>
         );
       })}
+      {/* must-run windows: where an activity is running whatever the schedule (latest start to earliest finish), and the moment the most are needed */}
+      {(view.mustRun ?? []).map((w) => {
+        const b = data.bars.find((q) => q.id === w.id);
+        if (!b) return null;
+        const bh = blocks ? rowH - 8 : 12;
+        const by = rowTop(b.row) + (rowH - bh) / 2;
+        return <rect key={`mr${w.id}`} x={x(w.from)} y={by} width={x(w.to) - x(w.from)} height={bh} fill="#ef4444" fillOpacity={0.5} stroke="#dc2626" strokeWidth={1.4} />;
+      })}
+      {view.mustRunAt !== undefined && (
+        <g>
+          <line x1={x(view.mustRunAt + 0.5)} y1={TOP - 4} x2={x(view.mustRunAt + 0.5)} y2={bodyBottom} stroke="#dc2626" strokeWidth={2} strokeDasharray="6 3" />
+          <text x={x(view.mustRunAt + 0.5)} y={bodyBottom + 31} textAnchor="middle" fontSize={12} fontWeight={700} fill="#dc2626">time {view.mustRunAt}</text>
+        </g>
+      )}
     </svg>
   );
 }

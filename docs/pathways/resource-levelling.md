@@ -19,11 +19,11 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
 - 2026-11-07 (after session 2): walkthrough text cut to a line or two per step; new drawing order (critical bottom, then longest first, no holes or overhangs) in `stepStack` for the earliest-start histograms and the three-level levelled pictures.
 - 2026-11-07 (session 3): the histogram tab. Levels 1 and 2 (drawing, one or several workers, network size option) and Level 3 cut the peak within the float (`CutData`, `cutSearch`, `solveHistogramCut`): fewest / show N / can it be N − 1, floors (worker-days, must-run), at most two moves, cascade chart with float tails beside the histogram. The must-run stretches are described in words, not shaded.
 - 2026-11-08: heavy-task queue exclusion. A literal rule ("most tasks need more than half the workers") was tried and dropped: it flags Legacy Q11 (7 of 9 tasks heavy), a real Level 3 question, and misses A-Level Q2 (5 of 11) and OUP Q3. What excludes the queue questions is the tries cap: the four "beyond caps" fixture questions need 72, 14, 40 and 69 tries against a most of 8, so they cannot be generated; a test checks it. Spec wording to update: the queue exclusion is by tries, not by share of heavy tasks.
+- 2026-11-08: the must-run stretches are shaded on the cascade chart in the histogram's "Why no fewer" step, with the busiest time marked.
 
 ## Next steps
 - Histogram tab: the new stacking order in the renderer; merge Levels 1 and 2; the new Level 3 (cut the peak within float) with its walkthrough and floors.
 - Levelling walkthrough: the six-step developing picture, the tries count, the model answer layout and the write-up.
-- Shade the must-run stretches on the cascade chart (spec: "shade these stretches on the Gantt chart").
 - Generation time of histogram Level 2 (a second or more now and then).
 - Check the new levelling steps on phone and tablet.
 - Check Level 3 generation time (a fit can take about a second); the Level 3 options show on every level of the tab (the shell cannot hide an option by level).

@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource histogram: the must-run floor is drawn
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/GanttView.tsx`, `src/tests/levellingMethod.test.ts`, docs.
+
+- **"Why no fewer" now shows the must-run floor on the cascade chart** (Resource histogram, Level 3, when the fewest workers is proved by the must-run argument rather than total worker-days): each activity's must-run stretch, from its latest start to its earliest finish, is shaded red on its bar, a dashed line marks the busiest time, and the step adds up the workers of the activities running then ("At time 51, H and I all are: 2 + 3 = 5 workers").
+- Tests: the shaded windows are the real ones and those at the marked time add up to the answer.
+- Queue questions (most tasks needing over half the workers): no separate rule. The tries cap leaves them out, and a test checks the fixture's "beyond caps" questions need more than 8 tries.
+
+Not done: phone and tablet layouts of the new steps; planner Build Log blocks for the 2026-11-07 drawing-order and histogram entries and this one; the Critical Path dashboard note.
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-07 — Resource histogram: the three levels and "cut the peak" (session 3 of 3)
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, docs.

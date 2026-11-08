@@ -630,8 +630,9 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
     steps.push(mk(
       c.floor.kind === "workerDays"
         ? `Why no fewer: the work is ${c.floor.total} worker-${u}. ${c.floor.total} ÷ ${T} = ${(c.floor.total! / T).toFixed(2)}, so at least ${c.floor.value} workers.`
-        : `Why no fewer: at time ${c.floor.at}, ${c.floor.value} workers are needed whatever we do, because the activities running then have to be (latest start to earliest finish).`,
-      "Why no fewer", { tryIndex: c.states.length - 1 },
+        : `Why no fewer: each red stretch is an activity that must be running whatever we do (latest start to earliest finish). At time ${c.floor.at}, ${cpaList(c.floor.ids ?? [])} all are: ${(c.floor.ids ?? []).map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${c.floor.value} workers.`,
+      "Why no fewer", { tryIndex: c.states.length - 1 }, undefined,
+      c.floor.kind === "mustRun" ? { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: c.floor.at } } : undefined,
     ));
   }
   steps.push(mk(

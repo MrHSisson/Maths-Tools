@@ -221,8 +221,40 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
           expect(steps[steps.length - 1].phase).toBe("Answer");
           expect(steps.some((s) => s.phase === "Why no fewer")).toBe(cut.ask !== "show" && !!cut.floor);
           expect(g.prompt).toContain(`${T}`);
+          // must-run floor: the shaded windows are real (running in every schedule), and those at the picked time add up to the answer
+          const why = steps.find((s) => s.phase === "Why no fewer");
+          if (cut.floor?.kind === "mustRun" && why) {
+            const gv = why.ganttView!;
+            expect(gv.mustRunAt).toBe(cut.floor.at);
+            for (const w of gv.mustRun!) {
+              const a = acts.find((x) => x.id === w.id)!;
+              expect(w.from).toBe(times.lf[a.id] - a.duration);
+              expect(w.to).toBe(times.es[a.id] + a.duration);
+              expect(w.from).toBeLessThan(w.to);
+            }
+            const at = gv.mustRunAt!;
+            const sum = gv.mustRun!.filter((w) => w.from <= at && at < w.to).reduce((n, w) => n + (acts.find((x) => x.id === w.id)!.workers ?? 1), 0);
+            expect(sum).toBe(cut.best);
+          } else if (why) expect(why.ganttView?.mustRun).toBeUndefined();
         }
       });
     }, 120_000);
   }
+  it("a must-run floor turns up and is drawn correctly (several workers, fewest)", () => {
+    withSeededRandom(2468, () => {
+      let seen = 0;
+      for (let i = 0; i < 40 && seen < 2; i++) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: i % 2 ? "mixed" : "several", histCut: "fewest" });
+        const cut = g.data.extra!.cut!;
+        if (cut.floor?.kind !== "mustRun") continue;
+        seen++;
+        const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+        const gv = steps.find((s) => s.phase === "Why no fewer")!.ganttView!;
+        expect(gv.mustRun!.length).toBeGreaterThanOrEqual(1);
+        expect(cut.floor.ids!.length).toBeGreaterThanOrEqual(1);
+        expect(cut.floor.ids!.every((id) => gv.mustRun!.some((w) => w.id === id && w.from <= cut.floor!.at! && cut.floor!.at! < w.to))).toBe(true);
+      }
+      expect(seen, "a must-run floor appeared").toBeGreaterThan(0);
+    });
+  }, 200_000);
 });
