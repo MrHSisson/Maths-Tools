@@ -2,17 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Lock, Settings } from "lucide-react";
 import { Confetti } from "../../shared/components/Confetti";
 
-// Advent Calendar: 25 doors, each hiding a name (or a greeting). Names are typed or pasted by the teacher and kept
+// Advent Calendar: 24 doors (4 rows of 6), each hiding a name (or a greeting). The teacher types who is behind each door
+// (or pastes a list to fill them in order or at random) and it is kept
 // on this device only (localStorage); nothing is sent anywhere. A door opens to a large reveal card so the whole class
 // can read it. With "open doors on a schedule" on, door 1 opens on a start date the teacher picks and one more door
 // opens each day after it (optionally skipping weekends); until a door's day arrives it stays shut.
 // Standalone classroom sandbox.
 
-const DOORS = 25;
+const DOORS = 24;
 const KEY = "advent-calendar-v1";
 const GREETING = "Merry Christmas!";
 
-interface Saved { names: string[]; assigned: string[]; opened: number[]; lock: boolean; start: string; skipWeekends: boolean }
+interface Saved { names?: string[]; assigned: string[]; opened: number[]; lock: boolean; start: string; skipWeekends: boolean }
 
 const pad = (a: string[]) => { const r = a.slice(0, DOORS); while (r.length < DOORS) r.push(""); return r; };
 function shuffle<T>(arr: T[]): T[] {
@@ -26,10 +27,10 @@ function load(): Saved {
   let s: Partial<Saved> = {};
   try { s = JSON.parse(localStorage.getItem(KEY) ?? "{}") ?? {}; } catch { /* blocked or corrupt: start empty */ }
   const names = Array.isArray(s.names) ? s.names.map(String) : [];
-  const assigned = Array.isArray(s.assigned) && s.assigned.length === DOORS ? s.assigned.map(String) : shuffle(pad(names));
+  const assigned = Array.isArray(s.assigned) ? pad(s.assigned.map(String)) : shuffle(pad(names));
   const opened = Array.isArray(s.opened) ? s.opened.filter(n => Number.isInteger(n) && n >= 0 && n < DOORS) : [];
   const start = typeof s.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.start) ? s.start : isoDate(defaultStart());
-  return { names, assigned, opened, lock: s.lock === true, start, skipWeekends: s.skipWeekends !== false };
+  return { assigned, opened, lock: s.lock === true, start, skipWeekends: s.skipWeekends !== false };
 }
 
 const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -85,13 +86,12 @@ const FONT = 'Georgia, "Times New Roman", serif';
 
 export default function AdventCalendar() {
   const [init] = useState(load);
-  const [names, setNames] = useState(init.names);
   const [assigned, setAssigned] = useState(init.assigned);
   const [opened, setOpened] = useState(init.opened);
   const [lock, setLock] = useState(init.lock);
   const [start, setStart] = useState(init.start);
   const [skipWeekends, setSkipWeekends] = useState(init.skipWeekends);
-  const [text, setText] = useState(init.names.join("\n"));
+  const [text, setText] = useState("");
   const [randomise, setRandomise] = useState(true);
   const [status, setStatus] = useState("");
   const [notice, setNotice] = useState("");
@@ -102,8 +102,8 @@ export default function AdventCalendar() {
   const doneRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify({ names, assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
-  }, [names, assigned, opened, lock, start, skipWeekends]);
+    try { localStorage.setItem(KEY, JSON.stringify({ assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
+  }, [assigned, opened, lock, start, skipWeekends]);
 
   // a day later when the page has been left open on a board: look again when it is next used
   useEffect(() => {
@@ -159,10 +159,11 @@ export default function AdventCalendar() {
 
   const save = () => {
     const list = parseNames(text);
-    setNames(list); setAssigned(randomise ? shuffle(pad(list)) : pad(list)); setOpened([]);
-    setStatus(`${list.length} name${list.length === 1 ? "" : "s"} saved.${list.length > DOORS ? ` Only the first ${DOORS} were used.` : ""}`);
+    setAssigned(randomise ? shuffle(pad(list)) : pad(list)); setOpened([]);
+    setStatus(`${list.length} name${list.length === 1 ? "" : "s"} placed behind the doors.${list.length > DOORS ? ` Only the first ${DOORS} were used.` : ""}`);
   };
-  const reshuffle = () => { setAssigned(shuffle(pad(names))); setOpened([]); setStatus("Names reshuffled. All doors closed."); };
+  const reshuffle = () => { setAssigned(a => shuffle(a)); setOpened([]); setStatus("Names reshuffled. All doors closed."); };
+  const setDoorName = (i: number, v: string) => setAssigned(a => a.map((x, k) => (k === i ? v : x)));
   const openAll = () => {
     const ids = Array.from({ length: DOORS }, (_, i) => i).filter(i => !isLocked(i + 1));
     setOpened(ids);
@@ -198,7 +199,7 @@ export default function AdventCalendar() {
       </header>
 
       <main aria-label="Advent calendar doors"
-        className="relative mx-auto grid max-w-3xl grid-cols-3 gap-3 rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] p-3 sm:grid-cols-4 sm:gap-4 sm:p-5 md:grid-cols-5"
+        className="relative mx-auto grid max-w-5xl grid-cols-4 gap-2.5 rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] p-3 sm:grid-cols-6 sm:gap-4 sm:p-5"
         style={{ boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" }}>
         {Array.from({ length: DOORS }, (_, i) => {
           const day = i + 1, name = assigned[i], isOpen = opened.includes(i), locked = isLocked(day);
@@ -209,7 +210,7 @@ export default function AdventCalendar() {
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg p-1.5 text-center text-[#3a1017]"
                 style={{ background: "radial-gradient(circle at 50% 40%, #fffaf0 0%, #f6e7c1 70%, #ecd59a 100%)", boxShadow: "inset 0 4px 10px rgba(0,0,0,.35)" }}>
                 <span className="text-sm leading-none text-[#a81f2e]" aria-hidden="true">★</span>
-                <span className={name ? "font-bold leading-tight [overflow-wrap:anywhere]" : "italic leading-tight"} style={{ fontSize: name ? "clamp(.95rem, 2.9vw, 1.55rem)" : "clamp(.8rem, 2.2vw, 1.1rem)" }}>{name || GREETING}</span>
+                <span className={name ? "font-bold leading-tight [overflow-wrap:anywhere]" : "italic leading-tight"} style={{ fontSize: name ? "clamp(.8rem, 2.2vw, 1.4rem)" : "clamp(.8rem, 2.2vw, 1.1rem)" }}>{name || GREETING}</span>
                 <span className="text-[11px] opacity-60">{doorLabel(day)}</span>
               </span>
               <span className="adv-door">
@@ -230,11 +231,21 @@ export default function AdventCalendar() {
               <button type="button" onClick={() => setControlsOpen(false)} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Done</button>
             </div>
             <div>
-            <p className="mb-2 text-sm leading-snug text-[#fbf5e6]/85">Type one name per line. The first {DOORS} names are used. Any doors left over show a Christmas greeting. Names stay on this device.</p>
+            <p className="mb-2 text-sm leading-snug text-[#fbf5e6]/85">Type who is behind each door. A door left empty shows a Christmas greeting. Names stay on this device.</p>
+            <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 sm:grid-cols-2">
+              {assigned.map((n, i) => (
+                <label key={i} className="flex items-center gap-2 text-sm">
+                  <span className="w-14 shrink-0 text-right text-[#f1dc9b]">Door {i + 1}</span>
+                  <input type="text" value={n} onChange={e => setDoorName(i, e.target.value)} spellCheck={false}
+                    className="min-w-0 flex-1 rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-2 py-1 text-base text-[#3a1017]" />
+                </label>
+              ))}
+            </div>
+            <p className="mb-1 mt-4 text-sm leading-snug text-[#fbf5e6]/85">Or paste a list, one name per line, to fill the doors. The first {DOORS} names are used.</p>
             <textarea value={text} onChange={e => setText(e.target.value)} spellCheck={false} placeholder={"Amira\nBen\nChloe\n…"}
-              className="min-h-[190px] w-full resize-y rounded-lg border border-[#d9b45b] bg-[#fbf5e6] p-3 text-base leading-relaxed text-[#3a1017]" />
+              className="min-h-[110px] w-full resize-y rounded-lg border border-[#d9b45b] bg-[#fbf5e6] p-3 text-base leading-relaxed text-[#3a1017]" />
             <label className="mt-3 flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={randomise} onChange={e => setRandomise(e.target.checked)} /> Randomise which door each name is behind
+              <input type="checkbox" checked={randomise} onChange={e => setRandomise(e.target.checked)} /> Randomise which door each pasted name goes behind
             </label>
             <label className="mt-2 flex items-start gap-2 text-sm">
               <input type="checkbox" className="mt-1" checked={lock} onChange={e => setLock(e.target.checked)} />
@@ -247,11 +258,11 @@ export default function AdventCalendar() {
                     className="rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-2 py-1 text-[#3a1017]" />
                 </label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={skipWeekends} onChange={e => setSkipWeekends(e.target.checked)} /> Skip weekends (school days only)</label>
-                <p className="text-[13px] text-[#fbf5e6]/70">Door 25 opens on {long(dates[DOORS - 1])}. {unlockedCount} of {DOORS} doors can be opened today.</p>
+                <p className="text-[13px] text-[#fbf5e6]/70">Door 24 opens on {long(dates[DOORS - 1])}. {unlockedCount} of {DOORS} doors can be opened today.</p>
               </div>
             )}
             <div className="mt-3 flex flex-wrap gap-2.5">
-              <button type="button" onClick={save} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Save names</button>
+              <button type="button" onClick={save} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Fill doors from list</button>
               <button type="button" onClick={reshuffle} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Reshuffle doors</button>
               <button type="button" onClick={openAll} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Open all</button>
               <button type="button" onClick={() => { setOpened([]); setStatus("All doors closed."); }} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Close all</button>
