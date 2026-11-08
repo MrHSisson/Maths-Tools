@@ -1,6 +1,6 @@
 # Resource histogram and resource levelling
 - **Status:** building
-- **Updated:** 2026-11-08
+- **Updated:** 2026-11-08 (later session: print grid, basket Reload, Show N − 1)
 
 ## Intention
 Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the Critical Path tool so that they only generate questions students could reasonably meet in an exam, and so that the levelling walkthrough teaches a method that finds the true minimum (quick sums and one ranked list) with a developing picture. Full design: `specs/resource-levelling.md`.
@@ -13,6 +13,7 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
   - **Histogram tab:** Level 1 draw (network size option), Level 2 draw with several workers, Level 3 cut the peak within the float (fewest / show N / show N − 1 is not enough (total work ÷ workers, no levelling); worker-days and must-run floors, must-run stretches shaded on the cascade chart).
   - **Drawing order:** critical along the bottom, then longest first, no holes or overhangs.
   - **Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); "new start of the last activity" is not offered at levelling Level 3.
+  - **Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask "Show N − 1 is not enough", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.
   - **Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed.
 
 ## Next steps

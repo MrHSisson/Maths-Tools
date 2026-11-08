@@ -349,7 +349,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** handing students a question on paper, and collecting the questions you plan to print so you can come back to them in another session. **How it works:** a printer icon beside the pin saves the question on screen to the print basket (a message confirms it; the count shows on the icon; the same icon removes it). The burger menu's **Print basket (n)…** lists the saved questions (up to 30) and prints them as questions, answers or both, each on its own A4 page: the question, the network with its times and critical path, the cascade chart with its floats, then the histograms to draw (blank) or already drawn, with the workers table centred. An answer sheet has the histograms drawn and the answer. A saved question is just its recipe (tab, level, options and seed), so the basket stays in the browser after the tab closes and **Copy basket link** carries it to another device. **Where:** Critical Path Analysis, the Resource histogram and Resource levelling tabs (any level). **Status:** built for short-term use: a later change to how questions are generated would change a saved one."
+     "s": "**For:** handing students a question on paper, and collecting the questions you plan to print so you can come back to them in another session. **How it works:** a printer icon beside the pin saves the question on screen to the print basket (a message confirms it; the count shows on the icon; the same icon removes it). The burger menu's **Print basket (n)…** lists the saved questions (up to 30) and prints them as questions, answers or both, each on its own A4 page: the question, the network with its times and critical path, the cascade chart with its floats, then the histograms to draw (blank) or already drawn, with the workers table centred. An answer sheet has the histograms drawn and the answer. A saved question is just its recipe (tab, level, options and seed), so the basket stays in the browser after the tab closes and **Copy basket link** carries it to another device, and **Reload** on a saved question brings it back onto the page exactly as it was. The blank histograms to draw have a fine grid (a line at every time unit, every fifth darker) so a value such as 63 is easy to find. **Where:** Critical Path Analysis, the Resource histogram and Resource levelling tabs (any level). **Status:** built for short-term use: a later change to how questions are generated would change a saved one."
     }
    ]
   },
@@ -1296,7 +1296,7 @@
    "title": "Resource histogram and resource levelling",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-08",
+   "updated": "2026-11-08 (later session: print grid, basket Reload, Show N − 1)",
    "sections": [
     {
      "title": "Intention",
@@ -1319,9 +1319,10 @@
         "2026-11-07 to 2026-11-08: **the tool build is done** (branch `claude/new-session-6gg0my`, on top of `main`, not merged). What exists, and where it departs from the plan (full list in `specs/resource-levelling.md`, \"As built\"):",
         "**Method:** `levelMethod` (quick sums, one ranked list, tries) beside `levelSchedule` in `cpa.ts`; tested against the fixture, random networks and an independent solver.",
         "**Levelling tab:** three levels and the filters; options *Ask for*, *Workers per activity* and *Most tries* (Level 3 ones use the new Decision shell field `forLevels`); the six-step walkthrough (histogram, first clash, quick-sum table, each try drawn with ghost and arrow, a step per knock-on clash, the check, the answer with a written \"Write it up\" card).",
-        "**Histogram tab:** Level 1 draw (network size option), Level 2 draw with several workers, Level 3 cut the peak within the float (fewest / show N / can it be N − 1; worker-days and must-run floors, must-run stretches shaded on the cascade chart).",
+        "**Histogram tab:** Level 1 draw (network size option), Level 2 draw with several workers, Level 3 cut the peak within the float (fewest / show N / show N − 1 is not enough (total work ÷ workers, no levelling); worker-days and must-run floors, must-run stretches shaded on the cascade chart).",
         "**Drawing order:** critical along the bottom, then longest first, no holes or overhangs.",
         "**Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); \"new start of the last activity\" is not offered at levelling Level 3.",
+        "**Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask \"Show N − 1 is not enough\", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.",
         "**Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed."
        ]
       }
