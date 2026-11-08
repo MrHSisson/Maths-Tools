@@ -29,6 +29,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource levelling: the model answer is a written card, not chips
+
+- The final step's **"What to write"** chips are now a plain **"Write it up"** card: numbered lines (the clash sentence, the quick sums, one line per try) and the filled-in write-up as a highlighted paragraph. It shows on the final step of the levelling tab only, no inner scrolling, and the step text above it is just the answer. The option chips stay on the try, clash and check steps. New `prose` flag on a step list (Decision shell) for this look.
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-08 — Resource levelling and histogram: fixes from the independent test agents
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts,types.ts,DecisionShell.tsx}`, `src/shared/decision/representations/{HistogramView,GanttView}.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.

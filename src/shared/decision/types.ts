@@ -185,6 +185,8 @@ export interface StepList {
   items: StepListItem[];
   /** a long list scrolls inside a box this tall (px) instead of pushing the buttons down as it grows */
   maxHeight?: number;
+  /** shown as a written answer: numbered lines in plain text (not chips), the item toned "good" set apart at the end as the write-up paragraph */
+  prose?: boolean;
 }
 
 // ── A colour-key entry — the swatch reuses the renderers' own styles ──────────

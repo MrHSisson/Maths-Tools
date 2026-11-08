@@ -832,15 +832,13 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
   const writeUp = `${cpaList(first.ids)} cannot run at the same time, as that needs ${nWorkers(first.need)} and only ${nWorkers(lv.limit)} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
   const model = [
     clashLine(first),
-    `Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}`,
-    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} → ${tr.clash ? `clash left (${tr.clash.from}–${tr.clash.to})` : `no clash → ${tr.finish}`}`),
-    answer,
-    writeUp,
+    `Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}.`,
+    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} until ${tr.option.until} → ${tr.clash ? `still a clash (${tr.clash.from}–${tr.clash.to})` : `no clash, finish ${tr.finish}`}.`),
   ];
   steps.push(mk(
-    `${answer} Other ways of delaying can give the same minimum; the finish time is what is fixed.`,
+    answer,
     "Final answer", { which: "after" }, undefined,
-    { runningTotal: ask === "extra" ? extra : m.minimum, totalLabel: ask === "extra" ? "Extra time" : "Minimum time", list: { title: "What to write", maxHeight: 210, items: model.map((text) => ({ text, tone: "note" as const })) } },
+    { runningTotal: ask === "extra" ? extra : m.minimum, totalLabel: ask === "extra" ? "Extra time" : "Minimum time", list: { title: "Write it up", prose: true, items: [...model.map((text) => ({ text })), { text: writeUp, tone: "good" as const }] } },
   ));
   return steps;
 }

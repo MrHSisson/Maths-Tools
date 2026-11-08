@@ -1125,6 +1125,18 @@ const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border:
 
 // A titled row of chips: Kruskal's edges in order, Prim's candidates, the tour so far…
 function ListCard({ list }: { list: StepList }) {
+  if (list.prose) {
+    const lines = list.items.filter((it) => it.tone !== "good"), write = list.items.filter((it) => it.tone === "good");
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
+        <ol className="list-decimal pl-5 space-y-1 text-[15px] leading-snug text-gray-800">
+          {lines.map((it, i) => <li key={i}>{it.text}</li>)}
+        </ol>
+        {write.map((it, i) => <p key={i} className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[15px] leading-snug text-blue-950">{it.text}</p>)}
+      </div>
+    );
+  }
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
