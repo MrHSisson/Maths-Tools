@@ -73,6 +73,12 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
       <line x1={LEFT} y1={TOP} x2={LEFT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <text x={LEFT + PLOT / 2} y={bodyBottom + 38} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
 
+      {view.mustRunAt !== undefined && (
+        <g>
+          <line x1={x(view.mustRunAt + 0.5)} y1={TOP} x2={x(view.mustRunAt + 0.5)} y2={bodyBottom} stroke="#dc2626" strokeWidth={2} strokeDasharray="6 3" />
+          <text x={x(view.mustRunAt + 0.5)} y={TOP - 1} textAnchor="middle" fontSize={11} fontWeight={700} fill="#dc2626">time {view.mustRunAt}</text>
+        </g>
+      )}
       {data.bars.map((b) => {
         if (!drawn.has(b.id)) return null;
         const cur = view.current === b.id;
@@ -89,7 +95,9 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
         return (
           <g key={b.id}>
             <rect x={x(b.start)} y={by} width={wide} height={bh} fill={fill} stroke={stroke} strokeWidth={cur ? 2.6 : 1.6} />
-            {wide >= 14 && <text x={x(b.start) + wide / 2} y={by + bh / 2 + (blocks ? 5 : 4)} textAnchor="middle" fontSize={blocks ? 15 : 12} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
+            {/* must-run window: running in every schedule, from the latest start to the earliest finish (drawn under the label so it stays readable) */}
+            {(view.mustRun ?? []).filter((w) => w.id === b.id).map((w) => <rect key="mr" x={x(w.from)} y={by} width={x(w.to) - x(w.from)} height={bh} fill="#ef4444" fillOpacity={0.4} stroke="#dc2626" strokeWidth={1.4} />)}
+            {wide >= 14 && <text x={x(b.start) + wide / 2} y={by + bh / 2 + (blocks ? 5 : 4)} textAnchor="middle" fontSize={blocks ? 15 : 12} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{b.id}</text>}
             {showFloat && (blocks
               ? <rect x={x(fx0)} y={by} width={fw} height={bh} fill="none" stroke={PURPLE} strokeWidth={1.5} strokeDasharray="5 3" />
               : <line x1={x(fx0)} y1={by + bh / 2} x2={x(fx1)} y2={by + bh / 2} stroke={PURPLE} strokeWidth={2} strokeDasharray="5 3" />)}
@@ -99,20 +107,6 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
           </g>
         );
       })}
-      {/* must-run windows: where an activity is running whatever the schedule (latest start to earliest finish), and the moment the most are needed */}
-      {(view.mustRun ?? []).map((w) => {
-        const b = data.bars.find((q) => q.id === w.id);
-        if (!b) return null;
-        const bh = blocks ? rowH - 8 : 12;
-        const by = rowTop(b.row) + (rowH - bh) / 2;
-        return <rect key={`mr${w.id}`} x={x(w.from)} y={by} width={x(w.to) - x(w.from)} height={bh} fill="#ef4444" fillOpacity={0.5} stroke="#dc2626" strokeWidth={1.4} />;
-      })}
-      {view.mustRunAt !== undefined && (
-        <g>
-          <line x1={x(view.mustRunAt + 0.5)} y1={TOP - 4} x2={x(view.mustRunAt + 0.5)} y2={bodyBottom} stroke="#dc2626" strokeWidth={2} strokeDasharray="6 3" />
-          <text x={x(view.mustRunAt + 0.5)} y={bodyBottom + 31} textAnchor="middle" fontSize={12} fontWeight={700} fill="#dc2626">time {view.mustRunAt}</text>
-        </g>
-      )}
     </svg>
   );
 }

@@ -346,7 +346,9 @@ export interface HistViewState {
   /** knock-ons: blocks that start later only because something they wait for now finishes later */
   knock?: string[];
   /** one clash picked out and labelled "needs 10 / limit 9" (the others are not shaded) */
-  clash?: { from: number; to: number; need: number };
+  clash?: { from: number; to: number; need: number }[];
+  /** a dashed line at this time (the busiest moment in the must-run step) */
+  markAt?: number;
   /** label every shaded clash "needs 10 / limit 9" */
   labelOver?: boolean;
   /** the peak picked out: the top worker of the tallest stretch, labelled */
@@ -1032,13 +1034,16 @@ function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "
   }
   return null;
 }
+/** the network whose histogram stacked in the pre-check (its workers are already set) */
+const histStash: { cur: CpaActivity[] | null } = { cur: null };
+const takeHistStash = (): CpaActivity[] | null => histStash.cur;
 const takeLevelStash = (): typeof levelStash.cur => levelStash.cur;
 const levelStash: { cur: { acts: CpaActivity[]; found: NonNullable<ReturnType<typeof searchLevel>> } | null } = { cur: null };
 
 /** Some questions need a network with a particular property (a histogram that stacks, a unique best activity…): try again until one has it. */
 export function generateCpa(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {}): { data: CpaProblemData; prompt: string; answerText: string } {
   for (let i = 0; i < 400; i++) {
-    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown" && kind !== "cpaReason") || !(e instanceof Error) || (e.message !== "histogram: no hole-free stack" && !(kind === "cpaLevel" && opts.levelLevel && e.message === "critical path: no suitable network found"))) throw e; }
+    try { return generateCpaOnce(level, kind, opts); } catch (e) { if ((kind !== "cpaHistogram" && kind !== "cpaLevel" && kind !== "cpaAlloc" && kind !== "cpaShorten" && kind !== "cpaChange" && kind !== "cpaContext" && kind !== "cpaPaths" && kind !== "cpaUnknown" && kind !== "cpaReason") || !(e instanceof Error) || (e.message !== "histogram: no hole-free stack" && !(((kind === "cpaLevel" && opts.levelLevel) || (kind === "cpaHistogram" && !opts.histLevel && !opts.fixed)) && e.message === "critical path: no suitable network found"))) throw e; }
   }
   throw new Error("critical path: no suitable histogram found");
 }
@@ -1048,9 +1053,19 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   const paths = opts.paths ?? "one";
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
   // the three-level levelling questions test each network for a question of the level before laying it out
-  levelStash.cur = null;
+  levelStash.cur = null; histStash.cur = null;
   const pre = kind === "cpaLevel" && opts.levelLevel && !opts.fixed
     ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelMaxTries ?? 8, opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
+    : kind === "cpaHistogram" && !opts.histLevel && !opts.fixed
+    // the drawing questions: a network whose histogram does not stack as asked is thrown away before it is laid out
+    ? (c: CpaActivity[]) => {
+        const several = opts.workers === "several";
+        c.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
+        const h = histogramData(c, cpaTimes(c), opts.histStart === "late" ? "late" : "early", opts.histShape ?? "whole");
+        if (!h || h.peak < 3 || h.peak > 10) return false;
+        histStash.cur = c;
+        return true;
+      }
     : undefined;
   if (opts.fixed) { acts = opts.fixed.acts; layout = opts.fixed.layout; found = 99; }
   // keep the tidiest of several acceptable networks, rather than the first
@@ -1158,18 +1173,19 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const target = ask === "canFewer" ? best - 1 : best;
     data.extra = { histogram: before, cascade: cascadeData(acts, times, start, "rows", "blocks"), cut: { ask, target, best, start, states, moves, floor, peak: { from: pkAt, to: pkTo, need: before.peak } } };
     const several = wk !== "one";
+    const wkr = (k: number) => `${k} worker${k === 1 ? "" : "s"}`;
     const given = `${several ? "The number of workers each activity needs is shown in the table." : "Each activity needs one worker."} The resource histogram for the project, with every activity as ${start} as possible, is shown. Its peak needs ${before.peak} workers.`;
     prompt = ask === "fewest" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Delaying activities within their float does not delay the project. Find the smallest number of workers with which the project can still be completed in the minimum time of ${T} ${unit}, and show how.`
-      : ask === "show" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project can be completed in the minimum time of ${T} ${unit} with only ${best} workers.`
-      : `The activity network represents ${subject}. The times are in ${unit}. ${given} Can the project be completed in the minimum time of ${T} ${unit} with only ${best - 1} workers? Give a reason.`;
+      : ask === "show" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project can be completed in the minimum time of ${T} ${unit} with only ${wkr(best)}.`
+      : `The activity network represents ${subject}. The times are in ${unit}. ${given} Can the project be completed in the minimum time of ${T} ${unit} with only ${wkr(best - 1)}? Give a reason.`;
     const slide = moves.filter((m) => !m.knock).map((m) => `${m.id} from ${m.from} to ${m.to}`).join(" and ");
-    const why = floor ? (floor.kind === "workerDays" ? ` No fewer will do: the work is ${floor.total} worker-${unit} and ${floor.total} ÷ ${T} = ${(floor.total! / T).toFixed(2)}, so at least ${floor.value} workers are needed.` : ` No fewer will do: at time ${floor.at}, ${floor.value} workers are needed whatever happens, because those activities must be running then.`) : "";
+    const why = floor ? (floor.kind === "workerDays" ? ` No fewer will do: the work is ${floor.total} worker-${unit} and ${floor.total} ÷ ${T} = ${(floor.total! / T).toFixed(2)}, so at least ${wkr(floor.value)} are needed.` : ` No fewer will do: at time ${floor.at}, ${wkr(floor.value)} are needed whatever happens, because those activities must be running then.`) : "";
     answerText = ask === "canFewer" ? `No.${why}`
       : ask === "show" ? `Slide ${slide}: the most workers needed at once is then ${best}, and the project still finishes at ${T}.`
-      : `${best} workers. Slide ${slide}${moves.some((m) => m.knock) ? `, which pushes ${moves.filter((m) => m.knock).map((m) => m.id).join(", ")}` : ""}; the project still finishes at ${T}.${why}`;
+      : `${wkr(best)}. Slide ${slide}${moves.some((m) => m.knock) ? `, which pushes ${moves.filter((m) => m.knock).map((m) => m.id).join(", ")}` : ""}; the project still finishes at ${T}.${why}`;
   } else if (kind === "cpaHistogram") {
     const several = opts.workers === "several";
-    if (!opts.fixed) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
+    if (!opts.fixed && takeHistStash() !== acts) acts.forEach((a) => { a.workers = several ? randInt(1, 3) : 1; });
     const hStart = opts.histStart === "late" ? "late" : "early";
     const h = histogramData(acts, times, hStart, opts.histShape ?? "whole");
     if (!h || h.peak < 3 || h.peak > 10) throw new Error("histogram: no hole-free stack");

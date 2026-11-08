@@ -1128,7 +1128,7 @@ function ListCard({ list }: { list: StepList }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, ...(list.maxHeight ? { maxHeight: list.maxHeight, overflowY: "auto" } : {}) }}>
         {list.items.map((it, i) => {
           const t = CHIP_TONE[it.tone ?? "pending"];
           return (
@@ -1136,7 +1136,7 @@ function ListCard({ list }: { list: StepList }) {
               key={i}
               style={{
                 padding: "3px 9px", borderRadius: 8, fontWeight: 800, fontSize: 15, background: t.bg, color: t.fg,
-                border: `1.5px solid ${t.border}`, textDecoration: t.strike ? "line-through" : undefined, whiteSpace: "nowrap",
+                border: `1.5px solid ${t.border}`, textDecoration: t.strike ? "line-through" : undefined, whiteSpace: it.text.length > 26 ? "normal" : "nowrap", maxWidth: "100%",
               }}
             >
               {it.text}

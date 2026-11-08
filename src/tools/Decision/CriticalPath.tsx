@@ -251,13 +251,14 @@ function overRanges(profile: number[], limit: number): { from: number; to: numbe
 // Resource levelling: the quick sums of the options at a clash, smallest first (the top row is the one tried; "tie" rows have the same quick sum)
 function QuickSumTable({ quick }: { quick: NonNullable<NonNullable<SolveStep["histView"]>["quick"]> }) {
   const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 13, padding: "3px 10px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
-  const cell = (tone: string): React.CSSProperties => ({ border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 14, fontFamily: serif, background: tone === "top" ? "#dcfce7" : tone === "tie" ? "#fef9c3" : "#fff", fontWeight: tone === "top" ? 700 : 400 });
+  const cell = (tone: string): React.CSSProperties => ({ border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 15, background: tone === "top" ? "#dcfce7" : tone === "tie" ? "#fef9c3" : "#fff", fontWeight: tone === "top" ? 700 : 400 });
   return (
     <table style={{ borderCollapse: "collapse" }}>
       <tbody>
         <tr>{quick.head.map((h) => <th key={h} style={head}>{h}</th>)}</tr>
         {quick.rows.map((r, i) => <tr key={i}>{r.cells.map((c, j) => <td key={j} style={cell(r.tone)}>{c}</td>)}</tr>)}
       </tbody>
+      <caption style={{ captionSide: "bottom", paddingTop: 6, fontSize: 12.5, color: "#334155", fontWeight: 600 }}>Green: the one tried first. Yellow: ties with it (take one with float).</caption>
     </table>
   );
 }
@@ -434,7 +435,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
           <div ref={panels[cur].ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{panels[cur].body}</div>
         </div>
         <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? (g.which === "try" ? overRanges(data.profile, lv.limit) : lv.over) : undefined} axisT={axis} />
+          <HistogramView data={data} view={g} unit={d.unit} axisPeak={Math.max(lv.before.peak, lv.after.peak, ...(lv.tryHist ?? []).map((h) => h.peak))} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? (g.which === "try" ? overRanges(data.profile, lv.limit) : lv.over) : undefined} axisT={axis} />
         </div>
       </div>
     );
@@ -454,7 +455,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
         </div>
         {several && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
         <div style={{ flex: "6 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={cut && g.which === "try" ? cut.states[g.tryIndex ?? 0] : d.extra!.histogram!} view={g} unit={d.unit} />
+          <HistogramView data={cut && g.which === "try" ? cut.states[g.tryIndex ?? 0] : d.extra!.histogram!} view={g} unit={d.unit} axisPeak={cut ? Math.max(...cut.states.map((h) => h.peak)) : undefined} />
         </div>
       </div>
     );
@@ -540,13 +541,18 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
       ) : levelling ? (
         <>
           <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> activity</span>
-          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> delayed</span>
+          <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
+          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> held back</span>
+          <span style={item}><span style={swatch("#fed7aa", "#ea580c")} /> knock-on</span>
           <span style={item}><span style={swatch("#fecaca", "#dc2626", true)} /> over the limit</span>
         </>
       ) : histogram ? (
         <>
           <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
           <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> other activity</span>
+          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> slid / drawn again</span>
+          <span style={item}><span style={swatch("#fed7aa", "#ea580c")} /> knock-on</span>
+          <span style={item}><span style={swatch("#fecaca", "#dc2626", true)} /> peak / must run</span>
           <span style={item}>block: width = duration, height = workers</span>
         </>
       ) : cascade ? (

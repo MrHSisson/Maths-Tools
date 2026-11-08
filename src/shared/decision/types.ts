@@ -183,6 +183,8 @@ export interface StepListItem {
 export interface StepList {
   title: string;
   items: StepListItem[];
+  /** a long list scrolls inside a box this tall (px) instead of pushing the buttons down as it grows */
+  maxHeight?: number;
 }
 
 // ── A colour-key entry — the swatch reuses the renderers' own styles ──────────

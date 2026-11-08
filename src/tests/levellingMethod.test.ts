@@ -258,3 +258,58 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
     });
   }, 200_000);
 });
+
+describe("QA regressions — wording, clash bands and chips", () => {
+  const stepsOf = (g: ReturnType<typeof generateCpa>, kind: "cpaLevel" | "cpaHistogram") =>
+    solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind } as never);
+  const bad = /\b1 (workers|days|hours|minutes)\b|undefined|NaN|\s{2,}/;
+  it("no '1 workers' / '1 days', no stray 'undefined' or double spaces, in any prompt, answer or step", () => {
+    withSeededRandom(8080, () => {
+      for (let i = 0; i < 12; i++) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: (["one", "several", "mixed"] as const)[i % 3], histCut: (["fewest", "show", "canFewer"] as const)[i % 3], histStart: i % 2 ? "late" : "early", setting: "context" });
+        for (const t of [g.prompt, g.answerText, ...stepsOf(g, "cpaHistogram").map((s) => s.caption)]) expect(t).not.toMatch(bad);
+      }
+      for (let i = 0; i < 8; i++) {
+        const lvl = (i % 3 + 1) as 1 | 2 | 3;
+        const g = generateCpa(lvl === 3 ? 3 : 2, "cpaLevel", { paths: "one", levelLevel: lvl, levelWording: (["time", "extra", "explain", "startLast"] as const)[i % 4], singleEnd: lvl < 3 && i % 4 === 3, histShape: "step", setting: "context" });
+        for (const t of [g.prompt, g.answerText, ...stepsOf(g, "cpaLevel").map((s) => s.caption)]) expect(t).not.toMatch(bad);
+      }
+    });
+  }, 200_000);
+  it("a clash band is never taller than the stack under it, and covers only times over the limit", () => {
+    withSeededRandom(6060, () => {
+      for (let i = 0; i < 8; i++) {
+        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: i % 2 ? "mixed" : "several", histShape: "step" });
+        const L = g.data.extra!.level!;
+        for (const s of stepsOf(g, "cpaLevel")) {
+          const hv = s.histView!;
+          if (!hv.clash) continue;
+          const profile = hv.which === "try" ? L.tryHist![hv.tryIndex!].profile : L.before.profile;
+          for (const b of hv.clash) for (let x = b.from; x < b.to; x++) { expect(profile[x], `${s.phase}: band ${b.from}-${b.to} at ${x}`).toBe(b.need); expect(b.need).toBeGreaterThan(L.limit); }
+        }
+      }
+    });
+  }, 200_000);
+  it("'explain' says what the limit does, and no two chips in a list read the same", () => {
+    withSeededRandom(5050, () => {
+      for (let i = 0; i < 6; i++) {
+        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "mixed", levelWording: "explain", histShape: "step" });
+        const steps = stepsOf(g, "cpaLevel");
+        expect(steps[steps.length - 1].caption).toMatch(/longer/);
+        for (const s of steps) if (s.list && s.list.title.startsWith("The list")) { const texts = s.list.items.map((x) => x.text); expect(new Set(texts).size, texts.join(" | ")).toBe(texts.length); }
+      }
+    });
+  }, 200_000);
+});
+
+describe("QA regression — the drawing questions always find a network", () => {
+  it("histogram Levels 1 and 2 never fail to build, whatever the Blocks and Start options (a page crash once came from this)", () => {
+    withSeededRandom(3030, () => {
+      for (let i = 0; i < 30; i++) {
+        const g = generateCpa(i % 2 ? 3 : 2, "cpaHistogram", { paths: "one", workers: i % 2 ? "several" : "one", histShape: (["whole", "jump", "step"] as const)[i % 3], histStart: i % 4 < 2 ? "early" : "late" });
+        expect(g.data.extra!.histogram!.blocks.length).toBe(g.data.acts.length);
+        if (i % 3 === 0) expect(g.data.extra!.histogram!.blocks.some((b) => b.base && b.base.some((v) => v !== b.base![0]))).toBe(false); // "whole": plain rectangles
+      }
+    });
+  }, 200_000);
+});

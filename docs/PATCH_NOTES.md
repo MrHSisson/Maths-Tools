@@ -29,6 +29,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource levelling and histogram: fixes from the independent test agents
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts,types.ts,DecisionShell.tsx}`, `src/shared/decision/representations/{HistogramView,GanttView}.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
+
+Five agents tested the two tabs independently (accuracy against their own brute-force solver, rendered-SVG geometry, appearance of each tab, option fuzzing). The maths was right everywhere (about 160 questions against a separate solver; about 1,300 drawn steps with no overlaps, holes or floating blocks; 720 questions with no crashes). What they found, now fixed:
+- **Red clash band** on the "clash left" steps overshot the stack when workers differed; it is now drawn in bands, each as high as the stack under it, and the step names the first band. The knock-on blocks stay coloured on that step.
+- **Last "What to write" chip clipped:** long chips now wrap, and long lists (the options list, the model answer) scroll in a box instead of pushing the Next button down.
+- **"1 workers" / "1 days"** fixed (prompts, slide and floor steps); the two-activity clash reads "cannot both run together".
+- **Vertical scale** is fixed across the steps of a walkthrough, so bars no longer jump; the histogram rows are taller when the stack is short.
+- **"Explain" wording** now says what the limit does ("the project takes 9 hours longer: 84 hours, not 75").
+- **Look-alike chips** in the options list now show their route.
+- **Ghost and arrow:** the dashed ghost sits under the blocks, and the arrow is an arc over the top, so neither strikes through a label; block labels have a white halo so the limit line no longer cuts through them; narrow stepped pieces are labelled down to 8 px.
+- **Must-run step:** the red windows sit under the labels, the dashed time marker is on both charts with its label at the top.
+- **Legend** now covers critical, held back, knock-on, over the limit / peak / must run; the quick-sum table is in the page font with a key for its colours.
+- **Wording:** "Slide F to start at 47, not 38"; "A and B must both be running"; "none has a quick sum below it".
+- **Generation speed:** histogram Levels 1 and 2 test a network's histogram before laying it out (median about 240 ms, was often 1–3 s). A first version of this crashed the page on some option combinations; the browser re-check caught it and a test now guards it.
+- Tests: wording, band, chip and generation regressions in `levellingMethod.test.ts`.
+
+Not changed: "Last start" is still a selectable wording at levelling Level 3 (the shell cannot hide one choice by level; it asks for the time there); the charts are larger but still share a card with the network or Gantt chart; phone and tablet not checked.
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-08 — Decision shell: options can be limited to a level (`forLevels`), and a lost set of levelling options restored
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{types.ts,DecisionShell.tsx}`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/criticalPathOptions.test.ts`, `docs/architecture/DECISION_SHELL_PLAN.md`.
