@@ -17,6 +17,7 @@ describe("A4 question sheet", () => {
       const q = await html(problemOf(g, "cpaHistogram", 3), false);
       expect(figs(q)).toEqual(["network", "gantt", "hist", "hist"]);
       expect(q).toContain("Name ____");
+      expect(q).toContain("table.workers { border-collapse: collapse; margin: 0 auto");   // the workers table is centred
       expect(q).toContain("Workers</th>");                  // the workers table, as the activities differ
       const a = await html(problemOf(g, "cpaHistogram", 3), true);
       expect(a).toContain("answers");
@@ -33,12 +34,12 @@ describe("A4 question sheet", () => {
       expect(blocksIn(a)).toBeGreaterThan(blocksIn(q) + g.data.acts.length);
     });
   }, 100_000);
-  it("histogram Levels 1 and 2: one tall blank histogram", async () => {
+  it("histogram Levels 1 and 2: the network and one tall blank histogram (no cascade chart: it would show the answer)", async () => {
     await withSeededRandom(33, async () => {
       for (const lv of [2, 3] as const) {
         const g = generateCpa(lv, "cpaHistogram", { paths: "one", workers: lv === 3 ? "several" : "one" });
         const q = await html(problemOf(g, "cpaHistogram", lv === 2 ? 1 : 2), false);
-        expect(figs(q)).toEqual(["network", "gantt", "hist"]);
+        expect(figs(q)).toEqual(["network", "hist"]);
         expect(q).toContain("hist tall");
       }
     });

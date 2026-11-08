@@ -36,6 +36,8 @@ Keep the split even when a session only touches one.
 - Checked: 36 sheets rendered to A4 PDFs (question and answer sheets, every kind), all one page; the menu items open the sheet in the real app and are absent on other tabs.
 - Tests: `cpaSheet.test.ts`; the given/draw option in `levellingMethod.test.ts` and `criticalPathOptions.test.ts`.
 
+- **Levels 1 and 2 (just draw the histogram):** the sheet is the network (larger) and one tall blank histogram that fills the page. The cascade chart is left off these two levels because it shows where every block starts, which would give the drawing away. The workers table is centred on every sheet.
+
 Not done: other Critical Path tabs have no sheet; several questions per sheet (one per page for now); blank histograms are gridded by worker and by the time ticks, not squared paper (the "Print templates…" item has squared grids).
 
 Agent: Claude Code

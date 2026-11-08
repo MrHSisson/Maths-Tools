@@ -34,12 +34,16 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
     data: cas, view: { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }, unit: d.unit, axisT: T, rowH: 22,
   }));
   const axisPeak = Math.max(hist.peak, lv?.limit ?? 0, ...(cut?.states ?? []).map((s) => s.peak), lv?.after.peak ?? 0);
-  const draw = (data: HistogramData, filled: boolean, limit?: number): string => renderToStaticMarkup(createElement(HistogramView, {
+  const draw = (data: HistogramData, filled: boolean, limit?: number, tall = false): string => renderToStaticMarkup(createElement(HistogramView, {
     data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0,
+    // a histogram that has the page to itself is drawn taller, to fill it
+    ...(tall ? { plotH: 470, cellMax: 80 } : {}),
   }));
+  // the cascade chart shows where every block starts, so a question that asks for the drawing (Levels 1 and 2) does not give it
+  const drawsOnly = d.kind === "cpaHistogram" && !cut;
   const figures: CpaSheetFigure[] = [
-    { caption: "Activity network (earliest start, duration, latest finish), critical path in green", svg: network, kind: "network" },
-    { caption: "Cascade chart: every activity as early as possible, float shown dashed", svg: gantt, kind: "gantt" },
+    { caption: "Activity network (earliest start, duration, latest finish), critical path in green", svg: network, kind: "network", tall: drawsOnly },
+    ...(drawsOnly ? [] : [{ caption: "Cascade chart: every activity as early as possible, float shown dashed", svg: gantt, kind: "gantt" as const }]),
   ];
   const out: CpaSheetInput = { title: "Critical Path Analysis", subtitle: "", prompt: p.prompt, figures, answerSheet: answers };
   if (d.acts.some((a) => (a.workers ?? 1) > 1)) out.workers = d.acts.map((a) => ({ id: a.id, n: a.workers ?? 1 }));
@@ -70,7 +74,7 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
     if (answers) out.answer = [p.answer.text];
   } else {
     out.subtitle = `Resource histogram${level}`;
-    figures.push({ caption: "Draw the resource histogram, every activity as " + (hist.start === "late" ? "late" : "early") + " as possible", svg: draw(hist, answers), kind: "hist", tall: true });
+    figures.push({ caption: "Draw the resource histogram, every activity as " + (hist.start === "late" ? "late" : "early") + " as possible", svg: draw(hist, answers, undefined, true), kind: "hist", tall: true });
     if (answers) out.answer = [p.answer.text];
   }
   return out;

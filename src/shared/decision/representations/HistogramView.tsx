@@ -32,15 +32,18 @@ interface HistogramViewProps {
   minWidth?: number;
   /** the most workers any picture in this walkthrough reaches, so the vertical scale stays the same from step to step */
   axisPeak?: number;
+  /** a taller plot (a page with a whole sheet for one histogram): the height of the whole plot, and the tallest one worker may be */
+  plotH?: number;
+  cellMax?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function HistogramView({ data, view, unit, limit, over, axisT, axisPeak, minWidth = 560, qIndex, background = "#ffffff" }: HistogramViewProps) {
+export default function HistogramView({ data, view, unit, limit, over, axisT, axisPeak, plotH = 250, cellMax = 44, minWidth = 560, qIndex, background = "#ffffff" }: HistogramViewProps) {
   const T = Math.max(data.T, axisT ?? 0);
   const peak = Math.max(data.peak, limit ?? 0, axisPeak ?? 0);
   const rows = peak + 1; // one spare unit of height above the tallest stack
-  const cell = Math.max(18, Math.min(44, 250 / rows)); // a short stack gets taller rows, so it is readable from the back of a room // height of one worker
+  const cell = Math.max(18, Math.min(cellMax, plotH / rows)); // a short stack gets taller rows, so it is readable from the back of a room // height of one worker
   const x = (t: number) => LEFT + (t / T) * PLOT;
   const bodyBottom = TOP + rows * cell;
   const yOf = (level: number) => bodyBottom - level * cell;

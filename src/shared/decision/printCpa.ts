@@ -30,7 +30,7 @@ const CSS = `
   header h1 { font-size: 13pt; margin: 0; color: #1e3a8a; }
   header .who { font-size: 9.5pt; color: #374151; }
   .prompt { margin: 0 0 2mm; line-height: 1.3; font-weight: 600; }
-  table.workers { border-collapse: collapse; margin: 0 0 2mm; font-size: 9.5pt; }
+  table.workers { border-collapse: collapse; margin: 0 auto 2mm; font-size: 9.5pt; }
   table.workers th { background: #1e3a8a; color: #fff; padding: 0.6mm 2.5mm; border: 0.3mm solid #1e3a8a; text-align: center; }
   table.workers td { border: 0.3mm solid #1e3a8a; padding: 0.6mm 2.5mm; text-align: center; font-style: italic; min-width: 6mm; }
   table.workers td.n { font-style: normal; }
@@ -39,13 +39,15 @@ const CSS = `
   .fig.network { height: 50mm; }
   .fig.gantt { height: 46mm; }
   .fig.hist { height: 52mm; }
-  .fig.hist.tall { height: 108mm; }
+  .fig.network.tall { height: 72mm; }
+  .fig.hist.tall { height: 138mm; }
   .fig svg { width: 100% !important; height: 100% !important; min-width: 0 !important; max-height: none !important; margin: 0 !important; }
   /* an answer sheet carries the answer lines too, so its pictures are a little smaller to keep it on one page */
   .sheet.ans .fig.network { height: 40mm; }
   .sheet.ans .fig.gantt { height: 36mm; }
   .sheet.ans .fig.hist { height: 42mm; }
-  .sheet.ans .fig.hist.tall { height: 96mm; }
+  .sheet.ans .fig.network.tall { height: 62mm; }
+  .sheet.ans .fig.hist.tall { height: 120mm; }
   .answer { margin-top: 2mm; font-size: 9pt; line-height: 1.25; }
   .answer ol { margin: 1mm 0 0 5mm; padding: 0; }
   .answer li { margin-bottom: 0.8mm; }
