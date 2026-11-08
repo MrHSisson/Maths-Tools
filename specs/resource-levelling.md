@@ -1,6 +1,21 @@
 # Critical Path Analysis — Resource histogram and Resource levelling (rework spec)
 
-**Status:** planned 2026-11-07. Pathway: `docs/pathways/resource-levelling.md`.
+**Status:** implemented (tool build, 2026-11-08): the histogram and levelling tabs, the method, the walkthroughs and the options. Still planned: the exam-style parts (see the last sections) and a phone and tablet check. Pathway: `docs/pathways/resource-levelling.md`.
+
+## As built (2026-11-08) — where the build differs from the plan below
+
+Read this first; the sections below are the original plan and some details were changed on purpose.
+
+- **Method and engine:** as planned. `levelMethod` (cpa.ts) returns the minimum, the tries and the ranked list; `levelSchedule` stays the ground truth. Ties on the list: an option with float first, then the larger float, then letter. Tested against the real questions, 120 random networks, and by five independent test agents (their own brute-force solver agreed on about 160 questions).
+- **Levels 1 and 2 need exactly one try** (the first option tried leaves no clash). The table's "1–2" for Level 2 was not followed, so Legacy Q2(e) (two tries) counts as Level 3. Level 2 workers are one to four each with the largest at least three; Level 3 workers are an option (one / 2 to 4 / 1 to 4).
+- **Queue questions** (most tasks need over half the workers) are left out by the tries cap, not by a rule on the share of heavy tasks: such a rule would drop Legacy Q11, a real Level 3 question, and miss A-Level Q2. The four "beyond caps" fixture questions need 14 to 72 tries against a most of 8; a test checks it.
+- **Last start** (new start of the last activity) needs a network that ends in one activity; the 10–12 activity networks never do, so Level 3 asks for the time instead.
+- **Walkthrough:** the six steps as planned, with these changes: **no daily totals row** (taken out; the picture is clearer without it), the step text is a line or two, each try is drawn as its own histogram, and the reference picture (network, cascade chart, floats) is one picture at a time behind arrows, with the quick-sum table taking its place on its own step. The model answer is a written "Write it up" card (numbered lines and the filled-in write-up) on the final step only. Options that cannot beat the answer show as "pending" chips, not greyed.
+- **Drawing order:** critical along the bottom, then longest first, no holes or overhangs, in `stepStack`. The exam-style chains' levelling picture keeps its older start-time order.
+- **Histogram tab:** Levels 1 and 2 draw (network size is a Level 1 option); Level 3 cuts the peak: fewest workers, show N is enough, or can it be N − 1, with the worker-days and must-run floors (must-run stretches are shaded red on the cascade chart, with the busiest time marked). At most two activities move (pushed ones count). A floor that proves the answer is needed for "fewest" and "N − 1"; otherwise the question asks to show N.
+- **Question Options:** *Ask for*, *Workers per activity* and *Most tries* (levelling); *Network size*, *Workers per activity* and *Ask for* (histogram). Options that belong to one level use the new Decision shell field `forLevels`, so they appear only at that level. "Most tries" is the spec's "Maximum tries".
+- **Exam-style chains** still use the old levelling question and the older greedy walkthrough (no method data, no tries cap).
+- **Not checked:** phone and tablet layouts of the new steps.
 **Scope:** the A-Level **Resource histogram** and **Resource levelling** tabs of the Critical Path tool. Worker allocation (legacy, starred) is out of scope and untouched.
 
 ## Why this rework
@@ -36,7 +51,7 @@ Five steps, one loop:
 
 **Why it works:** a try with no clash left finishes exactly on its quick sum, and every other option finishes at or above its own quick sum. So the first clash-free try reached, smallest first, cannot be beaten.
 
-**Special case (not taught as the method):** when most tasks need more than half the workers, the project is effectively a queue (A-Level Q2; OUP Example 2(c)). Intuition beats the method there; such questions are excluded from the levels.
+**Special case (not taught as the method):** when most tasks need more than half the workers, the project is effectively a queue (A-Level Q2; OUP Example 2(c)). Intuition beats the method there; such questions are excluded from the levels (as built: by the tries cap; see "As built").
 
 ## Drawing rules (both tabs, every histogram the tool draws)
 
@@ -68,7 +83,7 @@ Five steps, one loop:
 | Level | Definition | Tries | Real examples |
 |---|---|---|---|
 | 1 | One worker each; the top option on the quick-sum list leaves no clash | 1 | A-Level Q5, Legacy Q17 |
-| 2 | Several workers per task; the top option leaves no clash | 1–2 | Legacy Q2, Legacy Q9 |
+| 2 | Several workers per task; the top option leaves no clash | 1 (as built; see "As built") | Legacy Q2, Legacy Q9 |
 | 3 | Knock-on: the top option leaves a clash; one or several workers | up to the Maximum tries option | Legacy Q4, Q11, Q14, Q15 |
 
 "No knock-on" allows a second clash in the starting histogram as long as the first fix clears it (A-Level Q5, Legacy Q2).
@@ -104,7 +119,7 @@ The cascade chart and float table (earliest start, LFT, float) stay visible besi
 
 | Step | Picture | Text |
 |---|---|---|
-| 1. The histogram | Earliest-start histogram, a daily totals row beneath it, the limit line, clashes shaded and labelled "needs 10 / limit 9" | "Without a limit the project takes 18 days." |
+| 1. The histogram | Earliest-start histogram, the limit line, clashes shaded and labelled "needs 10 / limit 9" (the daily totals row was dropped) | "Without a limit the project takes 18 days." |
 | 2. The first clash | Blocks in the clash highlighted, the rest dimmed; at Level 2 the worker sum is shown ("4 + 2 + 4 = 10") | The mark-scheme sentence: "D, E and F cannot all run at the same time: 10 > 9." |
 | 3. Quick sums | A ranked table: hold back, waits until, new finish, LFT, quick sum; ties marked | "Smallest first; tie: take one with float." |
 | 4. The try | The held block ghosted at its old place with an arrow to its new place; knock-ons in amber; the totals row updated | "No clash left, so the finish (23) equals its quick sum: this is the minimum." |
@@ -117,11 +132,10 @@ The cascade chart and float table (earliest start, LFT, float) stay visible besi
 
 **The model answer (what a student writes)**
 
-1. A totals row under the cascade chart.
-2. The clash sentence.
-3. The quick-sum table.
-4. One line per try, e.g. "hold E → totals all ≤ 9 → 23".
-5. One final histogram and the answer.
+1. The clash sentence (the planned totals row under the cascade chart was dropped).
+2. The quick sums.
+3. One line per try, e.g. "hold E until 34 → no clash, finish 23".
+4. The answer, then the write-up below (as built: one final histogram, and a "Write it up" card).
 
 **Write-up template**
 

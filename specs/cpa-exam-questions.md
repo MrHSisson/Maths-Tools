@@ -2,6 +2,8 @@
 
 **Status:** implemented (AS and A-level), 2026-10-18. Built on `DecisionShell` inside `src/tools/Decision/CriticalPath.tsx`; generator `src/shared/decision/cpaExam.ts`; layout `ExamView.tsx` (shared with Network Flows); canvas `ExamCanvas` in the tool; tests `src/tests/cpaExam.test.ts`. Evidence: `specs/exam/critical-path-analysis.md` (AS 7366, A-level, legacy papers).
 
+> **Update 2026-11-08:** the skill tabs for the resource histogram and resource levelling were reworked (`specs/resource-levelling.md`). The exam-style chains in this file still use the **older** levelling question and walkthrough (no quick-sum method, no tries cap, the older start-time drawing order); moving them onto the new engine is planned in `docs/pathways/decision-exam-questions.md`.
+
 ## Why
 The skill tabs drill one skill each (`specs/cpa-skill-tools.md`). The papers set **one network followed by a chain of lettered parts** with marks. This adds a **Practice | Exam style** switch beside AS / A-level; each chain is built from the same generators and solvers as the skill tabs, on one shared network, so a model answer and its stepped working cannot drift from the skills.
 

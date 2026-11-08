@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Documentation brought up to date for the levelling and histogram rework
+
+- `specs/resource-levelling.md` is marked implemented (tool build) and opens with an **As built** section listing where the build differs from the plan (no totals row, exactly one try at Levels 1 and 2, queue questions left out by the tries cap, last start not at Level 3, drawing order, options, the written "Write it up" card). `specs/cpa-skill-tools.md` tab rows 10 and 11 describe the reworked tabs; `specs/cpa-exam-questions.md` says the exam chains still use the older levelling question.
+- `docs/pathways/resource-levelling.md` rewritten: progress in one place, next steps current (phone and tablet check, merge, exam parts later).
+- `docs/GLOSSARY.md` gains section 7b (histogram and levelling terms: clash, option, quick sum, try, knock-on, ghost, floors, `forLevels`). `docs/architecture/DECISION_SHELL_PLAN.md` notes the step-list flags `maxHeight` and `prose`.
+- Planner: the Handoff block for this branch is up to date.
+
+Agent: Claude Code
+Notes: planner Build Log blocks for the 2026-11-07 and 2026-11-08 levelling and histogram entries are for Harry to write.
+
 ## 2026-11-08 — Resource levelling: the model answer is a written card, not chips
 
 - The final step's **"What to write"** chips are now a plain **"Write it up"** card: numbered lines (the clash sentence, the quick sums, one line per try) and the filled-in write-up as a highlighted paragraph. It shows on the final step of the levelling tab only, no inner scrolling, and the step text above it is just the answer. The option chips stay on the try, clash and check steps. New `prose` flag on a step list (Decision shell) for this look.

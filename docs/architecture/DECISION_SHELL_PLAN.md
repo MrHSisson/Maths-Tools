@@ -256,7 +256,7 @@ is **no worksheet / print mode** and **no Whiteboard mode** — every question i
 in view as the page scrolls) beside a fading cascade of steps (Back / Next / Show all). Sub-tools are tabs; Question
 Options are a popover (`config.options`, optionally per sub-tool via `forSubTools`, and per level via `forLevels`: at another level the option is hidden and the generator never sees it); the setup lives in the URL (`tool`, `level`,
 `o_<key>`; options hidden for the current sub-tool are not written and not passed to `generate`). Config extras: `options[].top` (a big either/or row above the tabs),
-`options[].forSubTools`, `options[].forLevels`, `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
+`options[].forSubTools`, `options[].forLevels`, `SolveStep.list` flags (`maxHeight`: a long chip list scrolls in a box of that height; `prose`: shown as a written answer, numbered lines plus a highlighted write-up paragraph, not chips), `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
 
 ## Shell UX — updates since 2026-10-08 (Network Flows work)
 
