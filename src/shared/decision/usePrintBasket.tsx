@@ -17,6 +17,8 @@ interface Args {
   /** the options as the generator receives them for this sub-tool and level */
   optionsFor: (sub: string, level: number) => GenerateContext["options"];
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem;
+  /** a saved question brought back onto the page: the shell takes on its sub-tool, level and options and shows the rebuilt problem */
+  onLoad: (item: BasketItem, problem: DecisionProblem) => void;
 }
 
 interface PrintBasketState {
@@ -30,7 +32,7 @@ interface PrintBasketState {
   ui: ReactNode;
 }
 
-export function usePrintBasket({ config, problem, subTool, level, optionsFor, generate }: Args): PrintBasketState {
+export function usePrintBasket({ config, problem, subTool, level, optionsFor, generate, onLoad }: Args): PrintBasketState {
   const key = `mt-print-basket:${config.pageTitle}`;
   const tabs = config.questionSheet?.tabs;
   const [basket, setBasketState] = useState<BasketItem[]>(() => loadBasket(key));
@@ -95,6 +97,16 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
     } finally { setBusy(null); }
   };
 
+  /** bring a saved question back onto the page, exactly as it was drawn (same seed and options) */
+  const reload = (it: BasketItem) => {
+    try {
+      const pr = generateFromSeed(it.seed, () => generate(it.level, { subTool: it.tab, options: it.options }));
+      onLoad(it, pr);
+      setOpen(false);
+      setNote(null);
+    } catch { setNote("That question could not be rebuilt."); }
+  };
+
   const copyLink = async () => {
     const url = `${window.location.origin}${window.location.pathname}?basket=${encodeBasket(basket)}`;
     try { await navigator.clipboard.writeText(url); setNote("Link copied. Open it on any device to get these questions."); } catch { window.prompt("Copy this link:", url); }
@@ -137,7 +149,7 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
     <>
       {open && config.questionSheet && (
         <PrintBasket items={basket} tabLabel={(t) => config.subTools?.find((x) => x.key === t)?.label ?? t} busy={busy} note={note}
-          onRemove={(i) => { setBasket(removeItem(basket, i)); setNote(null); }} onClear={() => { setBasket([]); setNote(null); }}
+          onLoad={reload} onRemove={(i) => { setBasket(removeItem(basket, i)); setNote(null); }} onClear={() => { setBasket([]); setNote(null); }}
           onPrint={(m) => void print(m)} onCopyLink={() => void copyLink()} onClose={() => setOpen(false)} />
       )}
       {toast && (

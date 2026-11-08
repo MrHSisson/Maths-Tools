@@ -136,7 +136,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   // the print basket (saved questions, the toolbar button, the menu items and the page): see usePrintBasket.tsx
-  const basket = usePrintBasket({ config, problem, subTool, level, optionsFor: (sub, lv) => ctxOf(sub, options, lv).options, generate });
+  const basket = usePrintBasket({ config, problem, subTool, level, optionsFor: (sub, lv) => ctxOf(sub, options, lv).options, generate,
+    onLoad: (it, pr) => {
+      // the saved options are every option as the generator gets it: keep the ones this tool offers, then show the rebuilt question
+      const set: Record<string, string> = {};
+      for (const o of config.options ?? []) { const v = it.options[o.key]; if (v !== undefined) set[o.key] = v; }
+      setLevel(it.level); setSubTool(it.tab); setOptions(settle(config, { ...options, ...set }, it.level));
+      setProblem(pr); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false);
+    } });
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 

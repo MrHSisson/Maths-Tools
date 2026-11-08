@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link2, Printer, Trash2, X } from "lucide-react";
+import { Link2, Printer, RotateCcw, Trash2, X } from "lucide-react";
 import { BASKET_MAX, type BasketItem } from "./printBasket";
 
 // The print basket page: the questions saved to print later. Opened from the burger menu. Questions are saved as recipes (the tab, level, options
@@ -10,6 +10,7 @@ interface Props {
   tabLabel: (tab: string) => string;
   busy: string | null;
   note: string | null;
+  onLoad: (item: BasketItem) => void;
   onRemove: (item: BasketItem) => void;
   onClear: () => void;
   onPrint: (mode: "questions" | "answers" | "both") => void;
@@ -17,7 +18,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function PrintBasket({ items, tabLabel, busy, note, onRemove, onClear, onPrint, onCopyLink, onClose }: Props) {
+export default function PrintBasket({ items, tabLabel, busy, note, onLoad, onRemove, onClear, onPrint, onCopyLink, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -48,6 +49,7 @@ export default function PrintBasket({ items, tabLabel, busy, note, onRemove, onC
                       <div className="text-sm font-semibold text-slate-900">{tabLabel(it.tab)} · Level {it.level}</div>
                       <div className="text-sm text-slate-500 truncate">{it.preview}</div>
                     </div>
+                    <button onClick={() => onLoad(it)} aria-label={`Reload question ${i + 1}`} title="Reload this question" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold text-blue-900 hover:bg-slate-50"><RotateCcw size={15} /> Reload</button>
                     <button onClick={() => onRemove(it)} aria-label={`Remove question ${i + 1}`} title="Remove" className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-red-600"><Trash2 size={18} /></button>
                   </li>
                 ))}
@@ -64,7 +66,7 @@ export default function PrintBasket({ items, tabLabel, busy, note, onRemove, onC
           </div>
           {busy && <div className="text-sm font-semibold text-blue-900">{busy}</div>}
           {note && !busy && <div className="text-sm text-slate-600">{note}</div>}
-          <div className="text-xs text-slate-400">Each question prints on its own A4 page. &ldquo;Both&rdquo; prints every question first, then every answer sheet. The link rebuilds the same questions on any device that opens it.</div>
+          <div className="text-xs text-slate-400">Each question prints on its own A4 page. &ldquo;Both&rdquo; prints every question first, then every answer sheet. Reload brings a question back onto the page to work through. The link rebuilds the same questions on any device that opens it.</div>
         </div>
       </div>
     </div>
