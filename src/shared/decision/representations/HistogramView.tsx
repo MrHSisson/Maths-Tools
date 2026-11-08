@@ -49,6 +49,15 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
   for (let t = 0; t <= T; t += step) ticks.push(t);
   if (ticks[ticks.length - 1] !== T) ticks.push(T);
   const drawn = new Set(view.blocks);
+  // when the activities need different numbers of workers, a block is labelled with its workers: D(3). A piece too narrow for that keeps just the letter.
+  const several = data.blocks.some((b) => b.workers > 1);
+  const label = (b: { id: string; workers: number }, w: number): { text: string; size: number } | null => {
+    const full = several ? `${b.id}(${b.workers})` : b.id;
+    if (w >= full.length * 8.6 + 4) return { text: full, size: 15 };
+    if (w >= 12) return { text: b.id, size: 15 };
+    if (w >= 8) return { text: b.id, size: 11 };
+    return null;
+  };
   const H = bodyBottom + 46;
   const dim = new Set(view.dim ?? []);
   const knock = new Set(view.knock ?? []);
@@ -102,7 +111,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
                 return (
                   <g key={i}>
                     <rect x={x(g.from)} y={yOf(g.base + b.workers)} width={w} height={high} fill={fill} stroke={stroke} strokeWidth={sw} />
-                    {w >= 8 && <text x={x(g.from) + w / 2} y={yOf(g.base + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={w >= 12 ? 15 : 11} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{b.id}</text>}
+                    {(() => { const l = label(b, w); return l && <text x={x(g.from) + w / 2} y={yOf(g.base + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={l.size} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{l.text}</text>; })()}
                   </g>
                 );
               })}
@@ -112,7 +121,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
         return (
           <g key={b.id} opacity={dim.has(b.id) ? 0.22 : 1}>
             <rect x={x(b.start)} y={yOf(b.y + b.workers)} width={wide} height={high} fill={fill} stroke={stroke} strokeWidth={sw} />
-            {wide >= 12 && <text x={x(b.start) + wide / 2} y={yOf(b.y + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={15} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{b.id}</text>}
+            {(() => { const l = label(b, wide); return l && <text x={x(b.start) + wide / 2} y={yOf(b.y + b.workers) + high / 2 + 5} textAnchor="middle" fontSize={l.size} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{l.text}</text>; })()}
           </g>
         );
       })}

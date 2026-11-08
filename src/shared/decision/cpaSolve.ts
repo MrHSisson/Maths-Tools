@@ -605,11 +605,13 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   });
   const steps: SolveStep[] = [];
   const before = c.states[0];
+  const severalW = d.acts.some((a) => (a.workers ?? 1) > 1);
+  const tagW = (id: string) => (severalW ? `${id}(${d.acts.find((a) => a.id === id)!.workers ?? 1})` : id);
   const inPeak = before.blocks.filter((b) => b.start < c.peak.to && c.peak.from < b.end).map((b) => b.id);
   const slidable = inPeak.filter((id) => t.float[id] > 0);
   steps.push(mk(`The peak: ${c.peak.need} workers, ${c.peak.from}–${c.peak.to}. Can it be cut without delaying the project?`, "The peak", { tryIndex: 0, peak: c.peak }));
   steps.push(mk(
-    `Running at the peak: ${cpaList(inPeak)}. Only an activity with float can slide: ${slidable.length ? slidable.map((id) => `${id} (float ${t.float[id]})`).join(", ") : "none of these has float"}.`,
+    `Running at the peak: ${cpaList(inPeak.map(tagW))}. Only an activity with float can slide: ${slidable.length ? slidable.map((id) => `${tagW(id)}, float ${t.float[id]}`).join(", ") : "none of these has float"}.`,
     "What can slide", { tryIndex: 0, peak: c.peak, dim: ids.filter((id) => !inPeak.includes(id)) },
   ));
   c.moves.forEach((mv, i) => {
@@ -630,7 +632,7 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
     steps.push(mk(
       c.floor.kind === "workerDays"
         ? `Why no fewer: the work is ${c.floor.total} worker-${u}. ${c.floor.total} ÷ ${T} = ${(c.floor.total! / T).toFixed(2)}, so at least ${nWorkers(c.floor.value)}.`
-        : `Why no fewer: red is where an activity must be running whatever we do (latest start to earliest finish). At time ${c.floor.at}, ${cpaList(c.floor.ids ?? [])} must ${(c.floor.ids ?? []).length === 2 ? "both" : "all"} be running: ${(c.floor.ids ?? []).map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(c.floor.value)}.`,
+        : `Why no fewer: red is where an activity must be running whatever we do (latest start to earliest finish). At time ${c.floor.at}, ${cpaList((c.floor.ids ?? []).map(tagW))} must ${(c.floor.ids ?? []).length === 2 ? "both" : "all"} be running: ${(c.floor.ids ?? []).map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(c.floor.value)}.`,
       "Why no fewer", { tryIndex: c.states.length - 1, ...(c.floor.kind === "mustRun" ? { markAt: c.floor.at } : {}) }, undefined,
       c.floor.kind === "mustRun" ? { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: c.floor.at } } : undefined,
     ));
@@ -737,7 +739,9 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     ...extra,
   });
   const dimmed = (keep: string[]) => ids.filter((id) => !keep.includes(id));
-  const clashLine = (c: { ids: string[]; need: number }) => `${cpaList(c.ids)} cannot ${c.ids.length === 2 ? "both" : "all"} run together: ${several ? `${c.ids.map(wk).join(" + ")} = ${c.need}` : c.need} > ${lv.limit}.`;
+  /** an activity with its workers when they differ between activities: D(3) */
+  const tag = (id: string) => (several ? `${id}(${wk(id)})` : id);
+  const clashLine = (c: { ids: string[]; need: number }) => `${cpaList(c.ids.map(tag))} cannot ${c.ids.length === 2 ? "both" : "all"} run together: ${several ? `${c.ids.map(wk).join(" + ")} = ${c.need}` : c.need} > ${lv.limit}.`;
   // every option that has joined the list so far, as chips (tried ones coloured by what they led to; the rest waiting)
   const everyOption: Opt[] = [...m.options, ...m.tries.flatMap((tr) => tr.added)];
   const chips = (upto: number, cur?: number) => {
@@ -829,7 +833,7 @@ function solveLevelMethod(p: DecisionProblem): SolveStep[] {
     : ask === "explain" ? `${clashLine(first)} Some activity has to wait, so the project takes ${extra} ${unitN(extra, u)} longer: ${m.minimum} ${u}, not ${T}.`
     : ask === "startLast" && sinks.length === 1 ? `${sinks[0].id} starts at ${m.starts[sinks[0].id]}; minimum completion time ${m.minimum} ${u}.`
     : `Minimum completion time: ${m.minimum} ${u} (${extra} more than ${T}).`;
-  const writeUp = `${cpaList(first.ids)} cannot run at the same time, as that needs ${nWorkers(first.need)} and only ${nWorkers(lv.limit)} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
+  const writeUp = `${cpaList(first.ids.map(tag))} cannot run at the same time, as that needs ${nWorkers(first.need)} and only ${nWorkers(lv.limit)} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
   const model = [
     clashLine(first),
     `Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}.`,

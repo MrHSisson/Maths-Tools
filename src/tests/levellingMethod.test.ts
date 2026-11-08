@@ -313,3 +313,21 @@ describe("QA regression — the drawing questions always find a network", () => 
     });
   }, 200_000);
 });
+
+describe("worker labels — an activity needing several workers is written D(3)", () => {
+  it("the clash sentence and the peak step name activities with their workers when they differ, and plain letters when every activity needs one", () => {
+    withSeededRandom(1212, () => {
+      const several = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "mixed", histShape: "step" });
+      const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: several.prompt, answer: { text: several.answerText }, cpa: several.data, kind: "cpaLevel" } as never);
+      const clash = steps.find((s) => s.phase === "The first clash")!.caption;
+      const ids = several.data.extra!.level!.method!.firstClash!.ids;
+      for (const id of ids) expect(clash).toContain(`${id}(${several.data.acts.find((a) => a.id === id)!.workers})`);
+      const one = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" });
+      const steps1 = solveCpa({ network: { nodes: [], edges: [] }, prompt: one.prompt, answer: { text: one.answerText }, cpa: one.data, kind: "cpaLevel" } as never);
+      expect(steps1.find((s) => s.phase === "The first clash")!.caption).not.toMatch(/\(\d\)/);
+      const cut = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: "several", histCut: "show" });
+      const cs = solveCpa({ network: { nodes: [], edges: [] }, prompt: cut.prompt, answer: { text: cut.answerText }, cpa: cut.data, kind: "cpaHistogram" } as never);
+      expect(cs.find((s) => s.phase === "What can slide")!.caption).toMatch(/[A-Z]\(\d\)/);
+    });
+  }, 120_000);
+});
