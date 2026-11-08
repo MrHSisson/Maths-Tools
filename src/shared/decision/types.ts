@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
 import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from "./cpa";
+import type { CpaSheetInput } from "./printCpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -273,6 +274,8 @@ export interface DecisionShellProps {
     levels?: number; // >1 shows a level picker in the header
     /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */
     printTemplates?: boolean;
+    /** adds "Print this question (A4)" and "Print the answer sheet (A4)" burger items on the listed sub-tools: `build` returns the sheet(s) to print for the question on screen, or null when it has none */
+    questionSheet?: { tabs: string[]; build: (problem: DecisionProblem, answers: boolean) => Promise<CpaSheetInput[] | null> };
     /** show what each level means in an (i) pop-up beside the level buttons (this sub-tool's levels, the current one marked) instead of a "Levels" section in the burger menu's Info */
     levelInfo?: boolean;
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)

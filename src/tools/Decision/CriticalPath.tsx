@@ -6,6 +6,8 @@ import {
   GanttView,
   HistogramView,
   generateCpa,
+  buildCpaSheet,
+  CPA_SHEET_TABS,
   generateCpaExam,
   type CpaChain,
   solveCpa,
@@ -134,6 +136,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     histLevel: sub === "histogram" && lv === 3 ? 3 : undefined,
     histWorkers: pickOf(o.histWorkers, "one") as "one" | "several" | "mixed",
     histCut: pickOf(o.histCut, "fewest") as "fewest" | "show" | "canFewer",
+    histGiven: pickOf(o.histGiven, "given") === "given",
     levelLevel: lv,
     levelWorkers: pickOf(o.levelWorkers, "one") as "one" | "several" | "mixed",
     levelMaxTries: Number(pickOf(o.levelTries, "8")),
@@ -442,9 +445,11 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   }
   if (d.kind === "cpaHistogram") {
     // the network (with its times) above, the workers each activity needs when they differ, and the histogram being drawn
-    const g = step?.histView ?? { blocks: [] };
+    const cutQ = d.extra!.cut;
+    // before the working starts, a question that gives the histogram shows it; one that asks for it shows the empty axes
+    const g: NonNullable<SolveStep["histView"]> = step?.histView ?? (cutQ?.given ? { blocks: d.acts.map((a) => a.id), which: "try" as const, tryIndex: 0 } : { blocks: [] });
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
-    const cut = d.extra!.cut;
+    const cut = cutQ;
     const cas = d.extra!.cascade;
     // the must-run step is drawn on the cascade chart, so it switches there by itself
     const onNetwork = refIdx === 0 && !step?.ganttView?.mustRun;
@@ -598,6 +603,7 @@ export default function App() {
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         printTemplates: true,
+        questionSheet: { tabs: CPA_SHEET_TABS, build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
@@ -742,6 +748,19 @@ export default function App() {
               { value: "one", label: "One each" },
               { value: "several", label: "2 to 3 each" },
               { value: "mixed", label: "1 to 3 each" },
+            ],
+          },
+          {
+            key: "histGiven",
+            label: "Histogram",
+            info: "Whether a Level 3 question gives the histogram already drawn (the student cuts the peak), or the student draws it first.",
+            forSubTools: ["histogram"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "given",
+            choices: [
+              { value: "given", label: "Given", sub: "Already drawn" },
+              { value: "draw", label: "Draw it", sub: "Student draws it first" },
             ],
           },
           {

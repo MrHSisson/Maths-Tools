@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource histogram Level 3: histogram given or drawn; print a question on one A4 sheet
+
+- **New option (histogram, Level 3): Histogram — Given / Draw it.** *Given* (the default) shows the histogram already drawn on the question and the prompt says so; the student cuts the peak. *Draw it* asks the student to draw it first (the prompt no longer gives away the peak) and the worked example starts with the drawing steps before the cut. (Before, the prompt said the histogram "is shown" while the question view showed empty axes.)
+- **Print this question (A4) / Print the answer sheet (A4)** — new burger-menu items on the **Resource histogram** and **Resource levelling** tabs (any level). One A4 page: the question, the workers table when they differ, the network with its times and the critical path, the cascade chart with its floats (critical activities on one row), then the histograms. Histogram Level 3 *Given*: the given histogram and one blank to draw the cut one; *Draw it*: two blank (draw it, then draw it again after cutting the peak); Levels 1 and 2: one tall blank; levelling: the given histogram with its limit line and a blank one for the levelled histogram. The answer sheet has the histograms drawn and the answer (levelling also the quick sums, the tries and the write-up) on one page. Built on a new shell field `config.questionSheet` and `printCpa.ts` / `cpaSheet.tsx`.
+- Checked: 36 sheets rendered to A4 PDFs (question and answer sheets, every kind), all one page; the menu items open the sheet in the real app and are absent on other tabs.
+- Tests: `cpaSheet.test.ts`; the given/draw option in `levellingMethod.test.ts` and `criticalPathOptions.test.ts`.
+
+Not done: other Critical Path tabs have no sheet; several questions per sheet (one per page for now); blank histograms are gridded by worker and by the time ticks, not squared paper (the "Print templates…" item has squared grids).
+
+Agent: Claude Code
+Notes: planner Build Log block for Harry to write.
+
 ## 2026-11-08 — Resource histogram, Level 3: the network and critical path are shown, so precedence can be read
 
 - **Cut the peak** used to show only the cascade chart above the histogram, so a student could not see which activity follows which, or which are critical. The top panel is now **Network | Cascade chart** (switch with the arrows, network first): the network has its times, the **critical path in green**, the activities that can slide marked in the "What can slide" step, and the activity that pushes a knock-on marked in amber. The "Why no fewer" step switches to the cascade chart by itself, where the must-run stretches are shaded.

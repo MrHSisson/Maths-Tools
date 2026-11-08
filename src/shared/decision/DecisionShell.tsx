@@ -12,6 +12,7 @@ import { generateSeeded, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
+import { printCpaSheets } from "./printCpa";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -134,6 +135,19 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  // "Print this question (A4)" / "Print the answer sheet (A4)": the tool draws the sheet, the shell prints it
+  const printQuestionSheet = async (answers: boolean) => {
+    const win = window.open("", "_blank");   // opened here, at the click, before the rendering below
+    if (!win) { alert("Please allow popups to use the PDF export."); return; }
+    try {
+      const sheets = await config.questionSheet!.build(problem, answers);
+      if (!sheets) { win.close(); return; }
+      printCpaSheets(sheets, win);
+    } catch {
+      win.close();
+      alert("Sorry, that could not be printed.");
+    }
+  };
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
@@ -401,7 +415,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : undefined}  />}
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={[
+            ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : []),
+            ...(config.questionSheet && config.questionSheet.tabs.includes(subTool) && !problem.exam ? [
+              { label: "Print this question (A4)", hint: "The network, the cascade chart and the histograms to draw, on one page", onClick: () => { setMenuOpen(false); void printQuestionSheet(false); } },
+              { label: "Print the answer sheet (A4)", hint: "The same page with the histograms drawn and the answer", onClick: () => { setMenuOpen(false); void printQuestionSheet(true); } },
+            ] : []),
+          ]}  />}
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ describe("Critical Path — level-specific Question Options", () => {
     ["histSize", "histogram", "[1]"],
     ["histWorkers", "histogram", "[3]"],
     ["histCut", "histogram", "[3]"],
+    ["histGiven", "histogram", "[3]"],
   ];
   for (const [key, tab, levels] of expected) {
     it(`${key} is on the ${tab} tab${levels ? ` at level ${levels}` : " at every level"}`, () => {

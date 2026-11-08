@@ -197,6 +197,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | **Try** | One option checked: the hold-back and its knock-ons followed through, then looked at for a clash. The first clash-free try, smallest quick sum first, is the minimum. | `LevelTry`, `levelMethod` |
 | **Knock-on** | An activity that must start later only because something it waits for now finishes later. | `LevelTry.knockOns` |
 | **Ghost** | The held-back (or slid) block drawn dashed at its old place, with an arrow to where it is now. | `HistViewState.ghost` |
+| **Question sheet** | The A4 page a Critical Path histogram or levelling question prints on: the network, the cascade chart and the histograms (given or blank). The answer sheet has them drawn. | `config.questionSheet`, `printCpa.ts`, `cpaSheet.tsx` |
 | **forLevels** | A Decision shell option field: the option is offered only at those levels. | `ShellOption.forLevels` |
 
 ---

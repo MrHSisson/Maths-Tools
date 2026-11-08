@@ -535,8 +535,13 @@ function stepNote(b: { id: string; start: number; base?: number[] }): string {
 
 // ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──
 function solveHistogram(p: DecisionProblem): SolveStep[] {
+  const cut = p.cpa!.extra!.cut;
+  // cut the peak: when the student draws the histogram first, that is the start of the working
+  if (cut) return [...(cut.given ? [] : solveHistogramDraw(p)), ...solveHistogramCut(p)];
+  return solveHistogramDraw(p);
+}
+function solveHistogramDraw(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
-  if (d.extra!.cut) return solveHistogramCut(p);
   const h = d.extra!.histogram!;
   const { times: t } = d;
   const all = fullGraph(d.acts);

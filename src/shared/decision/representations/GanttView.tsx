@@ -26,15 +26,17 @@ interface GanttViewProps {
   unit: string;
   /** draw the time axis out to this (so a histogram under it lines up) */
   axisT?: number;
+  /** the height of one row (default 36, or 30 for bars); a smaller row fits a long chart on a page */
+  rowH?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function GanttView({ data, view, unit, axisT, qIndex, background = "#ffffff" }: GanttViewProps) {
+export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, qIndex, background = "#ffffff" }: GanttViewProps) {
   const { rowLabels, style } = data;
   const T = Math.max(data.T, axisT ?? 0);
   const blocks = style === "blocks";
-  const rowH = blocks ? 36 : 30;
+  const rowH = rowHProp ?? (blocks ? 36 : 30);
   const rows = rowLabels.length;
   const x = (t: number) => LEFT + (t / T) * PLOT;
   // rows read from the bottom up: the first row (the critical activities, or activity A) sits just above the time axis
@@ -87,6 +89,7 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
         const cur = view.current === b.id;
         const y0 = rowTop(b.row);
         const bh = blocks ? rowH - 8 : 12;
+        const fs = Math.min(blocks ? 15 : 12, Math.max(9, bh - 1)); // a short row (a chart fitted to a page) gets smaller letters
         const by = y0 + (rowH - bh) / 2;
         const stroke = cur ? BLUE : b.critical ? GREEN : NAVY;
         const fill = b.critical ? GREEN_FILL : SKY;
@@ -100,7 +103,7 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
             <rect x={x(b.start)} y={by} width={wide} height={bh} fill={fill} stroke={stroke} strokeWidth={cur ? 2.6 : 1.6} />
             {/* must-run window: running in every schedule, from the latest start to the earliest finish (drawn under the label so it stays readable) */}
             {(view.mustRun ?? []).filter((w) => w.id === b.id).map((w) => <rect key="mr" x={x(w.from)} y={by} width={x(w.to) - x(w.from)} height={bh} fill="#ef4444" fillOpacity={0.4} stroke="#dc2626" strokeWidth={1.4} />)}
-            {wide >= (several ? tag(b.id).length * 8 + 4 : 14) && <text x={x(b.start) + wide / 2} y={by + bh / 2 + (blocks ? 5 : 4)} textAnchor="middle" fontSize={blocks ? 15 : 12} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{tag(b.id)}</text>}
+            {wide >= (several ? tag(b.id).length * 8 + 4 : 14) && <text x={x(b.start) + wide / 2} y={by + bh / 2 + fs / 3} textAnchor="middle" fontSize={fs} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{tag(b.id)}</text>}
             {showFloat && (blocks
               ? <rect x={x(fx0)} y={by} width={fw} height={bh} fill="none" stroke={PURPLE} strokeWidth={1.5} strokeDasharray="5 3" />
               : <line x1={x(fx0)} y1={by + bh / 2} x2={x(fx1)} y2={by + bh / 2} stroke={PURPLE} strokeWidth={2} strokeDasharray="5 3" />)}

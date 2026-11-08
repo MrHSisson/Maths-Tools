@@ -291,6 +291,8 @@ back exactly retraces forward.
 
 ## Print (reuse, don't rebuild)
 
+**Question sheets (Critical Path).** `config.questionSheet = { tabs, build }` adds "Print this question (A4)" and "Print the answer sheet (A4)" burger items on those sub-tools; `build(problem, answers)` returns `CpaSheetInput[]` (`printCpa.ts`: the A4 HTML, one page per input) and the shell opens a window at the click and prints it. The Critical Path tool builds the pictures in `cpaSheet.tsx` (network, cascade chart, blank or drawn histograms) with `renderToStaticMarkup`.
+
 Network worksheets reuse the existing **`handleDiagramPrint` / `computeWorksheetLayout`** engine
 (`src/shared/printDiagram.ts`) — the same path the Geometry SVG tools use for variable columns,
 sections and differentiated layout. The `NetworkView` worksheet renderer must emit an

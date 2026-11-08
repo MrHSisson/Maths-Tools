@@ -354,3 +354,37 @@ describe("histogram Level 3 — precedence and the critical path are shown", () 
     });
   }, 200_000);
 });
+
+describe("histogram Level 3 — the histogram can be given, or drawn first", () => {
+  const stepsFor = (g: ReturnType<typeof generateCpa>) => solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+  it("given (the default): the prompt says it is shown and the working starts at the peak", () => {
+    withSeededRandom(9191, () => {
+      for (const given of [undefined, true]) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histCut: "show", histGiven: given });
+        expect(g.data.extra!.cut!.given).toBe(true);
+        expect(g.prompt).toContain("is shown");
+        expect(g.prompt).not.toMatch(/Draw the resource histogram/);
+        expect(stepsFor(g)[0].phase).toBe("The peak");
+      }
+    });
+  }, 100_000);
+  it("not given: the prompt asks for the drawing (without giving away the peak) and the working draws it before cutting the peak", () => {
+    withSeededRandom(9192, () => {
+      for (const ask of ["fewest", "show", "canFewer"] as const) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histCut: ask, histGiven: false });
+        const cut = g.data.extra!.cut!;
+        expect(cut.given).toBe(false);
+        expect(g.prompt).toMatch(/Draw the resource histogram/);
+        expect(g.prompt).not.toContain("Its peak needs");
+        const steps = stepsFor(g);
+        const peakAt = steps.findIndex((s) => s.phase === "The peak");
+        expect(peakAt).toBeGreaterThan(2);
+        expect(steps[0].phase).toBe("Set up");
+        // the drawing steps draw every activity once, and the picture they end on is the one the peak step starts from
+        const drawn = new Set(steps.slice(0, peakAt).flatMap((s) => s.histView?.blocks ?? []));
+        expect(drawn.size).toBe(g.data.acts.length);
+        expect(steps[peakAt].histView!.tryIndex).toBe(0);
+      }
+    });
+  }, 100_000);
+});
