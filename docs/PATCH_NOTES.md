@@ -32,6 +32,7 @@ Keep the split even when a session only touches one.
 ## 2026-11-08 — Resource histogram and levelling: activities with workers are written D(3)
 
 - When the activities in a question need different numbers of workers, each **histogram block is labelled with its workers: D(3)** (every block, so D(1) too; a piece too narrow for that keeps just the letter). The **clash sentence, the write-up, the "running at the peak" step and the must-run step** name activities the same way ("D(3), E(2) and F(4) cannot all run together: 3 + 2 + 4 = 9 > 8"). Questions where everyone needs one worker keep plain letters. Checked in a browser and by a test.
+- **The same D(3) now also appears on the network boxes and on the cascade (Gantt) chart** (row labels and bars), not only the histogram; a short move's arrow is a straight arrow instead of a small loop. A test (`workerLabels.test.ts`) draws all three pictures and checks the labels.
 
 Agent: Claude Code
 Notes: planner Build Log block for Harry to write.

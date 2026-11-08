@@ -274,7 +274,7 @@ type CascadeStart = "early" | "late";
 type CascadeLayout = "sequence" | "rows";
 /** "blocks": full-height blocks, the float a dashed block beside it; "bars": thin bars, the float a dashed line */
 type CascadeStyle = "blocks" | "bars";
-interface CascadeBar { id: string; start: number; end: number; float: number; critical: boolean; row: number }
+interface CascadeBar { id: string; start: number; end: number; float: number; critical: boolean; row: number; /** the workers the activity needs, when the question gives them */ workers?: number }
 export interface CascadeData {
   start: CascadeStart; layout: CascadeLayout; style: CascadeStyle;
   /** the chart is given partly drawn (the question asks to complete it): the activities already on it, floats and all */
@@ -311,7 +311,7 @@ function cascadeData(acts: CpaActivity[], t: CpaTimes, start: CascadeStart, layo
     acts.forEach((a, i) => (rowOf[a.id] = i));
     rowLabels = acts.map((a) => a.id);
   }
-  const bars = acts.map((a) => ({ id: a.id, start: startOf(a), end: startOf(a) + a.duration, float: t.float[a.id], critical: crit(a.id), row: rowOf[a.id] }));
+  const bars = acts.map((a) => ({ id: a.id, start: startOf(a), end: startOf(a) + a.duration, float: t.float[a.id], critical: crit(a.id), row: rowOf[a.id], workers: a.workers }));
   // a partly drawn chart: the critical activities and the first half (by letter) of the others are already on it
   const nonCrit = bars.filter((b) => !b.critical).map((b) => b.id);
   const given = partial ? [...bars.filter((b) => b.critical).map((b) => b.id), ...nonCrit.slice(0, Math.floor(nonCrit.length / 2))] : undefined;

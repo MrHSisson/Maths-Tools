@@ -150,6 +150,16 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
         const gx = (x(g.start) + x(g.end)) / 2, gy = yOf(g.y + g.workers);
         const nx = (x(nb.start) + x(nb.end)) / 2, ny = yOf(histBaseAt(nb, nb.start) + nb.workers);
         if (Math.abs(nx - gx) < 14) return null;
+        // a short move is a straight arrow just above the blocks (an arc would curl into a loop)
+        if (Math.abs(nx - gx) < 60) {
+          const yy = Math.min(gy, ny) - 8;
+          return (
+            <g>
+              <defs><marker id="ghostArrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill={AMBER} /></marker></defs>
+              <line x1={gx} y1={yy} x2={nx - Math.sign(nx - gx) * 2} y2={yy} stroke={AMBER} strokeWidth={2.6} markerEnd="url(#ghostArrow)" />
+            </g>
+          );
+        }
         const top = Math.max(TOP + 4, Math.min(gy, ny) - cell * 1.4);
         return (
           <g>
