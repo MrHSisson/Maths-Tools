@@ -56,7 +56,7 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
     // what tells this question from the others in the list: its size and time, then its limit or what it asks (the opening sentence is the same for all)
     const c = problem.cpa;
     const lv = c?.extra?.level, cut = c?.extra?.cut;
-    const facts = c ? [`${c.acts.length} activities`, `${c.times.projectTime} ${c.unit}`, ...(lv ? [`limit ${lv.limit} workers`] : []), ...(cut ? [cut.ask === "fewest" ? "fewest workers" : cut.ask === "show" ? `show ${cut.target} is enough` : `can it be ${cut.target}?`, cut.given ? "histogram given" : "draw it first"] : [])] : [];
+    const facts = c ? [`${c.acts.length} activities`, `${c.times.projectTime} ${c.unit}`, ...(lv ? [`limit ${lv.limit} workers`] : []), ...(cut ? [cut.ask === "fewest" ? "fewest workers" : cut.ask === "show" ? `show ${cut.target} is enough` : `show ${cut.target} is not enough`, cut.given ? "histogram given" : "draw it first"] : [])] : [];
     return { tab: subTool, level, seed, options: optionsFor(subTool, level), preview: facts.length ? facts.join(" · ") : previewOf(problem.prompt) };
   })();
   const inBasket = !!recipe && hasItem(basket, recipe);

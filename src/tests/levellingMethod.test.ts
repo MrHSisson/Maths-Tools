@@ -216,6 +216,17 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
           expect(cut.target).toBe(cut.ask === "canFewer" ? cut.best - 1 : cut.best);
           // the walkthrough: peak, what can slide, a step per move, the check, (why), the answer
           const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+          if (cut.ask === "canFewer") {
+            // show N − 1 is not enough: no sliding, just the sum (or the activities that must run together)
+            expect(steps.some((s) => s.phase!.startsWith("Slide") || s.phase!.startsWith("Knock-on"))).toBe(false);
+            expect(steps[steps.length - 1].phase).toBe("Answer");
+            expect(g.prompt).toMatch(/cannot be completed/);
+            if (cut.floor!.kind === "workerDays") {
+              expect(cut.floor!.total! / cut.target).toBeGreaterThan(T);
+              expect(g.answerText).toContain(`${cut.floor!.total} ÷ ${cut.target}`);
+            } else expect(cut.floor!.value).toBeGreaterThan(cut.target);
+            continue;
+          }
           expect(steps.map((s) => s.phase).slice(0, 2)).toEqual(["The peak", "What can slide"]);
           expect(steps.filter((s) => s.phase!.startsWith("Slide") || s.phase!.startsWith("Knock-on")).length).toBe(cut.moves.length);
           expect(steps[steps.length - 1].phase).toBe("Answer");
@@ -377,9 +388,11 @@ describe("histogram Level 3 — the histogram can be given, or drawn first", () 
         expect(g.prompt).toMatch(/Draw the resource histogram/);
         expect(g.prompt).not.toContain("Its peak needs");
         const steps = stepsFor(g);
+        expect(steps[0].phase).toBe("Set up");
+        // show N − 1 is not enough has no peak to cut: the drawing, then the sum
+        if (cut.ask === "canFewer") { expect(steps.some((s) => s.phase === "The peak")).toBe(false); expect(steps[steps.length - 1].phase).toBe("Answer"); continue; }
         const peakAt = steps.findIndex((s) => s.phase === "The peak");
         expect(peakAt).toBeGreaterThan(2);
-        expect(steps[0].phase).toBe("Set up");
         // the drawing steps draw every activity once, and the picture they end on is the one the peak step starts from
         const drawn = new Set(steps.slice(0, peakAt).flatMap((s) => s.histView?.blocks ?? []));
         expect(drawn.size).toBe(g.data.acts.length);
