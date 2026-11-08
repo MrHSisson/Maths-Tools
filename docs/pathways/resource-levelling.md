@@ -19,6 +19,7 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
 - Check the new levelling and histogram steps on phone and tablet, then merge `claude/new-session-6gg0my` (a PR has not been opened).
 - Generation time: histogram Level 3 and Level 2 can still take up to about a second now and then.
 - "Last start" is still a selectable wording at levelling Level 3 (the shell cannot hide one choice by level); it asks for the time there.
+- Print basket: questions can be saved and printed later, on this device or by link (`printBasket.ts`).
 - Printing: question and answer sheets exist for the histogram and levelling tabs (one question per A4 page); several questions per sheet and squared-paper histograms are not built.
 - Later, via `docs/pathways/decision-exam-questions.md`: a CPA corpus file and levelling exam parts on the new engine (the exam-style chains still use the older levelling question; plan in the spec; not a priority).
 

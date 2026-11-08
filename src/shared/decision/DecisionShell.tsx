@@ -8,11 +8,13 @@ import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
 import { useRecentQuestions } from "../recentQuestions";
-import { generateSeeded, replaySeeded } from "../seededGenerate";
+import { generateFromSeed, generateSeeded, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
-import { printCpaSheets } from "./printCpa";
+import { printCpaSheets, type CpaSheetInput } from "./printCpa";
+import PrintBasket from "./PrintBasket";
+import { addItem, decodeBasket, encodeBasket, hasItem, loadBasket, mergeItems, previewOf, removeItem, saveBasket, BASKET_MAX, type BasketItem } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -135,6 +137,80 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  // ── The print basket: questions saved (as recipes: tab, level, options, seed) to print later, kept in this browser and carried to another device by a link ──
+  const basketKey = `mt-print-basket:${config.pageTitle}`;
+  const [basket, setBasketState] = useState<BasketItem[]>(() => loadBasket(basketKey));
+  const [basketOpen, setBasketOpen] = useState(false);
+  const [basketBusy, setBasketBusy] = useState<string | null>(null);
+  const [basketNote, setBasketNote] = useState<string | null>(null);
+  const setBasket = (next: BasketItem[]) => { setBasketState(next); saveBasket(basketKey, next); };
+  const sheetTabs = config.questionSheet?.tabs;
+  /** the question on screen as a recipe, or null when it cannot be saved (no seed, an exam question, a tab without a sheet) */
+  const recipeOf = (): BasketItem | null => {
+    const seed = (problem as { _seed?: number })._seed;
+    if (typeof seed !== "number" || problem.exam || !sheetTabs?.includes(subTool)) return null;
+    // what tells this question from the others in the list: its size and time, then its limit or what it asks (the opening sentence is the same for all)
+    const c = problem.cpa;
+    const lv = c?.extra?.level, cut = c?.extra?.cut;
+    const facts = c ? [`${c.acts.length} activities`, `${c.times.projectTime} ${c.unit}`, ...(lv ? [`limit ${lv.limit} workers`] : []), ...(cut ? [cut.ask === "fewest" ? "fewest workers" : cut.ask === "show" ? `show ${cut.target} is enough` : `can it be ${cut.target}?`, cut.given ? "histogram given" : "draw it first"] : [])] : [];
+    return { tab: subTool, level, seed, options: ctxOf(subTool, options, level).options, preview: facts.length ? facts.join(" · ") : previewOf(problem.prompt) };
+  };
+  const toggleBasket = () => {
+    const r = recipeOf();
+    if (!r) return;
+    if (hasItem(basket, r)) { setBasket(removeItem(basket, r)); setBasketNote(null); return; }
+    if (basket.length >= BASKET_MAX) { setBasketNote(`The basket holds ${BASKET_MAX} questions: remove one to add another.`); setBasketOpen(true); return; }
+    setBasket(addItem(basket, r));
+  };
+  const printBasket = async (mode: "questions" | "answers" | "both") => {
+    if (!basket.length || basketBusy || !config.questionSheet) return;
+    const win = window.open("", "_blank");   // opened here, at the click, before the rebuilding below
+    if (!win) { alert("Please allow popups to use the PDF export."); return; }
+    const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
+    let skipped = 0;
+    try {
+      for (let k = 0; k < basket.length; k++) {
+        setBasketBusy(`Preparing question ${k + 1} of ${basket.length}…`);
+        await new Promise((r) => setTimeout(r, 20));
+        const it = basket[k];
+        try {
+          const pr = generateFromSeed(it.seed, () => generate(it.level, { subTool: it.tab, options: it.options }));
+          if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
+          if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
+        } catch { skipped++; }
+      }
+      const sheets = [...questions, ...answers];
+      if (!sheets.length) { win.close(); setBasketNote("None of the saved questions could be rebuilt."); return; }
+      printCpaSheets(sheets, win);
+      setBasketNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be rebuilt and ${skipped > 1 ? "were" : "was"} left out.` : null);
+    } catch {
+      win.close();
+      setBasketNote("Sorry, that could not be printed.");
+    } finally { setBasketBusy(null); }
+  };
+  const copyBasketLink = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?basket=${encodeBasket(basket)}`;
+    try { await navigator.clipboard.writeText(url); setBasketNote("Link copied. Open it on any device to get these questions."); } catch { window.prompt("Copy this link:", url); }
+  };
+  // a basket link opens the page: its questions join this device's basket and the basket is shown
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("basket");
+    if (!code) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("basket");
+    window.history.replaceState(null, "", url.toString());
+    const incoming = decodeBasket(code)?.filter((i) => sheetTabs?.includes(i.tab));
+    if (!incoming?.length) { setBasketNote("That basket link could not be read."); setBasketOpen(true); return; }
+    const next = mergeItems(basket, incoming);
+    setBasket(next);
+    setBasketNote(`${next.length - basket.length} question${next.length - basket.length === 1 ? "" : "s"} added from the link.`);
+    setBasketOpen(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs once, when the page opens with a basket link
+  const basketDialog = basketOpen && config.questionSheet ? (
+    <PrintBasket items={basket} tabLabel={(t) => config.subTools?.find((x) => x.key === t)?.label ?? t} busy={basketBusy} note={basketNote}
+      onRemove={(i) => { setBasket(removeItem(basket, i)); setBasketNote(null); }} onClear={() => { setBasket([]); setBasketNote(null); }}
+      onPrint={(m) => void printBasket(m)} onCopyLink={() => void copyBasketLink()} onClose={() => setBasketOpen(false)} />
+  ) : null;
   // "Print this question (A4)" / "Print the answer sheet (A4)": the tool draws the sheet, the shell prints it
   const printQuestionSheet = async (answers: boolean) => {
     const win = window.open("", "_blank");   // opened here, at the click, before the rendering below
@@ -417,6 +493,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </button>
           {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={[
             ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : []),
+            ...(config.questionSheet ? [
+              ...(recipeOf() ? [{ label: hasItem(basket, recipeOf()!) ? "Remove from print basket" : "Add to print basket", hint: "Save this question to print later", onClick: () => { setMenuOpen(false); toggleBasket(); } }] : []),
+              { label: `Print basket (${basket.length})…`, hint: "Questions saved to print later, on this device or by link", onClick: () => { setMenuOpen(false); setBasketOpen(true); } },
+            ] : []),
             ...(config.questionSheet && config.questionSheet.tabs.includes(subTool) && !problem.exam ? [
               { label: "Print this question (A4)", hint: "The network, the cascade chart and the histograms to draw, on one page", onClick: () => { setMenuOpen(false); void printQuestionSheet(false); } },
               { label: "Print the answer sheet (A4)", hint: "The same page with the histograms drawn and the answer", onClick: () => { setMenuOpen(false); void printQuestionSheet(true); } },
@@ -853,7 +933,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basketDialog}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
@@ -926,7 +1006,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
-        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basketDialog}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -1057,7 +1137,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {previewDialog}
-      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basketDialog}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>

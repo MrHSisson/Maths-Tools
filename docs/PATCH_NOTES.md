@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Print basket: save questions to print later (Critical Path histogram and levelling)
+
+- **Add to print basket** (burger menu, on the Resource histogram and Resource levelling tabs) saves the question on screen. **Print basket (n)…** opens the list: each question shows its tab, level and what tells it apart (activities, time, the limit or what it asks); remove one, clear the basket, then **Print questions**, **Print answers** or **Print both** (every question first, then every answer sheet), each on its own A4 page. Up to 30 questions; the basket is kept until you clear it, including after the tab or the browser is closed.
+- A saved question is only its **recipe** (tab, level, options and the seed it was generated from), a few hundred bytes in this browser's storage, and printing rebuilds it: the same seed gives the identical question. **Copy basket link** puts the whole basket in one link; opening it on any device (or a different browser) adds those questions to that device's basket and shows it. A damaged link is ignored. The recipes are for short-term use: a later change to how questions are generated would change a saved one.
+- Checked in the real app: adding and removing, the count in the menu, surviving a reload, printing both (4 sheets from 2 questions), the link on a fresh browser (basket shown, link cleared from the address bar), a garbage link. Tests: `printBasket.test.ts` (list, cap, storage, link, and that a seed rebuilds the identical question for each kind).
+
+Not done: other Critical Path tabs and other Decision tools (the basket is wired to a tool's question-sheet tabs); reordering the list.
+
+Agent: Claude Code
+Notes: planner Build Log block for Harry to write.
+
 ## 2026-11-08 — Resource histogram Level 3: histogram given or drawn; print a question on one A4 sheet
 
 - **New option (histogram, Level 3): Histogram — Given / Draw it.** *Given* (the default) shows the histogram already drawn on the question and the prompt says so; the student cuts the peak. *Draw it* asks the student to draw it first (the prompt no longer gives away the peak) and the worked example starts with the drawing steps before the cut. (Before, the prompt said the histogram "is shown" while the question view showed empty axes.)
