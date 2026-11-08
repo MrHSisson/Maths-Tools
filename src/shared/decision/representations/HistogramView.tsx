@@ -37,9 +37,11 @@ interface HistogramViewProps {
   cellMax?: number;
   qIndex?: number;
   background?: string;
+  /** a blank histogram to draw on (print): a faint line at every time unit, every fifth darker, so a value such as 63 is easy to find */
+  fineGrid?: boolean;
 }
 
-export default function HistogramView({ data, view, unit, limit, over, axisT, axisPeak, plotH = 250, cellMax = 44, minWidth = 560, qIndex, background = "#ffffff" }: HistogramViewProps) {
+export default function HistogramView({ data, view, unit, limit, over, axisT, axisPeak, plotH = 250, cellMax = 44, minWidth = 560, qIndex, background = "#ffffff", fineGrid = false }: HistogramViewProps) {
   const T = Math.max(data.T, axisT ?? 0);
   const peak = Math.max(data.peak, limit ?? 0, axisPeak ?? 0);
   const rows = peak + 1; // one spare unit of height above the tallest stack
@@ -79,9 +81,12 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
           <text x={LEFT - 8} y={yOf(i) + 4} textAnchor="end" fontSize={12} fill="#475569">{i}</text>
         </g>
       ))}
+      {fineGrid && T <= 120 && Array.from({ length: T + 1 }, (_, t) => t).map((t) => (
+        <line key={`f${t}`} x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke={t % 5 === 0 ? "#94a3b8" : "#e2e8f0"} strokeWidth={t % 5 === 0 ? 0.9 : 0.6} />
+      ))}
       {ticks.map((t, i) => (
         <g key={`x${t}`}>
-          <line x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke="#cbd5e1" strokeWidth={1} strokeDasharray="3 4" />
+          <line x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke="#cbd5e1" strokeWidth={1} strokeDasharray={fineGrid ? undefined : "3 4"} opacity={fineGrid && T <= 120 ? 0 : 1} />
           {(i < ticks.length - 1 || t - ticks[i - 1] >= step * 0.7) && <text x={x(t)} y={bodyBottom + 17} textAnchor="middle" fontSize={12} fill="#475569">{t}</text>}
         </g>
       ))}

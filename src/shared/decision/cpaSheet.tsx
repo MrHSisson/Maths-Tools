@@ -35,7 +35,7 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
   }));
   const axisPeak = Math.max(hist.peak, lv?.limit ?? 0, ...(cut?.states ?? []).map((s) => s.peak), lv?.after.peak ?? 0);
   const draw = (data: HistogramData, filled: boolean, limit?: number, tall = false): string => renderToStaticMarkup(createElement(HistogramView, {
-    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0,
+    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0, fineGrid: !filled,
     // a histogram that has the page to itself is drawn taller, to fill it
     ...(tall ? { plotH: 470, cellMax: 80 } : {}),
   }));
