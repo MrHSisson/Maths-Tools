@@ -82,7 +82,7 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
         </g>
       ))}
       {fineGrid && T <= 120 && Array.from({ length: T + 1 }, (_, t) => t).map((t) => (
-        <line key={`f${t}`} x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke={t % 5 === 0 ? "#94a3b8" : "#e2e8f0"} strokeWidth={t % 5 === 0 ? 0.9 : 0.6} />
+        <line key={`f${t}`} x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke={t % 5 === 0 ? "#475569" : "#94a3b8"} strokeWidth={t % 5 === 0 ? 1.2 : 0.7} />
       ))}
       {ticks.map((t, i) => (
         <g key={`x${t}`}>
