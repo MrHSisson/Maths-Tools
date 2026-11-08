@@ -182,6 +182,27 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 
 ---
 
+## 7b. Critical Path — resource histogram and resource levelling
+
+| Term | Means | In code |
+|---|---|---|
+| **Resource histogram** | Workers needed at each time: a block per activity as wide as its duration and as high as its workers. Drawn with the critical activities along the bottom, then the rest longest first, no holes or overhangs. A block can step down where the stack under it changes (each piece labelled). | `HistogramView`, `histogramData`, `stepStack` |
+| **Cut the peak** | Histogram Level 3: slide activities within their float (and the ones they push) to lower the peak without delaying the project. | `CutData`, `cutSearch` |
+| **Worker-days floor** | The fewest workers that can finish in the minimum time: total work (duration × workers, added up) ÷ the project time, rounded up. | `CutData.floor` |
+| **Must-run floor** | An activity must be running in every schedule from its latest start to its earliest finish (its must-run window); the workers of those running at the busiest time are the fewest possible. Shaded red on the cascade chart. | `GanttViewState.mustRun` |
+| **Limit** | The most workers available at once in a levelling question (the dashed red line). | `LevelData.limit` |
+| **Clash** | A time when the activities running need more workers than the limit. | `LevelClash`, `countClashes` |
+| **Option** | Holding one activity in the clash back until the next activity in the clash finishes. | `LevelOption` |
+| **Quick sum** | The no-limit project time plus how far the held-back activity finishes after its latest finish time (no extra if it finishes by then). A floor on the finish of any schedule that holds it that way. | `LevelOption.quick` |
+| **Try** | One option checked: the hold-back and its knock-ons followed through, then looked at for a clash. The first clash-free try, smallest quick sum first, is the minimum. | `LevelTry`, `levelMethod` |
+| **Knock-on** | An activity that must start later only because something it waits for now finishes later. | `LevelTry.knockOns` |
+| **Ghost** | The held-back (or slid) block drawn dashed at its old place, with an arrow to where it is now. | `HistViewState.ghost` |
+| **Question sheet** | The A4 page a Critical Path histogram or levelling question prints on: the network, the cascade chart and the histograms (given or blank). The answer sheet has them drawn. | `config.questionSheet`, `printCpa.ts`, `cpaSheet.tsx` |
+| **Print basket** | Questions saved (as recipes: sub-tool, level, options, seed) to print later; kept in the browser and shareable as a link. | `printBasket.ts`, `PrintBasket.tsx` |
+| **forLevels** | A Decision shell option field: the option is offered only at those levels. | `ShellOption.forLevels` |
+
+---
+
 ## 8. Dev / release state
 
 | Term | Means | In code |

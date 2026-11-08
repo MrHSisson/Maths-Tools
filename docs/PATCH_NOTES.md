@@ -29,6 +29,40 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource histogram and resource levelling reworked, with printing and a print basket
+
+Branch `claude/new-session-6gg0my` (one entry for the whole piece of work; it replaces about a dozen working-day entries). Plan and decisions: `specs/resource-levelling.md` ("As built") and `docs/pathways/resource-levelling.md`. Areas: `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`, `cpaSheet.tsx`, `printCpa.ts`, `printBasket.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`, `types.ts`, the `HistogramView`, `GanttView` and `ActivityNodeView` renderers), `src/tools/Decision/CriticalPath.tsx`, `src/shared/seededGenerate.ts`, `src/tests/`.
+
+**Resource levelling (A-level)**
+- Three levels: 1 one worker each and the first fix clears the clash; 2 one to four workers each (the largest needs at least three), the same; 3 the first fix leaves a clash (a knock-on), within a *Most tries* option (3 / 5 / 8). The limit always forces extra time, with at most two clashes and the peak at most two over the limit. Queue questions (most tasks needing over half the workers) are left out by the tries cap.
+- Options: *Ask for* (minimum time, extra time, new start of the last activity, explain the effect of the limit), *Workers per activity* and *Most tries* (Level 3). The new start of the last activity needs a network that ends in one activity, so Level 3 asks for the time instead.
+- **The method students use** (quick sums, one ranked list, smallest first, ties to an activity with float) is `levelMethod` beside the exhaustive solver `levelSchedule`; it matched the solver on the real exam questions and on random networks.
+- **The worked example follows the method:** the histogram with clashes labelled "needs 10 / limit 9", the first clash with the rest dimmed (and the worker sum), a ranked quick-sum table, each try drawn as its own histogram with the held block ghosted and an arrow to its new place, a step for each knock-on clash, the check, and the final answer with a written **Write it up** card (numbered lines and the filled-in write-up). Steps are a line or two each.
+
+**Resource histogram (A-level)**
+- Level 1 draw it, one worker each (*Network size* option); Level 2 draw it, one to three workers each; Level 3 **cut the peak within the float**: fewest workers, show N is enough, or can it be N − 1 (*Ask for*), with the worker-days and must-run floors as the reason (must-run stretches shaded red on the cascade chart), at most two activities moving, early or late start, and *Workers per activity*. *Histogram: Given / Draw it* says whether the histogram is on the question or the student draws it first.
+- The Level 3 working shows the network with its times and the critical path (and the cascade chart behind arrows), so precedence and knock-ons can be read.
+
+**Pictures**
+- **Drawing order** (both tabs): critical activities along the bottom, then the rest longest first, no holes or overhangs. An activity that needs workers is written **D(3)** on the network boxes, the cascade chart and the histogram blocks, and in the step text; one-worker questions keep plain letters. A fixed vertical scale across the steps, a white halo on labels, an arc arrow (straight for a short move) with the ghost under the blocks, and a fuller legend.
+
+**Printing and the print basket**
+- **Print this question** is an A4 sheet (Resource histogram and Resource levelling, any level): the question, a centred workers table, the network with times and the critical path, the cascade chart with floats, then the histograms (given, or blank to draw; Levels 1 and 2 leave the cascade chart off because it would show the drawing, and give the histogram the page). An answer sheet fills them in. Every one of 60 sheets rendered to A4 PDFs fit one page.
+- **Print basket:** an icon beside the pin (and *Add to print basket* in the burger menu) saves the question, with a message ("Added to print basket (3) · Open basket"). The basket (up to 30, kept in the browser) prints questions, answers or both, each on its own page. A saved question is only its recipe (tab, level, options, seed), so a basket can be carried to another device as a link; a damaged link is ignored. Meant for short-term use (a later change to how questions are generated would change a saved one).
+
+**Dashboard and docs**
+- **Print basket is a listed feature:** `docs/FEATURES.md` has "Print sheets and the print basket" (it shows on the dashboard's Features page), and the dashboard reads a new fact `printBasket` from the code (`scripts/toolFacts.mjs`, `src/admin/facts.ts`): it appears in the Feature tracker, each tool's profile and the Matrix; today only Critical Path Analysis has it. `docs/reference/shell-extras.md` documents `forLevels`, `questionSheet` and the step-list flags; the glossary, Decision shell plan, spec and pathway are updated.
+
+**Decision shell**
+- New option field `forLevels` (an option appears only at its level), step-list flags `maxHeight` and `prose`, and `config.questionSheet` (the print sheets and basket). Chips wrap and long lists scroll instead of pushing the buttons down.
+
+**Testing:** about 160 questions checked by an independent solver, about 1,300 drawn steps checked for overlaps and holes in the rendered SVG, 720 questions across 120 option combinations without a crash; every problem those five test agents found is fixed. New tests: `levellingMethod`, `criticalPathOptions`, `workerLabels`, `cpaSheet`, `printBasket`.
+
+Not done: the exam-style chains still use the older levelling question and walkthrough; other Critical Path tabs and other Decision tools have no print sheet or basket; phone and tablet layouts of the new steps, the print basket and the toolbar icon were not checked (a quick check at 390 wide showed no sideways scroll); the Critical Path dashboard note.
+
+Agent: Claude Code
+Notes: planner Build Log blocks for this work are for Harry to write.
+
 ## 2026-11-07 — Landing page: subject drop-down on a phone
 
 Branch `claude/gifted-pasteur-8ubr0a`. Areas: `src/components/LandingPage.tsx`.

@@ -23,6 +23,9 @@ interface ActivityNodeViewProps {
 }
 
 export default function ActivityNodeView({ acts, layout, view, qIndex, background = "#ffffff" }: ActivityNodeViewProps) {
+  // when the activities need different numbers of workers a box is headed D(3)
+  const severalW = acts.some((a) => (a.workers ?? 1) > 1);
+  const headOf = (id: string) => (severalW ? `${id}(${acts.find((a) => a.id === id)?.workers ?? 1})` : id);
   const dur = useMemo(() => Object.fromEntries([[START, 0], [END, 0], ...acts.map((a) => [a.id, a.duration])]), [acts]);
   const shown = view.shown ? new Set(view.shown) : null;
   const arrows = view.arrows ? new Set(view.arrows) : null;
@@ -68,7 +71,7 @@ export default function ActivityNodeView({ acts, layout, view, qIndex, backgroun
         return (
           <g key={b.id}>
             <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={isEnd ? 12 : 3} fill={fill} stroke={stroke} strokeWidth={cur || crit ? 3 : 1.8} />
-            <text x={b.x + b.w / 2} y={b.y + 16} textAnchor="middle" fontSize={isEnd ? 15 : 17} fontStyle={isEnd ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{b.id}</text>
+            <text x={b.x + b.w / 2} y={b.y + 16} textAnchor="middle" fontSize={isEnd ? 15 : 17} fontStyle={isEnd ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{isEnd ? b.id : headOf(b.id)}</text>
             <line x1={b.x} y1={cy} x2={b.x + b.w} y2={cy} stroke={stroke} strokeWidth={1.4} />
             <line x1={b.x + cw} y1={cy} x2={b.x + cw} y2={b.y + b.h} stroke={stroke} strokeWidth={1.4} />
             <line x1={b.x + 2 * cw} y1={cy} x2={b.x + 2 * cw} y2={b.y + b.h} stroke={stroke} strokeWidth={1.4} />

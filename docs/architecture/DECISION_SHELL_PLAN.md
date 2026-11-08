@@ -254,9 +254,9 @@ Captions are what a teacher would write on the board.
 `DecisionShell` now follows the standard tool shell's page (nav bar · title · tool tabs · control bar · content card) but is built for network questions: there
 is **no worksheet / print mode** and **no Whiteboard mode** — every question is worked through. One large network (sticky, so it stays
 in view as the page scrolls) beside a fading cascade of steps (Back / Next / Show all). Sub-tools are tabs; Question
-Options are a popover (`config.options`, optionally per sub-tool via `forSubTools`); the setup lives in the URL (`tool`, `level`,
+Options are a popover (`config.options`, optionally per sub-tool via `forSubTools`, and per level via `forLevels`: at another level the option is hidden and the generator never sees it); the setup lives in the URL (`tool`, `level`,
 `o_<key>`; options hidden for the current sub-tool are not written and not passed to `generate`). Config extras: `options[].top` (a big either/or row above the tabs),
-`options[].forSubTools`, `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
+`options[].forSubTools`, `options[].forLevels`, `SolveStep.list` flags (`maxHeight`: a long chip list scrolls in a box of that height; `prose`: shown as a written answer, numbered lines plus a highlighted write-up paragraph, not chips), `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
 
 ## Shell UX — updates since 2026-10-08 (Network Flows work)
 
@@ -290,6 +290,8 @@ back exactly retraces forward.
 ---
 
 ## Print (reuse, don't rebuild)
+
+**Question sheets (Critical Path).** `config.questionSheet = { tabs, build }` adds "Print this question (A4)" and "Print the answer sheet (A4)" burger items on those sub-tools; `build(problem, answers)` returns `CpaSheetInput[]` (`printCpa.ts`: the A4 HTML, one page per input) and the shell opens a window at the click and prints it. **Print basket:** on those same sub-tools there is an icon beside the pin, and "Add to print basket" and "Print basket (n)…" in the burger menu (the shell calls `usePrintBasket.tsx`; the page is `PrintBasket.tsx`, the logic `printBasket.ts`): a saved question is its recipe (sub-tool, level, resolved options, seed), kept in `localStorage` (`mt-print-basket:<page title>`, at most 30) and rebuilt with `generateFromSeed` when printed; "Copy basket link" encodes the basket in a `?basket=` value that another device merges in on opening. The Critical Path tool builds the pictures in `cpaSheet.tsx` (network, cascade chart, blank or drawn histograms) with `renderToStaticMarkup`.
 
 Network worksheets reuse the existing **`handleDiagramPrint` / `computeWorksheetLayout`** engine
 (`src/shared/printDiagram.ts`) — the same path the Geometry SVG tools use for variable columns,

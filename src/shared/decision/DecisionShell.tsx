@@ -12,6 +12,7 @@ import { generateSeeded, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
+import { usePrintBasket } from "./usePrintBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -94,10 +95,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && (!o.forLevels || o.forLevels.includes(lv)) && whenOk(o.when, opts);
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts, lv)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
@@ -134,6 +135,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  // the print basket (saved questions, the toolbar button, the menu items and the page): see usePrintBasket.tsx
+  const basket = usePrintBasket({ config, problem, subTool, level, optionsFor: (sub, lv) => ctxOf(sub, options, lv).options, generate });
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
@@ -160,7 +163,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
     setOptions(opts); setSubTool(t.subTool); setSheetMode(false); newQuestion(level, t.subTool, opts);
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
   const chooseTop = (key: string, value: string) => {
@@ -202,7 +205,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     }
     histStage.current = narrowStage;
   }, [narrow, narrowStage]);
-  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
+  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
@@ -245,7 +248,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -401,7 +404,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : undefined}  />}
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={[
+            ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : []),
+            ...basket.menuItems,
+          ]}  />}
         </div>
       </div>
     </div>
@@ -479,6 +485,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
         )}
         {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
+          {basket.button()}
           <PinButton keeper={keeper} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
@@ -833,7 +840,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
@@ -906,7 +913,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <RotateHint show={isTablet && layout.portrait} />
         {overlay}
         {previewDialog}
-        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+        {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
@@ -957,6 +964,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               ) : (
                 <>
                   <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
+                  {basket.button("phone")}
                   <PinButton keeper={keeper} size="phone" />
                   <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>
@@ -1037,7 +1045,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {previewDialog}
-      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}
+      {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
@@ -1125,10 +1133,22 @@ const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border:
 
 // A titled row of chips: Kruskal's edges in order, Prim's candidates, the tour so far…
 function ListCard({ list }: { list: StepList }) {
+  if (list.prose) {
+    const lines = list.items.filter((it) => it.tone !== "good"), write = list.items.filter((it) => it.tone === "good");
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
+        <ol className="list-decimal pl-5 space-y-1 text-[15px] leading-snug text-gray-800">
+          {lines.map((it, i) => <li key={i}>{it.text}</li>)}
+        </ol>
+        {write.map((it, i) => <p key={i} className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[15px] leading-snug text-blue-950">{it.text}</p>)}
+      </div>
+    );
+  }
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, ...(list.maxHeight ? { maxHeight: list.maxHeight, overflowY: "auto" } : {}) }}>
         {list.items.map((it, i) => {
           const t = CHIP_TONE[it.tone ?? "pending"];
           return (
@@ -1136,7 +1156,7 @@ function ListCard({ list }: { list: StepList }) {
               key={i}
               style={{
                 padding: "3px 9px", borderRadius: 8, fontWeight: 800, fontSize: 15, background: t.bg, color: t.fg,
-                border: `1.5px solid ${t.border}`, textDecoration: t.strike ? "line-through" : undefined, whiteSpace: "nowrap",
+                border: `1.5px solid ${t.border}`, textDecoration: t.strike ? "line-through" : undefined, whiteSpace: it.text.length > 26 ? "normal" : "nowrap", maxWidth: "100%",
               }}
             >
               {it.text}

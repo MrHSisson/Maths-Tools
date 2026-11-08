@@ -25,6 +25,11 @@ export function generateSeeded<T extends object>(gen: () => T): T {
   return { ...withSeed(seed, gen), _seed: seed } as T;
 }
 
+/** Generate with a known seed: the same seed (and options) gives the same question again, on any device (a saved question, a shared link). */
+export function generateFromSeed<T extends object>(seed: number, gen: () => T): T {
+  return { ...withSeed(seed, gen), _seed: seed } as T;
+}
+
 /** Regenerate `q` from its saved seed with the generator now reading the new options: same numbers, new display.
  *  Returns null when `q` carries no seed. */
 export function replaySeeded<T extends object>(q: T, gen: () => T): T | null {

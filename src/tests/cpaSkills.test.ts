@@ -264,10 +264,10 @@ const bruteMakespan = (acts: { id: string; duration: number; preds: string[]; wo
 };
 
 describe("CPA — resource levelling (A-level)", () => {
-  for (const [lv, workers, type] of [[2, "one", "within"], [2, "several", "extra"], [3, "one", "chain"]] as const) {
-    it(`${type}: the levelled histogram respects the limit and every precedence, and the finish time is the true minimum`, () => {
-      for (let i = 0; i < (lv === 3 ? 6 : 10); i++) {
-        const { data, steps, answerText } = run(lv as CpaLevel, "cpaLevel", { paths: "one", workers, levelType: type });
+  for (const level of [1, 2, 3] as const) {
+    it(`Level ${level}: the levelled histogram respects the limit and every precedence, and the finish time is the true minimum`, () => {
+      for (let i = 0; i < (level === 3 ? 6 : 10); i++) {
+        const { data, steps, answerText } = run((level === 3 ? 3 : 2) as CpaLevel, "cpaLevel", { paths: "one", levelLevel: level, levelWorkers: i % 2 ? "several" : "one" });
         const L = data.extra!.level!;
         const ref = referenceCpa(data.acts);
         const T = ref.projectTime;
@@ -290,9 +290,8 @@ describe("CPA — resource levelling (A-level)", () => {
         const readyAt = (a: { preds: string[] }) => Math.max(0, ...a.preds.map((q) => L.starts[q] + dur[q]));
         const delayed = data.acts.filter((a) => L.starts[a.id] > readyAt(a));
         expect(L.delayed.map((d) => d.id)).toEqual(delayed.map((a) => a.id));
-        if (type === "within") expect(L.newTime).toBe(T);
-        else expect(L.newTime).toBeGreaterThan(T);
-        if (type === "chain") expect(delayed.length).toBeGreaterThanOrEqual(2);
+        expect(L.newTime, "the limit forces extra time").toBeGreaterThan(T);
+        expect(delayed.length).toBeGreaterThanOrEqual(1);
         // lower bounds, and (up to nine activities) the independent optimum
         const work = data.acts.reduce((s, a) => s + a.duration * (a.workers ?? 1), 0);
         expect(L.newTime).toBeGreaterThanOrEqual(Math.max(T, Math.ceil(work / L.limit)));
@@ -373,12 +372,13 @@ describe("CPA — the harder cases (more than one critical path, late start, par
       }
     }
   }, 120_000);
-  it("Level 3 levelling holds up a critical activity at least once", () => {
+  it("Level 3 levelling needs a knock-on: the first option tried leaves a clash, within the most tries asked for", () => {
     for (let i = 0; i < 5; i++) {
-      const { data } = run(3, "cpaLevel", { paths: "one", workers: "one", levelType: "chain" });
-      const L = data.extra!.level!;
-      expect(L.delayed.length).toBeGreaterThanOrEqual(2);
-      expect(L.delayed.some((d) => data.times.float[d.id] === 0)).toBe(true);
+      const { data } = run(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelMaxTries: 5 });
+      const m = data.extra!.level!.method!;
+      expect(m.tries[0].clash, "the top option leaves a clash").not.toBeNull();
+      expect(m.tries.length).toBeGreaterThanOrEqual(2);
+      expect(m.tries.length).toBeLessThanOrEqual(5);
     }
   }, 300_000);
 });

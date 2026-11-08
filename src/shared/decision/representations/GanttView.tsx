@@ -26,15 +26,17 @@ interface GanttViewProps {
   unit: string;
   /** draw the time axis out to this (so a histogram under it lines up) */
   axisT?: number;
+  /** the height of one row (default 36, or 30 for bars); a smaller row fits a long chart on a page */
+  rowH?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function GanttView({ data, view, unit, axisT, qIndex, background = "#ffffff" }: GanttViewProps) {
+export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, qIndex, background = "#ffffff" }: GanttViewProps) {
   const { rowLabels, style } = data;
   const T = Math.max(data.T, axisT ?? 0);
   const blocks = style === "blocks";
-  const rowH = blocks ? 36 : 30;
+  const rowH = rowHProp ?? (blocks ? 36 : 30);
   const rows = rowLabels.length;
   const x = (t: number) => LEFT + (t / T) * PLOT;
   // rows read from the bottom up: the first row (the critical activities, or activity A) sits just above the time axis
@@ -45,6 +47,9 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
   for (let t = 0; t <= T; t += step) ticks.push(t);
   if (ticks[ticks.length - 1] !== T) ticks.push(T);
   const drawn = new Set(view.bars);
+  // when the activities need different numbers of workers they are written D(3), on the row labels and on the bars
+  const several = data.bars.some((b) => (b.workers ?? 1) > 1);
+  const tag = (id: string): string => { const b = data.bars.find((q) => q.id === id); return several && b ? `${id}(${b.workers ?? 1})` : id; };
   const floats = new Set(view.floats);
   const H = bodyBottom + 46;
 
@@ -66,18 +71,25 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
       {rowLabels.map((label, r) => (
         <g key={r}>
           <line x1={LEFT} y1={rowTop(r)} x2={LEFT + PLOT} y2={rowTop(r)} stroke="#e2e8f0" strokeWidth={1} />
-          <text x={LEFT - 10} y={rowTop(r) + rowH / 2 + 5} textAnchor="end" fontSize={label.length > 2 ? 12 : 15} fontStyle={label.length > 2 ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{label}</text>
+          <text x={LEFT - 10} y={rowTop(r) + rowH / 2 + 5} textAnchor="end" fontSize={label.length > 2 && tag(label) === label ? 12 : 15} fontStyle={label.length > 2 && tag(label) === label ? "normal" : "italic"} fontWeight={600} fill="#0f172a">{tag(label)}</text>
         </g>
       ))}
       <line x1={LEFT} y1={bodyBottom} x2={LEFT + PLOT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <line x1={LEFT} y1={TOP} x2={LEFT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <text x={LEFT + PLOT / 2} y={bodyBottom + 38} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
 
+      {view.mustRunAt !== undefined && (
+        <g>
+          <line x1={x(view.mustRunAt + 0.5)} y1={TOP} x2={x(view.mustRunAt + 0.5)} y2={bodyBottom} stroke="#dc2626" strokeWidth={2} strokeDasharray="6 3" />
+          <text x={x(view.mustRunAt + 0.5)} y={TOP - 1} textAnchor="middle" fontSize={11} fontWeight={700} fill="#dc2626">time {view.mustRunAt}</text>
+        </g>
+      )}
       {data.bars.map((b) => {
         if (!drawn.has(b.id)) return null;
         const cur = view.current === b.id;
         const y0 = rowTop(b.row);
         const bh = blocks ? rowH - 8 : 12;
+        const fs = Math.min(blocks ? 15 : 12, Math.max(9, bh - 1)); // a short row (a chart fitted to a page) gets smaller letters
         const by = y0 + (rowH - bh) / 2;
         const stroke = cur ? BLUE : b.critical ? GREEN : NAVY;
         const fill = b.critical ? GREEN_FILL : SKY;
@@ -89,7 +101,9 @@ export default function GanttView({ data, view, unit, axisT, qIndex, background 
         return (
           <g key={b.id}>
             <rect x={x(b.start)} y={by} width={wide} height={bh} fill={fill} stroke={stroke} strokeWidth={cur ? 2.6 : 1.6} />
-            {wide >= 14 && <text x={x(b.start) + wide / 2} y={by + bh / 2 + (blocks ? 5 : 4)} textAnchor="middle" fontSize={blocks ? 15 : 12} fontStyle="italic" fontWeight={600} fill="#0f172a">{b.id}</text>}
+            {/* must-run window: running in every schedule, from the latest start to the earliest finish (drawn under the label so it stays readable) */}
+            {(view.mustRun ?? []).filter((w) => w.id === b.id).map((w) => <rect key="mr" x={x(w.from)} y={by} width={x(w.to) - x(w.from)} height={bh} fill="#ef4444" fillOpacity={0.4} stroke="#dc2626" strokeWidth={1.4} />)}
+            {wide >= (several ? tag(b.id).length * 8 + 4 : 14) && <text x={x(b.start) + wide / 2} y={by + bh / 2 + fs / 3} textAnchor="middle" fontSize={fs} fontStyle="italic" fontWeight={600} fill="#0f172a" stroke="#fff" strokeWidth={3} paintOrder="stroke">{tag(b.id)}</text>}
             {showFloat && (blocks
               ? <rect x={x(fx0)} y={by} width={fw} height={bh} fill="none" stroke={PURPLE} strokeWidth={1.5} strokeDasharray="5 3" />
               : <line x1={x(fx0)} y1={by + bh / 2} x2={x(fx1)} y2={by + bh / 2} stroke={PURPLE} strokeWidth={2} strokeDasharray="5 3" />)}

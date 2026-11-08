@@ -4,7 +4,7 @@
 // starts compared and the smallest taken), then the float and the critical path. Every number is read from cpaTimes (cpa.ts).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { END, START, clockTime, cpaEdges, cpaList, cpaTimes, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
+import { END, START, clockTime, cpaEdges, histBaseAt, cpaList, cpaTimes, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
 import type { DecisionProblem, SolveStep } from "./types";
 
 const beat = (caption: string, view: CpaViewState, phase?: string, extra?: Partial<SolveStep>): SolveStep => ({
@@ -535,6 +535,12 @@ function stepNote(b: { id: string; start: number; base?: number[] }): string {
 
 // ── Resource histogram: the critical activities along the bottom, then the rest stacked with no holes ──
 function solveHistogram(p: DecisionProblem): SolveStep[] {
+  const cut = p.cpa!.extra!.cut;
+  // cut the peak: when the student draws the histogram first, that is the start of the working
+  if (cut) return [...(cut.given ? [] : solveHistogramDraw(p)), ...solveHistogramCut(p)];
+  return solveHistogramDraw(p);
+}
+function solveHistogramDraw(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const h = d.extra!.histogram!;
   const { times: t } = d;
@@ -561,8 +567,8 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
     `Put ${more ? "the first critical path" : "the critical activities"} along the bottom, end to end: ${critBlocks.map((b) => `${b.id} from ${b.start} to ${b.end}`).join(", ")}. ${more ? "There is another critical path; its other activities have no float either, so they are drawn next, before the activities that have float." : "They have no float, so early and late starts are the same."}`,
     "Critical activities", { ...base, critical: crit, criticalArrows: critArrows },
   ));
-  // the order the histogram was stacked in: any other critical path next, then everything else from the earliest start
-  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => Number(b.critical) - Number(a.critical) || a.start - b.start || a.id.localeCompare(b.id));
+  // the order the histogram was stacked in: any other critical path next, then everything else longest first
+  const rest = h.blocks.filter((b) => !drawn.includes(b.id)).sort((a, b) => Number(b.critical) - Number(a.critical) || (b.end - b.start) - (a.end - a.start) || a.start - b.start || a.id.localeCompare(b.id));
   let announced = false;
   for (const b of rest) {
     if (!announced && more && b.critical) {
@@ -587,11 +593,77 @@ function solveHistogram(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+// ── Resource histogram, Level 3: cut the peak by sliding activities within their float ──
+function solveHistogramCut(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const c = d.extra!.cut!;
+  const { times: t } = d;
+  const T = t.projectTime, u = d.unit;
+  const all = fullGraph(d.acts);
+  // the network is shown with its times and the critical path, so precedence (who must wait for whom) and the activities that cannot slide can be read off it
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows, text: critText } = criticalPathInfo(d.criticalPaths);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])), critical: crit, criticalArrows: critArrows };
+  const ids = d.acts.map((a) => a.id);
+  const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: { ...base, current, ...(extra?.cpaView ?? {}) }, histView: { blocks: ids, which: "try", ...hist },
+    // the cascade chart with its float tails sits beside the histogram throughout
+    ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current },
+    ...extra,
+  });
+  const steps: SolveStep[] = [];
+  const before = c.states[0];
+  const severalW = d.acts.some((a) => (a.workers ?? 1) > 1);
+  const tagW = (id: string) => (severalW ? `${id}(${d.acts.find((a) => a.id === id)!.workers ?? 1})` : id);
+  const inPeak = before.blocks.filter((b) => b.start < c.peak.to && c.peak.from < b.end).map((b) => b.id);
+  const slidable = inPeak.filter((id) => t.float[id] > 0);
+  steps.push(mk(`The peak: ${c.peak.need} workers, ${c.peak.from}–${c.peak.to}. Can it be cut without delaying the project?`, "The peak", { tryIndex: 0, peak: c.peak }));
+  steps.push(mk(
+    `${critText} Running at the peak: ${cpaList(inPeak.map(tagW))}. A critical activity (float 0) cannot slide; ${slidable.length ? `these can: ${slidable.map((id) => `${tagW(id)}, float ${t.float[id]}`).join("; ")}` : "none of these has float"}. Anything after a slid activity may have to move too.`,
+    "What can slide", { tryIndex: 0, peak: c.peak, dim: ids.filter((id) => !inPeak.includes(id)) }, undefined,
+    { cpaView: { ...base, compare: slidable } },
+  ));
+  c.moves.forEach((mv, i) => {
+    const old = c.states[i].blocks.find((b) => b.id === mv.id)!;
+    const last = i === c.moves.length - 1;
+    // the activity that pushes this one: an earlier move it comes after (precedence read off the network)
+    const pusher = mv.knock ? d.acts.find((a) => a.id === mv.id)!.preds.find((q) => c.moves.slice(0, i).some((m) => m.id === q)) : undefined;
+    const after = successorsOf(all)[mv.id].filter((q) => q !== END);
+    const nothingElse = !mv.knock && !c.moves.slice(i + 1).some((m) => m.knock) ? ` Nothing after it (${after.length ? cpaList(after) : "no activity"}) has to move.` : "";
+    steps.push(mk(
+      mv.knock
+        ? `${mv.id} comes after ${pusher ?? "what was slid"}, which now finishes later, so ${mv.id} now starts at ${mv.to}, not ${mv.from} (float is shared along a chain).${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`
+        : `Slide ${tagW(mv.id)} to start at ${mv.to}, not ${mv.from}: ${Math.abs(mv.to - mv.from)} ${unitN(Math.abs(mv.to - mv.from), u)} ${mv.to > mv.from ? "later" : "earlier"}, within its float of ${mv.float}.${nothingElse}${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`,
+      mv.knock ? `Knock-on: ${mv.id}` : `Slide ${mv.id}`,
+      { tryIndex: i + 1, knock: mv.knock ? [mv.id] : [], ghost: { id: mv.id, start: old.start, end: old.end, workers: old.workers, y: histBaseAt(old, old.start) } },
+      mv.id,
+      pusher ? { cpaView: { ...base, current: mv.id, compare: [pusher] } } : undefined,
+    ));
+  });
+  const fin = c.states[c.states.length - 1];
+  steps.push(mk(`Check the histogram again: the most needed is now ${fin.peak}, and the project still finishes at ${T} ${u}.`, "Check", { tryIndex: c.states.length - 1 }));
+  if (c.floor && c.ask !== "show") {
+    steps.push(mk(
+      c.floor.kind === "workerDays"
+        ? `Why no fewer: the work is ${c.floor.total} worker-${u}. ${c.floor.total} ÷ ${T} = ${(c.floor.total! / T).toFixed(2)}, so at least ${nWorkers(c.floor.value)}.`
+        : `Why no fewer: red is where an activity must be running whatever we do (latest start to earliest finish). At time ${c.floor.at}, ${cpaList((c.floor.ids ?? []).map(tagW))} must ${(c.floor.ids ?? []).length === 2 ? "both" : "all"} be running: ${(c.floor.ids ?? []).map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(c.floor.value)}.`,
+      "Why no fewer", { tryIndex: c.states.length - 1, ...(c.floor.kind === "mustRun" ? { markAt: c.floor.at } : {}) }, undefined,
+      c.floor.kind === "mustRun" ? { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: c.floor.at } } : undefined,
+    ));
+  }
+  steps.push(mk(
+    c.ask === "canFewer" ? `No: ${c.best} is the least, so ${c.target} will not do.` : c.ask === "show" ? `Shown: ${nWorkers(c.best)} is enough, and the project still finishes at ${T} ${u}.` : `The fewest is ${nWorkers(c.best)}.`,
+    "Answer", { tryIndex: c.states.length - 1 }, undefined, { runningTotal: c.best, totalLabel: "Workers" },
+  ));
+  return steps;
+}
+
 // ── Resource levelling: where the histogram is over the limit, then the schedule built again within the limit ──
 function solveLevel(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const lv = d.extra!.level!;
   if (lv.choices) return solveLevelChoice(p);
+  if (lv.method) return solveLevelMethod(p);
   const { times: t } = d;
   const all = fullGraph(d.acts);
   const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
@@ -644,6 +716,148 @@ function solveLevel(p: DecisionProblem): SolveStep[] {
     "Conclusion", { ...base }, { which: "after", showLimit: true }, { runningTotal: lv.newTime, totalLabel: "Minimum time" },
   ));
   void START;
+  return steps;
+}
+
+const nWorkers = (n: number) => `${n} worker${n === 1 ? "" : "s"}`;
+/** a unit of time in the plural unless there is exactly one of it ("1 day", "5 days") */
+const unitN = (n: number, u: string) => (n === 1 ? u.replace(/s$/, "") : u);
+/** the stretches of a profile over the limit inside [from, to), each at one height (a clash band is as high as the stack under it, never higher) */
+function bandsOf(profile: number[], limit: number, from: number, to: number): { from: number; to: number; need: number }[] {
+  const out: { from: number; to: number; need: number }[] = [];
+  for (let x = from; x < to && x < profile.length; x++) {
+    if (profile[x] <= limit) continue;
+    const l = out[out.length - 1];
+    if (l && l.to === x && l.need === profile[x]) l.to = x + 1; else out.push({ from: x, to: x + 1, need: profile[x] });
+  }
+  return out;
+}
+
+// ── Resource levelling, the method (specs/resource-levelling.md): the histogram and its clash, the quick sums, then one try at a time from the ranked list ──
+function solveLevelMethod(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const lv = d.extra!.level!;
+  const m = lv.method!;
+  const { times: t } = d;
+  const T = t.projectTime, u = d.unit;
+  const all = fullGraph(d.acts);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  const ids = d.acts.map((a) => a.id);
+  const wk = (id: string) => d.acts.find((a) => a.id === id)!.workers ?? 1;
+  const several = d.acts.some((a) => wk(a.id) > 1);
+  type Opt = (typeof m.options)[number];
+  const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: { ...base, current }, histView: { blocks: ids, showLimit: true, ...hist },
+    // the cascade chart and the float table stay beside the picture: every bar and float is there from the start
+    ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current },
+    ...extra,
+  });
+  const dimmed = (keep: string[]) => ids.filter((id) => !keep.includes(id));
+  /** an activity with its workers when they differ between activities: D(3) */
+  const tag = (id: string) => (several ? `${id}(${wk(id)})` : id);
+  const clashLine = (c: { ids: string[]; need: number }) => `${cpaList(c.ids.map(tag))} cannot ${c.ids.length === 2 ? "both" : "all"} run together: ${several ? `${c.ids.map(wk).join(" + ")} = ${c.need}` : c.need} > ${lv.limit}.`;
+  // every option that has joined the list so far, as chips (tried ones coloured by what they led to; the rest waiting)
+  const everyOption: Opt[] = [...m.options, ...m.tries.flatMap((tr) => tr.added)];
+  const chips = (upto: number, cur?: number) => {
+    const known = new Set<Opt>([...m.options, ...m.tries.slice(0, upto).flatMap((tr) => tr.added)]);
+    return {
+      title: "The list of options, smallest first",
+      maxHeight: 124,
+      items: everyOption.filter((o) => known.has(o)).sort((a, b) => a.quick - b.quick || Number(b.float > 0) - Number(a.float > 0) || a.held.localeCompare(b.held)).map((o) => {
+        const k = m.tries.findIndex((tr) => tr.option === o);
+        const tone: "current" | "good" | "bad" | "pending" = k < 0 || k > (cur ?? upto - 1) ? "pending" : k === cur ? "current" : m.tries[k].clash ? "bad" : "good";
+        const same = everyOption.filter((q) => q.held === o.held && q.until === o.until).length > 1;
+        return { text: `hold ${o.held} until ${o.until}${same ? ` (route: ${Object.entries(o.holds).map(([id, until]) => `${id} ${until}`).join(", ")})` : ""}: ${o.quick}`, tone };
+      }),
+    };
+  };
+  const rowsOf = (opts: Opt[]) => {
+    const sorted = [...opts].sort((a, b) => a.quick - b.quick || Number(b.float > 0) - Number(a.float > 0) || b.float - a.float || a.held.localeCompare(b.held));
+    return {
+      head: ["Hold back", "Waits until", "New finish", "LFT", "Quick sum"],
+      rows: sorted.map((o, i) => ({
+        cells: [o.held, `${o.wait} finishes (${o.until})`, String(o.newFinish), String(o.lft), o.own > o.quick || o.quick === o.own ? (o.newFinish > o.lft ? `${T} + (${o.newFinish} − ${o.lft}) = ${o.own}` : `${T} (by its LFT)`) : `${o.quick} (the route already has ${o.quick})`],
+        tone: (i === 0 ? "top" : o.quick === sorted[0].quick ? "tie" : "normal") as "top" | "tie" | "normal",
+      })),
+    };
+  };
+  const steps: SolveStep[] = [];
+  // 1. the histogram
+  const first = m.firstClash!;
+  const firstBands = bandsOf(lv.before.profile, lv.limit, first.from, first.to);
+  const firstBand = firstBands[0];
+  steps.push(mk(
+    `No limit: ${T} ${u}. Over the limit: ${lv.over.map((o) => `${o.from}–${o.to} needs ${o.need}`).join("; ")}.`,
+    "The histogram", { which: "before", showOver: true, labelOver: true },
+  ));
+  // 2. the first clash
+  steps.push(mk(`First clash, ${firstBand.from}–${firstBand.to}: ${clashLine(first)}`, "The first clash", { which: "before", clash: firstBands, dim: dimmed(first.ids) }));
+  // 3. the quick sums
+  const top = m.options[0];
+  const tied = m.options.filter((o) => o.quick === top.quick);
+  steps.push(mk(
+    `Quick sum = ${T} + (new finish − LFT), or ${T} if it finishes by its LFT. Try the smallest${tied.length > 1 ? ` (tie: take one with float)` : ""}: hold ${top.held}, ${top.quick}.`,
+    "Quick sums", { which: "before", showOver: true, labelOver: true, quick: rowsOf(m.options) }, top.held,
+  ));
+  // 4. each try (and, when a clash is left, the new clash and its quick sums joining the same list)
+  m.tries.forEach((tr, k) => {
+    const o = tr.option;
+    const parent = o.parent < 0 ? lv.before : lv.tryHist![o.parent];
+    const old = parent.blocks.find((b) => b.id === o.held)!;
+    const st = tr.starts[o.held];
+    const winner = !tr.clash && tr.finish === m.minimum && k === m.tries.length - 1;
+    const back = k > 0 && o.parent !== k - 1 ? "Back to the list: " : "";
+    const knock = tr.knockOns.length ? ` Knock-on: ${cpaList(tr.knockOns)}.` : "";
+    const left = tr.clash ? bandsOf(lv.tryHist![k].profile, lv.limit, tr.clash.from, tr.clash.to) : [];
+    const route = Object.keys(o.holds).length > 1 ? ` (route: ${Object.keys(o.holds).join(" then ")})` : "";
+    const verdict = tr.clash ? ` Clash left, ${left[0].from}–${left[0].to}.` : ` No clash left${winner ? `: ${tr.finish} equals its quick sum, so it is the minimum.` : "."}`;
+    steps.push(mk(
+      `${back}Hold ${o.held} until ${o.wait} finishes (${o.until}): it runs ${st}–${st + d.acts.find((a) => a.id === o.held)!.duration}.${route}${knock}${verdict}`,
+      `Try ${k + 1}: hold ${o.held}`,
+      { which: "try", tryIndex: k, showOver: true, labelOver: true, knock: tr.knockOns, ghost: { id: o.held, start: old.start, end: old.end, workers: old.workers, y: histBaseAt(old, old.start) } },
+      o.held,
+      { list: chips(k + 1, k) },
+    ));
+    if (tr.clash && k < m.tries.length - 1) {
+      const next = m.tries[k + 1].option;
+      steps.push(mk(
+        `New clash, ${left[0].from}–${left[0].to}: ${clashLine(tr.clash)} Its quick sums join the list. Smallest overall: hold ${next.held}, ${next.quick}.`,
+        `Clash left after try ${k + 1}`,
+        { which: "try", tryIndex: k, clash: left, knock: tr.knockOns, dim: dimmed(tr.clash.ids), quick: rowsOf(tr.added) },
+        o.held,
+        { list: chips(k + 1, -1) },
+      ));
+    }
+  });
+  // 5. the check
+  const n = m.tries.length;
+  const waiting = everyOption.filter((o) => !m.tries.some((tr) => tr.option === o));
+  steps.push(mk(
+    `${n} option${n > 1 ? "s" : ""} tried.${waiting.length ? ` The others can't beat ${m.minimum}: none has a quick sum below it.` : ""}`,
+    "The check", { which: "try", tryIndex: n - 1 }, undefined, { list: chips(n, n - 1) },
+  ));
+  // 6. the answer and the write-up
+  const winOpt = m.tries[n - 1].option;
+  const waits = Object.entries(winOpt.holds).map(([id, until]) => ({ id, until, wait: everyOption.find((o) => o.held === id && o.until === until)?.wait ?? "" }));
+  const heldIds = waits.map((w) => w.id);
+  const sinks = d.acts.filter((a) => !d.acts.some((b) => b.preds.includes(a.id)));
+  const extra = m.minimum - T;
+  const ask = lv.wording ?? "time";
+  const answer = ask === "extra" ? `Minimum extra time: ${extra} ${unitN(extra, u)}.`
+    : ask === "explain" ? `${clashLine(first)} Some activity has to wait, so the project takes ${extra} ${unitN(extra, u)} longer: ${m.minimum} ${u}, not ${T}.`
+    : ask === "startLast" && sinks.length === 1 ? `${sinks[0].id} starts at ${m.starts[sinks[0].id]}; minimum completion time ${m.minimum} ${u}.`
+    : `Minimum completion time: ${m.minimum} ${u} (${extra} more than ${T}).`;
+  const writeUp = `${cpaList(first.ids.map(tag))} cannot run at the same time, as that needs ${nWorkers(first.need)} and only ${nWorkers(lv.limit)} are available. ${waits.map((w) => `${w.id} waits until ${w.wait} finishes`).join(", and ")}, so ${cpaList(heldIds)} start${heldIds.length > 1 ? "" : "s"} later. The new minimum completion time is ${m.minimum} ${u}.`;
+  const model = [
+    clashLine(first),
+    `Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}.`,
+    ...m.tries.map((tr, k) => `Try ${k + 1}: hold ${tr.option.held} until ${tr.option.until} → ${tr.clash ? `still a clash (${tr.clash.from}–${tr.clash.to})` : `no clash, finish ${tr.finish}`}.`),
+  ];
+  steps.push(mk(
+    answer,
+    "Final answer", { which: "after" }, undefined,
+    { runningTotal: ask === "extra" ? extra : m.minimum, totalLabel: ask === "extra" ? "Extra time" : "Minimum time", list: { title: "Write it up", prose: true, items: [...model.map((text) => ({ text })), { text: writeUp, tone: "good" as const }] } },
+  ));
   return steps;
 }
 

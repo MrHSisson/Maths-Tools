@@ -6,6 +6,8 @@ import {
   GanttView,
   HistogramView,
   generateCpa,
+  buildCpaSheet,
+  CPA_SHEET_TABS,
   generateCpaExam,
   type CpaChain,
   solveCpa,
@@ -108,8 +110,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv >= 2 ? 3 : 2) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
-  const workers = pickOf(o.workersEach, sub === "histogram" ? (lv === 3 ? "several" : "one") : lv === 2 ? "several" : "one") === "several" ? "several" : "one";
+  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
+  const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
     size: size ?? (clockQ || CHART_SUBS.has(sub) ? "medium" : undefined),
@@ -130,7 +133,15 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     histStart: pickOf(o.histStart, "early") === "late" ? "late" : "early",
     partial: sub === "cascade" && lv !== 2 && pickOf(o.chartGiven, "blank") === "partial",
     cascadePasses: sub === "cascade" && lv === 2,
-    levelType: lv === 1 ? "within" : lv === 2 ? "extra" : "chain",
+    histLevel: sub === "histogram" && lv === 3 ? 3 : undefined,
+    histWorkers: pickOf(o.histWorkers, "one") as "one" | "several" | "mixed",
+    histCut: pickOf(o.histCut, "fewest") as "fewest" | "show" | "canFewer",
+    histGiven: pickOf(o.histGiven, "given") === "given",
+    levelLevel: lv,
+    levelWorkers: pickOf(o.levelWorkers, "one") as "one" | "several" | "mixed",
+    levelMaxTries: Number(pickOf(o.levelTries, "8")),
+    levelWording: levelWording as "time" | "extra" | "startLast" | "explain",
+    singleEnd: sub === "level" && levelWording === "startLast" && genLevel < 3,
     unknownBox: sub === "unknown" && lv === 2,
     unknownChoice: false,
     unknownWhere: pickOf(o.unknownWhere, "on") === "off" ? "off" : "on",
@@ -229,6 +240,28 @@ function WorkersTable({ p }: { p: DecisionProblem }) {
         <tr><th style={head}>Activity</th>{acts.map((a) => <td key={a.id} style={cell}><i>{a.id}</i></td>)}</tr>
         <tr><th style={head}>Workers</th>{acts.map((a) => <td key={a.id} style={cell}>{a.workers ?? 1}</td>)}</tr>
       </tbody>
+    </table>
+  );
+}
+
+// the times a profile is over the limit, as ranges with the workers needed
+function overRanges(profile: number[], limit: number): { from: number; to: number; need: number }[] {
+  const out: { from: number; to: number; need: number }[] = [];
+  profile.forEach((v, x) => { if (v <= limit) return; const l = out[out.length - 1]; if (l && l.to === x && l.need === v) l.to = x + 1; else out.push({ from: x, to: x + 1, need: v }); });
+  return out;
+}
+
+// Resource levelling: the quick sums of the options at a clash, smallest first (the top row is the one tried; "tie" rows have the same quick sum)
+function QuickSumTable({ quick }: { quick: NonNullable<NonNullable<SolveStep["histView"]>["quick"]> }) {
+  const head: React.CSSProperties = { background: TABLE_HEAD, color: "#fff", fontWeight: 700, fontSize: 13, padding: "3px 10px", border: `2px solid ${TABLE_HEAD}`, textAlign: "center" };
+  const cell = (tone: string): React.CSSProperties => ({ border: `2px solid ${TABLE_HEAD}`, padding: "2px 10px", textAlign: "center", fontSize: 15, background: tone === "top" ? "#dcfce7" : tone === "tie" ? "#fef9c3" : "#fff", fontWeight: tone === "top" ? 700 : 400 });
+  return (
+    <table style={{ borderCollapse: "collapse" }}>
+      <tbody>
+        <tr>{quick.head.map((h) => <th key={h} style={head}>{h}</th>)}</tr>
+        {quick.rows.map((r, i) => <tr key={i}>{r.cells.map((c, j) => <td key={j} style={cell(r.tone)}>{c}</td>)}</tr>)}
+      </tbody>
+      <caption style={{ captionSide: "bottom", paddingTop: 6, fontSize: 12.5, color: "#334155", fontWeight: 600 }}>Green: the one tried first. Yellow: ties with it (take one with float).</caption>
     </table>
   );
 }
@@ -380,9 +413,9 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       );
     }
     const g = step?.histView ?? { blocks: lv.before.blocks.map((b) => b.id), which: "before" as const, showLimit: true, showOver: true };
-    const data = g.which === "after" ? lv.after : lv.before;
+    const data = g.which === "after" ? lv.after : g.which === "try" && lv.tryHist ? lv.tryHist[g.tryIndex ?? 0] : lv.before;
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
-    const axis = Math.max(lv.before.T, lv.after.T);
+    const axis = Math.max(lv.before.T, lv.after.T, ...(lv.tryHist ?? []).map((h) => h.T));
     // what the histogram is read against is one picture at a time, switched with < and > — the network, the cascade chart (floats dashed, on the same time axis) and
     // the table of floats — so each gets the whole height and the width it needs; the histogram being built stays in view below
     const cas = d.extra!.cascade;
@@ -391,7 +424,9 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       ...(cas ? [{ title: "Cascade chart", width: "min(92%, 900px)", body: <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} /> }] : []),
       { title: several ? "Floats and workers" : "Floats", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div> },
     ];
-    const cur = Math.min(refIdx, panels.length - 1);
+    // the quick-sum step swaps its table in for the reference picture
+    if (g.quick) panels.push({ title: "Quick sums", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><QuickSumTable quick={g.quick} /></FitBox></div> });
+    const cur = g.quick ? panels.length - 1 : Math.min(refIdx, panels.length - (g.quick ? 1 : 0) - 1);
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div style={{ flex: "6 1 0", minHeight: 0, display: "flex", flexDirection: "column", margin: "0 8px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
@@ -403,23 +438,43 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
           <div ref={panels[cur].ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{panels[cur].body}</div>
         </div>
         <div style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={data} view={g} unit={d.unit} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? lv.over : undefined} axisT={axis} />
+          <HistogramView data={data} view={g} unit={d.unit} axisPeak={Math.max(lv.before.peak, lv.after.peak, ...(lv.tryHist ?? []).map((h) => h.peak))} limit={g.showLimit ? lv.limit : undefined} over={g.showOver ? (g.which === "try" ? overRanges(data.profile, lv.limit) : lv.over) : undefined} axisT={axis} />
         </div>
       </div>
     );
   }
   if (d.kind === "cpaHistogram") {
     // the network (with its times) above, the workers each activity needs when they differ, and the histogram being drawn
-    const g = step?.histView ?? { blocks: [] };
+    const cutQ = d.extra!.cut;
+    // before the working starts, a question that gives the histogram shows it; one that asks for it shows the empty axes
+    const g: NonNullable<SolveStep["histView"]> = step?.histView ?? (cutQ?.given ? { blocks: d.acts.map((a) => a.id), which: "try" as const, tryIndex: 0 } : { blocks: [] });
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
+    const cut = cutQ;
+    const cas = d.extra!.cascade;
+    // the must-run step is drawn on the cascade chart, so it switches there by itself
+    const onNetwork = refIdx === 0 && !step?.ganttView?.mustRun;
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
-          <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+          {cut && cas ? (
+            // cutting the peak needs both: the network (precedence, the critical path, who must wait for whom) and the cascade chart (float tails)
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px 0 56px" }}>
+                <button onClick={() => setRefIdx(refIdx === 0 ? 1 : 0)} aria-label="Previous picture" title="Previous picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>‹</button>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#64748b", minWidth: 150, textAlign: "center" }}>{onNetwork ? "Network" : "Cascade chart"} <span style={{ color: "#94a3b8" }}>· {onNetwork ? 1 : 2} of 2</span></div>
+                <button onClick={() => setRefIdx(refIdx === 0 ? 1 : 0)} aria-label="Next picture" title="Next picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>›</button>
+              </div>
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>
+                {onNetwork
+                  ? <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+                  : <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={d.times.projectTime} />}
+              </div>
+            </div>
+          ) : <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />}
         </div>
         {several && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
         <div style={{ flex: "6 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>
-          <HistogramView data={d.extra!.histogram!} view={g} unit={d.unit} />
+          <HistogramView data={cut && g.which === "try" ? cut.states[g.tryIndex ?? 0] : d.extra!.histogram!} view={g} unit={d.unit} axisPeak={cut ? Math.max(...cut.states.map((h) => h.peak)) : undefined} />
         </div>
       </div>
     );
@@ -505,13 +560,18 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
       ) : levelling ? (
         <>
           <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> activity</span>
-          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> delayed</span>
+          <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
+          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> held back</span>
+          <span style={item}><span style={swatch("#fed7aa", "#ea580c")} /> knock-on</span>
           <span style={item}><span style={swatch("#fecaca", "#dc2626", true)} /> over the limit</span>
         </>
       ) : histogram ? (
         <>
           <span style={item}><span style={swatch("#bbf7d0", "#16a34a")} /> critical</span>
           <span style={item}><span style={swatch("#bae6fd", "#1e3a8a")} /> other activity</span>
+          <span style={item}><span style={swatch("#fde68a", "#d97706")} /> slid / drawn again</span>
+          <span style={item}><span style={swatch("#fed7aa", "#ea580c")} /> knock-on</span>
+          <span style={item}><span style={swatch("#fecaca", "#dc2626", true)} /> peak / must run</span>
           <span style={item}>block: width = duration, height = workers</span>
         </>
       ) : cascade ? (
@@ -543,14 +603,15 @@ export default function App() {
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         printTemplates: true,
+        questionSheet: { tabs: CPA_SHEET_TABS, build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
-          level: ["The delays fit inside the float (8–9 activities)", "The project takes longer (8–9 activities, several workers each)", "Two or more delays (10–12 activities)"],
-          histogram: ["8–9 activities, one worker each", "10–12 activities, one worker each", "10–12 activities, one to three workers each"],
+          level: ["One worker each: the first fix clears the clash", "Several workers each: the first fix clears the clash", "A fix causes a knock-on clash (10–12 activities)"],
+          histogram: ["Draw it: one worker each", "Draw it: one to three workers each (10–12 activities)", "Cut the peak by sliding activities within their float"],
           shorten: ["One critical path: the longest critical activity is best", "Two critical paths: only an activity on both helps", "A near-critical path limits the saving (10–12 activities)"],
           alloc: ["8–9 activities: the smallest team for the minimum time", "8–9 activities: a fixed, smaller team", "10–12 activities: either question"],
           cascade: ["Network with its times given: draw the chart, as early as possible", "Network without its times: find them, then draw the chart, as early as possible", "Network with its times given: draw the chart, as late as possible"],
@@ -663,15 +724,98 @@ export default function App() {
             ],
           },
           {
-            key: "workersEach",
-            label: "Workers per activity",
-            info: "How many workers each activity needs.",
-            forSubTools: ["histogram", "level"],
+            key: "histSize",
+            label: "Network size",
+            info: "How many activities the Level 1 histogram has.",
+            forSubTools: ["histogram"],
+            forLevels: [1],
             multi: true,
-            defaultFor: (lv: number, sub?: string) => ((sub === "histogram" ? lv === 3 : lv === 2) ? "several" : "one"),
+            defaultFor: () => "n89",
+            choices: [
+              { value: "n89", label: "8–9 activities" },
+              { value: "n1012", label: "10–12 activities" },
+            ],
+          },
+          {
+            key: "histWorkers",
+            label: "Workers per activity",
+            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to three.",
+            forSubTools: ["histogram"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "one",
             choices: [
               { value: "one", label: "One each" },
-              { value: "several", label: "1 to 3 each" },
+              { value: "several", label: "2 to 3 each" },
+              { value: "mixed", label: "1 to 3 each" },
+            ],
+          },
+          {
+            key: "histGiven",
+            label: "Histogram",
+            info: "Whether a Level 3 question gives the histogram already drawn (the student cuts the peak), or the student draws it first.",
+            forSubTools: ["histogram"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "given",
+            choices: [
+              { value: "given", label: "Given", sub: "Already drawn" },
+              { value: "draw", label: "Draw it", sub: "Student draws it first" },
+            ],
+          },
+          {
+            key: "histCut",
+            label: "Ask for",
+            info: "What a Level 3 question asks once the peak can be cut: the fewest workers, to show a number is enough, or whether one fewer will do. The first and last need a reason that no fewer will do, so a question without one asks to show.",
+            forSubTools: ["histogram"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "fewest",
+            choices: [
+              { value: "fewest", label: "Fewest workers" },
+              { value: "show", label: "Show N is enough" },
+              { value: "canFewer", label: "Can it be N − 1?" },
+            ],
+          },
+          {
+            key: "levelWording",
+            label: "Ask for",
+            info: "What the question asks once the limit forces extra time.",
+            forSubTools: ["level"],
+            multi: true,
+            defaultFor: () => "time",
+            choices: [
+              { value: "time", label: "Minimum time", sub: "The new completion time" },
+              { value: "extra", label: "Extra time", sub: "How much longer" },
+              { value: "startLast", label: "Last start", sub: "New start of the last activity (not Level 3)" },
+              { value: "explain", label: "Explain", sub: "The effect of the limit" },
+            ],
+          },
+          {
+            key: "levelWorkers",
+            label: "Workers per activity",
+            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to four.",
+            forSubTools: ["level"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "one",
+            choices: [
+              { value: "one", label: "One each" },
+              { value: "several", label: "2 to 4 each" },
+              { value: "mixed", label: "1 to 4 each" },
+            ],
+          },
+          {
+            key: "levelTries",
+            label: "Most tries",
+            info: "The most options a Level 3 question may need trying before the answer is reached; up to 3 suits a first lesson on knock-ons.",
+            forSubTools: ["level"],
+            forLevels: [3],
+            defaultFor: () => "8",
+            choices: [
+              { value: "3", label: "Up to 3" },
+              { value: "5", label: "Up to 5" },
+              { value: "8", label: "Up to 8" },
             ],
           },
           {

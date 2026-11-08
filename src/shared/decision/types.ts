@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
 import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from "./cpa";
+import type { CpaSheetInput } from "./printCpa";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -183,6 +184,10 @@ export interface StepListItem {
 export interface StepList {
   title: string;
   items: StepListItem[];
+  /** a long list scrolls inside a box this tall (px) instead of pushing the buttons down as it grows */
+  maxHeight?: number;
+  /** shown as a written answer: numbered lines in plain text (not chips), the item toned "good" set apart at the end as the write-up paragraph */
+  prose?: boolean;
 }
 
 // ── A colour-key entry — the swatch reuses the renderers' own styles ──────────
@@ -227,6 +232,8 @@ export interface ShellOption {
   when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
+  /** only offer this option at these levels (default: every level). At another level it is hidden and the generator never sees it; "About this tool" still lists it under its tab. */
+  forLevels?: number[];
   /** Changing this only changes how the SAME problem is shown, so the shell redraws the current problem from its saved seed
    *  instead of leaving it as it is. Any other option change leaves the problem alone: the next one follows the new options. */
   displayOnly?: boolean;
@@ -267,6 +274,8 @@ export interface DecisionShellProps {
     levels?: number; // >1 shows a level picker in the header
     /** adds a "Print templates…" burger item: a page to preview and print blank grids and boxes (histograms, Gantt charts) */
     printTemplates?: boolean;
+    /** adds "Print this question (A4)" and "Print the answer sheet (A4)" burger items on the listed sub-tools: `build` returns the sheet(s) to print for the question on screen, or null when it has none */
+    questionSheet?: { tabs: string[]; build: (problem: DecisionProblem, answers: boolean) => Promise<CpaSheetInput[] | null> };
     /** show what each level means in an (i) pop-up beside the level buttons (this sub-tool's levels, the current one marked) instead of a "Levels" section in the burger menu's Info */
     levelInfo?: boolean;
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
