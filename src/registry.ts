@@ -170,7 +170,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'name-wheel', path: '/name-wheel', name: 'Name Wheel', description: 'Spin a wheel to pick a name at random, with extra entries per name, six themes and a list of who has been picked. The list stays on this device.', enabled: false, load: () => import('./tools/TeacherTools/NameWheel') },
-      { id: 'advent-calendar', path: '/advent-calendar', name: 'Advent Calendar', description: 'A 25-door advent calendar with a pupil name (or a greeting) behind each door. The names stay on this device.', enabled: false, load: () => import('./tools/TeacherTools/AdventCalendar') },
+      { id: 'advent-calendar', path: '/advent-calendar', name: 'Advent Calendar', description: 'A 24-door advent calendar (4 rows of 6) with a pupil name, set door by door, (or a greeting) behind each door. The names stay on this device.', enabled: false, load: () => import('./tools/TeacherTools/AdventCalendar') },
     ],
   },
   {

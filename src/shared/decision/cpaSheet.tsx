@@ -35,7 +35,7 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
   }));
   const axisPeak = Math.max(hist.peak, lv?.limit ?? 0, ...(cut?.states ?? []).map((s) => s.peak), lv?.after.peak ?? 0);
   const draw = (data: HistogramData, filled: boolean, limit?: number, tall = false): string => renderToStaticMarkup(createElement(HistogramView, {
-    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0,
+    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0, fineGrid: !filled,
     // a histogram that has the page to itself is drawn taller, to fill it
     ...(tall ? { plotH: 470, cellMax: 80 } : {}),
   }));
@@ -64,12 +64,14 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
   } else if (cut) {
     out.subtitle = `Resource histogram${level}`;
     const final = cut.states[cut.states.length - 1];
+    // "show N − 1 cannot do it" needs only the sum, so there is no second histogram to draw
+    const cutting = cut.ask !== "canFewer";
     if (cut.given) {
       figures.push({ caption: "The resource histogram, every activity as " + cut.start + " as possible", svg: draw(cut.states[0], true), kind: "hist" });
-      figures.push({ caption: "Your histogram after cutting the peak", svg: draw(final, answers), kind: "hist" });
+      if (cutting) figures.push({ caption: "Your histogram after cutting the peak", svg: draw(final, answers), kind: "hist" });
     } else {
       figures.push({ caption: "Draw the resource histogram, every activity as " + cut.start + " as possible", svg: draw(cut.states[0], answers), kind: "hist" });
-      figures.push({ caption: "Draw it again after cutting the peak", svg: draw(final, answers), kind: "hist" });
+      if (cutting) figures.push({ caption: "Draw it again after cutting the peak", svg: draw(final, answers), kind: "hist" });
     }
     if (answers) out.answer = [p.answer.text];
   } else {

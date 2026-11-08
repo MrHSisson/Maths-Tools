@@ -29,6 +29,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, "Show N − 1 is not enough"
+
+Branch `claude/focused-hopper-nndnwu`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts` (the card's description), `src/shared/decision/` (`HistogramView.tsx`, `cpaSheet.tsx`, `cpa.ts`, `cpaSolve.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
+
+**Advent Calendar** (Classroom; still Developing-tools only)
+- **24 doors in 4 rows of 6** (was 25 in a 5-column grid). On a phone the grid is 4 columns by 6 rows so the names stay readable; full screen is always 6 by 4. Saved calendars carry over (door 25 is dropped).
+- **Who is behind each door is typed door by door** in Teacher controls (Door 1 … Door 24). A door left empty shows "Merry Christmas!". Pasting a list is still there, now "Fill doors from list" (in order, or at random). Reshuffle shuffles whatever is behind the doors now.
+- **Full screen:** an expand icon beside the gear frames the 24 doors in the middle of the screen, sized to fit (checked at 1366×768, 1920×1080, 1180×820, 390×800 and 820×1180: nothing scrolls or overflows). Where the browser has no full-screen mode (an iPhone) the same layout fills the window. The same icon or Esc leaves it.
+- **Teacher controls are behind the Developing-tools password** (`checkDevPassword`), asked every time the gear is pressed and locked again when the controls close, so a stray press never shows the names. It stops accidents; the password is in the page's code, so it is not secure against someone who looks. Developing-tools mode does not unlock it (decided with Harry).
+
+**Critical Path — Histogram and print**
+- **Fine grid on the blank histograms to draw** (print sheets only): a faint line at every time unit and a darker one at every fifth, so a value such as 63 on an 80-day axis is easy to find. Skipped past 120 units. Histograms already drawn, and the on-screen walkthrough, keep the dashed grid.
+- **Print basket: Reload.** Each saved question has a Reload button that brings it back onto the page with the same seed, sub-tool, level and options, ready to work through.
+- **Histogram Level 3, "Can it be N − 1?" is now "Show N − 1 is not enough".** The question asks to show the project cannot be done in the minimum time with N − 1 workers, and the working needs no levelling or sliding: total work (the sum of duration × workers) ÷ N − 1 is more than the project time; where that sum does not prove it, the activities that must run together at one time are shown instead. Three short steps (two for the must-run proof). The print sheet draws only the given or blank histogram (no "after cutting the peak" one). The question falls back to "Show N is enough" when no such proof exists, as before.
+
+Tests: `levellingMethod` updated for the new walkthrough (no slide steps; the sum really exceeds the project time). Build, type-check and the full test suite pass.
+
+Not done: the print grid, Reload and the shorter walkthrough were not checked by eye on a printed page, phone or tablet (only measured in headless Chromium for the Advent Calendar); the Advent Calendar has no dashboard note.
+
+Agent: Claude Code
+Notes: planner Build Log blocks for this work are for Harry to write.
+
 ## 2026-11-08 — Resource histogram and resource levelling reworked, with printing and a print basket
 
 Branch `claude/new-session-6gg0my` (one entry for the whole piece of work; it replaces about a dozen working-day entries). Plan and decisions: `specs/resource-levelling.md` ("As built") and `docs/pathways/resource-levelling.md`. Areas: `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`, `cpaSheet.tsx`, `printCpa.ts`, `printBasket.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`, `types.ts`, the `HistogramView`, `GanttView` and `ActivityNodeView` renderers), `src/tools/Decision/CriticalPath.tsx`, `src/shared/seededGenerate.ts`, `src/tests/`.

@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Lock, Settings } from "lucide-react";
+import { Home, Lock, Maximize, Minimize, Settings } from "lucide-react";
 import { Confetti } from "../../shared/components/Confetti";
+import { checkDevPassword } from "../../devAccess";
 
-// Advent Calendar: 25 doors, each hiding a name (or a greeting). Names are typed or pasted by the teacher and kept
+// Advent Calendar: 24 doors (4 rows of 6), each hiding a name (or a greeting). The teacher types who is behind each door
+// (or pastes a list to fill them in order or at random) and it is kept
 // on this device only (localStorage); nothing is sent anywhere. A door opens to a large reveal card so the whole class
 // can read it. With "open doors on a schedule" on, door 1 opens on a start date the teacher picks and one more door
 // opens each day after it (optionally skipping weekends); until a door's day arrives it stays shut.
 // Standalone classroom sandbox.
 
-const DOORS = 25;
+const DOORS = 24;
 const KEY = "advent-calendar-v1";
 const GREETING = "Merry Christmas!";
 
-interface Saved { names: string[]; assigned: string[]; opened: number[]; lock: boolean; start: string; skipWeekends: boolean }
+interface Saved { names?: string[]; assigned: string[]; opened: number[]; lock: boolean; start: string; skipWeekends: boolean }
 
 const pad = (a: string[]) => { const r = a.slice(0, DOORS); while (r.length < DOORS) r.push(""); return r; };
 function shuffle<T>(arr: T[]): T[] {
@@ -26,10 +28,10 @@ function load(): Saved {
   let s: Partial<Saved> = {};
   try { s = JSON.parse(localStorage.getItem(KEY) ?? "{}") ?? {}; } catch { /* blocked or corrupt: start empty */ }
   const names = Array.isArray(s.names) ? s.names.map(String) : [];
-  const assigned = Array.isArray(s.assigned) && s.assigned.length === DOORS ? s.assigned.map(String) : shuffle(pad(names));
+  const assigned = Array.isArray(s.assigned) ? pad(s.assigned.map(String)) : shuffle(pad(names));
   const opened = Array.isArray(s.opened) ? s.opened.filter(n => Number.isInteger(n) && n >= 0 && n < DOORS) : [];
   const start = typeof s.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.start) ? s.start : isoDate(defaultStart());
-  return { names, assigned, opened, lock: s.lock === true, start, skipWeekends: s.skipWeekends !== false };
+  return { assigned, opened, lock: s.lock === true, start, skipWeekends: s.skipWeekends !== false };
 }
 
 const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -85,25 +87,40 @@ const FONT = 'Georgia, "Times New Roman", serif';
 
 export default function AdventCalendar() {
   const [init] = useState(load);
-  const [names, setNames] = useState(init.names);
   const [assigned, setAssigned] = useState(init.assigned);
   const [opened, setOpened] = useState(init.opened);
   const [lock, setLock] = useState(init.lock);
   const [start, setStart] = useState(init.start);
   const [skipWeekends, setSkipWeekends] = useState(init.skipWeekends);
-  const [text, setText] = useState(init.names.join("\n"));
+  const [text, setText] = useState("");
   const [randomise, setRandomise] = useState(true);
   const [status, setStatus] = useState("");
   const [notice, setNotice] = useState("");
   const [revealed, setRevealed] = useState<number | null>(null);
   const [controlsOpen, setControlsOpen] = useState(false);
+  // the gear asks for the password first, so a stray press never shows the names; the controls lock again each time they close
+  const [asking, setAsking] = useState(false);
+  const [pw, setPw] = useState("");
+  const [wrong, setWrong] = useState(false);
+  const closeAsk = () => { setAsking(false); setPw(""); setWrong(false); };
+  const submitPw = () => { if (checkDevPassword(pw)) { closeAsk(); setControlsOpen(true); } else { setWrong(true); setPw(""); } };
   const [now, setNow] = useState(() => new Date());
   const noticeTimer = useRef(0);
   const doneRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // full screen: the 24 doors are framed in the middle of the screen, sized to fit it (the browser's full screen where it has one, the same layout without it where it does not, as on a phone)
+  const [fs, setFs] = useState(false);
+  const enterFs = () => { setFs(true); try { void rootRef.current?.requestFullscreen?.()?.catch(() => { /* the layout still fills the window */ }); } catch { /* same */ } };
+  const exitFs = () => { setFs(false); try { if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* same */ } };
+  useEffect(() => {
+    const h = () => { if (!document.fullscreenElement) setFs(false); };
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify({ names, assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
-  }, [names, assigned, opened, lock, start, skipWeekends]);
+    try { localStorage.setItem(KEY, JSON.stringify({ assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
+  }, [assigned, opened, lock, start, skipWeekends]);
 
   // a day later when the page has been left open on a board: look again when it is next used
   useEffect(() => {
@@ -144,6 +161,12 @@ export default function AdventCalendar() {
   };
   const closeReveal = useCallback(() => setRevealed(null), []);
   useEffect(() => {
+    if (!asking) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeAsk(); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [asking]);
+  useEffect(() => {
     if (!controlsOpen) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") setControlsOpen(false); };
     document.addEventListener("keydown", h);
@@ -159,10 +182,11 @@ export default function AdventCalendar() {
 
   const save = () => {
     const list = parseNames(text);
-    setNames(list); setAssigned(randomise ? shuffle(pad(list)) : pad(list)); setOpened([]);
-    setStatus(`${list.length} name${list.length === 1 ? "" : "s"} saved.${list.length > DOORS ? ` Only the first ${DOORS} were used.` : ""}`);
+    setAssigned(randomise ? shuffle(pad(list)) : pad(list)); setOpened([]);
+    setStatus(`${list.length} name${list.length === 1 ? "" : "s"} placed behind the doors.${list.length > DOORS ? ` Only the first ${DOORS} were used.` : ""}`);
   };
-  const reshuffle = () => { setAssigned(shuffle(pad(names))); setOpened([]); setStatus("Names reshuffled. All doors closed."); };
+  const reshuffle = () => { setAssigned(a => shuffle(a)); setOpened([]); setStatus("Names reshuffled. All doors closed."); };
+  const setDoorName = (i: number, v: string) => setAssigned(a => a.map((x, k) => (k === i ? v : x)));
   const openAll = () => {
     const ids = Array.from({ length: DOORS }, (_, i) => i).filter(i => !isLocked(i + 1));
     setOpened(ids);
@@ -172,7 +196,7 @@ export default function AdventCalendar() {
   const revealName = revealed === null ? "" : assigned[revealed] || GREETING;
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-5 pb-16 pt-10 text-[#fbf5e6]"
+    <div ref={rootRef} className={`relative overflow-hidden text-[#fbf5e6] ${fs ? "fixed inset-0 z-30 flex flex-col items-center justify-center px-3 py-3" : "min-h-screen px-5 pb-16 pt-10"}`}
       style={{ fontFamily: FONT, background: "radial-gradient(ellipse at 50% -10%, #1d6a4c 0%, rgba(29,106,76,0) 60%), linear-gradient(180deg, #0d3b2c 0%, #082a1f 100%)" }}>
       <style>{CSS}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -182,24 +206,28 @@ export default function AdventCalendar() {
         ))}
       </div>
 
-      <button onClick={() => { window.location.href = "/"; }} className="relative mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#f1dc9b]">
+      {!fs && <button onClick={() => { window.location.href = "/"; }} className="relative mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#f1dc9b]">
         <Home size={18} /> Home
+      </button>}
+      <button type="button" onClick={fs ? exitFs : enterFs} aria-label={fs ? "Exit full screen" : "Full screen"} title={fs ? "Exit full screen" : "Full screen"}
+        className="absolute right-14 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
+        {fs ? <Minimize size={20} /> : <Maximize size={20} />}
       </button>
-      <button type="button" onClick={() => setControlsOpen(true)} aria-label="Teacher controls" title="Teacher controls"
+      <button type="button" onClick={() => setAsking(true)} aria-label="Teacher controls" title="Teacher controls"
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
         <Settings size={20} />
       </button>
-      <header className="relative mx-auto mb-6 max-w-3xl text-center">
-        <h1 className="text-5xl font-bold leading-none text-[#f1dc9b] max-sm:text-4xl" style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
-        <p className="mt-3 italic text-[#fbf5e6]/80">
+      <header className={`relative mx-auto max-w-3xl text-center ${fs ? "mb-2" : "mb-6"}`}>
+        <h1 className={`font-bold leading-none text-[#f1dc9b] ${fs ? "text-3xl" : "text-5xl max-sm:text-4xl"}`} style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
+        <p className={`italic text-[#fbf5e6]/80 ${fs ? "mt-1 text-sm" : "mt-3"}`}>
           {subtitle}
         </p>
-        <p role="status" aria-live="polite" className="mt-2 min-h-[1.5em] text-sm font-semibold text-[#f1dc9b]">{notice}</p>
+        <p role="status" aria-live="polite" className="mt-1 min-h-[1.5em] text-sm font-semibold text-[#f1dc9b]">{notice}</p>
       </header>
 
       <main aria-label="Advent calendar doors"
-        className="relative mx-auto grid max-w-3xl grid-cols-3 gap-3 rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] p-3 sm:grid-cols-4 sm:gap-4 sm:p-5 md:grid-cols-5"
-        style={{ boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" }}>
+        className={`relative mx-auto grid rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] ${fs ? "grid-cols-6 gap-2 p-2.5 sm:gap-3 sm:p-4" : "max-w-5xl grid-cols-4 gap-2.5 p-3 sm:grid-cols-6 sm:gap-4 sm:p-5"}`}
+        style={fs ? { width: "min(calc(100vw - 1.5rem), calc((100vh - 7.5rem) * 1.3))", boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" } : { boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" }}>
         {Array.from({ length: DOORS }, (_, i) => {
           const day = i + 1, name = assigned[i], isOpen = opened.includes(i), locked = isLocked(day);
           return (
@@ -209,7 +237,7 @@ export default function AdventCalendar() {
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg p-1.5 text-center text-[#3a1017]"
                 style={{ background: "radial-gradient(circle at 50% 40%, #fffaf0 0%, #f6e7c1 70%, #ecd59a 100%)", boxShadow: "inset 0 4px 10px rgba(0,0,0,.35)" }}>
                 <span className="text-sm leading-none text-[#a81f2e]" aria-hidden="true">★</span>
-                <span className={name ? "font-bold leading-tight [overflow-wrap:anywhere]" : "italic leading-tight"} style={{ fontSize: name ? "clamp(.95rem, 2.9vw, 1.55rem)" : "clamp(.8rem, 2.2vw, 1.1rem)" }}>{name || GREETING}</span>
+                <span className={name ? "font-bold leading-tight [overflow-wrap:anywhere]" : "italic leading-tight"} style={{ fontSize: name ? "clamp(.8rem, 2.2vw, 1.4rem)" : "clamp(.8rem, 2.2vw, 1.1rem)" }}>{name || GREETING}</span>
                 <span className="text-[11px] opacity-60">{doorLabel(day)}</span>
               </span>
               <span className="adv-door">
@@ -221,6 +249,23 @@ export default function AdventCalendar() {
         })}
       </main>
 
+      {asking && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-5" onClick={e => { if (e.target === e.currentTarget) closeAsk(); }}>
+          <form role="dialog" aria-modal="true" aria-label="Teacher password" onSubmit={e => { e.preventDefault(); submitPw(); }}
+            className="w-full max-w-xs rounded-2xl border-2 border-[#d9b45b] bg-[#082a1f] p-5 shadow-2xl">
+            <h2 className="mb-1 text-lg font-bold text-[#f1dc9b]">Teacher controls</h2>
+            <p className="mb-3 text-sm text-[#fbf5e6]/80">Enter the password to continue.</p>
+            <input type="password" autoFocus value={pw} onChange={e => { setPw(e.target.value); setWrong(false); }} aria-label="Password"
+              className="w-full rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-3 py-2 text-base text-[#3a1017]" />
+            <p role="status" aria-live="polite" className="mt-2 min-h-[1.3em] text-sm font-semibold text-[#f1dc9b]">{wrong ? "That isn’t right. Try again." : ""}</p>
+            <div className="mt-2 flex gap-2.5">
+              <button type="submit" className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Unlock</button>
+              <button type="button" onClick={closeAsk} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Teacher controls: hidden from the board until opened from the small gear in the corner */}
       {controlsOpen && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 p-3 sm:items-center sm:p-5" onClick={e => { if (e.target === e.currentTarget) setControlsOpen(false); }}>
@@ -230,11 +275,21 @@ export default function AdventCalendar() {
               <button type="button" onClick={() => setControlsOpen(false)} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Done</button>
             </div>
             <div>
-            <p className="mb-2 text-sm leading-snug text-[#fbf5e6]/85">Type one name per line. The first {DOORS} names are used. Any doors left over show a Christmas greeting. Names stay on this device.</p>
+            <p className="mb-2 text-sm leading-snug text-[#fbf5e6]/85">Type who is behind each door. A door left empty shows a Christmas greeting. Names stay on this device.</p>
+            <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 sm:grid-cols-2">
+              {assigned.map((n, i) => (
+                <label key={i} className="flex items-center gap-2 text-sm">
+                  <span className="w-14 shrink-0 text-right text-[#f1dc9b]">Door {i + 1}</span>
+                  <input type="text" value={n} onChange={e => setDoorName(i, e.target.value)} spellCheck={false}
+                    className="min-w-0 flex-1 rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-2 py-1 text-base text-[#3a1017]" />
+                </label>
+              ))}
+            </div>
+            <p className="mb-1 mt-4 text-sm leading-snug text-[#fbf5e6]/85">Or paste a list, one name per line, to fill the doors. The first {DOORS} names are used.</p>
             <textarea value={text} onChange={e => setText(e.target.value)} spellCheck={false} placeholder={"Amira\nBen\nChloe\n…"}
-              className="min-h-[190px] w-full resize-y rounded-lg border border-[#d9b45b] bg-[#fbf5e6] p-3 text-base leading-relaxed text-[#3a1017]" />
+              className="min-h-[110px] w-full resize-y rounded-lg border border-[#d9b45b] bg-[#fbf5e6] p-3 text-base leading-relaxed text-[#3a1017]" />
             <label className="mt-3 flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={randomise} onChange={e => setRandomise(e.target.checked)} /> Randomise which door each name is behind
+              <input type="checkbox" checked={randomise} onChange={e => setRandomise(e.target.checked)} /> Randomise which door each pasted name goes behind
             </label>
             <label className="mt-2 flex items-start gap-2 text-sm">
               <input type="checkbox" className="mt-1" checked={lock} onChange={e => setLock(e.target.checked)} />
@@ -247,11 +302,11 @@ export default function AdventCalendar() {
                     className="rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-2 py-1 text-[#3a1017]" />
                 </label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={skipWeekends} onChange={e => setSkipWeekends(e.target.checked)} /> Skip weekends (school days only)</label>
-                <p className="text-[13px] text-[#fbf5e6]/70">Door 25 opens on {long(dates[DOORS - 1])}. {unlockedCount} of {DOORS} doors can be opened today.</p>
+                <p className="text-[13px] text-[#fbf5e6]/70">Door 24 opens on {long(dates[DOORS - 1])}. {unlockedCount} of {DOORS} doors can be opened today.</p>
               </div>
             )}
             <div className="mt-3 flex flex-wrap gap-2.5">
-              <button type="button" onClick={save} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Save names</button>
+              <button type="button" onClick={save} className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Fill doors from list</button>
               <button type="button" onClick={reshuffle} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Reshuffle doors</button>
               <button type="button" onClick={openAll} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Open all</button>
               <button type="button" onClick={() => { setOpened([]); setStatus("All doors closed."); }} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Close all</button>

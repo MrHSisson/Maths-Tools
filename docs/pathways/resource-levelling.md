@@ -1,6 +1,6 @@
 # Resource histogram and resource levelling
 - **Status:** building
-- **Updated:** 2026-11-08
+- **Updated:** 2026-11-08 (later session: print grid, basket Reload, Show N − 1)
 
 ## Intention
 Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the Critical Path tool so that they only generate questions students could reasonably meet in an exam, and so that the levelling walkthrough teaches a method that finds the true minimum (quick sums and one ranked list) with a developing picture. Full design: `specs/resource-levelling.md`.
@@ -10,9 +10,10 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
 - 2026-11-07 to 2026-11-08: **the tool build is done** (branch `claude/new-session-6gg0my`, on top of `main`, not merged). What exists, and where it departs from the plan (full list in `specs/resource-levelling.md`, "As built"):
   - **Method:** `levelMethod` (quick sums, one ranked list, tries) beside `levelSchedule` in `cpa.ts`; tested against the fixture, random networks and an independent solver.
   - **Levelling tab:** three levels and the filters; options *Ask for*, *Workers per activity* and *Most tries* (Level 3 ones use the new Decision shell field `forLevels`); the six-step walkthrough (histogram, first clash, quick-sum table, each try drawn with ghost and arrow, a step per knock-on clash, the check, the answer with a written "Write it up" card).
-  - **Histogram tab:** Level 1 draw (network size option), Level 2 draw with several workers, Level 3 cut the peak within the float (fewest / show N / can it be N − 1; worker-days and must-run floors, must-run stretches shaded on the cascade chart).
+  - **Histogram tab:** Level 1 draw (network size option), Level 2 draw with several workers, Level 3 cut the peak within the float (fewest / show N / show N − 1 is not enough (total work ÷ workers, no levelling); worker-days and must-run floors, must-run stretches shaded on the cascade chart).
   - **Drawing order:** critical along the bottom, then longest first, no holes or overhangs.
   - **Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); "new start of the last activity" is not offered at levelling Level 3.
+  - **Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask "Show N − 1 is not enough", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.
   - **Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed.
 
 ## Next steps

@@ -1155,7 +1155,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     const mustRun = Array.from({ length: T }, (_, x) => acts.reduce((sum, a) => sum + (times.lf[a.id] - a.duration <= x && x < times.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
     const mr = Math.max(...mustRun);
     const floor: CutData["floor"] = wd === best ? { kind: "workerDays", value: wd, total } : mr === best ? { kind: "mustRun", value: mr, at: mustRun.indexOf(mr), ids: acts.filter((a) => times.lf[a.id] - a.duration <= mustRun.indexOf(mr) && mustRun.indexOf(mr) < times.es[a.id] + a.duration).map((a) => a.id) } : null;
-    const ask = opts.histCut && opts.histCut !== "show" && !floor ? "show" : opts.histCut ?? "fewest";
+    const ask = opts.histCut === "canFewer" && (!floor || best < 2) ? "show" : opts.histCut && opts.histCut !== "show" && !floor ? "show" : opts.histCut ?? "fewest";
     // the states: the histogram given, then after each move (the ones asked for first, then the ones they push)
     const order = [...acts.filter((a) => cs.starts[a.id] !== base[a.id])].sort((a, b) => Number(!cs.chosen.includes(a.id)) - Number(!cs.chosen.includes(b.id)) || cs.starts[a.id] - cs.starts[b.id] || a.id.localeCompare(b.id));
     const cur = { ...base };
@@ -1185,10 +1185,10 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       : `Draw the resource histogram for the project, with every activity as ${start} as possible.`}`;
     prompt = ask === "fewest" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Delaying activities within their float does not delay the project. Find the smallest number of workers with which the project can still be completed in the minimum time of ${T} ${unit}, and show how.`
       : ask === "show" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project can be completed in the minimum time of ${T} ${unit} with only ${wkr(best)}.`
-      : `The activity network represents ${subject}. The times are in ${unit}. ${given} Can the project be completed in the minimum time of ${T} ${unit} with only ${wkr(best - 1)}? Give a reason.`;
+      : `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project cannot be completed in the minimum time of ${T} ${unit} with only ${wkr(best - 1)}.`;
     const slide = moves.filter((m) => !m.knock).map((m) => `${m.id} from ${m.from} to ${m.to}`).join(" and ");
     const why = floor ? (floor.kind === "workerDays" ? ` No fewer will do: the work is ${floor.total} worker-${unit} and ${floor.total} ÷ ${T} = ${(floor.total! / T).toFixed(2)}, so at least ${wkr(floor.value)} are needed.` : ` No fewer will do: at time ${floor.at}, ${wkr(floor.value)} are needed whatever happens, because those activities must be running then.`) : "";
-    answerText = ask === "canFewer" ? `No.${why}`
+    answerText = ask === "canFewer" ? (floor!.kind === "workerDays" ? `The work is ${floor!.total} worker-${unit}. ${floor!.total} ÷ ${best - 1} = ${(floor!.total! / (best - 1)).toFixed(2)}, which is more than ${T}, so ${wkr(best - 1)} cannot finish in ${T} ${unit}.` : `At time ${floor!.at}, ${wkr(floor!.value)} are needed whatever happens, because those activities must be running then. That is more than ${best - 1}, so it cannot be done.`)
       : ask === "show" ? `Slide ${slide}: the most workers needed at once is then ${best}, and the project still finishes at ${T}.`
       : `${wkr(best)}. Slide ${slide}${moves.some((m) => m.knock) ? `, which pushes ${moves.filter((m) => m.knock).map((m) => m.id).join(", ")}` : ""}; the project still finishes at ${T}.${why}`;
   } else if (kind === "cpaHistogram") {

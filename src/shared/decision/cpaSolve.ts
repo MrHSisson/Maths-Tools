@@ -597,6 +597,7 @@ function solveHistogramDraw(p: DecisionProblem): SolveStep[] {
 function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
   const c = d.extra!.cut!;
+  if (c.ask === "canFewer") return solveCannotFewer(p);
   const { times: t } = d;
   const T = t.projectTime, u = d.unit;
   const all = fullGraph(d.acts);
@@ -652,10 +653,45 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
     ));
   }
   steps.push(mk(
-    c.ask === "canFewer" ? `No: ${c.best} is the least, so ${c.target} will not do.` : c.ask === "show" ? `Shown: ${nWorkers(c.best)} is enough, and the project still finishes at ${T} ${u}.` : `The fewest is ${nWorkers(c.best)}.`,
+    c.ask === "show" ? `Shown: ${nWorkers(c.best)} is enough, and the project still finishes at ${T} ${u}.` : `The fewest is ${nWorkers(c.best)}.`,
     "Answer", { tryIndex: c.states.length - 1 }, undefined, { runningTotal: c.best, totalLabel: "Workers" },
   ));
   return steps;
+}
+
+// "Show it cannot be done with N − 1 workers": no sliding or levelling, just the total work ÷ the workers (or the activities that must run together)
+function solveCannotFewer(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const c = d.extra!.cut!;
+  const f = c.floor!;
+  const { times: t } = d;
+  const T = t.projectTime, u = d.unit, n = c.target;
+  const ids = d.acts.map((a) => a.id);
+  const all = fullGraph(d.acts);
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows } = criticalPathInfo(d.criticalPaths);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])), critical: crit, criticalArrows: critArrows };
+  const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, extra?: Partial<SolveStep>): SolveStep => ({
+    caption, phase, edgeStates: {}, cpaView: base, histView: { blocks: ids, which: "try", tryIndex: 0, ...hist },
+    ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id) },
+    ...extra,
+  });
+  if (f.kind === "workerDays") {
+    const terms = d.acts.map((a) => ((a.workers ?? 1) > 1 ? `${a.duration}×${a.workers}` : `${a.duration}`)).join(" + ");
+    const ratio = (f.total! / n).toFixed(2);
+    return [
+      mk(`Add up all the work: ${terms} = ${f.total} worker-${u}.`, "Total work", {}),
+      mk(`With ${nWorkers(n)}, the time needed is at least ${f.total} ÷ ${n} = ${ratio} ${u}.`, "Divide by the workers", {}),
+      mk(`${ratio} is more than ${T}, so ${nWorkers(n)} cannot finish in ${T} ${u}.`, "Answer", {}, { runningTotal: n, totalLabel: "Workers" }),
+    ];
+  }
+  const run = f.ids ?? [];
+  return [
+    mk(`Red is where an activity must be running whatever we do (latest start to earliest finish). At time ${f.at}, ${cpaList(run)} must ${run.length === 2 ? "both" : "all"} be running: ${run.map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(f.value)}.`,
+      "Must run together", { markAt: f.at },
+      { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: f.at } }),
+    mk(`${f.value} is more than ${n}, so ${nWorkers(n)} cannot do it in ${T} ${u}.`, "Answer", { markAt: f.at }, { runningTotal: n, totalLabel: "Workers" }),
+  ];
 }
 
 // ── Resource levelling: where the histogram is over the limit, then the schedule built again within the limit ──

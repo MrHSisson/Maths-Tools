@@ -766,7 +766,7 @@ export default function App() {
           {
             key: "histCut",
             label: "Ask for",
-            info: "What a Level 3 question asks once the peak can be cut: the fewest workers, to show a number is enough, or whether one fewer will do. The first and last need a reason that no fewer will do, so a question without one asks to show.",
+            info: "What a Level 3 question asks once the peak can be cut: the fewest workers, to show a number is enough, or to show that one fewer will not do (the total work divided by the workers, with no levelling). The first and last need a reason that no fewer will do, so a question without one asks to show.",
             forSubTools: ["histogram"],
             forLevels: [3],
             multi: true,
@@ -774,7 +774,7 @@ export default function App() {
             choices: [
               { value: "fewest", label: "Fewest workers" },
               { value: "show", label: "Show N is enough" },
-              { value: "canFewer", label: "Can it be N − 1?" },
+              { value: "canFewer", label: "Show N − 1 is not enough", sub: "Total work ÷ workers" },
             ],
           },
           {
