@@ -446,12 +446,26 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     const several = d.acts.some((a) => (a.workers ?? 1) > 1);
     const cut = d.extra!.cut;
     const cas = d.extra!.cascade;
+    // the must-run step is drawn on the cascade chart, so it switches there by itself
+    const onNetwork = refIdx === 0 && !step?.ganttView?.mustRun;
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
-          {cut && cas
-            ? <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={d.times.projectTime} />
-            : <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />}
+          {cut && cas ? (
+            // cutting the peak needs both: the network (precedence, the critical path, who must wait for whom) and the cascade chart (float tails)
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px 0 56px" }}>
+                <button onClick={() => setRefIdx(refIdx === 0 ? 1 : 0)} aria-label="Previous picture" title="Previous picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>‹</button>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#64748b", minWidth: 150, textAlign: "center" }}>{onNetwork ? "Network" : "Cascade chart"} <span style={{ color: "#94a3b8" }}>· {onNetwork ? 1 : 2} of 2</span></div>
+                <button onClick={() => setRefIdx(refIdx === 0 ? 1 : 0)} aria-label="Next picture" title="Next picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>›</button>
+              </div>
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>
+                {onNetwork
+                  ? <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />
+                  : <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={d.times.projectTime} />}
+              </div>
+            </div>
+          ) : <ActivityNodeView acts={d.acts} layout={d.layout} view={{ ...everyTimes, ...(step?.cpaView ?? {}) }} />}
         </div>
         {several && <div style={{ flexShrink: 0, padding: "0 12px" }}><FitBox><WorkersTable p={p} /></FitBox></div>}
         <div style={{ flex: "6 1 0", minHeight: 0, overflow: "auto", display: "flex", borderTop: "1px solid #e2e8f0" }}>

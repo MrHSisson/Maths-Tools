@@ -331,3 +331,26 @@ describe("worker labels — an activity needing several workers is written D(3)"
     });
   }, 120_000);
 });
+
+describe("histogram Level 3 — precedence and the critical path are shown", () => {
+  it("every step highlights the critical path on the network, and a knock-on step names the activity that pushes it", () => {
+    withSeededRandom(4242, () => {
+      let knocks = 0;
+      for (let i = 0; i < 14; i++) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: (["one", "several", "mixed"] as const)[i % 3], histCut: "show", histStart: "early" });
+        const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+        const crit = new Set(g.data.criticalPaths.flat().filter((id) => id !== "Start" && id !== "End"));
+        for (const s of steps) expect(new Set(s.cpaView!.critical), s.phase).toEqual(crit);
+        expect(steps[1].caption).toContain("critical path is");
+        for (const s of steps.filter((x) => x.phase!.startsWith("Knock-on"))) {
+          knocks++;
+          const pusher = s.cpaView!.compare![0];
+          const id = s.phase!.replace("Knock-on: ", "");
+          expect(g.data.acts.find((a) => a.id === id)!.preds).toContain(pusher);
+          expect(s.caption).toContain(`comes after ${pusher}`);
+        }
+      }
+      expect(knocks, "a knock-on turned up").toBeGreaterThan(0);
+    });
+  }, 200_000);
+});

@@ -595,10 +595,13 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   const { times: t } = d;
   const T = t.projectTime, u = d.unit;
   const all = fullGraph(d.acts);
-  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])) };
+  // the network is shown with its times and the critical path, so precedence (who must wait for whom) and the activities that cannot slide can be read off it
+  const crit = criticalActivities(d.acts);
+  const { arrows: critArrows, text: critText } = criticalPathInfo(d.criticalPaths);
+  const base: CpaViewState = { es: Object.fromEntries(all.map((a) => [a.id, t.es[a.id]])), lf: Object.fromEntries(all.map((a) => [a.id, t.lf[a.id]])), critical: crit, criticalArrows: critArrows };
   const ids = d.acts.map((a) => a.id);
   const mk = (caption: string, phase: string, hist: Partial<NonNullable<SolveStep["histView"]>>, current?: string, extra?: Partial<SolveStep>): SolveStep => ({
-    caption, phase, edgeStates: {}, cpaView: { ...base, current }, histView: { blocks: ids, which: "try", ...hist },
+    caption, phase, edgeStates: {}, cpaView: { ...base, current, ...(extra?.cpaView ?? {}) }, histView: { blocks: ids, which: "try", ...hist },
     // the cascade chart with its float tails sits beside the histogram throughout
     ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), current },
     ...extra,
@@ -611,19 +614,25 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   const slidable = inPeak.filter((id) => t.float[id] > 0);
   steps.push(mk(`The peak: ${c.peak.need} workers, ${c.peak.from}–${c.peak.to}. Can it be cut without delaying the project?`, "The peak", { tryIndex: 0, peak: c.peak }));
   steps.push(mk(
-    `Running at the peak: ${cpaList(inPeak.map(tagW))}. Only an activity with float can slide: ${slidable.length ? slidable.map((id) => `${tagW(id)}, float ${t.float[id]}`).join(", ") : "none of these has float"}.`,
-    "What can slide", { tryIndex: 0, peak: c.peak, dim: ids.filter((id) => !inPeak.includes(id)) },
+    `${critText} Running at the peak: ${cpaList(inPeak.map(tagW))}. A critical activity (float 0) cannot slide; ${slidable.length ? `these can: ${slidable.map((id) => `${tagW(id)}, float ${t.float[id]}`).join("; ")}` : "none of these has float"}. Anything after a slid activity may have to move too.`,
+    "What can slide", { tryIndex: 0, peak: c.peak, dim: ids.filter((id) => !inPeak.includes(id)) }, undefined,
+    { cpaView: { ...base, compare: slidable } },
   ));
   c.moves.forEach((mv, i) => {
     const old = c.states[i].blocks.find((b) => b.id === mv.id)!;
     const last = i === c.moves.length - 1;
+    // the activity that pushes this one: an earlier move it comes after (precedence read off the network)
+    const pusher = mv.knock ? d.acts.find((a) => a.id === mv.id)!.preds.find((q) => c.moves.slice(0, i).some((m) => m.id === q)) : undefined;
+    const after = successorsOf(all)[mv.id].filter((q) => q !== END);
+    const nothingElse = !mv.knock && !c.moves.slice(i + 1).some((m) => m.knock) ? ` Nothing after it (${after.length ? cpaList(after) : "no activity"}) has to move.` : "";
     steps.push(mk(
       mv.knock
-        ? `${mv.id} follows what was slid, so it now starts at ${mv.to}, not ${mv.from} (float is shared along a chain).${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`
-        : `Slide ${mv.id} to start at ${mv.to}, not ${mv.from}: ${Math.abs(mv.to - mv.from)} ${unitN(Math.abs(mv.to - mv.from), u)} ${mv.to > mv.from ? "later" : "earlier"}, within its float of ${mv.float}.${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`,
+        ? `${mv.id} comes after ${pusher ?? "what was slid"}, which now finishes later, so ${mv.id} now starts at ${mv.to}, not ${mv.from} (float is shared along a chain).${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`
+        : `Slide ${tagW(mv.id)} to start at ${mv.to}, not ${mv.from}: ${Math.abs(mv.to - mv.from)} ${unitN(Math.abs(mv.to - mv.from), u)} ${mv.to > mv.from ? "later" : "earlier"}, within its float of ${mv.float}.${nothingElse}${last ? ` Peak now ${c.states[i + 1].peak}.` : ""}`,
       mv.knock ? `Knock-on: ${mv.id}` : `Slide ${mv.id}`,
       { tryIndex: i + 1, knock: mv.knock ? [mv.id] : [], ghost: { id: mv.id, start: old.start, end: old.end, workers: old.workers, y: histBaseAt(old, old.start) } },
       mv.id,
+      pusher ? { cpaView: { ...base, current: mv.id, compare: [pusher] } } : undefined,
     ));
   });
   const fin = c.states[c.states.length - 1];

@@ -29,6 +29,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Resource histogram, Level 3: the network and critical path are shown, so precedence can be read
+
+- **Cut the peak** used to show only the cascade chart above the histogram, so a student could not see which activity follows which, or which are critical. The top panel is now **Network | Cascade chart** (switch with the arrows, network first): the network has its times, the **critical path in green**, the activities that can slide marked in the "What can slide" step, and the activity that pushes a knock-on marked in amber. The "Why no fewer" step switches to the cascade chart by itself, where the must-run stretches are shaded.
+- **Step text:** "What can slide" names the critical path and says a critical activity (float 0) cannot slide; a slide that moves nothing else says "Nothing after it (J, K) has to move"; a knock-on step says which earlier activity pushes it ("J comes after E, which now finishes later").
+- Tests: every step highlights the critical path, and each knock-on step names a real predecessor that moved.
+
+Agent: Claude Code
+Notes: planner Build Log block for Harry to write.
+
 ## 2026-11-08 — Resource histogram and levelling: activities with workers are written D(3)
 
 - When the activities in a question need different numbers of workers, each **histogram block is labelled with its workers: D(3)** (every block, so D(1) too; a piece too narrow for that keeps just the letter). The **clash sentence, the write-up, the "running at the peak" step and the must-run step** name activities the same way ("D(3), E(2) and F(4) cannot all run together: 3 + 2 + 4 = 9 > 8"). Questions where everyone needs one worker keep plain letters. Checked in a browser and by a test.
