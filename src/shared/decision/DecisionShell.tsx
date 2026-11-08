@@ -94,10 +94,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && whenOk(o.when, opts);
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && (!o.forLevels || o.forLevels.includes(lv)) && whenOk(o.when, opts);
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts, lv)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
@@ -160,7 +160,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
     setOptions(opts); setSubTool(t.subTool); setSheetMode(false); newQuestion(level, t.subTool, opts);
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
   const chooseTop = (key: string, value: string) => {
@@ -202,7 +202,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     }
     histStage.current = narrowStage;
   }, [narrow, narrowStage]);
-  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && whenOk(o.when, options));
+  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
@@ -245,7 +245,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();

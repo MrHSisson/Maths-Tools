@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-08 — Decision shell: options can be limited to a level (`forLevels`), and a lost set of levelling options restored
+
+Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{types.ts,DecisionShell.tsx}`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/criticalPathOptions.test.ts`, `docs/architecture/DECISION_SHELL_PLAN.md`.
+
+- **New: `forLevels` on a Decision shell option.** An option can now be offered at some levels only (like `forSubTools` for tabs): at another level it is hidden in the options menu, left out of the share link and never reaches the generator. "About this tool" still lists it under its tab. Nothing changes for tools that do not set it.
+- **Used on Critical Path:** Resource levelling — *Workers per activity* and *Most tries* at Level 3 only; Resource histogram — *Network size* at Level 1 only, *Workers per activity* and *Ask for* at Level 3 only. The "(Level n)" suffixes in their labels are gone. Checked in a browser at every level of both tabs.
+- **Fixed a regression:** the histogram-tab commit had deleted the three levelling options (*Ask for*, *Workers per activity*, *Most tries*) from the tool, so they were missing from the menu (questions still generated, with the defaults). They are back, and a new test fails if any of the six level-specific options goes missing or loses its level.
+
+Not done: phone and tablet layouts of the new steps; planner Build Log blocks for the 2026-11-07 and 2026-11-08 changes; the Critical Path dashboard note.
+
+Agent: Claude Code
+Notes: planner Build Log block not written for this entry.
+
 ## 2026-11-08 — Resource histogram: the must-run floor is drawn
 
 Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/GanttView.tsx`, `src/tests/levellingMethod.test.ts`, docs.

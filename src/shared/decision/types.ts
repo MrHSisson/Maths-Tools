@@ -227,6 +227,8 @@ export interface ShellOption {
   when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
+  /** only offer this option at these levels (default: every level). At another level it is hidden and the generator never sees it; "About this tool" still lists it under its tab. */
+  forLevels?: number[];
   /** Changing this only changes how the SAME problem is shown, so the shell redraws the current problem from its saved seed
    *  instead of leaving it as it is. Any other option change leaves the problem alone: the next one follows the new options. */
   displayOnly?: boolean;

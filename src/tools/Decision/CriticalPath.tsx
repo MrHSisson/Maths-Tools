@@ -699,9 +699,10 @@ export default function App() {
           },
           {
             key: "histSize",
-            label: "Network size (Level 1)",
+            label: "Network size",
             info: "How many activities the Level 1 histogram has.",
             forSubTools: ["histogram"],
+            forLevels: [1],
             multi: true,
             defaultFor: () => "n89",
             choices: [
@@ -711,9 +712,10 @@ export default function App() {
           },
           {
             key: "histWorkers",
-            label: "Workers per activity (Level 3)",
+            label: "Workers per activity",
             info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to three.",
             forSubTools: ["histogram"],
+            forLevels: [3],
             multi: true,
             defaultFor: () => "one",
             choices: [
@@ -724,15 +726,57 @@ export default function App() {
           },
           {
             key: "histCut",
-            label: "Ask for (Level 3)",
+            label: "Ask for",
             info: "What a Level 3 question asks once the peak can be cut: the fewest workers, to show a number is enough, or whether one fewer will do. The first and last need a reason that no fewer will do, so a question without one asks to show.",
             forSubTools: ["histogram"],
+            forLevels: [3],
             multi: true,
             defaultFor: () => "fewest",
             choices: [
               { value: "fewest", label: "Fewest workers" },
               { value: "show", label: "Show N is enough" },
               { value: "canFewer", label: "Can it be N − 1?" },
+            ],
+          },
+          {
+            key: "levelWording",
+            label: "Ask for",
+            info: "What the question asks once the limit forces extra time.",
+            forSubTools: ["level"],
+            multi: true,
+            defaultFor: () => "time",
+            choices: [
+              { value: "time", label: "Minimum time", sub: "The new completion time" },
+              { value: "extra", label: "Extra time", sub: "How much longer" },
+              { value: "startLast", label: "Last start", sub: "New start of the last activity (not Level 3)" },
+              { value: "explain", label: "Explain", sub: "The effect of the limit" },
+            ],
+          },
+          {
+            key: "levelWorkers",
+            label: "Workers per activity",
+            info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to four.",
+            forSubTools: ["level"],
+            forLevels: [3],
+            multi: true,
+            defaultFor: () => "one",
+            choices: [
+              { value: "one", label: "One each" },
+              { value: "several", label: "2 to 4 each" },
+              { value: "mixed", label: "1 to 4 each" },
+            ],
+          },
+          {
+            key: "levelTries",
+            label: "Most tries",
+            info: "The most options a Level 3 question may need trying before the answer is reached; up to 3 suits a first lesson on knock-ons.",
+            forSubTools: ["level"],
+            forLevels: [3],
+            defaultFor: () => "8",
+            choices: [
+              { value: "3", label: "Up to 3" },
+              { value: "5", label: "Up to 5" },
+              { value: "8", label: "Up to 8" },
             ],
           },
           {
