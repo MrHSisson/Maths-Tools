@@ -22,6 +22,12 @@ describe("levelling — the real exam questions", () => {
       const prof = profileOf(acts, early);
       expect(Math.max(...prof) - q.limit).toBe(q.peakOverLimit);
       expect(countClashes(prof, q.limit)).toBe(q.clashes);
+      // heavy-task queues (most tasks need over half the workers) are left out of the levels by the tries cap: the method needs far more than the
+      // most any level allows (8), so none can be generated. (A rule on the share of heavy tasks would wrongly drop Legacy Q11, a Level 3 question.)
+      if (q.fits.startsWith("beyond caps")) {
+        const m = levelMethod(acts, times, q.limit, 5000);
+        expect(m === null || m.tries.length > 8, `${q.question} needs ${m?.tries.length} tries`).toBe(true);
+      }
       if (q.fits.startsWith("levelling")) {
         const m = levelMethod(acts, times, q.limit)!;
         expect(m.minimum).toBe(q.minimumTime);
