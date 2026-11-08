@@ -29,173 +29,36 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-11-08 — Print basket: save questions to print later (Critical Path histogram and levelling)
+## 2026-11-08 — Resource histogram and resource levelling reworked, with printing and a print basket
 
-- **Add to print basket** (burger menu, on the Resource histogram and Resource levelling tabs) saves the question on screen. **Print basket (n)…** opens the list: each question shows its tab, level and what tells it apart (activities, time, the limit or what it asks); remove one, clear the basket, then **Print questions**, **Print answers** or **Print both** (every question first, then every answer sheet), each on its own A4 page. Up to 30 questions; the basket is kept until you clear it, including after the tab or the browser is closed.
-- A saved question is only its **recipe** (tab, level, options and the seed it was generated from), a few hundred bytes in this browser's storage, and printing rebuilds it: the same seed gives the identical question. **Copy basket link** puts the whole basket in one link; opening it on any device (or a different browser) adds those questions to that device's basket and shows it. A damaged link is ignored. The recipes are for short-term use: a later change to how questions are generated would change a saved one.
-- Checked in the real app: adding and removing, the count in the menu, surviving a reload, printing both (4 sheets from 2 questions), the link on a fresh browser (basket shown, link cleared from the address bar), a garbage link. Tests: `printBasket.test.ts` (list, cap, storage, link, and that a seed rebuilds the identical question for each kind).
+Branch `claude/new-session-6gg0my` (one entry for the whole piece of work; it replaces about a dozen working-day entries). Plan and decisions: `specs/resource-levelling.md` ("As built") and `docs/pathways/resource-levelling.md`. Areas: `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`, `cpaSheet.tsx`, `printCpa.ts`, `printBasket.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`, `types.ts`, the `HistogramView`, `GanttView` and `ActivityNodeView` renderers), `src/tools/Decision/CriticalPath.tsx`, `src/shared/seededGenerate.ts`, `src/tests/`.
 
-Not done: other Critical Path tabs and other Decision tools (the basket is wired to a tool's question-sheet tabs); reordering the list.
+**Resource levelling (A-level)**
+- Three levels: 1 one worker each and the first fix clears the clash; 2 one to four workers each (the largest needs at least three), the same; 3 the first fix leaves a clash (a knock-on), within a *Most tries* option (3 / 5 / 8). The limit always forces extra time, with at most two clashes and the peak at most two over the limit. Queue questions (most tasks needing over half the workers) are left out by the tries cap.
+- Options: *Ask for* (minimum time, extra time, new start of the last activity, explain the effect of the limit), *Workers per activity* and *Most tries* (Level 3). The new start of the last activity needs a network that ends in one activity, so Level 3 asks for the time instead.
+- **The method students use** (quick sums, one ranked list, smallest first, ties to an activity with float) is `levelMethod` beside the exhaustive solver `levelSchedule`; it matched the solver on the real exam questions and on random networks.
+- **The worked example follows the method:** the histogram with clashes labelled "needs 10 / limit 9", the first clash with the rest dimmed (and the worker sum), a ranked quick-sum table, each try drawn as its own histogram with the held block ghosted and an arrow to its new place, a step for each knock-on clash, the check, and the final answer with a written **Write it up** card (numbered lines and the filled-in write-up). Steps are a line or two each.
 
-Agent: Claude Code
-Notes: planner Build Log block for Harry to write.
+**Resource histogram (A-level)**
+- Level 1 draw it, one worker each (*Network size* option); Level 2 draw it, one to three workers each; Level 3 **cut the peak within the float**: fewest workers, show N is enough, or can it be N − 1 (*Ask for*), with the worker-days and must-run floors as the reason (must-run stretches shaded red on the cascade chart), at most two activities moving, early or late start, and *Workers per activity*. *Histogram: Given / Draw it* says whether the histogram is on the question or the student draws it first.
+- The Level 3 working shows the network with its times and the critical path (and the cascade chart behind arrows), so precedence and knock-ons can be read.
 
-## 2026-11-08 — Resource histogram Level 3: histogram given or drawn; print a question on one A4 sheet
+**Pictures**
+- **Drawing order** (both tabs): critical activities along the bottom, then the rest longest first, no holes or overhangs. An activity that needs workers is written **D(3)** on the network boxes, the cascade chart and the histogram blocks, and in the step text; one-worker questions keep plain letters. A fixed vertical scale across the steps, a white halo on labels, an arc arrow (straight for a short move) with the ghost under the blocks, and a fuller legend.
 
-- **New option (histogram, Level 3): Histogram — Given / Draw it.** *Given* (the default) shows the histogram already drawn on the question and the prompt says so; the student cuts the peak. *Draw it* asks the student to draw it first (the prompt no longer gives away the peak) and the worked example starts with the drawing steps before the cut. (Before, the prompt said the histogram "is shown" while the question view showed empty axes.)
-- **Print this question (A4) / Print the answer sheet (A4)** — new burger-menu items on the **Resource histogram** and **Resource levelling** tabs (any level). One A4 page: the question, the workers table when they differ, the network with its times and the critical path, the cascade chart with its floats (critical activities on one row), then the histograms. Histogram Level 3 *Given*: the given histogram and one blank to draw the cut one; *Draw it*: two blank (draw it, then draw it again after cutting the peak); Levels 1 and 2: one tall blank; levelling: the given histogram with its limit line and a blank one for the levelled histogram. The answer sheet has the histograms drawn and the answer (levelling also the quick sums, the tries and the write-up) on one page. Built on a new shell field `config.questionSheet` and `printCpa.ts` / `cpaSheet.tsx`.
-- Checked: 36 sheets rendered to A4 PDFs (question and answer sheets, every kind), all one page; the menu items open the sheet in the real app and are absent on other tabs.
-- Tests: `cpaSheet.test.ts`; the given/draw option in `levellingMethod.test.ts` and `criticalPathOptions.test.ts`.
+**Printing and the print basket**
+- **Print this question** is an A4 sheet (Resource histogram and Resource levelling, any level): the question, a centred workers table, the network with times and the critical path, the cascade chart with floats, then the histograms (given, or blank to draw; Levels 1 and 2 leave the cascade chart off because it would show the drawing, and give the histogram the page). An answer sheet fills them in. Every one of 60 sheets rendered to A4 PDFs fit one page.
+- **Print basket:** an icon beside the pin (and *Add to print basket* in the burger menu) saves the question, with a message ("Added to print basket (3) · Open basket"). The basket (up to 30, kept in the browser) prints questions, answers or both, each on its own page. A saved question is only its recipe (tab, level, options, seed), so a basket can be carried to another device as a link; a damaged link is ignored. Meant for short-term use (a later change to how questions are generated would change a saved one).
 
-- **Levels 1 and 2 (just draw the histogram):** the sheet is the network (larger) and one tall blank histogram that fills the page. The cascade chart is left off these two levels because it shows where every block starts, which would give the drawing away. The workers table is centred on every sheet.
+**Decision shell**
+- New option field `forLevels` (an option appears only at its level), step-list flags `maxHeight` and `prose`, and `config.questionSheet` (the print sheets and basket). Chips wrap and long lists scroll instead of pushing the buttons down.
 
-Not done: other Critical Path tabs have no sheet; several questions per sheet (one per page for now); blank histograms are gridded by worker and by the time ticks, not squared paper (the "Print templates…" item has squared grids).
+**Testing:** about 160 questions checked by an independent solver, about 1,300 drawn steps checked for overlaps and holes in the rendered SVG, 720 questions across 120 option combinations without a crash; every problem those five test agents found is fixed. New tests: `levellingMethod`, `criticalPathOptions`, `workerLabels`, `cpaSheet`, `printBasket`.
 
-Agent: Claude Code
-Notes: planner Build Log block for Harry to write.
-
-## 2026-11-08 — Resource histogram, Level 3: the network and critical path are shown, so precedence can be read
-
-- **Cut the peak** used to show only the cascade chart above the histogram, so a student could not see which activity follows which, or which are critical. The top panel is now **Network | Cascade chart** (switch with the arrows, network first): the network has its times, the **critical path in green**, the activities that can slide marked in the "What can slide" step, and the activity that pushes a knock-on marked in amber. The "Why no fewer" step switches to the cascade chart by itself, where the must-run stretches are shaded.
-- **Step text:** "What can slide" names the critical path and says a critical activity (float 0) cannot slide; a slide that moves nothing else says "Nothing after it (J, K) has to move"; a knock-on step says which earlier activity pushes it ("J comes after E, which now finishes later").
-- Tests: every step highlights the critical path, and each knock-on step names a real predecessor that moved.
+Not done: the exam-style chains still use the older levelling question and walkthrough; other Critical Path tabs and other Decision tools have no print sheet or basket; phone and tablet layouts of the new steps, the print basket and the toolbar icon were not checked (a quick check at 390 wide showed no sideways scroll); the Critical Path dashboard note.
 
 Agent: Claude Code
-Notes: planner Build Log block for Harry to write.
-
-## 2026-11-08 — Resource histogram and levelling: activities with workers are written D(3)
-
-- When the activities in a question need different numbers of workers, each **histogram block is labelled with its workers: D(3)** (every block, so D(1) too; a piece too narrow for that keeps just the letter). The **clash sentence, the write-up, the "running at the peak" step and the must-run step** name activities the same way ("D(3), E(2) and F(4) cannot all run together: 3 + 2 + 4 = 9 > 8"). Questions where everyone needs one worker keep plain letters. Checked in a browser and by a test.
-- **The same D(3) now also appears on the network boxes and on the cascade (Gantt) chart** (row labels and bars), not only the histogram; a short move's arrow is a straight arrow instead of a small loop. A test (`workerLabels.test.ts`) draws all three pictures and checks the labels.
-
-Agent: Claude Code
-Notes: planner Build Log block for Harry to write.
-
-## 2026-11-08 — Documentation brought up to date for the levelling and histogram rework
-
-- `specs/resource-levelling.md` is marked implemented (tool build) and opens with an **As built** section listing where the build differs from the plan (no totals row, exactly one try at Levels 1 and 2, queue questions left out by the tries cap, last start not at Level 3, drawing order, options, the written "Write it up" card). `specs/cpa-skill-tools.md` tab rows 10 and 11 describe the reworked tabs; `specs/cpa-exam-questions.md` says the exam chains still use the older levelling question.
-- `docs/pathways/resource-levelling.md` rewritten: progress in one place, next steps current (phone and tablet check, merge, exam parts later).
-- `docs/GLOSSARY.md` gains section 7b (histogram and levelling terms: clash, option, quick sum, try, knock-on, ghost, floors, `forLevels`). `docs/architecture/DECISION_SHELL_PLAN.md` notes the step-list flags `maxHeight` and `prose`.
-- Planner: the Handoff block for this branch is up to date.
-
-Agent: Claude Code
-Notes: planner Build Log blocks for the 2026-11-07 and 2026-11-08 levelling and histogram entries are for Harry to write.
-
-## 2026-11-08 — Resource levelling: the model answer is a written card, not chips
-
-- The final step's **"What to write"** chips are now a plain **"Write it up"** card: numbered lines (the clash sentence, the quick sums, one line per try) and the filled-in write-up as a highlighted paragraph. It shows on the final step of the levelling tab only, no inner scrolling, and the step text above it is just the answer. The option chips stay on the try, clash and check steps. New `prose` flag on a step list (Decision shell) for this look.
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-08 — Resource levelling and histogram: fixes from the independent test agents
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts,types.ts,DecisionShell.tsx}`, `src/shared/decision/representations/{HistogramView,GanttView}.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
-
-Five agents tested the two tabs independently (accuracy against their own brute-force solver, rendered-SVG geometry, appearance of each tab, option fuzzing). The maths was right everywhere (about 160 questions against a separate solver; about 1,300 drawn steps with no overlaps, holes or floating blocks; 720 questions with no crashes). What they found, now fixed:
-- **Red clash band** on the "clash left" steps overshot the stack when workers differed; it is now drawn in bands, each as high as the stack under it, and the step names the first band. The knock-on blocks stay coloured on that step.
-- **Last "What to write" chip clipped:** long chips now wrap, and long lists (the options list, the model answer) scroll in a box instead of pushing the Next button down.
-- **"1 workers" / "1 days"** fixed (prompts, slide and floor steps); the two-activity clash reads "cannot both run together".
-- **Vertical scale** is fixed across the steps of a walkthrough, so bars no longer jump; the histogram rows are taller when the stack is short.
-- **"Explain" wording** now says what the limit does ("the project takes 9 hours longer: 84 hours, not 75").
-- **Look-alike chips** in the options list now show their route.
-- **Ghost and arrow:** the dashed ghost sits under the blocks, and the arrow is an arc over the top, so neither strikes through a label; block labels have a white halo so the limit line no longer cuts through them; narrow stepped pieces are labelled down to 8 px.
-- **Must-run step:** the red windows sit under the labels, the dashed time marker is on both charts with its label at the top.
-- **Legend** now covers critical, held back, knock-on, over the limit / peak / must run; the quick-sum table is in the page font with a key for its colours.
-- **Wording:** "Slide F to start at 47, not 38"; "A and B must both be running"; "none has a quick sum below it".
-- **Generation speed:** histogram Levels 1 and 2 test a network's histogram before laying it out (median about 240 ms, was often 1–3 s). A first version of this crashed the page on some option combinations; the browser re-check caught it and a test now guards it.
-- Tests: wording, band, chip and generation regressions in `levellingMethod.test.ts`.
-
-Not changed: "Last start" is still a selectable wording at levelling Level 3 (the shell cannot hide one choice by level; it asks for the time there); the charts are larger but still share a card with the network or Gantt chart; phone and tablet not checked.
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-08 — Decision shell: options can be limited to a level (`forLevels`), and a lost set of levelling options restored
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{types.ts,DecisionShell.tsx}`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/criticalPathOptions.test.ts`, `docs/architecture/DECISION_SHELL_PLAN.md`.
-
-- **New: `forLevels` on a Decision shell option.** An option can now be offered at some levels only (like `forSubTools` for tabs): at another level it is hidden in the options menu, left out of the share link and never reaches the generator. "About this tool" still lists it under its tab. Nothing changes for tools that do not set it.
-- **Used on Critical Path:** Resource levelling — *Workers per activity* and *Most tries* at Level 3 only; Resource histogram — *Network size* at Level 1 only, *Workers per activity* and *Ask for* at Level 3 only. The "(Level n)" suffixes in their labels are gone. Checked in a browser at every level of both tabs.
-- **Fixed a regression:** the histogram-tab commit had deleted the three levelling options (*Ask for*, *Workers per activity*, *Most tries*) from the tool, so they were missing from the menu (questions still generated, with the defaults). They are back, and a new test fails if any of the six level-specific options goes missing or loses its level.
-
-Not done: phone and tablet layouts of the new steps; planner Build Log blocks for the 2026-11-07 and 2026-11-08 changes; the Critical Path dashboard note.
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-08 — Resource histogram: the must-run floor is drawn
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/GanttView.tsx`, `src/tests/levellingMethod.test.ts`, docs.
-
-- **"Why no fewer" now shows the must-run floor on the cascade chart** (Resource histogram, Level 3, when the fewest workers is proved by the must-run argument rather than total worker-days): each activity's must-run stretch, from its latest start to its earliest finish, is shaded red on its bar, a dashed line marks the busiest time, and the step adds up the workers of the activities running then ("At time 51, H and I all are: 2 + 3 = 5 workers").
-- Tests: the shaded windows are the real ones and those at the marked time add up to the answer.
-- Queue questions (most tasks needing over half the workers): no separate rule. The tries cap leaves them out, and a test checks the fixture's "beyond caps" questions need more than 8 tries.
-
-Not done: phone and tablet layouts of the new steps; planner Build Log blocks for the 2026-11-07 drawing-order and histogram entries and this one; the Critical Path dashboard note.
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-07 — Resource histogram: the three levels and "cut the peak" (session 3 of 3)
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, docs.
-
-- **Resource histogram has three levels:** 1 draw it with one worker each (network size is now an option, 8–9 or 10–12 activities); 2 draw it with one to three workers each (10–12 activities); 3 **cut the peak within the float**.
-- **Level 3** shows the earliest-start (or latest-start) histogram and asks for the fewest workers that still finish in the minimum time, or to show that N is enough, or whether N − 1 will do. The answer is the true least (checked against the exhaustive solver), and at most two activities have to move. "Fewest" and "can it be N − 1?" are only asked when something proves no fewer will do: the worker-days floor (total work ÷ time, rounded up) or the must-run floor (workers an activity must have running from its latest start to its earliest finish); otherwise the question asks to show N is enough.
-- **The walkthrough:** the cascade chart with its float tails on top and the histogram below. Steps: the peak (highlighted), what can slide (only activities with float, the rest dimmed), each slide with the old place ghosted and an arrow, any knock-on in orange, the check, why no fewer, the answer.
-- **New Question Options (histogram tab):** *Network size (Level 1)*, *Workers per activity (Level 3)* (one / 2 to 3 / 1 to 3) and *Ask for (Level 3)*; the old *Workers per activity* option is replaced. *Start times* (early or late) applies to Level 3 too.
-- The Level 1 and 2 drawing walkthrough now draws the blocks in the new drawing order (critical along the bottom, then longest first).
-- Tests: four configurations of Level 3 (workers, wording, start): the least is true, the peak falls to it, every move stays in the float so the project time is unchanged, at most two moves, the floor equals the answer, and the walkthrough steps match.
-
-Not done: the must-run stretches are not shaded on the cascade chart (the floor is stated in words); the phone and tablet layouts of the new steps and of the levelling steps were not checked. Level 2 (several workers, 10–12 activities) can take a second or more to generate (as before: it needs a network whose histogram stacks).
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-07 — Resource levelling: shorter steps and the new drawing order
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/tests/levellingMethod.test.ts`, docs.
-
-- **The levelling steps are much shorter** (a line or two each): "No limit: 103 days. Over the limit: 45–55 needs 3", "First clash, 45–55: E, F and G cannot all run together: 3 > 2", "Hold D until B finishes (14): it runs 14–39. Knock-on: F, G and H. Clash left, 39–45." The write-up now sits with the model answer lines instead of in the step text.
-- **New drawing order** for the levelled pictures (every try and the final one) and the earliest-start histograms: critical activities along the bottom, then the others longest first, so shorter blocks sit on top. A block follows the stack under it (steps allowed, no holes, no overhangs). The older exam-chain levelling picture keeps its start-time order.
-- Tests: a drawing-rule test checks no holes or overhangs, critical blocks below everything else, and shorter blocks never under longer ones.
-
-Not done: the histogram tab itself (merge Levels 1 and 2, the cut-the-peak Level 3) and its walkthrough; the new steps on phone and tablet.
-
-Agent: Claude Code
-Notes: planner Build Log block not written for this entry.
-
-## 2026-11-07 — Resource levelling: the walkthrough (session 2 of 3)
-
-Branch `claude/new-session-6gg0my` (on top of session 1, which is not merged yet). Areas: `src/shared/decision/{cpa.ts,cpaSolve.ts}`, `src/shared/decision/representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`, `docs/pathways/resource-levelling.md`.
-
-- **The Worked Example for Resource levelling follows the method, as the spec's six steps:** the histogram with each clash labelled "needs 10 / limit 9"; the first clash with the other blocks dimmed (and the worker sum, "4 + 2 = 6 > 5", when tasks need several workers); a ranked quick-sum table (hold back, waits until, new finish, LFT, quick sum; the one tried is on top, ties marked); each try drawn as its own histogram with the held block ghosted at its old place and an arrow to its new place, knock-ons in amber-orange; at Level 3 an extra step for each knock-on clash, where its quick sums join the same list (the chips grow); the check ("2 options checked; the others can't beat 23"); and the final answer in the chosen wording with the levelled histogram, a write-up filled in from the template and the model answer as short lines. (A row of daily totals under the histogram was tried and taken out at Harry's request: the picture is clearer without it.)
-- The cascade chart, network and float table are still on the left (switch with the arrows); the quick-sum table takes the place of that picture on its own step.
-- The picture got a dim set, a labelled clash band, a ghost-and-arrow, knock-on colouring and a histogram per try (`HistViewState`, `LevelData.tryHist`).
-- Tests: the walkthrough test checks the step order and count (6 steps at Levels 1 and 2), one step per try, a knock-on step between tries, each try picture hole-free and ending on its own finish, and the model-answer lines. Checked in a browser at Levels 2 and 3: no console errors.
-- The old greedy walkthrough is still used by the exam-style chains, which have no method data.
-
-Not done: the new stacking order for drawn histograms (critical path on the bottom row, then longest to shortest) and the histogram tab (session 3); the phone and tablet layouts of the new steps were not checked.
-
-Agent: Claude Code
-Notes: planner Build Log block "2026-11-07 — Resource levelling: the walkthrough, session 2 of 3 (Claude Code)".
-
-## 2026-11-07 — Resource levelling: the method, the three levels and the question options (session 1 of 3)
-
-Branch `claude/new-session-6gg0my`. Areas: `src/shared/decision/cpa.ts`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.
-
-- **The levelling method is in the code** (`levelMethod`, beside `levelSchedule`): quick sum for each activity in the first clash, one ranked list (ties: has float, then larger float, then letter), try the smallest, and add the quick sums from any clash left. It returns the minimum, the number of tries and every try (the held activity, its knock-ons, the clash left, the options that joined the list), ready for the walkthrough in session 2. `levelSchedule` stays the ground truth and is now exported.
-- **Resource levelling has the spec's three levels.** Level 1: one worker each, the first option tried clears the clash. Level 2: one to four workers each (the largest needs at least 3), the same. Level 3: the first option leaves a clash (a knock-on), within the **Most tries** option. Every level: the limit forces extra time, at most 2 clashes, the peak at most 2 over the limit, the limit at least the biggest task. The old "two delays including a critical activity" rule is gone.
-- **New Question Options on the levelling tab:** *Ask for* (minimum time, extra time, new start of the last activity, explain the effect of the limit), *Workers per activity (Level 3)* (one / 2 to 4 / 1 to 4) and *Most tries (Level 3)* (3 / 5 / 8, default 8). The new start of the last activity needs a network that ends in one activity; the 10-12 activity networks never do, so Level 3 asks for the time instead. There is no "tick the correct histogram" wording. Answers show the delayed activities as "one valid way".
-- Level 1 and 2 labels on the tab changed to match; the exam-style chains still use the old levelling question and are untouched.
-- Tests: `src/tests/levellingMethod.test.ts` (new) checks the solver reproduces every real exam `minimumTime`, the method does for every levelling entry, the clash and peak counts match the fixture, the method equals the solver on random networks, and generated questions meet each level (filters, tries cap, no try below its quick sum, a clash-free try exactly on it). The old Level 3 assertions in `cpaSkills.test.ts` were replaced.
-- Known: the old walkthrough (`solveLevel`) still runs on the new questions but still narrates a greedy sweep; session 2 replaces it. A Level 3 question can take around a second to generate now and then (finding a network that fits all the filters).
-
-Not done: the histogram tab, the walkthrough and the drawing order (sessions 2 and 3); the dashboard note for Critical Path.
-
-Agent: Claude Code
-Notes: planner Build Log block "2026-11-07 — Resource levelling: the quick-sum method, three levels and question options, session 1 of 3 (Claude Code)".
+Notes: planner Build Log blocks for this work are for Harry to write.
 
 ## 2026-11-07 — Landing page: subject drop-down on a phone
 
