@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Lock, Settings } from "lucide-react";
+import { Home, Lock, Maximize, Minimize, Settings } from "lucide-react";
 import { Confetti } from "../../shared/components/Confetti";
 
 // Advent Calendar: 24 doors (4 rows of 6), each hiding a name (or a greeting). The teacher types who is behind each door
@@ -100,6 +100,16 @@ export default function AdventCalendar() {
   const [now, setNow] = useState(() => new Date());
   const noticeTimer = useRef(0);
   const doneRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // full screen: the 24 doors are framed in the middle of the screen, sized to fit it (the browser's full screen where it has one, the same layout without it where it does not, as on a phone)
+  const [fs, setFs] = useState(false);
+  const enterFs = () => { setFs(true); try { void rootRef.current?.requestFullscreen?.()?.catch(() => { /* the layout still fills the window */ }); } catch { /* same */ } };
+  const exitFs = () => { setFs(false); try { if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* same */ } };
+  useEffect(() => {
+    const h = () => { if (!document.fullscreenElement) setFs(false); };
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify({ assigned, opened, lock, start, skipWeekends })); } catch { /* private mode */ }
@@ -173,7 +183,7 @@ export default function AdventCalendar() {
   const revealName = revealed === null ? "" : assigned[revealed] || GREETING;
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-5 pb-16 pt-10 text-[#fbf5e6]"
+    <div ref={rootRef} className={`relative overflow-hidden text-[#fbf5e6] ${fs ? "fixed inset-0 z-30 flex flex-col items-center justify-center px-3 py-3" : "min-h-screen px-5 pb-16 pt-10"}`}
       style={{ fontFamily: FONT, background: "radial-gradient(ellipse at 50% -10%, #1d6a4c 0%, rgba(29,106,76,0) 60%), linear-gradient(180deg, #0d3b2c 0%, #082a1f 100%)" }}>
       <style>{CSS}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -183,24 +193,28 @@ export default function AdventCalendar() {
         ))}
       </div>
 
-      <button onClick={() => { window.location.href = "/"; }} className="relative mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#f1dc9b]">
+      {!fs && <button onClick={() => { window.location.href = "/"; }} className="relative mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#f1dc9b]">
         <Home size={18} /> Home
+      </button>}
+      <button type="button" onClick={fs ? exitFs : enterFs} aria-label={fs ? "Exit full screen" : "Full screen"} title={fs ? "Exit full screen" : "Full screen"}
+        className="absolute right-14 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
+        {fs ? <Minimize size={20} /> : <Maximize size={20} />}
       </button>
       <button type="button" onClick={() => setControlsOpen(true)} aria-label="Teacher controls" title="Teacher controls"
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
         <Settings size={20} />
       </button>
-      <header className="relative mx-auto mb-6 max-w-3xl text-center">
-        <h1 className="text-5xl font-bold leading-none text-[#f1dc9b] max-sm:text-4xl" style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
-        <p className="mt-3 italic text-[#fbf5e6]/80">
+      <header className={`relative mx-auto max-w-3xl text-center ${fs ? "mb-2" : "mb-6"}`}>
+        <h1 className={`font-bold leading-none text-[#f1dc9b] ${fs ? "text-3xl" : "text-5xl max-sm:text-4xl"}`} style={{ textShadow: "0 2px 0 rgba(0,0,0,.25)" }}>Advent Calendar</h1>
+        <p className={`italic text-[#fbf5e6]/80 ${fs ? "mt-1 text-sm" : "mt-3"}`}>
           {subtitle}
         </p>
-        <p role="status" aria-live="polite" className="mt-2 min-h-[1.5em] text-sm font-semibold text-[#f1dc9b]">{notice}</p>
+        <p role="status" aria-live="polite" className="mt-1 min-h-[1.5em] text-sm font-semibold text-[#f1dc9b]">{notice}</p>
       </header>
 
       <main aria-label="Advent calendar doors"
-        className="relative mx-auto grid max-w-5xl grid-cols-4 gap-2.5 rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] p-3 sm:grid-cols-6 sm:gap-4 sm:p-5"
-        style={{ boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" }}>
+        className={`relative mx-auto grid rounded-[18px] border-[3px] border-[#d9b45b] bg-[#082a1f] ${fs ? "grid-cols-6 gap-2 p-2.5 sm:gap-3 sm:p-4" : "max-w-5xl grid-cols-4 gap-2.5 p-3 sm:grid-cols-6 sm:gap-4 sm:p-5"}`}
+        style={fs ? { width: "min(calc(100vw - 1.5rem), calc((100vh - 7.5rem) * 1.3))", boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" } : { boxShadow: "0 0 0 6px rgba(217,180,91,.15), 0 24px 50px rgba(0,0,0,.45)" }}>
         {Array.from({ length: DOORS }, (_, i) => {
           const day = i + 1, name = assigned[i], isOpen = opened.includes(i), locked = isLocked(day);
           return (
