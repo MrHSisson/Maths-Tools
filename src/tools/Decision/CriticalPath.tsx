@@ -932,3 +932,6 @@ export default function App() {
 }
 
 // CI contract surface — checked by src/tests/cpa.test.ts (the shared Decision `__problem` validator is MST/TSP/route-specific).
+
+// Seed-replay contract surface — discovered by src/tests/seedReplay.test.ts.
+export const __seed = { generate, subTools: SUB_TOOLS };

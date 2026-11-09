@@ -314,6 +314,9 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 - **R43** A slide brief is optional: one or two sentences in `Slide.brief` saying what the slide’s questions test, or the key skill. When planning a lesson, write one for each question slide (not every slide) before authoring its questions; Harry’s own briefs and constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display. Choose the question presentation independently: Full-width, Workspace right or Workspace left; fixed sets and live generators share these layouts. Depth cards remain standalone full-slide question/answer faces, with no split stepper or workspace.
 - **R44** Never put three Depth slides back to back in a deck (two at most); break a run with practice, a discussion or a book activity. The deck check reports it.
 
+**Seeded replay** (`questions-and-working.md`)
+- **R45** A generator draws everything through `Math.random` and keeps no state between calls (no module-level "last used" memory), so a seed rebuilds the same question; `seedReplay.test.ts` enforces it.
+
 ## TypeScript / build rules
 
 - `generateQuestion` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`

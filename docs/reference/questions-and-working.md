@@ -76,6 +76,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 - Retrieve in renderers with the typed reader, never `as any`: `const d = extras(q)._rawValues as MyType | undefined` (`extras` is exported from `"../../shared"`; `withExtras(q, { _diagram: d })` builds a tagged copy) <!-- R3 -->
 - `answerSuffix` is always plain text — never put units inside KaTeX <!-- R4 -->
 - **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync. <!-- R5 -->
+- **A seed gives the same question every time.** A saved question (the print basket, a shared link) is rebuilt by running the generator again with its seed and options, so a generator draws everything through `Math.random` and never keeps memory between calls: no module-level "not the same as last time" or "used so far" state. Leave repeats to the shell's content check. `src/tests/seedReplay.test.ts` runs every sub-tool and level twice from one seed and fails on a difference. <!-- R45 -->
 
 ---
 
