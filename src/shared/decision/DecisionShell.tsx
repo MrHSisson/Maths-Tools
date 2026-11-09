@@ -7,12 +7,13 @@ import MatrixView from "./representations/MatrixView";
 import { SandboxOverlay } from "./representations/SandboxBoard";
 import ExamView from "./ExamView";
 import { useQuestionKeeper } from "../questionKeeper";
-import { useRecentQuestions } from "../recentQuestions";
-import { generateSeeded, replaySeeded } from "../seededGenerate";
+import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
+import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printExam } from "./printExam";
-import { usePrintBasket } from "./usePrintBasket";
+import { usePrintBasket, decisionRecipe } from "./usePrintBasket";
+import { itemKey } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -135,15 +136,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   }, []);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
-  // the print basket (saved questions, the toolbar button, the menu items and the page): see usePrintBasket.tsx
-  const basket = usePrintBasket({ config, problem, subTool, level, optionsFor: (sub, lv) => ctxOf(sub, options, lv).options, generate,
-    onLoad: (it, pr) => {
-      // the saved options are every option as the generator gets it: keep the ones this tool offers, then show the rebuilt question
-      const set: Record<string, string> = {};
-      for (const o of config.options ?? []) { const v = it.options[o.key]; if (v !== undefined) set[o.key] = v; }
-      setLevel(it.level); setSubTool(it.tab); setOptions(settle(config, { ...options, ...set }, it.level));
-      setProblem(pr); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false);
-    } });
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
@@ -248,8 +240,23 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     { id: `q${problemNo(problem)}`, label: `#${problemNo(problem)} · ${tabs.find((t) => t.key === subTool)?.label ?? config.pageTitle}${levelCount > 1 ? ` · L${level}` : ""} · ${sentences[sentences.length > 1 ? 1 : 0]}`, state: { problem, level, subTool, options } },
     (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false); },
     !(narrow && !started && !config.chooser && (config.options ?? []).some((o) => o.top)),   // not while the phone start screens are choosing: those questions were never shown
+    {
+      key: `mt-print-basket:${config.pageTitle}`,
+      toRecipe: (k) => decisionRecipe(k.problem, k.subTool, k.level, ctxOf(k.subTool, k.options, k.level).options),
+      fingerprint: (k) => questionFingerprint(k.problem),
+      // a saved recipe is every option as the generator received it: keep the ones this tool offers, then draw the question again from its seed
+      fromRecipe: (it) => {
+        if (!config.subTools?.some((x) => x.key === it.tab)) return null;
+        const set: Record<string, string> = {};
+        for (const o of config.options ?? []) { const v = it.options[o.key]; if (v !== undefined) set[o.key] = v; }
+        const opts = settle(config, { ...options, ...set }, it.level);
+        return { problem: generateFromSeed(it.seed, () => generate(it.level, ctxOf(it.tab, opts, it.level))), level: it.level, subTool: it.tab, options: opts };
+      },
+    },
   );
 
+  // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
   const savedUi = config.questionSheet ? { ...keeper, basket: basket.basket } : keeper;
 

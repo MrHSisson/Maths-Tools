@@ -7,7 +7,9 @@ import { commonPrompt, withoutPrompt } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { DifficultyToggle } from "./components/DifficultyToggle";
-import { generateSeeded } from "./seededGenerate";
+import { generateSeeded, generateFromSeed } from "./seededGenerate";
+import { extras } from "./questionExtras";
+import { levelNumber, levelKey, encodeToolOptions, decodeToolOptions } from "./savedRecipe";
 import { LevelInfoButton, LevelInfoDialog } from "./components/LevelInfoDialog";
 import {
   StandardQOPopover,
@@ -27,7 +29,7 @@ import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useQuestionKeeper } from "./questionKeeper";
-import { useRecentQuestions } from "./recentQuestions";
+import { useRecentQuestions, questionFingerprint } from "./recentQuestions";
 import { PinButton } from "./components/PinButton";
 import { useLayoutMode } from "./layoutMode";
 import { LessonsPage } from "./components/LessonsPage";
@@ -48,7 +50,6 @@ import { WorksheetControls } from "./components/WorksheetControls";
 import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
-import { extras } from "./questionExtras";
 import { printPrintable, type Printable } from "./printables";
 const SendToDeck = lazy(() => import("../decks/SendToDeck"));
 const SendDepthToDeck = lazy(() => import("../decks/SendDepthToDeck"));   // deck code loads only when the teacher opens it
@@ -698,7 +699,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   }, [difficulty, currentTool, qoFingerprint]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs only when the level, sub-tool or options change, and reads the latest values of everything else
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
 
-  // ── Recent and pinned questions (burger menu; this visit only) ───────────────
+  // ── Recent questions (this visit) and saved questions (kept on the device, as recipes: tool, level, options, seed) ───────────────
   type KeptState = { q: AnyQuestion; tool: string; level: DifficultyLevel; vars: Record<string, boolean>; ms: Record<string, boolean>; dd: string };
   const keptLabel = (q: AnyQuestion) => {
     const plain = (t: string) => t.replace(/\$/g, "").replace(/\\times/g, "×").replace(/\\div/g, "÷").replace(/\\cdot/g, "·").replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1/$2)").replace(/\\(left|right)/g, "").replace(/\\[a-zA-Z]+/g, "").replace(/[{}\\]/g, "");
@@ -719,6 +720,21 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
       setShowWhiteboardAnswer(false);
       setShowAnswer(false);
       setWorkedResetNonce(n => n + 1);
+    },
+    true,
+    {
+      key: `mt-print-basket:${config.pageTitle}`,
+      toRecipe: (k) => {
+        const seed = extras(k.q)._seed;
+        return typeof seed === "number" ? { tab: k.tool, level: levelNumber(k.level), seed, options: encodeToolOptions(k), preview: keptLabel(k.q) } : null;
+      },
+      fingerprint: (k) => questionFingerprint(k.q),
+      // drawn again from the seed with the settings it was saved with (a tool or level that no longer exists throws, and the keeper says so)
+      fromRecipe: (it) => {
+        if (!config.tools[it.tab]) return null;
+        const level = levelKey(it.level), { vars, ms, dd } = decodeToolOptions(it.options);
+        return { q: generateFromSeed(it.seed, () => generateQuestion(it.tab, level, vars, dd, ms)), tool: it.tab, level, vars, ms, dd };
+      },
     },
   );
   const keeperOn = mode === "worksheet" ? undefined : keeper;   // worksheets are many questions: no pin / recent

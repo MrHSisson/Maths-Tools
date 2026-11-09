@@ -9,9 +9,10 @@ One list of questions a teacher wants to come back to, held across lessons, with
 - 2026-11-09: **one control.** Pin and print basket are one joined split control in both shells (`PinButton`): the main half pins, the attached chevron opens a panel with Pin / Add to print basket / Open print basket and the Recent and Pinned lists. The basket's own dialog and the burger menu's list are unchanged.
 - 2026-11-09: **seed audit.** Every generator now rebuilds the same question from the same seed (Maths shell, Decision tools); `FileSizes` and `NonLinearSimEq` level 3 had "don't repeat" memory at module level and were fixed. `src/tests/seedReplay.test.ts` guards it and rule R45 records it.
 
+- 2026-11-09: **one saved list.** Pins are now saved recipes kept on the device (30 at most), the very list the Decision print basket prints, in both shells. Each saved question carries a fingerprint, and a restore that no longer matches says the tool has changed. A saved question with no print sheet stays in the list, marked, and is left out of a print. Recent is still memory only.
+
 ## Next steps
-- Make pins persistent recipes in the basket's format (stored on the device, one cap for both), so the panel's Pinned and the basket become one Saved list. Every question in both shells is already seeded (`generateSeeded` on the first question, New Question and a reload), and the audit reproduced the Decision exam sub-tools from their seeds too, so nothing is left out for lack of a seed. The basket's `problem.exam` check is about printing (no sheet builder for exam questions), not seeds: a saved exam question can be reloaded but not printed.
-- Store a short fingerprint of the question's text with each saved question, so one whose generator has since changed can be flagged instead of silently coming back different.
+- Check it with a class over a few weeks (saved questions held across lessons; does a changed generator warn as it should?).
 - Printing for Maths tools (only Critical Path has a printable sheet today); until then a Maths question can be saved and reloaded but not printed.
 - Possibly named lists (for example one per lesson) once there is a single list.
 

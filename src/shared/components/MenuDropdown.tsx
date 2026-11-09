@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeftRight, ChevronLeft, ChevronDown, Pin, X } from "lucide-react";
 import type { QuestionKeeperMenu } from "../questionKeeper";
-import { MAX_KEPT } from "../questionKeeper";
 import { setSwapSides, useSwapSides } from "../layoutMode";
 
 const CLAMP2 = { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" };
@@ -112,8 +111,8 @@ export const MenuDropdown = ({
               className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors ${keptOpen ? "bg-gray-50" : ""}`}>
               <ChevronLeft size={16} className="hidden sm:block text-gray-400 shrink-0" />
               <ChevronDown size={16} className={`sm:hidden text-gray-400 shrink-0 transition-transform ${keptOpen ? "" : "-rotate-90"}`} />
-              <span className="flex-1 text-left">Recent &amp; pinned questions</span>
-              {keeper.pins.length > 0 && <span className="text-xs font-normal text-gray-400">{keeper.pins.length} pinned</span>}
+              <span className="flex-1 text-left">Recent &amp; saved questions</span>
+              {keeper.pins.length > 0 && <span className="text-xs font-normal text-gray-400">{keeper.pins.length} saved</span>}
             </button>
             {keptOpen && (
               <div className="sm:absolute sm:right-full sm:top-0 sm:mr-2 sm:bg-white sm:rounded-xl sm:shadow-lift sm:border sm:border-gray-200 border-t border-gray-100 bg-gray-50 sm:bg-white py-1" style={{ width: "min(24rem, 86vw)" }}>
@@ -123,17 +122,17 @@ export const MenuDropdown = ({
                   <button key={h.id} onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sm:hover:bg-gray-50 transition-colors"><span style={CLAMP2}>{h.label}</span></button>
                 ))}
-                <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Pinned ({keeper.pins.length}/{MAX_KEPT})</div>
+                <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Saved ({keeper.pins.length}/{keeper.maxPins})</div>
                 {keeper.pins.map(h => (
                   <div key={h.id} className={`flex items-center ${h.id === keeper.currentId ? "bg-blue-50" : ""}`}>
                     <button onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}
                       className="flex-1 min-w-0 text-left pl-4 pr-2 py-2 text-sm text-gray-700 hover:bg-gray-100 sm:hover:bg-gray-50 transition-colors"><span style={CLAMP2}>{h.label}</span></button>
-                    <button onClick={() => keeper.onUnpin(h.id)} aria-label="Unpin" className="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-700"><X size={15} /></button>
+                    <button onClick={() => keeper.onUnpin(h.id)} aria-label="Remove from saved" className="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-700"><X size={15} /></button>
                   </div>
                 ))}
                 <button onClick={keeper.onPin} disabled={!keeper.canPin}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-blue-900 hover:bg-gray-100 sm:hover:bg-gray-50 transition-colors disabled:text-gray-400 disabled:hover:bg-transparent">
-                  <Pin size={15} className="shrink-0" />{keeper.isPinned ? "Unpin this question" : keeper.canPin ? "Pin this question" : `Unpin one first (${MAX_KEPT} pinned)`}
+                  <Pin size={15} className="shrink-0" />{keeper.isPinned ? "Remove from saved" : keeper.canPin ? "Save this question" : `Remove one first (${keeper.maxPins} saved)`}
                 </button>
               </div>
             )}

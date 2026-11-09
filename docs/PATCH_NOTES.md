@@ -29,11 +29,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-11-09 — Saved questions: one pin and print basket control; Advent Calendar names backup; every generator rebuilds from its seed
+## 2026-11-09 — Saved questions: pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed
 
 Branch `claude/loving-bell-i2troy`. Areas: `src/shared/components/PinButton.tsx`, `src/shared/questionKeeper.ts`, `src/shared/decision/` (`usePrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/TeacherTools/AdventCalendar.tsx`, `src/tools/Binary/FileSizes.tsx`, `src/tools/Algebra/NonLinearSimEq.tsx`, `src/tests/seedReplay.test.ts`, `docs/pathways/saved-questions.md`.
 
 **Saved questions** (both shells)
+- **One saved list.** The pin saves the question on screen as a recipe (tool or sub-tool, level, options, seed) kept on the device under the page's key, up to 30, so a saved question survives a reload and comes back exactly as it was (tool, level and options too). It is the list the Decision print basket prints; a saved question without a print sheet is marked and left out of a print. Each carries a fingerprint, and a restore that no longer matches says the tool has changed. Recent stays memory only. `src/shared/questionKeeper.ts` (a `SavedAdapter` per shell), `savedRecipe.ts`, `decision/usePrintBasket.tsx`, `ToolShellCore.tsx`, `DecisionShell.tsx`; tests in `savedQuestions.test.ts`.
 - **One control.** The pin button is now a joined split control. The main half pins; the chevron opens one panel with Pin, Add to / Remove from print basket and **Open print basket** (Decision tools; the basket opens even when the question on screen cannot be saved), the Pinned list and the Recent list. The separate basket button is gone. On phone widths the panel spans the screen above the bottom bar. The burger menu and the basket's own dialog are unchanged.
 - **Plan:** `docs/pathways/saved-questions.md` (pins and the basket become one saved list kept on the device, printing an ability of a saved question).
 
