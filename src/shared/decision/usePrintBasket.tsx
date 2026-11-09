@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Printer, ShoppingBasket } from "lucide-react";
+import { ChevronDown, Printer, ShoppingBasket } from "lucide-react";
 import PrintBasket from "./PrintBasket";
 import { printCpaSheets, type CpaSheetInput } from "./printCpa";
 import { BASKET_MAX, addItem, decodeBasket, encodeBasket, hasItem, loadBasket, mergeItems, previewOf, removeItem, saveBasket, type BasketItem } from "./printBasket";
@@ -40,6 +40,9 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; open: boolean } | null>(null);
+  // the toolbar control is split like Print Both: the main half does the chosen action, the attached chevron lists the choices
+  const [mode, setMode] = useState<"add" | "basket">("add");
+  const [menu, setMenu] = useState(false);
   const setBasket = (next: BasketItem[]) => { setBasketState(next); saveBasket(key, next); };
 
   // the little message after adding or removing, which goes by itself
@@ -48,6 +51,14 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
     const t = window.setTimeout(() => setToast(null), 3200);
     return () => window.clearTimeout(t);
   }, [toast]);
+
+  // the choices close when you press anywhere else
+  useEffect(() => {
+    if (!menu) return;
+    const h = (e: MouseEvent) => { if (!(e.target as Element | null)?.closest?.("[data-basket-split]")) setMenu(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [menu]);
 
   /** the question on screen as a recipe, or null when it cannot be saved (no seed, an exam question, a sub-tool without a sheet) */
   const recipe: BasketItem | null = (() => {
@@ -134,26 +145,39 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
 
   const button = (size: "bar" | "phone" = "bar"): ReactNode => {
     if (!config.questionSheet) return null;
-    const dims = size === "phone" ? "w-14 h-12" : "w-10 xl:w-11 h-10";
-    const count = basket.length > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{basket.length}</span>;
-    // the basket opens whether or not the question on screen can be saved
-    const openBtn = (
-      <button onClick={() => setOpen(true)} aria-label={`Open the print basket (${basket.length})`} title="Open the print basket"
-        className={`relative shrink-0 border rounded-xl flex items-center justify-center bg-white border-slate-200 text-blue-900 active:bg-slate-50 ${dims}`}>
-        <ShoppingBasket size={size === "phone" ? 20 : 18} />{count}
-      </button>
-    );
-    if (!recipe) return openBtn;
-    const title = inBasket ? "In the print basket: remove it" : "Add this question to the print basket";
-    const tone = inBasket ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-blue-900 active:bg-slate-50";
+    const phone = size === "phone";
+    // a question that cannot be saved offers only the basket
+    const effective = recipe ? mode : "basket";
+    const addLabel = inBasket ? "Remove from print basket" : "Add to print basket";
+    const tone = effective === "add" && inBasket ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white text-blue-900 hover:bg-slate-50";
+    const act = (m: "add" | "basket") => { setMode(m); setMenu(false); if (m === "add") toggle(); else setOpen(true); };
+    const label = effective === "add" ? (inBasket ? "In the print basket: remove it" : "Add this question to the print basket") : `Open the print basket (${basket.length})`;
     return (
-      <>
-        <button onClick={toggle} aria-label={title} aria-pressed={inBasket} title={title}
-          className={`shrink-0 border rounded-xl flex items-center justify-center ${tone} ${dims}`}>
-          <Printer size={size === "phone" ? 20 : 18} />
-        </button>
-        {openBtn}
-      </>
+      <div className="relative shrink-0" data-basket-split>
+        <div className={`flex overflow-hidden rounded-xl border border-slate-200 ${phone ? "h-12" : "h-10"}`}>
+          <button onClick={() => act(effective)} aria-label={label} title={label} aria-pressed={effective === "add" ? inBasket : undefined}
+            className={`flex items-center justify-center ${tone} ${phone ? "w-11" : "w-9 xl:w-10"}`}>
+            {effective === "add" ? <Printer size={phone ? 20 : 18} /> : <ShoppingBasket size={phone ? 20 : 18} />}
+          </button>
+          <button onClick={() => setMenu((o) => !o)} aria-label="Print basket options" aria-expanded={menu} title="Print basket options"
+            className="flex w-6 items-center justify-center border-l border-slate-200 bg-white text-blue-900 hover:bg-slate-50">
+            <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: menu ? "rotate(180deg)" : "rotate(0)" }} />
+          </button>
+        </div>
+        {basket.length > 0 && <span className="pointer-events-none absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{basket.length}</span>}
+        {menu && (
+          <div className={`absolute right-0 z-50 min-w-[210px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lift ${phone ? "bottom-full mb-1.5" : "top-full mt-1.5"}`}>
+            {([["add", addLabel, Printer], ["basket", `Open print basket (${basket.length})`, ShoppingBasket]] as const)
+              .filter(([m]) => m === "basket" || !!recipe)
+              .map(([m, text, Icon]) => (
+                <button key={m} onClick={() => act(m)}
+                  className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-semibold ${effective === m ? "bg-blue-900 text-white" : "text-gray-700 hover:bg-gray-50"}`}>
+                  <Icon size={16} /> {text}
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
     );
   };
 
