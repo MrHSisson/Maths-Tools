@@ -10,6 +10,17 @@ export const MAX_KEPT = 5;
 
 export interface KeptQuestion<S> { id: string; label: string; state: S }
 
+/** The print basket, where a shell has one (Decision tools): the toolbar control offers it beside the pin. */
+export interface BasketAction {
+  /** how many questions are saved */
+  count: number;
+  /** the question on screen can be saved (it has a seed and its sub-tool has a printable sheet) */
+  canSave: boolean;
+  inBasket: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+}
+
 /** What the burger menu needs: ids and labels only, plus the actions. */
 export interface QuestionKeeperMenu {
   history: Array<{ id: string; label: string }>;
@@ -20,6 +31,8 @@ export interface QuestionKeeperMenu {
   onPick: (id: string) => void;
   onPin: () => void;
   onUnpin: (id: string) => void;
+  /** set by a shell that has a print basket */
+  basket?: BasketAction;
 }
 
 /** the history after `prev` has been replaced on screen by the question `currentId`: newest first, no repeats, never the current one, at most MAX_KEPT */

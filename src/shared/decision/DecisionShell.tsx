@@ -250,6 +250,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     !(narrow && !started && !config.chooser && (config.options ?? []).some((o) => o.top)),   // not while the phone start screens are choosing: those questions were never shown
   );
 
+  // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
+  const savedUi = config.questionSheet ? { ...keeper, basket: basket.basket } : keeper;
+
   // keep the address bar bookmarkable
   useEffect(() => {
     const q = new URLSearchParams();
@@ -492,8 +495,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
         )}
         {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
-          {basket.button()}
-          <PinButton keeper={keeper} />
+          <PinButton keeper={savedUi} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
           </button>
@@ -965,14 +967,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               {problem.exam ? (
                 // an exam-style question reveals its answers part by part inside the question, so the bar just offers the next question
                 <>
-                  <PinButton keeper={keeper} size="phone" />
+                  <PinButton keeper={savedUi} size="phone" />
                   <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
                 </>
               ) : (
                 <>
                   <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
-                  {basket.button("phone")}
-                  <PinButton keeper={keeper} size="phone" />
+                  <PinButton keeper={savedUi} size="phone" />
                   <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>
               )}

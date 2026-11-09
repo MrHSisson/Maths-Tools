@@ -29,6 +29,24 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-09 — Saved questions: one pin and print basket control; Advent Calendar names backup; every generator rebuilds from its seed
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/shared/components/PinButton.tsx`, `src/shared/questionKeeper.ts`, `src/shared/decision/` (`usePrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/TeacherTools/AdventCalendar.tsx`, `src/tools/Binary/FileSizes.tsx`, `src/tools/Algebra/NonLinearSimEq.tsx`, `src/tests/seedReplay.test.ts`, `docs/pathways/saved-questions.md`.
+
+**Saved questions** (both shells)
+- **One control.** The pin button is now a joined split control. The main half pins; the chevron opens one panel with Pin, Add to / Remove from print basket and **Open print basket** (Decision tools; the basket opens even when the question on screen cannot be saved), the Pinned list and the Recent list. The separate basket button is gone. On phone widths the panel spans the screen above the bottom bar. The burger menu and the basket's own dialog are unchanged.
+- **Plan:** `docs/pathways/saved-questions.md` (pins and the basket become one saved list kept on the device, printing an ability of a saved question).
+
+**Seeds**
+- Audit of every generator: all Maths-shell and Decision generators rebuild the same question from the same seed except `FileSizes` (all levels) and `NonLinearSimEq` (level 3), which kept "don't repeat" memory at module level. That memory is removed; the shell's own content check still refuses identical questions. `src/tests/seedReplay.test.ts` now fails on any generator that differs from the same seed (rule R45).
+
+**Advent Calendar:** Teacher controls gain **Download names** and **Load names from file** (a small JSON file with the names and schedule), so the names survive a browser that clears its storage and move between devices.
+
+Tests: the full suite (126 files) and the build pass. Checked in headless Chromium at 1366×768, 1024×768 and 390×800.
+
+Agent: Claude Code
+Notes: no planner Build Log block written this session.
+
 ## 2026-11-08 — Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, "Show N − 1 is not enough"
 
 Branch `claude/focused-hopper-nndnwu`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts` (the card's description), `src/shared/decision/` (`HistogramView.tsx`, `cpaSheet.tsx`, `cpa.ts`, `cpaSolve.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
