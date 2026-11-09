@@ -429,6 +429,16 @@
    ]
   },
   {
+   "title": "Decision Maths hub (by specification code)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** finding a Decision generator by the part of the AQA 7367 Discrete specification it covers. **How it works:** the A-Level tab shows one **Decision Maths** card instead of one card per tool. It opens a page of the chapters DA to DG (with an AS / A-level switch); opening a chapter lists its **generators** first, then the specification statements, each marked AS + A2 or A2 only. A chapter with nothing built says so, and a chapter whose generators are not live yet says \"Coming soon\". Each chapter has an address of its own (`/decision-overview#DB`), and `/decision` goes to the page. A free workspace (Network Sandbox) is listed apart from the chapters. Everyone sees the live generators; Developing-tools mode also shows tools still in development, each statement's link back to the older AQA D1 and D2 papers with notes, the question banks and the older-papers page. The tools keep their own addresses and are still found by the landing page's search box. **Where:** landing page (A-Level), Decision Maths."
+    }
+   ]
+  },
+  {
    "title": "View as (Auto · Mobile · Tablet · Desktop)",
    "level": 3,
    "blocks": [

@@ -189,6 +189,8 @@ Optionally add `group: 'Sub-group name'` (e.g. `'Place value & decimals'`) so th
 
 A tool's `id` is its `path` without the slash, lower-case words joined by hyphens (`src/tests/registryIds.test.ts` fails otherwise); it is also the key of the tool's dashboard note, so never rename one without copying that note to the new id. When a **route** changes, keep the old address working with `aliases: ['/old-path']` on the entry: it redirects, query string and all, to the new route (Times Tables moved from `/timestables`).
 
+A strand's tools can be opened from one hub page: give each tool `hub: '<hub tool id>'` and the landing page shows only the hub's card (the search box still finds the tools; routes are unchanged). Decision Maths does this with `/decision-overview` (the AQA 7367 spec-code page, `SpecLanding` with `public`).
+
 The registry entry has no version/`ready` field — tools carry no version label. The landing page shows only a "Dev" badge for `enabled: false` tools; there is no version badge.
 
 ### 4. Build, test and push

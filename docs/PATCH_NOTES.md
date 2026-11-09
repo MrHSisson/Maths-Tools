@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-09 — Decision Maths: one hub, by specification code
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/registry.ts` (`hub`), `src/components/LandingPage.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tools/Decision/DecisionOverview.tsx`.
+
+- **One card for Decision.** The A-Level tab shows a single **Decision Maths** card; the other seven tools carry `hub: 'decision-overview'` and no longer have a card of their own (the search box still finds them, routes are unchanged). The hub is live for everyone and `/decision` redirects to it.
+- **The hub is the way in by spec code.** Chapters DA to DG with an AS / A-level switch; a chapter opens to its generators first, then its specification statements. Live generators only for teachers, "Coming soon" where none is live, "not built yet" where there is none; a chapter has its own address (`#DB`), also when pasted into the page already open. Network Sandbox is listed as a workspace.
+- **Planning material stays in Developing-tools mode:** legacy D1 and D2 links and notes, question banks, the older-papers page, Dev badges and tools not yet live. `SpecLanding` takes a `public` option for this; Further Mechanics does not use it and is unchanged (still behind the password).
+- Checked in headless Chromium at 1366×768 and 390×800 (no horizontal overflow). Full suite and build pass.
+
+Agent: Claude Code
+Notes: no planner Build Log block written this session.
+
 ## 2026-11-09 — Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed
 
 Branch `claude/loving-bell-i2troy`. Areas: `src/shared/components/PinButton.tsx`, `src/shared/questionKeeper.ts`, `src/shared/decision/` (`usePrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/TeacherTools/AdventCalendar.tsx`, `src/tools/Binary/FileSizes.tsx`, `src/tools/Algebra/NonLinearSimEq.tsx`, `src/tests/seedReplay.test.ts`, `docs/pathways/saved-questions.md`.
