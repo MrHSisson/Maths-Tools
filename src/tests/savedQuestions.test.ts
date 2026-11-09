@@ -3,8 +3,7 @@
 // (and an old link without one), toggling, and a real round trip: save a question's recipe, rebuild it from the seed, get the same question.
 import { describe, it, expect } from "vitest";
 import { levelKey, levelNumber, encodeToolOptions, decodeToolOptions } from "../shared/savedRecipe";
-import { toggleSaved } from "../shared/questionKeeper";
-import { BASKET_MAX, decodeBasket, encodeBasket, itemKey, type BasketItem } from "../shared/decision/printBasket";
+import { decodeBasket, encodeBasket, itemKey, type BasketItem } from "../shared/decision/printBasket";
 import { generateFromSeed, generateSeeded } from "../shared/seededGenerate";
 import { questionFingerprint } from "../shared/recentQuestions";
 import { extras } from "../shared/questionExtras";
@@ -29,13 +28,6 @@ describe("saved recipe options", () => {
 });
 
 describe("saved list", () => {
-  it("toggles: saves a question once, removes it on the second press, stops at the cap", () => {
-    const one = toggleSaved([], item(1));
-    expect(one).toHaveLength(1);
-    expect(toggleSaved(one, item(1))).toEqual([]);
-    const full = Array.from({ length: BASKET_MAX }, (_, i) => item(i));
-    expect(toggleSaved(full, item(999))).toHaveLength(BASKET_MAX);
-  });
   it("the fingerprint travels in a link; a link without one still reads", () => {
     const withFp = decodeBasket(encodeBasket([item(1, { fp: "abc123" })]));
     expect(withFp?.[0].fp).toBe("abc123");

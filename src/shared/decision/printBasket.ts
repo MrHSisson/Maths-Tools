@@ -43,7 +43,7 @@ export function mergeItems(items: BasketItem[], incoming: BasketItem[]): BasketI
   return incoming.reduce(addItem, items);
 }
 
-const valid = (x: unknown): x is BasketItem => {
+export const isBasketItem = (x: unknown): x is BasketItem => {
   const i = x as BasketItem;
   return !!i && typeof i.tab === "string" && Number.isInteger(i.level) && i.level >= 1 && i.level <= 9 && Number.isInteger(i.seed) && i.seed >= 0
     && !!i.options && typeof i.options === "object" && Object.values(i.options).every((v) => typeof v === "string") && typeof i.preview === "string" && (i.fp === undefined || typeof i.fp === "string");
@@ -54,7 +54,7 @@ export function loadBasket(key: string): BasketItem[] {
   try {
     const raw = window.localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list.filter(valid).slice(0, BASKET_MAX) : [];
+    return Array.isArray(list) ? list.filter(isBasketItem).slice(0, BASKET_MAX) : [];
   } catch { return []; }
 }
 export function saveBasket(key: string, items: BasketItem[]): void {
@@ -74,7 +74,7 @@ export function decodeBasket(code: string): BasketItem[] | null {
   try {
     const list = JSON.parse(unb64(code));
     if (!Array.isArray(list)) return null;
-    const items = list.map((r) => (Array.isArray(r) ? { tab: r[0], level: r[1], seed: r[2], options: r[3], preview: r[4], ...(typeof r[5] === "string" ? { fp: r[5] } : {}) } : null)).filter(valid) as BasketItem[];
+    const items = list.map((r) => (Array.isArray(r) ? { tab: r[0], level: r[1], seed: r[2], options: r[3], preview: r[4], ...(typeof r[5] === "string" ? { fp: r[5] } : {}) } : null)).filter(isBasketItem) as BasketItem[];
     return items.length ? items.slice(0, BASKET_MAX) : null;
   } catch { return null; }
 }

@@ -723,7 +723,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
     },
     true,
     {
-      key: `mt-print-basket:${config.pageTitle}`,
+      pageTitle: config.pageTitle,
       toRecipe: (k) => {
         const seed = extras(k.q)._seed;
         return typeof seed === "number" ? { tab: k.tool, level: levelNumber(k.level), seed, options: encodeToolOptions(k), preview: keptLabel(k.q) } : null;

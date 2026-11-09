@@ -122,7 +122,7 @@ export const MenuDropdown = ({
                   <button key={h.id} onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 sm:hover:bg-gray-50 transition-colors"><span style={CLAMP2}>{h.label}</span></button>
                 ))}
-                <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Saved ({keeper.pins.length}/{keeper.maxPins})</div>
+                <div className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{keeper.currentListName ?? "Saved"} ({keeper.pins.length}/{keeper.maxPins})</div>
                 {keeper.pins.map(h => (
                   <div key={h.id} className={`flex items-center ${h.id === keeper.currentId ? "bg-blue-50" : ""}`}>
                     <button onClick={() => { keeper.onPick(h.id); onClose(); }} title={h.label}

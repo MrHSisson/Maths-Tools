@@ -241,7 +241,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false); },
     !(narrow && !started && !config.chooser && (config.options ?? []).some((o) => o.top)),   // not while the phone start screens are choosing: those questions were never shown
     {
-      key: `mt-print-basket:${config.pageTitle}`,
+      pageTitle: config.pageTitle,
       toRecipe: (k) => decisionRecipe(k.problem, k.subTool, k.level, ctxOf(k.subTool, k.options, k.level).options),
       fingerprint: (k) => questionFingerprint(k.problem),
       // a saved recipe is every option as the generator received it: keep the ones this tool offers, then draw the question again from its seed

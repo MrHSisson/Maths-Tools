@@ -1,27 +1,31 @@
 import { useEffect } from "react";
 import { Link2, Printer, RotateCcw, Trash2, X } from "lucide-react";
-import { BASKET_MAX, type BasketItem } from "./printBasket";
+import { BASKET_MAX } from "./printBasket";
+import type { SavedItem } from "../savedLists";
 
 // The saved-questions print page: the questions saved on this device, printed as questions, answers or both. Opened from the pin control's panel
 // or the burger menu. Questions are saved as recipes (the tab, level, options and seed), so printing rebuilds each one; the link carries the
 // whole list to another device. Only sub-tools with a print sheet can be printed; the rest can still be reloaded.
 
 interface Props {
-  items: BasketItem[];
-  tabLabel: (tab: string) => string;
-  /** the saved question's sub-tool has a print sheet */
-  printable: (item: BasketItem) => boolean;
+  items: SavedItem[];
+  /** what a saved question is called in the list: its sub-tool here, its tool's name when it belongs to another tool */
+  label: (item: SavedItem) => string;
+  /** the saved question can be printed from this page (this tool, and its sub-tool has a print sheet) */
+  printable: (item: SavedItem) => boolean;
+  /** the saved question belongs to the tool this page is */
+  here: (item: SavedItem) => boolean;
   busy: string | null;
   note: string | null;
-  onLoad: (item: BasketItem) => void;
-  onRemove: (item: BasketItem) => void;
+  onLoad: (item: SavedItem) => void;
+  onRemove: (item: SavedItem) => void;
   onClear: () => void;
   onPrint: (mode: "questions" | "answers" | "both") => void;
   onCopyLink: () => void;
   onClose: () => void;
 }
 
-export default function PrintBasket({ items, tabLabel, printable, busy, note, onLoad, onRemove, onClear, onPrint, onCopyLink, onClose }: Props) {
+export default function PrintBasket({ items, label, printable, here, busy, note, onLoad, onRemove, onClear, onPrint, onCopyLink, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -49,7 +53,7 @@ export default function PrintBasket({ items, tabLabel, printable, busy, note, on
                   <li key={`${it.tab}-${it.level}-${it.seed}-${i}`} className="flex items-center gap-3 px-4 py-3">
                     <span className="w-6 shrink-0 text-sm font-semibold text-slate-400">{i + 1}</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-slate-900">{tabLabel(it.tab)} · Level {it.level}{!printable(it) && <span className="ml-2 text-xs font-normal text-slate-400">no print sheet</span>}</div>
+                      <div className="text-sm font-semibold text-slate-900">{label(it)} · Level {it.level}{!printable(it) && <span className="ml-2 text-xs font-normal text-slate-400">{here(it) ? "no print sheet" : "other tool: reload to open it"}</span>}</div>
                       <div className="text-sm text-slate-500 truncate">{it.preview}</div>
                     </div>
                     <button onClick={() => onLoad(it)} aria-label={`Reload question ${i + 1}`} title="Reload this question" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold text-blue-900 hover:bg-slate-50"><RotateCcw size={15} /> Reload</button>
