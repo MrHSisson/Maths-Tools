@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Printer } from "lucide-react";
+import { Printer, ShoppingBasket } from "lucide-react";
 import PrintBasket from "./PrintBasket";
 import { printCpaSheets, type CpaSheetInput } from "./printCpa";
 import { BASKET_MAX, addItem, decodeBasket, encodeBasket, hasItem, loadBasket, mergeItems, previewOf, removeItem, saveBasket, type BasketItem } from "./printBasket";
@@ -26,7 +26,7 @@ interface PrintBasketState {
   canSave: boolean;
   /** items for the burger menu's "Printables" list */
   menuItems: { label: string; hint?: string; onClick: () => void }[];
-  /** the toolbar button beside the pin (null when the question cannot be saved) */
+  /** the toolbar buttons beside the pin: save / remove the question on screen (only when it can be saved) and open the basket (always) */
   button: (size?: "bar" | "phone") => ReactNode;
   /** the basket page and the "added" message, rendered once */
   ui: ReactNode;
@@ -133,15 +133,27 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
   ] : [];
 
   const button = (size: "bar" | "phone" = "bar"): ReactNode => {
-    if (!recipe) return null;
+    if (!config.questionSheet) return null;
+    const dims = size === "phone" ? "w-14 h-12" : "w-10 xl:w-11 h-10";
+    const count = basket.length > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{basket.length}</span>;
+    // the basket opens whether or not the question on screen can be saved
+    const openBtn = (
+      <button onClick={() => setOpen(true)} aria-label={`Open the print basket (${basket.length})`} title="Open the print basket"
+        className={`relative shrink-0 border rounded-xl flex items-center justify-center bg-white border-slate-200 text-blue-900 active:bg-slate-50 ${dims}`}>
+        <ShoppingBasket size={size === "phone" ? 20 : 18} />{count}
+      </button>
+    );
+    if (!recipe) return openBtn;
     const title = inBasket ? "In the print basket: remove it" : "Add this question to the print basket";
     const tone = inBasket ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-blue-900 active:bg-slate-50";
     return (
-      <button onClick={toggle} aria-label={title} aria-pressed={inBasket} title={title}
-        className={`relative shrink-0 border rounded-xl flex items-center justify-center ${tone} ${size === "phone" ? "w-14 h-12" : "w-10 xl:w-11 h-10"}`}>
-        <Printer size={size === "phone" ? 20 : 18} />
-        {basket.length > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{basket.length}</span>}
-      </button>
+      <>
+        <button onClick={toggle} aria-label={title} aria-pressed={inBasket} title={title}
+          className={`shrink-0 border rounded-xl flex items-center justify-center ${tone} ${dims}`}>
+          <Printer size={size === "phone" ? 20 : 18} />
+        </button>
+        {openBtn}
+      </>
     );
   };
 
