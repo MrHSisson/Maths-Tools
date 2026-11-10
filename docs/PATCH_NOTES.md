@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Complete Year 7 rectilinear area lesson
+
+Branch `codex/year7-rectilinear-lesson`. Areas: authored lesson specification/build/export scripts and shared deck snapshot.
+
+- Created the full lesson: 59-slide offline PowerPoint with speaker notes and separate answer reveals; three-page scaffolded pupil worksheet; three-page worked answers; two-page teacher guide and slide PDF.
+- Saved and read back new shared draft `year7-rectilinear-area`: 17 interactive slides, fixed practice, two live generators and the 12-question pinned worksheet. No retrieval starter; missing lengths by addition then subtraction; discussion of removing cut-outs. Reduced labels throughout and large board labels.
+- Independently checked all 34 shape areas and marked unknowns, checked printable layouts and rendered PowerPoint answer reveals.
+- Deliberately not done: publish or deploy the editor foundations. The PowerPoint is self-contained; live generators use the companion editor deck with this branch.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Complete Year 7 rectilinear lesson (Codex)”.
+
 ## 2026-11-10 — Rectilinear board labels and mid-lesson missing lengths
 
 Branch `codex/rectilinear-board-labels` (incorporates the earlier rectilinear fixes and editor foundations). Areas: shared shape renderer, Perimeter & Area defaults, authored shape specification/controls/print, shared review draft, tests and lesson docs.

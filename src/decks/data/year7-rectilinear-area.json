@@ -1,0 +1,1748 @@
+{
+ "id": "year7-rectilinear-area",
+ "title": "Area of rectilinear shapes",
+ "summary": "Year 7: split and add, find missing lengths, compare removing cut-outs, and practise on a scaffolded authored worksheet.",
+ "tool": "perimeter-and-area",
+ "slides": [
+  {
+   "id": "year7-rectilinear-area-title",
+   "family": "structure",
+   "title": "Area of rectilinear shapes",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Area of rectilinear shapes",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "year7-rectilinear-area-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Year 7 · Split, calculate and explain",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "year7-rectilinear-area-title-2"
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "year7-rectilinear-area-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Find the area of a rectilinear shape and explain your method.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "year7-rectilinear-area-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Split into rectangles and add their areas\n•  Find a missing length before calculating area\n•  Compare splitting with removing a cut-out",
+     "size": 44,
+     "colour": "#334155",
+     "id": "year7-rectilinear-area-objective-3"
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-definition",
+   "family": "language",
+   "title": "Rectilinear shape",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 120,
+     "w": 1400,
+     "h": 50,
+     "text": "KEY DEFINITION",
+     "size": 30,
+     "colour": "#6d28d9",
+     "bold": true,
+     "id": "year7-rectilinear-area-definition-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 190,
+     "w": 1400,
+     "h": 140,
+     "text": "Rectilinear shape",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "year7-rectilinear-area-definition-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 370,
+     "w": 1400,
+     "h": 420,
+     "text": "A 2D shape with straight sides meeting at right angles. Its area is the amount of surface it covers, measured in square units.",
+     "size": 52,
+     "colour": "#0f172a",
+     "id": "year7-rectilinear-area-definition-3"
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-explore",
+   "family": "teach",
+   "title": "Where could we split?",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-explore-q",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-explore-1"
+    },
+    {
+     "id": "year7-rectilinear-area-explore-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "Where could we split this shape?"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-split",
+   "family": "teach",
+   "title": "Split, calculate, add",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-model-split",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-split-1"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-two-splits",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "year7-rectilinear-area-two-splits-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Could two different splits both be correct?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "year7-rectilinear-area-two-splits-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "year7-rectilinear-area-two-splits-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "year7-rectilinear-area-two-splits-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "Each rectangle must lie inside the shape. Cover the whole shape exactly once, with no gaps or overlaps.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "year7-rectilinear-area-two-splits-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "year7-rectilinear-area-two-splits-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "$8 \\times 4 + 5 \\times 2$ or $5 \\times 6 + 3 \\times 4$?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "year7-rectilinear-area-two-splits-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "year7-rectilinear-area-two-splits-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "42\\,\\mathrm{cm}^2",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "year7-rectilinear-area-two-splits-9"
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-practice-one",
+   "family": "practice",
+   "title": "Split and add: practice",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-p1",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$36$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 7 \\times 3 = 21 ,\\ B = 5 \\times 3 = 15$",
+        "Add the areas: $21 + 15 = 36$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 7,
+        "height": 6,
+        "cutWidth": 2,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-p2",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$58$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 10 \\times 4 = 40 ,\\ B = 6 \\times 3 = 18$",
+        "Add the areas: $40 + 18 = 58$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 10,
+        "height": 7,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-p3",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$57$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 5 = 25$",
+        "Add the areas: $32 + 25 = 57$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 9,
+        "height": 8,
+        "cutWidth": 5,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 1,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-p4",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$68$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 11 \\times 3 = 33 ,\\ B = 7 \\times 5 = 35$",
+        "Add the areas: $33 + 35 = 68$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 11,
+        "height": 8,
+        "cutWidth": 4,
+        "cutHeight": 5,
+        "method": "split",
+        "orientation": 4,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-p5",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$40$ cm²"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $2$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 10 \\times 2 = 20 ,\\ B = 4 \\times 5 = 20$",
+        "Add the areas: $20 + 20 = 40$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "T",
+        "width": 10,
+        "height": 7,
+        "cutWidth": 3,
+        "cutHeight": 5,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-p6",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$72$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 8 \\times 3 = 24 ,\\ C = 4 \\times 3 = 12$",
+        "Add the areas: $36 + 24 + 12 = 72$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "stairs3",
+        "width": 12,
+        "height": 9,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-practice-one-1"
+    }
+   ],
+   "brief": "Six fixed questions: supplied splits, rotation/reflection, choosing a split, a T-shape and three rectangles. Reduce support deliberately; keep required component lengths visible."
+  },
+  {
+   "id": "year7-rectilinear-area-general-one",
+   "title": "General practice",
+   "family": "practice",
+   "brief": "Area only, with all necessary boundary lengths given or directly implied; ask pupils to suggest a split before revealing the working.",
+   "els": [
+    {
+     "id": "year7-rectilinear-area-general-one-el",
+     "kind": "generator",
+     "tool": "perimeter-and-area",
+     "preset": {
+      "sub": "compound",
+      "level": "level1",
+      "multiSelect": {
+       "area": true,
+       "perimeter": false,
+       "all": true,
+       "missing": false,
+       "split": true,
+       "subtract": false
+      },
+      "variables": {
+       "reducedLabels": true,
+       "showSplit": false
+      }
+     },
+     "seed": 123,
+     "presentation": "full",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-missing-add",
+   "family": "teach",
+   "title": "Find a length by adding",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-model-add",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "The sides along the left add up to the same as the sides along the right: $? = 4 + 2$",
+        "So the missing side is: $(4 + 2) = 6$",
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "addition"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-missing-add-1"
+    },
+    {
+     "id": "year7-rectilinear-area-missing-add-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "Find the missing length first."
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-missing-subtract",
+   "family": "teach",
+   "title": "Find a length by subtracting",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-model-subtract",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $2 + ? = 6$",
+        "So the missing side is: $6 - 2 = 4$",
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-missing-subtract-1"
+    },
+    {
+     "id": "year7-rectilinear-area-missing-subtract-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "Which lengths add to the whole?"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-practice-two",
+   "family": "practice",
+   "title": "Missing lengths: practice",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-m1",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$57$ cm²"
+       ],
+       "explanation": [
+        "The sides along the left add up to the same as the sides along the right: $? = 5 + 2$",
+        "So the missing side is: $(5 + 2) = 7$",
+        "Split it into rectangles and find each area: $A = 9 \\times 5 = 45 ,\\ B = 6 \\times 2 = 12$",
+        "Add the areas: $45 + 12 = 57$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 9,
+        "height": 7,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "addition"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-m2",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$68$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $? = 4 + 6$",
+        "So the missing side is: $(4 + 6) = 10$",
+        "Split it into rectangles and find each area: $A = 8 \\times 6 = 48 ,\\ B = 5 \\times 4 = 20$",
+        "Add the areas: $48 + 20 = 68$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 10,
+        "height": 8,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 1,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "addition"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-m3",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$87$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $3 + ? = 9$",
+        "So the missing side is: $9 - 3 = 6$",
+        "Split it into rectangles and find each area: $A = 11 \\times 6 = 66 ,\\ B = 7 \\times 3 = 21$",
+        "Add the areas: $66 + 21 = 87$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 11,
+        "height": 9,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-m4",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$81$ cm²"
+       ],
+       "explanation": [
+        "The sides along the left add up to the same as the sides along the right: $5 + ? = 8$",
+        "So the missing side is: $8 - 5 = 3$",
+        "Split it into rectangles and find each area: $A = 12 \\times 5 = 60 ,\\ B = 7 \\times 3 = 21$",
+        "Add the areas: $60 + 21 = 81$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 12,
+        "height": 8,
+        "cutWidth": 5,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 4,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-m5",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$116$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $6 + ? = 10$",
+        "So the missing side is: $10 - 6 = 4$",
+        "Split it into rectangles and find each area: $A = 14 \\times 6 = 84 ,\\ B = 8 \\times 4 = 32$",
+        "Add the areas: $84 + 32 = 116$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 14,
+        "height": 10,
+        "cutWidth": 6,
+        "cutHeight": 4,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-m6",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$123$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $8 + ? = 13$",
+        "So the missing side is: $13 - 8 = 5$",
+        "Split it into rectangles and find each area: $A = 7 \\times 5 = 35 ,\\ B = 11 \\times 8 = 88$",
+        "Add the areas: $35 + 88 = 123$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 13,
+        "height": 11,
+        "cutWidth": 5,
+        "cutHeight": 4,
+        "method": "split",
+        "orientation": 3,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-practice-two-1"
+    }
+   ],
+   "brief": "Six fixed L-shapes: addition first, then subtraction, with rotations and reflection. Find the question-mark length before calculating each area."
+  },
+  {
+   "id": "year7-rectilinear-area-general-two",
+   "title": "Missing lengths, then area",
+   "family": "practice",
+   "brief": "Find marked missing lengths by adding or subtracting, then calculate area. Use fresh questions as needed; full-width reveals the shared working.",
+   "els": [
+    {
+     "id": "year7-rectilinear-area-general-two-el",
+     "kind": "generator",
+     "tool": "perimeter-and-area",
+     "preset": {
+      "sub": "compound",
+      "level": "level2",
+      "multiSelect": {
+       "area": true,
+       "perimeter": false,
+       "all": false,
+       "missing": true,
+       "split": true,
+       "subtract": false
+      },
+      "variables": {
+       "reducedLabels": true,
+       "showSplit": false
+      }
+     },
+     "seed": 421,
+     "presentation": "full",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-cutout",
+   "family": "teach",
+   "title": "Discuss removing a cut-out",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-model-cutout",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "The rectangle round the whole shape: $8 \\times 6 = 48$",
+        "The parts that are missing: $3 \\times 2 = 6$",
+        "Take them away: $48 - 6 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-cutout-1"
+    },
+    {
+     "id": "year7-rectilinear-area-cutout-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "Could we remove a cut-out instead?"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-method-choice",
+   "family": "teach",
+   "title": "Choose an efficient method",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-method-choice",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$102$ cm²"
+       ],
+       "explanation": [
+        "The rectangle round the whole shape: $12 \\times 9 = 108$",
+        "The parts that are missing: $2 \\times 3 = 6$",
+        "Take them away: $108 - 6 = 102$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 12,
+        "height": 9,
+        "cutWidth": 2,
+        "cutHeight": 3,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-method-choice-1"
+    },
+    {
+     "id": "year7-rectilinear-area-method-choice-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "Which method would you choose? Why?"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-worksheet",
+   "title": "Rectilinear area — independent practice",
+   "family": "practice",
+   "els": [
+    {
+     "id": "year7-rectilinear-area-worksheet-sheet",
+     "kind": "worksheet",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "perimeter-and-area",
+     "preset": {
+      "sub": "compound",
+      "level": "level1"
+     },
+     "count": 12,
+     "cols": 2,
+     "view": "key",
+     "pin": {
+      "title": "Rectilinear area — independent practice",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": true
+     },
+     "authored": [
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-1",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$37$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 9 \\times 3 = 27 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $27 + 10 = 37$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 9,
+        "height": 5,
+        "cutWidth": 4,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-2",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$50$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 8 \\times 5 = 40 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $40 + 10 = 50$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 7,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-3",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$62$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 10 \\times 5 = 50 ,\\ B = 4 \\times 3 = 12$",
+        "Add the areas: $50 + 12 = 62$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 10,
+        "height": 8,
+        "cutWidth": 6,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-4",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$65$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 7 \\times 7 = 49 ,\\ B = 4 \\times 4 = 16$",
+        "Add the areas: $49 + 16 = 65$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 11,
+        "height": 7,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 1,
+        "reducedLabels": true,
+        "scaffold": "full"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-5",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$56$ cm²"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 4 \\times 5 = 20$",
+        "Add the areas: $36 + 20 = 56$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "T",
+        "width": 12,
+        "height": 8,
+        "cutWidth": 4,
+        "cutHeight": 5,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-6",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$97$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 13 \\times 5 = 65 ,\\ B = 8 \\times 4 = 32$",
+        "Add the areas: $65 + 32 = 97$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 13,
+        "height": 9,
+        "cutWidth": 5,
+        "cutHeight": 4,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-7",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$86$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 13 \\times 3 = 39 ,\\ B = 9 \\times 3 = 27 ,\\ C = 5 \\times 4 = 20$",
+        "Add the areas: $39 + 27 + 20 = 86$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "stairs3",
+        "width": 13,
+        "height": 10,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-8",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$102$ cm²"
+       ],
+       "explanation": [
+        "Split it into rectangles and find each area: $A = 15 \\times 5 = 75 ,\\ B = 9 \\times 3 = 27$",
+        "Add the areas: $75 + 27 = 102$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 15,
+        "height": 8,
+        "cutWidth": 6,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 4,
+        "reducedLabels": true,
+        "scaffold": "split"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-9",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$69$ cm²"
+       ],
+       "explanation": [
+        "The sides along the bottom add up to the same as the sides along the top: $? = 5 + 7$",
+        "So the missing side is: $(5 + 7) = 12$",
+        "Split it into rectangles and find each area: $A = 12 \\times 4 = 48 ,\\ B = 7 \\times 3 = 21$",
+        "Add the areas: $48 + 21 = 69$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 12,
+        "height": 7,
+        "cutWidth": 5,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "addition"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-10",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$106$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $5 + ? = 9$",
+        "So the missing side is: $9 - 5 = 4$",
+        "Split it into rectangles and find each area: $A = 14 \\times 5 = 70 ,\\ B = 9 \\times 4 = 36$",
+        "Add the areas: $70 + 36 = 106$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 14,
+        "height": 9,
+        "cutWidth": 5,
+        "cutHeight": 4,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-11",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$108$ cm²"
+       ],
+       "explanation": [
+        "The rectangle round the whole shape: $12 \\times 10 = 120$",
+        "The parts that are missing: $3 \\times 4 = 12$",
+        "Take them away: $120 - 12 = 108$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 12,
+        "height": 10,
+        "cutWidth": 3,
+        "cutHeight": 4,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "year7-rectilinear-area-worksheet-q-12",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$78$ cm²"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $6$",
+        "Split it into rectangles and find each area: $A = 14 \\times 3 = 42 ,\\ B = 6 \\times 6 = 36$",
+        "Add the areas: $42 + 36 = 78$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "T",
+        "width": 14,
+        "height": 9,
+        "cutWidth": 4,
+        "cutHeight": 6,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-summary",
+   "family": "structure",
+   "title": "Choose a method",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Choose a method",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "year7-rectilinear-area-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  Split into rectangles: multiply, then add\n•  Find any missing lengths first\n•  Or use the whole rectangle minus the cut-out\n•  Check every part is counted once; use cm²",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "year7-rectilinear-area-summary-2"
+    }
+   ]
+  },
+  {
+   "id": "year7-rectilinear-area-exit",
+   "family": "retrieval",
+   "title": "Exit check",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-exit-area",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$98$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $7 + ? = 10$",
+        "So the missing side is: $10 - 7 = 3$",
+        "Split it into rectangles and find each area: $A = 11 \\times 7 = 77 ,\\ B = 7 \\times 3 = 21$",
+        "Add the areas: $77 + 21 = 98$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 11,
+        "height": 10,
+        "cutWidth": 4,
+        "cutHeight": 3,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-exit-explain",
+       "title": "Explain why we add rectangle areas when splitting, but subtract the cut-out area when using the whole rectangle",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Explain why we add rectangle areas when splitting, but subtract the cut-out area when using the whole rectangle."
+       ],
+       "answer": [
+        "Splitting covers the shape exactly once. The enclosing rectangle includes an extra cut-out, so remove its area. Give area in cm²."
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "year7-rectilinear-area-exit-1"
+    }
+   ],
+   "brief": "One new missing-length area question and one explanation of the two methods. Use this to decide where the next lesson should resume."
+  }
+ ],
+ "toolPath": "/perimeter-and-area",
+ "questionVersion": 2
+}
