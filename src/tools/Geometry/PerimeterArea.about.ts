@@ -2,7 +2,7 @@ import type { ToolAbout } from "../../shared";
 
 // Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
-  purpose: "Find the perimeter and area of shapes, from counting squares to compound shapes and algebra.",
+  purpose: "Find the perimeter and area of shapes, from counting squares to rectilinear shapes and algebra.",
   // What each Question Option is for (by option id; shared by every sub-tool unless a sub-tool overrides it)
   options: {
     "askFor": "What the question asks you to find.",
@@ -11,7 +11,7 @@ export const ABOUT: ToolAbout = {
     "units": "Whether all the lengths are in the same unit or you must convert.",
     "scale": "How long one square on the grid is.",
     "sidesGiven": "Whether every side is labelled, or some sides are missing and marked with a ? for you to find.",
-    "reducedLabels": "Leaves out the labels the drawing already implies, such as a side equal to the one opposite it, as on an exam paper. With missing sides, the rest are found by adding or taking away.",
+    "reducedLabels": "Leaves out only labels whose lengths are clear from the geometry, such as the opposite side of a rectangle. Equal-looking staircase steps stay labelled. Some Missing separately asks you to find lengths by adding or taking away.",
     "perimeterMethod": "How the perimeter is worked out in the working.",
     "areaMethod": "How the area is worked out in the working.",
     "showSplit": "Whether the dashed lines for the area method are drawn on the question.",

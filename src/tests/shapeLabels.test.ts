@@ -1,4 +1,6 @@
-// Shape pictures: label pills are fitted to the whole picture, so none may overlap another pill, sit on a line, or fall off the picture.
+// Legacy shape pictures: label pills are fitted to the whole picture. Rectilinear
+// arrows use a separate renderer and are audited in dimensionArrows.test.ts.
+import { withSeededRandom } from "./seededRandom";
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Geometry/PerimeterArea";
 import { labelPlan } from "../shared/shapes/Diagram";
@@ -26,13 +28,14 @@ function problems(d: Drawing, small: boolean, answer: boolean): string[] {
 }
 
 describe("label placement", () => {
-  it("keeps every pill clear of the others, the outline, the helper lines and the picture's edge", () => {
+  it("keeps every pill clear of the others, the outline, the helper lines and the picture's edge", () => withSeededRandom(20261110, () => {
     const bad: Record<string, number> = {};
     let total = 0;
     const SETUPS: [Record<string, boolean>, Record<string, boolean>][] = [[{}, {}], [{ all: true, missing: false }, { reducedLabels: true }], [{ missing: true, all: false }, { reducedLabels: true }], [{}, { reducedLabels: false }]];
     for (const tool of TOOLS) for (const level of LEVELS) for (let i = 0; i < 60; i++) {
       const [ms, vars] = SETUPS[i % SETUPS.length];
       const d = generateQuestion(tool, level, vars, "", ms)._diagram as Drawing;
+      if (d.dimensionStyle === "arrows") continue;
       for (const small of [true, false]) for (const answer of [false, true]) {
         total++;
         const p = problems(d, small, answer);
@@ -44,5 +47,5 @@ describe("label placement", () => {
     const kinds = Object.entries(bad).filter(([k]) => !/off the picture/.test(k));
     expect(kinds, `of ${total} pictures`).toEqual([]);
     expect(Object.values(bad).reduce((a, b) => a + b, 0) / total).toBeLessThan(0.005);
-  });
+  }));
 });

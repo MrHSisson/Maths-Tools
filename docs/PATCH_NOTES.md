@@ -29,6 +29,113 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear worksheet area progression
+
+Branch `codex/year7-rectilinear-lesson`. Updated only the authored worksheet and its pupil/key PDFs: page 1 now asks for areas of alternating T/L shapes; page 2 has two crosses and two staircases requiring internal lengths; page 3 keeps its cut-outs in U/M/O/N order, with N last. First question on each page retains its scaffold. Approved teaching slides preserved exactly.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear worksheet area progression (Codex)”.
+
+## 2026-11-10 — Complete rectilinear deck rebuild
+
+Branch `codex/year7-rectilinear-lesson`. Replaced the previous lesson with fresh slide/question IDs: 10 core slides plus two optional generators, visible headers and no discussion slides. Four partitions share one question sequence; the next sequence alternates unpartitioned T–L–T–L. Internal-dimension model/check pairs precede practice. Cut-outs progress through L/U, M/N and O.
+
+The authored worksheet now has three sections of four questions, each with the first scaffolded. Independent cut-outs use U/N/M/O, with the first U showing the enclosing rectangle and removed part; no L in this section. Added opposing-notch N geometry and a four-step staircase extension, including worked enclosing/internal lengths before areas. Existing 10px edge arrows retained. Fresh PDF questions and key use the same authored data; independent geometry checks and regression guards cover the rebuilt progression. Source and teaching route: `specs/decks/year7-rectilinear-area.md`. No production promotion or deck publication.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Complete rectilinear deck rebuild (Codex)”.
+
+## 2026-11-10 — Partition → internal lengths → cut-outs
+
+Branch `codex/year7-rectilinear-lesson`. Refactored the native lesson and worksheet after review. Four varied partition-only questions precede discussion; T area modelling leads into explicit internal-width/height calculations, then area practice. Removed external missing-side tasks. Cut-outs progress from L to M (two notches) and O (frame), including Level 3 general practice. Worksheet mirrors those three stages.
+
+The canonical rectilinear builder now derives internal component lengths before area multiplication, for fixed and generated questions. Partition-only tasks preserve their purpose on dimension edits and print without area requests. Existing edge-local 10px arrows and boundary labels retained.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear lesson progression refactor (Codex)”.
+
+## 2026-11-10 — Rectilinear dimensions with explicit spans
+
+Branch `codex/year7-rectilinear-lesson`, continuing Harry’s diagram review.
+
+- Combined duplicate slides 4–5 into one worked T-shape with its partition visible, then reveal rectangle areas and the 40 cm² total; saved/read back the native lesson with 19 slides.
+- Replaced floating pills and equality tabs on rectilinear pictures with full-span, double-headed dimension arrows. The former internal “10 cm” explicitly spans rectangle B’s entire width. Every independent boundary label is kept. Only aligned parallel spans are implied, or ? marks an intentional unknown. Arrows follow their own boundary edge at a fixed 10 CSS px screen gap; there are no overall dimension lanes, witness frames or extra internal-width annotations.
+- Added placement checks for labels, outlines and arrows at corners, with local stroke gaps rather than moving the arrows. Actual browser measurements on T/staircase/frame diagrams remain 10.000px on laptop/tablet/phone, both before and after working reveals. Labels remain tied to measured endpoints, and unknowns keep the same positions on reveal. Deck and authored worksheet figures omit diagram captions and generic purpose headings; the standalone tool retains its area/perimeter prompt.
+- Updated pupil worksheet, worked key and a staircase/cross preview. Other shape tools retain their current renderer. All 41 lesson diagrams pass board/paper overlap audits; authored families across eight orientations and seeded live questions pass dimension regression checks.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear dimension arrows (Codex)”.
+
+## 2026-11-10 — Broader rectilinear deck and lighter labels
+
+Branch `codex/year7-rectilinear-lesson`, continuing the lesson after Harry’s review.
+
+- Rebalanced the native deck around T, staircase, cross, U, two-notch and frame outlines; L-shapes are brief accessible anchors. Added a frame model, six authored cut-out questions and a Level 3 generator.
+- Worksheet retains two L-shapes and adds ten questions spanning the other six families, including Level 3 cut-outs and holes. Revised three-page print and worked key.
+- Authored shapes now support the tool’s advanced families and distinct addition/subtraction unknowns on eligible outlines. Repeated lengths use explicit equality marks and one number; supplied component dimensions replace redundant overall labels. Region letters avoid helper pills.
+- Cut-out questions show only the whole and removed rectangles’ dimensions; U/two-notch/frame questions use four given numeric edge labels. Recomputed all 41 exported shapes from polygons and rectangle regions. Content/layout checks pass for all 20 slides; full suite passes (126 files, 2,529 tests, 18 skipped), and 13 focused shape/label checks pass after the final label refinement. Build, lint and shell smoke pass.
+- The deck’s print button also uses four authored questions per A4 page, matching the three-page pupil PDF; the worked key has three pages. Actual browser print confirms six pages in Both mode with no clipped cells. Generated sheets keep their existing density.
+- Lesson spec records the revised progression and optional continuation. PowerPoint is superseded; native deck is the master.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear deck variety and labels (Codex)”.
+
+## 2026-11-10 — Complete Year 7 rectilinear area lesson
+
+Branch `codex/year7-rectilinear-lesson`. Areas: authored lesson specification/build/export scripts and shared deck snapshot.
+
+- Created the full lesson: 59-slide offline PowerPoint with speaker notes and separate answer reveals; three-page scaffolded pupil worksheet; three-page worked answers; two-page teacher guide and slide PDF.
+- Saved and read back new shared draft `year7-rectilinear-area`: 17 interactive slides, fixed practice, two live generators and the 12-question pinned worksheet. No retrieval starter; missing lengths by addition then subtraction; discussion of removing cut-outs. Reduced labels throughout and large board labels.
+- Independently checked all 34 shape areas and marked unknowns, checked printable layouts and rendered PowerPoint answer reveals.
+- Checks: build and lint pass; 126 test files pass (2,526 tests, 18 skipped); 17-slide content/layout check passes.
+- Deliberately not done: publish or deploy the editor foundations. The PowerPoint is self-contained; live generators use the companion editor deck with this branch.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Complete Year 7 rectilinear lesson (Codex)”.
+
+## 2026-11-10 — Rectilinear board labels and mid-lesson missing lengths
+
+Branch `codex/rectilinear-board-labels` (incorporates the earlier rectilinear fixes and editor foundations). Areas: shared shape renderer, Perimeter & Area defaults, authored shape specification/controls/print, shared review draft, tests and lesson docs.
+
+- Larger board edge labels: 30-unit rather than 18-unit type, with label pills and margins replanned at the new size. Worksheet labels and print aspect calculations remain unchanged at 12 units.
+- Reduced Labelling defaults on at all three Rectilinear Shapes levels and remains enabled throughout the review draft. Deliberate unknowns remain visibly marked `?`.
+- Authored L-shapes can choose a missing length found by addition or subtraction. The working finds it before calculating area; supplied split/helper labels do not disclose the value. The specification and API validate that a distinct unknown is available.
+- Updated the Year 7 plan to introduce missing lengths mid-lesson, before the cut-out discussion. The shared draft now includes two fixed missing-length models, a generator phase and missing-length worksheet questions; concurrent teacher edits are merged from a freshly pulled base.
+- Validation: full suite passed (126 files, 2,520 tests; 18 skipped), build and lint passed. Browser checks cover larger board type, unchanged worksheet type, missing-length edit/save/reload, phone/tablet/laptop layouts and print pagination; shared-shell and all eight draft content/layout checks pass. Shared readback confirms eight slides with no merge clashes.
+- Deliberately not done: full lesson authoring, PR, merge or production deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear board labels and missing lengths (2026-11-10)”.
+
+## 2026-11-10 — Rectilinear area in the deck editor: live diagrams, fixed questions and scaffolded sheets
+
+Branch `codex/rectilinear-deck-foundations` (includes the reduced-label fix from `codex/rectilinear-reduced-labels`). Areas: `src/decks/` generator, question, editor and worksheet paths; `api/_rectilinear.ts`, question/deck validation; the shared printable layout; Perimeter & Area's shared compound builder; browser/unit checks; docs and generated facts.
+
+- The generator picker offers **Perimeter & Area → Rectilinear Shapes**. Slides use the tool's diagram and step highlighting, retain earlier revealed lengths and reset correctly for a new question.
+- **Add rectilinear shape** in Skill practice chooses fixed dimensions for L/T/staircase diagrams, rotation/reflection and splitting or removing cut-outs. It updates the answer and worked steps together; invalid dimensions prevent Apply. `Q.rectilinear` uses the live solution path and independently checks area.
+- **Make printable worksheet** inserts an independent authored copy. Each question chooses calculation prompts with a split, a split only, or independent working space. Internal component lengths are labelled on supplied splits when no boundary label directly implies them. File → Worksheets prints the diagrams and worked answers, six per A4 page (two per A5). These fixed questions survive save, duplication and portable export/import, and cannot be rerolled accidentally.
+- The player toolbar wraps on narrow screens so worksheet and presentation controls remain accessible.
+- The agreed Year 7 sequence and implementation contract are in `specs/decks/rectilinear-foundations.md`: no retrieval starter; split/add first, then a discussion comparing the same shape with removing its cut-out.
+- Validation: full suite passed (126 files, 2,517 tests; 18 skipped), with focused checks for subsequent guards; build and lint pass. Browser checks cover invalid dimensions, save/reload, phone/tablet/laptop editing and presentation, actual print buttons, four-page PDF pagination, shared-shell smoke and the review draft’s content/layout checks.
+- Review draft `my-rectilinear-foundations-mwb163ic`: five slides and a six-question authored sheet, saved/read back from sharing and backed up in `src/decks/data/`. It demonstrates the editor foundations; it is not the complete lesson.
+- Deliberately not done: authoring the complete lesson, creating a Depth bank, merging or deploying production. No existing teacher deck was changed by the browser tests.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear deck editor foundations (2026-11-10)”.
+
+## 2026-11-10 — Rectilinear Shapes: reduced labels only omit implied lengths
+
+Branch `codex/rectilinear-reduced-labels`. Areas: `src/tools/Geometry/PerimeterArea.tsx`, its About copy and `perimeterArea/{compound,pools}.ts`, `src/tests/perimeterArea.test.ts`, registry wording, generated dashboard facts/docs and the picture reference.
+
+- Renamed the Compound Shapes tab to **Rectilinear Shapes**; existing saved option ids still work.
+- Reduced Labelling keeps staircase steps labelled when their lengths merely happen to match. Only a labelled parallel side spanning the same interval can imply an omitted boundary length. Some Missing still marks lengths requiring arithmetic with `?`.
+- Shapes without redundant lengths remain in the pool with every side labelled. Regression coverage includes the 13 cm staircase with 4 cm, 4 cm and 5 cm treads in all eight orientations, plus seeded samples across all levels and compatibility with Some Missing.
+- Validation: build, lint and all 125 test files passed (2,505 tests passed, 18 skipped); browser checks passed at phone, tablet and laptop sizes. Dashboard review set to Reviewing.
+- Deliberately not done: changing standard-shape labelling or publishing a deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear Shapes reduced labelling (2026-11-10)”.
+
 ## 2026-11-08 — Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, "Show N − 1 is not enough"
 
 Branch `claude/focused-hopper-nndnwu`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts` (the card's description), `src/shared/decision/` (`HistogramView.tsx`, `cpaSheet.tsx`, `cpa.ts`, `cpaSolve.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.

@@ -3,10 +3,10 @@
 import { randInt as ri } from "../../../shared";
 import { dihedral, orient, type Pt } from "../../../shared/shapes/model";
 
-export type RectKind = "L" | "T" | "stairs2" | "stairs3" | "cross" | "U" | "comb" | "frame";
+export type RectKind = "L" | "T" | "stairs2" | "stairs3" | "stairs4" | "cross" | "U" | "N" | "comb" | "frame";
 
 /** Kinds with no notch or hole: the perimeter equals the perimeter of the rectangle round them. */
-export const CONVEX: RectKind[] = ["L", "T", "stairs2", "stairs3", "cross"];
+export const CONVEX: RectKind[] = ["L", "T", "stairs2", "stairs3", "stairs4", "cross"];
 
 const polysFor = (kind: RectKind, grid: boolean): Pt[][] => {
   const m = grid ? 2 : 3;                        // the smallest a part may be
@@ -21,8 +21,8 @@ const polysFor = (kind: RectKind, grid: boolean): Pt[][] => {
       const o = ri(grid ? 1 : 2, W - s - (grid ? 1 : 2));
       return [[[0, 0], [W, 0], [W, a], [o + s, a], [o + s, a + h], [o, a + h], [o, a], [0, a]]];
     }
-    case "stairs2": case "stairs3": {
-      const k = kind === "stairs2" ? 2 : 3;
+    case "stairs2": case "stairs3": case "stairs4": {
+      const k = kind === "stairs2" ? 2 : kind === "stairs3" ? 3 : 4;
       const dx = () => (grid ? ri(2, 3) : ri(3, 5)), dy = () => (grid ? ri(2, 2) : ri(3, 4));
       const d = Array.from({ length: k - 1 }, dx), top = dx(), h = Array.from({ length: k }, dy);
       const W = d.reduce((a, b) => a + b, 0) + top;
@@ -40,6 +40,10 @@ const polysFor = (kind: RectKind, grid: boolean): Pt[][] => {
     case "U": {
       const W = ri(12, 16), H = ri(9, 12), n = ri(4, 6), o = ri(3, W - n - 3), d = ri(5, H - 3);
       return [[[0, 0], [W, 0], [W, H], [o + n, H], [o + n, H - d], [o, H - d], [o, H], [0, H]]];
+    }
+    case "N": {
+      const a=ri(3,4), g=ri(3,4), W=2*a+3*g, H=ri(10,14), d=ri(5,H-3);
+      return [[[0,0],[g,0],[g,d],[g+a,d],[g+a,0],[W,0],[W,H],[2*g+2*a,H],[2*g+2*a,H-d],[2*g+a,H-d],[2*g+a,H],[0,H]]];
     }
     case "comb": {
       const g1 = ri(2, 3), n1 = ri(2, 3), g2 = ri(2, 3), n2 = ri(2, 3), g3 = ri(2, 3);

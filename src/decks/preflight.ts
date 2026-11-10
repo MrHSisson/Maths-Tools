@@ -42,7 +42,7 @@ export async function preflightTool(tool: string): Promise<{ lines: string[]; pr
 
   // 4. Fixed questions with the tool's own working
   const builder = readFileSync("src/decks/builder.ts", "utf8");
-  lines.push(builder.includes(`"${tool}"`)
+  lines.push((builder.includes(`"${tool}"`) || (tool === "perimeter-and-area" && builder.includes("rectilinear: authoredRectilinear")))
     ? "Fixed questions: a builder with this tool's own working exists (Q.* in src/decks/builder.ts); use it for every authored set"
     : "Fixed questions: NO builder, so authored sets would be hand-typed. Build one as part of this deck: pull the generator's inner function that takes chosen numbers out into its own file (the pattern is src/tools/Proportion/ratioFromFraction.ts), then add a Q.<name> that calls it, verifies the answer and uses fromWorked");
   return { lines, problems };

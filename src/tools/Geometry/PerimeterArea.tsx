@@ -34,12 +34,12 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     compound: {
-      name: "Compound Shapes",
+      name: "Rectilinear Shapes",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true), reducedLabels(false)] },
-        level2: { multiSelect: [ASK, SIDES_2, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(false), reducedLabels(false)] },
-        level3: { multiSelect: [ASK, SIDES_3, UNITS], variables: [showSplit(false), reducedLabels(false)] },
+        level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true), reducedLabels(true)] },
+        level2: { multiSelect: [ASK, SIDES_2, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(false), reducedLabels(true)] },
+        level3: { multiSelect: [ASK, SIDES_3, UNITS], variables: [showSplit(false), reducedLabels(true)] },
       },
     },
     algebraic: {

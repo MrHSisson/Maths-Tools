@@ -37,7 +37,8 @@ function mathsProblems(q: CuratedQuestion): string[] {
   if (q.format === "error") for (const line of q.lines) try { katex.renderToString(line, { throwOnError: true }); } catch { errors.push("Check the LaTeX in the worked lines."); break; }
   return errors;
 }
-export function QuestionWorkspace({ start, tool, draftKey, context: initialContext, display: initialDisplay = {}, identity, mode = "skill", grid = false, onApply, onClose }: {
+export function QuestionWorkspace({ start, tool, draftKey, context: initialContext, display: initialDisplay = {}, identity, mode = "skill", grid = false, onApply, onClose, onWorksheet }: {
+  onWorksheet?: (items: CuratedQuestion[], title: string) => void;
   start: CuratedQuestion[]; tool: string; draftKey: string; context?: QuestionSlideDraft; display?: QuestionDisplaySettings; identity?: string; mode?: "skill" | "depth"; grid?: boolean; onApply: (items: CuratedQuestion[], context: QuestionSlideDraft, display: QuestionDisplaySettings) => void; onClose: () => void;
 }) {
   const key = `mt-question-draft:${draftKey}`;
@@ -46,6 +47,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
   const startingItems = () => structuredClone(start.length ? start : mode === "skill" ? [makeQuestion(1)] : []);
   const [recovered, setRecovered] = useState(!!recovery);
   const [items, setItems] = useState<CuratedQuestion[]>(() => structuredClone(recovery?.items ?? startingItems()));
+  const [shapeValid, setShapeValid] = useState(true);
   const [selected, setSelected] = useState(recovery?.selected ?? 0);
   const startingContext = (): QuestionSlideDraft => ({ title: initialContext?.title ?? "Skill practice", brief: initialContext?.brief });
   const [context, setContext] = useState<QuestionSlideDraft>(() => structuredClone(recovery?.context ?? startingContext()));
@@ -60,11 +62,12 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
   const close = () => { try { sessionStorage.removeItem(key); } catch { /* ignore */ } onClose(); };
   const at = Math.min(selected, Math.max(0, items.length - 1));
   const q = items[at];
+  useEffect(() => { setShapeValid(true); }, [q?.id]);
   useEffect(() => { questionList.current?.querySelector<HTMLElement>('[aria-current="step"]')?.scrollIntoView({ block: "nearest", inline: "nearest" }); }, [at, items.length, picking]);
   const preview = picking ? cardPreview : q;
   const standaloneDepth = mode === "depth" || items.some(isDepthQuestion);
   const savedDisplay: QuestionDisplaySettings = standaloneDepth ? { presentation: "full", visualiser: false } : display;
-  const errors = [...new Set(items.flatMap(mathsProblems))];
+  const errors = [...(!shapeValid ? ["Finish the shape dimensions before applying."] : []), ...new Set(items.flatMap(mathsProblems))];
   const drafts = items.filter((item) => readyProblems(item).length > 0 || mathsProblems(item).length > 0).length;
   const update = (next: CuratedQuestion) => setItems((xs) => xs.map((item, i) => i === at ? { ...next, status: readyProblems(next).length || mathsProblems(next).length ? "draft" : "ready" } : item));
   const move = (from: number, to: number) => {
@@ -114,7 +117,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
                 <button className={icon} aria-label="Move question later" title="Move later" disabled={at === items.length - 1} onClick={() => move(at, at + 1)}><ArrowDown size={16} /></button>
                 <button className={`${icon} hover:!text-red-700`} aria-label="Remove" title="Remove" onClick={() => { setItems((xs) => xs.filter((_, i) => i !== at)); setSelected(Math.max(0, at - 1)); }}><Trash2 size={16} /></button>
               </div>
-              <QuestionAuthor key={q.id} question={q} onChange={update} library={items} openOnly={grid} />
+              <QuestionAuthor key={q.id} question={q} onChange={update} onValidityChange={setShapeValid} library={items} openOnly={grid} />
             </> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No questions yet. <button className="font-semibold text-blue-800 underline" onClick={add}>Add one</button>{mode === "depth" ? " or choose a Depth card." : "."}</div>}
         </section>
         <aside aria-label="Classroom preview" className="min-w-0 border-t border-slate-200 p-4 sm:p-5 lg:overflow-y-auto lg:border-l lg:border-t-0">
@@ -123,7 +126,7 @@ export function QuestionWorkspace({ start, tool, draftKey, context: initialConte
             : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-sm text-slate-500">{picking ? "Preview a Depth card to see it here." : "The question appears here as you write it."}</div>}
         </aside>
       </div>
-      <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 bg-white px-5 py-3"><span className={`text-sm ${errors.length ? "text-red-700" : "text-slate-500"}`}>{errors[0] || `${items.length} question${items.length === 1 ? "" : "s"}${drafts ? ` · ${drafts} unfinished (saved as drafts)` : ""}`}</span><button className={`${button} ml-auto`} onClick={close}>Cancel</button><button disabled={errors.length > 0 || !items.every(isCuratedQuestion)} className={`${button} !border-blue-900 !bg-blue-900 !text-white`} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(savedDisplay)); close(); }}>Apply to slide</button></footer>
+      <footer className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 bg-white px-5 py-3"><span className={`text-sm ${errors.length ? "text-red-700" : "text-slate-500"}`}>{errors[0] || `${items.length} question${items.length === 1 ? "" : "s"}${drafts ? ` · ${drafts} unfinished (saved as drafts)` : ""}`}</span><button className={`${button} ml-auto`} onClick={close}>Cancel</button>{onWorksheet && <button className={button} disabled={!items.length || drafts > 0 || errors.length > 0 || items.some(q => !q.rectilinear)} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(savedDisplay)); onWorksheet(structuredClone(items), context.title); close(); }}>Make printable worksheet</button>}<button disabled={errors.length > 0 || !items.every(isCuratedQuestion)} className={`${button} !border-blue-900 !bg-blue-900 !text-white`} onClick={() => { onApply(structuredClone(items), structuredClone(context), structuredClone(savedDisplay)); close(); }}>Apply to slide</button></footer>
     </div>
   </dialog>;
 }

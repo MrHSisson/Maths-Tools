@@ -12,6 +12,7 @@ export interface DHelper { id: string; a: Pt; b: Pt; label?: string; kind: "heig
 export interface DRegion { id: string; pts: Pt[]; color: string; text?: string; always?: boolean }
 
 export interface Drawing {
+  dimensionStyle?: "arrows";
   polys: Pt[][];
   edges: DEdge[];
   helpers: DHelper[];
