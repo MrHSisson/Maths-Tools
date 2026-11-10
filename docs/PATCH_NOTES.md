@@ -42,7 +42,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/decks/DeckPage.tsx`, `src/decks/
 - Checked in headless Chromium emulating an iPhone portrait, landscape and the turn between them, with real touch swipes, and a laptop. Not checked on a real phone.
 
 Agent: Claude Code
-Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)" (this change is not in it yet).
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-10 — Critical Path: the clock-time option is removed from Forward pass and Backward pass
 
