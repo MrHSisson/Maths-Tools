@@ -309,3 +309,6 @@ export { INSTRUCTION };
 // CI contract surface — checked by src/tests/flow.test.ts (the shared Decision
 // `__problem` validator is MST/TSP-specific, so this tool does not export one).
 export const __flow = { generate, solve: solveFlowProblem };
+
+// Seed-replay contract surface — discovered by src/tests/seedReplay.test.ts.
+export const __seed = { generate, subTools: SUB_TOOLS };

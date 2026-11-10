@@ -193,6 +193,31 @@ export default function AdventCalendar() {
     setStatus(lock && ids.length < DOORS ? `Opened ${ids.length} door${ids.length === 1 ? "" : "s"}. The rest are shut until their day.` : "");
   };
 
+  // Backup: the names and schedule go to a small file the teacher keeps, and can be loaded back on any device or after the browser's storage is cleared
+  const fileRef = useRef<HTMLInputElement>(null);
+  const downloadBackup = () => {
+    const data = { tool: "advent-calendar", version: 1, assigned, lock, start, skipWeekends };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "advent-calendar-names.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStatus("Names downloaded. Keep the file somewhere safe.");
+  };
+  const uploadBackup = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const s = JSON.parse(await file.text()) as Partial<Saved>;
+      if (!s || !Array.isArray(s.assigned)) throw new Error("not a names file");
+      setAssigned(pad(s.assigned.map(String))); setOpened([]);
+      if (typeof s.lock === "boolean") setLock(s.lock);
+      if (typeof s.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.start)) setStart(s.start);
+      if (typeof s.skipWeekends === "boolean") setSkipWeekends(s.skipWeekends);
+      setStatus(`Names loaded from ${file.name}. All doors closed.`);
+    } catch { setStatus("That file isn’t an Advent Calendar names file, so nothing was changed."); }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const revealName = revealed === null ? "" : assigned[revealed] || GREETING;
 
   return (
@@ -310,6 +335,12 @@ export default function AdventCalendar() {
               <button type="button" onClick={reshuffle} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Reshuffle doors</button>
               <button type="button" onClick={openAll} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Open all</button>
               <button type="button" onClick={() => { setOpened([]); setStatus("All doors closed."); }} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Close all</button>
+            </div>
+            <p className="mb-1 mt-4 text-sm leading-snug text-[#fbf5e6]/85">Back up: save the names and schedule to a file, or load a saved file back in (this replaces the current names).</p>
+            <div className="flex flex-wrap gap-2.5">
+              <button type="button" onClick={downloadBackup} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Download names</button>
+              <button type="button" onClick={() => fileRef.current?.click()} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Load names from file</button>
+              <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" aria-label="Names file" onChange={e => { void uploadBackup(e.target.files?.[0]); }} />
             </div>
             <div role="status" aria-live="polite" className="mt-2.5 min-h-[1.3em] text-sm text-[#f1dc9b]">{status}</div>
             </div>

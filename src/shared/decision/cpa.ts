@@ -3,7 +3,7 @@
 // holding  earliest start | duration | latest finish,  arrows run from an activity to each activity that directly follows it, and a Start
 // and an End box close the network. Total float only. Spec: specs/critical-path.md.
 //
-//   cpaTimes       — the forward and backward pass (the algorithm the working follows)
+//   cpaTimes       — the forward and backward pass (the algorithm the working follows); the Backward pass skill gives the earliest starts and asks for the latest finishes
 //   referenceCpa   — an INDEPENDENT answer by listing every path Start → End (the CI check; shares no code with cpaTimes)
 //   layoutCpa      — boxes in columns by longest chain, rows ordered to cut crossings, arrows that skip a column routed round the boxes
 //   generateCpa    — a precedence table that always gives a clean, unambiguous network
@@ -266,7 +266,7 @@ export function layoutIssues(l: CpaLayout): string[] {
 
 // ── The generated problem ────────────────────────────────────────────────────
 
-export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten" | "cpaReason" | "cpaExam";
+export type CpaKind = "cpaNetwork" | "cpaTable" | "cpaForward" | "cpaBackward" | "cpaFull" | "cpaFloat" | "cpaPaths" | "cpaUnknown" | "cpaChange" | "cpaContext" | "cpaCascade" | "cpaHistogram" | "cpaLevel" | "cpaAlloc" | "cpaShorten" | "cpaReason" | "cpaExam";
 
 // ── The cascade (Gantt) chart ────────────────────────────────────────────────
 type CascadeStart = "early" | "late";
@@ -1108,6 +1108,10 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   } else if (kind === "cpaForward") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Find the earliest start time of every activity and the minimum completion time of the project.`;
     answerText = `Earliest starts: ${acts.map((a) => `${a.id} ${times.es[a.id]}`).join(", ")}. Minimum completion time ${T} ${unit}.`;
+  } else if (kind === "cpaBackward") {
+    // the earliest start of every activity is given (with the minimum completion time at End): the student works back from End
+    prompt = `The activity network represents ${subject}. The times are in ${unit}. The earliest start time of every activity is shown, and the minimum completion time of the project is ${T} ${unit}. Find the latest finish time of every activity.`;
+    answerText = `Latest finishes: ${acts.map((a) => `${a.id} ${times.lf[a.id]}`).join(", ")}.`;
   } else if (kind === "cpaFull") {
     prompt = `The activity network represents ${subject}. The times are in ${unit}. Work out the earliest start time and latest finish time of every activity. State the critical activities, ${paths === "one" ? "the critical path" : "every critical path"} and the minimum completion time.`;
     answerText = `Critical activities ${list(critical)}; ${several ? "critical paths" : "critical path"} ${pathsText}; minimum completion time ${T} ${unit}.`;

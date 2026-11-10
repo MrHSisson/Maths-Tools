@@ -998,26 +998,15 @@ const toQuestion = (q: InternalQ, surdDisplay: SurdDisplay): AnyQuestion => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATE — QO → the original generators
 // ═══════════════════════════════════════════════════════════════════════════════
-// Level-3 banks hold a finite set of questions; a module-level rotating "used"
-// set walks the pool without repeats (resetting when exhausted). The key is the
-// bank entry's own, so the shell's content check sees a real repeat as a repeat.
-const bankUsed = { fac: new Set<number>(), form: new Set<number>() };
-
+// Level-3 banks hold a finite set of questions. A pick depends on the seed alone (no memory of earlier picks), so a seed rebuilds the
+// same question; the bank entry's own key lets the shell's content check see a real repeat as a repeat.
 const pickBankFac = (allowA: number): NonLinearQuestion => {
-  const pool = filteredFacPool(allowA);
-  let avail = pool.filter(({ idx }) => !bankUsed.fac.has(idx));
-  if (!avail.length) { pool.forEach(({ idx }) => bankUsed.fac.delete(idx)); avail = pool; }
-  const { entry, idx } = pick(avail);
-  bankUsed.fac.add(idx);
+  const { entry, idx } = pick(filteredFacPool(allowA));
   return bankToFacQuestion(entry, idx);
 };
 
 const pickBankForm = (allowA: number): NonLinearQuestion => {
-  const pool = filteredFormPool(allowA);
-  let avail = pool.filter(({ idx }) => !bankUsed.form.has(idx));
-  if (!avail.length) { pool.forEach(({ idx }) => bankUsed.form.delete(idx)); avail = pool; }
-  const { entry, idx } = pick(avail);
-  bankUsed.form.add(idx);
+  const { entry, idx } = pick(filteredFormPool(allowA));
   return bankToFormQuestion(entry, idx);
 };
 

@@ -251,6 +251,8 @@ export default function LandingPage(): JSX.Element {
   const visibleIn = (tools: typeof categories[number]['tools']) => {
     const shown = tools
       .filter(t => t.enabled !== false || devMode)
+      // a tool opened from a hub page (Decision Maths) shows as the hub's card; the search box still finds it
+      .filter(t => !t.hub || !!qRe)
       .filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),

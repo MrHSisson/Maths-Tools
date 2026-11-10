@@ -759,3 +759,49 @@ describe("CPA — explain and justify (written reasoning, marked against mark po
     }
   });
 });
+
+describe("CPA — the backward pass on its own", () => {
+  it("gives every earliest start and asks only for the latest finishes, working back from End", () => {
+    for (const level of [1, 2, 3] as CpaLevel[]) for (let i = 0; i < 20; i++) {
+      const { data, prompt, answerText, steps } = run(level, "cpaBackward", { paths: (["one", "more", "either"] as const)[i % 3] });
+      const t = data.times, ref = referenceCpa(data.acts);
+      // the question is the backward pass and nothing else
+      expect(prompt).toContain("latest finish time");
+      expect(prompt).toContain(`${t.projectTime} ${data.unit}`);
+      expect(prompt).not.toMatch(/float|critical/i);
+      expect(answerText).toBe(`Latest finishes: ${data.acts.map((a) => `${a.id} ${ref.lf[a.id]}`).join(", ")}.`);
+      // the working never leaves the picture's given times, and fills the latest finishes in reverse order
+      const first = steps[0].cpaView!;
+      expect(first.es).toEqual(t.es);
+      expect(Object.keys(first.lf!)).toEqual(["End"]);
+      expect(first.lf!.End).toBe(t.projectTime);
+      for (const s of steps) {
+        expect(s.cpaView!.es).toEqual(t.es);
+        expect(s.cpaView!.critical, "no critical path in the backward pass").toBeUndefined();
+        expect(s.caption).not.toMatch(/critical|float/i);
+      }
+      const last = steps[steps.length - 1].cpaView!;
+      for (const a of data.acts) expect(last.lf![a.id], `lf ${a.id}`).toBe(ref.lf[a.id]);
+      // each activity's beat compares the latest starts of its successors and takes the smallest
+      const multi = steps.filter((s) => /followed by .*, .*\. They must start by/.test(s.caption) || /followed by \w+ and \w+/.test(s.caption));
+      for (const s of multi) expect(s.caption).toMatch(/the smallest/);
+    }
+  }, 60_000);
+
+  it("Level 3 is generated at 10–12 activities like the forward pass", () => {
+    for (let i = 0; i < 15; i++) {
+      const { data } = run(3, "cpaBackward");
+      expect(data.acts.length).toBeGreaterThanOrEqual(10);
+      expect(data.acts.length).toBeLessThanOrEqual(12);
+    }
+  }, 60_000);
+
+  it("the working has the same backward beats as Full analysis", () => {
+    const g = generateCpa(2, "cpaFull", {});
+    const full = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText, value: g.data.times.projectTime }, cpa: g.data, kind: "cpaFull" } as never);
+    const bg = { ...g.data, kind: "cpaBackward" as const };
+    const back = solveCpa({ network: { nodes: [], edges: [] }, prompt: "", answer: { text: "" }, cpa: bg, kind: "cpaBackward" } as never);
+    const backBeats = full.filter((s) => s.phase === "Backward pass" || s.phase?.startsWith("Latest finish"));
+    expect(back.map((s) => s.caption)).toEqual(backBeats.map((s) => s.caption));
+  });
+});

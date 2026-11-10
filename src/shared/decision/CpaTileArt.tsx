@@ -92,6 +92,9 @@ function scene(key: string): ReactNode {
       );
     case "forward":
       return <>{net()}<Bx id="S" es="0" mid="0" /><Bx id="A" es="0" mid="6" tone={BLUE} /><Bx id="B" es="0" mid="3" tone={BLUE} /><Bx id="C" es="6" mid="4" tone={BLUE} /><Bx id="E" es="10" mid="0" /><Tag x={110} y={14} t="→" c={BLUE} s={10} /></>;
+    case "backward":
+      // the earliest starts are given (plain); the latest finishes are the answer (blue), working back from End
+      return <>{net()}<Bx id="S" es="0" mid="0" lf="0" tone={BLUE} /><Bx id="A" es="0" mid="6" lf="6" tone={BLUE} /><Bx id="B" es="0" mid="3" lf="8" tone={BLUE} /><Bx id="C" es="6" mid="4" lf="10" tone={BLUE} /><Bx id="E" es="10" mid="0" lf="10" /><Tag x={110} y={14} t="←" c={BLUE} s={10} /></>;
     case "full":
       return <>{net(["S", "A", "C", "E"], { arrowCrit: true })}<Bx id="S" es="0" mid="0" lf="0" /><Bx id="A" es="0" mid="6" lf="6" tone={GREEN} fill={GREEN_FILL} /><Bx id="B" es="0" mid="3" lf="8" /><Bx id="C" es="6" mid="4" lf="10" tone={GREEN} fill={GREEN_FILL} /><Bx id="E" es="10" mid="0" lf="10" /></>;
     case "floatPaths":

@@ -29,6 +29,90 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Decks on a phone: preview only, landscape, swipe to move
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/decks/DeckPage.tsx`, `src/decks/PlayerBar.tsx`, `src/decks/swipe.ts`, `src/shared/layoutMode.ts` (`usePhoneDevice`), `src/components/DecksTab.tsx`, `src/shared/ToolShellCore.tsx`, `src/App.tsx`, `src/tests/deckSwipe.test.ts`.
+
+- **A phone only previews a deck.** The Decks page has no Deck editor button; `/decks`, `/decks/library` and `?edit=1` go back to the Decks page or the player; the player has no Edit; the tool pages' Send to a deck and Edit in a deck are not offered. A phone is a touch screen whose shorter side is at most 600px (so a phone held sideways counts, which `useLayoutMode()` would call a tablet; a narrowed laptop window does not, so the deck editor still works there); View as overrides it.
+- **It opens on a start card, then plays full screen in landscape.** The tap goes full screen and asks for landscape where the browser allows it (some Android browsers). On an upright phone where it will not (an iPhone), the whole show is drawn turned a quarter turn, so turning the phone sideways reads it upright.
+- **Swipe from right to left for forward, left to right for back** (a slide's next click first, as the arrow keys do); in the turned show the same swipe is up or down the screen. A tap shows the controls bar; a swipe does not.
+- Ink is off on a phone's deck. The laptop and tablet player are unchanged.
+- **The controls bar is under your control:** it shows as the show opens and fades after four seconds; a tap on the slide shows it, and a tap while it shows hides it at once (the start card says so). A tap on a button or anything on the slide that takes a tap is left to that, and a swipe never touches the bar.
+- **Fixed the same day: the slide shrank to a tiny box after the phone turned from upright to sideways.** The show was rebuilt around its stage when it turned, and the slide-fitting code kept watching the stage that had gone. The wrapper is now always there and the fitting code follows its element. `npm run smoke:deck-phone` plays a deck on an emulated iPhone, including the turn, and fails on the old code.
+- Checked in headless Chromium emulating an iPhone portrait, landscape and the turn between them, with real touch swipes, and a laptop. Not checked on a real phone.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
+## 2026-11-10 — Critical Path: the clock-time option is removed from Forward pass and Backward pass
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`), `src/tests/cpaSkills.test.ts`, `specs/cpa-skill-tools.md`.
+
+- **Forward pass loses "Finish time as" (Minutes or Clock time), and the Backward pass's clock option, added earlier today, is removed.** A time of day is not a DE statement and added a second skill to two single-procedure tools. Clock-time practice remains in the AS exam-style question "Clock times and a second project" (`exClock`).
+- **Left in place:** the context-and-clock generator and working (`cpaContext`), which the exam-style question uses in its second-project form; its plain form is no longer reachable from the tool but is still tested. An old link with `o_clockQ=clock` or `o_clockB=clock` simply opens the default question.
+- The Backward pass is back to what it was: every earliest start given, find the latest finishes, no Question Options of its own.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
+## 2026-11-10 — Critical Path: a Backward pass sub-tool
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`, `CpaTileArt.tsx`), `src/tools/Decision/decisionSpec.ts`, `src/tests/cpa.test.ts`, `src/tests/cpaSkills.test.ts`.
+
+- **New sub-tool: Backward pass** (AS, skills practice, three levels like Forward pass: 6–7, 8–9 and 10–12 activities). Every earliest start is shown, with the minimum completion time at End; the student finds the latest finish of every activity. The working goes from End back to Start, comparing the latest starts of the successors and taking the smallest; it stops at the latest finishes (no float or critical path, which are DE3). It shares its backward-pass beats with Full analysis (`backwardPass` in `cpaSolve.ts`), so the two cannot disagree.
+- **DE2 now has its own practice for the latest times.** On the Decision Maths hub DE2 lists Forward pass, Backward pass and Missing time, and Full analysis moves to DE3 (with Float and critical paths), as noted when it was listed under DE2.
+- Tests: Backward pass joins the generator checks against the independent reference (`cpa.test.ts`) and has its own (`cpaSkills.test.ts`: the earliest starts are given, only the latest finishes are asked, the working never mentions float or critical paths, its beats equal Full analysis's backward beats, Level 3 is 10–12 activities). `seedReplay.test.ts` and `decisionPairings.test.ts` cover it automatically.
+- Checked in headless Chromium at 1366×768: it opens from the hub link, the picture shows every earliest start with the latest-finish cells empty and End showing the minimum time, and stepping the working fills them in.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
+## 2026-11-10 — Decision Maths hub: generator sub-tools under each specification statement
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/decisionSpec.ts` (`DECISION_PAIRINGS`, `DECISION_GROUPS`), `src/tools/Decision/DecisionOverview.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/decisionPairings.test.ts`.
+
+- **Statements are paired with the sub-tools that practise them** (Critical Path chapter, DE1 to DE6): each statement lists its sub-tools as links that open the tool on that sub-tool (`?tool=…&o_course=…&o_practice=…`). DE1: Network from a table, Table from a network. DE2: Forward pass, Full analysis, Missing time (Full analysis is listed once, under DE2, as the only practice of the latest times until a Backward pass exists). DE3: Float and critical paths. DE4: Delays and changes, Explain and justify, and at A-level Which to shorten and Limits of the model. DE5: Cascade/Gantt chart, Resource histogram. DE6: Resource levelling.
+- **Exam-style questions** (AS and A-level) and the **older-papers-only** sub-tools (the two worker-allocation ones) are listed under the statements. The AS tab shows the AS sub-tools; the A-level tab adds the A-level ones.
+- **A test keeps the pairing honest** (`decisionPairings.test.ts`): every paired sub-tool exists in the tool with the same name, course and practice, and every Critical Path sub-tool is placed in exactly one place, so adding one fails until it is paired.
+- **Banked then:** a Backward pass sub-tool (built later the same day, see the entry above).
+- All 25 links checked in headless Chromium: each opens its sub-tool.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
+## 2026-11-09 — Decision Maths: one hub, by specification code
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/registry.ts` (`hub`), `src/components/LandingPage.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tools/Decision/DecisionOverview.tsx`.
+
+- **One card for Decision.** The A-Level tab shows a single **Decision Maths** card; the other seven tools carry `hub: 'decision-overview'` and no longer have a card of their own (the search box still finds them, routes are unchanged). The hub is live for everyone and `/decision` redirects to it.
+- **The hub is the way in by spec code.** Chapters DA to DG with an AS / A-level switch; a chapter opens to its generators first, then its specification statements. Live generators only for teachers, "Coming soon" where none is live, "not built yet" where there is none; a chapter has its own address (`#DB`), also when pasted into the page already open. Network Sandbox is listed as a workspace.
+- **Planning material stays in Developing-tools mode:** legacy D1 and D2 links and notes, question banks, the older-papers page, Dev badges and tools not yet live. `SpecLanding` takes a `public` option for this; Further Mechanics does not use it and is unchanged (still behind the password).
+- Checked in headless Chromium at 1366×768 and 390×800 (no horizontal overflow). Full suite and build pass.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
+## 2026-11-09 — Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/shared/components/PinButton.tsx`, `src/shared/questionKeeper.ts`, `src/shared/decision/` (`usePrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/TeacherTools/AdventCalendar.tsx`, `src/tools/Binary/FileSizes.tsx`, `src/tools/Algebra/NonLinearSimEq.tsx`, `src/tests/seedReplay.test.ts`, `docs/pathways/saved-questions.md`.
+
+**Saved questions** (both shells)
+- **The panel fits every layout:** it opens towards the side that has room (it opened 204px off the left of the screen in tablet portrait with the Whiteboard) and its controls are 40px on phone and tablet layouts.
+- **Named lists that mix tools.** The pin panel gains a list picker (new, rename, delete; always one called Saved) and saved questions now live in site-wide lists (`src/shared/savedLists.ts`, `mt-saved-lists`, 30 per list, 20 lists), each remembering its tool page. A question from another tool shows with its tool's name; picking it goes to that tool with the question restored (`?pick=`). A page's old basket joins the open list on its first load. The print page prints only the current tool's questions and marks the rest. Tests: `savedLists.test.ts`.
+- **One saved list.** The pin saves the question on screen as a recipe (tool or sub-tool, level, options, seed) kept on the device under the page's key, up to 30, so a saved question survives a reload and comes back exactly as it was (tool, level and options too). It is the list the Decision print basket prints; a saved question without a print sheet is marked and left out of a print. Each carries a fingerprint, and a restore that no longer matches says the tool has changed. Recent stays memory only. `src/shared/questionKeeper.ts` (a `SavedAdapter` per shell), `savedRecipe.ts`, `decision/usePrintBasket.tsx`, `ToolShellCore.tsx`, `DecisionShell.tsx`; tests in `savedQuestions.test.ts`.
+- **One control.** The pin button is now a joined split control. The main half pins; the chevron opens one panel with Pin, Add to / Remove from print basket and **Open print basket** (Decision tools; the basket opens even when the question on screen cannot be saved), the Pinned list and the Recent list. The separate basket button is gone. On phone widths the panel spans the screen above the bottom bar. The burger menu and the basket's own dialog are unchanged.
+- **Plan:** `docs/pathways/saved-questions.md` (pins and the basket become one saved list kept on the device, printing an ability of a saved question).
+
+**Seeds**
+- Audit of every generator: all Maths-shell and Decision generators rebuild the same question from the same seed except `FileSizes` (all levels) and `NonLinearSimEq` (level 3), which kept "don't repeat" memory at module level. That memory is removed; the shell's own content check still refuses identical questions. `src/tests/seedReplay.test.ts` now fails on any generator that differs from the same seed (rule R45).
+
+**Advent Calendar:** Teacher controls gain **Download names** and **Load names from file** (a small JSON file with the names and schedule), so the names survive a browser that clears its storage and move between devices.
+
+Tests: the full suite (126 files) and the build pass. Checked in headless Chromium at 1366×768, 1024×768 and 390×800.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
+
 ## 2026-11-10 — Rectilinear worksheet area progression
 
 Branch `codex/year7-rectilinear-lesson`. Updated only the authored worksheet and its pupil/key PDFs: page 1 now asks for areas of alternating T/L shapes; page 2 has two crosses and two staircases requiring internal lengths; page 3 keeps its cut-outs in U/M/O/N order, with N last. First question on each page retains its scaffold. Approved teaching slides preserved exactly.

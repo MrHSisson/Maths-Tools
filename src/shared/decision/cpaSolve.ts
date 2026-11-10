@@ -17,6 +17,7 @@ export function solveCpa(p: DecisionProblem): SolveStep[] {
     case "cpaNetwork": return solveNetwork(p);
     case "cpaTable": return solveTable(p);
     case "cpaForward": return solvePasses(p, false);
+    case "cpaBackward": return solveBackward(p);
     case "cpaFull": return solvePasses(p, true);
     case "cpaPaths": return solvePaths(p);
     case "cpaUnknown": return solveUnknown(p);
@@ -84,6 +85,49 @@ function solveNetwork(p: DecisionProblem): SolveStep[] {
 }
 
 // ── Forward pass (and the backward pass, float and critical path for the full analysis) ──
+// The backward pass, one beat per activity from End back to Start: the latest starts of the successors are compared and the smallest taken.
+// Full analysis does it after the forward pass; the Backward pass skill starts from the earliest starts already given. `es` is what the picture shows.
+function backwardPass(d: NonNullable<DecisionProblem["cpa"]>, all: ReturnType<typeof fullGraph>, succ: ReturnType<typeof successorsOf>, dur: Record<string, number>, es: Record<string, number>, lf: Record<string, number>, steps: SolveStep[]): void {
+  const t = d.times;
+  const snap = (extra: Partial<CpaViewState> = {}): CpaViewState => ({ es: { ...es }, lf: { ...lf }, ...extra });
+  lf[END] = t.projectTime;
+  steps.push(beat(
+    `Backward pass. Start at End: its latest finish is the minimum completion time, ${t.projectTime}.`,
+    snap({ current: END }), "Backward pass",
+  ));
+  for (const a of [...all].reverse()) {
+    if (a.id === END) continue;
+    lf[a.id] = t.lf[a.id];
+    const ss = succ[a.id];
+    if (a.id === START) {
+      steps.push(beat(`Check: working back to Start gives a latest finish of ${t.lf[START]}, so the times agree.`, snap({ current: START, compare: ss }), "Backward pass"));
+    } else if (ss.length === 1 && ss[0] === END) {
+      steps.push(beat(`${a.id} is followed only by End, so its latest finish is ${t.projectTime}.`, snap({ current: a.id, compare: [END] }), `Latest finish of ${a.id}`));
+    } else if (ss.length === 1) {
+      const s = ss[0];
+      steps.push(beat(
+        `${a.id} is followed by ${s}, which must start by ${t.lf[s]} − ${dur[s]} = ${t.ls[s]}. So ${a.id} must finish by ${t.lf[a.id]}.`,
+        snap({ current: a.id, compare: [s] }), `Latest finish of ${a.id}`,
+      ));
+    } else {
+      steps.push(beat(
+        `${a.id} is followed by ${cpaList(ss)}. They must start by ${ss.map((s) => `${s}: ${t.lf[s]} − ${dur[s]} = ${t.ls[s]}`).join(", ")}. ${a.id} must finish before the first of them: the smallest, ${t.lf[a.id]}.`,
+        snap({ current: a.id, compare: ss }), `Latest finish of ${a.id}`,
+      ));
+    }
+  }
+}
+
+// The Backward pass skill: every earliest start is given, with the minimum completion time at End; the latest finishes are the answer.
+function solveBackward(p: DecisionProblem): SolveStep[] {
+  const d = p.cpa!;
+  const all = fullGraph(d.acts);
+  const dur = Object.fromEntries(all.map((a) => [a.id, a.duration]));
+  const steps: SolveStep[] = [];
+  backwardPass(d, all, successorsOf(all), dur, Object.fromEntries(Object.entries(d.times.es)), {}, steps);
+  return steps;
+}
+
 function solvePasses(p: DecisionProblem, full: boolean): SolveStep[] {
   const d = p.cpa!;
   const { times: t } = d;
@@ -125,33 +169,7 @@ function solvePasses(p: DecisionProblem, full: boolean): SolveStep[] {
   }
   if (!full) return steps;
 
-  // backward pass
-  lf[END] = t.projectTime;
-  steps.push(beat(
-    `Backward pass. Start at End: its latest finish is the minimum completion time, ${t.projectTime}.`,
-    snap({ current: END }), "Backward pass",
-  ));
-  for (const a of [...all].reverse()) {
-    if (a.id === END) continue;
-    lf[a.id] = t.lf[a.id];
-    const ss = succ[a.id];
-    if (a.id === START) {
-      steps.push(beat(`Check: working back to Start gives a latest finish of ${t.lf[START]}, so the times agree.`, snap({ current: START, compare: ss }), "Backward pass"));
-    } else if (ss.length === 1 && ss[0] === END) {
-      steps.push(beat(`${a.id} is followed only by End, so its latest finish is ${t.projectTime}.`, snap({ current: a.id, compare: [END] }), `Latest finish of ${a.id}`));
-    } else if (ss.length === 1) {
-      const s = ss[0];
-      steps.push(beat(
-        `${a.id} is followed by ${s}, which must start by ${t.lf[s]} − ${dur[s]} = ${t.ls[s]}. So ${a.id} must finish by ${t.lf[a.id]}.`,
-        snap({ current: a.id, compare: [s] }), `Latest finish of ${a.id}`,
-      ));
-    } else {
-      steps.push(beat(
-        `${a.id} is followed by ${cpaList(ss)}. They must start by ${ss.map((s) => `${s}: ${t.lf[s]} − ${dur[s]} = ${t.ls[s]}`).join(", ")}. ${a.id} must finish before the first of them: the smallest, ${t.lf[a.id]}.`,
-        snap({ current: a.id, compare: ss }), `Latest finish of ${a.id}`,
-      ));
-    }
-  }
+  backwardPass(d, all, succ, dur, es, lf, steps);
   // float, critical activities, critical path
   const crit = criticalActivities(d.acts);
   const { onPaths, arrows: critArrows, text: pathText } = criticalPathInfo(d.criticalPaths);

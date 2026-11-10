@@ -62,14 +62,9 @@ const sup = (n: number) => String(n).split("").map((d) => SUP[+d]).join("");
 const an = (w: string) => (/^[aeiou]/i.test(w) ? "an" : "a");
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-/** No two consecutive questions share a context (module-level, per sub-tool). */
-const lastContext: Partial<Record<Sub, string>> = {};
-const pickContext = (sub: Sub, list: string[]): string => {
-  let c = pick(list);
-  for (let i = 0; i < 6 && c === lastContext[sub]; i++) c = pick(list);
-  lastContext[sub] = c;
-  return c;
-};
+/** A context for the question: drawn from the seed alone, so the same seed gives the same question again (a saved question must rebuild
+ *  exactly). Repeats are left to the shell's own content check. */
+const pickContext = (_sub: Sub, list: string[]): string => pick(list);
 
 // ── 2. Question options ───────────────────────────────────────────────────────
 

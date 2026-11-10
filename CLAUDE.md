@@ -189,6 +189,8 @@ Optionally add `group: 'Sub-group name'` (e.g. `'Place value & decimals'`) so th
 
 A tool's `id` is its `path` without the slash, lower-case words joined by hyphens (`src/tests/registryIds.test.ts` fails otherwise); it is also the key of the tool's dashboard note, so never rename one without copying that note to the new id. When a **route** changes, keep the old address working with `aliases: ['/old-path']` on the entry: it redirects, query string and all, to the new route (Times Tables moved from `/timestables`).
 
+A strand's tools can be opened from one hub page: give each tool `hub: '<hub tool id>'` and the landing page shows only the hub's card (the search box still finds the tools; routes are unchanged). Decision Maths does this with `/decision-overview` (the AQA 7367 spec-code page, `SpecLanding` with `public`).
+
 The registry entry has no version/`ready` field — tools carry no version label. The landing page shows only a "Dev" badge for `enabled: false` tools; there is no version badge.
 
 ### 4. Build, test and push
@@ -313,6 +315,9 @@ One line per rule, grouped by file. **These apply even if you have not opened th
 - **R42** Author at least five distinct, fixed questions per skill-practice slide, varying examples deliberately within its brief, with correct answers and working that matches the referenced generator’s method, labels, notation and reveal steps. Misconception notes are optional; if supplied, verify the wrong method gives a different result. Short diagnostics and exit tickets can stay short.
 - **R43** A slide brief is optional: one or two sentences in `Slide.brief` saying what the slide’s questions test, or the key skill. When planning a lesson, write one for each question slide (not every slide) before authoring its questions; Harry’s own briefs and constraints take precedence. Save questions directly on the slide, with no shared-bank registration. Keep the brief in exported decks, off the classroom display. Choose the question presentation independently: Full-width, Workspace right or Workspace left; fixed sets and live generators share these layouts. Depth cards remain standalone full-slide question/answer faces, with no split stepper or workspace.
 - **R44** Never put three Depth slides back to back in a deck (two at most); break a run with practice, a discussion or a book activity. The deck check reports it.
+
+**Seeded replay** (`questions-and-working.md`)
+- **R45** A generator draws everything through `Math.random` and keeps no state between calls (no module-level "last used" memory), so a seed rebuilds the same question; `seedReplay.test.ts` enforces it.
 
 ## TypeScript / build rules
 

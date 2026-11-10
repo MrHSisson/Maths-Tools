@@ -30,9 +30,13 @@ export function liftAbove(bar: { left: number; right: number; height: number }, 
   return lift;
 }
 
-export function PlayerBar({ visible, count, onBack, onNext, onLeave, backDisabled, nextDisabled, btn, children }: {
+export function PlayerBar({ visible, count, onBack, onNext, onLeave, backDisabled, nextDisabled, btn, children, frame, compact }: {
   /** Fades out when false (the bar is hidden after the mouse rests); it stays while the pop-out is open or the bar is being dragged. */
   visible: boolean; count: string; onBack: () => void; onNext: () => void; onLeave: () => void; backDisabled: boolean; nextDisabled: boolean; btn: string;
+  /** The size of the box the bar sits in when that is not the window (a phone's show turned on its side); positions are worked out against it. */
+  frame?: { w: number; h: number };
+  /** A phone: the bar stays centred, with no grip to drag it. */
+  compact?: boolean;
   /** The pop-out's contents; given `close` to shut it. */
   children: (close: () => void) => ReactNode;
 }) {
@@ -48,14 +52,15 @@ export function PlayerBar({ visible, count, onBack, onNext, onLeave, backDisable
   useEffect(() => { const f = () => setVp({ w: window.innerWidth, h: window.innerHeight }); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   useLayoutEffect(() => { const r = ref.current?.getBoundingClientRect(); if (r && (Math.abs(r.width - size.w) > 0.5 || Math.abs(r.height - size.h) > 0.5)) setSize({ w: r.width, h: r.height }); }, [size.w, size.h, vp.w]);
 
-  const left = barLeft(live ?? cx, size.w, vp.w);
+  const box = frame ?? vp;
+  const left = barLeft(compact ? 0.5 : live ?? cx, size.w, box.w);
 
   // keep clear of the ink pencil and hotbar, which can be anywhere: look now and then (they move when the teacher opens or drags them)
   const check = useCallback(() => {
     const ink = [...document.querySelectorAll("[data-ink-bar]")].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0);
-    const next = liftAbove({ left, right: left + size.w, height: size.h }, window.innerHeight, ink);
+    const next = liftAbove({ left, right: left + size.w, height: size.h }, box.h, ink);
     setLift((l) => (Math.abs(l - next) < 1 ? l : next));
-  }, [left, size.w, size.h]);
+  }, [left, size.w, size.h, box.h]);
   useEffect(() => { check(); const t = window.setInterval(check, 300); return () => window.clearInterval(t); }, [check]);
 
   const down = (e: React.PointerEvent) => {
@@ -72,16 +77,16 @@ export function PlayerBar({ visible, count, onBack, onNext, onLeave, backDisable
   return (
     <div ref={ref} data-player-bar className="fixed z-30 flex items-center gap-2 rounded-2xl bg-white/90 p-1.5 shadow-lift backdrop-blur transition-opacity duration-300"
       style={{ left, bottom: BOTTOM + lift, opacity: shown ? 1 : 0, pointerEvents: shown ? "auto" : "none" }}>
-      <button type="button" aria-label="Move these controls" title="Drag to move along the bottom" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
-        className="inline-flex h-10 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"><GripVertical size={18} /></button>
+      {!compact && <button type="button" aria-label="Move these controls" title="Drag to move along the bottom" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        className="inline-flex h-10 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"><GripVertical size={18} /></button>}
       <button className={btn} onClick={onBack} disabled={backDisabled} aria-label="Back"><ChevronLeft size={20} /></button>
       <span className="w-16 text-center text-sm font-semibold tabular-nums text-slate-600">{count}</span>
       <button className={btn} onClick={onNext} disabled={nextDisabled} aria-label="Next"><ChevronRight size={20} /></button>
       <button className={`${btn} ${open ? "!bg-slate-800 !text-white" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label="Slide options" title="Options for this slide"><SlidersHorizontal size={18} />Slide options</button>
       <button className={btn} onClick={onLeave} aria-label="Leave full screen" title="Leave full screen (Esc)"><Minimize size={18} /></button>
       {open && (
-        <div role="dialog" aria-label="Slide options" onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-full mb-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-300 bg-white p-3 text-sm shadow-lift"
-          style={{ width: Math.min(POP_W, vp.w - 2 * MARGIN), ...(popLeft ? { left: 0 } : { right: 0 }) }}>
+        <div role="dialog" aria-label="Slide options" onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-full mb-2 overflow-y-auto rounded-2xl border border-slate-300 bg-white p-3 text-sm shadow-lift"
+          style={{ width: Math.min(POP_W, box.w - 2 * MARGIN), maxHeight: Math.round(box.h * 0.7), ...(popLeft ? { left: 0 } : { right: 0 }) }}>
           {children(() => setOpen(false))}
         </div>
       )}

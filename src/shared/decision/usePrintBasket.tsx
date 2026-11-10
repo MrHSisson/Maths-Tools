@@ -1,86 +1,67 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Printer } from "lucide-react";
 import PrintBasket from "./PrintBasket";
 import { printCpaSheets, type CpaSheetInput } from "./printCpa";
-import { BASKET_MAX, addItem, decodeBasket, encodeBasket, hasItem, loadBasket, mergeItems, previewOf, removeItem, saveBasket, type BasketItem } from "./printBasket";
+import { decodeBasket, encodeBasket, previewOf, type BasketItem } from "./printBasket";
+import type { SavedItem } from "../savedLists";
+import type { BasketAction, SavedApi } from "../questionKeeper";
 import { generateFromSeed } from "../seededGenerate";
 import type { DecisionProblem, DecisionShellProps, GenerateContext } from "./types";
 
-// The print basket as the shell uses it: the saved questions, the toolbar button, the menu items, the page and the little "added" message,
-// in one place. A saved question is its recipe (tab, level, options, seed) — see printBasket.ts — so printing rebuilds it with `generate`.
+// The print basket as the shell uses it: the page that prints the saved questions, the action the toolbar control offers and the menu item.
+// The saved questions themselves live in the question keeper (the current named list, kept on the device and able to mix tools); a saved
+// question is its recipe (tab, level, options, seed) — see printBasket.ts — so printing rebuilds it with `generate`. Only this tool's
+// questions in a sub-tool with a printable sheet (`config.questionSheet.tabs`) can be printed; the rest can be reloaded but are left out.
+
+/** The recipe for the question on screen, or null when it has no seed. `options` are the options as the generator receives them for this sub-tool and level. */
+export function decisionRecipe(problem: DecisionProblem, tab: string, level: number, options: Record<string, string>): BasketItem | null {
+  const seed = (problem as { _seed?: number })._seed;
+  if (typeof seed !== "number") return null;
+  // what tells this question from the others in the list: its size and time, then its limit or what it asks (the opening sentence is the same for all)
+  const c = problem.cpa;
+  const lv = c?.extra?.level, cut = c?.extra?.cut;
+  const facts = c ? [`${c.acts.length} activities`, `${c.times.projectTime} ${c.unit}`, ...(lv ? [`limit ${lv.limit} workers`] : []), ...(cut ? [cut.ask === "fewest" ? "fewest workers" : cut.ask === "show" ? `show ${cut.target} is enough` : `show ${cut.target} is not enough`, cut.given ? "histogram given" : "draw it first"] : [])] : [];
+  return { tab, level, seed, options, preview: facts.length ? facts.join(" · ") : previewOf(problem.exam ? problem.exam.intro : problem.prompt) };
+}
 
 interface Args {
   config: DecisionShellProps["config"];
-  problem: DecisionProblem;
-  subTool: string;
-  level: number;
-  /** the options as the generator receives them for this sub-tool and level */
-  optionsFor: (sub: string, level: number) => GenerateContext["options"];
+  /** the current saved list, from the question keeper */
+  saved: SavedApi;
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem;
-  /** a saved question brought back onto the page: the shell takes on its sub-tool, level and options and shows the rebuilt problem */
-  onLoad: (item: BasketItem, problem: DecisionProblem) => void;
+  /** a saved question brought back onto the page (the shell takes on its sub-tool, level and options and shows the rebuilt problem) */
+  onLoad: (item: SavedItem) => void;
 }
 
 interface PrintBasketState {
-  /** the question on screen can be saved (a sub-tool with a sheet, with a seed) */
-  canSave: boolean;
   /** items for the burger menu's "Printables" list */
   menuItems: { label: string; hint?: string; onClick: () => void }[];
-  /** the toolbar button beside the pin (null when the question cannot be saved) */
-  button: (size?: "bar" | "phone") => ReactNode;
-  /** the basket page and the "added" message, rendered once */
+  /** the basket as the saved-questions control (`PinButton`) offers it beside the pin */
+  basket: BasketAction;
+  /** the basket page, rendered once */
   ui: ReactNode;
 }
 
-export function usePrintBasket({ config, problem, subTool, level, optionsFor, generate, onLoad }: Args): PrintBasketState {
-  const key = `mt-print-basket:${config.pageTitle}`;
+export function usePrintBasket({ config, saved, generate, onLoad }: Args): PrintBasketState {
   const tabs = config.questionSheet?.tabs;
-  const [basket, setBasketState] = useState<BasketItem[]>(() => loadBasket(key));
+  const basket = saved.items;
+  const here = (i: SavedItem) => i.page === window.location.pathname;
+  const printable = (i: SavedItem) => here(i) && !!tabs?.includes(i.tab);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ text: string; open: boolean } | null>(null);
-  const setBasket = (next: BasketItem[]) => { setBasketState(next); saveBasket(key, next); };
-
-  // the little message after adding or removing, which goes by itself
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(t);
-  }, [toast]);
-
-  /** the question on screen as a recipe, or null when it cannot be saved (no seed, an exam question, a sub-tool without a sheet) */
-  const recipe: BasketItem | null = (() => {
-    const seed = (problem as { _seed?: number })._seed;
-    if (typeof seed !== "number" || problem.exam || !tabs?.includes(subTool)) return null;
-    // what tells this question from the others in the list: its size and time, then its limit or what it asks (the opening sentence is the same for all)
-    const c = problem.cpa;
-    const lv = c?.extra?.level, cut = c?.extra?.cut;
-    const facts = c ? [`${c.acts.length} activities`, `${c.times.projectTime} ${c.unit}`, ...(lv ? [`limit ${lv.limit} workers`] : []), ...(cut ? [cut.ask === "fewest" ? "fewest workers" : cut.ask === "show" ? `show ${cut.target} is enough` : `show ${cut.target} is not enough`, cut.given ? "histogram given" : "draw it first"] : [])] : [];
-    return { tab: subTool, level, seed, options: optionsFor(subTool, level), preview: facts.length ? facts.join(" · ") : previewOf(problem.prompt) };
-  })();
-  const inBasket = !!recipe && hasItem(basket, recipe);
-
-  const toggle = () => {
-    if (!recipe) return;
-    if (inBasket) { const next = removeItem(basket, recipe); setBasket(next); setToast({ text: `Removed from print basket (${next.length})`, open: false }); return; }
-    if (basket.length >= BASKET_MAX) { setNote(`The basket holds ${BASKET_MAX} questions: remove one to add another.`); setOpen(true); return; }
-    const next = addItem(basket, recipe);
-    setBasket(next);
-    setToast({ text: `Added to print basket (${next.length})`, open: true });
-  };
 
   const print = async (mode: "questions" | "answers" | "both") => {
-    if (!basket.length || busy || !config.questionSheet) return;
+    const toPrint = basket.filter(printable);
+    if (!toPrint.length || busy || !config.questionSheet) { if (basket.length && !toPrint.length) setNote("None of the saved questions can be printed here: they are from other tools, or have no print sheet."); return; }
     const win = window.open("", "_blank");   // opened here, at the click, before the rebuilding below
     if (!win) { alert("Please allow popups to use the PDF export."); return; }
     const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
-    let skipped = 0;
+    let skipped = basket.length - toPrint.length;   // saved questions with no print sheet, or from another tool
     try {
-      for (let k = 0; k < basket.length; k++) {
-        setBusy(`Preparing question ${k + 1} of ${basket.length}…`);
+      for (let k = 0; k < toPrint.length; k++) {
+        setBusy(`Preparing question ${k + 1} of ${toPrint.length}…`);
         await new Promise((r) => setTimeout(r, 20));
-        const it = basket[k];
+        const it = toPrint[k];
         try {
           const pr = generateFromSeed(it.seed, () => generate(it.level, { subTool: it.tab, options: it.options }));
           if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
@@ -90,7 +71,7 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
       const sheets = [...questions, ...answers];
       if (!sheets.length) { win.close(); setNote("None of the saved questions could be rebuilt."); return; }
       printCpaSheets(sheets, win);
-      setNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be rebuilt and ${skipped > 1 ? "were" : "was"} left out.` : null);
+      setNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be printed (from another tool, no print sheet, or could not be rebuilt) and ${skipped > 1 ? "were" : "was"} left out.` : null);
     } catch {
       win.close();
       setNote("Sorry, that could not be printed.");
@@ -98,17 +79,10 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
   };
 
   /** bring a saved question back onto the page, exactly as it was drawn (same seed and options) */
-  const reload = (it: BasketItem) => {
-    try {
-      const pr = generateFromSeed(it.seed, () => generate(it.level, { subTool: it.tab, options: it.options }));
-      onLoad(it, pr);
-      setOpen(false);
-      setNote(null);
-    } catch { setNote("That question could not be rebuilt."); }
-  };
+  const reload = (it: SavedItem) => { setOpen(false); setNote(null); onLoad(it); };
 
   const copyLink = async () => {
-    const url = `${window.location.origin}${window.location.pathname}?basket=${encodeBasket(basket)}`;
+    const url = `${window.location.origin}${window.location.pathname}?basket=${encodeBasket(basket.filter(here))}`;
     try { await navigator.clipboard.writeText(url); setNote("Link copied. Open it on any device to get these questions."); } catch { window.prompt("Copy this link:", url); }
   };
 
@@ -119,47 +93,24 @@ export function usePrintBasket({ config, problem, subTool, level, optionsFor, ge
     const url = new URL(window.location.href);
     url.searchParams.delete("basket");
     window.history.replaceState(null, "", url.toString());
-    const incoming = decodeBasket(code)?.filter((i) => tabs?.includes(i.tab));
-    if (!incoming?.length) { setNote("That basket link could not be read."); setOpen(true); return; }
-    const next = mergeItems(basket, incoming);
-    setBasket(next);
-    setNote(`${next.length - basket.length} question${next.length - basket.length === 1 ? "" : "s"} added from the link.`);
+    const incoming = decodeBasket(code)?.filter((i) => config.subTools?.some((x) => x.key === i.tab));
+    if (!incoming?.length) { setNote("That link could not be read."); setOpen(true); return; }
+    const added = saved.merge(incoming);
+    setNote(`${added} question${added === 1 ? "" : "s"} added from the link.`);
     setOpen(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs once, when the page opens with a basket link
 
   const menuItems: PrintBasketState["menuItems"] = config.questionSheet ? [
-    ...(recipe ? [{ label: inBasket ? "Remove from print basket" : "Add to print basket", hint: "Save this question to print later", onClick: toggle }] : []),
-    { label: `Print basket (${basket.length})…`, hint: "Print the saved questions, or take them to another device", onClick: () => setOpen(true) },
+    { label: `Print saved questions (${basket.length})…`, hint: "Print the saved questions, or take them to another device", onClick: () => setOpen(true) },
   ] : [];
 
-  const button = (size: "bar" | "phone" = "bar"): ReactNode => {
-    if (!recipe) return null;
-    const title = inBasket ? "In the print basket: remove it" : "Add this question to the print basket";
-    const tone = inBasket ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-blue-900 active:bg-slate-50";
-    return (
-      <button onClick={toggle} aria-label={title} aria-pressed={inBasket} title={title}
-        className={`relative shrink-0 border rounded-xl flex items-center justify-center ${tone} ${size === "phone" ? "w-14 h-12" : "w-10 xl:w-11 h-10"}`}>
-        <Printer size={size === "phone" ? 20 : 18} />
-        {basket.length > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{basket.length}</span>}
-      </button>
-    );
-  };
-
   const ui = (
-    <>
-      {open && config.questionSheet && (
-        <PrintBasket items={basket} tabLabel={(t) => config.subTools?.find((x) => x.key === t)?.label ?? t} busy={busy} note={note}
-          onLoad={reload} onRemove={(i) => { setBasket(removeItem(basket, i)); setNote(null); }} onClear={() => { setBasket([]); setNote(null); }}
-          onPrint={(m) => void print(m)} onCopyLink={() => void copyLink()} onClose={() => setOpen(false)} />
-      )}
-      {toast && (
-        <div role="status" className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-3 rounded-xl bg-slate-900 text-white text-sm font-semibold px-4 py-2.5 shadow-lift">
-          {toast.text}
-          {toast.open && <button onClick={() => { setToast(null); setOpen(true); }} className="underline underline-offset-2 text-blue-200 hover:text-white">Open basket</button>}
-        </div>
-      )}
-    </>
+    open && config.questionSheet ? (
+      <PrintBasket items={basket} label={(i) => (here(i) ? config.subTools?.find((x) => x.key === i.tab)?.label ?? i.tab : i.pageTitle)} printable={printable} here={here} busy={busy} note={note}
+        onLoad={reload} onRemove={(i) => { saved.remove(i); setNote(null); }} onClear={() => { saved.clear(); setNote(null); }}
+        onPrint={(m) => void print(m)} onCopyLink={() => void copyLink()} onClose={() => setOpen(false)} />
+    ) : null
   );
 
-  return { canSave: !!recipe, menuItems, button, ui };
+  return { menuItems, basket: { count: basket.length, onOpen: () => setOpen(true) }, ui };
 }

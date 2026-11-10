@@ -25,6 +25,7 @@ import CpaTileArt from "../../shared/decision/CpaTileArt";
 //   Network from a table — draw the activity network (with Start and End) from the precedence table;
 //   Table from a network — write the precedence table from a drawn network;
 //   Forward pass         — the earliest start of every activity and the minimum completion time;
+//   Backward pass        — the earliest starts are given; find every latest finish, working back from End;
 //   Full analysis        — forward and backward pass, then the critical activities, critical path and minimum time;
 //   Float                — the float of every activity, from a network already filled in;
 //   Critical paths       — every critical activity and critical path, from a network already filled in;
@@ -50,6 +51,7 @@ const SUB_TOOLS = [
   { key: "network", label: "Network from a table", levels: 2, blurb: "Draw the network from a precedence table", when: [AS_ONLY, SKILLS] },
   { key: "table", label: "Table from a network", levels: 2, blurb: "Read the precedence table off a network", when: [AS_ONLY, SKILLS] },
   { key: "forward", label: "Forward pass", levels: 3, blurb: "Earliest start times and the minimum time", when: [AS_ONLY, SKILLS] },
+  { key: "backward", label: "Backward pass", levels: 3, blurb: "Latest finish times from the earliest starts", when: [AS_ONLY, SKILLS] },
   { key: "full", label: "Full analysis", levels: 3, blurb: "Forward and backward pass, critical path", when: [AS_ONLY, SKILLS] },
   { key: "floatPaths", label: "Float and critical paths", levels: 2, blurb: "Float, every critical path, which starts first", when: [AS_ONLY, SKILLS] },
   { key: "unknown", label: "Missing time", levels: 2, blurb: "Find a missing time or box value", when: [AS_ONLY, SKILLS] },
@@ -79,7 +81,7 @@ const EXAM_CHAIN: Record<string, CpaChain | "asAny" | "alAny"> = {
   exAlAny: "alAny", exCascade: "alCascade", exTable: "alTable", exHist: "alHist", exShorten: "alShorten", exAlloc: "alAlloc",
 };
 const KIND: Record<string, CpaKind> = {
-  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", floatPaths: "cpaFloat",
+  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", backward: "cpaBackward", full: "cpaFull", floatPaths: "cpaFloat",
   unknown: "cpaUnknown", change: "cpaChange", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
 };
 
@@ -101,21 +103,20 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (EXAM_CHAIN[sub]) return generateCpaExam(level, EXAM_CHAIN[sub], { size, setting: "context" });
   // Float and critical paths is one tab with three kinds of question; Forward pass can ask for a clock finish time
   const floatQ = sub === "floatPaths" ? pickOf(o.floatQ, "float") : "";
-  const clockQ = sub === "forward" && pickOf(o.clockQ, "minutes") === "clock";
-  const kind: CpaKind = clockQ ? "cpaContext" : sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
+  const kind: CpaKind = sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   const reasonCase = sub === "reasonA" ? "limit" : (pickOf(o.reasonForm, lv === 1 ? "range" : "claim") as "range" | "remove" | "claim" | "glyn");
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = clockQ ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
   const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: size ?? (clockQ || CHART_SUBS.has(sub) ? "medium" : undefined),
+    size: size ?? (CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
     levelRef: "cascade",
@@ -309,7 +310,8 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   const passesFirst = d.kind === "cpaCascade" && !!d.extra!.cascade?.passes; // the times are for the student to find
   const questionView: CpaViewState =
     d.kind === "cpaNetwork" ? { shown: [] }
-      : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
+      : d.kind === "cpaBackward" ? { es: everyEs, lf: { End: d.times.projectTime } }   // every earliest start is given; the student works back from End
+        : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaShorten" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaChange" ? { es: everyEs, lf: everyLf, float: Object.fromEntries(Object.entries(d.times.float).filter(([id]) => id !== "Start" && id !== "End")) }
           : d.kind === "cpaUnknown" && d.extra!.unknown!.box
@@ -609,6 +611,7 @@ export default function App() {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
+          backward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           level: ["One worker each: the first fix clears the clash", "Several workers each: the first fix clears the clash", "A fix causes a knock-on clash (10–12 activities)"],
           histogram: ["Draw it: one worker each", "Draw it: one to three workers each (10–12 activities)", "Cut the peak by sliding activities within their float"],
@@ -628,7 +631,7 @@ export default function App() {
           filters: ["course", "practice"],
           groups: [
             { title: "Building the network", keys: ["network", "table"] },
-            { title: "Times, floats and critical paths", keys: ["forward", "full", "floatPaths", "unknown"] },
+            { title: "Times, floats and critical paths", keys: ["forward", "backward", "full", "floatPaths", "unknown"] },
             { title: "Changes and reasoning", keys: ["change", "reason", "shorten", "reasonA"] },
             { title: "Charts and resources", keys: ["cascade", "histogram", "level", "alloc"] },
             { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },
@@ -671,18 +674,6 @@ export default function App() {
               { value: "float", label: "Float", sub: "Of each activity" },
               { value: "paths", label: "Critical paths", sub: "Every one" },
               { value: "first", label: "Start first", sub: "Which activity" },
-            ],
-          },
-          {
-            key: "clockQ",
-            label: "Finish time as",
-            info: "Whether the finish is given as the minutes taken or as a clock time (a start and a finish).",
-            forSubTools: ["forward"],
-            multi: true,
-            defaultFor: () => "minutes",
-            choices: [
-              { value: "minutes", label: "Minutes", sub: "Time taken" },
-              { value: "clock", label: "Clock time", sub: "Start and finish" },
             ],
           },
           {
@@ -932,3 +923,6 @@ export default function App() {
 }
 
 // CI contract surface — checked by src/tests/cpa.test.ts (the shared Decision `__problem` validator is MST/TSP/route-specific).
+
+// Seed-replay contract surface — discovered by src/tests/seedReplay.test.ts.
+export const __seed = { generate, subTools: SUB_TOOLS };

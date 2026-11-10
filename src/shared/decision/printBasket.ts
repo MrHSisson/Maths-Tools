@@ -13,6 +13,8 @@ export interface BasketItem {
   options: Record<string, string>;
   /** the start of the question, for the list */
   preview: string;
+  /** a short fingerprint of the question's content when it was saved: a rebuilt question that differs means the generator has changed since */
+  fp?: string;
 }
 
 export const BASKET_MAX = 30;
@@ -41,10 +43,10 @@ export function mergeItems(items: BasketItem[], incoming: BasketItem[]): BasketI
   return incoming.reduce(addItem, items);
 }
 
-const valid = (x: unknown): x is BasketItem => {
+export const isBasketItem = (x: unknown): x is BasketItem => {
   const i = x as BasketItem;
   return !!i && typeof i.tab === "string" && Number.isInteger(i.level) && i.level >= 1 && i.level <= 9 && Number.isInteger(i.seed) && i.seed >= 0
-    && !!i.options && typeof i.options === "object" && Object.values(i.options).every((v) => typeof v === "string") && typeof i.preview === "string";
+    && !!i.options && typeof i.options === "object" && Object.values(i.options).every((v) => typeof v === "string") && typeof i.preview === "string" && (i.fp === undefined || typeof i.fp === "string");
 };
 
 // ── the browser's storage (never throws: a private window or blocked storage just means an empty, unsaved basket) ──
@@ -52,7 +54,7 @@ export function loadBasket(key: string): BasketItem[] {
   try {
     const raw = window.localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list.filter(valid).slice(0, BASKET_MAX) : [];
+    return Array.isArray(list) ? list.filter(isBasketItem).slice(0, BASKET_MAX) : [];
   } catch { return []; }
 }
 export function saveBasket(key: string, items: BasketItem[]): void {
@@ -63,16 +65,16 @@ export function saveBasket(key: string, items: BasketItem[]): void {
 const b64 = (s: string): string => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const unb64 = (s: string): string => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))));
 
-/** compact: one array per question, [tab, level, seed, options, preview] */
+/** compact: one array per question, [tab, level, seed, options, preview, fingerprint] */
 export function encodeBasket(items: BasketItem[]): string {
-  return b64(JSON.stringify(items.map((i) => [i.tab, i.level, i.seed, i.options, i.preview])));
+  return b64(JSON.stringify(items.map((i) => [i.tab, i.level, i.seed, i.options, i.preview, i.fp ?? null])));
 }
 /** the questions in a link, or null when it is not a basket (an old, damaged or made-up link never breaks the page) */
 export function decodeBasket(code: string): BasketItem[] | null {
   try {
     const list = JSON.parse(unb64(code));
     if (!Array.isArray(list)) return null;
-    const items = list.map((r) => (Array.isArray(r) ? { tab: r[0], level: r[1], seed: r[2], options: r[3], preview: r[4] } : null)).filter(valid) as BasketItem[];
+    const items = list.map((r) => (Array.isArray(r) ? { tab: r[0], level: r[1], seed: r[2], options: r[3], preview: r[4], ...(typeof r[5] === "string" ? { fp: r[5] } : {}) } : null)).filter(isBasketItem) as BasketItem[];
     return items.length ? items.slice(0, BASKET_MAX) : null;
   } catch { return null; }
 }

@@ -40,14 +40,14 @@ describe("Critical Path Analysis — the reference diagram", () => {
   });
 });
 
-const KINDS: CpaKind[] = ["cpaNetwork", "cpaForward", "cpaFull", "cpaFloat"];
+const KINDS: CpaKind[] = ["cpaNetwork", "cpaForward", "cpaBackward", "cpaFull", "cpaFloat"];
 
 describe("Critical Path Analysis — generated networks", () => {
   for (const level of [1, 2, 3] as CpaLevel[]) {
     it(`Level ${level}: clean, unambiguous, and the pass agrees with the independent reference`, () => {
       for (let i = 0; i < 120; i++) {
         const paths = (["one", "more", "either"] as const)[i % 3];
-        const { data } = generateCpa(level, KINDS[i % 4], { size: i % 2 ? "small" : "medium", paths });
+        const { data } = generateCpa(level, KINDS[i % KINDS.length], { size: i % 2 ? "small" : "medium", paths });
         const { acts, times, layout } = data;
         const ref = referenceCpa(acts);
         expect(times.projectTime).toBe(ref.projectTime);
@@ -88,7 +88,7 @@ describe("Critical Path Analysis — the working", () => {
         if (kind !== "cpaNetwork") {
           for (const a of data.acts) {
             if (kind !== "cpaFloat") expect(last.es?.[a.id], `${kind} es ${a.id}`).toBe(t.es[a.id]);
-            if (kind === "cpaFull" || kind === "cpaFloat") expect(last.lf?.[a.id], `${kind} lf ${a.id}`).toBe(t.lf[a.id]);
+            if (kind === "cpaFull" || kind === "cpaFloat" || kind === "cpaBackward") expect(last.lf?.[a.id], `${kind} lf ${a.id}`).toBe(t.lf[a.id]);
           }
         } else {
           expect(new Set(last.shown)).toEqual(new Set(["Start", "End", ...data.acts.map((a) => a.id)]));

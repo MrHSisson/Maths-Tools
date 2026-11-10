@@ -29,6 +29,9 @@ interface ToolMeta {
   group?: string;
   /** Old addresses that still work: each redirects (keeping any query string) to `path`. Use when a route is renamed so saved links and printed sheets keep opening the tool. */
   aliases?: string[];
+  /** The id of a hub page this tool is opened from (Decision Maths' spec-code page). The landing page leaves the tool's own card out and shows the hub's;
+   *  the tool is still found by the search box, and its route is unchanged. */
+  hub?: string;
   load: () => Promise<{ default: ComponentType }>;
 }
 
@@ -133,14 +136,14 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Decision Mathematics',
     subject: 'A-Level',
     tools: [
-      { id: 'decision-overview', path: '/decision-overview', name: 'Decision Overview', description: 'AQA 7367 Discrete (DA–DG) chapter by chapter: AS and A2 content, the link back to the legacy D1 and D2 papers, the tools built so far and their question banks. Planning space for the Decision tools.', enabled: false, load: () => import('./tools/Decision/DecisionOverview') },
-      { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Free workspace for Decision Maths: load any graph from the shared bank, change weights, drag vertices, show the table — the same board that opens from every Decision question', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
-      { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },
-      { id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Upper bound (nearest neighbour), lower bound (deleted vertex) and the interval for the optimal tour of the travelling salesperson problem — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
-      { id: 'route-inspection', path: '/route-inspection', name: 'Route Inspection', description: 'The Chinese postman problem: degrees and odd vertices, the shortest closed route that uses every edge, and the shortest route between two chosen odd vertices — walked through step by step', enabled: false, load: () => import('./tools/Decision/RouteInspection') },
-      { id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
-      { id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
-      { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
+      { id: 'decision-overview', path: '/decision-overview', aliases: ['/decision'], name: 'Decision Maths', description: 'AQA 7367 Discrete (DA–DG): open a part of the specification to find its question generators.', load: () => import('./tools/Decision/DecisionOverview') },
+      { hub: 'decision-overview', id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Free workspace for Decision Maths: load any graph from the shared bank, change weights, drag vertices, show the table — the same board that opens from every Decision question', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
+      { hub: 'decision-overview', id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },
+      { hub: 'decision-overview', id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Upper bound (nearest neighbour), lower bound (deleted vertex) and the interval for the optimal tour of the travelling salesperson problem — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
+      { hub: 'decision-overview', id: 'route-inspection', path: '/route-inspection', name: 'Route Inspection', description: 'The Chinese postman problem: degrees and odd vertices, the shortest closed route that uses every edge, and the shortest route between two chosen odd vertices — walked through step by step', enabled: false, load: () => import('./tools/Decision/RouteInspection') },
+      { hub: 'decision-overview', id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
+      { hub: 'decision-overview', id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
+      { hub: 'decision-overview', id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
     ],
   },
   {

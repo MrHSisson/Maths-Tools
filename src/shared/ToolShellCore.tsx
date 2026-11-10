@@ -7,7 +7,9 @@ import { commonPrompt, withoutPrompt } from "./prompts";
 import { normalizeMultiSelect, resolveMultiSelectValues, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { DifficultyToggle } from "./components/DifficultyToggle";
-import { generateSeeded } from "./seededGenerate";
+import { generateSeeded, generateFromSeed } from "./seededGenerate";
+import { extras } from "./questionExtras";
+import { levelNumber, levelKey, encodeToolOptions, decodeToolOptions } from "./savedRecipe";
 import { LevelInfoButton, LevelInfoDialog } from "./components/LevelInfoDialog";
 import {
   StandardQOPopover,
@@ -27,9 +29,9 @@ import { DepthMode } from "./components/DepthMode";
 import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useQuestionKeeper } from "./questionKeeper";
-import { useRecentQuestions } from "./recentQuestions";
+import { useRecentQuestions, questionFingerprint } from "./recentQuestions";
 import { PinButton } from "./components/PinButton";
-import { useLayoutMode } from "./layoutMode";
+import { useLayoutMode, usePhoneDevice } from "./layoutMode";
 import { LessonsPage } from "./components/LessonsPage";
 import { useFullscreenFlag } from "./fullscreenFlag";
 import { type LessonControls } from "./components/LessonBar";
@@ -48,7 +50,6 @@ import { WorksheetControls } from "./components/WorksheetControls";
 import { planQoChange, adaptQuestion } from "./questionLifecycle";
 import { onlyDisplayOptionsChanged, initToolVariables, initToolDropdowns, initToolMultiSelect } from "./shellOptions";
 import { readShellUrl, buildShellQuery, ALL_LEVELS } from "./shellUrl";
-import { extras } from "./questionExtras";
 import { printPrintable, type Printable } from "./printables";
 const SendToDeck = lazy(() => import("../decks/SendToDeck"));
 const SendDepthToDeck = lazy(() => import("../decks/SendDepthToDeck"));   // deck code loads only when the teacher opens it
@@ -373,6 +374,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   }, []);
   const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections ?? []} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
+  const phoneDevice = usePhoneDevice();   // a phone only previews decks: no sending questions into one
   const [sendOpen, setSendOpen] = useState(false);   // "Send to a deck" (Developing-tools mode)
   const [depthSend, setDepthSend] = useState<DepthItem | null>(null);   // "Edit in a deck" from the Depth section (Developing-tools mode)
 
@@ -698,7 +700,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   }, [difficulty, currentTool, qoFingerprint]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs only when the level, sub-tool or options change, and reads the latest values of everything else
   useEffect(() => { restoredQ.current = null; });   // after the effect above has had its say
 
-  // ── Recent and pinned questions (burger menu; this visit only) ───────────────
+  // ── Recent questions (this visit) and saved questions (kept on the device, as recipes: tool, level, options, seed) ───────────────
   type KeptState = { q: AnyQuestion; tool: string; level: DifficultyLevel; vars: Record<string, boolean>; ms: Record<string, boolean>; dd: string };
   const keptLabel = (q: AnyQuestion) => {
     const plain = (t: string) => t.replace(/\$/g, "").replace(/\\times/g, "×").replace(/\\div/g, "÷").replace(/\\cdot/g, "·").replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1/$2)").replace(/\\(left|right)/g, "").replace(/\\[a-zA-Z]+/g, "").replace(/[{}\\]/g, "");
@@ -719,6 +721,21 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
       setShowWhiteboardAnswer(false);
       setShowAnswer(false);
       setWorkedResetNonce(n => n + 1);
+    },
+    true,
+    {
+      pageTitle: config.pageTitle,
+      toRecipe: (k) => {
+        const seed = extras(k.q)._seed;
+        return typeof seed === "number" ? { tab: k.tool, level: levelNumber(k.level), seed, options: encodeToolOptions(k), preview: keptLabel(k.q) } : null;
+      },
+      fingerprint: (k) => questionFingerprint(k.q),
+      // drawn again from the seed with the settings it was saved with (a tool or level that no longer exists throws, and the keeper says so)
+      fromRecipe: (it) => {
+        if (!config.tools[it.tab]) return null;
+        const level = levelKey(it.level), { vars, ms, dd } = decodeToolOptions(it.options);
+        return { q: generateFromSeed(it.seed, () => generateQuestion(it.tab, level, vars, dd, ms)), tool: it.tab, level, vars, ms, dd };
+      },
     },
   );
   const keeperOn = mode === "worksheet" ? undefined : keeper;   // worksheets are many questions: no pin / recent
@@ -905,7 +922,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
             </Suspense>
           )}
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onSendToDeck={devMode ? () => setSendOpen(true) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onSendToDeck={devMode && !phoneDevice ? () => setSendOpen(true) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
         </div>
       </div>
     </div>
@@ -1017,7 +1034,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>
-              {screen("Depth", <DepthMode onEditInDeck={devMode ? setDepthSend : undefined} items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
+              {screen("Depth", <DepthMode onEditInDeck={devMode && !phoneDevice ? setDepthSend : undefined} items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
             </div>
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
