@@ -151,4 +151,13 @@ describe("rectilinear deck foundations", () => {
     expect(d.edges.filter(e => e.label).length).toBeLessThan(6);
   });
 
+  it("labels only the whole rectangle and removed regions on subtraction questions", () => {
+    for (const kind of ["U", "comb", "frame"] as const) {
+      const q = rectilinearQuestion({ ...shape(), shape: kind, width: 17, height: 13, cutWidth: 5, cutHeight: 4, method: "subtract", scaffold: "none" });
+      const d = extras(q)._diagram as Drawing;
+      expect(d.edges.filter(e => e.kind === "plain" && e.label)).toHaveLength(4);
+      expect(Number(q.answer)).toBe(kind === "comb" ? 181 : 201);
+    }
+  });
+
 });

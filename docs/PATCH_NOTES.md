@@ -36,6 +36,7 @@ Branch `codex/year7-rectilinear-lesson`, continuing the lesson after Harry’s r
 - Rebalanced the native deck around T, staircase, cross, U, two-notch and frame outlines; L-shapes are brief accessible anchors. Added a frame model, six authored cut-out questions and a Level 3 generator.
 - Worksheet retains two L-shapes and adds ten questions spanning the other six families, including Level 3 cut-outs and holes. Revised three-page print and worked key.
 - Authored shapes now support the tool’s advanced families and distinct addition/subtraction unknowns on eligible outlines. Repeated lengths use explicit equality marks and one number; supplied component dimensions replace redundant overall labels. Region letters avoid helper pills.
+- Cut-out questions show only the whole and removed rectangles’ dimensions; U/two-notch/frame questions use four given numeric edge labels. Recomputed all 41 exported shapes from polygons and rectangle regions. Content/layout checks pass for all 20 slides; full suite passes (126 files, 2,529 tests, 18 skipped), and 13 focused shape/label checks pass after the final label refinement. Build, lint and shell smoke pass.
 - Lesson spec records the revised progression and optional continuation. PowerPoint is superseded; native deck is the master.
 
 Agent: Codex

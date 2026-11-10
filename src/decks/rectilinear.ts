@@ -50,6 +50,15 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
     }
   }
   if (spec.reducedLabels) {
+    if (spec.method === "subtract" && !spec.missingLength) {
+      // Whole-minus-cut-out needs the outer and removed rectangles, not the widths of the remaining bridges.
+      const needed = drawing.regions.filter(r => r.id === "outer" || r.id.startsWith("c"));
+      drawing.edges.forEach(e => {
+        if (e.kind !== "plain" || !e.label) return;
+        const axis = e.a[1] === e.b[1] ? 0 : 1, lo = Math.min(e.a[axis], e.b[axis]), hi = Math.max(e.a[axis], e.b[axis]);
+        if (!needed.some(r => Math.min(...r.pts.map(p => p[axis])) === lo && Math.max(...r.pts.map(p => p[axis])) === hi)) e.label = "";
+      });
+    }
     // Explicit equality marks let repeated steps share one number without asking pupils to infer equality.
     const groups = new Map<string, number[]>();
     drawing.edges.forEach((e, i) => {

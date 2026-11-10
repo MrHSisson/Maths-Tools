@@ -3,6 +3,8 @@
  "title": "Area of rectilinear shapes",
  "summary": "Year 7: split and add, find missing lengths, compare removing cut-outs, and practise on a scaffolded authored worksheet.",
  "tool": "perimeter-and-area",
+ "toolPath": "/perimeter-and-area",
+ "questionVersion": 2,
  "slides": [
   {
    "id": "year7-rectilinear-area-title",
@@ -361,6 +363,7 @@
    "id": "year7-rectilinear-area-practice-one",
    "family": "practice",
    "title": "Split and add: practice",
+   "brief": "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible.",
    "els": [
     {
      "kind": "questions",
@@ -595,8 +598,7 @@
      ],
      "id": "year7-rectilinear-area-practice-one-1"
     }
-   ],
-   "brief": "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible."
+   ]
   },
   {
    "id": "year7-rectilinear-area-general-one",
@@ -637,6 +639,7 @@
    "id": "year7-rectilinear-area-missing-add",
    "family": "teach",
    "title": "Find a length by adding",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -700,13 +703,13 @@
      "bold": true,
      "text": "Find the missing length first."
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-missing-subtract",
    "family": "teach",
    "title": "Find a length by subtracting",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -768,13 +771,13 @@
      "bold": true,
      "text": "Which lengths add to the whole?"
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-practice-two",
    "family": "practice",
    "title": "Missing lengths: practice",
+   "brief": "Varied T, staircase, U and two-notch outlines: addition first, then subtraction. Find the question-mark length before calculating each area.",
    "els": [
     {
      "kind": "questions",
@@ -1025,8 +1028,7 @@
      ],
      "id": "year7-rectilinear-area-practice-two-1"
     }
-   ],
-   "brief": "Varied T, staircase, U and two-notch outlines: addition first, then subtraction. Find the question-mark length before calculating each area."
+   ]
   },
   {
    "id": "year7-rectilinear-area-general-two",
@@ -1067,6 +1069,7 @@
    "id": "year7-rectilinear-area-cutout",
    "family": "teach",
    "title": "Discuss removing a cut-out",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -1128,13 +1131,13 @@
      "bold": true,
      "text": "Could we remove a cut-out instead?"
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-method-choice",
    "family": "teach",
    "title": "Choose an efficient method",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -1198,8 +1201,7 @@
      "bold": true,
      "text": "Which method would you choose? Why?"
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-frame-model",
@@ -1544,7 +1546,7 @@
        "perimeter": false,
        "all": true,
        "missing": false,
-       "cmOnly": true,
+       "same": true,
        "mixed": false
       },
       "variables": {
@@ -2085,6 +2087,7 @@
    "id": "year7-rectilinear-area-exit",
    "family": "retrieval",
    "title": "Exit check",
+   "brief": "One new missing-length area question and one explanation of the two methods. Use this to decide where the next lesson should resume.",
    "els": [
     {
      "kind": "questions",
@@ -2158,10 +2161,7 @@
      ],
      "id": "year7-rectilinear-area-exit-1"
     }
-   ],
-   "brief": "One new missing-length area question and one explanation of the two methods. Use this to decide where the next lesson should resume."
+   ]
   }
- ],
- "toolPath": "/perimeter-and-area",
- "questionVersion": 2
+ ]
 }
