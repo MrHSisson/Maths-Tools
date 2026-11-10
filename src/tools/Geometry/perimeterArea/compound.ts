@@ -92,6 +92,13 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     // Keep shapes with no redundant sides too: reduced labelling must not force a different shape.
     if (!missingOn || polys.length > 1 || missing.length) break;
   }
+  return buildCompound(polys, { kind, level, ask, mixed, showSplit, twins, missing, bounding: !!v.boundingRectangle, subtract: !!v.subtract });
+}
+
+/** Shared solution path for live questions and deliberately chosen deck questions. */
+export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: DifficultyLevel; ask: "area" | "perimeter"; mixed: boolean; showSplit: boolean; twins?: Hide[]; reduced?: boolean; missing?: Hide[]; bounding?: boolean; subtract?: boolean }): Built {
+  const { kind, level, ask, mixed, showSplit } = opts;
+  const twins = opts.twins ?? (opts.reduced ? twinHides(polys) : []), missing = opts.missing ?? [];
   const hidden: Hide[] = [...twins, ...missing];
   const outer = polys[0];
   const holes = polys.slice(1);
@@ -147,7 +154,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const helpers: DHelper[] = [];
   const regions: DRegion[] = [];
   if (ask === "perimeter") {
-    const bounding = !!v.boundingRectangle && level !== "level3" && CONVEX.includes(kind);
+    const bounding = !!opts.bounding && level !== "level3" && CONVEX.includes(kind);
     if (hasHole) {
       const hb = boxOf([holes[0]]), hw = hb.x1 - hb.x0, hh = hb.y1 - hb.y0;
       beats.push({ step: mStep("The outside edge:", [`2 \\times (${W} + ${H})`, `= ${2 * (W + H)}`]), focus: { edges: outerEdges } });
@@ -163,7 +170,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     } else {
       beats.push({ step: mStep("Add every side:", addFrags(flat.map((e) => e.len), P), CM), focus: everything });
     }
-  } else if (hasHole || level === "level3" || !!v.subtract) {
+  } else if (hasHole || level === "level3" || !!opts.subtract) {
     const cuts = hasHole ? [boxOf([holes[0]])] : cutRects(polys);
     regions.push({ id: "outer", pts: rect({ x0: box.x0, y0: box.y0, x1: box.x1, y1: box.y1 }), color: "#e2e8f0" });
     cuts.forEach((r, k) => regions.push({ id: `c${k}`, pts: rect(r), color: "#fde68a", text: "", always: showSplit }));

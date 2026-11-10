@@ -1,3 +1,7 @@
+import { rectilinearQuestion } from "./rectilinear";
+import { ShapeQuestion } from "./ShapeQuestion";
+import { extras } from "../shared/questionExtras";
+import type { Drawing, Focus } from "../shared/shapes/drawing";
 import { DECK_SURFACE } from "./theme";
 import { ForceAnswersCtx, ReportSizesCtx, useReportSize } from "./shownSize";
 import { QuestionFrame } from "./QuestionFrame";
@@ -137,7 +141,7 @@ function BarEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "bar" }>;
 
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
-interface Shown { latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string }
+interface Shown { drawing?: Drawing; focuses?: (Focus | undefined)[]; latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string }
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
@@ -145,6 +149,8 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   suffix: q.answerSuffix,
   working: q.working.map((w) => ({ label: w.label ?? "", latex: w.latex, type: w.type, plain: w.plain, extra: w.extra })),
   source,
+  drawing: extras(q)._diagram as Drawing | undefined,
+  focuses: extras(q)._stepFocus as (Focus | undefined)[] | undefined,
 });
 
 /** A question as the class sees it: maths, or a worded question's lines (smaller, so a paragraph fits). */
@@ -153,7 +159,8 @@ const isInstruction = (l: string) => l.trim().endsWith(":");
 const isMathsLine = (l: string) => /^\s*\$[^$]+\$\s*$/.test(l);
 /** `book` is a book activity: a worded question there is one short instruction and one line of maths, so the maths
  *  line is set at the full question size and the instruction beside it a little smaller, never a paragraph's size. */
-function QuestionView({ q, size, book, centre }: { q: Pick<Shown, "latex" | "lines">; size: number; book?: boolean; centre?: boolean }) {
+function QuestionView({ q, size, book, centre }: { q: Pick<Shown, "latex" | "lines" | "drawing">; size: number; book?: boolean; centre?: boolean }) {
+  if (q.drawing) return <ShapeQuestion drawing={q.drawing} />;
   return q.lines?.length
     ? <div style={{ fontSize: size * 0.45, lineHeight: 1.35, textAlign: centre ? "center" : "left" }}>{q.lines.map((l, i) => <div key={i} style={book ? { fontSize: isMathsLine(l) ? size : isInstruction(l) ? size * 0.45 : l.includes("$") ? size * 0.55 : size * 0.45, lineHeight: 1.2, ...(l.includes("$") && !isInstruction(l) ? { fontWeight: 600 } : {}), whiteSpace: l.includes("$") || l.length > 34 ? undefined : "nowrap" } : undefined}><InlineMath text={l} /></div>)}</div>
     : book ? <div className="deck-nowrap" style={centre ? { textAlign: "center" } : undefined}><MathRenderer latex={q.latex} style={{ fontSize: size }} /></div> : <MathRenderer latex={q.latex} style={{ fontSize: size }} />;
@@ -235,7 +242,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const hasPicture = !whiteboard && q.working.some((w) => pictureOf(w));
   const latest = [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
-    question={<div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    question={q.drawing ? <ShapeQuestion drawing={q.drawing} focuses={q.focuses} shown={solution.all ? total : solution.shown} answer={solution.answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: !q.lines?.length || q.lines.join("").length < 100 ? "center" : "left" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
     steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={workingSize} questionFontSize={questionSize} layout={whiteboard ? "stacked" : "split"}
   />;
@@ -293,17 +300,19 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const showTools = () => { setTools(true); clearTimeout(toolsTimer.current); toolsTimer.current = setTimeout(() => setTools(false), 3500); };
   useEffect(() => () => clearTimeout(toolsTimer.current), []);
   const [prompt, setPrompt] = useState(el.prompt ?? "");
+  const authored = el.authored;
   const frozen = el.pin && el.frozen && isFrozen(el) ? el.frozen.questions : null;
   useEffect(() => { setSeed(el.seed ?? 1); }, [el.seed]);
   useEffect(() => {
     let on = true;
     // a pinned worksheet shows the set kept with the deck, so the page on the desk and the slide always agree
-    if (frozen) setQs(frozen);
+    if (authored) void Promise.resolve(authored.map(q => { if (!q.rectilinear) throw new Error("Missing worksheet shape"); return { ...rectilinearQuestion(q.rectilinear), key: `authored-${q.id}` }; })).then((x) => { if (on) setQs(x); });
+    else if (frozen) setQs(frozen);
     else void generateSet(el.tool, el.preset, el.count, seed).then((x) => { if (on) setQs(x); });
     setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
-  }, [el.tool, el.preset, el.count, seed, el.prompt, frozen]);
+  }, [el.tool, el.preset, el.count, seed, el.prompt, frozen, authored]);
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") { setAnswers((v) => !v); setFlips(new Set()); } };
@@ -359,7 +368,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
             <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
               onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
               question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
-              extra={live && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
+              extra={live && !el.authored && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
           );
         })}
@@ -512,7 +521,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
   const gridRef = useRef<HTMLDivElement>(null);
   const cells = () => [...(gridRef.current?.children ?? [])];
   const rowsOverflow = () => { const g = gridRef.current; return !!g && (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1); };
-  const size = useFitSize(el.fixed ? el.size ?? 56 : BOOK_AUTO_MAX / Q_SCALE, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
+  const size = useFitSize(el.fixed ? el.size ?? 56 : BOOK_AUTO_MAX / Q_SCALE, 20, `${qs.map((q) => q.id + q.question.join("|") + q.answer.join("|") + JSON.stringify(q.rectilinear ?? null)).join("~")}|${el.cols}|${el.w}|${el.h}`,
     () => rowsOverflow() || partOverflows(cells(), "q", 0, BOOK_FILL), cells, !!el.fixed || qs.length === 0);
   // the answers have their own size: by default as large as the question's if they fit, or a size set by hand
   const answerSize = useFitSize(el.answerFixed ? el.answerSize ?? 40 : Math.round(size * Q_SCALE), 20, `a|${qs.map((q) => q.id + q.answer.join("|")).join("~")}|${el.cols}|${el.w}|${el.h}`,
@@ -538,7 +547,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
         {qs.map((q, i) => (
           <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
             onPointerUp={live ? (e) => tap(e, q.id) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
-            question={instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
+            question={q.rectilinear ? <ShapeQuestion drawing={extras(rectilinearQuestion(q.rectilinear))._diagram as Drawing} /> : instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
             answer={<QuestionText lines={q.answer} />} />
         ))}
       </div>

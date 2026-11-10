@@ -29,6 +29,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear area in the deck editor: live diagrams, fixed questions and scaffolded sheets
+
+Branch `codex/rectilinear-deck-foundations` (includes the reduced-label fix from `codex/rectilinear-reduced-labels`). Areas: `src/decks/` generator, question, editor and worksheet paths; `api/_rectilinear.ts`, question/deck validation; the shared printable layout; Perimeter & Area's shared compound builder; browser/unit checks; docs and generated facts.
+
+- The generator picker offers **Perimeter & Area → Rectilinear Shapes**. Slides use the tool's diagram and step highlighting, retain earlier revealed lengths and reset correctly for a new question.
+- **Add rectilinear shape** in Skill practice chooses fixed dimensions for L/T/staircase diagrams, rotation/reflection and splitting or removing cut-outs. It updates the answer and worked steps together; invalid dimensions prevent Apply. `Q.rectilinear` uses the live solution path and independently checks area.
+- **Make printable worksheet** inserts an independent authored copy. Each question chooses calculation prompts with a split, a split only, or independent working space. Internal component lengths are labelled on supplied splits when no boundary label directly implies them. File → Worksheets prints the diagrams and worked answers, six per A4 page (two per A5). These fixed questions survive save, duplication and portable export/import, and cannot be rerolled accidentally.
+- The player toolbar wraps on narrow screens so worksheet and presentation controls remain accessible.
+- The agreed Year 7 sequence and implementation contract are in `specs/decks/rectilinear-foundations.md`: no retrieval starter; split/add first, then a discussion comparing the same shape with removing its cut-out.
+- Validation: full suite passed (126 files, 2,517 tests; 18 skipped), with focused checks for subsequent guards; build and lint pass. Browser checks cover invalid dimensions, save/reload, phone/tablet/laptop editing and presentation, actual print buttons, four-page PDF pagination, shared-shell smoke and the review draft’s content/layout checks.
+- Review draft `my-rectilinear-foundations-mwb163ic`: five slides and a six-question authored sheet, saved/read back from sharing and backed up in `src/decks/data/`. It demonstrates the editor foundations; it is not the complete lesson.
+- Deliberately not done: authoring the complete lesson, creating a Depth bank, merging or deploying production. No existing teacher deck was changed by the browser tests.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear deck editor foundations (2026-11-10)”.
+
 ## 2026-11-10 — Rectilinear Shapes: reduced labels only omit implied lengths
 
 Branch `codex/rectilinear-reduced-labels`. Areas: `src/tools/Geometry/PerimeterArea.tsx`, its About copy and `perimeterArea/{compound,pools}.ts`, `src/tests/perimeterArea.test.ts`, registry wording, generated dashboard facts/docs and the picture reference.

@@ -15,7 +15,7 @@ type ToolModule = { __test?: { generateQuestion: Generate; TOOL_CONFIG: ToolConf
 type Fact = { id: string; name: string; shell: string; kind: string; customPrint: boolean; category: string; group?: string };
 /** Picture tools whose sub-tools still read as maths and words in a deck, and which of their sub-tools those are
  *  (Rounding's digit-rule working is drawn by the slide; its Identify Sig. Figs question is a picture, so it stays out). */
-const DECK_SUBTOOLS: Record<string, string[]> = { rounding: ["nearest", "dp", "sf"] };
+const DECK_SUBTOOLS: Record<string, string[]> = { rounding: ["nearest", "dp", "sf"], "perimeter-and-area": ["compound"] };
 
 /** Tools a deck can draw questions from, with the strand and group they sit under on the landing page. */
 export const GENERATOR_TOOL_INFO: { id: string; name: string; category: string; group?: string }[] = ((facts as unknown as { tools: Fact[] }).tools)
@@ -23,6 +23,9 @@ export const GENERATOR_TOOL_INFO: { id: string; name: string; category: string; 
   .map((t) => ({ id: t.id, name: t.name, category: t.category, group: t.group }));
 /** The same list as (registry id, display name) pairs. */
 export const GENERATOR_TOOLS: [string, string][] = GENERATOR_TOOL_INFO.map((t) => [t.id, t.name]);
+
+/** Send-to-deck honours the same sub-tool limits as the picker. */
+export const supportsGeneratorSubtool = (tool: string, sub: string) => GENERATOR_TOOLS.some(([id]) => id === tool) && (!DECK_SUBTOOLS[tool] || DECK_SUBTOOLS[tool].includes(sub));
 
 const cache = new Map<string, Promise<ToolModule["__test"] | null>>();
 const load = (tool: string) => {
@@ -72,7 +75,7 @@ export async function generateFrom(tool: string, preset: GeneratorPreset, seed?:
 }
 
 /** What a question shows and answers, so two questions that look the same are known to be the same whatever their keys. */
-export const questionContent = (q: AnyQuestion) => `${q.kind === "worded" ? q.lines?.join("|") : q.displayLatex ?? q.display}=>${q.answerLatex ?? q.answer}`;
+export const questionContent = (q: AnyQuestion) => `${q.kind === "worded" ? q.lines?.join("|") : q.displayLatex ?? q.display}=>${q.answerLatex ?? q.answer}${"_diagram" in q ? JSON.stringify(q._diagram) : ""}`;
 
 /** `count` different questions (different keys), stable for a given seed. */
 export async function generateSet(tool: string, preset: GeneratorPreset, count: number, seed: number): Promise<AnyQuestion[]> {

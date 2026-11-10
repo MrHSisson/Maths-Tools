@@ -42,10 +42,11 @@ export function SheetProps({ el, set, canPin }: { el: Sheet; set: (patch: Partia
           <input className={input} value={pin.title} onChange={(e) => setPin({ title: e.target.value })} aria-label="Worksheet title" />
           <Label>Page</Label>
           <div className="flex gap-1">{PAPER.map((p) => <button key={p} className={choice((pin.paper ?? "A5") === p)} onClick={() => setPin({ paper: p })}>{p}</button>)}</div>
-          <Label>Layout</Label>
+          {!el.authored && <><Label>Layout</Label>
           <div className="flex gap-1">{(["grid", "list"] as const).map((l) => <button key={l} className={choice((pin.layout ?? "grid") === l)} onClick={() => setPin({ layout: l })}>{l === "grid" ? "Grid" : "List"}</button>)}
             <button className={choice(pin.borders !== false)} onClick={() => setPin({ borders: pin.borders === false })}>Borders</button></div>
-          <div className="mt-2"><Num label="Text size (px)" value={pin.fontPx ?? 16} min={9} onChange={(fontPx) => setPin({ fontPx: Math.max(9, Math.min(30, fontPx)) })} /></div>
+          <div className="mt-2"><Num label="Text size (px)" value={pin.fontPx ?? 16} min={9} onChange={(fontPx) => setPin({ fontPx: Math.max(9, Math.min(30, fontPx)) })} /></div></>}
+          {el.authored && <p className="mt-2 text-xs text-slate-600">Fixed diagrams with working space: six per A4 page, two per A5. Choose the support for each question in Edit authored questions.</p>}
           <Label>This slide shows</Label>
           <div className="flex gap-1">
             <button className={choice(el.view !== "key")} onClick={() => set({ view: undefined })}>The questions</button>
@@ -55,7 +56,7 @@ export function SheetProps({ el, set, canPin }: { el: Sheet; set: (patch: Partia
           <div className="mt-3 flex flex-wrap gap-1">
             <button className={small} onClick={() => print(el, "questions")}><Printer size={12} />Print</button>
             <button className={small} onClick={() => print(el, "answers")}><Printer size={12} />Answer sheet</button>
-            <button className={small} onClick={newSet}><RefreshCw size={12} />New set</button>
+            {!el.authored && <button className={small} onClick={newSet}><RefreshCw size={12} />New set</button>}
           </div>
         </>
       )}
@@ -80,13 +81,13 @@ export function WorksheetsDialog({ deck, onClose, onPatch, onGo, onAdd }: {
       <div role="dialog" aria-modal="true" aria-label="Worksheets" onPointerDown={(e) => e.stopPropagation()} className="max-h-full w-full max-w-xl overflow-y-auto rounded-2xl border border-slate-300 bg-white p-5 shadow-lift">
         <div className="mb-1 flex items-center justify-between"><h2 className="text-lg font-semibold text-slate-900">Worksheets for this lesson</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><X size={16} /></button></div>
-        <p className="mb-3 text-sm text-slate-600">Up to {MAX_PINNED}. Each prints on an A5 page with the same layout as the tool's Worksheet, and has an answer sheet. To get two to an A4 sheet, choose "Pages per sheet: 2" in the print window.</p>
+        <p className="mb-3 text-sm text-slate-600">Up to {MAX_PINNED}. Each has an answer sheet. Authored shape worksheets use A4 with working space and per-question scaffolding; generated sheets default to A5. To get two to an A4 sheet, choose "Pages per sheet: 2" in the print window.</p>
         {sheets.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">Nothing pinned yet. Pin one to print it, with its answers.</p>}
         {sheets.map(({ el, slideNo }) => (
           <div key={el.id} className="mb-2 rounded-xl border border-slate-200 p-3">
             <div className="flex items-baseline justify-between gap-2"><div className="font-semibold text-slate-900">{el.pin?.title}</div>
               <button className="text-xs font-semibold text-blue-800 underline" onClick={() => { onGo(slideNo); onClose(); }}>Slide {slideNo}</button></div>
-            <div className="mt-0.5 text-xs text-slate-500">{el.count} questions · {el.cols} column{el.cols === 1 ? "" : "s"} · {el.pin?.paper ?? "A5"} · Level {el.preset.level.slice(-1)}</div>
+            <div className="mt-0.5 text-xs text-slate-500">{el.count} questions · {el.cols} column{el.cols === 1 ? "" : "s"} · {el.pin?.paper ?? "A5"} · {el.authored ? "Authored shapes" : `Level ${el.preset.level.slice(-1)}`}</div>
             <div className="mt-2 flex flex-wrap gap-1">
               <button className={small} onClick={() => print(el, "questions")}><Printer size={12} />Print</button>
               <button className={small} onClick={() => print(el, "answers")}><Printer size={12} />Answer sheet</button>
