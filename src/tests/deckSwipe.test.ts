@@ -24,15 +24,15 @@ describe("deck swipe", () => {
 
 describe("what a phone is", () => {
   const dev = (o: Partial<Parameters<typeof phoneDeviceOf>[0]>) => phoneDeviceOf({ width: 1366, coarse: false, shortSide: 768, override: null, ...o });
-  it("a window up to 640px wide, or a touch screen whose short side is at most 600px, even held sideways", () => {
+  it("a touch screen whose short side is at most 600px, upright or held sideways", () => {
     expect(dev({ width: 390, coarse: true, shortSide: 390 })).toBe(true);
     expect(dev({ width: 844, coarse: true, shortSide: 390 })).toBe(true);   // a phone in landscape
-    expect(dev({ width: 600 })).toBe(true);                                  // a narrowed browser window
   });
-  it("a tablet or a laptop is not one", () => {
+  it("a tablet, a laptop, or a narrow browser window with a mouse is not one", () => {
     expect(dev({ width: 1133, coarse: true, shortSide: 744 })).toBe(false);  // an iPad mini, landscape
     expect(dev({ width: 1366, coarse: false, shortSide: 768 })).toBe(false);
     expect(dev({ width: 844, coarse: false, shortSide: 390 })).toBe(false);  // a wide window with a mouse is not a phone
+    expect(dev({ width: 390, coarse: false, shortSide: 900 })).toBe(false);  // a laptop's window narrowed to phone width keeps the editor
   });
   it("View as decides: Mobile is a phone, Tablet and Desktop are not", () => {
     expect(dev({ override: "phone" })).toBe(true);

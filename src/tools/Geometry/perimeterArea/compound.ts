@@ -1,4 +1,4 @@
-// Perimeter & Area — Compound Shapes: shapes made of rectangles. Missing sides are found from the opposite sides (and the working says
+// Perimeter & Area — Rectilinear Shapes: shapes made of rectangles. Missing sides are found from the opposite sides (and the working says
 // so, lighting the edges involved); area is found by splitting the shape or by taking pieces away from the rectangle round it.
 import { mStep, randInt as ri, pickActive, resolveMultiSelectValues, type DifficultyLevel } from "../../../shared";
 import { areaOf, boxOf, cutRects, edgeLengths, OPPOSITE, perimeterOf, rectArea, sideOf, splitRects, sum, type Pt, type Rect } from "../../../shared/shapes/model";
@@ -13,7 +13,7 @@ const rect = (r: Rect): Pt[] => [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0
 const range = (n: number, from = 0) => Array.from({ length: n }, (_, i) => i + from);
 
 /** One side that is not labelled. `sum`: it follows from adding or taking away other sides (only used for a "?" side). `twin`: it is
- *  the same length as a labelled side that is opposite it or next to it, so no sum is needed . */
+ *  the same length as a labelled parallel side spanning the same interval, so no sum is needed. */
 interface Hide { i: number; how: "sum" | "twin"; twin?: number }
 
 /** Sides that may be "?": found from the opposite sides by adding or taking away, and not the same length as any other side
@@ -34,28 +34,31 @@ function missingCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[] } {
   return { horiz, vert };
 }
 
-/** Reduced Labelling: two sides are twins when they are parallel, the same length, and a student can see they are equal. That is when they
- *  are opposite each other (the same stretch of the shape, like the two inner legs of an n-shape or the two outer sides), or when they are
- *  two treads (or risers) of one staircase, one step apart. The top and bottom of a notch are not twins, however equal they happen to be.
- *  Each side left out is directly opposite, or next to, one that stays labelled, so nothing needs working out and nothing is ticked. */
+/** One deliberately unknown length, using the same eligibility and calculation as the live generator. */
+export function chosenMissingSide(polys: Pt[][], calculation: "addition" | "subtraction"): Hide {
+  const candidates = missingCandidates(polys), outer = polys[0];
+  const possible = [...candidates.horiz, ...candidates.vert].filter(h => {
+    const side = sideOf(outer[h.i], outer[(h.i + 1) % outer.length]);
+    const same = outer.filter((p, i) => i !== h.i && sideOf(p, outer[(i + 1) % outer.length]) === side).length;
+    return calculation === "addition" ? same === 0 : same > 0;
+  });
+  if (!possible.length) throw new Error("These dimensions do not provide a distinct missing length; choose different lengths.");
+  return pickOne(possible);
+}
+
+/** Only hide a side when a labelled parallel side spans exactly the same interval.
+ *  Matching lengths on neighbouring staircase steps are a coincidence, not a geometric equality:
+ *  without a label, a pupil would have to subtract the other steps from the overall length. */
 function twinHides(polys: Pt[][]): Hide[] {
-  const offsets = polys.map((_, k) => polys.slice(0, k).reduce((a, q) => a + q.length, 0));
-  const flatEdges = polys.flatMap((p, pi) => p.map((a, k) => ({ a, b: p[(k + 1) % p.length], pi, k, n: p.length })));
+  const flatEdges = polys.flatMap((p, pi) => p.map((a, k) => ({ a, b: p[(k + 1) % p.length], pi })));
   type E = (typeof flatEdges)[number];
-  const at = (e: E, d: number) => flatEdges[offsets[e.pi] + ((e.k + d + e.n) % e.n)];
   const horizontal = (e: E) => e.a[1] === e.b[1];
-  const dir = (e: E) => `${Math.sign(e.b[0] - e.a[0])},${Math.sign(e.b[1] - e.a[1])}`;
   const span = (e: E) => (horizontal(e) ? [Math.min(e.a[0], e.b[0]), Math.max(e.a[0], e.b[0])] : [Math.min(e.a[1], e.b[1]), Math.max(e.a[1], e.b[1])]);
   const linked = flatEdges.map(() => new Set<number>());
   flatEdges.forEach((e, i) => flatEdges.forEach((f, j) => {
     if (j <= i || e.pi !== f.pi || horizontal(e) !== horizontal(f)) return;
     const [e0, e1] = span(e), [f0, f1] = span(f);
-    if (e1 - e0 !== f1 - f0) return;
-    const opposite = e0 === f0 && e1 === f1;
-    // a staircase: the little edge between them carries on in the same direction either before the first or after the second
-    const [first, second] = (e.k + 2) % e.n === f.k ? [e, f] : (f.k + 2) % e.n === e.k ? [f, e] : [undefined, undefined];
-    const step = !!first && !!second && (dir(at(first, 1)) === dir(at(first, -1)) || dir(at(first, 1)) === dir(at(second, 1)));
-    if (opposite || step) { linked[i].add(j); linked[j].add(i); }
+    if (e0 === f0 && e1 === f1) { linked[i].add(j); linked[j].add(i); }
   }));
   // components of twins: label one side, leave out those directly linked to it
   const seen = new Set<number>(), hides: Hide[] = [];
@@ -76,13 +79,13 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const ask = pickActive(v, ASK.options) as "perimeter" | "area";
   const mixed = level === "level3" && !!v.mixed;
   const showSplit = vars.showSplit ?? level === "level1";
-  const missingOn = !!v.missing, reducedOn = !!vars.reducedLabels;
+  const missingOn = !!v.missing, reducedOn = vars.reducedLabels ?? true;
 
   // pick a shape so that every side left out is allowed: a twin (implied by the drawing) for Reduced Labelling, and for a ? side one that
   // is a sum or difference of others, never a copy
   let kind: RectKind = "L", polys: Pt[][] = [], twins: Hide[] = [], missing: Hide[] = [];
   for (let attempt = 0; attempt < 400; attempt++) {
-    kind = attempt > 80 ? (reducedOn ? "T" : "L") : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
+    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "N", "comb", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
     twins = reducedOn ? twinHides(polys) : [];
@@ -98,8 +101,32 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
         if (count === 2 && other.length) missing.push(pickOne(other));
       }
     }
-    if ((!reducedOn || twins.length) && (!missingOn || polys.length > 1 || missing.length)) break;
+    // Keep shapes with no redundant sides too: reduced labelling must not force a different shape.
+    if (!missingOn || polys.length > 1 || missing.length) break;
   }
+  return buildCompound(polys, { kind, level, ask, mixed, showSplit, twins, missing, bounding: !!v.boundingRectangle, subtract: !!v.subtract });
+}
+
+/** Shared solution path for live questions and deliberately chosen deck questions. */
+function internalDimensions(rects: Rect[], flat: { a: Pt; b: Pt; len: number }[], overall = false): Beat[] {
+  const beats: Beat[] = [], seen = new Set<string>();
+  rects.forEach((r,k) => { for (const axis of [0,1]) {
+    const lo=axis===0?r.x0:r.y0,hi=axis===0?r.x1:r.y1,key=`${axis}:${lo}:${hi}`;
+    if(seen.has(key))continue;seen.add(key);
+    const spans=flat.filter(e=>(e.a[1]===e.b[1]?0:1)===axis).map(e=>[Math.min(e.a[axis],e.b[axis]),Math.max(e.a[axis],e.b[axis])] as const);
+    if(spans.some(([a,b])=>a===lo&&b===hi))continue;
+    const parts=(a:number,b:number):number[]|undefined=>{if(a===b)return[];for(const [x,y] of spans)if(x===a&&y<=b){const rest=parts(y,b);if(rest)return[y-x,...rest];}return undefined;};
+    let expression:string|undefined;
+    for(const [a,b] of spans)if(a<=lo&&b>=hi){const left=parts(a,lo),right=parts(hi,b);if(left&&right){expression=[b-a,...left.map(x=>-x),...right.map(x=>-x)].map((n,i)=>i?` - ${-n}`:String(n)).join("");break;}}
+    if(!expression){const add=parts(lo,hi);if(add)expression=add.join(" + ");}
+    if(expression)beats.push({step:mStep(overall ? `Find the overall ${axis===0?"width":"height"}:` : `Find the internal ${axis===0?"width":"height"} of rectangle ${LETTERS[k]}:`,[`${expression} = ${hi-lo}`],CM),focus:{regions:[overall ? "outer" : `s${k}`]}});
+  }});
+  return beats;
+}
+
+export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: DifficultyLevel; ask: "area" | "perimeter"; mixed: boolean; showSplit: boolean; twins?: Hide[]; reduced?: boolean; missing?: Hide[]; bounding?: boolean; subtract?: boolean }): Built {
+  const { kind, level, ask, mixed, showSplit } = opts;
+  const twins = opts.twins ?? (opts.reduced ? twinHides(polys) : []), missing = opts.missing ?? [];
   const hidden: Hide[] = [...twins, ...missing];
   const outer = polys[0];
   const holes = polys.slice(1);
@@ -155,7 +182,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const helpers: DHelper[] = [];
   const regions: DRegion[] = [];
   if (ask === "perimeter") {
-    const bounding = !!v.boundingRectangle && level !== "level3" && CONVEX.includes(kind);
+    const bounding = !!opts.bounding && level !== "level3" && CONVEX.includes(kind);
     if (hasHole) {
       const hb = boxOf([holes[0]]), hw = hb.x1 - hb.x0, hh = hb.y1 - hb.y0;
       beats.push({ step: mStep("The outside edge:", [`2 \\times (${W} + ${H})`, `= ${2 * (W + H)}`]), focus: { edges: outerEdges } });
@@ -171,12 +198,13 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     } else {
       beats.push({ step: mStep("Add every side:", addFrags(flat.map((e) => e.len), P), CM), focus: everything });
     }
-  } else if (hasHole || level === "level3" || !!v.subtract) {
+  } else if (hasHole || level === "level3" || !!opts.subtract) {
     const cuts = hasHole ? [boxOf([holes[0]])] : cutRects(polys);
     regions.push({ id: "outer", pts: rect({ x0: box.x0, y0: box.y0, x1: box.x1, y1: box.y1 }), color: "#e2e8f0" });
     cuts.forEach((r, k) => regions.push({ id: `c${k}`, pts: rect(r), color: "#fde68a", text: "", always: showSplit }));
     const cutAreas = cuts.map(rectArea), cutTotal = sum(cutAreas);
     const cutIds = cuts.map((_, k) => `c${k}`);
+    beats.push(...internalDimensions([box], flat, true));
     beats.push({ step: mStep("The rectangle round the whole shape:", [`${W} \\times ${H}`, `= ${W * H}`]), focus: { regions: ["outer"] } });
     beats.push({
       step: mStep(hasHole ? "The hole:" : "The parts that are missing:", [...cuts.map((r, k) => `${k ? "+ " : ""}${r.x1 - r.x0} \\times ${r.y1 - r.y0}`), ...(cuts.length > 1 ? [`= ${cutTotal}`] : [`= ${cutTotal}`])]),
@@ -187,6 +215,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
     const rects = splitRects(polys), areas = rects.map(rectArea);
     rects.forEach((r, k) => regions.push({ id: `s${k}`, pts: rect(r), color: COLORS[k % COLORS.length], text: LETTERS[k], always: showSplit }));
     const ids = rects.map((_, k) => `s${k}`);
+    beats.push(...internalDimensions(rects, flat));
     beats.push({
       step: mStep("Split it into rectangles and find each area:", rects.map((r, k) => `${k ? ",\\ " : ""}${LETTERS[k]} = ${r.x1 - r.x0} \\times ${r.y1 - r.y0} = ${areas[k]}`)),
       focus: { regions: ids },
@@ -196,6 +225,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
 
   const value = ask === "perimeter" ? P : A, unit = ask === "perimeter" ? CM : CM2;
   const drawing: Drawing = {
+    dimensionStyle: "arrows",
     polys, edges, helpers, corners: [], regions,
     caption: [...(mixed ? ["Give your answer in cm."] : []), `Find the ${ask}.`],
     answerLine: `${ask === "perimeter" ? "Perimeter" : "Area"} = ${value} ${unit}`,

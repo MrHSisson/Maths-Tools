@@ -346,11 +346,11 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
   const show = (
     <div className={`flex ${turned ? "h-full w-full" : "h-app"} flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE, ...(phone ? { touchAction: "none" } : {}) }}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      {!full && <div className="flex items-center gap-3 pb-2">
+      {!full && <div className="flex flex-wrap items-center gap-3 pb-2">
         <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex max-w-full flex-wrap items-center gap-2">
           {boards.length > 0 && fillGroup}
           {deck.slides[index].els.some((e) => e.kind === "numberGrid") && <button className={iconBtn} onClick={() => printPrintable(hundredSquareSheet())} title="Print 1 to 100 grids, two to an A4 page"><Printer size={16} />Print grids</button>}
           {here.length > 0 && <>

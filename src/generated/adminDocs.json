@@ -324,6 +324,16 @@
    ]
   },
   {
+   "title": "Rectilinear shapes in decks",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** teaching area by splitting into rectangles and by removing cut-outs. **How it works:** live generator slides show the tool's own diagrams and step highlighting. Authored questions have chosen dimensions, orientation and method; L-shapes can deliberately mark a length to find by addition or subtraction before area. Board edge labels are larger while worksheet labels keep their print size. Reduced labelling defaults on. Make printable worksheet saves an independent set with a supplied split and prompts, a split only, or independent working space; questions and worked answers print from File → Worksheets. **Where:** deck editor, Perimeter & Area → Rectilinear Shapes."
+    }
+   ]
+  },
+  {
    "title": "Print slides (decks)",
    "level": 3,
    "blocks": [
@@ -539,7 +549,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
+     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out. Rectilinear staircase steps stay labelled even when their lengths happen to match; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
     }
    ]
   },
@@ -952,7 +962,7 @@
    "title": "Decks",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-04",
+   "updated": "2026-11-10",
    "sections": [
     {
      "title": "Intention",
@@ -971,6 +981,8 @@
       {
        "t": "ul",
        "items": [
+        "Year 7 rectilinear area completely rebuilt (2026-11-10): 12 fresh slides (10 core plus two optional generators), visible headers, no discussion slides. Four partitions on one sequence, then unpartitioned T–L–T–L area, internal-length teaching/practice, L/U then M/N then O cut-outs. Worksheet has three sections of four with the first question scaffolded; page 1 finds areas of T/L shapes, page 2 has two crosses and two staircases requiring internal lengths, and independent cut-outs are U/M/O/N, with N last and no L. Native shared deck is the master; former versions and PowerPoint are superseded. See `specs/decks/year7-rectilinear-area.md`.",
+        "Rectilinear diagrams: every independent boundary label retained, only aligned spans implied; arrows follow their own actual edge at a fixed 10px screen gap. No overall dimension frame, floating pills or equality tabs. Authored shapes include opposing-notch N and four-step staircases; solutions derive required internal/enclosing dimensions before areas.",
         "Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.",
         "Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.",
         "2026-11-10: **a phone only previews.** No deck editor, Edit, slide library or Send to a deck on a phone; opening a deck is a start card, then a full-screen show that goes landscape (or turns on its side on an upright iPhone) and swipes right to left forward, left to right back. See `docs/reference/decks.md`.",
@@ -980,7 +992,7 @@
         "Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.",
         "Decks are data (2026-10-29): JSON in `src/decks/data/`, the shared copy is master, `npm run deck` pulls, pushes, builds and checks. A lesson-plan template, a slide features list and a house-style page (`docs/design/LESSON_STYLE.md`) shape each build.",
         "The Year 9 Estimation deck (44 slides, built from `specs/decks/estimation-y9.md`) replaced the first one, with seven new Estimation Depth cards; Estimation division now spreads its answers across the 2 to 12 tables; the Rounding tool runs in generator slides. Not yet taught: refine it after a real lesson.",
-        "Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders exist for Estimation and Rounding only.",
+        "Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders now cover Estimation, Rounding, Ratio Manipulation and Rectilinear Shapes.",
         "Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.",
         "Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.",
         "Ratio table and bar model slide pieces (2026-10-30): both in the Insert menu and Add slide, with Filled in / Structure only / Blank and click-by-click building; the bar model is a shared picture (`src/shared/barModel.ts`) the ratio tools can reuse.",
@@ -2944,7 +2956,7 @@
    ]
   },
   "perimeter-and-area": {
-   "purpose": "Find the perimeter and area of shapes, from counting squares to compound shapes and algebra.",
+   "purpose": "Find the perimeter and area of shapes, from counting squares to rectilinear shapes and algebra.",
    "subTools": [
     {
      "name": "Counting on a Grid",
@@ -2965,7 +2977,7 @@
      ]
     },
     {
-     "name": "Compound Shapes",
+     "name": "Rectilinear Shapes",
      "purpose": "Find the perimeter and area of shapes made from rectangles.",
      "levels": [
       "L, T and staircase shapes with every side given",

@@ -45,12 +45,13 @@ const subscribeView = (cb: () => void): (() => void) => {
 export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
 
 // ── Is this a phone? `useLayoutMode()` calls a phone held sideways a tablet (it is more than 640px wide), but some things belong to the device,
-// not the window: a phone only previews a deck, whichever way it is held. So a phone is a window up to 640px wide, or a touch-first screen whose
-// shorter side is at most 600px (an iPad mini is 744). "View as" overrides it, so Mobile counts as a phone and Tablet or Desktop do not.
+// not the window: a phone only previews a deck, whichever way it is held. So a phone is a touch-first screen whose shorter side is at most 600px
+// (an iPad mini is 744). A narrow browser window on a laptop is not a phone: it keeps everything. "View as" overrides it, so Mobile counts as a
+// phone and Tablet or Desktop do not.
 const PHONE_SCREEN_MAX = 600;
 export function phoneDeviceOf(o: { width: number; coarse: boolean; shortSide: number; override: ViewOverride }): boolean {
   if (o.override) return o.override === "phone";
-  return o.width <= PHONE_MAX || (o.coarse && o.shortSide <= PHONE_SCREEN_MAX);
+  return o.coarse && o.shortSide <= PHONE_SCREEN_MAX;
 }
 const readPhone = (): { width: number; coarse: boolean; shortSide: number } => (typeof window === "undefined"
   ? { width: 1366, coarse: false, shortSide: 768 }
