@@ -34,6 +34,18 @@ function missingCandidates(polys: Pt[][]): { horiz: Hide[]; vert: Hide[] } {
   return { horiz, vert };
 }
 
+/** One deliberately unknown length, using the same eligibility and calculation as the live generator. */
+export function chosenMissingSide(polys: Pt[][], calculation: "addition" | "subtraction"): Hide {
+  const candidates = missingCandidates(polys), outer = polys[0];
+  const possible = [...candidates.horiz, ...candidates.vert].filter(h => {
+    const side = sideOf(outer[h.i], outer[(h.i + 1) % outer.length]);
+    const same = outer.filter((p, i) => i !== h.i && sideOf(p, outer[(i + 1) % outer.length]) === side).length;
+    return calculation === "addition" ? same === 0 : same > 0;
+  });
+  if (!possible.length) throw new Error("These dimensions do not provide a distinct missing length; choose different lengths.");
+  return pickOne(possible);
+}
+
 /** Only hide a side when a labelled parallel side spans exactly the same interval.
  *  Matching lengths on neighbouring staircase steps are a coincidence, not a geometric equality:
  *  without a label, a pupil would have to subtract the other steps from the overall length. */
@@ -67,7 +79,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   const ask = pickActive(v, ASK.options) as "perimeter" | "area";
   const mixed = level === "level3" && !!v.mixed;
   const showSplit = vars.showSplit ?? level === "level1";
-  const missingOn = !!v.missing, reducedOn = !!vars.reducedLabels;
+  const missingOn = !!v.missing, reducedOn = vars.reducedLabels ?? true;
 
   // pick a shape so that every side left out is allowed: a twin (implied by the drawing) for Reduced Labelling, and for a ? side one that
   // is a sum or difference of others, never a copy

@@ -20,6 +20,7 @@ export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) 
     const prompts = !full ? ["Show your method.", `${measure} = __________________ ${unit}`] : authored?.rectilinear?.method === "subtract"
       ? ["Whole rectangle: ____ × ____ = ____ cm²", "Cut-out area(s): __________________", "Shape area: __________________ cm²"]
       : [...d.regions.filter(r => r.id.startsWith("s")).map((_, i) => `Rectangle ${String.fromCharCode(65 + i)}: ____ × ____ = ____ cm²`), "Total area: __________________ cm²"];
+    if (authored?.rectilinear?.missingLength) prompts.unshift("Missing length: __________ cm");
     const clean = (s: string) => s.replace(/\\times/g, "×").replace(/,\\\s*/g, "; ").replace(/\\,/g, " ");
     return { svg: renderToStaticMarkup(<ShapeDiagram d={d} showAnswer={false} small />),
       answerSvg: renderToStaticMarkup(<ShapeDiagram d={d} showAnswer small focus={{ regions: d.regions.map(r => r.id) }} />),

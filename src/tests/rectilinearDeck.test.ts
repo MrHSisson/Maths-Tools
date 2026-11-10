@@ -12,6 +12,7 @@ import { rectilinearPrintCells } from "../decks/rectilinearPrint";
 import { diagramPracticeSheet } from "../shared/printables";
 import { GENERATOR_TOOLS, generateFrom, loadConfig, generateSet, supportsGeneratorSubtool } from "../decks/generators";
 import { fromGenerated } from "../decks/SlideCanvas";
+import { labelPlan } from "../shared/shapes/Diagram";
 import { extras } from "../shared/questionExtras";
 import type { Drawing } from "../shared/shapes/drawing";
 
@@ -82,6 +83,33 @@ describe("rectilinear deck foundations", () => {
     const html = renderToStaticMarkup(createElement(SendToDeck, { path: "/perimeter-and-area", sub: "compound", level: "level1", variables: {}, dropdown: "", multiSelect: {}, question: rectilinearQuestion(shape()), onClose: () => {} }));
     expect(html).toContain("chosen dimensions");
     expect(html).not.toContain("This question, hand-picked");
+  });
+
+  it("enlarges board labels without changing worksheet type or sizing", () => {
+    const d = extras(rectilinearQuestion(shape()))._diagram as Drawing;
+    expect(labelPlan(d, false, false).L.fs).toBe(30);
+    expect(labelPlan(d, true, false).L.fs).toBe(12);
+    expect(rectilinearPrintCells([authoredRectilinear("printed", shape())])[0].svg).toContain('font-size="12"');
+  });
+  it("authors missing lengths by addition or subtraction before area, without leaking the value in helpers", () => {
+    for (const missingLength of ["addition", "subtraction"] as const) for (let orientation = 0; orientation < 8; orientation++) {
+      const q = rectilinearQuestion({ ...shape(), missingLength, orientation });
+      const d = extras(q)._diagram as Drawing;
+      const unknown = d.edges.filter(e => e.kind === "missing");
+      expect(unknown).toHaveLength(1);
+      const value = unknown[0].value!;
+      expect(d.edges.filter(e => e.kind === "plain").some(e => e.label === value)).toBe(false);
+      expect(d.helpers).toEqual([]);
+      expect(q.working.findIndex(w => w.label === "So the missing side is:")).toBeLessThan(q.working.findIndex(w => w.label === "Split it into rectangles and find each area:"));
+      expect(q.answer).toBe("42");
+      const calculation = q.working.find(w => w.label === "So the missing side is:")!.latex.split("=")[0];
+      expect(calculation.includes("-")).toBe(missingLength === "subtraction");
+      const authored = authoredRectilinear("missing-one", { ...shape(), missingLength, orientation });
+      expect(isCuratedQuestion(JSON.parse(JSON.stringify(authored)))).toBe(true);
+      expect(rectilinearPrintCells([authored])[0].prompts[0]).toContain("Missing length");
+    }
+    expect(isRectilinearSpec({ ...shape(), shape: "T", missingLength: "addition" })).toBe(false);
+    expect(isRectilinearSpec({ ...shape(), width: 6, height: 6, cutWidth: 3, cutHeight: 3, missingLength: "subtraction" })).toBe(false);
   });
 
 });

@@ -12,6 +12,8 @@ Moved out of `CLAUDE.md` unchanged, so every session need not load it. Every rul
 
 **Rectilinear Shapes — Reduced Labelling:** an unlabelled boundary side must have a labelled parallel side spanning exactly the same interval on the same outline. Neighbouring staircase steps remain labelled even when the generated lengths happen to match: their equality is not established by the drawing. Shapes with no redundant labels keep all their labels. **Some Missing** is separate and marks sides requiring addition or subtraction with `?`. <!-- ref -->
 
+Board length labels use 30-unit type, with pill dimensions and spacing recomputed by the existing label-placement engine. Small/worksheet rendering retains its 12-unit type and original aspect calculations. <!-- ref -->
+
 ## Split worked example — the developing picture, three flavours
 
 `stepVisualRenderer` turns Worked Example into a split: ONE picture that updates in place as the steps advance.

@@ -329,7 +329,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** teaching area by splitting into rectangles and by removing cut-outs. **How it works:** live generator slides show the tool's own diagrams and step highlighting. Authored questions have chosen dimensions, orientation and method. Make printable worksheet saves an independent set with a supplied split and prompts, a split only, or independent working space; questions and worked answers print from File → Worksheets. **Where:** deck editor, Perimeter & Area → Rectilinear Shapes."
+     "s": "**For:** teaching area by splitting into rectangles and by removing cut-outs. **How it works:** live generator slides show the tool's own diagrams and step highlighting. Authored questions have chosen dimensions, orientation and method; L-shapes can deliberately mark a length to find by addition or subtraction before area. Board edge labels are larger while worksheet labels keep their print size. Reduced labelling defaults on. Make printable worksheet saves an independent set with a supplied split and prompts, a split only, or independent working space; questions and worked answers print from File → Worksheets. **Where:** deck editor, Perimeter & Area → Rectilinear Shapes."
     }
    ]
   },
@@ -961,7 +961,7 @@
       {
        "t": "ul",
        "items": [
-        "Rectilinear foundations (2026-11-10): live shape diagrams with step highlighting; chosen-dimension L/T/staircase questions using the tool’s own working; split/add and subtract cut-outs; independent authored worksheets with fading scaffolds, A4 writing space and worked answer pages. The Year 7 lesson plan starts directly with shapes and introduces cut-outs as a discussion. Full lesson content remains to be authored.",
+        "Rectilinear foundations (2026-11-10): live shape diagrams with step highlighting; chosen-dimension L/T/staircase questions using the tool’s own working; split/add and subtract cut-outs; independent authored worksheets with fading scaffolds, A4 writing space and worked answer pages. The Year 7 lesson plan starts directly with shapes, introduces missing lengths mid-lesson and cut-outs as a discussion; board labels are larger, print labels unchanged, and reduced labelling defaults on. Full lesson content remains to be authored.",
         "Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.",
         "Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.",
         "Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.",
