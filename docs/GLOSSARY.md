@@ -198,7 +198,10 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | **Knock-on** | An activity that must start later only because something it waits for now finishes later. | `LevelTry.knockOns` |
 | **Ghost** | The held-back (or slid) block drawn dashed at its old place, with an arrow to where it is now. | `HistViewState.ghost` |
 | **Question sheet** | The A4 page a Critical Path histogram or levelling question prints on: the network, the cascade chart and the histograms (given or blank). The answer sheet has them drawn. | `config.questionSheet`, `printCpa.ts`, `cpaSheet.tsx` |
-| **Print basket** | Questions saved (as recipes: sub-tool, level, options, seed) to print later; kept in the browser and shareable as a link. | `printBasket.ts`, `PrintBasket.tsx` |
+| **Saved question** | A question kept to come back to: its recipe (sub-tool or tool, level, options, seed), the tool page it came from and a fingerprint of how it looked when saved. Drawn again from the seed, so it survives a reload and goes in a link. | `SavedItem` (`savedLists.ts`), `BasketItem` (`printBasket.ts`) |
+| **Saved list** | A named list of saved questions (up to 30; up to 20 lists; always at least one, first called Saved) kept on the device. It can mix tools; picking a question from another tool opens that tool with it restored. The pin control's panel switches, creates, renames and deletes lists. | `savedLists.ts`, `PinButton.tsx` |
+| **Print basket** | The page that prints the open saved list: this tool's saved questions in a sub-tool with a print sheet (questions, answers or both), plus the link that carries them to another device. (Before saved lists it was the whole of "saved questions".) | `PrintBasket.tsx`, `usePrintBasket.tsx` |
+| **Hub (spec-code page)** | A page that is the way in to a strand's tools, instead of one card per tool on the landing page. Decision Maths is one: chapters DA to DG, each listing its generators and, under each specification statement, the sub-tools that practise it. | `hub` (registry), `DecisionOverview.tsx`, `SpecLanding.tsx` |
 | **forLevels** | A Decision shell option field: the option is offered only at those levels. | `ShellOption.forLevels` |
 
 ---
