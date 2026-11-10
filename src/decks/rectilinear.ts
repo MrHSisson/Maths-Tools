@@ -1,7 +1,7 @@
 import { extras } from "../shared/questionExtras";
 import type { Drawing, Focus } from "../shared/shapes/drawing";
 import { isRectilinearSpec, type RectilinearSpec } from "../../api/_rectilinear";
-import { buildCompound } from "../tools/Geometry/perimeterArea/compound";
+import { buildCompound, chosenMissingSide } from "../tools/Geometry/perimeterArea/compound";
 import { toQuestion } from "../tools/Geometry/perimeterArea/build";
 import { boxOf, orient, type Pt } from "../shared/shapes/model";
 import { replaySeeded } from "../shared/seededGenerate";
@@ -26,16 +26,17 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   const bounds = boxOf([rotated]);
   const polys = orient([rotated.map(([x, y]) => [x - bounds.x0, y - bounds.y0] as Pt)]);
   const q = replaySeeded({ _seed: 1 } as unknown as AnyQuestion, () => toQuestion(buildCompound(polys, {
-    kind: shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, subtract: spec.method === "subtract",
+    kind: shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
   })));
   if (!q) throw new Error("The rectilinear question could not be built.");
   if (Number(q.answer) !== expected) throw new Error("The shape's area does not match its dimensions.");
   // On supplied splits, label component dimensions that have no directly aligned boundary label.
   // This keeps the scaffold about area, rather than an unannounced missing-length calculation.
   const drawing = extras(q)._diagram as Drawing;
+  if (spec.missingLength) { drawing.caption = ["Find the missing length, then the area."]; if (q.kind === "worded") q.lines = drawing.caption; else q.display = drawing.caption[0]; }
   const focuses = extras(q)._stepFocus as (Focus | undefined)[];
   const added = new Set<string>();
-  for (const region of drawing.regions.filter(r => r.id !== "outer")) {
+  for (const region of (spec.missingLength ? [] : drawing.regions).filter(r => r.id !== "outer")) {
     const xs = region.pts.map(p => p[0]), ys = region.pts.map(p => p[1]);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
     for (const [axis, a, b] of [[0, [x0, y0], [x1, y0]], [1, [x0, y0], [x0, y1]]] as [number, Pt, Pt][]) {

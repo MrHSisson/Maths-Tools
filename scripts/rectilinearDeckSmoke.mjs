@@ -56,15 +56,18 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
     await p.getByRole("button", { name: "Apply to slide", exact: true }).waitFor();
     if (!await p.getByRole("button", { name: "Apply to slide", exact: true }).isDisabled()) throw Error("Invalid dimensions can be applied");
     await p.getByLabel("Overall width (cm)", { exact: true }).fill("10");
+    await p.getByLabel("Lengths given", { exact: true }).selectOption("addition");
     await p.getByRole("button", { name: "Apply to slide", exact: true }).click();
     await p.waitForTimeout(2200);
     if (deck.slides[1].els.find((e) => e.kind === "questions").items[0].rectilinear.width !== 10) throw Error("Shape dimensions did not save");
-    console.log("PASS edit shape and save through API");
+    if (deck.slides[1].els.find(e => e.kind === "questions").items[0].rectilinear.missingLength !== "addition") throw Error("Missing-length choice did not save");
+    console.log("PASS edit shape and missing length, save through API");
     await p.reload();
     await p.locator("[data-shape-question]").first().waitFor();
     await p.locator("[data-slide-canvas]").last().dblclick({ position: { x: 200, y: 130 } });
     await p.getByLabel("Overall width (cm)", { exact: true }).waitFor();
     if (await p.getByLabel("Overall width (cm)", { exact: true }).inputValue() !== "10") throw Error("Saved shape did not reload");
+    if (await p.getByLabel("Lengths given", { exact: true }).inputValue() !== "addition") throw Error("Missing-length choice did not reload");
     for (const [width, height] of [[1024, 768], [390, 800]]) {
       await p.setViewportSize({ width, height });
       const dialog = p.getByRole("dialog", { name: "Skill practice", exact: true });
@@ -86,7 +89,8 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
     });
     if (bounds.w < 150 || bounds.h < 150) throw Error("Generator diagram is too small " + JSON.stringify(bounds));
     await p.screenshot({ path: path.join(output, "generator.png") });
-    console.log("PASS live generator reveal", bounds);
+    if (await p.locator('[data-shape-question] svg text[font-size="30"]').count() === 0) throw Error("Board edge labels were not enlarged");
+    console.log("PASS live generator reveal and larger board labels", bounds);
     for (const [width, height] of [[1024, 768], [390, 800]]) {
       await p.setViewportSize({ width, height });
       await p.reload();
@@ -110,7 +114,8 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
     if (over) throw Error("Printed cell content clips " + over);
     await print.screenshot({ path: path.join(output, "print.png") });
     await print.pdf({ path: path.join(output, "print.pdf"), preferCSSPageSize: true });
-    console.log("PASS four print pages without clipping");
+    if (await print.locator('svg text[font-size="12"]').count() === 0 || await print.locator('svg text[font-size="30"]').count() !== 0) throw Error("Worksheet label size changed");
+    console.log("PASS four print pages without clipping; worksheet labels unchanged");
     if (errors.length) throw Error(errors.join("\n"));
     console.log("PASS no browser errors; artifacts:", output);
     await context.close();

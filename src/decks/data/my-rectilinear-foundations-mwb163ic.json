@@ -3,6 +3,8 @@
  "title": "Rectilinear area — foundations",
  "summary": "Compare splitting and adding with removing a cut-out, then practise using a scaffolded worksheet.",
  "tool": "perimeter-and-area",
+ "toolPath": "/perimeter-and-area",
+ "questionVersion": 2,
  "slides": [
   {
    "id": "my-rectilinear-foundations-mwb163ic-title",
@@ -118,6 +120,155 @@
       }
      },
      "seed": 123,
+     "presentation": "full",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852
+    }
+   ]
+  },
+  {
+   "id": "my-rectilinear-foundations-mwb163ic-missing-0",
+   "family": "teach",
+   "title": "Find a length by adding",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "my-rectilinear-foundations-mwb163ic-missing-q-0",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "The sides along the left add up to the same as the sides along the right: $? = 4 + 2$",
+        "So the missing side is: $(4 + 2) = 6$",
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "addition"
+       }
+      }
+     ],
+     "id": "my-rectilinear-foundations-mwb163ic-missing-0-1"
+    }
+   ],
+   "brief": "Find the marked missing boundary length first, then use it to calculate area. Reduced labels only omit geometric equals."
+  },
+  {
+   "id": "my-rectilinear-foundations-mwb163ic-missing-1",
+   "family": "teach",
+   "title": "Find a length by subtracting",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "my-rectilinear-foundations-mwb163ic-missing-q-1",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the missing length, then the area."
+       ],
+       "answer": [
+        "$42$ cm²"
+       ],
+       "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $2 + ? = 6$",
+        "So the missing side is: $6 - 2 = 4$",
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
+        "Add the areas: $32 + 10 = 42$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "L",
+        "width": 8,
+        "height": 6,
+        "cutWidth": 3,
+        "cutHeight": 2,
+        "method": "split",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none",
+        "missingLength": "subtraction"
+       }
+      }
+     ],
+     "id": "my-rectilinear-foundations-mwb163ic-missing-1-1"
+    }
+   ],
+   "brief": "Find the marked missing boundary length first, then use it to calculate area. Reduced labels only omit geometric equals."
+  },
+  {
+   "id": "my-rectilinear-foundations-mwb163ic-missing-practice",
+   "title": "Missing lengths, then area",
+   "family": "practice",
+   "brief": "General practice after modelling addition and subtraction: find the unknown lengths before calculating area.",
+   "els": [
+    {
+     "id": "my-rectilinear-foundations-mwb163ic-missing-practice-generator",
+     "kind": "generator",
+     "tool": "perimeter-and-area",
+     "preset": {
+      "sub": "compound",
+      "level": "level2",
+      "multiSelect": {
+       "area": true,
+       "perimeter": false,
+       "all": false,
+       "missing": true,
+       "split": true,
+       "subtract": false
+      },
+      "variables": {
+       "showSplit": false,
+       "reducedLabels": true
+      }
+     },
+     "seed": 421,
      "presentation": "full",
      "x": 24,
      "y": 24,
@@ -370,14 +521,16 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the area."
+        "Find the missing length, then the area."
        ],
        "answer": [
-        "$72$ cm²"
+        "$96$ cm²"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 8 \\times 3 = 24 ,\\ C = 4 \\times 3 = 12$",
-        "Add the areas: $36 + 24 + 12 = 72$"
+        "The sides along the left add up to the same as the sides along the right: $? = 6 + 3$",
+        "So the missing side is: $(6 + 3) = 9$",
+        "Split it into rectangles and find each area: $A = 12 \\times 6 = 72 ,\\ B = 8 \\times 3 = 24$",
+        "Add the areas: $72 + 24 = 96$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -385,7 +538,7 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "stairs3",
+        "shape": "L",
         "width": 12,
         "height": 9,
         "cutWidth": 4,
@@ -393,7 +546,8 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "none",
+        "missingLength": "addition"
        }
       },
       {
@@ -405,12 +559,14 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the area."
+        "Find the missing length, then the area."
        ],
        "answer": [
         "$88$ cm²"
        ],
        "explanation": [
+        "The sides along the right add up to the same as the sides along the left: $5 + ? = 9$",
+        "So the missing side is: $9 - 5 = 4$",
         "The rectangle round the whole shape: $12 \\times 9 = 108$",
         "The parts that are missing: $5 \\times 4 = 20$",
         "Take them away: $108 - 20 = 88$"
@@ -429,14 +585,13 @@
         "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "none",
+        "missingLength": "subtraction"
        }
       }
      ]
     }
    ]
   }
- ],
- "toolPath": "/perimeter-and-area",
- "questionVersion": 2
+ ]
 }

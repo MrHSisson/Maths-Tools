@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear board labels and mid-lesson missing lengths
+
+Branch `codex/rectilinear-board-labels` (incorporates the earlier rectilinear fixes and editor foundations). Areas: shared shape renderer, Perimeter & Area defaults, authored shape specification/controls/print, shared review draft, tests and lesson docs.
+
+- Larger board edge labels: 30-unit rather than 18-unit type, with label pills and margins replanned at the new size. Worksheet labels and print aspect calculations remain unchanged at 12 units.
+- Reduced Labelling defaults on at all three Rectilinear Shapes levels and remains enabled throughout the review draft. Deliberate unknowns remain visibly marked `?`.
+- Authored L-shapes can choose a missing length found by addition or subtraction. The working finds it before calculating area; supplied split/helper labels do not disclose the value. The specification and API validate that a distinct unknown is available.
+- Updated the Year 7 plan to introduce missing lengths mid-lesson, before the cut-out discussion. The shared draft now includes two fixed missing-length models, a generator phase and missing-length worksheet questions; concurrent teacher edits are merged from a freshly pulled base.
+- Validation: full suite passed (126 files, 2,520 tests; 18 skipped), build and lint passed. Browser checks cover larger board type, unchanged worksheet type, missing-length edit/save/reload, phone/tablet/laptop layouts and print pagination; shared-shell and all eight draft content/layout checks pass. Shared readback confirms eight slides with no merge clashes.
+- Deliberately not done: full lesson authoring, PR, merge or production deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear board labels and missing lengths (2026-11-10)”.
+
 ## 2026-11-10 — Rectilinear area in the deck editor: live diagrams, fixed questions and scaffolded sheets
 
 Branch `codex/rectilinear-deck-foundations` (includes the reduced-label fix from `codex/rectilinear-reduced-labels`). Areas: `src/decks/` generator, question, editor and worksheet paths; `api/_rectilinear.ts`, question/deck validation; the shared printable layout; Perimeter & Area's shared compound builder; browser/unit checks; docs and generated facts.

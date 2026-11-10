@@ -17,7 +17,7 @@ function layoutOf(d: Drawing, small: boolean): Layout {
   const target = small ? 170 : 380;
   let sc = Math.min(target / spanX, target / spanY);
   if (d.grid) sc = Math.min(sc, small ? 26 : 38);
-  const fs = small ? 12 : 18, fsC = small ? 13 : 20;
+  const fs = small ? 12 : 30, fsC = small ? 13 : 20;
   // room for the widest label to hang off a side and still sit inside the picture
   const widest = Math.max(1, ...d.edges.map((e) => Math.max(e.label.length, e.value?.length ?? 0)), ...d.helpers.map((h) => Math.max(h.label?.length ?? 0, h.value?.length ?? 0)));
   const reach = small ? 7 : 11;
