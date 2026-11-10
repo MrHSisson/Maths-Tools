@@ -1,3 +1,4 @@
+import { authoredSheetSlide } from "./worksheets";
 import { DECK_PAGE } from "./theme";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
@@ -102,7 +103,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [depthSwap, setDepthSwap] = useState<string | null>(null);            // the Depth card being changed                  // File → Worksheets
-  const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean } | null>(null);
+  const [question, setQuestion] = useState<{ id: string; items: CuratedQuestion[]; grid: boolean; sheet?: boolean } | null>(null);
   const [equation, setEquation] = useState<{ mode: "new" | "edit" | "insert"; id?: string; latex: string } | null>(null);
   const [generator, setGenerator] = useState<GeneratorElement | null>(null);
   const [bankVersion, setBankVersion] = useState(0);
@@ -227,7 +228,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   const addEls = (els: DeckElement[]) => { setSlide((s) => ({ ...s, els: [...s.els, ...els] })); setSel(els.map((e) => e.id)); const g = els.find((e) => e.kind === "generator" || e.kind === "worksheet"); if (g) setGenerator(g as GeneratorElement); };
   const openQuestions = async (el: DeckElement) => {
     stopEditing();
-    if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
+    if (el.kind === "worksheet" && el.authored) setQuestion({ id: el.id, items: el.authored, grid: false, sheet: true });
+    else if (el.kind === "questions") setQuestion({ id: el.id, items: el.items, grid: false });
     else if (el.kind === "grid") setQuestion({ id: el.id, items: legacyItems(el, bankQuestion), grid: true });
     else if (el.kind === "depth") {
       // a Depth card from the bank becomes this deck's own copy (same slide, same design), so its wording can be tweaked; the bank is not touched
@@ -860,9 +862,9 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
         {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid" || one.kind === "depth" || one.kind === "generator" || one.kind === "worksheet") && <RibbonGroup label="Questions">
           {(one.kind === "questions" || one.kind === "practice" || one.kind === "grid") && textBtn("Edit questions", <Pencil size={16} />, () => { void openQuestions(one); })}
           {one.kind === "depth" && <>{textBtn("Edit card", <Pencil size={16} />, () => { void openQuestions(one); })}{textBtn("Change card", <Replace size={16} />, () => setDepthSwap(one.id))}</>}
-          {(one.kind === "generator" || one.kind === "worksheet") && textBtn("Configure", <Dices size={16} />, () => { stopEditing(); setGenerator(one); })}
+          {(one.kind === "generator" || one.kind === "worksheet") && textBtn("Configure", <Dices size={16} />, () => { stopEditing(); one.kind === "worksheet" && one.authored ? void openQuestions(one) : setGenerator(one); })}
           {(one.kind === "generator" || one.kind === "worksheet") && <Menu panel label="Generator settings" title="Level, count, columns and more" button={<><Dices size={16} /><span className="hidden lg:inline">Settings</span></>}>
-            {() => <div className="p-2"><GeneratorProps el={one} onConfigure={() => { stopEditing(); setGenerator(one); }} />{one.kind === "worksheet" && <SheetProps el={one} set={(pt) => setEl(one.id, pt)} canPin={pinnedSheets(deck).length < MAX_PINNED} />}</div>}
+            {() => <div className="p-2"><GeneratorProps el={one} onConfigure={() => { stopEditing(); one.kind === "worksheet" && one.authored ? void openQuestions(one) : setGenerator(one); }} />{one.kind === "worksheet" && <SheetProps el={one} set={(pt) => setEl(one.id, pt)} canPin={pinnedSheets(deck).length < MAX_PINNED} />}</div>}
           </Menu>}
           {one.kind === "grid" && <Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} />}
           {(one.kind === "grid" || one.kind === "worksheet") && (["left", "center"] as const).map((al) => <button key={al} className={`${toolBtn} ${iconOn((one.align ?? "left") === al)}`} aria-pressed={(one.align ?? "left") === al} title={`Questions ${al === "left" ? "at the left of" : "centred in"} their cells`} onClick={() => setEl(one.id, { align: al === "left" ? undefined : al })}>{al === "left" ? <AlignLeft size={16} /> : <AlignCenter size={16} />}</button>)}
@@ -1046,7 +1048,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
                 const picked = selSet.has(el.id);
                 return (
                   <div key={el.id} onPointerDown={(e) => pressElement(e, el)}
-                    onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); else if (el.kind === "generator" || el.kind === "worksheet") setGenerator(el); else if (["questions", "practice", "depth", "grid"].includes(el.kind)) void openQuestions(el); }}
+                    onDoubleClick={() => { if (el.kind === "text") startEditing(el.id); else if (el.kind === "maths") setEquation({ mode: "edit", id: el.id, latex: el.latex }); else if (el.kind === "worksheet" && el.authored) void openQuestions(el); else if (el.kind === "generator" || el.kind === "worksheet") setGenerator(el); else if (["questions", "practice", "depth", "grid"].includes(el.kind)) void openQuestions(el); }}
                     style={{ position: "absolute", left: b.x - pad, top: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, cursor: el.kind === "text" ? "text" : "move",
                       outline: picked ? `${2 / scale}px solid #2563eb` : issueIds.has(el.id) ? `${2 / scale}px dashed #d97706` : undefined, outlineOffset: 2 / scale }}
                     className={picked ? "" : "hover:outline hover:outline-1 hover:outline-blue-300"} />
@@ -1148,8 +1150,11 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
       {lessonMap && <LessonMap deckTitle={deck.title} slides={deck.slides} index={si} onClose={() => setLessonMap(false)} onApply={(slides) => { apply((d) => ({ ...d, slides })); setLessonMap(false); }} />}
       {generator && <GeneratorDialog start={generator} brief={slide.brief} onClose={() => setGenerator(null)} onApply={(el) => { setEl(el.id, el); setGenerator(null); }} />}
 
-      {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
-        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? (e.kind === "depth" ? { id: e.id, kind: "questions", x: e.x, y: e.y, w: e.w, h: e.h, ...(e.step ? { step: e.step } : {}), presentation: "full", visualiser: false, items } as DeckElement : ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement)) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
+      {question && <QuestionWorkspace context={{ title: slide.title, brief: slide.brief }} identity={`${deck.title} / ${slide.id}`} mode={slide.family === "depth" ? "depth" : "skill"} display={(() => { const el = slide.els.find((e) => e.id === question.id); return el?.kind === "questions" ? { presentation: el.presentation, visualiser: el.visualiser } : {}; })()} start={question.items} tool={deck.tool ?? "estimation"} draftKey={`${deck.id}:${question.id}`} onWorksheet={!question.sheet && pinnedSheets(deck).length < MAX_PINNED ? (items, title) => {
+        const next = authoredSheetSlide(uid(deck.id), title, items);
+        stopEditing(); apply(d => ({ ...d, slides: [...d.slides.slice(0, si + 1), next, ...d.slides.slice(si + 1)] })); setSi(si + 1); setSel([]);
+      } : undefined} grid={question.grid} onClose={() => setQuestion(null)} onApply={(items, context, display) => {
+        setSlide((s) => ({ ...s, title: context.title, brief: context.brief?.trim() ? context.brief : undefined, els: s.els.map((e) => e.id === question.id ? (e.kind === "worksheet" && e.authored ? { ...e, authored: items, count: items.length, pin: e.pin ? { ...e.pin, title: context.title } : undefined } : e.kind === "depth" ? { id: e.id, kind: "questions", x: e.x, y: e.y, w: e.w, h: e.h, ...(e.step ? { step: e.step } : {}), presentation: "full", visualiser: false, items } as DeckElement : ({ ...e, ...(question.grid ? { items, bank: [] } : { kind: "questions", items, ...display }) } as DeckElement)) : e.kind === "text" && e.text === s.title ? { ...e, text: context.title } : e) }));
       }} />}
       {equation && (
         <EquationEditor initial={equation.latex} title={equation.mode === "edit" ? "Edit equation" : "Equation"} action={equation.mode === "insert" ? "Insert" : equation.mode === "new" ? "Add to slide" : "Done"}

@@ -107,6 +107,8 @@ export type DeckElement = Box & (
       pin?: PinnedSheet;
       /** The set as it was when pinned, so a printed sheet and its answers cannot change if a generator does. Valid only while `sig` matches the setup. */
       frozen?: FrozenSheet;
+      /** Fixed authored geometry questions, with per-question print scaffolding. Never regenerated. */
+      authored?: CuratedQuestion[];
       /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
       view?: "key" }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */

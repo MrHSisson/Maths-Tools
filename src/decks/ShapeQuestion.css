@@ -1,0 +1,2 @@
+/* Give the shared shape renderer the question panel's height, including when the solution opens beside it. */
+.solution-question-content:has(> [data-shape-question]) { height: 100%; }

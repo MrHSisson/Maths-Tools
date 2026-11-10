@@ -1,3 +1,7 @@
+import { ShapeQuestion } from "./ShapeQuestion";
+import { rectilinearQuestion } from "./rectilinear";
+import { extras } from "../shared/questionExtras";
+import type { Drawing, Focus } from "../shared/shapes/drawing";
 import { asDepthItem, isDepthQuestion } from "./questions";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
@@ -6,7 +10,7 @@ import { DepthClaims } from "./DepthArtwork";
 import type { QuestionDisplaySettings } from "../../api/_questionDisplay";
 import { QuestionFrame } from "./QuestionFrame";
 import { useReportSize } from "./shownSize";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { InlineMath, MathRenderer } from "../shared/components/MathRenderer";
 import { SolutionStepper, useSolutionStepper } from "../shared/components/SolutionStepper";
 import { BidmasPyramid } from "../shared/components/BidmasPyramid";
@@ -72,7 +76,8 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
   const B = live ? "button" : "span";
   const controlButton = slideButton;
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
-  const questionContent = <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.join("").length < 170 ? "center" : "left" }}>
+  const shape = useMemo(() => q.rectilinear ? rectilinearQuestion(q.rectilinear) : undefined, [q.rectilinear]);
+  const questionContent = shape ? <ShapeQuestion drawing={extras(shape)._diagram as Drawing} focuses={extras(shape)._stepFocus as (Focus | undefined)[]} shown={solution.all ? q.explanation.length : solution.shown} answer={answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.join("").length < 170 ? "center" : "left" }}>
       {q.missing && <div role="alert" style={{ color: "#b91c1c" }}>Missing source: {q.missing}. Replace this item in Questions.</div>}
         {depth && !answer && q.format === "claims" && <DepthClaims claims={q.claims} />}
         {(!depth || !answer) && <div style={{ fontSize: "1em", fontWeight: 500 }}><QuestionText lines={q.question} /></div>}
@@ -88,7 +93,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
         {answer && <div className="depth-answer-heading">Answer</div>}
         {questionContent}
         {answer && <div className="depth-answer-reasoning" data-answer=""><QuestionText lines={q.answer} />{q.explanation.map((line, i) => <div key={i} data-explanation=""><QuestionText lines={[line]} /></div>)}</div>}
-      </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} flip={flip} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} question={questionContent} steps={stacked ? [] : q.explanation.map((line, i) => <QuestionText key={i} lines={[hasPicture && pictures[i] ? pictures[i]!.caption : line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={q.format === "open" && q.question.join("").length < 100} />}
+      </div></section> : <SolutionStepper layout={stacked ? "stacked" : "split"} flip={flip} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} question={questionContent} steps={stacked ? [] : q.explanation.map((line, i) => <QuestionText key={i} lines={[hasPicture && pictures[i] ? pictures[i]!.caption : line]} />)} answer={<QuestionText lines={q.answer} />} state={solution} live={live} fontSize={size} largeQuestion={!q.rectilinear && q.format === "open" && q.question.join("").length < 100} />}
 
     </div>
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>

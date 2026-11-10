@@ -1,3 +1,6 @@
+import { RectilinearAuthor } from "./RectilinearAuthor";
+import { defaultRectilinear } from "../../api/_rectilinear";
+import { authoredRectilinear } from "./rectilinear";
 import { useState } from "react";
 import { ALL_TOOLS } from "../registry";
 import { EquationEditor } from "./EquationEditor";
@@ -7,7 +10,7 @@ import type { CuratedQuestion } from "./types";
 const input = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 const label = "block text-sm font-semibold text-slate-700";
 const action = "min-h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50";
-export function QuestionAuthor({ question: q, onChange, library, openOnly = false }: { question: CuratedQuestion; onChange: (q: CuratedQuestion) => void; library: CuratedQuestion[]; openOnly?: boolean }) {
+export function QuestionAuthor({ question: q, onChange, library, openOnly = false, onValidityChange }: { question: CuratedQuestion; onChange: (q: CuratedQuestion) => void; library: CuratedQuestion[]; openOnly?: boolean; onValidityChange?: (valid: boolean) => void }) {
   const [maths, setMaths] = useState<{ insert: (latex: string) => void } | null>(null);
   const patch = (p: Partial<CuratedQuestion>) => onChange({ ...q, ...p, status: Object.keys(p).every((k) => k === "title") ? q.status : "draft" } as CuratedQuestion);
   let field = 0;
@@ -20,9 +23,11 @@ export function QuestionAuthor({ question: q, onChange, library, openOnly = fals
   };
   const choices = misconceptionChoices([...library, q]).filter(([id]) => id.startsWith(`${q.tool}-`) || id === q.misconception?.id);
   const problems = readyProblems(q);
-  const locked = !!q.visual;
+  const locked = !!q.visual || !!q.rectilinear;
   return <div className="space-y-4">
-    {locked && <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">This activity uses a built-in diagram. Its question, choices, answer and format stay together so the diagram remains accurate. Remove the diagram to change those fields; you can still edit the teaching guidance.<button className={`${action} mt-2 block`} onClick={() => patch({ visual: undefined })}>Remove diagram and unlock content</button></div>}
+    {q.format === "open" && !q.depth && q.source?.kind !== "depth" && !q.visual && !q.rectilinear && <button type="button" className={action} onClick={() => onChange(authoredRectilinear(q.id, defaultRectilinear(), q))}>Add rectilinear shape</button>}
+    {q.rectilinear && <RectilinearAuthor question={q} onChange={onChange} onValidityChange={onValidityChange} />}
+    {q.visual && <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">This activity uses a built-in diagram. Its question, choices, answer and format stay together so the diagram remains accurate. Remove the diagram to change those fields; you can still edit the teaching guidance.<button className={`${action} mt-2 block`} onClick={() => patch({ visual: undefined })}>Remove diagram and unlock content</button></div>}
     {rich("Question", q.question.join("\n"), (text) => patch({ question: text.split("\n") }), 2, locked)}
     {q.format === "claims" && <fieldset className="space-y-3"><legend className={`${label} mb-1`}>Students’ claims</legend>{q.claims.map((c, i) => <div key={i} className="rounded-xl border border-slate-200 p-3"><label><span className={`${label} mb-1`}>Name</span><input disabled={locked} className={input} value={c.name} onChange={(e) => patch({ claims: q.claims.map((x, j) => j === i ? { ...x, name: e.target.value } : x) })} /></label>{rich("Claim", c.text, (text) => patch({ claims: q.claims.map((x, j) => j === i ? { ...x, text } : x) }), 2, locked)}<button disabled={locked} className={`${action} mt-2`} onClick={() => patch({ claims: q.claims.filter((_, j) => j !== i) })}>Remove claim</button></div>)}<button disabled={locked} className={action} onClick={() => patch({ claims: [...q.claims, { name: "Student", text: "" }] })}>Add claim</button></fieldset>}
     {(q.format === "choice" || q.format === "claims") && <fieldset className="space-y-3"><legend className={`${label} mb-1`}>{q.format === "claims" ? "Answer choices (optional)" : "Answer choices"}</legend>{q.options.map((o, i) => <div key={i} className="space-y-2 rounded-xl border border-slate-200 p-3">{rich(`Choice ${String.fromCharCode(65 + i)}`, o.text, (text) => patch({ options: q.options.map((x, j) => j === i ? { ...x, text } : x) }), 2, locked)}<label className="flex min-h-10 items-center gap-2"><input type="checkbox" disabled={locked} checked={o.correct} onChange={(e) => patch({ options: q.options.map((x, j) => j === i ? { ...x, correct: e.target.checked } : x) })} />Answer</label>{rich("What this wrong response reveals", o.reasoning, (reasoning) => patch({ options: q.options.map((x, j) => j === i ? { ...x, reasoning } : x) }), 2, locked)}<button disabled={locked} className={action} onClick={() => patch({ options: q.options.filter((_, j) => j !== i) })}>Remove choice</button></div>)}<button disabled={locked} className={action} onClick={() => patch({ options: [...q.options, { text: "", correct: false, reasoning: "" }] })}>Add choice</button></fieldset>}

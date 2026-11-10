@@ -1,3 +1,4 @@
+import { isRectilinearSpec, type RectilinearSpec } from "./_rectilinear.js";
 // Serializable authored questions. Shared by the browser and the API; never import React or src here.
 type QuestionBase = {
   version: 2; id: string; title: string; tool: string; level: "level1" | "level2" | "level3";
@@ -8,6 +9,7 @@ type QuestionBase = {
   rationale: string; expectedErrors: { response: string; reasoning: string }[]; followUp: string;
   status: "draft" | "ready";
   source?: { kind: "bank" | "depth" | "library"; id: string; tool: string; /** a Depth card changed in the deck: kept as the deck's own copy, not turned back into a reference to the bank */ edited?: boolean };
+  rectilinear?: RectilinearSpec;
   visual?: { tool: string; item: string };
   depth?: { prompt: string; takeaway: string };
   missing?: string;
@@ -29,6 +31,7 @@ export function isCuratedQuestion(q: unknown): q is CuratedQuestion {
   if (q.relatedMisconceptions !== undefined && (!Array.isArray(q.relatedMisconceptions) || !q.relatedMisconceptions.every((m) => textFields(m, ["id", "label"])))) return false;
   if (q.source !== undefined && (!textFields(q.source, ["id", "tool", "kind"]) || !["bank", "depth", "library"].includes((q.source as Record<string, string>).kind) || ((q.source as Record<string, unknown>).edited !== undefined && typeof (q.source as Record<string, unknown>).edited !== "boolean"))) return false;
   if (q.depth !== undefined && !textFields(q.depth, ["prompt", "takeaway"])) return false;
+  if (q.rectilinear !== undefined && (!isRectilinearSpec(q.rectilinear) || q.tool !== "perimeter-and-area" || q.format !== "open" || q.visual || q.depth)) return false;
   if (q.visual !== undefined && !textFields(q.visual, ["tool", "item"])) return false;
   if (q.missing !== undefined && typeof q.missing !== "string") return false;
   if (q.format === "error" && (!strings(q.lines) || !Number.isInteger(q.wrongLine) || Number(q.wrongLine) < 0 || (Number(q.wrongLine) >= q.lines.length && !(q.status === "draft" && q.lines.length === 0 && q.wrongLine === 0)))) return false;

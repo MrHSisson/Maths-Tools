@@ -1,3 +1,6 @@
+import { rectilinearQuestion } from "./rectilinear";
+import { printRectilinearSheet } from "./rectilinearPrint";
+import type { CuratedQuestion } from "./types";
 // Printable worksheets pinned to a lesson. A pinned worksheet is an ordinary book-activity element (`kind: "worksheet"`) with
 // `pin` set: it prints with the same layout engine as the tool pages' Worksheet (grid or list, columns, borders), on an A5
 // page by default, with an answer sheet. `frozen` keeps the generated questions with the deck so a printed sheet and its
@@ -21,24 +24,27 @@ export const sheetSig = (el: Sheet) => JSON.stringify([el.tool, el.preset, el.co
 /** A question as it is kept and printed: what it shows and what it answers, without its worked solution. */
 const trim = (q: AnyQuestion): AnyQuestion => ({ ...q, working: [] }) as AnyQuestion;
 
-export const isFrozen = (el: Sheet) => !!el.frozen && el.frozen.sig === sheetSig(el);
+export const isFrozen = (el: Sheet) => !!el.authored || !!el.frozen && el.frozen.sig === sheetSig(el);
 
 /** The sheet's questions: the frozen copy while it still applies, otherwise a fresh set from its seed. */
 export async function sheetQuestions(el: Sheet): Promise<AnyQuestion[]> {
+  if (el.authored) return el.authored.map(q => { if (!q.rectilinear) throw new Error("An authored worksheet question has no shape."); return { ...rectilinearQuestion(q.rectilinear), key: `authored-${q.id}` }; });
   if (el.frozen && isFrozen(el)) return el.frozen.questions;
   return (await generateSet(el.tool, el.preset, el.count, el.seed ?? 1)).map(trim);
 }
 
 /** A copy of the set to keep with the deck (call again for a new frozen copy after changing the seed). */
 export async function freezeSheet(el: Sheet): Promise<FrozenSheet> {
-  return { sig: sheetSig(el), questions: (await generateSet(el.tool, el.preset, el.count, el.seed ?? 1)).map(trim) };
+  return { sig: sheetSig(el), questions: (await sheetQuestions(el)).map(trim) };
 }
 
 /** Opens the print window: the questions, the answer sheet, or both. A5 unless the sheet says otherwise. */
 export async function printSheet(el: Sheet, mode: PrintMode): Promise<void> {
   const pin = el.pin;
   if (!pin) return;
+  if (el.authored) { printRectilinearSheet(el.authored, pin.title, mode, pin.paper ?? "A4"); return; }
   const [qs, cfg] = await Promise.all([sheetQuestions(el), loadConfig(el.tool)]);
+  if (qs.some(q => "_diagram" in q)) { printRectilinearSheet(qs, pin.title, mode, pin.paper ?? "A4"); return; }
   const instruction = el.prompt ?? (cfg ? instructionOf(cfg, el.preset.sub) : "");
   const fontPx = pin.fontPx ?? 16;
   // the answer sheet has the same boxes as the questions, in the same places, with the answer in each cell
@@ -48,3 +54,11 @@ export async function printSheet(el: Sheet, mode: PrintMode): Promise<void> {
 
 /** A title for the next pinned worksheet: "Worksheet 1", then 2, 3. */
 export const nextSheetTitle = (deck: Pick<DeckDef, "slides">) => `Worksheet ${pinnedSheets(deck).length + 1}`;
+
+/** A fixed copy of a practice set; later edits on either slide do not change the other. */
+export function authoredSheetSlide(id: string, title: string, items: CuratedQuestion[]): Slide {
+  if (!items.length || items.some(q => !q.rectilinear || q.status !== "ready")) throw new Error("Finish each shape question before making a worksheet.");
+  return { id, title, family: "practice", els: [{ id: `${id}-sheet`, kind: "worksheet", x: 24, y: 24, w: 1552, h: 852,
+    tool: "perimeter-and-area", preset: { sub: "compound", level: "level1" }, count: items.length, cols: 2, view: "key",
+    pin: { title, paper: "A4", layout: "grid", borders: true }, authored: structuredClone(items).map((q, i) => ({ ...q, id: `${id.slice(0, 60)}-q-${i + 1}` })) }] };
+}
