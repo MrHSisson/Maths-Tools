@@ -10,7 +10,7 @@ export function DimensionDiagram({d,showAnswer,small=false,fillBox=false,dataInd
   const path=(pts:Drawing["polys"][number])=>pts.map((q,i)=>`${i?"L":"M"}${X(q[0])},${Y(q[1])}`).join(" ")+" Z";
   const arrow=(x:number,y:number,dx:number,dy:number,key:string)=>{const a=fs*.22,b=fs*.12;return <path key={key} d={`M${x},${y} L${x+dx*a-dy*b},${y+dy*a+dx*b} L${x+dx*a+dy*b},${y+dy*a-dx*b} Z`} fill="currentColor"/>;};
   const shown=d.regions.filter(r=>r.always||focus?.regions?.includes(r.id));
-  return <svg data-dimension-diagram="" viewBox={`${p.x} ${p.y-capH} ${p.W} ${p.H+capH}`} style={{display:"block",width:"100%",height:fillBox?"100%":"auto"}} {...(dataIndex!==undefined?{"data-q-index":dataIndex}:{})}>
+  return <svg role="img" aria-label={[d.caption.join(" "), ...p.dimensions.filter(m=>m.visible).map(m=>`${m.region ?? ""} ${m.vertical ? "height" : "width"}: ${m.found ? (m.value ?? m.text) : m.text}`)].filter(Boolean).join("; ")} data-dimension-diagram="" viewBox={`${p.x} ${p.y-capH} ${p.W} ${p.H+capH}`} style={{display:"block",width:"100%",height:fillBox?"100%":"auto"}} {...(dataIndex!==undefined?{"data-q-index":dataIndex}:{})}>
     {!hideCaption && d.caption.map((c,i)=><text key={i} x={p.x+p.W/2} y={p.y-capH+fs*(i+.7)} textAnchor="middle" fontSize={fs*.65} fill="#334155">{c}</text>)}
     <path d={d.polys.map(path).join(" ")} fill="#e0e7ff" fillRule="evenodd" stroke="#4338ca" strokeWidth={small?1.5:2.5} strokeLinejoin="round"/>
     {shown.map(r=><path key={r.id} d={path(r.pts)} fill={r.color} fillOpacity={.55} stroke="#4338ca" strokeWidth={small?1:1.5} strokeDasharray="5 4"/>)}

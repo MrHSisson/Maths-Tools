@@ -126,7 +126,7 @@
   {
    "id": "year7-rectilinear-area-split",
    "family": "teach",
-   "title": "Split, calculate, add",
+   "title": "Worked example: split and add",
    "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
@@ -149,11 +149,13 @@
         "Find the area."
        ],
        "answer": [
-        "$42$ cm\u00b2"
+        "$40$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
-        "Add the areas: $32 + 10 = 42$"
+        "Equal sides are the same length: $2$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 10 \\times 2 = 20 ,\\ B = 4 \\times 5 = 20$",
+        "Add the areas: $20 + 20 = 40$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -161,15 +163,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 6,
+        "shape": "T",
+        "width": 10,
+        "height": 7,
         "cutWidth": 3,
-        "cutHeight": 2,
+        "cutHeight": 5,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "full"
        }
       }
      ],
@@ -260,7 +262,7 @@
      "y": 170,
      "w": 640,
      "h": 260,
-     "text": "$8 \\times 4 + 5 \\times 2$ or $5 \\times 6 + 3 \\times 4$?",
+     "text": "$10 \\times 2 + 4 \\times 5$ or $4 \\times 7 + 3 \\times 2 + 3 \\times 2$?",
      "size": 52,
      "colour": "#0f172a",
      "step": 2,
@@ -285,7 +287,7 @@
      "y": 580,
      "w": 640,
      "h": 200,
-     "latex": "42\\,\\mathrm{cm}^2",
+     "latex": "40\\,\\mathrm{cm}^2",
      "size": 96,
      "colour": "#1e3a8a",
      "align": "left",
@@ -574,7 +576,6 @@
    "id": "year7-rectilinear-area-missing-add",
    "family": "teach",
    "title": "Find a length by adding",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -627,13 +628,13 @@
      ],
      "id": "year7-rectilinear-area-missing-add-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-missing-subtract",
    "family": "teach",
    "title": "Find a length by subtracting",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -684,7 +685,8 @@
      ],
      "id": "year7-rectilinear-area-missing-subtract-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-practice-two",
@@ -982,7 +984,6 @@
    "id": "year7-rectilinear-area-cutout",
    "family": "teach",
    "title": "Discuss removing a cut-out",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -1033,13 +1034,13 @@
      ],
      "id": "year7-rectilinear-area-cutout-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-method-choice",
    "family": "teach",
    "title": "Choose an efficient method",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -1092,13 +1093,13 @@
      ],
      "id": "year7-rectilinear-area-method-choice-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-frame-model",
    "family": "teach",
    "title": "A hole inside the shape",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -1151,7 +1152,8 @@
      ],
      "id": "year7-rectilinear-area-frame-model-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-cutout-practice",

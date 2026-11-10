@@ -13,7 +13,6 @@ export interface DRegion { id: string; pts: Pt[]; color: string; text?: string; 
 
 export interface Drawing {
   dimensionStyle?: "arrows";
-  measurements?: import("./dimensions").Dimension[];
   polys: Pt[][];
   edges: DEdge[];
   helpers: DHelper[];

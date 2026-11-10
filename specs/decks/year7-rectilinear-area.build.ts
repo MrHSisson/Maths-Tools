@@ -6,7 +6,7 @@ import type { CuratedQuestion, Slide } from "/src/decks/types";
 export const ID = "year7-rectilinear-area";
 const make = (id: string, patch: Partial<RectilinearSpec> = {}, purpose: CuratedQuestion["purpose"] = "practice") => ({ ...Q.rectilinear(id, { ...defaultRectilinear(), ...patch, reducedLabels: true }), purpose });
 export const models = {
-  split: make("y7-model-split", { scaffold: "none" }, "explain"),
+  split: make("y7-model-split", { shape: "T", width: 10, height: 7, cutWidth: 3, cutHeight: 5, scaffold: "full" }, "explain"),
   add: make("y7-model-add", { shape: "T", width: 13, height: 9, cutWidth: 3, cutHeight: 4, missingLength: "addition", scaffold: "none" }, "explain"),
   subtract: make("y7-model-subtract", { shape: "stairs3", width: 14, height: 12, cutWidth: 3, cutHeight: 4, missingLength: "subtraction", scaffold: "none" }, "explain"),
   cutout: make("y7-model-cutout", { shape: "U", width: 14, height: 10, cutWidth: 6, cutHeight: 6, method: "subtract", scaffold: "none" }, "explain"),
@@ -64,8 +64,8 @@ export default async function lesson() {
     S.title(ID + "-title", "Area of rectilinear shapes", "Year 7 · Split, calculate and explain"),
     S.objective(ID + "-objective", "Find the area of a rectilinear shape and explain your method.", ["Split into rectangles and add their areas", "Find a missing length before calculating area", "Compare splitting with removing a cut-out"]),
     S.definition(ID + "-definition", "Rectilinear shape", "A 2D shape with straight sides meeting at right angles. Its area is the amount of surface it covers, measured in square units."),
-    model(ID + "-split", "Split, calculate, add", models.split),
-    S.discuss(ID + "-two-splits", "Could two different splits both be correct?", "Each rectangle must lie inside the shape. Cover the whole shape exactly once, with no gaps or overlaps.", "$8 \\times 4 + 5 \\times 2$ or $5 \\times 6 + 3 \\times 4$?", "42\\,\\mathrm{cm}^2"),
+    model(ID + "-split", "Worked example: split and add", models.split),
+    S.discuss(ID + "-two-splits", "Could two different splits both be correct?", "Each rectangle must lie inside the shape. Cover the whole shape exactly once, with no gaps or overlaps.", "$10 \\times 2 + 4 \\times 5$ or $4 \\times 7 + 3 \\times 2 + 3 \\times 2$?", "40\\,\\mathrm{cm}^2"),
     S.deliberate(ID + "-practice-one", "Split and add: practice", practiceOne, "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible."),
     generator(ID + "-general-one", false),
     model(ID + "-missing-add", "Find a length by adding", models.add, "Find the missing length first."),

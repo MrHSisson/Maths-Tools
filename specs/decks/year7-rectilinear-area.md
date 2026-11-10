@@ -5,7 +5,7 @@
 
 | Minutes | Route | Purpose |
 | --- | --- | --- |
-| 0–8 | Brief L model and compare two splits | Establish split, multiply, add; move on promptly |
+| 0–8 | Worked T-shape with partition visible; compare two splits | Establish split, multiply, add; move on promptly |
 | 8–20 | Practice A, optional generator | One L, two Ts, staircase, cross and U; fade supplied splits |
 | 20–32 | T addition model, staircase subtraction model, Practice B | Find lengths explicitly, then area; T/staircase/U/two-notch outlines |
 | 32–43 | U cut-out discussion, two-notch method choice, frame model | Explain whole area minus every removed area; compare methods |
@@ -27,7 +27,7 @@ Optional continuation: six authored U/frame/two-notch questions and the Level 3 
 ## Labels and authoring
 All authored questions use Q.rectilinear, through the tool's canonical geometry/solution. Authoring now supports L, T, stairs, cross, U, comb/two cut-outs and frame. Missing lengths work on eligible open outlines, never frames. New dimensions are editable in the deck.
 
-Length labels now use double-headed dimension arrows spanning the complete width or height they name, without pills or equality tabs. Component dimensions sit inside/alongside their rectangle; outer dimensions can sit outside with extension lines. Repeated independent steps retain explicit dimensions. Only matching axis spans share one dimension. Missing lengths retain `?` and a stable position on reveal. Captions, matching-marks text, generic Explain/Practice headings and model prompts above diagrams are removed. Slides 4–5 are combined into one staged model: outline, reveal partition, area working. The deck now has 19 slides.
+Length labels use double-headed dimension arrows outside the outline, with witness lines to their exact endpoints. Every independent boundary length remains given, even if a component width would suffice for area. Only a labelled parallel edge with exactly the same coordinate span makes a length implied. Deliberately missing lengths show `?`; unrelated equal steps retain individual labels. Extra supplied component widths support early area work without replacing boundary labels. Captions, matching-marks text, generic Explain/Practice headings and model prompts above diagrams are removed. Slides 4–5 are combined: slide 4 now models a partitioned T-shape, A = 10 × 2 = 20, B = 4 × 5 = 20, total 40 cm². The deck has 19 slides.
 
 ## Verification and exports
 Recompute all areas independently using polygon shoelace and rectangle sums/removals, and verify missing boundary lengths. Check distinct answers within each authored set. Run content/layout and browser print checks.

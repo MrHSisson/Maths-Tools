@@ -139,25 +139,25 @@ describe("rectilinear deck foundations", () => {
       expect(q.working.find(w => w.label === "So the missing side is:")!.latex.split("=")[0].includes("-")).toBe(missingLength === "subtraction");
     }
   });
-  it("uses explicit component dimensions without equality tabs on a staircase", () => {
+  it("keeps staircase boundary labels and gives an extra explicit width without equality tabs", () => {
     const d = extras(rectilinearQuestion({ ...shape(), shape: "stairs3", width: 14, height: 10, cutWidth: 4, cutHeight: 3 }))._diagram as Drawing;
     expect(d.edges.some(e=>e.ticks)).toBe(false);
-    expect(d.measurements).toHaveLength(6);
-    const middle=d.measurements!.find(m=>m.id === "width-s1")!;
+    const plan=dimensionPlan(d);
+    expect(plan.dimensions).toHaveLength(9);
+    const middle=plan.dimensions.find(m=>m.helper === "dimension-s1-0")!;
     expect(middle.text).toBe("10 cm");
     expect(Math.abs(middle.b[0]-middle.a[0])).toBe(10);
-    expect(dimensionPlan(d).dimensions).toHaveLength(6);
     const svg=rectilinearPrintCells([authoredRectilinear("arrow-print", shape())])[0].svg;
     expect(svg).toContain("data-dimension=");
-    expect(svg).not.toContain("Find the area");
+    expect(svg).not.toContain(">Find the area");
     expect(svg).not.toContain("Matching marks");
     expect(svg).not.toContain("<rect");
   });
-  it("measures only the whole rectangle and removed regions on subtraction questions", () => {
+  it("retains boundary measurements even when subtraction needs only whole/cut-out dimensions", () => {
     for (const kind of ["U", "comb", "frame"] as const) {
       const q = rectilinearQuestion({ ...shape(), shape: kind, width: 17, height: 13, cutWidth: 5, cutHeight: 4, method: "subtract", scaffold: "none" });
-      const d = extras(q)._diagram as Drawing;
-      expect(dimensionPlan(d).dimensions).toHaveLength(kind === "comb" ? 5 : 4);
+      const d = extras(q)._diagram as Drawing, plan=dimensionPlan(d);
+      d.edges.forEach((e,i)=>{if(e.kind === "plain" && e.label)expect(plan.dimensions.some(m=>m.edge === i)).toBe(true);});
       expect(Number(q.answer)).toBe(kind === "comb" ? 181 : 201);
     }
   });

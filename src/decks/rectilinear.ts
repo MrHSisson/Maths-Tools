@@ -50,16 +50,9 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
       focuses.forEach(f => { if (f?.regions?.includes(region.id)) f.helpers = [...(f.helpers ?? []), id]; });
     }
   }
-  // Dimensions in the cells name complete component widths/heights, rather than floating near a step.
-  if (!spec.missingLength) {
-    drawing.measurements = drawing.regions.flatMap(region => {
-      const box = boxOf([region.pts]);
-      return [
-        { id: `width-${region.id}`, a: [box.x0,box.y0] as Pt, b: [box.x1,box.y0] as Pt, text: `${box.x1-box.x0} cm`, region: region.id, outside: region.id === "outer" },
-        { id: `height-${region.id}`, a: [box.x0,box.y0] as Pt, b: [box.x0,box.y1] as Pt, text: `${box.y1-box.y0} cm`, region: region.id, outside: region.id === "outer" },
-      ];
-    });
-  }
+  // Keep every independent boundary label. Extra component widths support the area method,
+  // but never replace a boundary length; only aligned opposite spans are implied.
+  if (!spec.missingLength) drawing.helpers.forEach(h => { if (h.label) h.always = true; });
   extras(q)._aspect = aspectOf(drawing);
   return q;
 }

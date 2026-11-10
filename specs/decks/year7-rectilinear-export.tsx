@@ -26,7 +26,7 @@ export default async function exportLesson() {
     const found = foundAt >= 0 ? { ...focuses[foundAt], reveal: focuses.slice(0, foundAt + 1).flatMap(f => f?.reveal ?? []) } : undefined;
     const svg: Record<string, string> = { question: render(drawing), answer: render(drawing, true, all), outline: render(outline), split: render(drawing, false, { regions: all.regions, helpers: all.helpers }), found: render(drawing, false, found), paper: render(drawing, false, undefined, true), paperAnswer: render(drawing, true, all, true) };
     if (id === models.split.id) {
-      const alt = { ...drawing, regions: [{ id: "a", pts: [[0,0],[5,0],[5,6],[0,6]], color: "#bfdbfe", text: "A", always: true }, { id: "b", pts: [[5,0],[8,0],[8,4],[5,4]], color: "#bbf7d0", text: "B", always: true }] } as Drawing;
+      const alt = { ...drawing, regions: [{ id: "a", pts: [[3,0],[7,0],[7,7],[3,7]], color: "#bfdbfe", text: "A", always: true }, { id: "b", pts: [[0,0],[3,0],[3,2],[0,2]], color: "#bbf7d0", text: "B", always: true }, { id: "c", pts: [[7,0],[10,0],[10,2],[7,2]], color: "#fde68a", text: "C", always: true }] } as Drawing;
       svg.alternate = render(alt);
     }
     svg.whole = render(outline, false, { regions: ["outer"] });
