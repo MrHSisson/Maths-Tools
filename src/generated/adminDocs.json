@@ -434,7 +434,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** finding a Decision generator by the part of the AQA 7367 Discrete specification it covers. **How it works:** the A-Level tab shows one **Decision Maths** card instead of one card per tool. It opens a page of the chapters DA to DG (with an AS / A-level switch); opening a chapter lists its **generators** first, then the specification statements, each marked AS + A2 or A2 only and followed by the generator **sub-tools that practise it** (for Critical Path, for example, DE2 lists Forward pass, Full analysis and Missing time); each opens the tool on that sub-tool. Exam-style questions and sub-tools from the older papers only are listed beneath the statements, and the A-level tab adds the A-level sub-tools. A chapter with nothing built says so, and a chapter whose generators are not live yet says \"Coming soon\". Each chapter has an address of its own (`/decision-overview#DB`), and `/decision` goes to the page. A free workspace (Network Sandbox) is listed apart from the chapters. Everyone sees the live generators; Developing-tools mode also shows tools still in development, each statement's link back to the older AQA D1 and D2 papers with notes, the question banks and the older-papers page. The tools keep their own addresses and are still found by the landing page's search box. **Where:** landing page (A-Level), Decision Maths."
+     "s": "**For:** finding a Decision generator by the part of the AQA 7367 Discrete specification it covers. **How it works:** the A-Level tab shows one **Decision Maths** card instead of one card per tool. It opens a page of the chapters DA to DG (with an AS / A-level switch); opening a chapter lists its **generators** first, then the specification statements, each marked AS + A2 or A2 only and followed by the generator **sub-tools that practise it** (for Critical Path, for example, DE2 lists Forward pass, Backward pass and Missing time); each opens the tool on that sub-tool. Exam-style questions and sub-tools from the older papers only are listed beneath the statements, and the A-level tab adds the A-level sub-tools. A chapter with nothing built says so, and a chapter whose generators are not live yet says \"Coming soon\". Each chapter has an address of its own (`/decision-overview#DB`), and `/decision` goes to the page. A free workspace (Network Sandbox) is listed apart from the chapters. Everyone sees the live generators; Developing-tools mode also shows tools still in development, each statement's link back to the older AQA D1 and D2 papers with notes, the question banks and the older-papers page. The tools keep their own addresses and are still found by the landing page's search box. **Where:** landing page (A-Level), Decision Maths."
     }
    ]
   },
@@ -692,16 +692,6 @@
   },
   {
    "status": "Open",
-   "title": "Critical Path: a backward pass of its own",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "Banked 2026-11-10 at Harry's request, not started. DE2 asks for earliest **and** latest start and finish times. Today **Forward pass** practises only the earliest times, and the backward pass appears only inside **Full analysis** (which also asks for the critical path), so the latest times have no practice of their own. Build a **Backward pass** sub-tool (AS, skills practice) that starts from a network with its earliest times filled in and asks for the latest times, then pair it with DE2 in `DECISION_PAIRINGS` (`src/tools/Decision/decisionSpec.ts`) and move Full analysis from DE2 to DE3, where its critical path belongs (a sub-tool is listed under one statement only); `decisionPairings.test.ts` fails until a new Critical Path sub-tool is placed. Links: `src/tools/Decision/CriticalPath.tsx`, `src/tools/Decision/decisionSpec.ts`, `docs/pathways/decision-exam-questions.md`."
-    }
-   ]
-  },
-  {
-   "status": "Open",
    "title": "Questions render inside their containers",
    "blocks": [
     {
@@ -727,6 +717,16 @@
     {
      "t": "p",
      "s": "Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`)."
+    }
+   ]
+  },
+  {
+   "status": "Done (recent)",
+   "title": "Critical Path: a backward pass of its own",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3. Links: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`."
     }
    ]
   }

@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Critical Path: a Backward pass sub-tool
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`, `CpaTileArt.tsx`), `src/tools/Decision/decisionSpec.ts`, `src/tests/cpa.test.ts`, `src/tests/cpaSkills.test.ts`.
+
+- **New sub-tool: Backward pass** (AS, skills practice, three levels like Forward pass: 6–7, 8–9 and 10–12 activities). Every earliest start is shown, with the minimum completion time at End; the student finds the latest finish of every activity. The working goes from End back to Start, comparing the latest starts of the successors and taking the smallest; it stops at the latest finishes (no float or critical path, which are DE3). It shares its backward-pass beats with Full analysis (`backwardPass` in `cpaSolve.ts`), so the two cannot disagree.
+- **DE2 now has its own practice for the latest times.** On the Decision Maths hub DE2 lists Forward pass, Backward pass and Missing time, and Full analysis moves to DE3 (with Float and critical paths), as noted when it was listed under DE2.
+- Tests: Backward pass joins the generator checks against the independent reference (`cpa.test.ts`) and has its own (`cpaSkills.test.ts`: the earliest starts are given, only the latest finishes are asked, the working never mentions float or critical paths, its beats equal Full analysis's backward beats, Level 3 is 10–12 activities). `seedReplay.test.ts` and `decisionPairings.test.ts` cover it automatically.
+- Checked in headless Chromium at 1366×768: it opens from the hub link, the picture shows every earliest start with the latest-finish cells empty and End showing the minimum time, and stepping the working fills them in.
+
+Agent: Claude Code
+Notes: no planner Build Log block written this session.
+
 ## 2026-11-10 — Decision Maths hub: generator sub-tools under each specification statement
 
 Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/decisionSpec.ts` (`DECISION_PAIRINGS`, `DECISION_GROUPS`), `src/tools/Decision/DecisionOverview.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/decisionPairings.test.ts`.
@@ -36,7 +48,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/decisionSpec.ts` 
 - **Statements are paired with the sub-tools that practise them** (Critical Path chapter, DE1 to DE6): each statement lists its sub-tools as links that open the tool on that sub-tool (`?tool=…&o_course=…&o_practice=…`). DE1: Network from a table, Table from a network. DE2: Forward pass, Full analysis, Missing time (Full analysis is listed once, under DE2, as the only practice of the latest times until a Backward pass exists). DE3: Float and critical paths. DE4: Delays and changes, Explain and justify, and at A-level Which to shorten and Limits of the model. DE5: Cascade/Gantt chart, Resource histogram. DE6: Resource levelling.
 - **Exam-style questions** (AS and A-level) and the **older-papers-only** sub-tools (the two worker-allocation ones) are listed under the statements. The AS tab shows the AS sub-tools; the A-level tab adds the A-level ones.
 - **A test keeps the pairing honest** (`decisionPairings.test.ts`): every paired sub-tool exists in the tool with the same name, course and practice, and every Critical Path sub-tool is placed in exactly one place, so adding one fails until it is paired.
-- **Banked:** a Backward pass sub-tool (docs/TASKS.md): DE2 asks for latest times and only Full analysis practises them.
+- **Banked then:** a Backward pass sub-tool (built later the same day, see the entry above).
 - All 25 links checked in headless Chromium: each opens its sub-tool.
 
 Agent: Claude Code

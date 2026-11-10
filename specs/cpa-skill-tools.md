@@ -22,6 +22,7 @@ The larger networks (10–13 activities, several merges) that A-level papers use
 | 1 | **Network from a table** `cpaNetwork` | AS | 2 | 6–7 activities / 8–9 (some wait for two others; a skip arrow can occur but is not forced) | built |
 | 2 | **Table from a network** `cpaTable` | AS | 2 | no skip arrow / a skip arrow (and a redundant arrow to avoid) | built |
 | 3 | **Forward pass** `cpaForward` | AS | 3 | 6–7 / 8–9 / 10–12 activities (skip arrow, near-critical activity) | built |
+| 3b | **Backward pass** `cpaBackward` | AS | 3 | as the forward pass (6–7 / 8–9 / 10–12 activities). Every earliest start is given, with the minimum time at End; find every latest finish, working back from End (the smallest of the successors' latest starts). Built 2026-11-10 | built |
 | 4 | **Backward pass and float** `cpaFull` (3 levels), `cpaFloat` (2) | AS | 2–3 | as above | built |
 | 5 | **Critical paths** `cpaPaths` | AS | 2 | one path, list it and the time / two critical paths (and a near-critical path to reject) | built |
 | 6 | **Missing times** `cpaUnknown` | AS | 1 | one unknown x, found from the critical path and the minimum time (the inequality form is not built yet) | built |

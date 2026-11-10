@@ -25,6 +25,7 @@ import CpaTileArt from "../../shared/decision/CpaTileArt";
 //   Network from a table — draw the activity network (with Start and End) from the precedence table;
 //   Table from a network — write the precedence table from a drawn network;
 //   Forward pass         — the earliest start of every activity and the minimum completion time;
+//   Backward pass        — the earliest starts are given; find every latest finish, working back from End;
 //   Full analysis        — forward and backward pass, then the critical activities, critical path and minimum time;
 //   Float                — the float of every activity, from a network already filled in;
 //   Critical paths       — every critical activity and critical path, from a network already filled in;
@@ -50,6 +51,7 @@ const SUB_TOOLS = [
   { key: "network", label: "Network from a table", levels: 2, blurb: "Draw the network from a precedence table", when: [AS_ONLY, SKILLS] },
   { key: "table", label: "Table from a network", levels: 2, blurb: "Read the precedence table off a network", when: [AS_ONLY, SKILLS] },
   { key: "forward", label: "Forward pass", levels: 3, blurb: "Earliest start times and the minimum time", when: [AS_ONLY, SKILLS] },
+  { key: "backward", label: "Backward pass", levels: 3, blurb: "Latest finish times from the earliest starts", when: [AS_ONLY, SKILLS] },
   { key: "full", label: "Full analysis", levels: 3, blurb: "Forward and backward pass, critical path", when: [AS_ONLY, SKILLS] },
   { key: "floatPaths", label: "Float and critical paths", levels: 2, blurb: "Float, every critical path, which starts first", when: [AS_ONLY, SKILLS] },
   { key: "unknown", label: "Missing time", levels: 2, blurb: "Find a missing time or box value", when: [AS_ONLY, SKILLS] },
@@ -79,7 +81,7 @@ const EXAM_CHAIN: Record<string, CpaChain | "asAny" | "alAny"> = {
   exAlAny: "alAny", exCascade: "alCascade", exTable: "alTable", exHist: "alHist", exShorten: "alShorten", exAlloc: "alAlloc",
 };
 const KIND: Record<string, CpaKind> = {
-  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", full: "cpaFull", floatPaths: "cpaFloat",
+  network: "cpaNetwork", table: "cpaTable", forward: "cpaForward", backward: "cpaBackward", full: "cpaFull", floatPaths: "cpaFloat",
   unknown: "cpaUnknown", change: "cpaChange", cascade: "cpaCascade", histogram: "cpaHistogram", level: "cpaLevel", alloc: "cpaAlloc", shorten: "cpaShorten", reason: "cpaReason", reasonA: "cpaReason",
 };
 
@@ -104,7 +106,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const clockQ = sub === "forward" && pickOf(o.clockQ, "minutes") === "clock";
   const kind: CpaKind = clockQ ? "cpaContext" : sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   const reasonCase = sub === "reasonA" ? "limit" : (pickOf(o.reasonForm, lv === 1 ? "range" : "claim") as "range" | "remove" | "claim" | "glyn");
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
@@ -309,7 +311,8 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
   const passesFirst = d.kind === "cpaCascade" && !!d.extra!.cascade?.passes; // the times are for the student to find
   const questionView: CpaViewState =
     d.kind === "cpaNetwork" ? { shown: [] }
-      : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
+      : d.kind === "cpaBackward" ? { es: everyEs, lf: { End: d.times.projectTime } }   // every earliest start is given; the student works back from End
+        : d.kind === "cpaFloat" || d.kind === "cpaPaths" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaShorten" ? { es: everyEs, lf: everyLf }
         : d.kind === "cpaChange" ? { es: everyEs, lf: everyLf, float: Object.fromEntries(Object.entries(d.times.float).filter(([id]) => id !== "Start" && id !== "End")) }
           : d.kind === "cpaUnknown" && d.extra!.unknown!.box
@@ -609,6 +612,7 @@ export default function App() {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
           default: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)"],
           forward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
+          backward: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           full: ["Small projects (6–7 activities)", "Medium projects (8–9 activities)", "Large projects (10–12 activities)"],
           level: ["One worker each: the first fix clears the clash", "Several workers each: the first fix clears the clash", "A fix causes a knock-on clash (10–12 activities)"],
           histogram: ["Draw it: one worker each", "Draw it: one to three workers each (10–12 activities)", "Cut the peak by sliding activities within their float"],
@@ -628,7 +632,7 @@ export default function App() {
           filters: ["course", "practice"],
           groups: [
             { title: "Building the network", keys: ["network", "table"] },
-            { title: "Times, floats and critical paths", keys: ["forward", "full", "floatPaths", "unknown"] },
+            { title: "Times, floats and critical paths", keys: ["forward", "backward", "full", "floatPaths", "unknown"] },
             { title: "Changes and reasoning", keys: ["change", "reason", "shorten", "reasonA"] },
             { title: "Charts and resources", keys: ["cascade", "histogram", "level", "alloc"] },
             { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },
