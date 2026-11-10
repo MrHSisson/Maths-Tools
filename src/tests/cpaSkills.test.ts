@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { histBaseAt } from "../shared/decision/cpa";
+import { generateFromSeed } from "../shared/seededGenerate";
 import { cpaTimes, histogramData, generateCpa, referenceCpa, solveCpa, clockTime, depthOf, fullGraph, type CpaKind, type CpaLevel } from "../shared/decision";
 
 const run = (level: CpaLevel, kind: CpaKind, opts = {}) => {
@@ -803,5 +804,43 @@ describe("CPA — the backward pass on its own", () => {
     const back = solveCpa({ network: { nodes: [], edges: [] }, prompt: "", answer: { text: "" }, cpa: bg, kind: "cpaBackward" } as never);
     const backBeats = full.filter((s) => s.phase === "Backward pass" || s.phase?.startsWith("Latest finish"));
     expect(back.map((s) => s.caption)).toEqual(backBeats.map((s) => s.caption));
+  });
+});
+
+describe("CPA — the backward pass with a clock time", () => {
+  it("asks for one activity's latest start as a time of day, and the working ends on it", () => {
+    for (const level of [1, 2, 3] as CpaLevel[]) for (let i = 0; i < 25; i++) {
+      const { data, prompt, answerText, steps } = run(level, "cpaBackward", { clockBack: true, paths: (["one", "more", "either"] as const)[i % 3] });
+      const clk = data.extra!.clock!;
+      const ref = referenceCpa(data.acts);
+      const target = data.acts.find((a) => a.id === clk.latestId)!;
+      const wanted = clockTime(clk.startMins + ref.lf[target.id] - target.duration);
+      expect(data.unit).toBe("minutes");
+      expect(prompt).toContain(`work starts at ${clockTime(clk.startMins)}`);
+      expect(prompt).toContain(`activity ${target.id} can be started`);
+      expect(prompt).not.toMatch(/float|critical/i);
+      expect(answerText).toBe(`Latest finishes: ${data.acts.map((a) => `${a.id} ${ref.lf[a.id]}`).join(", ")}. Activity ${target.id} can start as late as ${wanted}.`);
+      // the same backward beats as the minutes version, then one more beat that turns the latest start into a time of day
+      const last = steps[steps.length - 1];
+      expect(last.caption).toContain(wanted);
+      expect(last.cpaView!.current).toBe(target.id);
+      for (const a of data.acts) expect(last.cpaView!.lf![a.id], `lf ${a.id}`).toBe(ref.lf[a.id]);
+      for (const s of steps) expect(s.cpaView!.es).toEqual(data.times.es);
+      expect(steps.filter((s) => /Latest start of/.test(s.phase ?? "")).length).toBe(1);
+    }
+  }, 60_000);
+
+  it("the same seed gives the same question (a saved question rebuilds exactly)", () => {
+    for (const seed of [11, 4242, 987654]) {
+      const once = () => JSON.stringify(generateFromSeed(seed, () => generateCpa(2, "cpaBackward", { clockBack: true, size: "medium" })));
+      expect(once()).toBe(once());
+    }
+  });
+
+  it("without the option there is no clock and no extra beat", () => {
+    const { data, steps, prompt } = run(2, "cpaBackward");
+    expect(data.extra?.clock).toBeUndefined();
+    expect(prompt).not.toMatch(/work starts at/);
+    expect(steps.some((s) => /Latest start of/.test(s.phase ?? ""))).toBe(false);
   });
 });
