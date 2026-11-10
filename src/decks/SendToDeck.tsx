@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { ALL_TOOLS } from "../registry";
 import { MathRenderer, InlineMath } from "../shared/components/MathRenderer";
 import type { AnyQuestion, DifficultyLevel } from "../shared";
-import { GENERATOR_TOOLS } from "./generators";
+import { supportsGeneratorSubtool } from "./generators";
 import { generatorSlide, titleSlide, whiteboardSlide, worksheetSlide } from "./layouts";
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { copyQuestion, fromBank, materializeDeck } from "./questions";
@@ -29,7 +29,7 @@ type What = "whiteboard" | "generator" | "book" | "question";
 
 export default function SendToDeck({ path, sub, level, variables, dropdown, multiSelect, question, onClose }: SendToDeckProps) {
   const tool = ALL_TOOLS.find((t) => t.path === path);
-  const wired = !!tool && GENERATOR_TOOLS.some(([id]) => id === tool.id);
+  const wired = !!tool && supportsGeneratorSubtool(tool.id, sub);
   const decks = useMemo(() => allDecks(), []);
   const [target, setTarget] = useState<string>(decks.find((d) => d.deck.tool === tool?.id)?.deck.id ?? decks[0]?.deck.id ?? "new");
   const [what, setWhat] = useState<What>("generator");
@@ -42,6 +42,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
 
   const add = async (captured?: CuratedQuestion[], context?: QuestionSlideDraft, display?: QuestionDisplaySettings) => {
     if (!tool) return;
+    if (what === "question" && shown.drawing) return;
     if (what === "question" && !captured) {
       const q: BankQuestion = { id: newQuestionId(), tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
         answer: shown.suffix ? `${shown.answer}\\text{ ${shown.suffix}}` : shown.answer, working: shown.working };
@@ -94,7 +95,8 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
               {radio("generator", "A generator slide with this setup", "The tool's generator live in the deck: New question, the answer, the working step by step.")}
               {radio("whiteboard", "A whiteboard slide with this setup", "Question left, writing or document camera right; solution steps unfold below the question.")}
               {radio("book", "A book activity with this setup", "Eight numbered questions to copy and answer, and answers on demand.")}
-              {radio("question", "This question, hand-picked", "The question on screen becomes a deck-owned draft. Open the question workspace to adapt it.")}
+              {!shown.drawing && radio("question", "This question, hand-picked", "The question on screen becomes a deck-owned draft. Open the question workspace to adapt it.")}
+              {shown.drawing && <p className="text-sm text-slate-600">For a fixed example with chosen dimensions, add a rectilinear shape in the deck editor’s Skill practice.</p>}
             </div>
             {what === "question" && (
               <div className="mt-3 rounded-xl bg-slate-50 p-3">

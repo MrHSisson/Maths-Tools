@@ -44,7 +44,7 @@ async function visit(browser, viewport, label, url, extra) {
   await page.close();
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
 for (const tool of TOOLS) {
   for (const [name, qs] of LAPTOP) await visit(browser, { width: 1366, height: 768 }, `laptop ${name}`, tool + qs);
   await visit(browser, { width: 1366, height: 768 }, "laptop worksheet fullscreen", `${tool}?mode=worksheet&n=6`, async p => {

@@ -1,3 +1,4 @@
+import { authoredRectilinear } from "./rectilinear";
 // Building a deck from a short script: the slide kinds, and question builders that write the working the way the tool
 // does and check it against an independent calculation. A build script default-exports a function returning a deck
 // (`npm run deck -- build <script>`); `buildDeck` makes it a deck the player opens and `deckChecks.ts` checks it.
@@ -31,6 +32,8 @@ interface RatioFractionSpec {
 }
 
 export const Q = {
+  /** Fixed rectilinear dimensions, checked independently and worked by the live tool. */
+  rectilinear: authoredRectilinear,
   /** Any question: one line of question, one of answer, one reveal per line of working. */
   open: (id: string, tool: string, level: Level, question: string, answer: string, explanation: string[] = [], mistakes: Mistake[] = []): CuratedQuestion =>
     ({ ...newQuestion(tool), id, title: question.replace(/\.$/, ""), level, format: "open", status: "ready", question: [question], answer: [answer], explanation, expectedErrors: mistakes }),

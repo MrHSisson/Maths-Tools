@@ -1,11 +1,12 @@
 # Decks
 - **Status:** building
-- **Updated:** 2026-11-04
+- **Updated:** 2026-11-10
 
 ## Intention
 Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them.
 
 ## Progress
+- Rectilinear foundations (2026-11-10): live shape diagrams with step highlighting; chosen-dimension L/T/staircase questions using the tool’s own working; split/add and subtract cut-outs; independent authored worksheets with fading scaffolds, A4 writing space and worked answer pages. The Year 7 lesson plan starts directly with shapes and introduces cut-outs as a discussion. Full lesson content remains to be authored.
 - Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.
 - Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.
 - Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.
@@ -14,7 +15,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 - Editor header and toolbar redesigned (2026-10-28): a menu bar (File, Edit, Insert, Slide, View), New slide, grouped Insert / Shapes / Questions, quick controls for the selection, a back arrow, a keyboard shortcuts window; panels start shut on a phone.
 - Decks are data (2026-10-29): JSON in `src/decks/data/`, the shared copy is master, `npm run deck` pulls, pushes, builds and checks. A lesson-plan template, a slide features list and a house-style page (`docs/design/LESSON_STYLE.md`) shape each build.
 - The Year 9 Estimation deck (44 slides, built from `specs/decks/estimation-y9.md`) replaced the first one, with seven new Estimation Depth cards; Estimation division now spreads its answers across the 2 to 12 tables; the Rounding tool runs in generator slides. Not yet taught: refine it after a real lesson.
-- Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders exist for Estimation and Rounding only.
+- Deck builder and checks (2026-10-29): `src/decks/builder.ts` (slide kinds, question builders that write the tool's working and check it) and `deckChecks.ts` (maths, answers, set sizes, Depth numbers, generators, text fit); `npm run deck -- build|check [--layout]`. Question builders now cover Estimation, Rounding, Ratio Manipulation and Rectilinear Shapes.
 - Quieter question slides (2026-10-29): no Solution options, More menu, teacher-guidance button or Print on book activities; Show all sits between the step arrows; authored sets are labelled Deliberate practice, generators General practice.
 - Published decks (2026-10-29): a frozen read-only copy anyone can play (first-slide cards with an (i) on the landing page's **Decks** tab), and the editor, deck list and slide library behind the admin password. Publishing works once this is merged and deployed; nothing is published yet.
 - Ratio table and bar model slide pieces (2026-10-30): both in the Insert menu and Add slide, with Filled in / Structure only / Blank and click-by-click building; the bar model is a shared picture (`src/shared/barModel.ts`) the ratio tools can reuse.

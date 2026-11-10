@@ -1,3 +1,5 @@
+import { isCuratedQuestion } from "../../api/_questions";
+import { rectilinearQuestion } from "./rectilinear";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
@@ -124,6 +126,14 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "questions" && slide.family === "practice" && items.length && items.every((q) => q.purpose === "practice")) {
         if (items.length < 5) problems.push(`${where}: a deliberate-practice set has ${items.length} questions; the least is 5`);
         if (items.length > 8) warnings.push(`${where}: ${items.length} questions in one set is a long run`);
+      }
+      if (el.kind === "worksheet" && el.authored) {
+        for (const q of el.authored) {
+          if (!isCuratedQuestion(q) || !q.rectilinear || q.status !== "ready") { problems.push(`${where}: unfinished or invalid worksheet shape`); continue; }
+          const expected = rectilinearQuestion(q.rectilinear).answer;
+          if (q.answer.join(" ") !== `$${expected}$ cm²`) problems.push(`${where}: the worksheet answer does not match its shape dimensions`);
+        }
+        continue;
       }
       if (el.kind === "generator" || el.kind === "worksheet") {
         if (!GENERATOR_TOOLS.some(([id]) => id === el.tool)) { problems.push(`${where}: "${el.tool}" is not a tool a deck can run`); continue; }

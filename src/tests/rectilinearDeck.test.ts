@@ -1,0 +1,87 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import SendToDeck from "../decks/SendToDeck";
+import { checkDeckContent } from "../decks/deckChecks";
+import { describe, expect, it } from "vitest";
+import { defaultRectilinear, isRectilinearSpec } from "../../api/_rectilinear";
+import { isCuratedQuestion } from "../../api/_questions";
+import { checkDeck } from "../../api/_decks";
+import { authoredRectilinear, rectilinearQuestion } from "../decks/rectilinear";
+import { authoredSheetSlide, sheetQuestions, isFrozen } from "../decks/worksheets";
+import { rectilinearPrintCells } from "../decks/rectilinearPrint";
+import { diagramPracticeSheet } from "../shared/printables";
+import { GENERATOR_TOOLS, generateFrom, loadConfig, generateSet, supportsGeneratorSubtool } from "../decks/generators";
+import { fromGenerated } from "../decks/SlideCanvas";
+import { extras } from "../shared/questionExtras";
+import type { Drawing } from "../shared/shapes/drawing";
+
+const shape = defaultRectilinear;
+describe("rectilinear deck foundations", () => {
+  it("uses the same 42 cm² L-shape for addition and removing a cut-out in every orientation", () => {
+    const outlines = new Set<string>();
+    for (let orientation = 0; orientation < 8; orientation++) {
+      const add = rectilinearQuestion({ ...shape(), orientation, method: "split" });
+      const subtract = rectilinearQuestion({ ...shape(), orientation, method: "subtract" });
+      outlines.add(JSON.stringify((extras(add)._diagram as Drawing).polys));
+      expect(add.answer).toBe("42"); expect(subtract.answer).toBe("42");
+      expect(extras(add)._diagram).toMatchObject({ polys: (extras(subtract)._diagram as Drawing).polys });
+      expect(subtract.working.some(w => w.latex.includes("48 - 6"))).toBe(true);
+    }
+    expect(outlines.size).toBe(8);
+  });
+  it("checks chosen dimensions, and answers for T-shapes and stairs", () => {
+    expect(rectilinearQuestion({ ...shape(), shape: "T", width: 10, height: 7, cutWidth: 3, cutHeight: 5 }).answer).toBe("40");
+    expect(rectilinearQuestion({ ...shape(), shape: "stairs3", width: 10, height: 7, cutWidth: 3, cutHeight: 2 }).answer).toBe("46");
+    for (const spec of [{ ...shape(), cutWidth: 8 }, { ...shape(), height: Infinity }, { ...shape(), width: 8.5 }, { ...shape(), orientation: 8 }]) {
+      expect(isRectilinearSpec(spec)).toBe(false); expect(() => rectilinearQuestion(spec)).toThrow();
+    }
+  });
+  it("saves portable, independent copies and rejects malformed shape data on the API", () => {
+    const q = authoredRectilinear("area-one", shape()); expect(isCuratedQuestion(q)).toBe(true);
+    expect(q.answer).toEqual(["$42$ cm²"]);
+    const slide = authoredSheetSlide("area-sheet", "Area practice", [q]);
+    const el = slide.els[0]; if (el.kind !== "worksheet") throw Error("expected sheet");
+    expect(isFrozen(el)).toBe(true);
+    const roundTrip = JSON.parse(JSON.stringify({ id: "area-foundations", title: "Shapes", summary: "", slides: [slide] }));
+    expect(checkDeck(roundTrip)).not.toHaveProperty("error");
+    if (q.rectilinear) q.rectilinear.width = 20;
+    expect(el.authored?.[0].rectilinear?.width).toBe(8);
+    roundTrip.slides[0].els[0].authored[0].rectilinear.cutHeight = -1;
+    expect(checkDeck(roundTrip)).toHaveProperty("error");
+  });
+  it("freezes the printed questions and changes scaffolding without changing the chosen area", async () => {
+    const questions = (["full", "split", "none"] as const).map((scaffold, i) => authoredRectilinear(`area-${i}`, { ...shape(), scaffold }));
+    const slide = authoredSheetSlide("sheet", "Area practice", questions), el = slide.els[0];
+    if (el.kind !== "worksheet") throw Error("expected sheet");
+    const printed = await sheetQuestions(el);
+    expect(printed.map(q => q.answer)).toEqual(["42", "42", "42"]);
+    expect(new Set(printed.map(q => q.key)).size).toBe(3);
+    expect((await checkDeckContent({ id: "area-check", title: "Area", summary: "", slides: [slide] })).problems).toEqual([]);
+    const cells = rectilinearPrintCells(questions);
+    expect(cells[0].prompts.join(" ")).toContain("Rectangle A");
+    const stair = rectilinearQuestion({ ...shape(), shape: "stairs3", width: 12, height: 9, cutWidth: 4, cutHeight: 3 });
+    expect((extras(stair)._diagram as Drawing).helpers.some(h => h.label === "8 cm" && h.always)).toBe(true);
+    expect(cells[2].prompts.join(" ")).not.toContain("Rectangle A");
+    expect(cells.every(c => c.svg.includes("<svg") && c.answer.includes("42"))).toBe(true);
+    const html = diagramPracticeSheet([...cells, ...cells, ...cells, ...cells], "Area <test>", "both");
+    expect(html.match(/<section class="page">/g)).toHaveLength(4);
+    expect(html).toContain("Area &lt;test&gt;"); expect(html).not.toContain("<test>");
+  });
+  it("offers the real rectilinear generator and preserves diagrams in the slide presentation", async () => {
+    expect(GENERATOR_TOOLS.some(([id]) => id === "perimeter-and-area")).toBe(true);
+    expect(Object.keys((await loadConfig("perimeter-and-area"))!.tools)).toEqual(["compound"]);
+    const preset = { sub: "compound", level: "level1" as const, multiSelect: { area: true, perimeter: false, all: true, missing: false }, variables: { reducedLabels: true, showSplit: false } };
+    const q = await generateFrom("perimeter-and-area", preset, 123); expect(q).not.toBeNull();
+    expect(fromGenerated(q!).drawing?.polys.length).toBe(1);
+    expect(fromGenerated(q!).focuses?.length).toBe(q!.working.length);
+    expect((await generateSet("perimeter-and-area", preset, 12, 123))).toHaveLength(12);
+  });
+  it("only sends supported sub-tools and never flattens a diagram into a text-only fixed question", () => {
+    expect(supportsGeneratorSubtool("perimeter-and-area", "compound")).toBe(true);
+    expect(supportsGeneratorSubtool("perimeter-and-area", "shapes")).toBe(false);
+    const html = renderToStaticMarkup(createElement(SendToDeck, { path: "/perimeter-and-area", sub: "compound", level: "level1", variables: {}, dropdown: "", multiSelect: {}, question: rectilinearQuestion(shape()), onClose: () => {} }));
+    expect(html).toContain("chosen dimensions");
+    expect(html).not.toContain("This question, hand-picked");
+  });
+
+});
