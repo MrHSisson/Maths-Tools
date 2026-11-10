@@ -169,4 +169,14 @@ describe("rectilinear deck foundations", () => {
     expect((extras(q)._diagram as Drawing).edges.some(e=>e.kind==="missing")).toBe(false);
   });
 
+  it("prints partition-only tasks without asking for an area",async()=>{
+    const item=authoredRectilinear("partition",{...shape(),task:"partition",scaffold:"none"});
+    expect(item.answer.join(" ")).toContain("partition");
+    const cell=rectilinearPrintCells([item])[0];
+    expect(cell.prompts.join(" ")).toContain("No area calculation");
+    expect(cell.working).toEqual([]);
+    expect(isCuratedQuestion(item)).toBe(true);
+    expect((await checkDeckContent({id:"partition-check",title:"Partition",summary:"",slides:[authoredSheetSlide("partition-sheet","Partition",[item])]})).problems).toEqual([]);
+  });
+
 });

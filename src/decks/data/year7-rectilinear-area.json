@@ -412,7 +412,6 @@
    "id": "year7-rectilinear-area-split",
    "family": "teach",
    "title": "Split and add: worked example",
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -462,7 +461,8 @@
      ],
      "id": "year7-rectilinear-area-split-1"
     }
-   ]
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
    "id": "year7-rectilinear-area-internal-stairs",
@@ -1035,7 +1035,6 @@
    "id": "year7-rectilinear-area-cutout-practice",
    "family": "practice",
    "title": "L, M and O: choose a method",
-   "brief": "Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths.",
    "els": [
     {
      "kind": "questions",
@@ -1282,7 +1281,8 @@
      ],
      "id": "year7-rectilinear-area-cutout-practice-1"
     }
-   ]
+   ],
+   "brief": "Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths."
   },
   {
    "id": "year7-rectilinear-area-cutout-generator",
@@ -1842,7 +1842,6 @@
    "id": "year7-rectilinear-area-exit",
    "family": "retrieval",
    "title": "Explain and apply",
-   "brief": "No external missing-length questions. Explain which internal rectangle dimensions or removed areas are needed.",
    "els": [
     {
      "kind": "questions",
@@ -1913,7 +1912,8 @@
      ],
      "id": "year7-rectilinear-area-exit-1"
     }
-   ]
+   ],
+   "brief": "No external missing-length questions. Explain which internal rectangle dimensions or removed areas are needed."
   }
  ]
 }

@@ -131,7 +131,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         for (const q of el.authored) {
           if (!isCuratedQuestion(q) || !q.rectilinear || q.status !== "ready") { problems.push(`${where}: unfinished or invalid worksheet shape`); continue; }
           const expected = rectilinearQuestion(q.rectilinear).answer;
-          if (q.answer.join(" ") !== `$${expected}$ cm²`) problems.push(`${where}: the worksheet answer does not match its shape dimensions`);
+          if (q.rectilinear.task !== "partition" && q.answer.join(" ") !== `$${expected}$ cm²`) problems.push(`${where}: the worksheet answer does not match its shape dimensions`);
         }
         continue;
       }

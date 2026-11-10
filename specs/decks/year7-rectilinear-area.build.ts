@@ -12,7 +12,7 @@ export const models = {
   cutout: make("y7-model-cutout", { shape: "L", width: 8, height: 6, cutWidth: 3, cutHeight: 2, method: "subtract", scaffold: "none" }, "explain"),
   frame: make("y7-frame-model", { shape: "frame", width: 13, height: 10, cutWidth: 5, cutHeight: 4, method: "subtract", scaffold: "none" }, "explain"),
   choice: make("y7-method-choice", { shape: "comb", width: 16, height: 11, cutWidth: 3, cutHeight: 6, method: "subtract", scaffold: "none" }, "explain"),
-  exit: make("y7-exit-area", { shape: "U", width: 18, height: 13, cutWidth: 7, cutHeight: 8, method: "subtract", scaffold: "none" }, "diagnose"),
+  exit: make("y7-exit-area", { shape: "comb", width: 18, height: 13, cutWidth: 4, cutHeight: 8, method: "subtract", scaffold: "none" }, "diagnose"),
 };
 export const practiceOne: CuratedQuestion[] = [
   make("y7-p1", { width: 7, height: 6, cutWidth: 2, cutHeight: 3 }),
@@ -31,12 +31,12 @@ export const practiceTwo: CuratedQuestion[] = [
   make("y7-m6", { shape: "comb", width: 19, height: 12, cutWidth: 4, cutHeight: 7, orientation: 3, scaffold: "none" }),
 ];
 export const cutoutPractice: CuratedQuestion[] = [
-  make("y7-c1", { shape: "U", width: 13, height: 10, cutWidth: 5, cutHeight: 6, method: "subtract", scaffold: "none" }),
-  make("y7-c2", { shape: "frame", width: 12, height: 9, cutWidth: 6, cutHeight: 5, method: "subtract", scaffold: "none" }),
+  make("y7-c1", { shape: "L", width: 13, height: 10, cutWidth: 5, cutHeight: 6, method: "subtract", scaffold: "none" }),
+  make("y7-c2", { shape: "L", width: 12, height: 9, cutWidth: 6, cutHeight: 5, method: "subtract", scaffold: "none" }),
   make("y7-c3", { shape: "comb", width: 17, height: 10, cutWidth: 3, cutHeight: 6, method: "subtract", scaffold: "none" }),
-  make("y7-c4", { shape: "U", width: 16, height: 12, cutWidth: 6, cutHeight: 7, orientation: 1, method: "subtract", scaffold: "none" }),
+  make("y7-c4", { shape: "comb", width: 16, height: 12, cutWidth: 3, cutHeight: 7, orientation: 1, method: "subtract", scaffold: "none" }),
   make("y7-c5", { shape: "frame", width: 15, height: 11, cutWidth: 7, cutHeight: 6, method: "subtract", scaffold: "none" }),
-  make("y7-c6", { shape: "comb", width: 20, height: 13, cutWidth: 4, cutHeight: 8, orientation: 4, method: "subtract", scaffold: "none" }),
+  make("y7-c6", { shape: "frame", width: 20, height: 13, cutWidth: 8, cutHeight: 8, orientation: 4, method: "subtract", scaffold: "none" }),
 ];
 export const worksheetQuestions: CuratedQuestion[] = [
   make("y7-w1", { task:"partition", width: 9, height: 5, cutWidth: 4, cutHeight: 2, scaffold: "none" }),
@@ -75,7 +75,7 @@ export default async function lesson() {
       slide.els.push({id:slide.id+"-instruction",kind:"text",x:60,y:28,w:1480,h:65,size:36,text:"Draw a split into rectangles. No calculation yet."});
       return slide;
     }),
-    S.discuss(ID+"-partition-discussion","Which splits are valid?","Rectangles cover the shape exactly once, with no gaps or overlaps. Different partitions can work.","Which split makes the rectangle dimensions easiest to identify?","\\text{No gaps or overlaps}"),
+    S.discuss(ID+"-partition-discussion","Which splits are valid?","A rectilinear shape has straight sides meeting at right angles. Rectangles cover it exactly once, with no gaps or overlaps. Different partitions can work.","Which split makes the rectangle dimensions easiest to identify?","\\text{No gaps or overlaps}"),
     model(ID+"-split","Split and add: worked example",models.split),
     model(ID+"-internal-stairs","Find internal widths first",models.subtract),
     model(ID+"-internal-cross","Build an internal length by adding",models.add),
@@ -84,7 +84,7 @@ export default async function lesson() {
     model(ID+"-l-cutout","L-shape: whole minus cut-out",models.cutout),
     model(ID+"-m-cutout","M-shape: remove both cut-outs",models.choice),
     model(ID+"-o-cutout","O-shape: remove the inner rectangle",models.frame),
-    S.deliberate(ID+"-cutout-practice","L, M and O: choose a method",[make("y7-cutout-l",{width:11,height:8,cutWidth:4,cutHeight:3,method:"subtract",scaffold:"none"}),...cutoutPractice.slice(1)],"Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths."),
+    S.deliberate(ID+"-cutout-practice","L, M and O: choose a method",cutoutPractice,"Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths."),
     { ...generator(ID+"-cutout-generator",false),title:"M and O cut-outs: general practice",els:[{id:ID+"-cutout-generator-el",kind:"generator",tool:"perimeter-and-area",preset:{sub:"compound",level:"level3",multiSelect:{area:true,perimeter:false,all:true,missing:false,same:true,mixed:false},variables:{reducedLabels:true,showSplit:false}},seed:317,presentation:"full",x:24,y:24,w:1552,h:852}]},
     authoredSheetSlide(ID+"-worksheet","Rectilinear area — partition, internal lengths, cut-outs",worksheetQuestions),
     S.summary(ID+"-summary","Choose your method",["Draw a valid partition","Calculate internal rectangle lengths before areas","Add component areas, or subtract all cut-out areas","Use square units"]),
