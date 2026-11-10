@@ -157,12 +157,13 @@ export const DECISION_CHECK_NOTES = {
   ],
 };
 
-/** The sub-tools that address each statement (by statement ref). A sub-tool can serve more than one statement. */
+/** The sub-tools that address each statement (by statement ref). Each sub-tool is listed under one statement only. */
 export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
   DE1: [cpa("network", "Network from a table", "as"), cpa("table", "Table from a network", "as")],
-  // Forward pass is the earliest times only; the latest times come from Full analysis (a backward pass of its own is not built yet)
+  // Forward pass is the earliest times only; the latest times come from Full analysis, which is listed here until a Backward pass of its own is
+  // built (docs/TASKS.md): Full analysis then moves to DE3, where its critical path belongs
   DE2: [cpa("forward", "Forward pass", "as"), cpa("full", "Full analysis", "as"), cpa("unknown", "Missing time", "as")],
-  DE3: [cpa("full", "Full analysis", "as"), cpa("floatPaths", "Float and critical paths", "as")],
+  DE3: [cpa("floatPaths", "Float and critical paths", "as")],
   DE4: [cpa("change", "Delays and changes", "as"), cpa("reason", "Explain and justify", "as"), cpa("shorten", "Which to shorten", "a"), cpa("reasonA", "Limits of the model", "a")],
   DE5: [cpa("cascade", "Cascade/Gantt chart", "a"), cpa("histogram", "Resource histogram", "a")],
   DE6: [cpa("level", "Resource levelling", "a")],

@@ -696,7 +696,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Banked 2026-11-10 at Harry's request, not started. DE2 asks for earliest **and** latest start and finish times. Today **Forward pass** practises only the earliest times, and the backward pass appears only inside **Full analysis** (which also asks for the critical path), so the latest times have no practice of their own. Build a **Backward pass** sub-tool (AS, skills practice) that starts from a network with its earliest times filled in and asks for the latest times, then pair it with DE2 in `DECISION_PAIRINGS` (`src/tools/Decision/decisionSpec.ts`); `decisionPairings.test.ts` fails until a new Critical Path sub-tool is placed. Links: `src/tools/Decision/CriticalPath.tsx`, `src/tools/Decision/decisionSpec.ts`, `docs/pathways/decision-exam-questions.md`."
+     "s": "Banked 2026-11-10 at Harry's request, not started. DE2 asks for earliest **and** latest start and finish times. Today **Forward pass** practises only the earliest times, and the backward pass appears only inside **Full analysis** (which also asks for the critical path), so the latest times have no practice of their own. Build a **Backward pass** sub-tool (AS, skills practice) that starts from a network with its earliest times filled in and asks for the latest times, then pair it with DE2 in `DECISION_PAIRINGS` (`src/tools/Decision/decisionSpec.ts`) and move Full analysis from DE2 to DE3, where its critical path belongs (a sub-tool is listed under one statement only); `decisionPairings.test.ts` fails until a new Critical Path sub-tool is placed. Links: `src/tools/Decision/CriticalPath.tsx`, `src/tools/Decision/decisionSpec.ts`, `docs/pathways/decision-exam-questions.md`."
     }
    ]
   },

@@ -1,6 +1,6 @@
 // Decision Maths: which generator sub-tools address which specification statement (decisionSpec.ts, DECISION_PAIRINGS and DECISION_GROUPS).
 // The pairing is data written by hand, so these tests keep it honest: every pairing names a sub-tool the tool really has, with the name and
-// the course and practice settings the tool gives it, and every sub-tool of the tool is placed somewhere, so a new one cannot be forgotten.
+// the course and practice settings the tool gives it, and every sub-tool of the tool is placed in exactly one place, so a new one cannot be forgotten or listed twice.
 import { describe, it, expect } from "vitest";
 import { DECISION_CHAPTERS, DECISION_PAIRINGS, DECISION_GROUPS, type SubToolRef } from "../tools/Decision/decisionSpec";
 
@@ -32,8 +32,9 @@ describe("Decision spec pairings", () => {
     expect(problems).toEqual([]);
   });
 
-  it("every Critical Path sub-tool is placed under a statement or in a group", () => {
-    const placed = new Set(all().filter(x => x.tool === "critical-path").map(x => x.sub));
-    expect(SUBS.map(s => s.key).filter(k => !placed.has(k))).toEqual([]);
+  it("every Critical Path sub-tool is placed under a statement or in a group, and in only one place", () => {
+    const placed = all().filter(x => x.tool === "critical-path").map(x => x.sub);
+    expect(SUBS.map(s => s.key).filter(k => !placed.includes(k))).toEqual([]);
+    expect(placed.filter((k, i) => placed.indexOf(k) !== i)).toEqual([]);
   });
 });
