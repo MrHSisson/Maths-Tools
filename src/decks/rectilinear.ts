@@ -16,8 +16,8 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = spec;
   const outlines = rectilinearPolygons(spec);
   const expected = shape === "L" || shape === "U" || shape === "frame" ? w*h-a*b
-    : shape === "comb" ? w*h-2*a*b : shape === "cross" ? w*h-4*a*b
-    : shape === "T" ? w*(h-b)+(w-2*a)*b : w*b+(w-a)*b+(w-2*a)*(h-2*b);
+    : (shape === "comb" || shape === "N") ? w*h-2*a*b : shape === "cross" ? w*h-4*a*b
+    : shape === "T" ? w*(h-b)+(w-2*a)*b : shape === "stairs4" ? w*b+(w-a)*b+(w-2*a)*b+(w-3*a)*(h-3*b) : w*b+(w-a)*b+(w-2*a)*(h-2*b);
   const rotated: Pt[][] = outlines.map(outline => outline.map(([x0, y0]) => {
     let x = spec.orientation >= 4 ? -x0 : x0, y = y0;
     for (let turn = 0; turn < spec.orientation % 4; turn++) [x, y] = [-y, x];
@@ -52,10 +52,11 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   }
   // Boundary arrows use only the outline edges. Component dimensions remain in the worked
   // solution; they never replace an edge label or add an overall dimension frame.
+  if(spec.method === "subtract" && spec.scaffold !== "none")drawing.regions.forEach(r=>r.always=true);
   if(spec.task === "partition") {
     drawing.caption=["Split this shape into rectangles."];
     if(q.kind === "worded")q.lines=[...drawing.caption];else q.display=drawing.caption[0];
-    drawing.regions.forEach(r=>r.always=false);drawing.helpers.forEach(h=>h.always=false);
+    drawing.regions.forEach(r=>r.always=spec.scaffold !== "none" && r.id.startsWith("s"));drawing.helpers.forEach(h=>h.always=false);
     q.working=[{plain:"One valid rectangle partition is shown.",type:"mStep",label:"One valid partition:",latex:"\\text{Rectangles cover the shape exactly once}"}];
     focuses.splice(0,focuses.length,{regions:drawing.regions.filter(r=>r.id.startsWith("s")).map(r=>r.id)});
   }

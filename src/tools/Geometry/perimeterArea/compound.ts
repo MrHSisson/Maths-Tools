@@ -85,7 +85,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   // is a sum or difference of others, never a copy
   let kind: RectKind = "L", polys: Pt[][] = [], twins: Hide[] = [], missing: Hide[] = [];
   for (let attempt = 0; attempt < 400; attempt++) {
-    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "U", "comb", "frame", "frame"]);
+    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "N", "comb", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
     twins = reducedOn ? twinHides(polys) : [];
@@ -108,7 +108,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
 }
 
 /** Shared solution path for live questions and deliberately chosen deck questions. */
-function internalDimensions(rects: Rect[], flat: { a: Pt; b: Pt; len: number }[]): Beat[] {
+function internalDimensions(rects: Rect[], flat: { a: Pt; b: Pt; len: number }[], overall = false): Beat[] {
   const beats: Beat[] = [], seen = new Set<string>();
   rects.forEach((r,k) => { for (const axis of [0,1]) {
     const lo=axis===0?r.x0:r.y0,hi=axis===0?r.x1:r.y1,key=`${axis}:${lo}:${hi}`;
@@ -119,7 +119,7 @@ function internalDimensions(rects: Rect[], flat: { a: Pt; b: Pt; len: number }[]
     let expression:string|undefined;
     for(const [a,b] of spans)if(a<=lo&&b>=hi){const left=parts(a,lo),right=parts(hi,b);if(left&&right){expression=[b-a,...left.map(x=>-x),...right.map(x=>-x)].map((n,i)=>i?` - ${-n}`:String(n)).join("");break;}}
     if(!expression){const add=parts(lo,hi);if(add)expression=add.join(" + ");}
-    if(expression)beats.push({step:mStep(`Find the internal ${axis===0?"width":"height"} of rectangle ${LETTERS[k]}:`,[`${expression} = ${hi-lo}`],CM),focus:{regions:[`s${k}`]}});
+    if(expression)beats.push({step:mStep(overall ? `Find the overall ${axis===0?"width":"height"}:` : `Find the internal ${axis===0?"width":"height"} of rectangle ${LETTERS[k]}:`,[`${expression} = ${hi-lo}`],CM),focus:{regions:[overall ? "outer" : `s${k}`]}});
   }});
   return beats;
 }
@@ -204,6 +204,7 @@ export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: Diff
     cuts.forEach((r, k) => regions.push({ id: `c${k}`, pts: rect(r), color: "#fde68a", text: "", always: showSplit }));
     const cutAreas = cuts.map(rectArea), cutTotal = sum(cutAreas);
     const cutIds = cuts.map((_, k) => `c${k}`);
+    beats.push(...internalDimensions([box], flat, true));
     beats.push({ step: mStep("The rectangle round the whole shape:", [`${W} \\times ${H}`, `= ${W * H}`]), focus: { regions: ["outer"] } });
     beats.push({
       step: mStep(hasHole ? "The hole:" : "The parts that are missing:", [...cuts.map((r, k) => `${k ? "+ " : ""}${r.x1 - r.x0} \\times ${r.y1 - r.y0}`), ...(cuts.length > 1 ? [`= ${cutTotal}`] : [`= ${cutTotal}`])]),

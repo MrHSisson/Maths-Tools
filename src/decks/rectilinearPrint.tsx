@@ -18,9 +18,12 @@ export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) 
     const scaffold = authored?.rectilinear?.scaffold ?? "none";
     const partition=authored?.rectilinear?.task === "partition";
     const full = scaffold === "full";
-    const prompts = partition ? ["Draw lines to split the shape into rectangles. No area calculation."] : !full ? ["Show your method.", `${measure} = __________________ ${unit}`] : authored?.rectilinear?.method === "subtract"
+    const prompts = partition ? [scaffold === "none" ? "Draw lines to split the shape into rectangles. No area calculation." : "Identify the rectangles in the supplied partition. No area calculation."] : !full ? ["Show your method.", `${measure} = __________________ ${unit}`] : authored?.rectilinear?.method === "subtract"
       ? ["Whole rectangle: ____ × ____ = ____ cm²", "Cut-out area(s): __________________", "Shape area: __________________ cm²"]
       : [...d.regions.filter(r => r.id.startsWith("s")).map((_, i) => `Rectangle ${String.fromCharCode(65 + i)}: ____ × ____ = ____ cm²`), "Total area: __________________ cm²"];
+    if(full && !partition && authored?.rectilinear?.method === "split") {
+      q.working.filter(w=>w.label?.startsWith("Find the internal")).forEach(w=>prompts.unshift(`${w.label!.replace("Find the ","")} ${w.latex.split("=")[0].trim()} = ____ cm`));
+    }
     if (authored?.rectilinear?.missingLength) prompts.unshift("Missing length: __________ cm");
     const clean = (s: string) => s.replace(/\\times/g, "×").replace(/,\\\s*/g, "; ").replace(/\\,/g, " ");
     return { svg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer={false} small />),

@@ -35,8 +35,8 @@ function audit(d:Drawing,small:boolean) {
 describe("rectilinear dimension arrows",()=>{
   it("keeps measured endpoints and clears right-angle corners across authored families and orientations",()=>{
     const bad:string[]=[];
-    for(const shape of ["L","T","stairs3","cross","U","comb","frame"] as const) for(let orientation=0;orientation<8;orientation++) for(const method of ["split","subtract"] as const) {
-      const d=extras(rectilinearQuestion({...defaultRectilinear(),shape,width:17,height:13,cutWidth:5,cutHeight:4,orientation,method}))._diagram as Drawing;
+    for(const shape of ["L","T","stairs3","stairs4","cross","U","N","comb","frame"] as const) for(let orientation=0;orientation<8;orientation++) for(const method of ["split","subtract"] as const) {
+      const d=extras(rectilinearQuestion({...defaultRectilinear(),shape,width:shape==="stairs4"?20:17,height:shape==="stairs4"?15:13,cutWidth:shape==="stairs4"?4:5,cutHeight:shape==="stairs4"?3:4,orientation,method}))._diagram as Drawing;
       for(const small of [false,true])bad.push(...audit(d,small).map(x=>`${shape}/${orientation}/${method}/${small}: ${x}`));
     }
     expect(bad).toEqual([]);

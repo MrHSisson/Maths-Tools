@@ -1,20 +1,40 @@
-# Year 7 rectilinear area — revised sequence
-Status: implemented after review, 2026-11-10. Native deck is the master. 60 minutes, with optional practice continuing next lesson. No retrieval starter. Rectangle area already secure.
+# Year 7 rectilinear area — complete rebuild
 
-| Minutes | Sequence |
-| --- | --- |
-| 0–10 | Four partition-only questions: L, T, staircase, cross. Draw rectangles; no areas yet. |
-| 10–15 | Discuss valid partitions, gaps/overlaps, and which split makes dimensions easiest to identify. |
-| 15–22 | T worked area model, then explicit internal-length models: staircase width by subtraction and cross width by addition. |
-| 22–35 | Six varied authored questions: identify internal rectangle dimensions before areas. Live split-and-add generator, external sides all given. |
-| 35–45 | Subtraction built from an L corner, to an M with two cut-outs, then an O frame. Authored practice and Level 3 generator as continuation if needed. |
-| 45–57 | Worksheet mirrors the three stages. |
-| 57–60 | Apply/justify a method; continue next lesson if needed. |
+Implemented 2026-11-10. Native shared deck `year7-rectilinear-area` is the master. Top set Year 7, rectangle area already secure. No retrieval starter or discussion slides. All slide/question IDs start `rectilinear-r2-`; the previous lesson has been replaced, rather than edited into this version.
 
-No external missing-length questions or generator settings remain. Worked solutions now explicitly derive any needed internal rectangle width/height before multiplication, using addition of contiguous spans or subtraction from a longer span. Example: staircase middle width = 14−4=10. This runs through the canonical tool builder, so authored and generated work agree.
+## Slide sequence
 
-Worksheet: four unpartitioned shapes to split only; four internal-dimension/area questions with fading split support; L, M and O cut-outs. Three pupil pages and three worked-key pages. The first key page shows possible partitions, accepts alternatives and gives no area calculations. Later key pages show internal-length arithmetic before rectangle areas.
+| Slide | Visible header | Content and progression |
+| --- | --- | --- |
+| 1 | Area of rectilinear shapes | Title and the three stages. |
+| 2 | Split into rectangles | ONE question sequence: four unpartitioned L, T, staircase and cross shapes. Draw rectangles only, no area calculation. Reveal one valid partition. |
+| 3 | Area by splitting | ONE sequence: T, L, T, L. Each starts unpartitioned; no internal-length arithmetic yet. Model the first and check the others. |
+| 4 | Find internal lengths first | Staircase model/check, then cross model/check. Models have supplied partitions. Derive required internal dimensions before multiplying; all external sides given or directly implied. |
+| 5 | Internal lengths: practice | Six graded questions: staircase/cross, reflected and rotated shapes, then a four-step staircase requiring two internal widths. Final questions can continue next lesson. |
+| 6 | Remove one part: L and U | L model/check, then U model/check. Reveal enclosing rectangle and cut-out; subtract areas. |
+| 7 | Remove two parts: M and N | M model/check with same-side notches; N model/check with opposing offset notches. Subtract both cut-outs. Derive the enclosing width first where necessary. |
+| 8 | Remove a hole: O shapes | Frame model/check. Outer rectangle area minus inner rectangle area. |
+| 9 | Independent practice | The pinned authored worksheet, three sections of four questions. |
+| 10 | Check your method | Four short method reminders; no discussion task or new question. |
+| 11 | Optional: internal-length practice | Level 2 live generator, all external sides given/directly implied. Continuation only. |
+| 12 | Optional: cut-out practice | Level 3 live U/N/M/O generator, all external sides given/directly implied. Continuation only. |
 
-The agreed diagram style remains: actual boundary arrows at 10 screen pixels from their own edge, all independent boundary labels retained, only aligned spans implied; no internal-width arrows, tabs, generic diagram headings or overall dimension frames.
+## Sixty-minute teaching route
 
-Exports: run `_check/year7-rectilinear-assets.cjs` with the app running, then `_check/year7-rectilinear-print.py --work <folder>`. Native partition task is saved with each authored shape so editing dimensions preserves its partition-only purpose.
+Allow 0–8 minutes for partitions, 8–15 for the T/L area sequence, 15–24 for internal-length model/check pairs, and 24–31 for internal-length practice. Use the first practice questions in class; the final four-step staircase is an extension. Allow 31–43 for cut-out models, with paired checks available if pace permits, then 43–58 for the worksheet and 58–60 for checking methods. Keep unfinished checks/practice for the next lesson. Slides 11–12 are additional continuation material.
+
+## Worksheet scaffold
+
+Three A4 pupil pages, four questions per section, with a matching three-page worked key:
+
+- **A — Partition only:** T, L, staircase, cross. First T has a supplied partition to identify; the remaining three require pupils to draw partitions. No area calculations.
+- **B — Internal lengths then area:** three-step staircase, rotated staircase, cross, four-step staircase. First has a supplied partition and an internal-length calculation blank before rectangle area prompts; support fades completely for the remaining three.
+- **C — Remove cut-outs:** U, N, M, O. No L in independent cut-out practice. First U demonstrates the enclosing rectangle and shaded removed part, with whole/removed/remaining area prompts. Others are unscaffolded.
+
+All answers are recomputed independently from the exported polygons, component rectangles and edge vectors. The key shows internal/enclosing dimension arithmetic before areas where needed. Partition answers accept alternative valid splits.
+
+## Diagram and verification contract
+
+Visible headers are separate text elements. Generic per-question captions are suppressed. Actual boundary arrows remain 10 CSS pixels from their own edges on the board. All independent boundary lengths remain labelled; only matching aligned spans are implied. No external missing-length tasks, internal-width arrows, floating pills, equality tabs or overall dimension frames.
+
+Build source: `year7-rectilinear-area.build.ts`. Export with `_check/year7-rectilinear-assets.cjs`, then `_check/year7-rectilinear-print.py --work <folder>`. The snapshot regression test checks grouped partition questions, T/L order, no premature internal arithmetic, worksheet scaffolds, fresh IDs and headers. The edge-gap browser check covers laptop, tablet and phone.

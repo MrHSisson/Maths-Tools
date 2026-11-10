@@ -114,9 +114,9 @@ describe("rectilinear deck foundations", () => {
     expect(isRectilinearSpec({ ...shape(), width: 6, height: 6, cutWidth: 3, cutHeight: 3, missingLength: "subtraction" })).toBe(false);
   });
 
-  it("authors cross, U, two-notch and frame areas through both methods in all orientations", () => {
-    const expected = { cross: 141, U: 201, comb: 181, frame: 201 };
-    for (const kind of ["cross", "U", "comb", "frame"] as const) for (let orientation = 0; orientation < 8; orientation++) for (const method of ["split", "subtract"] as const) {
+  it("authors cross, U, opposing-notch, two-notch and frame areas through both methods in all orientations", () => {
+    const expected = { cross: 141, U: 201, comb: 181, N: 181, frame: 201 };
+    for (const kind of ["cross", "U", "N", "comb", "frame"] as const) for (let orientation = 0; orientation < 8; orientation++) for (const method of ["split", "subtract"] as const) {
       const spec = { ...shape(), shape: kind, width: 17, height: 13, cutWidth: 5, cutHeight: 4, orientation, method };
       expect(isRectilinearSpec(spec)).toBe(true);
       const q = rectilinearQuestion(spec);
@@ -167,6 +167,28 @@ describe("rectilinear deck foundations", () => {
     expect(q.working[at].latex).toContain("14 - 4 = 10");
     expect(at).toBeLessThan(q.working.findIndex(w=>w.label?.includes("find each area")));
     expect((extras(q)._diagram as Drawing).edges.some(e=>e.kind==="missing")).toBe(false);
+  });
+
+  it("teaches four-step internal widths and the enclosing width of opposing cut-outs before areas",()=>{
+    const stairs=rectilinearQuestion({...shape(),shape:"stairs4",width:20,height:15,cutWidth:4,cutHeight:3});
+    expect(stairs.answer).toBe("192");
+    expect(stairs.working.filter(w=>w.label?.includes("internal width")).map(w=>w.latex)).toEqual(expect.arrayContaining([expect.stringContaining("20 - 4 = 16"),expect.stringContaining("20 - 4 - 4 = 12")]));
+    const n=rectilinearQuestion({...shape(),shape:"N",width:17,height:12,cutWidth:4,cutHeight:7,method:"subtract"});
+    expect(n.answer).toBe("148");
+    const overall=n.working.findIndex(w=>w.label?.includes("overall width"));
+    expect(overall).toBeGreaterThanOrEqual(0);
+    expect(overall).toBeLessThan(n.working.findIndex(w=>w.latex.includes("17 \\times 12")));
+  });
+  it("shows first-item partitions and an enclosing cut-out scaffold on the pupil sheet",()=>{
+    const partition=extras(rectilinearQuestion({...shape(),task:"partition",scaffold:"split"}))._diagram as Drawing;
+    const independent=extras(rectilinearQuestion({...shape(),task:"partition",scaffold:"none"}))._diagram as Drawing;
+    expect(partition.regions.some(r=>r.always)).toBe(true);
+    expect(independent.regions.some(r=>r.always)).toBe(false);
+    const u={...shape(),shape:"U" as const,width:16,height:11,cutWidth:6,cutHeight:7,method:"subtract" as const,scaffold:"full" as const};
+    const drawing=extras(rectilinearQuestion(u))._diagram as Drawing;
+    expect(drawing.regions.find(r=>r.id==="outer")?.always).toBe(true);
+    expect(drawing.regions.filter(r=>r.id!=="outer").every(r=>r.always)).toBe(true);
+    expect(rectilinearPrintCells([authoredRectilinear("u-scaffold",u)])[0].prompts.join(" ")).toContain("Cut-out area");
   });
 
   it("prints partition-only tasks without asking for an area",async()=>{

@@ -1,4 +1,5 @@
-// Shape pictures: label pills are fitted to the whole picture, so none may overlap another pill, sit on a line, or fall off the picture.
+// Legacy shape pictures: label pills are fitted to the whole picture. Rectilinear
+// arrows use a separate renderer and are audited in dimensionArrows.test.ts.
 import { withSeededRandom } from "./seededRandom";
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Geometry/PerimeterArea";
@@ -34,6 +35,7 @@ describe("label placement", () => {
     for (const tool of TOOLS) for (const level of LEVELS) for (let i = 0; i < 60; i++) {
       const [ms, vars] = SETUPS[i % SETUPS.length];
       const d = generateQuestion(tool, level, vars, "", ms)._diagram as Drawing;
+      if (d.dimensionStyle === "arrows") continue;
       for (const small of [true, false]) for (const answer of [false, true]) {
         total++;
         const p = problems(d, small, answer);

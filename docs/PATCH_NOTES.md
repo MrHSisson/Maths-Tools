@@ -29,6 +29,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Complete rectilinear deck rebuild
+
+Branch `codex/year7-rectilinear-lesson`. Replaced the previous lesson with fresh slide/question IDs: 10 core slides plus two optional generators, visible headers and no discussion slides. Four partitions share one question sequence; the next sequence alternates unpartitioned T–L–T–L. Internal-dimension model/check pairs precede practice. Cut-outs progress through L/U, M/N and O.
+
+The authored worksheet now has three sections of four questions, each with the first scaffolded. Independent cut-outs use U/N/M/O, with the first U showing the enclosing rectangle and removed part; no L in this section. Added opposing-notch N geometry and a four-step staircase extension, including worked enclosing/internal lengths before areas. Existing 10px edge arrows retained. Fresh PDF questions and key use the same authored data; independent geometry checks and regression guards cover the rebuilt progression. Source and teaching route: `specs/decks/year7-rectilinear-area.md`. No production promotion or deck publication.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Complete rectilinear deck rebuild (Codex)”.
+
 ## 2026-11-10 — Partition → internal lengths → cut-outs
 
 Branch `codex/year7-rectilinear-lesson`. Refactored the native lesson and worksheet after review. Four varied partition-only questions precede discussion; T area modelling leads into explicit internal-width/height calculations, then area practice. Removed external missing-side tasks. Cut-outs progress from L to M (two notches) and O (frame), including Level 3 general practice. Worksheet mirrors those three stages.

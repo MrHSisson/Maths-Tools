@@ -1,10 +1,5 @@
 from pathlib import Path
 import json, math, re, textwrap
-from pptx import Presentation
-from pptx.util import Inches, Pt
-from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -27,7 +22,9 @@ def clean(s):
 def calculations(a):
  rows=[]
  for w in a['working']:
-  if w.get('label','').startswith('Find the internal'): rows.append(w['label'].replace('Find the ','')+' '+clean(w['latex'])+' cm')
+  if w.get('label','').startswith(('Find the internal','Find the overall')):
+   label=re.sub(r'Find the internal (width|height) of rectangle ([A-Z]):',r'Internal \2 \1:',w['label']).replace('Find the ','')
+   rows.append(label+' '+clean(w['latex'])+' cm')
  d=a['drawing']; splits=[r for r in d['regions'] if r['id'].startswith('s')]; cuts=[r for r in d['regions'] if r['id'].startswith('c')]
  def dims(r):
   xs=[p[0] for p in r['pts']];ys=[p[1] for p in r['pts']];return max(xs)-min(xs),max(ys)-min(ys)
@@ -59,9 +56,9 @@ for a in A.values():
    val=math.hypot(e['b'][0]-e['a'][0],e['b'][1]-e['a'][1]); assert val==float(e['value'].split()[0]); assert all(f['label']!=e['value'] for f in d['edges'] if f['kind']=='plain')
  boxw=max(p[0] for p in d['polys'][0])-min(p[0] for p in d['polys'][0]);boxh=max(p[1] for p in d['polys'][0])-min(p[1] for p in d['polys'][0]);assert boxw*boxh!=actual
  verified.append({'id':a['id'],'area':actual,'missing':unknowns(a),'wrong_enclosing_rectangle':boxw*boxh,'method':calculations(a)})
-for group in ['practiceOne','practiceTwo','worksheet']:
+for group in G:
  vals=[A[k]['answer'] for k in G[group]];assert len(vals)==len(set(vals)),(group,vals)
-assert all(A[k]['item']['rectilinear']['reducedLabels'] for k in G['worksheet'])
+assert all(A[k]['item']['rectilinear']['reducedLabels'] for k in G['worksheetQuestions'])
 (ROOT/'lesson-verification.json').write_text(json.dumps(verified,indent=2))
 
 # Readable A4 worksheets: four questions on each page, fading support by section.
@@ -82,13 +79,13 @@ def lines(c,x,y,s,width=240,size=10,leading=15,bold=False):
 
 def worksheet(path,answers=False):
  c=canvas.Canvas(str(path),pagesize=A4);c.setTitle('Rectilinear area — '+('worked answers' if answers else 'worksheet'));c.setAuthor('Maths')
- labels=['A · Draw partitions only','B · Internal lengths, then area','C · L, M and O cut-outs']
- instructions=['Draw lines to make rectangles. Do not calculate areas yet.','Calculate internal rectangle dimensions before their areas.','Use the whole rectangle minus every removed area.']
+ labels=['A · Draw partitions only','B · Internal lengths, then area','C · U, N, M and O cut-outs']
+ instructions=['Use the first partition as a model. Split the remaining shapes; no areas yet.','Calculate internal rectangle dimensions before their areas.','Use the whole rectangle minus every removed area.']
  for page in range(3):
   pdftext(c,30,H-34,'Area of rectilinear shapes',18,True,NAVY);pdftext(c,30,H-53,'Worked answers' if answers else 'Name: __________________________   Class: __________',10)
   pdftext(c,30,H-78,labels[page],12,True,TEAL);pdftext(c,30,H-96,instructions[page],9)
   gap=14;cw=(W-60-gap)/2;ch=337;top=H-112
-  for j,k in enumerate(G['worksheet'][page*4:page*4+4]):
+  for j,k in enumerate(G['worksheetQuestions'][page*4:page*4+4]):
    idx=page*4+j+1;a=A[k];x=30+(j%2)*(cw+gap);yt=top-(j//2)*(ch+12);bottom=yt-ch
    c.setStrokeColorRGB(.80,.84,.88);c.setLineWidth(.6);c.roundRect(x,bottom,cw,ch,5,stroke=1,fill=0)
    pdftext(c,x+9,yt-17,str(idx)+'.',11,True)
@@ -102,12 +99,15 @@ def worksheet(path,answers=False):
    else:
     spec=a['item']['rectilinear']
     if page==0:
-     lines(c,x+10,y,'Draw a valid partition into rectangles.',cw-20,10,15)
+     lines(c,x+10,y,'Identify the rectangles in the supplied partition.' if j==0 else 'Draw a valid partition into rectangles.',cw-20,10,15)
      continue
     if page==1:
      pdftext(c,x+10,y,'Internal length(s): __________ cm',10);y-=22
     if spec.get('missingLength'):pdftext(c,x+10,y,'Missing length: __________ cm',10);y-=22
-    if spec['scaffold']=='full':
+    if spec['scaffold']=='full' and spec['method']=='subtract':
+     for prompt in ['Whole rectangle: ___ × ___ = ___ cm²','Removed rectangle: ___ × ___ = ___ cm²','Remaining area: ______________ cm²']:
+      pdftext(c,x+10,y,prompt,9.6);y-=23
+    elif spec['scaffold']=='full':
      for r in [r for r in a['drawing']['regions'] if r['id'].startswith('s')]:
       pdftext(c,x+10,y,f'Rectangle {r["text"]}: ___ × ___ = ___ cm²',10);y-=23
      pdftext(c,x+10,y,'Total area: ______________ cm²',10)
