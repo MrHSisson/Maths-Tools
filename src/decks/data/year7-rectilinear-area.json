@@ -43,7 +43,6 @@
    "id": "year7-rectilinear-area-partition-1",
    "family": "teach",
    "title": "Split into rectangles \u2014 1",
-   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here.",
    "els": [
     {
      "kind": "questions",
@@ -101,13 +100,13 @@
      "size": 36,
      "text": "Draw a split into rectangles. No calculation yet."
     }
-   ]
+   ],
+   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here."
   },
   {
    "id": "year7-rectilinear-area-partition-2",
    "family": "teach",
    "title": "Split into rectangles \u2014 2",
-   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here.",
    "els": [
     {
      "kind": "questions",
@@ -165,13 +164,13 @@
      "size": 36,
      "text": "Draw a split into rectangles. No calculation yet."
     }
-   ]
+   ],
+   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here."
   },
   {
    "id": "year7-rectilinear-area-partition-3",
    "family": "teach",
    "title": "Split into rectangles \u2014 3",
-   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here.",
    "els": [
     {
      "kind": "questions",
@@ -229,13 +228,13 @@
      "size": 36,
      "text": "Draw a split into rectangles. No calculation yet."
     }
-   ]
+   ],
+   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here."
   },
   {
    "id": "year7-rectilinear-area-partition-4",
    "family": "teach",
    "title": "Split into rectangles \u2014 4",
-   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here.",
    "els": [
     {
      "kind": "questions",
@@ -293,7 +292,8 @@
      "size": 36,
      "text": "Draw a split into rectangles. No calculation yet."
     }
-   ]
+   ],
+   "brief": "Partition only: pupils use the pen or mini-whiteboards. Accept different valid partitions; discuss after all four shapes. Do not calculate areas here."
   },
   {
    "id": "year7-rectilinear-area-partition-discussion",
@@ -514,7 +514,7 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "split"
        }
       }
      ],
@@ -575,7 +575,7 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "split"
        }
       }
      ],
@@ -588,6 +588,7 @@
    "id": "year7-rectilinear-area-internal-practice",
    "family": "practice",
    "title": "Internal lengths, then area",
+   "brief": "All external lengths are given or directly implied. Draw a split, calculate the internal rectangle dimensions, then areas. Internal-length calculations appear before multiplication in the working.",
    "els": [
     {
      "kind": "questions",
@@ -609,13 +610,13 @@
         "Find the area."
        ],
        "answer": [
-        "$66$ cm\u00b2"
+        "$72$ cm\u00b2"
        ],
        "explanation": [
-        "Equal sides are the same length: $3$",
-        "Equal sides are the same length: $5$",
-        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 6 \\times 5 = 30$",
-        "Add the areas: $36 + 30 = 66$"
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $4$",
+        "Split it into rectangles and find each area: $A = 12 \\times 4 = 48 ,\\ B = 6 \\times 4 = 24$",
+        "Add the areas: $48 + 24 = 72$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -627,7 +628,7 @@
         "width": 12,
         "height": 8,
         "cutWidth": 3,
-        "cutHeight": 5,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -824,8 +825,7 @@
      ],
      "id": "year7-rectilinear-area-internal-practice-1"
     }
-   ],
-   "brief": "All external lengths are given or directly implied. Draw a split, calculate the internal rectangle dimensions, then areas. Internal-length calculations appear before multiplication in the working."
+   ]
   },
   {
    "id": "year7-rectilinear-area-split-generator",
@@ -1039,7 +1039,6 @@
    "id": "year7-rectilinear-area-cutout-practice",
    "family": "practice",
    "title": "L, M and O: choose a method",
-   "brief": "Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths.",
    "els": [
     {
      "kind": "questions",
@@ -1284,7 +1283,8 @@
      ],
      "id": "year7-rectilinear-area-cutout-practice-1"
     }
-   ]
+   ],
+   "brief": "Start with one missing corner, then two notches (M), then an enclosed hole (O). Subtract areas, not lengths."
   },
   {
    "id": "year7-rectilinear-area-cutout-generator",
@@ -1834,7 +1834,6 @@
    "id": "year7-rectilinear-area-exit",
    "family": "retrieval",
    "title": "Explain and apply",
-   "brief": "No external missing-length questions. Explain which internal rectangle dimensions or removed areas are needed.",
    "els": [
     {
      "kind": "questions",
@@ -1907,7 +1906,8 @@
      ],
      "id": "year7-rectilinear-area-exit-1"
     }
-   ]
+   ],
+   "brief": "No external missing-length questions. Explain which internal rectangle dimensions or removed areas are needed."
   }
  ]
 }

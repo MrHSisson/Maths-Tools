@@ -7,8 +7,8 @@ export const ID = "year7-rectilinear-area";
 const make = (id: string, patch: Partial<RectilinearSpec> = {}, purpose: CuratedQuestion["purpose"] = "practice") => ({ ...Q.rectilinear(id, { ...defaultRectilinear(), ...patch, reducedLabels: true }), purpose });
 export const models = {
   split: make("y7-model-split", { shape: "T", width: 10, height: 7, cutWidth: 3, cutHeight: 5, scaffold: "full" }, "explain"),
-  add: make("y7-model-add", { shape: "cross", width: 13, height: 11, cutWidth: 3, cutHeight: 4, scaffold: "none" }, "explain"),
-  subtract: make("y7-model-subtract", { shape: "stairs3", width: 14, height: 12, cutWidth: 3, cutHeight: 4, scaffold: "none" }, "explain"),
+  add: make("y7-model-add", { shape: "cross", width: 13, height: 11, cutWidth: 3, cutHeight: 4, scaffold: "split" }, "explain"),
+  subtract: make("y7-model-subtract", { shape: "stairs3", width: 14, height: 12, cutWidth: 3, cutHeight: 4, scaffold: "split" }, "explain"),
   cutout: make("y7-model-cutout", { shape: "L", width: 8, height: 6, cutWidth: 3, cutHeight: 2, method: "subtract", scaffold: "none" }, "explain"),
   frame: make("y7-frame-model", { shape: "frame", width: 13, height: 10, cutWidth: 5, cutHeight: 4, method: "subtract", scaffold: "none" }, "explain"),
   choice: make("y7-method-choice", { shape: "comb", width: 16, height: 11, cutWidth: 3, cutHeight: 6, method: "subtract", scaffold: "none" }, "explain"),
@@ -23,7 +23,7 @@ export const practiceOne: CuratedQuestion[] = [
   make("y7-p6", { shape: "U", width: 15, height: 9, cutWidth: 5, cutHeight: 6, scaffold: "none" }),
 ];
 export const practiceTwo: CuratedQuestion[] = [
-  make("y7-m1", { shape: "T", width: 12, height: 8, cutWidth: 3, cutHeight: 5, scaffold: "none" }),
+  make("y7-m1", { shape: "T", width: 12, height: 8, cutWidth: 3, cutHeight: 4, scaffold: "none" }),
   make("y7-m2", { shape: "stairs3", width: 13, height: 12, cutWidth: 3, cutHeight: 4, orientation: 1, scaffold: "none" }),
   make("y7-m3", { shape: "stairs3", width: 16, height: 13, cutWidth: 4, cutHeight: 3, scaffold: "none" }),
   make("y7-m4", { shape: "U", width: 16, height: 11, cutWidth: 5, cutHeight: 7, orientation: 4, scaffold: "none" }),
