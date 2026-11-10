@@ -44,6 +44,28 @@ const subscribeView = (cb: () => void): (() => void) => {
 };
 export const useViewOverride = (): ViewOverride => useSyncExternalStore(subscribeView, getViewOverride, () => null);
 
+// ── Is this a phone? `useLayoutMode()` calls a phone held sideways a tablet (it is more than 640px wide), but some things belong to the device,
+// not the window: a phone only previews a deck, whichever way it is held. So a phone is a window up to 640px wide, or a touch-first screen whose
+// shorter side is at most 600px (an iPad mini is 744). "View as" overrides it, so Mobile counts as a phone and Tablet or Desktop do not.
+const PHONE_SCREEN_MAX = 600;
+export function phoneDeviceOf(o: { width: number; coarse: boolean; shortSide: number; override: ViewOverride }): boolean {
+  if (o.override) return o.override === "phone";
+  return o.width <= PHONE_MAX || (o.coarse && o.shortSide <= PHONE_SCREEN_MAX);
+}
+const readPhone = (): { width: number; coarse: boolean; shortSide: number } => (typeof window === "undefined"
+  ? { width: 1366, coarse: false, shortSide: 768 }
+  : { width: window.innerWidth, coarse: window.matchMedia("(pointer: coarse)").matches, shortSide: Math.min(window.screen?.width ?? Infinity, window.screen?.height ?? Infinity) });
+export function usePhoneDevice(): boolean {
+  const [dev, setDev] = useState(readPhone);
+  useEffect(() => {
+    const on = () => setDev((p) => { const n = readPhone(); return p.width === n.width && p.coarse === n.coarse && p.shortSide === n.shortSide ? p : n; });
+    window.addEventListener("resize", on);
+    window.addEventListener("orientationchange", on);
+    return () => { window.removeEventListener("resize", on); window.removeEventListener("orientationchange", on); };
+  }, []);
+  return phoneDeviceOf({ ...dev, override: useViewOverride() });
+}
+
 // ── "Swap sides": every two-sided (split) layout in ToolShell — the Whiteboard's question beside the working box, the Worked Example's
 // steps beside the picture — can be mirrored, so the teacher puts the question on whichever side suits the room. Per device (localStorage),
 // shared across tabs, read through useSwapSides(); set from the landing-page menu and each tool's own menu.

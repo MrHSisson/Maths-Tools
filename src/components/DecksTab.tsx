@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Lock, Pencil } from 'lucide-react';
 import { useDevMode } from '../devMode';
+import { usePhoneDevice } from '../shared/layoutMode';
 import { usePublishedIndex } from '../decks/published';
 import { allDecks } from '../decks/store';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
@@ -13,6 +14,7 @@ const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day:
 export default function DecksTab() {
   const published = usePublishedIndex();
   const unlocked = useDevMode();
+  const phone = usePhoneDevice();   // a phone only previews a deck: no editor
   const pub = published ?? {};
   const fromPublished: GalleryDeck[] = Object.entries(pub).sort((a, b) => b[1].publishedAt.localeCompare(a[1].publishedAt))
     .map(([id, d]) => ({ id, title: d.title, summary: d.summary, strand: d.strand, slides: d.slides, preview: d.preview, notes: [`published ${dateOf(d.publishedAt)}`] }));
@@ -26,10 +28,10 @@ export default function DecksTab() {
         <h2 className="flex items-center gap-2.5 text-lg sm:text-xl font-bold text-slate-900">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{unlocked ? 'Decks' : 'Published decks'}
         </h2>
-        <Link to="/decks" title={unlocked ? 'Open the deck editor' : 'Needs the admin password'}
+        {!phone && <Link to="/decks" title={unlocked ? 'Open the deck editor' : 'Needs the admin password'}
           className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">
           {unlocked ? <Pencil size={14} /> : <Lock size={14} />}Deck editor
-        </Link>
+        </Link>}
       </div>
       {published === undefined && <p className="text-slate-500">Loading…</p>}
       {published === null && !unlocked && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}

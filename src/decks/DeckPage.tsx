@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Plus, Printer } from "lucide-react";
+import { Navigate, useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Plus, Printer, Smartphone } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
@@ -12,6 +12,8 @@ import { PlayerBar } from "./PlayerBar";
 import { TimerLine, TimerMenu, useTimer } from "./Timer";
 import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
+import { usePhoneDevice } from "../shared/layoutMode";
+import { swipeOf } from "./swipe";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
@@ -135,14 +137,52 @@ function Library() {
 
 // ── The player ───────────────────────────────────────────────────────────────
 
-function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (index: number) => void; badge?: string; backTo?: string }) {
+interface PlayerProps { deck: DeckDef; onEdit?: (index: number) => void; badge?: string; backTo?: string }
+
+/** The turned-on-its-side player and the start card before it. A phone only previews a deck: it has no editing, opens straight into the full-screen show
+ *  after one tap (which is also what lets the browser go full screen and turn to landscape), and swipes from slide to slide. */
+function Player(props: PlayerProps) {
+  const phone = usePhoneDevice();
+  const [started, setStarted] = useState(false);
+  const begin = () => {
+    setStarted(true);
+    // full screen and landscape need the tap that just happened; where the browser will not (an iPhone), the show turns itself on its side instead
+    const lock = () => { try { void (window.screen.orientation as unknown as { lock?: (o: string) => Promise<void> }).lock?.("landscape")?.catch?.(() => undefined); } catch { /* not allowed here */ } };
+    try { void document.documentElement.requestFullscreen?.().then(lock).catch(() => undefined); } catch { /* not allowed here */ }
+    lock();
+  };
+  useEffect(() => () => {
+    try { (window.screen.orientation as unknown as { unlock?: () => void }).unlock?.(); if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* nothing to undo */ }
+  }, []);
+  if (phone && !started) return <PhoneStart deck={props.deck} backTo={props.backTo ?? "/deck-gallery"} onStart={begin} />;
+  return <PlayerShow {...props} phone={phone} />;
+}
+
+function PhoneStart({ deck, backTo, onStart }: { deck: DeckDef; backTo: string; onStart: () => void }) {
+  return (
+    <div className="flex h-app flex-col items-center justify-center gap-5 px-6 text-center" style={{ background: DECK_PAGE }}>
+      <Link to={backTo} className="absolute left-4 top-4 inline-flex items-center gap-1 text-sm font-semibold text-slate-500"><ArrowLeft size={15} />Decks</Link>
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">{deck.title}</h1>
+        <p className="mt-1 text-slate-500">{deck.slides.length} slides</p>
+      </div>
+      <button onClick={onStart} className="inline-flex h-14 items-center gap-2 rounded-2xl bg-blue-900 px-8 text-lg font-semibold text-white shadow-card active:bg-blue-800"><Smartphone size={22} className="rotate-90" />Start</button>
+      <p className="max-w-xs text-sm leading-snug text-slate-500">The slides show sideways. Swipe from right to left for the next slide, and from left to right to go back.</p>
+    </div>
+  );
+}
+
+function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phone: boolean }) {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const canEdit = !!onEdit && !phone;       // a phone only previews a deck
   const total = deck.slides.length;
   const raw = Number(params.get("s") ?? 1);
   const index = Math.min(total - 1, Math.max(0, (Number.isFinite(raw) ? raw : 1) - 1));
   const [fills, setFills] = useState<Record<string, FillMode>>({});
   const [jump, setJump] = useState(false);
-  const [full, setFull] = useState(false);
+  const [fullState, setFull] = useState(false);
+  const full = fullState || phone;           // a phone always plays full screen
   const [sheetsOpen, setSheetsOpen] = useState(false);
   const [printSlidesOpen, setPrintSlidesOpen] = useState(false);
   const sheets = useMemo(() => pinnedSheets(deck), [deck]);
@@ -153,6 +193,24 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   const timer = useTimer();
   const { countdown: timerCountdown, toggle: toggleTimer } = timer;
   const [timerOpen, setTimerOpen] = useState(false);
+
+  // A phone held upright still shows the slide landscape: the whole show is turned a quarter turn, so turning the phone sideways reads it upright
+  // (and the browser's own landscape, where it will give it, replaces the turn).
+  const [win, setWin] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const f = () => setWin({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", f); window.addEventListener("orientationchange", f);
+    return () => { window.removeEventListener("resize", f); window.removeEventListener("orientationchange", f); };
+  }, []);
+  const turned = phone && win.h > win.w;
+  const frameSize = turned ? { w: win.h, h: win.w } : null;
+  useEffect(() => {
+    if (!phone) return;
+    const was = document.body.style.overflow;
+    document.body.style.overflow = "hidden";       // the page never scrolls or pulls down under a swipe
+    return () => { document.body.style.overflow = was; };
+  }, [phone]);
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const [beat, setBeat] = useState(0);                // how many of the slide's clicks have been shown
   // Writing with the pen stays with its slide while the deck is open (kept in slide units, so it survives a resize or full screen), and is gone when the deck is closed
@@ -212,12 +270,13 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
   // (all chrome hidden) is ours, so it also works where the browser refuses. Esc leaves either way.
   useEffect(() => {
     const h = () => { if (!document.fullscreenElement) setFull(false); };
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape" && !phone) setFull(false); };
     document.addEventListener("fullscreenchange", h);
     window.addEventListener("keydown", k);
     return () => { document.removeEventListener("fullscreenchange", h); window.removeEventListener("keydown", k); };
-  }, []);
+  }, [phone]);
   const toggleFull = () => {
+    if (phone) { navigate(backTo ?? "/deck-gallery"); return; }       // a phone's show has no other mode: leaving it goes back to the decks
     const on = !full;
     setFull(on);
     try { if (on) void document.documentElement.requestFullscreen?.().catch(() => undefined); else if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* the layout alone still fills the window */ }
@@ -229,9 +288,9 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
     let t = 0;
     const show = () => { setNudge(true); window.clearTimeout(t); t = window.setTimeout(() => setNudge(false), 2500); };
     show();
-    window.addEventListener("mousemove", show); window.addEventListener("touchstart", show);
+    window.addEventListener("mousemove", show); if (!phone) window.addEventListener("touchstart", show);   // on a phone a tap shows the bar (it fires mouse events); a swipe does not
     return () => { window.clearTimeout(t); window.removeEventListener("mousemove", show); window.removeEventListener("touchstart", show); };
-  }, [full]);
+  }, [full, phone]);
 
   const slide = deck.slides[index];
   const family = FAMILY_STYLE[slide.family];
@@ -252,8 +311,20 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
     </div>
   );
 
-  return (
-    <div className={`flex h-app flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE }}>
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!phone || e.touches.length !== 1 || (e.target as HTMLElement).closest("[data-player-bar],input,textarea,select,[data-no-swipe]")) { touch.current = null; return; }
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s0 = touch.current; touch.current = null;
+    if (!s0 || !phone || jump) return;
+    const t = e.changedTouches[0];
+    const dir = swipeOf(t.clientX - s0.x, t.clientY - s0.y, Date.now() - s0.t, turned);
+    if (dir === "forward") forward(); else if (dir === "back") backward();
+  };
+  const show = (
+    <div className={`flex ${turned ? "h-full w-full" : "h-app"} flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE, ...(phone ? { touchAction: "none" } : {}) }}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {!full && <div className="flex items-center gap-3 pb-2">
         <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
@@ -265,7 +336,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
             <button className={iconBtn} onClick={() => void printSheet(here[0].el, "questions")}><Printer size={16} />Print sheet</button>
             <button className={iconBtn} onClick={() => void printSheet(here[0].el, "answers")}><Printer size={16} />Answer sheet</button>
           </>}
-          {onEdit && <button className={iconBtn} onClick={() => onEdit(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
+          {canEdit && <button className={iconBtn} onClick={() => onEdit!(index)} title="Edit this deck"><Pencil size={16} />Edit</button>}
           {sheets.length > 0 && <button className={iconBtn} onClick={() => setSheetsOpen(true)} aria-label="Worksheets" title="Print the worksheets pinned to this lesson"><FileText size={16} />Worksheets</button>}
           <button className={iconBtn} onClick={() => setPrintSlidesOpen(true)} aria-label="Print slides" title="Print slides to stick into books: 1, 2, 4 or 8 to a page"><Printer size={16} />Print slides</button>
           <TimerMenu className={iconBtn} open={timerOpen} onOpenChange={setTimerOpen} onPick={(m) => timer.start(m)} />
@@ -306,7 +377,7 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
         <button className={iconBtn} onClick={forward} disabled={index === total - 1 && beat >= steps} aria-label="Next"><ChevronRight size={20} /></button>
       </div>}
       {full && (
-        <PlayerBar visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} onLeave={toggleFull} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
+        <PlayerBar frame={frameSize ?? undefined} compact={phone} visible={nudge} count={`${index + 1} / ${total}`} onBack={backward} onNext={forward} onLeave={toggleFull} backDisabled={index === 0 && beat === 0} nextDisabled={index === total - 1 && beat >= steps} btn={iconBtn}>
           {(close) => (
             <div className="space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">This slide</div>
@@ -333,6 +404,10 @@ function Player({ deck, onEdit, badge, backTo }: { deck: DeckDef; onEdit?: (inde
       {sheetsOpen && <WorksheetsDialog deck={deck} onClose={() => setSheetsOpen(false)} onPatch={() => undefined} onGo={(n) => { go(n - 1); setSheetsOpen(false); }} />}
     </div>
   );
+  // upright phone: the show drawn landscape in a box as wide as the screen is tall, turned a quarter turn clockwise to fill the screen
+  return turned && frameSize ? (
+    <div data-turned style={{ position: "fixed", top: 0, left: 0, width: frameSize.w, height: frameSize.h, transformOrigin: "top left", transform: `translateX(${win.w}px) rotate(90deg)`, zIndex: 40, background: "#000" }}>{show}</div>
+  ) : show;
 }
 
 /** The longest the first open waits for the shared copy before using the device's. */
@@ -383,8 +458,12 @@ export default function DeckPage() {
   const { id } = useParams();
   const [params] = useSearchParams();
   const admin = useDevMode();
+  const phone = usePhoneDevice();
   useEffect(() => { document.title = id === "library" ? "Slide library · Maths Tools" : id ? `${loadDeck(id)?.title ?? "Deck"} · Maths Tools` : "Deck editor · Maths Tools"; }, [id]);
   // The deck list, the slide library and the editor need the admin password; the player shows the published copy to everyone else.
+  // a phone only previews a deck: no deck list, slide library or editor, and no Edit
+  if (phone && (!id || id === "library")) return <Navigate to="/deck-gallery" replace />;
+  if (phone && params.get("edit") === "1") { const q = new URLSearchParams(params); q.delete("edit"); return <Navigate to={`/decks/${id}${q.toString() ? `?${q}` : ""}`} replace />; }
   if (!id) return <AdminGate what="deck editor"><DeckIndex /></AdminGate>;
   if (id === "library") return <AdminGate what="slide library"><Library /></AdminGate>;
   if (params.get("edit") === "1" && !admin) return <AdminGate what="deck editor"><></></AdminGate>;

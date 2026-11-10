@@ -31,7 +31,7 @@ import { SkillOverlay } from "./skills";
 import { useQuestionKeeper } from "./questionKeeper";
 import { useRecentQuestions, questionFingerprint } from "./recentQuestions";
 import { PinButton } from "./components/PinButton";
-import { useLayoutMode } from "./layoutMode";
+import { useLayoutMode, usePhoneDevice } from "./layoutMode";
 import { LessonsPage } from "./components/LessonsPage";
 import { useFullscreenFlag } from "./fullscreenFlag";
 import { type LessonControls } from "./components/LessonBar";
@@ -374,6 +374,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   }, []);
   const infoModal = isInfoOpen ? <InfoModal infoSections={infoSections ?? []} title={config.pageTitle} config={config} current={currentTool} onClose={() => setIsInfoOpen(false)} /> : null;
   const [lessonsOpen, setLessonsOpen] = useState(false);
+  const phoneDevice = usePhoneDevice();   // a phone only previews decks: no sending questions into one
   const [sendOpen, setSendOpen] = useState(false);   // "Send to a deck" (Developing-tools mode)
   const [depthSend, setDepthSend] = useState<DepthItem | null>(null);   // "Edit in a deck" from the Depth section (Developing-tools mode)
 
@@ -921,7 +922,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
             </Suspense>
           )}
           {lessonsOpen && lessonControls && <LessonsPage title={config.pageTitle} lessons={lessonControls.lessons} onPick={(id) => { setLessonsOpen(false); lessonControls.start(id); }} onClose={() => setLessonsOpen(false)} />}
-          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onSendToDeck={devMode ? () => setSendOpen(true) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
+          {isMenuOpen && <MenuDropdown onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} lessons={lessonControls?.lessons} decks={devMode ? decksForPath(window.location.pathname) : undefined} onSendToDeck={devMode && !phoneDevice ? () => setSendOpen(true) : undefined} onOpenLessons={() => setLessonsOpen(true)} printables={printables?.map((p) => ({ label: p.label, hint: p.hint, onClick: () => printPrintable(p) }))} keeper={keeperOn} />}
         </div>
       </div>
     </div>
@@ -1033,7 +1034,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>
-              {screen("Depth", <DepthMode onEditInDeck={devMode ? setDepthSend : undefined} items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
+              {screen("Depth", <DepthMode onEditInDeck={devMode && !phoneDevice ? setDepthSend : undefined} items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />)}
             </div>
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (

@@ -8,6 +8,7 @@ Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burge
 ## Progress
 - Developing-tools gated. Player (keys, jump list, full screen, ink), slide editor (type on the slide, equation editor, smart guides, align, layers, undo, copy and paste, export and import), slide library, saving shared between devices (private Blob), boards with fill modes.
 - Skill practice slides open on their own fixed questions (five or more per slide, with working matching the generator), optional misconception notes, and an optional one-note **slide brief** per slide (Lesson thread lists them all). Three shared question layouts (full-width, workspace right, workspace left). Depth cards are standalone full-slide faces.
+- 2026-11-10: **a phone only previews.** No deck editor, Edit, slide library or Send to a deck on a phone; opening a deck is a start card, then a full-screen show that goes landscape (or turns on its side on an upright iPhone) and swipes right to left forward, left to right back. See `docs/reference/decks.md`.
 - Generator slides with central configuration, book activities, Send to a deck, optional camera in the Whiteboard layout.
 - First deck: Estimation, a rough first version that the Year 9 deck below replaced.
 - Decided with Harry (2026-10-27): decks have their own place; hand-picked questions and Depth are built together as intentional designs; decks Claude builds are ordinary decks in the same format.

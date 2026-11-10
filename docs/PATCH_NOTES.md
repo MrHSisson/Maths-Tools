@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Decks on a phone: preview only, landscape, swipe to move
+
+Branch `claude/loving-bell-i2troy`. Areas: `src/decks/DeckPage.tsx`, `src/decks/PlayerBar.tsx`, `src/decks/swipe.ts`, `src/shared/layoutMode.ts` (`usePhoneDevice`), `src/components/DecksTab.tsx`, `src/shared/ToolShellCore.tsx`, `src/App.tsx`, `src/tests/deckSwipe.test.ts`.
+
+- **A phone only previews a deck.** The Decks page has no Deck editor button; `/decks`, `/decks/library` and `?edit=1` go back to the Decks page or the player; the player has no Edit; the tool pages' Send to a deck and Edit in a deck are not offered. A phone is a window up to 640px wide or a touch screen whose shorter side is at most 600px (so a phone held sideways counts, which `useLayoutMode()` would call a tablet); View as overrides it.
+- **It opens on a start card, then plays full screen in landscape.** The tap goes full screen and asks for landscape where the browser allows it (some Android browsers). On an upright phone where it will not (an iPhone), the whole show is drawn turned a quarter turn, so turning the phone sideways reads it upright.
+- **Swipe from right to left for forward, left to right for back** (a slide's next click first, as the arrow keys do); in the turned show the same swipe is up or down the screen. A tap shows the controls bar; a swipe does not.
+- Ink is off on a phone's deck. The laptop and tablet player are unchanged.
+- Checked in headless Chromium emulating an iPhone portrait and landscape, with real touch swipes and a laptop. Not checked on a real phone.
+
+Agent: Claude Code
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)" (this change is not in it yet).
+
 ## 2026-11-10 — Critical Path: the clock-time option is removed from Forward pass and Backward pass
 
 Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/` (`cpa.ts`, `cpaSolve.ts`), `src/tests/cpaSkills.test.ts`, `specs/cpa-skill-tools.md`.
