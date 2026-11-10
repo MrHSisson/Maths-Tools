@@ -1048,7 +1048,7 @@
    "id": "perimeter-and-area",
    "path": "/perimeter-and-area",
    "name": "Perimeter & Area",
-   "description": "Find the perimeter and area of squares, rectangles, triangles, parallelograms, trapezia and compound shapes, on a grid and with algebra",
+   "description": "Find the perimeter and area of squares, rectangles, triangles, parallelograms, trapezia and rectilinear shapes, on a grid and with algebra",
    "group": "Shapes & measures",
    "category": "Geometry",
    "subject": "GCSE Maths",
