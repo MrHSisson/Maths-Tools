@@ -36,6 +36,7 @@ Branch `codex/year7-rectilinear-lesson`. Areas: authored lesson specification/bu
 - Created the full lesson: 59-slide offline PowerPoint with speaker notes and separate answer reveals; three-page scaffolded pupil worksheet; three-page worked answers; two-page teacher guide and slide PDF.
 - Saved and read back new shared draft `year7-rectilinear-area`: 17 interactive slides, fixed practice, two live generators and the 12-question pinned worksheet. No retrieval starter; missing lengths by addition then subtraction; discussion of removing cut-outs. Reduced labels throughout and large board labels.
 - Independently checked all 34 shape areas and marked unknowns, checked printable layouts and rendered PowerPoint answer reveals.
+- Checks: build and lint pass; 126 test files pass (2,526 tests, 18 skipped); 17-slide content/layout check passes.
 - Deliberately not done: publish or deploy the editor foundations. The PowerPoint is self-contained; live generators use the companion editor deck with this branch.
 
 Agent: Codex
