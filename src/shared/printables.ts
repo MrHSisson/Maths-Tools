@@ -127,14 +127,14 @@ export function hundredSquareSheet(): Printable {
 }
 
 /** Authored diagram practice with writing space. Inputs are trusted SVGs produced by the shared renderer; all text is escaped. */
-export function diagramPracticeSheet(cells: { svg: string; answerSvg: string; prompts: string[]; answer: string; working: string[] }[], title: string, mode: "questions" | "answers" | "both", paper: "A4" | "A5" = "A4"): string {
+export function diagramPracticeSheet(cells: { svg: string; answerSvg: string; prompts: string[]; answer: string; working: string[] }[], title: string, mode: "questions" | "answers" | "both", paper: "A4" | "A5" = "A4", a4PerPage: 4 | 6 = 6): string {
   const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-  const perPage = paper === "A4" ? 6 : 2;
+  const perPage = paper === "A4" ? a4PerPage : 2;
   const pages = (answers: boolean) => Array.from({ length: Math.ceil(cells.length / perPage) }, (_, page) => `<section class="page"><h1>${esc(title)}${answers ? " — worked answers" : ""}</h1><div class="grid">${cells.slice(page * perPage, (page + 1) * perPage).map((c, i) => `<article><h2>${page * perPage + i + 1}.</h2><div class="diagram">${answers ? c.answerSvg : c.svg}</div><div class="work">${(answers ? [...c.working, c.answer] : c.prompts).map(t => `<p>${esc(t)}</p>`).join("")}</div></article>`).join("")}</div></section>`).join("");
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
   *{box-sizing:border-box} @page{size:${paper} portrait;margin:10mm} body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
   .page{width:${paper === "A4" ? 190 : 128}mm;height:${paper === "A4" ? 277 : 190}mm;break-after:page;display:flex;flex-direction:column}
-  .page:last-child{break-after:auto} h1{font-size:16px;height:10mm;margin:0} .grid{display:grid;grid-template-columns:repeat(${paper === "A4" ? 2 : 1},1fr);grid-template-rows:repeat(${paper === "A4" ? 3 : 2},1fr);gap:4mm;flex:1;min-height:0}
+  .page:last-child{break-after:auto} h1{font-size:16px;height:10mm;margin:0} .grid{display:grid;grid-template-columns:repeat(${paper === "A4" ? 2 : 1},1fr);grid-template-rows:repeat(${paper === "A4" ? perPage / 2 : 2},1fr);gap:4mm;flex:1;min-height:0}
   article{border:1px solid #cbd5e1;padding:2mm;min-width:0;min-height:0;display:flex;flex-direction:column;break-inside:avoid} h2{font-size:12px;margin:0}.diagram{height:46mm;flex-shrink:0}.diagram svg{width:100%!important;height:100%!important}.work{font-size:11px;line-height:1.25;flex:1;min-height:0}.work p{margin:1.3mm 0}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;

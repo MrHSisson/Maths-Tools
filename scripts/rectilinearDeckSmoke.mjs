@@ -109,13 +109,13 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
     const print = await popup;
     await print.waitForLoadState();
     await print.setViewportSize({ width: 794, height: 1123 });
-    if (await print.locator("section.page").count() !== 4) throw Error("Wrong print page count");
+    if (await print.locator("section.page").count() !== 6) throw Error("Wrong print page count");
     const over = await print.locator("article").evaluateAll((es) => es.filter((e) => e.scrollHeight > e.clientHeight + 2).length);
     if (over) throw Error("Printed cell content clips " + over);
     await print.screenshot({ path: path.join(output, "print.png") });
     await print.pdf({ path: path.join(output, "print.pdf"), preferCSSPageSize: true });
     if (await print.locator('svg text[font-size="12"]').count() === 0 || await print.locator('svg text[font-size="30"]').count() !== 0) throw Error("Worksheet label size changed");
-    console.log("PASS four print pages without clipping; worksheet labels unchanged");
+    console.log("PASS six print pages without clipping; worksheet labels unchanged");
     if (errors.length) throw Error(errors.join("\n"));
     console.log("PASS no browser errors; artifacts:", output);
     await context.close();

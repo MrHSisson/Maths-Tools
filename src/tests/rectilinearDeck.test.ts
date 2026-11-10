@@ -66,6 +66,7 @@ describe("rectilinear deck foundations", () => {
     expect(cells.every(c => c.svg.includes("<svg") && c.answer.includes("42"))).toBe(true);
     const html = diagramPracticeSheet([...cells, ...cells, ...cells, ...cells], "Area <test>", "both");
     expect(html.match(/<section class="page">/g)).toHaveLength(4);
+    expect(diagramPracticeSheet([...cells, ...cells, ...cells, ...cells], "Area", "both", "A4", 4).match(/<section class="page">/g)).toHaveLength(6);
     expect(html).toContain("Area &lt;test&gt;"); expect(html).not.toContain("<test>");
   });
   it("offers the real rectilinear generator and preserves diagrams in the slide presentation", async () => {

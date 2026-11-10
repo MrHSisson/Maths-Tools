@@ -29,5 +29,5 @@ export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) 
 }
 export function printRectilinearSheet(items: (CuratedQuestion | AnyQuestion)[], title: string, mode: PrintMode, paper: "A4" | "A5" = "A4") {
   // Open synchronously from the print button: this path has no asynchronous generator or font fetch.
-  openPrintWindow(diagramPracticeSheet(rectilinearPrintCells(items), title, mode, paper), 400);
+  openPrintWindow(diagramPracticeSheet(rectilinearPrintCells(items), title, mode, paper, items.some(item => "version" in item) ? 4 : 6), 400);
 }

@@ -37,6 +37,7 @@ Branch `codex/year7-rectilinear-lesson`, continuing the lesson after Harry’s r
 - Worksheet retains two L-shapes and adds ten questions spanning the other six families, including Level 3 cut-outs and holes. Revised three-page print and worked key.
 - Authored shapes now support the tool’s advanced families and distinct addition/subtraction unknowns on eligible outlines. Repeated lengths use explicit equality marks and one number; supplied component dimensions replace redundant overall labels. Region letters avoid helper pills.
 - Cut-out questions show only the whole and removed rectangles’ dimensions; U/two-notch/frame questions use four given numeric edge labels. Recomputed all 41 exported shapes from polygons and rectangle regions. Content/layout checks pass for all 20 slides; full suite passes (126 files, 2,529 tests, 18 skipped), and 13 focused shape/label checks pass after the final label refinement. Build, lint and shell smoke pass.
+- The deck’s print button also uses four authored questions per A4 page, matching the three-page pupil PDF; the worked key has three pages. Actual browser print confirms six pages in Both mode with no clipped cells. Generated sheets keep their existing density.
 - Lesson spec records the revised progression and optional continuation. PowerPoint is superseded; native deck is the master.
 
 Agent: Codex
