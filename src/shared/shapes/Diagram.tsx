@@ -147,10 +147,13 @@ export function ShapeDiagram({ d, showAnswer, small = false, fillBox = false, da
       <path d={path} fill={d.grid ? "rgba(165,180,252,0.55)" : "#e0e7ff"} fillRule="evenodd" stroke={INK} strokeWidth={sw} strokeLinejoin="round" />
       {shownRegions.map((r) => {
         const b = boxOf([r.pts]);
+        const cy = Y((b.y0 + b.y1) / 2), centre = X((b.x0 + b.x1) / 2);
+        const clear = (x: number) => helperPills.every(p => Math.abs(x - p.rect.x) > p.rect.w / 2 + L.fs * .7 || Math.abs(cy - p.rect.y) > p.rect.h / 2 + L.fs * .7);
+        const textX = [centre, X(b.x0) + L.fs, X(b.x1) - L.fs].find(x => x >= X(b.x0) + L.fs * .7 && x <= X(b.x1) - L.fs * .7 && clear(x)) ?? centre;
         return (
           <g key={r.id}>
             <path d={r.pts.map((q, k) => `${k ? "L" : "M"} ${X(q[0])} ${Y(q[1])}`).join(" ") + " Z"} fill={r.color} fillOpacity={0.55} stroke={INK} strokeWidth={1.2} strokeDasharray="5 3" />
-            {r.text && <text x={X((b.x0 + b.x1) / 2)} y={Y((b.y0 + b.y1) / 2)} textAnchor="middle" dominantBaseline="central" fontSize={L.fs * 1.2} fontWeight={700} fill="#1e293b">{r.text}</text>}
+            {r.text && <text x={textX} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={L.fs * 1.2} fontWeight={700} fill="#1e293b">{r.text}</text>}
           </g>
         );
       })}

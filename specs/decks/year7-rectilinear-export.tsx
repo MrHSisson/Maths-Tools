@@ -6,7 +6,7 @@ import { extras } from "/src/shared/questionExtras";
 import type { Drawing, Focus } from "/src/shared/shapes/drawing";
 import type { CuratedQuestion } from "/src/decks/types";
 import { generateFrom } from "/src/decks/generators";
-import lesson, { models, practiceOne, practiceTwo, worksheetQuestions } from "./year7-rectilinear-area.build";
+import lesson, { models, practiceOne, practiceTwo, cutoutPractice, worksheetQuestions } from "./year7-rectilinear-area.build";
 
 export default async function exportLesson() {
   const deck = await lesson();
@@ -16,7 +16,7 @@ export default async function exportLesson() {
     const q = await generateFrom("perimeter-and-area", { sub: "compound", level: missing ? "level2" : "level1", multiSelect: { area: true, perimeter: false, all: !missing, missing, split: true, subtract: false }, variables: { reducedLabels: true, showSplit: false } }, 20261111 + i * 73 + (missing ? 1000 : 0));
     if (q) generated.push({ id: `${missing ? "live-missing" : "live-given"}-${i + 1}`, q });
   }
-  const source = [...Object.values(models), ...practiceOne, ...practiceTwo, ...worksheetQuestions, ...extra].map(item => ({ id: item.id, item, q: rectilinearQuestion(item.rectilinear!) }));
+  const source = [...Object.values(models), ...practiceOne, ...practiceTwo, ...cutoutPractice, ...worksheetQuestions, ...extra].map(item => ({ id: item.id, item, q: rectilinearQuestion(item.rectilinear!) }));
   const assets = [...source, ...generated.map(x => ({ ...x, item: null }))].map(({ id, q, item }) => {
     const drawing = extras(q)._diagram as Drawing, focuses = extras(q)._stepFocus as (Focus | undefined)[];
     const all: Focus = { regions: drawing.regions.map(r => r.id), helpers: drawing.helpers.map(h => h.id), reveal: drawing.edges.map((_, i) => i), revealHelpers: drawing.helpers.map(h => h.id) };

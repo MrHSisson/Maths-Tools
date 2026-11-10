@@ -108,8 +108,47 @@ describe("rectilinear deck foundations", () => {
       expect(isCuratedQuestion(JSON.parse(JSON.stringify(authored)))).toBe(true);
       expect(rectilinearPrintCells([authored])[0].prompts[0]).toContain("Missing length");
     }
-    expect(isRectilinearSpec({ ...shape(), shape: "T", missingLength: "addition" })).toBe(false);
+    expect(isRectilinearSpec({ ...shape(), shape: "T", missingLength: "addition" })).toBe(true);
     expect(isRectilinearSpec({ ...shape(), width: 6, height: 6, cutWidth: 3, cutHeight: 3, missingLength: "subtraction" })).toBe(false);
+  });
+
+  it("authors cross, U, two-notch and frame areas through both methods in all orientations", () => {
+    const expected = { cross: 141, U: 201, comb: 181, frame: 201 };
+    for (const kind of ["cross", "U", "comb", "frame"] as const) for (let orientation = 0; orientation < 8; orientation++) for (const method of ["split", "subtract"] as const) {
+      const spec = { ...shape(), shape: kind, width: 17, height: 13, cutWidth: 5, cutHeight: 4, orientation, method };
+      expect(isRectilinearSpec(spec)).toBe(true);
+      const q = rectilinearQuestion(spec);
+      expect(Number(q.answer)).toBe(expected[kind]);
+      expect((extras(q)._diagram as Drawing).polys.length).toBe(kind === "frame" ? 2 : 1);
+      expect(isCuratedQuestion(authoredRectilinear(`varied-${kind.toLowerCase()}`, spec))).toBe(true);
+    }
+    expect(isRectilinearSpec({ ...shape(), shape: "comb", width: 8, cutWidth: 3 })).toBe(false);
+    expect(isRectilinearSpec({ ...shape(), shape: "frame", cutWidth: 7 })).toBe(false);
+    expect(isRectilinearSpec({ ...shape(), shape: "frame", missingLength: "addition" })).toBe(false);
+  });
+  it("keeps varied missing-length questions solvable without copying a repeated length", () => {
+    for (const kind of ["T", "stairs3", "U", "comb"] as const) for (const missingLength of ["addition", "subtraction"] as const) for (let orientation = 0; orientation < 8; orientation++) {
+      const spec = { ...shape(), shape: kind, width: 19, height: 13, cutWidth: 4, cutHeight: 3, missingLength, orientation, scaffold: "none" as const };
+      if (!isRectilinearSpec(spec)) continue;
+      const q = rectilinearQuestion(spec), d = extras(q)._diagram as Drawing;
+      expect(d.edges.filter(e => e.kind === "missing")).toHaveLength(1);
+      const unknown = d.edges.find(e => e.kind === "missing")!;
+      expect(d.edges.some(e => e.kind === "plain" && e.label === unknown.value)).toBe(false);
+      expect(q.working.find(w => w.label === "So the missing side is:")!.latex.split("=")[0].includes("-")).toBe(missingLength === "subtraction");
+    }
+  });
+  it("replaces repeated staircase numbers with explicit matching marks and retains component dimensions", () => {
+    const spec = { ...shape(), shape: "stairs3" as const, width: 14, height: 10, cutWidth: 4, cutHeight: 3 };
+    const d = extras(rectilinearQuestion(spec))._diagram as Drawing;
+    const marked = d.edges.filter(e => e.ticks);
+    expect(marked.length).toBeGreaterThan(2);
+    for (const tick of new Set(marked.map(e => e.ticks))) {
+      const group = marked.filter(e => e.ticks === tick);
+      expect(new Set(group.map(e => Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]))).size).toBe(1);
+      expect(group.filter(e => e.label)).toHaveLength(1);
+    }
+    expect(d.helpers.some(h => h.label === "10 cm" && h.always)).toBe(true);
+    expect(d.edges.filter(e => e.label).length).toBeLessThan(6);
   });
 
 });

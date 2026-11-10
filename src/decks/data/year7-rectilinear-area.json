@@ -29,7 +29,7 @@
      "y": 480,
      "w": 1400,
      "h": 90,
-     "text": "Year 7 · Split, calculate and explain",
+     "text": "Year 7 \u00b7 Split, calculate and explain",
      "size": 56,
      "colour": "#64748b",
      "align": "center",
@@ -72,7 +72,7 @@
      "y": 440,
      "w": 1400,
      "h": 380,
-     "text": "•  Split into rectangles and add their areas\n•  Find a missing length before calculating area\n•  Compare splitting with removing a cut-out",
+     "text": "\u2022  Split into rectangles and add their areas\n\u2022  Find a missing length before calculating area\n\u2022  Compare splitting with removing a cut-out",
      "size": 44,
      "colour": "#334155",
      "id": "year7-rectilinear-area-objective-3"
@@ -146,7 +146,7 @@
         "Find the area."
        ],
        "answer": [
-        "$42$ cm²"
+        "$42$ cm\u00b2"
        ],
        "explanation": [
         "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
@@ -211,7 +211,7 @@
         "Find the area."
        ],
        "answer": [
-        "$42$ cm²"
+        "$42$ cm\u00b2"
        ],
        "explanation": [
         "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
@@ -382,7 +382,7 @@
         "Find the area."
        ],
        "answer": [
-        "$36$ cm²"
+        "$36$ cm\u00b2"
        ],
        "explanation": [
         "Split it into rectangles and find each area: $A = 7 \\times 3 = 21 ,\\ B = 5 \\times 3 = 15$",
@@ -417,11 +417,13 @@
         "Find the area."
        ],
        "answer": [
-        "$58$ cm²"
+        "$58$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 10 \\times 4 = 40 ,\\ B = 6 \\times 3 = 18$",
-        "Add the areas: $40 + 18 = 58$"
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 11 \\times 3 = 33 ,\\ B = 5 \\times 5 = 25$",
+        "Add the areas: $33 + 25 = 58$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -429,11 +431,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 10,
-        "height": 7,
-        "cutWidth": 4,
-        "cutHeight": 3,
+        "shape": "T",
+        "width": 11,
+        "height": 8,
+        "cutWidth": 3,
+        "cutHeight": 5,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -452,11 +454,13 @@
         "Find the area."
        ],
        "answer": [
-        "$57$ cm²"
+        "$77$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 5 = 25$",
-        "Add the areas: $32 + 25 = 57$"
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 4 \\times 4 = 16 ,\\ B = 9 \\times 5 = 45 ,\\ C = 4 \\times 4 = 16$",
+        "Add the areas: $16 + 45 + 16 = 77$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -464,11 +468,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 9,
-        "height": 8,
-        "cutWidth": 5,
-        "cutHeight": 3,
+        "shape": "T",
+        "width": 13,
+        "height": 9,
+        "cutWidth": 4,
+        "cutHeight": 5,
         "method": "split",
         "orientation": 1,
         "reducedLabels": true,
@@ -487,11 +491,11 @@
         "Find the area."
        ],
        "answer": [
-        "$68$ cm²"
+        "$96$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 11 \\times 3 = 33 ,\\ B = 7 \\times 5 = 35$",
-        "Add the areas: $33 + 35 = 68$"
+        "Split it into rectangles and find each area: $A = 14 \\times 3 = 42 ,\\ B = 10 \\times 3 = 30 ,\\ C = 6 \\times 4 = 24$",
+        "Add the areas: $42 + 30 + 24 = 96$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -499,15 +503,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 11,
-        "height": 8,
+        "shape": "stairs3",
+        "width": 14,
+        "height": 10,
         "cutWidth": 4,
-        "cutHeight": 5,
+        "cutHeight": 3,
         "method": "split",
-        "orientation": 4,
+        "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none"
+        "scaffold": "split"
        }
       },
       {
@@ -522,13 +526,17 @@
         "Find the area."
        ],
        "answer": [
-        "$40$ cm²"
+        "$95$ cm\u00b2"
        ],
        "explanation": [
-        "Equal sides are the same length: $2$",
-        "Equal sides are the same length: $5$",
-        "Split it into rectangles and find each area: $A = 10 \\times 2 = 20 ,\\ B = 4 \\times 5 = 20$",
-        "Add the areas: $20 + 20 = 40$"
+        "Equal sides are the same length: $7$",
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $3$",
+        "Split it into rectangles and find each area: $A = 7 \\times 4 = 28 ,\\ B = 13 \\times 3 = 39 ,\\ C = 7 \\times 4 = 28$",
+        "Add the areas: $28 + 39 + 28 = 95$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -536,11 +544,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "T",
-        "width": 10,
-        "height": 7,
+        "shape": "cross",
+        "width": 13,
+        "height": 11,
         "cutWidth": 3,
-        "cutHeight": 5,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -559,11 +567,13 @@
         "Find the area."
        ],
        "answer": [
-        "$72$ cm²"
+        "$105$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 8 \\times 3 = 24 ,\\ C = 4 \\times 3 = 12$",
-        "Add the areas: $36 + 24 + 12 = 72$"
+        "Equal sides are the same length: $9$",
+        "Equal sides are the same length: $6$",
+        "Split it into rectangles and find each area: $A = 15 \\times 3 = 45 ,\\ B = 5 \\times 6 = 30 ,\\ C = 5 \\times 6 = 30$",
+        "Add the areas: $45 + 30 + 30 = 105$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -571,22 +581,22 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "stairs3",
-        "width": 12,
+        "shape": "U",
+        "width": 15,
         "height": 9,
-        "cutWidth": 4,
-        "cutHeight": 3,
+        "cutWidth": 5,
+        "cutHeight": 6,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "split"
+        "scaffold": "none"
        }
       }
      ],
      "id": "year7-rectilinear-area-practice-one-1"
     }
    ],
-   "brief": "Six fixed questions: supplied splits, rotation/reflection, choosing a split, a T-shape and three rectangles. Reduce support deliberately; keep required component lengths visible."
+   "brief": "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible."
   },
   {
    "id": "year7-rectilinear-area-general-one",
@@ -648,13 +658,15 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$42$ cm²"
+        "$93$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the left add up to the same as the sides along the right: $? = 4 + 2$",
-        "So the missing side is: $(4 + 2) = 6$",
-        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
-        "Add the areas: $32 + 10 = 42$"
+        "Equal sides are the same length: $5$",
+        "Equal sides are the same length: $4$",
+        "The sides along the bottom add up to the same as the sides along the top: $? = 3 + 7 + 3$",
+        "So the missing side is: $(3 + 7 + 3) = 13$",
+        "Split it into rectangles and find each area: $A = 13 \\times 5 = 65 ,\\ B = 7 \\times 4 = 28$",
+        "Add the areas: $65 + 28 = 93$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -662,11 +674,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 6,
+        "shape": "T",
+        "width": 13,
+        "height": 9,
         "cutWidth": 3,
-        "cutHeight": 2,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -716,13 +728,13 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$42$ cm²"
+        "$132$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $2 + ? = 6$",
-        "So the missing side is: $6 - 2 = 4$",
-        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
-        "Add the areas: $32 + 10 = 42$"
+        "The sides along the top add up to the same as the sides along the bottom: $3 + 3 + ? = 14$",
+        "So the missing side is: $14 - 3 - 3 = 8$",
+        "Split it into rectangles and find each area: $A = 14 \\times 4 = 56 ,\\ B = 11 \\times 4 = 44 ,\\ C = 8 \\times 4 = 32$",
+        "Add the areas: $56 + 44 + 32 = 132$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -730,11 +742,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 6,
+        "shape": "stairs3",
+        "width": 14,
+        "height": 12,
         "cutWidth": 3,
-        "cutHeight": 2,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -784,13 +796,15 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$57$ cm²"
+        "$66$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the left add up to the same as the sides along the right: $? = 5 + 2$",
-        "So the missing side is: $(5 + 2) = 7$",
-        "Split it into rectangles and find each area: $A = 9 \\times 5 = 45 ,\\ B = 6 \\times 2 = 12$",
-        "Add the areas: $45 + 12 = 57$"
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $5$",
+        "The sides along the bottom add up to the same as the sides along the top: $? = 3 + 6 + 3$",
+        "So the missing side is: $(3 + 6 + 3) = 12$",
+        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 6 \\times 5 = 30$",
+        "Add the areas: $36 + 30 = 66$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -798,11 +812,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 9,
-        "height": 7,
+        "shape": "T",
+        "width": 12,
+        "height": 8,
         "cutWidth": 3,
-        "cutHeight": 2,
+        "cutHeight": 5,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -822,13 +836,13 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$68$ cm²"
+        "$120$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $? = 4 + 6$",
-        "So the missing side is: $(4 + 6) = 10$",
-        "Split it into rectangles and find each area: $A = 8 \\times 6 = 48 ,\\ B = 5 \\times 4 = 20$",
-        "Add the areas: $48 + 20 = 68$"
+        "The sides along the right add up to the same as the sides along the left: $? = 3 + 3 + 7$",
+        "So the missing side is: $(3 + 3 + 7) = 13$",
+        "Split it into rectangles and find each area: $A = 12 \\times 7 = 84 ,\\ B = 8 \\times 3 = 24 ,\\ C = 4 \\times 3 = 12$",
+        "Add the areas: $84 + 24 + 12 = 120$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -836,11 +850,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 10,
-        "height": 8,
-        "cutWidth": 4,
-        "cutHeight": 3,
+        "shape": "stairs3",
+        "width": 13,
+        "height": 12,
+        "cutWidth": 3,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 1,
         "reducedLabels": true,
@@ -860,13 +874,13 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$87$ cm²"
+        "$140$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $3 + ? = 9$",
-        "So the missing side is: $9 - 3 = 6$",
-        "Split it into rectangles and find each area: $A = 11 \\times 6 = 66 ,\\ B = 7 \\times 3 = 21$",
-        "Add the areas: $66 + 21 = 87$"
+        "The sides along the right add up to the same as the sides along the left: $3 + 3 + ? = 13$",
+        "So the missing side is: $13 - 3 - 3 = 7$",
+        "Split it into rectangles and find each area: $A = 16 \\times 3 = 48 ,\\ B = 12 \\times 3 = 36 ,\\ C = 8 \\times 7 = 56$",
+        "Add the areas: $48 + 36 + 56 = 140$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -874,9 +888,9 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 11,
-        "height": 9,
+        "shape": "stairs3",
+        "width": 16,
+        "height": 13,
         "cutWidth": 4,
         "cutHeight": 3,
         "method": "split",
@@ -898,13 +912,15 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$81$ cm²"
+        "$141$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the left add up to the same as the sides along the right: $5 + ? = 8$",
-        "So the missing side is: $8 - 5 = 3$",
-        "Split it into rectangles and find each area: $A = 12 \\times 5 = 60 ,\\ B = 7 \\times 3 = 21$",
-        "Add the areas: $60 + 21 = 81$"
+        "Equal sides are the same length: $7$",
+        "Equal sides are the same length: $11$",
+        "The sides along the top add up to the same as the sides along the bottom: $5 + 5 + ? = 16$",
+        "So the missing side is: $16 - 5 - 5 = 6$",
+        "Split it into rectangles and find each area: $A = 16 \\times 4 = 64 ,\\ B = 6 \\times 7 = 42 ,\\ C = 5 \\times 7 = 35$",
+        "Add the areas: $64 + 42 + 35 = 141$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -912,11 +928,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 12,
-        "height": 8,
+        "shape": "U",
+        "width": 16,
+        "height": 11,
         "cutWidth": 5,
-        "cutHeight": 3,
+        "cutHeight": 7,
         "method": "split",
         "orientation": 4,
         "reducedLabels": true,
@@ -936,13 +952,15 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$116$ cm²"
+        "$117$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $6 + ? = 10$",
-        "So the missing side is: $10 - 6 = 4$",
-        "Split it into rectangles and find each area: $A = 14 \\times 6 = 84 ,\\ B = 8 \\times 4 = 32$",
-        "Add the areas: $84 + 32 = 116$"
+        "Equal sides are the same length: $5$",
+        "Equal sides are the same length: $6$",
+        "The sides along the top add up to the same as the sides along the bottom: $4 + 4 + ? = 15$",
+        "So the missing side is: $15 - 4 - 4 = 7$",
+        "Split it into rectangles and find each area: $A = 15 \\times 5 = 75 ,\\ B = 7 \\times 6 = 42$",
+        "Add the areas: $75 + 42 = 117$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -950,11 +968,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 14,
-        "height": 10,
-        "cutWidth": 6,
-        "cutHeight": 4,
+        "shape": "T",
+        "width": 15,
+        "height": 11,
+        "cutWidth": 4,
+        "cutHeight": 6,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -974,13 +992,17 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$123$ cm²"
+        "$172$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $8 + ? = 13$",
-        "So the missing side is: $13 - 8 = 5$",
-        "Split it into rectangles and find each area: $A = 7 \\times 5 = 35 ,\\ B = 11 \\times 8 = 88$",
-        "Add the areas: $35 + 88 = 123$"
+        "Equal sides are the same length: $12$",
+        "Equal sides are the same length: $7$",
+        "Equal sides are the same length: $7$",
+        "Equal sides are the same length: $7$",
+        "The sides along the right add up to the same as the sides along the left: $4 + 3 + 4 + 3 + ? = 19$",
+        "So the missing side is: $19 - 4 - 3 - 4 - 3 = 5$",
+        "Split it into rectangles and find each area: $A = 12 \\times 5 = 60 ,\\ B = 5 \\times 4 = 20 ,\\ C = 12 \\times 3 = 36 ,\\ D = 5 \\times 4 = 20 ,\\ E = 12 \\times 3 = 36$",
+        "Add the areas: $60 + 20 + 36 + 20 + 36 = 172$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -988,11 +1010,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 13,
-        "height": 11,
-        "cutWidth": 5,
-        "cutHeight": 4,
+        "shape": "comb",
+        "width": 19,
+        "height": 12,
+        "cutWidth": 4,
+        "cutHeight": 7,
         "method": "split",
         "orientation": 3,
         "reducedLabels": true,
@@ -1004,7 +1026,7 @@
      "id": "year7-rectilinear-area-practice-two-1"
     }
    ],
-   "brief": "Six fixed L-shapes: addition first, then subtraction, with rotations and reflection. Find the question-mark length before calculating each area."
+   "brief": "Varied T, staircase, U and two-notch outlines: addition first, then subtraction. Find the question-mark length before calculating each area."
   },
   {
    "id": "year7-rectilinear-area-general-two",
@@ -1066,12 +1088,14 @@
         "Find the area."
        ],
        "answer": [
-        "$42$ cm²"
+        "$104$ cm\u00b2"
        ],
        "explanation": [
-        "The rectangle round the whole shape: $8 \\times 6 = 48$",
-        "The parts that are missing: $3 \\times 2 = 6$",
-        "Take them away: $48 - 6 = 42$"
+        "Equal sides are the same length: $10$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $14 \\times 10 = 140$",
+        "The parts that are missing: $6 \\times 6 = 36$",
+        "Take them away: $140 - 36 = 104$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1079,11 +1103,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 6,
-        "cutWidth": 3,
-        "cutHeight": 2,
+        "shape": "U",
+        "width": 14,
+        "height": 10,
+        "cutWidth": 6,
+        "cutHeight": 6,
         "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
@@ -1132,12 +1156,16 @@
         "Find the area."
        ],
        "answer": [
-        "$102$ cm²"
+        "$140$ cm\u00b2"
        ],
        "explanation": [
-        "The rectangle round the whole shape: $12 \\times 9 = 108$",
-        "The parts that are missing: $2 \\times 3 = 6$",
-        "Take them away: $108 - 6 = 102$"
+        "Equal sides are the same length: $11$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $16 \\times 11 = 176$",
+        "The parts that are missing: $3 \\times 6 + 3 \\times 6 = 36$",
+        "Take them away: $176 - 36 = 140$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1145,11 +1173,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 12,
-        "height": 9,
-        "cutWidth": 2,
-        "cutHeight": 3,
+        "shape": "comb",
+        "width": 16,
+        "height": 11,
+        "cutWidth": 3,
+        "cutHeight": 6,
         "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
@@ -1174,8 +1202,368 @@
    "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
   },
   {
+   "id": "year7-rectilinear-area-frame-model",
+   "family": "teach",
+   "title": "A hole inside the shape",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 140,
+     "w": 1552,
+     "h": 735,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-frame-model",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "explain",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$110$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $13$",
+        "Equal sides are the same length: $10$",
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $5$",
+        "The rectangle round the whole shape: $13 \\times 10 = 130$",
+        "The hole: $5 \\times 4 = 20$",
+        "Take them away: $130 - 20 = 110$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "frame",
+        "width": 13,
+        "height": 10,
+        "cutWidth": 5,
+        "cutHeight": 4,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-frame-model-1"
+    },
+    {
+     "id": "year7-rectilinear-area-frame-model-prompt",
+     "kind": "text",
+     "x": 60,
+     "y": 32,
+     "w": 1480,
+     "h": 88,
+     "size": 44,
+     "bold": true,
+     "text": "What area must we remove?"
+    }
+   ],
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+  },
+  {
+   "id": "year7-rectilinear-area-cutout-practice",
+   "family": "practice",
+   "title": "Cut-outs and frames: practice",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 46,
+     "items": [
+      {
+       "version": 2,
+       "id": "y7-c1",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$100$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $10$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $13 \\times 10 = 130$",
+        "The parts that are missing: $5 \\times 6 = 30$",
+        "Take them away: $130 - 30 = 100$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "U",
+        "width": 13,
+        "height": 10,
+        "cutWidth": 5,
+        "cutHeight": 6,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-c2",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$78$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $12$",
+        "Equal sides are the same length: $9$",
+        "Equal sides are the same length: $5$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $12 \\times 9 = 108$",
+        "The hole: $6 \\times 5 = 30$",
+        "Take them away: $108 - 30 = 78$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "frame",
+        "width": 12,
+        "height": 9,
+        "cutWidth": 6,
+        "cutHeight": 5,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-c3",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$134$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $10$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $17 \\times 10 = 170$",
+        "The parts that are missing: $3 \\times 6 + 3 \\times 6 = 36$",
+        "Take them away: $170 - 36 = 134$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "comb",
+        "width": 17,
+        "height": 10,
+        "cutWidth": 3,
+        "cutHeight": 6,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-c4",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$150$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $12$",
+        "Equal sides are the same length: $7$",
+        "The rectangle round the whole shape: $12 \\times 16 = 192$",
+        "The parts that are missing: $7 \\times 6 = 42$",
+        "Take them away: $192 - 42 = 150$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "U",
+        "width": 16,
+        "height": 12,
+        "cutWidth": 6,
+        "cutHeight": 7,
+        "method": "subtract",
+        "orientation": 1,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-c5",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$123$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $15$",
+        "Equal sides are the same length: $11$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $7$",
+        "The rectangle round the whole shape: $15 \\times 11 = 165$",
+        "The hole: $7 \\times 6 = 42$",
+        "Take them away: $165 - 42 = 123$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "frame",
+        "width": 15,
+        "height": 11,
+        "cutWidth": 7,
+        "cutHeight": 6,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "y7-c6",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$196$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $13$",
+        "The rectangle round the whole shape: $20 \\times 13 = 260$",
+        "The parts that are missing: $4 \\times 8 + 4 \\times 8 = 64$",
+        "Take them away: $260 - 64 = 196$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "comb",
+        "width": 20,
+        "height": 13,
+        "cutWidth": 4,
+        "cutHeight": 8,
+        "method": "subtract",
+        "orientation": 4,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      }
+     ],
+     "id": "year7-rectilinear-area-cutout-practice-1"
+    }
+   ],
+   "brief": "U-shapes, enclosed holes and two cut-outs. Optional continuation if needed; ask for whole area minus all removed areas."
+  },
+  {
+   "id": "year7-rectilinear-area-general-three",
+   "title": "Cut-outs and frames: general practice",
+   "family": "practice",
+   "brief": "Level 3 styles: U-shapes, two notches and frames. Area only, reduced labels; discuss subtraction before revealing the solution.",
+   "els": [
+    {
+     "id": "year7-rectilinear-area-general-three-el",
+     "kind": "generator",
+     "tool": "perimeter-and-area",
+     "preset": {
+      "sub": "compound",
+      "level": "level3",
+      "multiSelect": {
+       "area": true,
+       "perimeter": false,
+       "all": true,
+       "missing": false,
+       "cmOnly": true,
+       "mixed": false
+      },
+      "variables": {
+       "reducedLabels": true,
+       "showSplit": false
+      }
+     },
+     "seed": 317,
+     "presentation": "full",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852
+    }
+   ]
+  },
+  {
    "id": "year7-rectilinear-area-worksheet",
-   "title": "Rectilinear area — independent practice",
+   "title": "Rectilinear area \u2014 independent practice",
    "family": "practice",
    "els": [
     {
@@ -1194,7 +1582,7 @@
      "cols": 2,
      "view": "key",
      "pin": {
-      "title": "Rectilinear area — independent practice",
+      "title": "Rectilinear area \u2014 independent practice",
       "paper": "A4",
       "layout": "grid",
       "borders": true
@@ -1212,7 +1600,7 @@
         "Find the area."
        ],
        "answer": [
-        "$37$ cm²"
+        "$37$ cm\u00b2"
        ],
        "explanation": [
         "Split it into rectangles and find each area: $A = 9 \\times 3 = 27 ,\\ B = 5 \\times 2 = 10$",
@@ -1247,11 +1635,13 @@
         "Find the area."
        ],
        "answer": [
-        "$50$ cm²"
+        "$66$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 8 \\times 5 = 40 ,\\ B = 5 \\times 2 = 10$",
-        "Add the areas: $40 + 10 = 50$"
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 6 \\times 5 = 30$",
+        "Add the areas: $36 + 30 = 66$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1259,11 +1649,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 7,
+        "shape": "T",
+        "width": 12,
+        "height": 8,
         "cutWidth": 3,
-        "cutHeight": 2,
+        "cutHeight": 5,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -1282,11 +1672,11 @@
         "Find the area."
        ],
        "answer": [
-        "$62$ cm²"
+        "$62$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 10 \\times 5 = 50 ,\\ B = 4 \\times 3 = 12$",
-        "Add the areas: $50 + 12 = 62$"
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 6 = 30$",
+        "Add the areas: $32 + 30 = 62$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1300,9 +1690,9 @@
         "cutWidth": 6,
         "cutHeight": 3,
         "method": "split",
-        "orientation": 0,
+        "orientation": 1,
         "reducedLabels": true,
-        "scaffold": "full"
+        "scaffold": "split"
        }
       },
       {
@@ -1317,11 +1707,11 @@
         "Find the area."
        ],
        "answer": [
-        "$65$ cm²"
+        "$113$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 7 \\times 7 = 49 ,\\ B = 4 \\times 4 = 16$",
-        "Add the areas: $49 + 16 = 65$"
+        "Split it into rectangles and find each area: $A = 15 \\times 3 = 45 ,\\ B = 11 \\times 3 = 33 ,\\ C = 7 \\times 5 = 35$",
+        "Add the areas: $45 + 33 + 35 = 113$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1329,15 +1719,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 11,
-        "height": 7,
+        "shape": "stairs3",
+        "width": 15,
+        "height": 11,
         "cutWidth": 4,
         "cutHeight": 3,
         "method": "split",
-        "orientation": 1,
+        "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "full"
+        "scaffold": "split"
        }
       },
       {
@@ -1352,13 +1742,17 @@
         "Find the area."
        ],
        "answer": [
-        "$56$ cm²"
+        "$120$ cm\u00b2"
        ],
        "explanation": [
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $4$",
         "Equal sides are the same length: $3$",
-        "Equal sides are the same length: $5$",
-        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 4 \\times 5 = 20$",
-        "Add the areas: $36 + 20 = 56$"
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $3$",
+        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 14 \\times 4 = 56 ,\\ C = 8 \\times 4 = 32$",
+        "Add the areas: $32 + 56 + 32 = 120$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1366,11 +1760,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "T",
-        "width": 12,
-        "height": 8,
-        "cutWidth": 4,
-        "cutHeight": 5,
+        "shape": "cross",
+        "width": 14,
+        "height": 12,
+        "cutWidth": 3,
+        "cutHeight": 4,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
@@ -1386,14 +1780,18 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the area."
+        "Find the missing length, then the area."
        ],
        "answer": [
-        "$97$ cm²"
+        "$92$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 13 \\times 5 = 65 ,\\ B = 8 \\times 4 = 32$",
-        "Add the areas: $65 + 32 = 97$"
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $6$",
+        "The sides along the bottom add up to the same as the sides along the top: $? = 4 + 6 + 4$",
+        "So the missing side is: $(4 + 6 + 4) = 14$",
+        "Split it into rectangles and find each area: $A = 14 \\times 4 = 56 ,\\ B = 6 \\times 6 = 36$",
+        "Add the areas: $56 + 36 = 92$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1401,15 +1799,16 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 13,
-        "height": 9,
-        "cutWidth": 5,
-        "cutHeight": 4,
+        "shape": "T",
+        "width": 14,
+        "height": 10,
+        "cutWidth": 4,
+        "cutHeight": 6,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "split"
+        "scaffold": "none",
+        "missingLength": "addition"
        }
       },
       {
@@ -1421,14 +1820,16 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the area."
+        "Find the missing length, then the area."
        ],
        "answer": [
-        "$86$ cm²"
+        "$144$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 13 \\times 3 = 39 ,\\ B = 9 \\times 3 = 27 ,\\ C = 5 \\times 4 = 20$",
-        "Add the areas: $39 + 27 + 20 = 86$"
+        "The sides along the right add up to the same as the sides along the left: $3 + 3 + ? = 12$",
+        "So the missing side is: $12 - 3 - 3 = 6$",
+        "Split it into rectangles and find each area: $A = 17 \\times 3 = 51 ,\\ B = 13 \\times 3 = 39 ,\\ C = 9 \\times 6 = 54$",
+        "Add the areas: $51 + 39 + 54 = 144$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1437,14 +1838,15 @@
        "rectilinear": {
         "version": 1,
         "shape": "stairs3",
-        "width": 13,
-        "height": 10,
+        "width": 17,
+        "height": 12,
         "cutWidth": 4,
         "cutHeight": 3,
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "split"
+        "scaffold": "none",
+        "missingLength": "subtraction"
        }
       },
       {
@@ -1456,14 +1858,18 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the area."
+        "Find the missing length, then the area."
        ],
        "answer": [
-        "$102$ cm²"
+        "$145$ cm\u00b2"
        ],
        "explanation": [
-        "Split it into rectangles and find each area: $A = 15 \\times 5 = 75 ,\\ B = 9 \\times 3 = 27$",
-        "Add the areas: $75 + 27 = 102$"
+        "Equal sides are the same length: $11$",
+        "Equal sides are the same length: $7$",
+        "The sides along the top add up to the same as the sides along the bottom: $6 + 6 + ? = 17$",
+        "So the missing side is: $17 - 6 - 6 = 5$",
+        "Split it into rectangles and find each area: $A = 17 \\times 4 = 68 ,\\ B = 5 \\times 7 = 35 ,\\ C = 6 \\times 7 = 42$",
+        "Add the areas: $68 + 35 + 42 = 145$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1471,15 +1877,16 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 15,
-        "height": 8,
+        "shape": "U",
+        "width": 17,
+        "height": 11,
         "cutWidth": 6,
-        "cutHeight": 3,
+        "cutHeight": 7,
         "method": "split",
-        "orientation": 4,
+        "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "split"
+        "scaffold": "none",
+        "missingLength": "subtraction"
        }
       },
       {
@@ -1491,16 +1898,17 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the missing length, then the area."
+        "Find the area."
        ],
        "answer": [
-        "$69$ cm²"
+        "$160$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the bottom add up to the same as the sides along the top: $? = 5 + 7$",
-        "So the missing side is: $(5 + 7) = 12$",
-        "Split it into rectangles and find each area: $A = 12 \\times 4 = 48 ,\\ B = 7 \\times 3 = 21$",
-        "Add the areas: $48 + 21 = 69$"
+        "Equal sides are the same length: $12$",
+        "Equal sides are the same length: $8$",
+        "The rectangle round the whole shape: $18 \\times 12 = 216$",
+        "The parts that are missing: $7 \\times 8 = 56$",
+        "Take them away: $216 - 56 = 160$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1508,16 +1916,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 12,
-        "height": 7,
-        "cutWidth": 5,
-        "cutHeight": 3,
-        "method": "split",
+        "shape": "U",
+        "width": 18,
+        "height": 12,
+        "cutWidth": 7,
+        "cutHeight": 8,
+        "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none",
-        "missingLength": "addition"
+        "scaffold": "none"
        }
       },
       {
@@ -1529,16 +1936,19 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the missing length, then the area."
+        "Find the area."
        ],
        "answer": [
-        "$106$ cm²"
+        "$124$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $5 + ? = 9$",
-        "So the missing side is: $9 - 5 = 4$",
-        "Split it into rectangles and find each area: $A = 14 \\times 5 = 70 ,\\ B = 9 \\times 4 = 36$",
-        "Add the areas: $70 + 36 = 106$"
+        "Equal sides are the same length: $14$",
+        "Equal sides are the same length: $11$",
+        "Equal sides are the same length: $5$",
+        "Equal sides are the same length: $6$",
+        "The rectangle round the whole shape: $14 \\times 11 = 154$",
+        "The hole: $6 \\times 5 = 30$",
+        "Take them away: $154 - 30 = 124$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1546,16 +1956,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
+        "shape": "frame",
         "width": 14,
-        "height": 9,
-        "cutWidth": 5,
-        "cutHeight": 4,
-        "method": "split",
+        "height": 11,
+        "cutWidth": 6,
+        "cutHeight": 5,
+        "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none",
-        "missingLength": "subtraction"
+        "scaffold": "none"
        }
       },
       {
@@ -1570,12 +1979,16 @@
         "Find the area."
        ],
        "answer": [
-        "$108$ cm²"
+        "$183$ cm\u00b2"
        ],
        "explanation": [
-        "The rectangle round the whole shape: $12 \\times 10 = 120$",
-        "The parts that are missing: $3 \\times 4 = 12$",
-        "Take them away: $120 - 12 = 108$"
+        "Equal sides are the same length: $13$",
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $8$",
+        "The rectangle round the whole shape: $19 \\times 13 = 247$",
+        "The parts that are missing: $4 \\times 8 + 4 \\times 8 = 64$",
+        "Take them away: $247 - 64 = 183$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1583,11 +1996,11 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 12,
-        "height": 10,
-        "cutWidth": 3,
-        "cutHeight": 4,
+        "shape": "comb",
+        "width": 19,
+        "height": 13,
+        "cutWidth": 4,
+        "cutHeight": 8,
         "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
@@ -1606,13 +2019,16 @@
         "Find the area."
        ],
        "answer": [
-        "$78$ cm²"
+        "$158$ cm\u00b2"
        ],
        "explanation": [
-        "Equal sides are the same length: $3$",
-        "Equal sides are the same length: $6$",
-        "Split it into rectangles and find each area: $A = 14 \\times 3 = 42 ,\\ B = 6 \\times 6 = 36$",
-        "Add the areas: $42 + 36 = 78$"
+        "Equal sides are the same length: $17$",
+        "Equal sides are the same length: $13$",
+        "Equal sides are the same length: $7$",
+        "Equal sides are the same length: $9$",
+        "The rectangle round the whole shape: $17 \\times 13 = 221$",
+        "The hole: $9 \\times 7 = 63$",
+        "Take them away: $221 - 63 = 158$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1620,12 +2036,12 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "T",
-        "width": 14,
-        "height": 9,
-        "cutWidth": 4,
-        "cutHeight": 6,
-        "method": "split",
+        "shape": "frame",
+        "width": 17,
+        "height": 13,
+        "cutWidth": 9,
+        "cutHeight": 7,
+        "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
         "scaffold": "none"
@@ -1658,7 +2074,7 @@
      "y": 260,
      "w": 1400,
      "h": 560,
-     "text": "•  Split into rectangles: multiply, then add\n•  Find any missing lengths first\n•  Or use the whole rectangle minus the cut-out\n•  Check every part is counted once; use cm²",
+     "text": "\u2022  Split into rectangles: multiply, then add\n\u2022  Find any missing lengths first\n\u2022  Or use the whole rectangle minus the cut-out\n\u2022  Check every part is counted once; use cm\u00b2",
      "size": 50,
      "colour": "#0f172a",
      "id": "year7-rectilinear-area-summary-2"
@@ -1690,13 +2106,16 @@
         "Find the missing length, then the area."
        ],
        "answer": [
-        "$98$ cm²"
+        "$178$ cm\u00b2"
        ],
        "explanation": [
-        "The sides along the right add up to the same as the sides along the left: $7 + ? = 10$",
-        "So the missing side is: $10 - 7 = 3$",
-        "Split it into rectangles and find each area: $A = 11 \\times 7 = 77 ,\\ B = 7 \\times 3 = 21$",
-        "Add the areas: $77 + 21 = 98$"
+        "Equal sides are the same length: $13$",
+        "Equal sides are the same length: $8$",
+        "The sides along the top add up to the same as the sides along the bottom: $6 + 5 + ? = 18$",
+        "So the missing side is: $18 - 6 - 5 = 7$",
+        "The rectangle round the whole shape: $18 \\times 13 = 234$",
+        "The parts that are missing: $7 \\times 8 = 56$",
+        "Take them away: $234 - 56 = 178$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1704,12 +2123,12 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "L",
-        "width": 11,
-        "height": 10,
-        "cutWidth": 4,
-        "cutHeight": 3,
-        "method": "split",
+        "shape": "U",
+        "width": 18,
+        "height": 13,
+        "cutWidth": 7,
+        "cutHeight": 8,
+        "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,
         "scaffold": "none",
@@ -1728,7 +2147,7 @@
         "Explain why we add rectangle areas when splitting, but subtract the cut-out area when using the whole rectangle."
        ],
        "answer": [
-        "Splitting covers the shape exactly once. The enclosing rectangle includes an extra cut-out, so remove its area. Give area in cm²."
+        "Splitting covers the shape exactly once. The enclosing rectangle includes an extra cut-out, so remove its area. Give area in cm\u00b2."
        ],
        "explanation": [],
        "rationale": "",

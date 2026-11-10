@@ -1,35 +1,35 @@
 # Area of rectilinear shapes — Year 7 top set
-**Status:** implemented
-**Length:** 60 minutes; practice and worksheet can continue next lesson.
-**Starting point:** pupils know rectangle area and are new to rectilinear shapes.
-**Agreed requirements:** no retrieval starter; large board labels; reduced labels throughout; missing lengths by addition/subtraction mid-lesson; removal of cut-outs introduced through discussion; authored scaffolded worksheet with answers.
+**Status:** implemented, revised after review 2026-11-10
+**Length:** 60 minutes, with optional continuation. Pupils already know rectangle area. No retrieval starter.
+**Primary resource:** native deck `year7-rectilinear-area`, not PowerPoint.
 
-| Minutes | Activity | Intended evidence |
+| Minutes | Route | Purpose |
 | --- | --- | --- |
-| 0–5 | Objective, formal definition, suggest a split | Pupils identify rectangles inside the original shape |
-| 5–13 | Model split/add; compare two valid splits | Every part counted once; multiply within rectangles, then add |
-| 13–24 | Six authored questions, then optional live/offline general practice | Transfer through rotated, reflected, T and staircase outlines |
-| 24–35 | Missing-length models and six authored questions; optional generator | Use addition before subtraction; find the marked length before area |
-| 35–43 | Discuss removing the 3 × 2 corner from the 8 × 6 rectangle; choose an efficient method | Explain why 48 − 6 and 32 + 10 both give 42 cm² |
-| 43–57 | Twelve authored worksheet questions | Fading prompts and supplied splits; later unknown lengths and method choice |
-| 57–60 | New area question and explanation | Accurate length/area units and a justified method |
+| 0–8 | Brief L model and compare two splits | Establish split, multiply, add; move on promptly |
+| 8–20 | Practice A, optional generator | One L, two Ts, staircase, cross and U; fade supplied splits |
+| 20–32 | T addition model, staircase subtraction model, Practice B | Find lengths explicitly, then area; T/staircase/U/two-notch outlines |
+| 32–43 | U cut-out discussion, two-notch method choice, frame model | Explain whole area minus every removed area; compare methods |
+| 43–57 | Authored worksheet | Supplied splits → missing lengths → cut-outs/holes |
+| 57–60 | New U-shape missing length/area and explanation | Check reasoning and units |
 
-## Authored ladder and traps
-| Set | Ladder | Traps checked |
+Optional continuation: six authored U/frame/two-notch questions and the Level 3 generator follow the cut-out models. Skip these initially if needed; return next lesson rather than rushing the discussion or worksheet.
+
+## Worksheet composition
+12 distinct authored questions: two L, two T, two staircases, one cross, two U, one two-notch and two frames. Keep L questions 1 and 3 as accessible anchors, then require new decisions. Three A4 pages with working room and a separate worked key.
+
+| Questions | Scaffold / idea | Traps |
 | --- | --- | --- |
-| Board A, 6 | Split provided → identify dimensions → rotation/reflection → T → three rectangles | Area vs perimeter; multiplying two lengths from different rectangles; omitting a region; enclosing rectangle includes extra area |
-| Board B, 6 | Addition → rotated addition → subtraction → reflection → independent mixed orientation | Using the whole length for a part; adding instead of subtracting; stopping after finding the missing length |
-| Worksheet, 12 | Four prompted splits → four supplied splits with working space → four independent questions | Unknown lengths first; choose efficient method; cm vs cm² |
+| 1–2 | L/T, supplied splits and calculation prompts | Area vs perimeter; missing a rectangle |
+| 3–5 | Rotated L, staircase, cross; supplied splits only | Dimensions from different rectangles; double counting |
+| 6–8 | T, staircase, U; marked unknowns before area | Whole vs part; incorrect addition/subtraction |
+| 9–12 | U, frame, two cut-outs, larger frame | Enclosing area includes extra material; subtract all holes/cut-outs |
 
-Whole centimetres only. Worksheet questions differ from the board questions and have distinct answers. Authoring uses Q.rectilinear and the tool's canonical solution; answers are independently checked using polygon area and boundary lengths. Ordinary discussion checks are used, not new Depth cards. No Depth bank is required for this lesson.
+## Labels and authoring
+All authored questions use Q.rectilinear, through the tool's canonical geometry/solution. Authoring now supports L, T, stairs, cross, U, comb/two cut-outs and frame. Missing lengths work on eligible open outlines, never frames. New dimensions are editable in the deck.
 
-The PowerPoint will use separate question/build/answer slides so it is reliable offline. The shared editor deck contains live generator slides. PowerPoint general practice includes fixed offline backup questions.
+Repeated equal lengths use explicit matching tick marks with one number per group. Equality is stated by marks, never guessed from the drawing. Supplied split dimensions make redundant overall boundary labels unnecessary. Essential region dimensions remain supplied before the missing-length phase; only marked unknowns require calculation. Board numbers remain large; paper uses the small renderer. Region letters move away from dimension pills.
 
-## Deliverables and verification
-- Offline PowerPoint: 59 slides, including optional practice, separate answer reveals and teacher notes.
-- Print: three-page pupil worksheet, three-page worked answers and two-page teacher guide.
-- Shared editor draft: `year7-rectilinear-area`, 17 slides, two live generators and pinned authored worksheet. Not published.
-- All 34 shapes independently checked by polygon area, rectangle sums/removals and missing edge lengths; authored content checks pass.
-- `year7-rectilinear-export.tsx` exports shared-renderer SVGs and canonical question data. `_check/year7-rectilinear-export.py --work <directory>` builds files from `lesson-bundle.json` and `lesson-assets/` (python-pptx, reportlab, Pillow).
+## Verification and exports
+Recompute all areas independently using polygon shoelace and rectangle sums/removals, and verify missing boundary lengths. Check distinct answers within each authored set. Run content/layout and browser print checks.
 
-Re-export with the app running: `SMOKE_URL=http://localhost:5173 node specs/decks/_check/year7-rectilinear-assets.cjs work/year7-lesson`, then `python specs/decks/_check/year7-rectilinear-export.py --work work/year7-lesson`. Set `PLAYWRIGHT_PATH` and `CHROMIUM_PATH` if installed outside the project. Convert the resulting PPTX to PDF with LibreOffice if a slide PDF is required.
+`year7-rectilinear-export.tsx` exports the native questions and shared-renderer assets. With the app running: `SMOKE_URL=http://localhost:5173 node specs/decks/_check/year7-rectilinear-assets.cjs work/year7-lesson`; set PLAYWRIGHT_PATH/CHROMIUM_PATH if required. Then `python specs/decks/_check/year7-rectilinear-print.py --work work/year7-lesson` generates the revised worksheet and key. The earlier PowerPoint export is superseded; it is not the lesson master.

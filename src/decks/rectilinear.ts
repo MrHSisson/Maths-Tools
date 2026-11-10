@@ -1,6 +1,6 @@
 import { extras } from "../shared/questionExtras";
 import type { Drawing, Focus } from "../shared/shapes/drawing";
-import { isRectilinearSpec, type RectilinearSpec } from "../../api/_rectilinear";
+import { isRectilinearSpec, rectilinearPolygons, type RectilinearSpec } from "../../api/_rectilinear";
 import { buildCompound, chosenMissingSide } from "../tools/Geometry/perimeterArea/compound";
 import { toQuestion } from "../tools/Geometry/perimeterArea/build";
 import { boxOf, orient, type Pt } from "../shared/shapes/model";
@@ -13,18 +13,17 @@ import { fromWorked } from "./questions";
 export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   if (!isRectilinearSpec(spec)) throw new Error("The cut-out must fit inside the shape; use positive whole-number lengths.");
   const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = spec;
-  const outline: Pt[] = shape === "L" ? [[0, 0], [w, 0], [w, h - b], [w - a, h - b], [w - a, h], [0, h]]
-    : shape === "T" ? [[0, 0], [w, 0], [w, h - b], [w - a, h - b], [w - a, h], [a, h], [a, h - b], [0, h - b]]
-    : [[0, 0], [w, 0], [w, b], [w - a, b], [w - a, 2 * b], [w - 2 * a, 2 * b], [w - 2 * a, h], [0, h]];
-  const expected = shape === "L" ? w * h - a * b : shape === "T" ? w * (h - b) + (w - 2 * a) * b
-    : w * b + (w - a) * b + (w - 2 * a) * (h - 2 * b);
-  const rotated: Pt[] = outline.map(([x0, y0]) => {
+  const outlines = rectilinearPolygons(spec);
+  const expected = shape === "L" || shape === "U" || shape === "frame" ? w*h-a*b
+    : shape === "comb" ? w*h-2*a*b : shape === "cross" ? w*h-4*a*b
+    : shape === "T" ? w*(h-b)+(w-2*a)*b : w*b+(w-a)*b+(w-2*a)*(h-2*b);
+  const rotated: Pt[][] = outlines.map(outline => outline.map(([x0, y0]) => {
     let x = spec.orientation >= 4 ? -x0 : x0, y = y0;
     for (let turn = 0; turn < spec.orientation % 4; turn++) [x, y] = [-y, x];
     return [x, y];
-  });
-  const bounds = boxOf([rotated]);
-  const polys = orient([rotated.map(([x, y]) => [x - bounds.x0, y - bounds.y0] as Pt)]);
+  }));
+  const bounds = boxOf(rotated);
+  const polys = orient(rotated.map(poly => poly.map(([x, y]) => [x - bounds.x0, y - bounds.y0] as Pt)));
   const q = replaySeeded({ _seed: 1 } as unknown as AnyQuestion, () => toQuestion(buildCompound(polys, {
     kind: shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
   })));
@@ -48,6 +47,31 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
       const id = `dimension-${region.id}-${axis}`;
       drawing.helpers.push({ id, a, b, kind: "split", label: `${hi - lo} cm`, always: spec.scaffold !== "none" });
       focuses.forEach(f => { if (f?.regions?.includes(region.id)) f.helpers = [...(f.helpers ?? []), id]; });
+    }
+  }
+  if (spec.reducedLabels) {
+    // Explicit equality marks let repeated steps share one number without asking pupils to infer equality.
+    const groups = new Map<string, number[]>();
+    drawing.edges.forEach((e, i) => {
+      if (e.kind !== "plain" || !e.label) return;
+      const axis = e.a[1] === e.b[1] ? 0 : 1;
+      const key = `${axis}:${Math.abs(e.a[axis] - e.b[axis])}`;
+      groups.set(key, [...(groups.get(key) ?? []), i]);
+    });
+    let tick = 0;
+    for (const ids of groups.values()) if (ids.length > 1) {
+      tick++;
+      ids.forEach((i, k) => { drawing.edges[i].ticks = tick; if (k) drawing.edges[i].label = ""; });
+    }
+    if (tick) drawing.caption.push("Matching marks show equal lengths.");
+    // Supplied component dimensions make a separate overall-height label redundant.
+    if (spec.scaffold !== "none" && !spec.missingLength && spec.method === "split") {
+      const regions = drawing.regions.filter(r => r.id.startsWith("s"));
+      drawing.edges.forEach(e => {
+        if (e.kind !== "plain" || !e.label || e.ticks) return;
+        const axis = e.a[1] === e.b[1] ? 0 : 1, lo = Math.min(e.a[axis],e.b[axis]), hi = Math.max(e.a[axis],e.b[axis]);
+        if (!regions.some(r => Math.min(...r.pts.map(p => p[axis])) === lo && Math.max(...r.pts.map(p => p[axis])) === hi)) e.label = "";
+      });
     }
   }
   return q;

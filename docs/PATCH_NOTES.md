@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Broader rectilinear deck and lighter labels
+
+Branch `codex/year7-rectilinear-lesson`, continuing the lesson after Harry’s review.
+
+- Rebalanced the native deck around T, staircase, cross, U, two-notch and frame outlines; L-shapes are brief accessible anchors. Added a frame model, six authored cut-out questions and a Level 3 generator.
+- Worksheet retains two L-shapes and adds ten questions spanning the other six families, including Level 3 cut-outs and holes. Revised three-page print and worked key.
+- Authored shapes now support the tool’s advanced families and distinct addition/subtraction unknowns on eligible outlines. Repeated lengths use explicit equality marks and one number; supplied component dimensions replace redundant overall labels. Region letters avoid helper pills.
+- Lesson spec records the revised progression and optional continuation. PowerPoint is superseded; native deck is the master.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear deck variety and labels (Codex)”.
+
 ## 2026-11-10 — Complete Year 7 rectilinear area lesson
 
 Branch `codex/year7-rectilinear-lesson`. Areas: authored lesson specification/build/export scripts and shared deck snapshot.
