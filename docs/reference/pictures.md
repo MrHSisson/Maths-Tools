@@ -12,9 +12,9 @@ Moved out of `CLAUDE.md` unchanged, so every session need not load it. Every rul
 
 **Rectilinear Shapes — Reduced Labelling:** an unlabelled boundary side must have a labelled parallel side spanning exactly the same interval on the same outline. Neighbouring staircase steps remain labelled even when the generated lengths happen to match: their equality is not established by the drawing. Shapes with no redundant labels keep all their labels. **Some Missing** is separate and marks sides requiring addition or subtraction with `?`. <!-- ref -->
 
-Authored deck questions additionally establish repeated independent lengths with explicit matching tick marks and one numeric label per group; no equality is assumed from appearance. With supplied splits, component dimensions replace overall boundary lengths that no component needs. Missing lengths remain marked with `?`. Region letters avoid helper-label pills.
+Rectilinear pictures use full-span dimension arrows instead of floating label pills. Both arrowheads align exactly with the endpoints of the measured width or height. Authored area questions measure component rectangles (split method) or the whole and removed rectangles (subtraction); a dimension can sit inside its cell. Only identical axis intervals share a label; equal numbers on unrelated steps are not replaced with equality tabs. Distinct unknowns show `?` on their measured span, retaining the same placement when revealed. The dimension planner tests text against outlines, other text, dimension lines and corner extension lines. Region letters sit near the upper-left of their cell. Deck and authored worksheet diagrams suppress captions and question-purpose headings; the standalone tool keeps its area/perimeter prompt. Other shape tools retain their existing renderer.
 
-Board length labels use 30-unit type, with pill dimensions and spacing recomputed by the existing label-placement engine. Small/worksheet rendering retains its 12-unit type and original aspect calculations. <!-- ref -->
+Board dimension numbers use 30-unit type; worksheet numbers use 12.
 
 ## Split worked example — the developing picture, three flavours
 

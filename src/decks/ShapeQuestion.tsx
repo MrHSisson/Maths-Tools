@@ -7,5 +7,5 @@ export function ShapeQuestion({ drawing, focuses = [], shown = 0, answer = false
   const active = focuses.slice(0, shown);
   const current = active[active.length - 1];
   const focus = shown ? { ...current, reveal: [...new Set(active.flatMap(f => f?.reveal ?? []))], revealHelpers: [...new Set(active.flatMap(f => f?.revealHelpers ?? []))] } : undefined;
-  return <div data-shape-question="" style={{ width: "100%", height: "100%", minHeight: 0 }}><ShapeDiagram d={drawing} focus={focus} showAnswer={answer} fillBox /></div>;
+  return <div data-shape-question="" style={{ width: "100%", height: "100%", minHeight: 0 }}><ShapeDiagram hideCaption d={drawing} focus={focus} showAnswer={answer} fillBox /></div>;
 }

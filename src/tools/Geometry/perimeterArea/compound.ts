@@ -207,6 +207,7 @@ export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: Diff
 
   const value = ask === "perimeter" ? P : A, unit = ask === "perimeter" ? CM : CM2;
   const drawing: Drawing = {
+    dimensionStyle: "arrows",
     polys, edges, helpers, corners: [], regions,
     caption: [...(mixed ? ["Give your answer in cm."] : []), `Find the ${ask}.`],
     answerLine: `${ask === "perimeter" ? "Perimeter" : "Area"} = ${value} ${unit}`,

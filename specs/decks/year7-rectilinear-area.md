@@ -27,7 +27,7 @@ Optional continuation: six authored U/frame/two-notch questions and the Level 3 
 ## Labels and authoring
 All authored questions use Q.rectilinear, through the tool's canonical geometry/solution. Authoring now supports L, T, stairs, cross, U, comb/two cut-outs and frame. Missing lengths work on eligible open outlines, never frames. New dimensions are editable in the deck.
 
-Repeated equal lengths use explicit matching tick marks with one number per group. Equality is stated by marks, never guessed from the drawing. Supplied split dimensions make redundant overall boundary labels unnecessary. Essential region dimensions remain supplied before the missing-length phase; only marked unknowns require calculation. Board numbers remain large; paper uses the small renderer. Region letters move away from dimension pills.
+Length labels now use double-headed dimension arrows spanning the complete width or height they name, without pills or equality tabs. Component dimensions sit inside/alongside their rectangle; outer dimensions can sit outside with extension lines. Repeated independent steps retain explicit dimensions. Only matching axis spans share one dimension. Missing lengths retain `?` and a stable position on reveal. Captions, matching-marks text, generic Explain/Practice headings and model prompts above diagrams are removed. Slides 4–5 are combined into one staged model: outline, reveal partition, area working. The deck now has 19 slides.
 
 ## Verification and exports
 Recompute all areas independently using polygon shoelace and rectangle sums/removals, and verify missing boundary lengths. Check distinct answers within each authored set. Run content/layout and browser print checks.

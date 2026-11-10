@@ -6,7 +6,7 @@ import type { CuratedQuestion, Slide } from "/src/decks/types";
 export const ID = "year7-rectilinear-area";
 const make = (id: string, patch: Partial<RectilinearSpec> = {}, purpose: CuratedQuestion["purpose"] = "practice") => ({ ...Q.rectilinear(id, { ...defaultRectilinear(), ...patch, reducedLabels: true }), purpose });
 export const models = {
-  split: make("y7-model-split", {}, "explain"),
+  split: make("y7-model-split", { scaffold: "none" }, "explain"),
   add: make("y7-model-add", { shape: "T", width: 13, height: 9, cutWidth: 3, cutHeight: 4, missingLength: "addition", scaffold: "none" }, "explain"),
   subtract: make("y7-model-subtract", { shape: "stairs3", width: 14, height: 12, cutWidth: 3, cutHeight: 4, missingLength: "subtraction", scaffold: "none" }, "explain"),
   cutout: make("y7-model-cutout", { shape: "U", width: 14, height: 10, cutWidth: 6, cutHeight: 6, method: "subtract", scaffold: "none" }, "explain"),
@@ -54,7 +54,7 @@ export const worksheetQuestions: CuratedQuestion[] = [
 ];
 const model = (sid: string, title: string, item: CuratedQuestion, prompt?: string): Slide => {
   const s = { ...S.deliberate(sid, title, [item], "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."), family: "teach" as const };
-  if (prompt) { s.els = s.els.map(e => e.kind === "questions" ? { ...e, y: 140, h: 735 } : e); s.els.push({ id: sid + "-prompt", kind: "text", x: 60, y: 32, w: 1480, h: 88, size: 44, bold: true, text: prompt }); }
+  void prompt;
   return s;
 };
 const generator = (sid: string, missing: boolean): Slide => ({ id: sid, title: missing ? "Missing lengths, then area" : "General practice", family: "practice", brief: missing ? "Find marked missing lengths by adding or subtracting, then calculate area. Use fresh questions as needed; full-width reveals the shared working." : "Area only, with all necessary boundary lengths given or directly implied; ask pupils to suggest a split before revealing the working.", els: [{ id: sid + "-el", kind: "generator", tool: "perimeter-and-area", preset: { sub: "compound", level: missing ? "level2" : "level1", multiSelect: { area: true, perimeter: false, all: !missing, missing, split: true, subtract: false }, variables: { reducedLabels: true, showSplit: false } }, seed: missing ? 421 : 123, presentation: "full", x: 24, y: 24, w: 1552, h: 852 }] });
@@ -64,7 +64,6 @@ export default async function lesson() {
     S.title(ID + "-title", "Area of rectilinear shapes", "Year 7 · Split, calculate and explain"),
     S.objective(ID + "-objective", "Find the area of a rectilinear shape and explain your method.", ["Split into rectangles and add their areas", "Find a missing length before calculating area", "Compare splitting with removing a cut-out"]),
     S.definition(ID + "-definition", "Rectilinear shape", "A 2D shape with straight sides meeting at right angles. Its area is the amount of surface it covers, measured in square units."),
-    model(ID + "-explore", "Where could we split?", { ...models.split, id: "y7-explore-q", rectilinear: { ...models.split.rectilinear!, scaffold: "none" } }, "Where could we split this shape?"),
     model(ID + "-split", "Split, calculate, add", models.split),
     S.discuss(ID + "-two-splits", "Could two different splits both be correct?", "Each rectangle must lie inside the shape. Cover the whole shape exactly once, with no gaps or overlaps.", "$8 \\times 4 + 5 \\times 2$ or $5 \\times 6 + 3 \\times 4$?", "42\\,\\mathrm{cm}^2"),
     S.deliberate(ID + "-practice-one", "Split and add: practice", practiceOne, "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible."),

@@ -22,8 +22,8 @@ export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) 
       : [...d.regions.filter(r => r.id.startsWith("s")).map((_, i) => `Rectangle ${String.fromCharCode(65 + i)}: ____ × ____ = ____ cm²`), "Total area: __________________ cm²"];
     if (authored?.rectilinear?.missingLength) prompts.unshift("Missing length: __________ cm");
     const clean = (s: string) => s.replace(/\\times/g, "×").replace(/,\\\s*/g, "; ").replace(/\\,/g, " ");
-    return { svg: renderToStaticMarkup(<ShapeDiagram d={d} showAnswer={false} small />),
-      answerSvg: renderToStaticMarkup(<ShapeDiagram d={d} showAnswer small focus={{ regions: d.regions.map(r => r.id) }} />),
+    return { svg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer={false} small />),
+      answerSvg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer small focus={{ regions: d.regions.map(r => r.id) }} />),
       prompts, answer: `${measure} = ${q.answer} ${unit}`, working: q.working.map(w => clean(w.plain ?? w.latex)) };
   });
 }

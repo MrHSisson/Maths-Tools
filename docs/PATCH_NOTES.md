@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear dimensions with explicit spans
+
+Branch `codex/year7-rectilinear-lesson`, continuing Harry’s diagram review.
+
+- Combined duplicate slides 4–5 into one staged model; saved/read back the native lesson with 19 slides.
+- Replaced floating pills and equality tabs on rectilinear pictures with full-span, double-headed dimension arrows. The former internal “10 cm” explicitly spans rectangle B’s entire width. Authored area diagrams label component or removed rectangles; independent equal steps retain explicit measurements.
+- Added placement checks for labels, outlines, arrows and external corner extension lines. Labels remain tied to measured endpoints, and unknowns keep the same positions on reveal. Deck and authored worksheet figures omit diagram captions and generic purpose headings; the standalone tool retains its area/perimeter prompt.
+- Updated pupil worksheet, worked key and a staircase/cross preview. Other shape tools retain their current renderer. All 41 lesson diagrams pass board/paper overlap audits; authored families across eight orientations and seeded live questions pass dimension regression checks.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear dimension arrows (Codex)”.
+
 ## 2026-11-10 — Broader rectilinear deck and lighter labels
 
 Branch `codex/year7-rectilinear-lesson`, continuing the lesson after Harry’s review.

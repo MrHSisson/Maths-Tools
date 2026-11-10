@@ -1,4 +1,6 @@
 // Perimeter & Area — the one renderer for every picture the tool draws.
+import { DimensionDiagram } from "./DimensionDiagram";
+import { dimensionPlan } from "./dimensions";
 import { useMemo, type CSSProperties } from "react";
 import { boxOf, insideShape, type Pt } from "./model";
 import { placePills, type PillIn, type Scene, type Seg } from "./labels";
@@ -28,7 +30,7 @@ function layoutOf(d: Drawing, small: boolean): Layout {
   const W = Math.max(spanX * sc + padX * 2, capW);
   return { W, H: capH + spanY * sc + padY * 2, sc, fs, fsC, capH, padX, padY, x0: box.x0, y1: box.y1, offX: (W - spanX * sc) / 2 };
 }
-export const aspectOf = (d: Drawing): number => { const l = layoutOf(d, true); return l.W / l.H; };
+export const aspectOf = (d: Drawing): number => { const l = d.dimensionStyle === "arrows" ? dimensionPlan(d, true) : layoutOf(d, true); return l.W / (l.H + (d.dimensionStyle === "arrows" ? d.caption.length * 12 : 0)); };
 
 /** Everything about the labels that is decided before drawing: which pills there are, where each goes, and the scene they were fitted to. */
 export function labelPlan(d: Drawing, small: boolean, showAnswer: boolean, focus?: Focus) {
@@ -91,9 +93,13 @@ export function labelPlan(d: Drawing, small: boolean, showAnswer: boolean, focus
   return { L, X, Y, pills, spots, helperPills, scene, charW, pillH, pillW };
 }
 
-interface Props { d: Drawing; showAnswer: boolean; small?: boolean; fillBox?: boolean; dataIndex?: number; focus?: Focus }
+interface Props { d: Drawing; showAnswer: boolean; small?: boolean; fillBox?: boolean; dataIndex?: number; focus?: Focus; hideCaption?: boolean }
 
-export function ShapeDiagram({ d, showAnswer, small = false, fillBox = false, dataIndex, focus }: Props) {
+export function ShapeDiagram(props: Props) {
+  return props.d.dimensionStyle === "arrows" ? <DimensionDiagram {...props} /> : <LegacyShapeDiagram {...props} />;
+}
+
+function LegacyShapeDiagram({ d, showAnswer, small = false, fillBox = false, dataIndex, focus }: Props) {
   const { L, X, Y, pills, spots, helperPills, pillH, pillW } = useMemo(() => labelPlan(d, small, showAnswer, focus), [d, small, showAnswer, focus]);
   const dim = !!focus?.edges;
   const lit = (i: number) => !!focus?.edges?.includes(i);

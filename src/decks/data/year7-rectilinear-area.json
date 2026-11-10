@@ -124,74 +124,10 @@
    ]
   },
   {
-   "id": "year7-rectilinear-area-explore",
-   "family": "teach",
-   "title": "Where could we split?",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 24,
-     "y": 140,
-     "w": 1552,
-     "h": 735,
-     "size": 46,
-     "items": [
-      {
-       "version": 2,
-       "id": "y7-explore-q",
-       "title": "Rectilinear area",
-       "tool": "perimeter-and-area",
-       "level": "level1",
-       "purpose": "explain",
-       "format": "open",
-       "question": [
-        "Find the area."
-       ],
-       "answer": [
-        "$42$ cm\u00b2"
-       ],
-       "explanation": [
-        "Split it into rectangles and find each area: $A = 8 \\times 4 = 32 ,\\ B = 5 \\times 2 = 10$",
-        "Add the areas: $32 + 10 = 42$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
-       "rectilinear": {
-        "version": 1,
-        "shape": "L",
-        "width": 8,
-        "height": 6,
-        "cutWidth": 3,
-        "cutHeight": 2,
-        "method": "split",
-        "orientation": 0,
-        "reducedLabels": true,
-        "scaffold": "none"
-       }
-      }
-     ],
-     "id": "year7-rectilinear-area-explore-1"
-    },
-    {
-     "id": "year7-rectilinear-area-explore-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "Where could we split this shape?"
-    }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
-  },
-  {
    "id": "year7-rectilinear-area-split",
    "family": "teach",
    "title": "Split, calculate, add",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
@@ -233,14 +169,13 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "full"
+        "scaffold": "none"
        }
       }
      ],
      "id": "year7-rectilinear-area-split-1"
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-two-splits",
@@ -363,7 +298,6 @@
    "id": "year7-rectilinear-area-practice-one",
    "family": "practice",
    "title": "Split and add: practice",
-   "brief": "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible.",
    "els": [
     {
      "kind": "questions",
@@ -598,7 +532,8 @@
      ],
      "id": "year7-rectilinear-area-practice-one-1"
     }
-   ]
+   ],
+   "brief": "One short L warm-up, then two T-shapes, a staircase, a cross and a U-shape. Reduce support deliberately; keep required component lengths visible."
   },
   {
    "id": "year7-rectilinear-area-general-one",
@@ -644,9 +579,9 @@
     {
      "kind": "questions",
      "x": 24,
-     "y": 140,
+     "y": 24,
      "w": 1552,
-     "h": 735,
+     "h": 852,
      "size": 46,
      "items": [
       {
@@ -691,17 +626,6 @@
       }
      ],
      "id": "year7-rectilinear-area-missing-add-1"
-    },
-    {
-     "id": "year7-rectilinear-area-missing-add-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "Find the missing length first."
     }
    ]
   },
@@ -714,9 +638,9 @@
     {
      "kind": "questions",
      "x": 24,
-     "y": 140,
+     "y": 24,
      "w": 1552,
-     "h": 735,
+     "h": 852,
      "size": 46,
      "items": [
       {
@@ -759,17 +683,6 @@
       }
      ],
      "id": "year7-rectilinear-area-missing-subtract-1"
-    },
-    {
-     "id": "year7-rectilinear-area-missing-subtract-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "Which lengths add to the whole?"
     }
    ]
   },
@@ -777,7 +690,6 @@
    "id": "year7-rectilinear-area-practice-two",
    "family": "practice",
    "title": "Missing lengths: practice",
-   "brief": "Varied T, staircase, U and two-notch outlines: addition first, then subtraction. Find the question-mark length before calculating each area.",
    "els": [
     {
      "kind": "questions",
@@ -1028,7 +940,8 @@
      ],
      "id": "year7-rectilinear-area-practice-two-1"
     }
-   ]
+   ],
+   "brief": "Varied T, staircase, U and two-notch outlines: addition first, then subtraction. Find the question-mark length before calculating each area."
   },
   {
    "id": "year7-rectilinear-area-general-two",
@@ -1074,9 +987,9 @@
     {
      "kind": "questions",
      "x": 24,
-     "y": 140,
+     "y": 24,
      "w": 1552,
-     "h": 735,
+     "h": 852,
      "size": 46,
      "items": [
       {
@@ -1119,17 +1032,6 @@
       }
      ],
      "id": "year7-rectilinear-area-cutout-1"
-    },
-    {
-     "id": "year7-rectilinear-area-cutout-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "Could we remove a cut-out instead?"
     }
    ]
   },
@@ -1142,9 +1044,9 @@
     {
      "kind": "questions",
      "x": 24,
-     "y": 140,
+     "y": 24,
      "w": 1552,
-     "h": 735,
+     "h": 852,
      "size": 46,
      "items": [
       {
@@ -1189,17 +1091,6 @@
       }
      ],
      "id": "year7-rectilinear-area-method-choice-1"
-    },
-    {
-     "id": "year7-rectilinear-area-method-choice-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "Which method would you choose? Why?"
     }
    ]
   },
@@ -1207,13 +1098,14 @@
    "id": "year7-rectilinear-area-frame-model",
    "family": "teach",
    "title": "A hole inside the shape",
+   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown.",
    "els": [
     {
      "kind": "questions",
      "x": 24,
-     "y": 140,
+     "y": 24,
      "w": 1552,
-     "h": 735,
+     "h": 852,
      "size": 46,
      "items": [
       {
@@ -1258,20 +1150,8 @@
       }
      ],
      "id": "year7-rectilinear-area-frame-model-1"
-    },
-    {
-     "id": "year7-rectilinear-area-frame-model-prompt",
-     "kind": "text",
-     "x": 60,
-     "y": 32,
-     "w": 1480,
-     "h": 88,
-     "size": 44,
-     "bold": true,
-     "text": "What area must we remove?"
     }
-   ],
-   "brief": "Discuss the diagram before revealing the tool's canonical working. Every omitted label is implied; a question mark is deliberately unknown."
+   ]
   },
   {
    "id": "year7-rectilinear-area-cutout-practice",
@@ -2087,7 +1967,6 @@
    "id": "year7-rectilinear-area-exit",
    "family": "retrieval",
    "title": "Exit check",
-   "brief": "One new missing-length area question and one explanation of the two methods. Use this to decide where the next lesson should resume.",
    "els": [
     {
      "kind": "questions",
@@ -2161,7 +2040,8 @@
      ],
      "id": "year7-rectilinear-area-exit-1"
     }
-   ]
+   ],
+   "brief": "One new missing-length area question and one explanation of the two methods. Use this to decide where the next lesson should resume."
   }
  ]
 }

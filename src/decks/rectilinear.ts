@@ -1,3 +1,4 @@
+import { aspectOf } from "../shared/shapes/Diagram";
 import { extras } from "../shared/questionExtras";
 import type { Drawing, Focus } from "../shared/shapes/drawing";
 import { isRectilinearSpec, rectilinearPolygons, type RectilinearSpec } from "../../api/_rectilinear";
@@ -49,40 +50,17 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
       focuses.forEach(f => { if (f?.regions?.includes(region.id)) f.helpers = [...(f.helpers ?? []), id]; });
     }
   }
-  if (spec.reducedLabels) {
-    if (spec.method === "subtract" && !spec.missingLength) {
-      // Whole-minus-cut-out needs the outer and removed rectangles, not the widths of the remaining bridges.
-      const needed = drawing.regions.filter(r => r.id === "outer" || r.id.startsWith("c"));
-      drawing.edges.forEach(e => {
-        if (e.kind !== "plain" || !e.label) return;
-        const axis = e.a[1] === e.b[1] ? 0 : 1, lo = Math.min(e.a[axis], e.b[axis]), hi = Math.max(e.a[axis], e.b[axis]);
-        if (!needed.some(r => Math.min(...r.pts.map(p => p[axis])) === lo && Math.max(...r.pts.map(p => p[axis])) === hi)) e.label = "";
-      });
-    }
-    // Explicit equality marks let repeated steps share one number without asking pupils to infer equality.
-    const groups = new Map<string, number[]>();
-    drawing.edges.forEach((e, i) => {
-      if (e.kind !== "plain" || !e.label) return;
-      const axis = e.a[1] === e.b[1] ? 0 : 1;
-      const key = `${axis}:${Math.abs(e.a[axis] - e.b[axis])}`;
-      groups.set(key, [...(groups.get(key) ?? []), i]);
+  // Dimensions in the cells name complete component widths/heights, rather than floating near a step.
+  if (!spec.missingLength) {
+    drawing.measurements = drawing.regions.flatMap(region => {
+      const box = boxOf([region.pts]);
+      return [
+        { id: `width-${region.id}`, a: [box.x0,box.y0] as Pt, b: [box.x1,box.y0] as Pt, text: `${box.x1-box.x0} cm`, region: region.id, outside: region.id === "outer" },
+        { id: `height-${region.id}`, a: [box.x0,box.y0] as Pt, b: [box.x0,box.y1] as Pt, text: `${box.y1-box.y0} cm`, region: region.id, outside: region.id === "outer" },
+      ];
     });
-    let tick = 0;
-    for (const ids of groups.values()) if (ids.length > 1) {
-      tick++;
-      ids.forEach((i, k) => { drawing.edges[i].ticks = tick; if (k) drawing.edges[i].label = ""; });
-    }
-    if (tick) drawing.caption.push("Matching marks show equal lengths.");
-    // Supplied component dimensions make a separate overall-height label redundant.
-    if (spec.scaffold !== "none" && !spec.missingLength && spec.method === "split") {
-      const regions = drawing.regions.filter(r => r.id.startsWith("s"));
-      drawing.edges.forEach(e => {
-        if (e.kind !== "plain" || !e.label || e.ticks) return;
-        const axis = e.a[1] === e.b[1] ? 0 : 1, lo = Math.min(e.a[axis],e.b[axis]), hi = Math.max(e.a[axis],e.b[axis]);
-        if (!regions.some(r => Math.min(...r.pts.map(p => p[axis])) === lo && Math.max(...r.pts.map(p => p[axis])) === hi)) e.label = "";
-      });
-    }
   }
+  extras(q)._aspect = aspectOf(drawing);
   return q;
 }
 export function authoredRectilinear(id: string, spec: RectilinearSpec, previous?: CuratedQuestion): CuratedQuestion {

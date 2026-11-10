@@ -83,7 +83,7 @@ def lines(c,x,y,s,width=240,size=10,leading=15,bold=False):
 def worksheet(path,answers=False):
  c=canvas.Canvas(str(path),pagesize=A4);c.setTitle('Rectilinear area — '+('worked answers' if answers else 'worksheet'));c.setAuthor('Maths')
  labels=['A · Split into rectangles','B · Find lengths, then areas','C · Cut-outs and frames']
- instructions=['Use the supplied splits. Matching marks show equal lengths.','Find any ? lengths first. Show a valid area method.','Choose your method. Remove all cut-outs or holes from the whole area.']
+ instructions=['Use the dimension arrows to identify rectangle widths and heights.','Find any ? lengths first. Show a valid area method.','Choose your method. Remove all cut-outs or holes from the whole area.']
  for page in range(3):
   pdftext(c,30,H-34,'Area of rectilinear shapes',18,True,NAVY);pdftext(c,30,H-53,'Worked answers' if answers else 'Name: __________________________   Class: __________',10)
   pdftext(c,30,H-78,labels[page],12,True,TEAL);pdftext(c,30,H-96,instructions[page],9)

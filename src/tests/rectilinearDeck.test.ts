@@ -12,6 +12,7 @@ import { rectilinearPrintCells } from "../decks/rectilinearPrint";
 import { diagramPracticeSheet } from "../shared/printables";
 import { GENERATOR_TOOLS, generateFrom, loadConfig, generateSet, supportsGeneratorSubtool } from "../decks/generators";
 import { fromGenerated } from "../decks/SlideCanvas";
+import { dimensionPlan } from "../shared/shapes/dimensions";
 import { labelPlan } from "../shared/shapes/Diagram";
 import { extras } from "../shared/questionExtras";
 import type { Drawing } from "../shared/shapes/drawing";
@@ -138,25 +139,25 @@ describe("rectilinear deck foundations", () => {
       expect(q.working.find(w => w.label === "So the missing side is:")!.latex.split("=")[0].includes("-")).toBe(missingLength === "subtraction");
     }
   });
-  it("replaces repeated staircase numbers with explicit matching marks and retains component dimensions", () => {
-    const spec = { ...shape(), shape: "stairs3" as const, width: 14, height: 10, cutWidth: 4, cutHeight: 3 };
-    const d = extras(rectilinearQuestion(spec))._diagram as Drawing;
-    const marked = d.edges.filter(e => e.ticks);
-    expect(marked.length).toBeGreaterThan(2);
-    for (const tick of new Set(marked.map(e => e.ticks))) {
-      const group = marked.filter(e => e.ticks === tick);
-      expect(new Set(group.map(e => Math.hypot(e.b[0]-e.a[0],e.b[1]-e.a[1]))).size).toBe(1);
-      expect(group.filter(e => e.label)).toHaveLength(1);
-    }
-    expect(d.helpers.some(h => h.label === "10 cm" && h.always)).toBe(true);
-    expect(d.edges.filter(e => e.label).length).toBeLessThan(6);
+  it("uses explicit component dimensions without equality tabs on a staircase", () => {
+    const d = extras(rectilinearQuestion({ ...shape(), shape: "stairs3", width: 14, height: 10, cutWidth: 4, cutHeight: 3 }))._diagram as Drawing;
+    expect(d.edges.some(e=>e.ticks)).toBe(false);
+    expect(d.measurements).toHaveLength(6);
+    const middle=d.measurements!.find(m=>m.id === "width-s1")!;
+    expect(middle.text).toBe("10 cm");
+    expect(Math.abs(middle.b[0]-middle.a[0])).toBe(10);
+    expect(dimensionPlan(d).dimensions).toHaveLength(6);
+    const svg=rectilinearPrintCells([authoredRectilinear("arrow-print", shape())])[0].svg;
+    expect(svg).toContain("data-dimension=");
+    expect(svg).not.toContain("Find the area");
+    expect(svg).not.toContain("Matching marks");
+    expect(svg).not.toContain("<rect");
   });
-
-  it("labels only the whole rectangle and removed regions on subtraction questions", () => {
+  it("measures only the whole rectangle and removed regions on subtraction questions", () => {
     for (const kind of ["U", "comb", "frame"] as const) {
       const q = rectilinearQuestion({ ...shape(), shape: kind, width: 17, height: 13, cutWidth: 5, cutHeight: 4, method: "subtract", scaffold: "none" });
       const d = extras(q)._diagram as Drawing;
-      expect(d.edges.filter(e => e.kind === "plain" && e.label)).toHaveLength(4);
+      expect(dimensionPlan(d).dimensions).toHaveLength(kind === "comb" ? 5 : 4);
       expect(Number(q.answer)).toBe(kind === "comb" ? 181 : 201);
     }
   });
