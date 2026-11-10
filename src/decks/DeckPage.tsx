@@ -33,18 +33,24 @@ import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from ".
 
 const clearInk = () => window.dispatchEvent(new Event("mt-ink-clear"));
 
-/** Fits a 16:9 canvas into the element it is measured from. */
+/** Fits a 16:9 canvas into the element it is measured from. It follows the element: if the page is rebuilt around it (a phone turning from upright to
+ *  sideways) it measures the new one rather than watching one that has gone. */
 function useFit(ref: React.RefObject<HTMLDivElement | null>) {
   const [scale, setScale] = useState(0.5);
+  const seen = useRef<HTMLDivElement | null>(null);
+  const watcher = useRef<ResizeObserver | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
+    if (el === seen.current) return;
+    watcher.current?.disconnect();
+    seen.current = el;
     if (!el) return;
     const fit = () => setScale(Math.max(0.1, Math.min(el.clientWidth / CANVAS_W, el.clientHeight / CANVAS_H)));
     fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [ref]);
+    watcher.current = new ResizeObserver(fit);
+    watcher.current.observe(el);
+  });
+  useEffect(() => () => watcher.current?.disconnect(), []);
   return scale;
 }
 
@@ -405,9 +411,13 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
     </div>
   );
   // upright phone: the show drawn landscape in a box as wide as the screen is tall, turned a quarter turn clockwise to fill the screen
-  return turned && frameSize ? (
-    <div data-turned style={{ position: "fixed", top: 0, left: 0, width: frameSize.w, height: frameSize.h, transformOrigin: "top left", transform: `translateX(${win.w}px) rotate(90deg)`, zIndex: 40, background: "#000" }}>{show}</div>
-  ) : show;
+  // The wrapper is always rendered, so nothing is rebuilt when the phone turns; `display: contents` makes it vanish from the layout when it is not turned.
+  return (
+    <div {...(turned ? { "data-turned": "" } : {})}
+      style={turned && frameSize ? { position: "fixed", top: 0, left: 0, width: frameSize.w, height: frameSize.h, transformOrigin: "top left", transform: `translateX(${win.w}px) rotate(90deg)`, zIndex: 40, background: "#000" } : { display: "contents" }}>
+      {show}
+    </div>
+  );
 }
 
 /** The longest the first open waits for the shared copy before using the device's. */

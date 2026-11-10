@@ -37,7 +37,8 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/decks/DeckPage.tsx`, `src/decks/
 - **It opens on a start card, then plays full screen in landscape.** The tap goes full screen and asks for landscape where the browser allows it (some Android browsers). On an upright phone where it will not (an iPhone), the whole show is drawn turned a quarter turn, so turning the phone sideways reads it upright.
 - **Swipe from right to left for forward, left to right for back** (a slide's next click first, as the arrow keys do); in the turned show the same swipe is up or down the screen. A tap shows the controls bar; a swipe does not.
 - Ink is off on a phone's deck. The laptop and tablet player are unchanged.
-- Checked in headless Chromium emulating an iPhone portrait and landscape, with real touch swipes and a laptop. Not checked on a real phone.
+- **Fixed the same day: the slide shrank to a tiny box after the phone turned from upright to sideways.** The show was rebuilt around its stage when it turned, and the slide-fitting code kept watching the stage that had gone. The wrapper is now always there and the fitting code follows its element. `npm run smoke:deck-phone` plays a deck on an emulated iPhone, including the turn, and fails on the old code.
+- Checked in headless Chromium emulating an iPhone portrait, landscape and the turn between them, with real touch swipes, and a laptop. Not checked on a real phone.
 
 Agent: Claude Code
 Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)" (this change is not in it yet).

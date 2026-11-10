@@ -214,6 +214,8 @@ A `BankQuestion` remains the legacy built-bank authoring shape, optionally with 
 
 `npm run smoke:deck-layout -- <deck id>` (with `npm run dev` running; same optional browser and server settings) measures the real text on every slide and fails when text spills out of its box, runs off the slide or overlaps another element. Run it after building or editing a deck; a board title that wraps, or a fraction in a 64-unit title, is the usual cause. <!-- ref -->
 
+`npm run smoke:deck-phone` (Playwright and a Chromium needed; it starts the dev server, or use `SMOKE_URL`) plays a deck on an emulated iPhone: no editor addresses, the start card, the slide filling the screen upright and sideways **and again after the phone turns** (the player once measured a stage that had been rebuilt and the slide stayed tiny), and swipes in both orientations. `deckSwipe.test.ts` covers the swipe directions and what counts as a phone. <!-- ref -->
+
 `solutionStepper.test.ts` checks question/step/answer disclosure and bounded progress. `npm run smoke:solutions` checks the actual left/right positions and stable question node, staged answers, backwards navigation, Show All, keyboard controls, generator reset, diagnostic choices, narrow previews and reduced motion. It uses the same optional browser/server environment settings as `smoke:questions` and intercepts sharing requests.
 
 
