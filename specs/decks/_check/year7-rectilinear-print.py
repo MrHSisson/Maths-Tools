@@ -27,7 +27,7 @@ def clean(s):
 def calculations(a):
  rows=[]
  for w in a['working']:
-  if w.get('label')=='So the missing side is:': rows.append('Missing length: '+clean(w['latex'])+' cm')
+  if w.get('label','').startswith('Find the internal'): rows.append(w['label'].replace('Find the ','')+' '+clean(w['latex'])+' cm')
  d=a['drawing']; splits=[r for r in d['regions'] if r['id'].startswith('s')]; cuts=[r for r in d['regions'] if r['id'].startswith('c')]
  def dims(r):
   xs=[p[0] for p in r['pts']];ys=[p[1] for p in r['pts']];return max(xs)-min(xs),max(ys)-min(ys)
@@ -82,8 +82,8 @@ def lines(c,x,y,s,width=240,size=10,leading=15,bold=False):
 
 def worksheet(path,answers=False):
  c=canvas.Canvas(str(path),pagesize=A4);c.setTitle('Rectilinear area — '+('worked answers' if answers else 'worksheet'));c.setAuthor('Maths')
- labels=['A · Split into rectangles','B · Find lengths, then areas','C · Cut-outs and frames']
- instructions=['Use the dimension arrows to identify rectangle widths and heights.','Find any ? lengths first. Show a valid area method.','Choose your method. Remove all cut-outs or holes from the whole area.']
+ labels=['A · Draw partitions only','B · Internal lengths, then area','C · L, M and O cut-outs']
+ instructions=['Draw lines to make rectangles. Do not calculate areas yet.','Calculate internal rectangle dimensions before their areas.','Use the whole rectangle minus every removed area.']
  for page in range(3):
   pdftext(c,30,H-34,'Area of rectilinear shapes',18,True,NAVY);pdftext(c,30,H-53,'Worked answers' if answers else 'Name: __________________________   Class: __________',10)
   pdftext(c,30,H-78,labels[page],12,True,TEAL);pdftext(c,30,H-96,instructions[page],9)
@@ -93,12 +93,19 @@ def worksheet(path,answers=False):
    c.setStrokeColorRGB(.80,.84,.88);c.setLineWidth(.6);c.roundRect(x,bottom,cw,ch,5,stroke=1,fill=0)
    pdftext(c,x+9,yt-17,str(idx)+'.',11,True)
    # The same small-mode SVG supplies both print diagrams; images remain crisp at over 300 dpi.
-   variant='paperAnswer' if answers else 'paper';c.drawImage(str(ASSETS/f'{k}-{variant}.png'),x+8,yt-218,width=cw-16,height=198,preserveAspectRatio=True,anchor='c',mask='auto')
-   y=yt-232
-   if answers:
+   variant='paperAnswer' if answers else 'paper';c.drawImage(str(ASSETS/f'{k}-{variant}.png'),x+8,yt-(190 if answers and page==1 else 218),width=cw-16,height=170 if answers and page==1 else 198,preserveAspectRatio=True,anchor='c',mask='auto')
+   y=yt-204 if answers and page==1 else yt-232
+   if answers and page==0:
+    y=lines(c,x+10,y,'One valid partition is shown. Accept other rectangle partitions with no gaps or overlaps.',cw-20,10,15)
+   elif answers:
     for row in calculations(a):y=lines(c,x+10,y,row,cw-20,9.6,14,bold=row.startswith('Area:'))-3
    else:
     spec=a['item']['rectilinear']
+    if page==0:
+     lines(c,x+10,y,'Draw a valid partition into rectangles.',cw-20,10,15)
+     continue
+    if page==1:
+     pdftext(c,x+10,y,'Internal length(s): __________ cm',10);y-=22
     if spec.get('missingLength'):pdftext(c,x+10,y,'Missing length: __________ cm',10);y-=22
     if spec['scaffold']=='full':
      for r in [r for r in a['drawing']['regions'] if r['id'].startswith('s')]:
@@ -110,7 +117,7 @@ def worksheet(path,answers=False):
      pdftext(c,x+10,y,'Area: __________________ cm²',10)
    assert y>bottom+5,(k,'working runs off cell',y,bottom)
   pdftext(c,30,18,'All lengths in cm. Use the labels, not the apparent size of the drawing.',8,MUTED if False else False) if False else None
-  pdftext(c,30,18,'All lengths in cm · Give areas in cm²',8,color=MUTED);pdftext(c,W-88,18,f'Page {page+1} / 3',8,color=MUTED);c.showPage()
+  pdftext(c,30,18,'Different valid partitions are possible.' if page==0 else 'All lengths in cm · Give areas in cm²',8,color=MUTED);pdftext(c,W-88,18,f'Page {page+1} / 3',8,color=MUTED);c.showPage()
  c.save()
 worksheet(OUT/'Rectilinear_Area_Worksheet.pdf');worksheet(OUT/'Rectilinear_Area_Worked_Answers.pdf',True)
 

@@ -160,4 +160,13 @@ describe("rectilinear deck foundations", () => {
     }
   });
 
+  it("finds internal rectangle dimensions before area without hiding external sides",()=>{
+    const q=rectilinearQuestion({...shape(),shape:"stairs3",width:14,height:10,cutWidth:4,cutHeight:3});
+    const at=q.working.findIndex(w=>w.label?.includes("internal width"));
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(q.working[at].latex).toContain("14 - 4 = 10");
+    expect(at).toBeLessThan(q.working.findIndex(w=>w.label?.includes("find each area")));
+    expect((extras(q)._diagram as Drawing).edges.some(e=>e.kind==="missing")).toBe(false);
+  });
+
 });

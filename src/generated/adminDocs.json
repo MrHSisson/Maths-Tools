@@ -961,6 +961,7 @@
       {
        "t": "ul",
        "items": [
+        "Year 7 progression refactored (2026-11-10): four partition-only shapes, then discussion; explicit internal rectangle lengths before area; cut-outs from L to M and O. No external missing-side tasks. Worksheet follows the same three stages.",
         "Rectilinear review refinement (2026-11-10): every independent boundary label retained, only aligned spans implied or explicit ? unknowns; all arrows follow their own edge at a fixed 10px screen gap, without an overall dimension frame. Slide 4 is a visible-partition T-shape worked model, not another L question.",
         "Rectilinear dimension revision (2026-11-10): combined duplicate introductory slides; replaced floating pills/equality tabs with edge-local dimension arrows at a fixed 10px gap; caption-free native deck and worksheet. A dedicated planner checks labels, span lines and external corners.",
         "Rectilinear lesson revised after review (2026-11-10): native deck is the master; advanced authored cross/U/comb/frame families, eligible missing lengths, equality marks for repeated labels, and a worksheet retaining two L-shapes among twelve varied questions. See `specs/decks/year7-rectilinear-area.md`.",

@@ -108,6 +108,22 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
 }
 
 /** Shared solution path for live questions and deliberately chosen deck questions. */
+function internalDimensions(rects: Rect[], flat: { a: Pt; b: Pt; len: number }[]): Beat[] {
+  const beats: Beat[] = [], seen = new Set<string>();
+  rects.forEach((r,k) => { for (const axis of [0,1]) {
+    const lo=axis===0?r.x0:r.y0,hi=axis===0?r.x1:r.y1,key=`${axis}:${lo}:${hi}`;
+    if(seen.has(key))continue;seen.add(key);
+    const spans=flat.filter(e=>(e.a[1]===e.b[1]?0:1)===axis).map(e=>[Math.min(e.a[axis],e.b[axis]),Math.max(e.a[axis],e.b[axis])] as const);
+    if(spans.some(([a,b])=>a===lo&&b===hi))continue;
+    const parts=(a:number,b:number):number[]|undefined=>{if(a===b)return[];for(const [x,y] of spans)if(x===a&&y<=b){const rest=parts(y,b);if(rest)return[y-x,...rest];}return undefined;};
+    let expression:string|undefined;
+    for(const [a,b] of spans)if(a<=lo&&b>=hi){const left=parts(a,lo),right=parts(hi,b);if(left&&right){expression=[b-a,...left.map(x=>-x),...right.map(x=>-x)].map((n,i)=>i?` - ${-n}`:String(n)).join("");break;}}
+    if(!expression){const add=parts(lo,hi);if(add)expression=add.join(" + ");}
+    if(expression)beats.push({step:mStep(`Find the internal ${axis===0?"width":"height"} of rectangle ${LETTERS[k]}:`,[`${expression} = ${hi-lo}`],CM),focus:{regions:[`s${k}`]}});
+  }});
+  return beats;
+}
+
 export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: DifficultyLevel; ask: "area" | "perimeter"; mixed: boolean; showSplit: boolean; twins?: Hide[]; reduced?: boolean; missing?: Hide[]; bounding?: boolean; subtract?: boolean }): Built {
   const { kind, level, ask, mixed, showSplit } = opts;
   const twins = opts.twins ?? (opts.reduced ? twinHides(polys) : []), missing = opts.missing ?? [];
@@ -198,6 +214,7 @@ export function buildCompound(polys: Pt[][], opts: { kind: RectKind; level: Diff
     const rects = splitRects(polys), areas = rects.map(rectArea);
     rects.forEach((r, k) => regions.push({ id: `s${k}`, pts: rect(r), color: COLORS[k % COLORS.length], text: LETTERS[k], always: showSplit }));
     const ids = rects.map((_, k) => `s${k}`);
+    beats.push(...internalDimensions(rects, flat));
     beats.push({
       step: mStep("Split it into rectangles and find each area:", rects.map((r, k) => `${k ? ",\\ " : ""}${LETTERS[k]} = ${r.x1 - r.x0} \\times ${r.y1 - r.y0} = ${areas[k]}`)),
       focus: { regions: ids },

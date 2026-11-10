@@ -29,6 +29,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Partition → internal lengths → cut-outs
+
+Branch `codex/year7-rectilinear-lesson`. Refactored the native lesson and worksheet after review. Four varied partition-only questions precede discussion; T area modelling leads into explicit internal-width/height calculations, then area practice. Removed external missing-side tasks. Cut-outs progress from L to M (two notches) and O (frame), including Level 3 general practice. Worksheet mirrors those three stages.
+
+The canonical rectilinear builder now derives internal component lengths before area multiplication, for fixed and generated questions. Partition-only tasks preserve their purpose on dimension edits and print without area requests. Existing edge-local 10px arrows and boundary labels retained.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear lesson progression refactor (Codex)”.
+
 ## 2026-11-10 — Rectilinear dimensions with explicit spans
 
 Branch `codex/year7-rectilinear-lesson`, continuing Harry’s diagram review.

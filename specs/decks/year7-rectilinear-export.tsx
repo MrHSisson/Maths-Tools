@@ -13,7 +13,7 @@ export default async function exportLesson() {
   const extra: CuratedQuestion[] = [];
   const generated: { id: string; q: any }[] = [];
   for (const missing of [false, true]) for (let i = 0; i < 2; i++) {
-    const q = await generateFrom("perimeter-and-area", { sub: "compound", level: missing ? "level2" : "level1", multiSelect: { area: true, perimeter: false, all: !missing, missing, split: true, subtract: false }, variables: { reducedLabels: true, showSplit: false } }, 20261111 + i * 73 + (missing ? 1000 : 0));
+    const q = await generateFrom("perimeter-and-area", { sub: "compound", level: "level1", multiSelect: { area: true, perimeter: false, all: true, missing: false, split: true, subtract: false }, variables: { reducedLabels: true, showSplit: false } }, 20261111 + i * 73 + (missing ? 1000 : 0));
     if (q) generated.push({ id: `${missing ? "live-missing" : "live-given"}-${i + 1}`, q });
   }
   const source = [...Object.values(models), ...practiceOne, ...practiceTwo, ...cutoutPractice, ...worksheetQuestions, ...extra].map(item => ({ id: item.id, item, q: rectilinearQuestion(item.rectilinear!) }));

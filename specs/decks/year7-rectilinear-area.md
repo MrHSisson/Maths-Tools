@@ -1,37 +1,20 @@
-# Area of rectilinear shapes — Year 7 top set
-**Status:** implemented, revised after review 2026-11-10
-**Length:** 60 minutes, with optional continuation. Pupils already know rectangle area. No retrieval starter.
-**Primary resource:** native deck `year7-rectilinear-area`, not PowerPoint.
+# Year 7 rectilinear area — revised sequence
+Status: implemented after review, 2026-11-10. Native deck is the master. 60 minutes, with optional practice continuing next lesson. No retrieval starter. Rectangle area already secure.
 
-| Minutes | Route | Purpose |
-| --- | --- | --- |
-| 0–8 | Worked T-shape with partition visible; compare two splits | Establish split, multiply, add; move on promptly |
-| 8–20 | Practice A, optional generator | One L, two Ts, staircase, cross and U; fade supplied splits |
-| 20–32 | T addition model, staircase subtraction model, Practice B | Find lengths explicitly, then area; T/staircase/U/two-notch outlines |
-| 32–43 | U cut-out discussion, two-notch method choice, frame model | Explain whole area minus every removed area; compare methods |
-| 43–57 | Authored worksheet | Supplied splits → missing lengths → cut-outs/holes |
-| 57–60 | New U-shape missing length/area and explanation | Check reasoning and units |
+| Minutes | Sequence |
+| --- | --- |
+| 0–10 | Four partition-only questions: L, T, staircase, cross. Draw rectangles; no areas yet. |
+| 10–15 | Discuss valid partitions, gaps/overlaps, and which split makes dimensions easiest to identify. |
+| 15–22 | T worked area model, then explicit internal-length models: staircase width by subtraction and cross width by addition. |
+| 22–35 | Six varied authored questions: identify internal rectangle dimensions before areas. Live split-and-add generator, external sides all given. |
+| 35–45 | Subtraction built from an L corner, to an M with two cut-outs, then an O frame. Authored practice and Level 3 generator as continuation if needed. |
+| 45–57 | Worksheet mirrors the three stages. |
+| 57–60 | Apply/justify a method; continue next lesson if needed. |
 
-Optional continuation: six authored U/frame/two-notch questions and the Level 3 generator follow the cut-out models. Skip these initially if needed; return next lesson rather than rushing the discussion or worksheet.
+No external missing-length questions or generator settings remain. Worked solutions now explicitly derive any needed internal rectangle width/height before multiplication, using addition of contiguous spans or subtraction from a longer span. Example: staircase middle width = 14−4=10. This runs through the canonical tool builder, so authored and generated work agree.
 
-## Worksheet composition
-12 distinct authored questions: two L, two T, two staircases, one cross, two U, one two-notch and two frames. Keep L questions 1 and 3 as accessible anchors, then require new decisions. Three A4 pages with working room and a separate worked key.
+Worksheet: four unpartitioned shapes to split only; four internal-dimension/area questions with fading split support; L, M and O cut-outs. Three pupil pages and three worked-key pages. The first key page shows possible partitions, accepts alternatives and gives no area calculations. Later key pages show internal-length arithmetic before rectangle areas.
 
-| Questions | Scaffold / idea | Traps |
-| --- | --- | --- |
-| 1–2 | L/T, supplied splits and calculation prompts | Area vs perimeter; missing a rectangle |
-| 3–5 | Rotated L, staircase, cross; supplied splits only | Dimensions from different rectangles; double counting |
-| 6–8 | T, staircase, U; marked unknowns before area | Whole vs part; incorrect addition/subtraction |
-| 9–12 | U, frame, two cut-outs, larger frame | Enclosing area includes extra material; subtract all holes/cut-outs |
+The agreed diagram style remains: actual boundary arrows at 10 screen pixels from their own edge, all independent boundary labels retained, only aligned spans implied; no internal-width arrows, tabs, generic diagram headings or overall dimension frames.
 
-## Labels and authoring
-All authored questions use Q.rectilinear, through the tool's canonical geometry/solution. Authoring now supports L, T, stairs, cross, U, comb/two cut-outs and frame. Missing lengths work on eligible open outlines, never frames. New dimensions are editable in the deck.
-
-Length labels use edge-local double-headed arrows, parallel to each actual boundary and 10 CSS pixels away in the live slide. No overall dimension frame, witness lines or internal component-width arrows. Every independent boundary label is retained; only a labelled parallel edge with the same coordinate span makes a side implied. Deliberate unknowns show `?`; unrelated equal treads keep separate numbers. Captions, equality tabs, generic question-purpose headings and model prompts above diagrams are removed. Slide 4 is a partitioned T-shape worked example, A = 10 × 2 = 20, B = 4 × 5 = 20, total 40 cm², revealed step by step. The deck has 19 slides.
-
-`_check/rectilinear-edge-gap.cjs` measures actual screen distances on T/staircase/frame slides at laptop/tablet/phone sizes, before and after revealing working. All measure 10.000px.
-
-## Verification and exports
-Recompute all areas independently using polygon shoelace and rectangle sums/removals, and verify missing boundary lengths. Check distinct answers within each authored set. Run content/layout and browser print checks.
-
-`year7-rectilinear-export.tsx` exports the native questions and shared-renderer assets. With the app running: `SMOKE_URL=http://localhost:5173 node specs/decks/_check/year7-rectilinear-assets.cjs work/year7-lesson`; set PLAYWRIGHT_PATH/CHROMIUM_PATH if required. Then `python specs/decks/_check/year7-rectilinear-print.py --work work/year7-lesson` generates the revised worksheet and key. The earlier PowerPoint export is superseded; it is not the lesson master.
+Exports: run `_check/year7-rectilinear-assets.cjs` with the app running, then `_check/year7-rectilinear-print.py --work <folder>`. Native partition task is saved with each authored shape so editing dimensions preserves its partition-only purpose.
