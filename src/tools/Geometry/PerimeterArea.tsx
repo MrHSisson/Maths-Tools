@@ -34,7 +34,7 @@ const TOOL_CONFIG: ToolConfig = {
       },
     },
     compound: {
-      name: "Compound Shapes",
+      name: "Rectilinear Shapes",
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { multiSelect: [ASK, SIDES_1, PERIMETER_METHOD, AREA_METHOD], variables: [showSplit(true), reducedLabels(false)] },
