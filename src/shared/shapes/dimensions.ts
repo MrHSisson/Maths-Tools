@@ -2,79 +2,67 @@ import { boxOf, insideShape, type Pt } from "./model";
 import { rectGap, segHitsRect, segsCross, type Rect, type Seg } from "./labels";
 import type { Drawing, Focus } from "./drawing";
 
-interface Dimension {
-  id: string; a: Pt; b: Pt; text: string; value?: string; region?: string; outside?: boolean;
-  edge?: number; helper?: string;
-}
-interface PlacedDimension extends Dimension {
-  line: Seg; extensions: Seg[]; label: Rect; vertical: boolean; visible: boolean; found: boolean;
+interface PlacedDimension {
+  id: string; a: Pt; b: Pt; text: string; value?: string; edge: number;
+  options: {rect:Rect; cost:number}[]; line: Seg; segments: Seg[]; label: Rect; vertical: boolean; visible: boolean; found: boolean;
 }
 
-/** A dimension stays parallel to its measured span; its endpoints never slide along an edge. */
-export function dimensionPlan(d: Drawing, small = false, answer = false, focus?: Focus) {
+/** Each arrow follows its own boundary edge at a fixed perpendicular gap; no overall dimension frame. */
+export function dimensionPlan(d: Drawing, small = false, answer = false, focus?: Focus, gap = 10) {
   const box = boxOf(d.polys), fs = small ? 12 : 30;
   const sc = (small ? 240 : 600) / Math.max(box.x1-box.x0, box.y1-box.y0, 1);
   const X = (x: number) => (x-box.x0)*sc, Y = (y: number) => (box.y1-y)*sc;
   const shape: Seg[] = d.polys.flatMap(p => p.map((a,i) => { const b=p[(i+1)%p.length]; return {x1:X(a[0]),y1:Y(a[1]),x2:X(b[0]),y2:Y(b[1])}; }));
-  const source: Dimension[] = [
-    ...d.edges.flatMap((e,i) => e.kind === "hidden" || (e.kind === "plain" && !e.label) ? [] : [{id:`edge-${i}`,a:e.a,b:e.b,text:e.kind === "plain" ? e.label : "?",value:e.value,edge:i}]),
-    ...d.helpers.filter(h=>h.label || h.find).map(h=>({id:`helper-${h.id}`,a:h.a,b:h.b,text:h.find?"?":h.label!,value:h.value,helper:h.id})),
-  ];
-  // Short spans are placed first so nested outside dimensions can use progressively wider lanes.
-  source.sort((a,b)=>Math.hypot(a.b[0]-a.a[0],a.b[1]-a.a[1])-Math.hypot(b.b[0]-b.a[0],b.b[1]-b.a[1]));
   const letters = d.regions.filter(r=>r.text).map(r => { const b=boxOf([r.pts]);return {id:r.id,text:r.text!,x:X(b.x0)+fs*.8,y:Y(b.y1)+fs*.85,w:fs,h:fs*1.2}; });
   const placed: PlacedDimension[] = [];
-  const spanKey = (m: Dimension) => {const axis=m.a[1]===m.b[1]?0:1;return `${axis}:${Math.min(m.a[axis],m.b[axis])}:${Math.max(m.a[axis],m.b[axis])}`;};
-  const seen = new Set<string>();
-  for (const m of source) {
-    const key=spanKey(m); if(m.helper && seen.has(key))continue;seen.add(key);
-    const ax=X(m.a[0]),ay=Y(m.a[1]),bx=X(m.b[0]),by=Y(m.b[1]),vertical=ax===bx;
-    const cx=(ax+bx)/2,cy=(ay+by)/2;
-    const chars=Math.max(m.text.length,m.value?.length??0),width=chars*fs*.57+fs*.5,height=fs*1.3;
-    const w=vertical?height:width,h=vertical?width:height;
-    const candidates: {pos:number;cost:number}[]=[];
-    const base=vertical?cx:cy;
-    const extent=vertical?(box.x1-box.x0)*sc:(box.y1-box.y0)*sc;
-    for(const side of [-1,1]) for(const k of [1,1.7,2.5,3.5,4.7,6,8,11,14,18]) {
-      const pos=side<0?-fs*k:extent+fs*k;
-      candidates.push({pos,cost:Math.abs(pos-base)/fs+k});
+  d.edges.forEach((e,i)=>{
+    if(e.kind === "hidden" || e.kind === "plain" && !e.label)return;
+    const ax=X(e.a[0]),ay=Y(e.a[1]),bx=X(e.b[0]),by=Y(e.b[1]),vertical=ax===bx;
+    const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy)||1;
+    let nx=dy/len,ny=-dx/len;
+    if(insideShape((e.a[0]+e.b[0])/2+nx*.001,(e.a[1]+e.b[1])/2+ny*.001,d.polys)){nx=-nx;ny=-ny;}
+    ny=-ny;
+    const line=vertical?{x1:ax+nx*gap,y1:Math.min(ay,by),x2:ax+nx*gap,y2:Math.max(ay,by)}:{x1:Math.min(ax,bx),y1:ay+ny*gap,x2:Math.max(ax,bx),y2:ay+ny*gap};
+    const text=e.kind === "plain"?e.label:"?",chars=Math.max(text.length,e.value?.length??0);
+    const width=chars*fs*.57+fs*.25,height=fs*1.25,w=vertical?height:width,h=vertical?width:height;
+    let label:Rect={x:(line.x1+line.x2)/2+nx*(height/2+4),y:(line.y1+line.y2)/2+ny*(height/2+4),w,h},best=Infinity;
+    const options:{rect:Rect;cost:number}[]=[];
+    for(const padding of gap>=height/2+1?[height/2+4,0]:[height/2+4])for(const extra of [0,fs*.35,fs*.7,fs*1.1,fs*1.7,fs*2.5,fs*3.5])for(const t of [.5,.3,.7,.35,.65,.2,.8,.05,.95,-.15,1.15]){
+      const r={x:line.x1+(line.x2-line.x1)*t+nx*(padding+extra),y:line.y1+(line.y2-line.y1)*t+ny*(padding+extra),w,h};
+      let cost=extra+Math.abs(t-.5)*fs+(padding===0?2:0);
+      options.push({rect:r,cost});
+      cost+=shape.filter(s=>segHitsRect(s,r,fs*.08)).length*100000;
+      if(insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
+      for(const p of placed){const space=rectGap(p.label,r);if(space<0)cost+=200000;else cost+=Math.max(0,fs*.1-space)*2;if(segHitsRect(p.line,r,fs*.1))cost+=20000;}
+      if(cost<best){best=cost;label=r;}
     }
-    const make=(pos:number):PlacedDimension=>{
-      const line=vertical?{x1:pos,y1:Math.min(ay,by),x2:pos,y2:Math.max(ay,by)}:{x1:Math.min(ax,bx),y1:pos,x2:Math.max(ax,bx),y2:pos};
-      const label={x:vertical?pos:cx,y:vertical?cy:pos,w,h};
-      const extension=(x:number,y:number,tx:number,ty:number):Seg=>{const len=Math.hypot(tx-x,ty-y)||1,gap=Math.min(fs*.18,len/2);return{x1:x+(tx-x)/len*gap,y1:y+(ty-y)/len*gap,x2:tx,y2:ty};};
-      const extensions=vertical?[extension(ax,ay,pos,ay),extension(bx,by,pos,by)]:[extension(ax,ay,ax,pos),extension(bx,by,bx,pos)];
-      const found=answer || (m.edge!==undefined && !!focus?.reveal?.includes(m.edge)) || !!(m.helper&&focus?.revealHelpers?.includes(m.helper));
-      return {...m,line,extensions,label,vertical,visible:!m.helper||!!d.helpers.find(h=>h.id===m.helper)?.always||!!focus?.helpers?.includes(m.helper),found};
-    };
-    const score=(p:PlacedDimension,cost:number)=>{
-      let n=cost;
-      // Prefer witness lines that reach their dimension through empty space, rather than through another cell.
-      for(const e of p.extensions) for(const t of [.25,.5,.75]) {
-        const x=e.x1+(e.x2-e.x1)*t,y=e.y1+(e.y2-e.y1)*t;
-        const onOutline=shape.some(s=>Math.abs(s.x1-s.x2)<.1 ? Math.abs(x-s.x1)<.1 && y>=Math.min(s.y1,s.y2)-.1 && y<=Math.max(s.y1,s.y2)+.1 : Math.abs(y-s.y1)<.1 && x>=Math.min(s.x1,s.x2)-.1 && x<=Math.max(s.x1,s.x2)+.1);
-        if(!onOutline && insideShape(box.x0+x/sc,box.y1-y/sc,d.polys))n+=700;
-      }
-      n+=shape.filter(s=>segHitsRect(s,p.label,fs*.15)).length*10000;
-      n+=shape.filter(s=>segsCross(s,p.line)).length*3000;
-      for(const l of letters)if(rectGap(l,p.label)<fs*.1)n+=2000;
-      for(const q of placed){
-        if(rectGap(p.label,q.label)<fs*.25)n+=20000;
-        if(segHitsRect(p.line,q.label,fs*.2)||segHitsRect(q.line,p.label,fs*.2))n+=10000;
-        if(segsCross(p.line,q.line))n+=3000;
-        for(const e of p.extensions)if(segsCross(e,q.line))n+=8000;
-        for(const e of q.extensions)if(segsCross(e,p.line))n+=8000;
-        for(const e of p.extensions)if(segHitsRect(e,q.label,fs*.15))n+=4000;
-        for(const e of q.extensions)if(segHitsRect(e,p.label,fs*.15))n+=4000;
-      }
-      return n;
-    };
-    let best=make(candidates[0].pos),cost=Infinity;
-    for(const c of candidates){const p=make(c.pos),n=score(p,c.cost);if(n<cost){best=p;cost=n;}}
-    placed.push(best);
+    placed.push({id:`edge-${i}`,a:e.a,b:e.b,text,value:e.value,edge:i,options,line,segments:[],label,vertical,visible:true,found:answer||!!focus?.reveal?.includes(i)});
+  });
+  for(let pass=0;pass<3;pass++)for(const p of pass%2?[...placed].reverse():placed){
+    let best=Infinity;
+    for(const option of p.options){const r=option.rect;let cost=option.cost;
+      cost+=shape.filter(s=>segHitsRect(s,r,fs*.08)).length*100000;
+      if(insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
+      for(const q of placed)if(q!==p){const space=rectGap(q.label,r);if(space<0)cost+=200000;else cost+=Math.max(0,fs*.1-space)*2;if(segHitsRect(q.line,r,fs*.1))cost+=20000;}
+      if(cost<best){best=cost;p.label=r;}
+    }
   }
+  // At a re-entrant corner, two fixed-offset arrows can cross. Break the later stroke locally;
+  // retain both endpoint arrowheads and the exact measured spans.
+  placed.forEach((p,i)=>{
+    const lo=p.vertical?p.line.y1:p.line.x1,hi=p.vertical?p.line.y2:p.line.x2;
+    const cuts:[number,number][]=[];
+    placed.forEach((q,j)=>{
+      if(j<i && segsCross(p.line,q.line)){const c=p.vertical?q.line.y1:q.line.x1;cuts.push([c-gap*.3,c+gap*.3]);}
+      if(segHitsRect(p.line,q.label,1)){const c=p.vertical?q.label.y:q.label.x,r=(p.vertical?q.label.h:q.label.w)/2+2;cuts.push([c-r,c+r]);}
+    });
+    let at=lo;
+    const segment=(a:number,b:number)=>p.vertical?{x1:p.line.x1,y1:a,x2:p.line.x2,y2:b}:{x1:a,y1:p.line.y1,x2:b,y2:p.line.y2};
+    for(const [a,b] of cuts.sort((a,b)=>a[0]-b[0])){if(a>=hi||b<=lo)continue;if(a>at)p.segments.push(segment(at,Math.min(a,hi)));at=Math.min(hi,Math.max(at,b));}
+    if(at<hi)p.segments.push(segment(at,hi));
+  });
   const xs=[0,(box.x1-box.x0)*sc,...placed.flatMap(p=>[p.line.x1,p.line.x2,p.label.x-p.label.w/2,p.label.x+p.label.w/2])];
   const ys=[0,(box.y1-box.y0)*sc,...placed.flatMap(p=>[p.line.y1,p.line.y2,p.label.y-p.label.h/2,p.label.y+p.label.h/2])];
-  const pad=fs*.8,x=Math.min(...xs)-pad,y=Math.min(...ys)-pad,W=Math.max(...xs)-x+pad,H=Math.max(...ys)-y+pad;
-  return {x,y,W,H,fs,sc,X,Y,shape,letters,dimensions:placed};
+  const pad=fs*.6,x=Math.min(...xs)-pad,y=Math.min(...ys)-pad,W=Math.max(...xs)-x+pad,H=Math.max(...ys)-y+pad;
+  return {x,y,W,H,fs,sc,gap,X,Y,shape,letters,dimensions:placed};
 }

@@ -93,7 +93,7 @@ export function labelPlan(d: Drawing, small: boolean, showAnswer: boolean, focus
   return { L, X, Y, pills, spots, helperPills, scene, charW, pillH, pillW };
 }
 
-interface Props { d: Drawing; showAnswer: boolean; small?: boolean; fillBox?: boolean; dataIndex?: number; focus?: Focus; hideCaption?: boolean }
+interface Props { d: Drawing; showAnswer: boolean; small?: boolean; fillBox?: boolean; dataIndex?: number; focus?: Focus; hideCaption?: boolean; pixelSize?: {w: number; h: number} }
 
 export function ShapeDiagram(props: Props) {
   return props.d.dimensionStyle === "arrows" ? <DimensionDiagram {...props} /> : <LegacyShapeDiagram {...props} />;

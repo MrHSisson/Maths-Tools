@@ -19,16 +19,15 @@ function audit(d:Drawing,small:boolean) {
   });
   for(let i=0;i<p.dimensions.length;i++) {
     const a=p.dimensions[i], {line:l}=a;
-    const width=(Math.max(...p.shape.flatMap(s=>[s.x1,s.x2]))),height=Math.max(...p.shape.flatMap(s=>[s.y1,s.y2]));
-    expect(a.vertical ? l.x1<0 || l.x1>width : l.y1<0 || l.y1>height).toBe(true);
+    expect(Math.abs(a.vertical?l.x1-p.X(a.a[0]):l.y1-p.Y(a.a[1]))).toBeCloseTo(10,8);
     // Full-width / full-height endpoints stay tied to the actual measured span.
     expect(a.vertical?[l.y1,l.y2]:[l.x1,l.x2]).toEqual(a.vertical?[Math.min(p.Y(a.a[1]),p.Y(a.b[1])),Math.max(p.Y(a.a[1]),p.Y(a.b[1]))]:[Math.min(p.X(a.a[0]),p.X(a.b[0])),Math.max(p.X(a.a[0]),p.X(a.b[0]))]);
     if(p.shape.some(s=>segHitsRect(s,a.label,.1)))bad.push("text touches outline");
     for(let j=i+1;j<p.dimensions.length;j++) {
       const b=p.dimensions[j];
       if(rectGap(a.label,b.label)<0)bad.push("text overlaps");
-      if(segHitsRect(a.line,b.label,.1)||segHitsRect(b.line,a.label,.1))bad.push("dimension crosses text");
-      if(segsCross(a.line,b.line))bad.push("dimension lines cross");
+      if(a.segments.some(s=>segHitsRect(s,b.label,.1))||b.segments.some(s=>segHitsRect(s,a.label,.1)))bad.push("dimension crosses text");
+      if(a.segments.some(s=>b.segments.some(t=>segsCross(s,t))))bad.push("dimension lines cross");
     }
   }
   return bad;

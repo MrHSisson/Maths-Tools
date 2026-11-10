@@ -139,14 +139,12 @@ describe("rectilinear deck foundations", () => {
       expect(q.working.find(w => w.label === "So the missing side is:")!.latex.split("=")[0].includes("-")).toBe(missingLength === "subtraction");
     }
   });
-  it("keeps staircase boundary labels and gives an extra explicit width without equality tabs", () => {
+  it("keeps staircase boundary labels without extrapolated component-width arrows", () => {
     const d = extras(rectilinearQuestion({ ...shape(), shape: "stairs3", width: 14, height: 10, cutWidth: 4, cutHeight: 3 }))._diagram as Drawing;
     expect(d.edges.some(e=>e.ticks)).toBe(false);
     const plan=dimensionPlan(d);
-    expect(plan.dimensions).toHaveLength(9);
-    const middle=plan.dimensions.find(m=>m.helper === "dimension-s1-0")!;
-    expect(middle.text).toBe("10 cm");
-    expect(Math.abs(middle.b[0]-middle.a[0])).toBe(10);
+    expect(plan.dimensions).toHaveLength(8);
+    expect(plan.dimensions.every(m=>m.id.startsWith("edge-"))).toBe(true);
     const svg=rectilinearPrintCells([authoredRectilinear("arrow-print", shape())])[0].svg;
     expect(svg).toContain("data-dimension=");
     expect(svg).not.toContain(">Find the area");

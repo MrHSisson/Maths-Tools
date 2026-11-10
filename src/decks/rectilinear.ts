@@ -50,9 +50,8 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
       focuses.forEach(f => { if (f?.regions?.includes(region.id)) f.helpers = [...(f.helpers ?? []), id]; });
     }
   }
-  // Keep every independent boundary label. Extra component widths support the area method,
-  // but never replace a boundary length; only aligned opposite spans are implied.
-  if (!spec.missingLength) drawing.helpers.forEach(h => { if (h.label) h.always = true; });
+  // Boundary arrows use only the outline edges. Component dimensions remain in the worked
+  // solution; they never replace an edge label or add an overall dimension frame.
   extras(q)._aspect = aspectOf(drawing);
   return q;
 }
