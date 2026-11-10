@@ -52,18 +52,18 @@ export const frames=[
   question("cut-o2","frame",15,11,7,6,{method:"subtract"}),
 ];
 export const worksheetQuestions=[
-  question("w1","T",12,8,3,5,{task:"partition",scaffold:"split"},"explain"),
-  question("w2","L",9,7,4,3,{task:"partition"}),
-  question("w3","stairs3",13,10,3,3,{task:"partition"}),
-  question("w4","cross",14,11,4,3,{task:"partition"}),
+  question("w1","T",12,8,3,5,{scaffold:"full"},"explain"),
+  question("w2","L",9,7,4,3),
+  question("w3","T",14,9,4,5,{orientation:4}),
+  question("w4","L",13,9,5,4,{orientation:4}),
   question("w5","stairs3",15,11,4,3,{scaffold:"full"}),
-  question("w6","stairs3",17,12,4,3,{orientation:1}),
+  question("w6","cross",14,12,4,3,{orientation:1}),
   question("w7","cross",15,13,4,4),
   question("w8","stairs4",20,14,4,3),
   question("w9","U",16,11,6,7,{method:"subtract",scaffold:"full"}),
-  question("w10","N",19,13,4,8,{method:"subtract"}),
   question("w11","comb",18,13,4,8,{method:"subtract"}),
   question("w12","frame",19,14,9,7,{method:"subtract"}),
+  question("w10","N",19,13,4,8,{method:"subtract"}),
 ];
 export const questionSets={partitionQuestions,areaQuestions,internalTeaching,internalPractice,oneCutout,twoCutouts,frames,worksheetQuestions};
 function header(slide:Slide,title:string):Slide {

@@ -1342,13 +1342,16 @@
        "purpose": "explain",
        "format": "open",
        "question": [
-        "Split this shape into rectangles."
+        "Find the area."
        ],
        "answer": [
-        "One valid rectangle partition; other valid partitions are accepted."
+        "$66$ cm\u00b2"
        ],
        "explanation": [
-        "One valid partition: $\\text{Rectangles cover the shape exactly once}$"
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $5$",
+        "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 6 \\times 5 = 30$",
+        "Add the areas: $36 + 30 = 66$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1364,8 +1367,7 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "split",
-        "task": "partition"
+        "scaffold": "full"
        }
       },
       {
@@ -1377,13 +1379,14 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Split this shape into rectangles."
+        "Find the area."
        ],
        "answer": [
-        "One valid rectangle partition; other valid partitions are accepted."
+        "$51$ cm\u00b2"
        ],
        "explanation": [
-        "One valid partition: $\\text{Rectangles cover the shape exactly once}$"
+        "Split it into rectangles and find each area: $A = 9 \\times 4 = 36 ,\\ B = 5 \\times 3 = 15$",
+        "Add the areas: $36 + 15 = 51$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1399,8 +1402,7 @@
         "method": "split",
         "orientation": 0,
         "reducedLabels": true,
-        "scaffold": "none",
-        "task": "partition"
+        "scaffold": "none"
        }
       },
       {
@@ -1412,13 +1414,16 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Split this shape into rectangles."
+        "Find the area."
        ],
        "answer": [
-        "One valid rectangle partition; other valid partitions are accepted."
+        "$86$ cm\u00b2"
        ],
        "explanation": [
-        "One valid partition: $\\text{Rectangles cover the shape exactly once}$"
+        "Equal sides are the same length: $5$",
+        "Equal sides are the same length: $4$",
+        "Split it into rectangles and find each area: $A = 14 \\times 4 = 56 ,\\ B = 6 \\times 5 = 30$",
+        "Add the areas: $56 + 30 = 86$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1426,16 +1431,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "stairs3",
-        "width": 13,
-        "height": 10,
-        "cutWidth": 3,
-        "cutHeight": 3,
+        "shape": "T",
+        "width": 14,
+        "height": 9,
+        "cutWidth": 4,
+        "cutHeight": 5,
         "method": "split",
-        "orientation": 0,
+        "orientation": 4,
         "reducedLabels": true,
-        "scaffold": "none",
-        "task": "partition"
+        "scaffold": "none"
        }
       },
       {
@@ -1447,13 +1451,14 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Split this shape into rectangles."
+        "Find the area."
        ],
        "answer": [
-        "One valid rectangle partition; other valid partitions are accepted."
+        "$97$ cm\u00b2"
        ],
        "explanation": [
-        "One valid partition: $\\text{Rectangles cover the shape exactly once}$"
+        "Split it into rectangles and find each area: $A = 13 \\times 5 = 65 ,\\ B = 8 \\times 4 = 32$",
+        "Add the areas: $65 + 32 = 97$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1461,16 +1466,15 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "cross",
-        "width": 14,
-        "height": 11,
-        "cutWidth": 4,
-        "cutHeight": 3,
+        "shape": "L",
+        "width": 13,
+        "height": 9,
+        "cutWidth": 5,
+        "cutHeight": 4,
         "method": "split",
-        "orientation": 0,
+        "orientation": 4,
         "reducedLabels": true,
-        "scaffold": "none",
-        "task": "partition"
+        "scaffold": "none"
        }
       },
       {
@@ -1521,12 +1525,18 @@
         "Find the area."
        ],
        "answer": [
-        "$144$ cm\u00b2"
+        "$120$ cm\u00b2"
        ],
        "explanation": [
-        "Find the internal width of rectangle B: $12 - 6 = 6$",
-        "Split it into rectangles and find each area: $A = 12 \\times 9 = 108 ,\\ B = 6 \\times 4 = 24 ,\\ C = 3 \\times 4 = 12$",
-        "Add the areas: $108 + 24 + 12 = 144$"
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $4$",
+        "Equal sides are the same length: $6$",
+        "Equal sides are the same length: $3$",
+        "Equal sides are the same length: $4$",
+        "Find the internal width of rectangle B: $3 + 6 + 3 = 12$",
+        "Split it into rectangles and find each area: $A = 6 \\times 4 = 24 ,\\ B = 12 \\times 6 = 72 ,\\ C = 6 \\times 4 = 24$",
+        "Add the areas: $24 + 72 + 24 = 120$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -1534,8 +1544,8 @@
        "status": "ready",
        "rectilinear": {
         "version": 1,
-        "shape": "stairs3",
-        "width": 17,
+        "shape": "cross",
+        "width": 14,
         "height": 12,
         "cutWidth": 4,
         "cutHeight": 3,
@@ -1674,46 +1684,6 @@
         "Find the area."
        ],
        "answer": [
-        "$183$ cm\u00b2"
-       ],
-       "explanation": [
-        "Equal sides are the same length: $8$",
-        "Equal sides are the same length: $13$",
-        "Equal sides are the same length: $8$",
-        "Find the overall width: $3 + 4 + 12 = 19$",
-        "The rectangle round the whole shape: $19 \\times 13 = 247$",
-        "The parts that are missing: $4 \\times 8 + 4 \\times 8 = 64$",
-        "Take them away: $247 - 64 = 183$"
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
-       "rectilinear": {
-        "version": 1,
-        "shape": "N",
-        "width": 19,
-        "height": 13,
-        "cutWidth": 4,
-        "cutHeight": 8,
-        "method": "subtract",
-        "orientation": 0,
-        "reducedLabels": true,
-        "scaffold": "none"
-       }
-      },
-      {
-       "version": 2,
-       "id": "rectilinear-r2-worksheet-q-11",
-       "title": "Rectilinear area",
-       "tool": "perimeter-and-area",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Find the area."
-       ],
-       "answer": [
         "$170$ cm\u00b2"
        ],
        "explanation": [
@@ -1744,7 +1714,7 @@
       },
       {
        "version": 2,
-       "id": "rectilinear-r2-worksheet-q-12",
+       "id": "rectilinear-r2-worksheet-q-11",
        "title": "Rectilinear area",
        "tool": "perimeter-and-area",
        "level": "level1",
@@ -1776,6 +1746,46 @@
         "height": 14,
         "cutWidth": 9,
         "cutHeight": 7,
+        "method": "subtract",
+        "orientation": 0,
+        "reducedLabels": true,
+        "scaffold": "none"
+       }
+      },
+      {
+       "version": 2,
+       "id": "rectilinear-r2-worksheet-q-12",
+       "title": "Rectilinear area",
+       "tool": "perimeter-and-area",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the area."
+       ],
+       "answer": [
+        "$183$ cm\u00b2"
+       ],
+       "explanation": [
+        "Equal sides are the same length: $8$",
+        "Equal sides are the same length: $13$",
+        "Equal sides are the same length: $8$",
+        "Find the overall width: $3 + 4 + 12 = 19$",
+        "The rectangle round the whole shape: $19 \\times 13 = 247$",
+        "The parts that are missing: $4 \\times 8 + 4 \\times 8 = 64$",
+        "Take them away: $247 - 64 = 183$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "rectilinear": {
+        "version": 1,
+        "shape": "N",
+        "width": 19,
+        "height": 13,
+        "cutWidth": 4,
+        "cutHeight": 8,
         "method": "subtract",
         "orientation": 0,
         "reducedLabels": true,

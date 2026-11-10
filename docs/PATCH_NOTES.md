@@ -29,6 +29,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear worksheet area progression
+
+Branch `codex/year7-rectilinear-lesson`. Updated only the authored worksheet and its pupil/key PDFs: page 1 now asks for areas of alternating T/L shapes; page 2 has two crosses and two staircases requiring internal lengths; page 3 keeps its cut-outs in U/M/O/N order, with N last. First question on each page retains its scaffold. Approved teaching slides preserved exactly.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Rectilinear worksheet area progression (Codex)”.
+
 ## 2026-11-10 — Complete rectilinear deck rebuild
 
 Branch `codex/year7-rectilinear-lesson`. Replaced the previous lesson with fresh slide/question IDs: 10 core slides plus two optional generators, visible headers and no discussion slides. Four partitions share one question sequence; the next sequence alternates unpartitioned T–L–T–L. Internal-dimension model/check pairs precede practice. Cut-outs progress through L/U, M/N and O.

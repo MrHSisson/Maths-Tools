@@ -31,14 +31,20 @@ describe("rebuilt Year 7 lesson progression",()=>{
     }
     expect(sequence(3).map(q=>q.rectilinear?.scaffold)).toEqual(["split","none","split","none"]);
   });
-  it("provides four worksheet questions per stage, with a first-item scaffold and U/N/M/O cut-outs",()=>{
+  it("provides four worksheet questions per stage, with a first-item scaffold, area questions, and the N cut-out last",()=>{
     const sheet=deck.slides[8].els.find(e=>e.kind==="worksheet");
     if(sheet?.kind!=="worksheet")throw Error("Expected the authored worksheet");
     const qs=sheet.authored!;
     expect(qs).toHaveLength(12);
-    expect(qs.map(q=>q.rectilinear?.scaffold)).toEqual(["split","none","none","none","full","none","none","none","full","none","none","none"]);
-    expect(qs.slice(0,4).every(q=>q.rectilinear?.task==="partition")).toBe(true);
-    expect(qs.slice(8).map(q=>q.rectilinear?.shape)).toEqual(["U","N","comb","frame"]);
+    expect(qs.map(q=>q.rectilinear?.scaffold)).toEqual(["full","none","none","none","full","none","none","none","full","none","none","none"]);
+    expect(qs.slice(0,4).map(q=>q.rectilinear?.shape)).toEqual(["T","L","T","L"]);
+    for(const q of qs.slice(0,4)){
+      expect(q.rectilinear?.task).not.toBe("partition");
+      expect(rectilinearQuestion(q.rectilinear!).working.some(w=>w.label?.includes("Find the internal"))).toBe(false);
+    }
+    expect(qs.slice(4,8).map(q=>q.rectilinear?.shape)).toEqual(["stairs3","cross","cross","stairs4"]);
+    expect(qs.slice(4,8).every(q=>rectilinearQuestion(q.rectilinear!).working.some(w=>w.label?.includes("Find the internal")))).toBe(true);
+    expect(qs.slice(8).map(q=>q.rectilinear?.shape)).toEqual(["U","comb","frame","N"]);
     expect(qs.slice(8).every(q=>q.rectilinear?.method==="subtract")).toBe(true);
     const all=[...Array.from({length:7},(_,i)=>sequence(i+1)).flat(),...qs];
     expect(all.every(q=>q.id.startsWith("rectilinear-r2-")&&!q.rectilinear?.missingLength)).toBe(true);

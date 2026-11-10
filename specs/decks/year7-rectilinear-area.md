@@ -27,11 +27,11 @@ Allow 0–8 minutes for partitions, 8–15 for the T/L area sequence, 15–24 fo
 
 Three A4 pupil pages, four questions per section, with a matching three-page worked key:
 
-- **A — Partition only:** T, L, staircase, cross. First T has a supplied partition to identify; the remaining three require pupils to draw partitions. No area calculations.
-- **B — Internal lengths then area:** three-step staircase, rotated staircase, cross, four-step staircase. First has a supplied partition and an internal-length calculation blank before rectangle area prompts; support fades completely for the remaining three.
-- **C — Remove cut-outs:** U, N, M, O. No L in independent cut-out practice. First U demonstrates the enclosing rectangle and shaded removed part, with whole/removed/remaining area prompts. Others are unscaffolded.
+- **A — Area of T and L shapes:** T, L, T, L. Find every area; first T has a supplied partition and rectangle-area prompts. Remaining three are unpartitioned. No internal-length arithmetic at this stage.
+- **B — Internal lengths then area:** three-step staircase, rotated cross, cross, four-step staircase (two crosses and two staircases). First has a supplied partition and an internal-length calculation blank before rectangle area prompts; support fades completely for the remaining three.
+- **C — Remove cut-outs:** U, M, O, N, with N last. No L in independent cut-out practice. First U demonstrates the enclosing rectangle and shaded removed part, with whole/removed/remaining area prompts. Others are unscaffolded.
 
-All answers are recomputed independently from the exported polygons, component rectangles and edge vectors. The key shows internal/enclosing dimension arithmetic before areas where needed. Partition answers accept alternative valid splits.
+All answers are recomputed independently from the exported polygons, component rectangles and edge vectors. The key shows internal/enclosing dimension arithmetic before areas where needed. Worked answers accept alternative valid rectangle partitions.
 
 ## Diagram and verification contract
 
