@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-10 — Rectilinear Shapes: reduced labels only omit implied lengths
+
+Branch `codex/rectilinear-reduced-labels`. Areas: `src/tools/Geometry/PerimeterArea.tsx`, its About copy and `perimeterArea/{compound,pools}.ts`, `src/tests/perimeterArea.test.ts`, registry wording, generated dashboard facts/docs and the picture reference.
+
+- Renamed the Compound Shapes tab to **Rectilinear Shapes**; existing saved option ids still work.
+- Reduced Labelling keeps staircase steps labelled when their lengths merely happen to match. Only a labelled parallel side spanning the same interval can imply an omitted boundary length. Some Missing still marks lengths requiring arithmetic with `?`.
+- Shapes without redundant lengths remain in the pool with every side labelled. Regression coverage includes the 13 cm staircase with 4 cm, 4 cm and 5 cm treads in all eight orientations, plus seeded samples across all levels and compatibility with Some Missing.
+- Validation: build, lint and all 125 test files passed (2,505 tests passed, 18 skipped); browser checks passed at phone, tablet and laptop sizes. Dashboard review set to Reviewing.
+- Deliberately not done: changing standard-shape labelling or publishing a deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Rectilinear Shapes reduced labelling (2026-11-10)”.
+
 ## 2026-11-08 — Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, "Show N − 1 is not enough"
 
 Branch `claude/focused-hopper-nndnwu`. Areas: `src/tools/TeacherTools/AdventCalendar.tsx`, `src/registry.ts` (the card's description), `src/shared/decision/` (`HistogramView.tsx`, `cpaSheet.tsx`, `cpa.ts`, `cpaSolve.ts`, `usePrintBasket.tsx`, `PrintBasket.tsx`, `DecisionShell.tsx`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.

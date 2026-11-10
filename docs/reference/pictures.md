@@ -10,6 +10,8 @@ Moved out of `CLAUDE.md` unchanged, so every session need not load it. Every rul
 
 `model.ts` holds shapes as closed polygons (outline first, then holes) and derives every edge length, perimeter, area, bounding box and rectangle split from the points; `drawing.ts` is the plain data a generator hands a picture (edges with labels and ticks, dashed helpers, right-angle marks, coloured regions, a grid, the caption); `Diagram.tsx` draws any of them at worksheet or whiteboard size and lights what a step's `Focus` names; `labels.ts` places label pills by searching candidate spots (slid along the side, pushed out, inside the shape or on the line) and scoring each against the outline, helper lines, other pills, leaders and the picture's edge (`labelPlan` in `Diagram.tsx` returns the plan; `shapeLabels.test.ts` checks it). Reference user: `src/tools/Geometry/PerimeterArea.tsx` (with `perimeterArea/`). Use the same model for any future geometry tool that labels edges.
 
+**Rectilinear Shapes — Reduced Labelling:** an unlabelled boundary side must have a labelled parallel side spanning exactly the same interval on the same outline. Neighbouring staircase steps remain labelled even when the generated lengths happen to match: their equality is not established by the drawing. Shapes with no redundant labels keep all their labels. **Some Missing** is separate and marks sides requiring addition or subtraction with `?`. <!-- ref -->
+
 ## Split worked example — the developing picture, three flavours
 
 `stepVisualRenderer` turns Worked Example into a split: ONE picture that updates in place as the steps advance.
