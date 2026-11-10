@@ -5,6 +5,14 @@
 
 import type { SpecChapter, SpecResource, SpecStatement } from "../../shared/components/SpecLanding";
 
+// ── Which generator sub-tools address which statement ───────────────────────────────────────────────────────────────────
+// A sub-tool is named by its tool (a registry id), its key in that tool and the course and kind of practice that show it (Critical Path's
+// course and practice switches). `label` is the name the tool gives it, so a test can check it still matches. `as` is whether it is part
+// of the AS course (an A-level-only sub-tool is `as: false`). The hub turns each into a link that opens the tool on that sub-tool.
+export interface SubToolRef { tool: string; sub: string; label: string; course: "as" | "a"; practice: "skills" | "exam"; as: boolean }
+const cpa = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef =>
+  ({ tool: "critical-path", sub, label, course, practice, as: course === "as" });
+
 const P = "https://pmt.physicsandmathstutor.com/download/Maths/A-level/";
 const enc = (path: string) => P + path.split("/").map(encodeURIComponent).join("/");
 const aqa = (mod: "D1" | "D2", name: string): SpecResource => ({ label: name, from: "AQA legacy", url: enc(`${mod}/Topic-Qs/AQA/${name}.pdf`) });
@@ -146,5 +154,32 @@ export const DECISION_CHECK_NOTES = {
     "Content that was core in D2 (network flow augmentation, simplex, Gantt diagrams, resource levelling) is A2 only in this spec, so an AS class should be set only the statements marked AS.",
     "The AQA D1 and D2 combined papers and topic packs are the best bank; PMT's other packs for these modules are Edexcel and are labelled that way.",
     "PMT has no AQA Discrete (current spec) cheat sheets at the address that works for the mechanics ones, so none are linked.",
+  ],
+};
+
+/** The sub-tools that address each statement (by statement ref). A sub-tool can serve more than one statement. */
+export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
+  DE1: [cpa("network", "Network from a table", "as"), cpa("table", "Table from a network", "as")],
+  // Forward pass is the earliest times only; the latest times come from Full analysis (a backward pass of its own is not built yet)
+  DE2: [cpa("forward", "Forward pass", "as"), cpa("full", "Full analysis", "as"), cpa("unknown", "Missing time", "as")],
+  DE3: [cpa("full", "Full analysis", "as"), cpa("floatPaths", "Float and critical paths", "as")],
+  DE4: [cpa("change", "Delays and changes", "as"), cpa("reason", "Explain and justify", "as"), cpa("shorten", "Which to shorten", "a"), cpa("reasonA", "Limits of the model", "a")],
+  DE5: [cpa("cascade", "Cascade/Gantt chart", "a"), cpa("histogram", "Resource histogram", "a")],
+  DE6: [cpa("level", "Resource levelling", "a")],
+};
+
+/** Sub-tools that belong to a chapter but to no single statement: exam-style questions span several, and some come from the older papers only. */
+export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[] }[]> = {
+  DE: [
+    {
+      heading: "Exam-style questions",
+      links: [
+        cpa("exAsAny", "Any AS exam question", "as", "exam"), cpa("exBuild", "Network, then a change or a claim", "as", "exam"), cpa("exClaim", "Times and Glyn's claim", "as", "exam"),
+        cpa("exChange", "Effect of a change", "as", "exam"), cpa("exClock", "Clock times and a second project", "as", "exam"),
+        cpa("exAlAny", "Any A-level exam question", "a", "exam"), cpa("exCascade", "Times and a cascade/Gantt chart", "a", "exam"), cpa("exTable", "Table, histogram and levelling", "a", "exam"),
+        cpa("exHist", "Histogram and levelling", "a", "exam"), cpa("exShorten", "Which to shorten and a limitation", "a", "exam"),
+      ],
+    },
+    { heading: "From the older papers only (not in the current specification)", links: [cpa("alloc", "Worker allocation *", "a"), cpa("exAlloc", "Levelling and worker allocation *", "a", "exam")] },
   ],
 };

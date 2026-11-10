@@ -29,7 +29,12 @@ export interface SpecStatement {
   /** the first mapping, when the check changed it */
   was?: string;
   note?: string;
+  /** the generators (sub-tools) that address this statement */
+  links?: SpecLink[];
 }
+
+/** a generator (or one sub-tool of one) that addresses a statement or a chapter; `href` opens it, `as` is whether it is part of the AS course */
+export interface SpecLink { label: string; href: string; live: boolean; as: boolean }
 
 export interface SpecResource {
   label: string;
@@ -47,6 +52,8 @@ export interface SpecChapter {
   resources: SpecResource[];
   /** the tools built (or being built) for this chapter */
   tools: SpecTool[];
+  /** generators that belong to the chapter but to no one statement (exam-style questions; the older papers only) */
+  groups?: { heading: string; links: SpecLink[] }[];
 }
 
 interface SpecLandingProps {
@@ -129,7 +136,7 @@ function ResourceLink({ r }: { r: SpecResource }) {
   );
 }
 
-function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) {
+function StatementRow({ s, planning, year }: { s: SpecStatement; planning: boolean; year: Year }) {
   const [open, setOpen] = useState(false);
   const note = planning ? [s.was ? `The first map said ${s.was}.` : "", s.note ?? ""].join(" ").trim() : "";
   return (
@@ -152,9 +159,27 @@ function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) 
             )}
           </div>
           {open && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{note}</p>}
+          <LinkRow links={s.links} label="Practise" planning={planning} year={year} />
         </div>
       </div>
     </li>
+  );
+}
+
+/** the generators for a statement or group: the AS ones always, the A-level-only ones on the A-level tab; a visitor sees the live ones */
+function LinkRow({ links, label, planning, year }: { links?: SpecLink[]; label?: string; planning: boolean; year: Year }) {
+  const shown = (links ?? []).filter(l => (planning || l.live) && (year === "a2" || l.as));
+  if (!shown.length) return null;
+  return (
+    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+      {label && <span className="mr-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</span>}
+      {shown.map(l => (
+        <a key={l.href} href={l.href}
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50">
+          {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -292,8 +317,17 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
             </div>
             <div className="mt-4"><YearTabs year={year} setYear={setYear} /></div>
             <ul className={`${card} mt-4 divide-y divide-slate-200`}>
-              {chapter.statements.filter(s => inYear(s, year)).map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
+              {chapter.statements.filter(s => inYear(s, year)).map(s => <StatementRow key={s.ref} s={s} planning={planning} year={year} />)}
             </ul>
+            {(chapter.groups ?? []).map(g => {
+              const any = g.links.some(l => (planning || l.live) && (year === "a2" || l.as));
+              return any ? (
+                <div key={g.heading} className={`${card} mt-4 px-4 py-3`}>
+                  <h2 className="font-semibold text-slate-800">{g.heading}</h2>
+                  <LinkRow links={g.links} planning={planning} year={year} />
+                </div>
+              ) : null;
+            })}
             {planning && chapter.resources.length > 0 && (
               <details className={`${card} mt-4 px-4 py-3`}>
                 <summary className="cursor-pointer font-semibold text-slate-800">Question banks ({chapter.resources.length})</summary>
