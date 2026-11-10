@@ -38,7 +38,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`
 - The Backward pass is back to what it was: every earliest start given, find the latest finishes, no Question Options of its own.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-10 — Critical Path: a Backward pass sub-tool
 
@@ -50,7 +50,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/CriticalPath.tsx`
 - Checked in headless Chromium at 1366×768: it opens from the hub link, the picture shows every earliest start with the latest-finish cells empty and End showing the minimum time, and stepping the working fills them in.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-10 — Decision Maths hub: generator sub-tools under each specification statement
 
@@ -63,7 +63,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/tools/Decision/decisionSpec.ts` 
 - All 25 links checked in headless Chromium: each opens its sub-tool.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-09 — Decision Maths: one hub, by specification code
 
@@ -75,7 +75,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/registry.ts` (`hub`), `src/compo
 - Checked in headless Chromium at 1366×768 and 390×800 (no horizontal overflow). Full suite and build pass.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-09 — Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed
 
@@ -96,7 +96,7 @@ Branch `claude/loving-bell-i2troy`. Areas: `src/shared/components/PinButton.tsx`
 Tests: the full suite (126 files) and the build pass. Checked in headless Chromium at 1366×768, 1024×768 and 390×800.
 
 Agent: Claude Code
-Notes: no planner Build Log block written this session.
+Notes: Build Log block "2026-11-10 — Saved lists, Decision Maths by specification code, Backward pass, Advent Calendar backup (Claude Code)".
 
 ## 2026-11-08 — Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, "Show N − 1 is not enough"
 
