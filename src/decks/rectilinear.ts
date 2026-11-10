@@ -56,7 +56,7 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
     drawing.caption=["Split this shape into rectangles."];
     if(q.kind === "worded")q.lines=[...drawing.caption];else q.display=drawing.caption[0];
     drawing.regions.forEach(r=>r.always=false);drawing.helpers.forEach(h=>h.always=false);
-    q.working=[{type:"mStep",label:"One valid partition:",latex:"\\text{Rectangles cover the shape exactly once}"}];
+    q.working=[{plain:"One valid rectangle partition is shown.",type:"mStep",label:"One valid partition:",latex:"\\text{Rectangles cover the shape exactly once}"}];
     focuses.splice(0,focuses.length,{regions:drawing.regions.filter(r=>r.id.startsWith("s")).map(r=>r.id)});
   }
   extras(q)._aspect = aspectOf(drawing);
