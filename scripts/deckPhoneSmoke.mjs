@@ -57,6 +57,16 @@ check((await page.getByRole("button", { name: "Start" }).count()) === 1, "a phon
 await page.getByRole("button", { name: "Start" }).click(); await page.waitForTimeout(900);
 check((await page.getByRole("button", { name: /^Edit/ }).count()) === 0, "the show has no Edit button");
 
+// the controls bar: showing as the show opens, gone a few seconds later, and a tap on the slide shows it and a second tap hides it
+const barShown = () => page.evaluate(() => Number(getComputedStyle(document.querySelector("[data-player-bar]")).opacity) > 0.5);
+check(await barShown(), "the controls bar shows as the show opens");
+await page.waitForTimeout(5500);
+check(!(await barShown()), "the controls bar fades by itself");
+await page.touchscreen.tap(150, 300); await page.waitForTimeout(500);
+check(await barShown(), "a tap on the slide shows the bar");
+await page.touchscreen.tap(150, 300); await page.waitForTimeout(500);
+check(!(await barShown()), "a second tap on the slide hides it at once");
+
 // upright: the show is turned on its side and fills the screen
 check((await page.locator("[data-turned]").count()) === 1, "an upright phone shows the slides turned on their side");
 check((await fill()) > 0.9, "upright: the slide fills the screen");

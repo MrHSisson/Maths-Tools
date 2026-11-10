@@ -173,7 +173,7 @@ function PhoneStart({ deck, backTo, onStart }: { deck: DeckDef; backTo: string; 
         <p className="mt-1 text-slate-500">{deck.slides.length} slides</p>
       </div>
       <button onClick={onStart} className="inline-flex h-14 items-center gap-2 rounded-2xl bg-blue-900 px-8 text-lg font-semibold text-white shadow-card active:bg-blue-800"><Smartphone size={22} className="rotate-90" />Start</button>
-      <p className="max-w-xs text-sm leading-snug text-slate-500">The slides show sideways. Swipe from right to left for the next slide, and from left to right to go back.</p>
+      <p className="max-w-xs text-sm leading-snug text-slate-500">The slides show sideways. Swipe from right to left for the next slide, and from left to right to go back. Tap the slide to hide or show the controls.</p>
     </div>
   );
 }
@@ -292,9 +292,24 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
   useEffect(() => {
     if (!full) return;
     let t = 0;
-    const show = () => { setNudge(true); window.clearTimeout(t); t = window.setTimeout(() => setNudge(false), 2500); };
+    let visible = true;
+    const set = (on: boolean, after: number) => { visible = on; setNudge(on); window.clearTimeout(t); if (on) t = window.setTimeout(() => { visible = false; setNudge(false); }, after); };
+    if (phone) {
+      // a phone has no mouse: the bar shows when the show opens, fades after a few seconds, and a tap on the slide shows it or, while it is showing, hides it
+      // at once (a tap on a button or anything else on the slide that responds to a tap is left to that; a swipe moves the slide and does not touch the bar)
+      set(true, 4000);
+      const tap = (e: MouseEvent) => {
+        const el = e.target as HTMLElement;
+        if (el.closest("[data-player-bar]")) { if (visible) set(true, 4000); return; }      // using the bar keeps it a while longer
+        if (el.closest("button,a,input,select,textarea,summary,[role=button],[data-no-swipe]")) return;
+        set(!visible, 4000);
+      };
+      window.addEventListener("click", tap);
+      return () => { window.clearTimeout(t); window.removeEventListener("click", tap); };
+    }
+    const show = () => set(true, 2500);
     show();
-    window.addEventListener("mousemove", show); if (!phone) window.addEventListener("touchstart", show);   // on a phone a tap shows the bar (it fires mouse events); a swipe does not
+    window.addEventListener("mousemove", show); window.addEventListener("touchstart", show);
     return () => { window.clearTimeout(t); window.removeEventListener("mousemove", show); window.removeEventListener("touchstart", show); };
   }, [full, phone]);
 
