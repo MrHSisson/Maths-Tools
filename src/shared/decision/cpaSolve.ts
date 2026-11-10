@@ -125,16 +125,6 @@ function solveBackward(p: DecisionProblem): SolveStep[] {
   const dur = Object.fromEntries(all.map((a) => [a.id, a.duration]));
   const steps: SolveStep[] = [];
   backwardPass(d, all, successorsOf(all), dur, Object.fromEntries(Object.entries(d.times.es)), {}, steps);
-  // the clock-time version: one activity's latest start, as a time of day
-  const clk = d.extra?.clock;
-  const target = clk && d.acts.find((a) => a.id === clk.latestId);
-  if (clk && target) {
-    const t = d.times, ls = t.lf[target.id] - target.duration, last = steps[steps.length - 1].cpaView!;
-    steps.push(beat(
-      `The latest start of ${target.id} is its latest finish − its duration = ${t.lf[target.id]} − ${target.duration} = ${ls} minutes after the start. Work starts at ${clockTime(clk.startMins)}, so ${clockTime(clk.startMins)} + ${ls} minutes = ${clockTime(clk.startMins + ls)}. Activity ${target.id} can be started as late as ${clockTime(clk.startMins + ls)}.`,
-      { ...last, current: target.id }, `Latest start of ${target.id}`,
-    ));
-  }
   return steps;
 }
 

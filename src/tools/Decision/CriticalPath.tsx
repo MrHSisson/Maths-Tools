@@ -103,9 +103,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (EXAM_CHAIN[sub]) return generateCpaExam(level, EXAM_CHAIN[sub], { size, setting: "context" });
   // Float and critical paths is one tab with three kinds of question; Forward pass can ask for a clock finish time
   const floatQ = sub === "floatPaths" ? pickOf(o.floatQ, "float") : "";
-  const clockQ = sub === "forward" && pickOf(o.clockQ, "minutes") === "clock";
-  const clockBack = sub === "backward" && pickOf(o.clockB, "minutes") === "clock";   // the backward pass with a time of day
-  const kind: CpaKind = clockQ ? "cpaContext" : sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
+  const kind: CpaKind = sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
   const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
@@ -113,12 +111,12 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = clockQ || clockBack ? 2 : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
   const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: size ?? (clockQ || clockBack || CHART_SUBS.has(sub) ? "medium" : undefined),
+    size: size ?? (CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
     levelRef: "cascade",
@@ -126,7 +124,6 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     reasonCase,
     pathsAsk: floatQ === "first" ? "first" : "paths",
     clockSecond: false,
-    clockBack,
     skip: sub === "table" && lv === 2,
     workers,
     changeCase: lv === 1 ? "delay" : lv === 2 ? "shorten" : Math.random() < 0.5 ? "range" : "remove",
@@ -677,30 +674,6 @@ export default function App() {
               { value: "float", label: "Float", sub: "Of each activity" },
               { value: "paths", label: "Critical paths", sub: "Every one" },
               { value: "first", label: "Start first", sub: "Which activity" },
-            ],
-          },
-          {
-            key: "clockQ",
-            label: "Finish time as",
-            info: "Whether the finish is given as the minutes taken or as a clock time (a start and a finish).",
-            forSubTools: ["forward"],
-            multi: true,
-            defaultFor: () => "minutes",
-            choices: [
-              { value: "minutes", label: "Minutes", sub: "Time taken" },
-              { value: "clock", label: "Clock time", sub: "Start and finish" },
-            ],
-          },
-          {
-            key: "clockB",
-            label: "Answer Format",
-            info: "Whether the latest times stay as minutes after the start, or one activity's latest start is also asked for as a time of day (work starts at a clock time).",
-            forSubTools: ["backward"],
-            multi: true,
-            defaultFor: () => "minutes",
-            choices: [
-              { value: "minutes", label: "Minutes", sub: "Latest finishes only" },
-              { value: "clock", label: "Clock time", sub: "Also one latest start" },
             ],
           },
           {
