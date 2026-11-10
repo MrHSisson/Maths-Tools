@@ -529,7 +529,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
+     "s": "**For:** a shape picture where every length is easy to read and nothing sits on a line or on another label. **How it works:** each label tries a grid of spots beside its side (slid along it, pushed out, inside the shape or on the line when there is no room), scores each against the outline, the dashed helper lines, the other labels and the picture's edge, and takes the clearest; a thin dashed line joins it to its side. **Reduced Labelling** (a switch) leaves out only the labels the drawing already implies (a side equal to the one opposite it, a rectangle's other two sides), so nothing has to be worked out. Rectilinear staircase steps stay labelled even when their lengths happen to match; it pairs with Some Missing, whose ? sides are always found by adding or taking away. **Where:** Perimeter & Area."
     }
    ]
   },
@@ -2859,7 +2859,7 @@
    ]
   },
   "perimeter-and-area": {
-   "purpose": "Find the perimeter and area of shapes, from counting squares to compound shapes and algebra.",
+   "purpose": "Find the perimeter and area of shapes, from counting squares to rectilinear shapes and algebra.",
    "subTools": [
     {
      "name": "Counting on a Grid",
@@ -2880,7 +2880,7 @@
      ]
     },
     {
-     "name": "Compound Shapes",
+     "name": "Rectilinear Shapes",
      "purpose": "Find the perimeter and area of shapes made from rectangles.",
      "levels": [
       "L, T and staircase shapes with every side given",

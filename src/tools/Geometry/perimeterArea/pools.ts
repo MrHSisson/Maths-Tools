@@ -19,7 +19,7 @@ export const SHAPES_3: ToolMultiSelect = {
   options: [opt("rectangle", "Rectangle", true), opt("triangle", "Right-Angled Triangle", true), opt("isoscelesTriangle", "Isosceles Triangle", true), opt("scaleneTriangle", "Scalene Triangle", true), opt("parallelogram", "Parallelogram", true), opt("trapezium", "Trapezium", false)],
 };
 
-// Compound Shapes
+// Rectilinear Shapes
 const sides = (d: "all" | "missing"): ToolMultiSelect => ({
   key: "sidesGiven", tab: "questions", label: "Sides Given", exclusive: true,
   options: [opt("all", "All Sides", d === "all"), opt("missing", "Some Missing", d === "missing")],

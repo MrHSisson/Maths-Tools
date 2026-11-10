@@ -1,7 +1,9 @@
 // Perimeter & Area: every picture, answer and label re-derived independently from the question's own points.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { __test } from "../tools/Geometry/PerimeterArea";
-import { cutRects, splitRects, rectArea, boxOf, type Pt } from "../shared/shapes/model";
+import { cutRects, splitRects, rectArea, boxOf, dihedral, type Pt } from "../shared/shapes/model";
+import * as rectilinear from "../tools/Geometry/perimeterArea/rectilinear";
+import { withSeededRandom } from "./seededRandom";
 import { buildRect, type RectKind } from "../tools/Geometry/perimeterArea/rectilinear";
 import type { Drawing } from "../shared/shapes/drawing";
 import { aspectOf } from "../shared/shapes/Diagram";
@@ -145,7 +147,7 @@ describe("Standard Shapes, Level 3: isosceles and scalene triangles", () => {
   });
 });
 
-describe("Compound Shapes", () => {
+describe("Rectilinear Shapes", () => {
   it("answers match the shape, in every option", () => {
     for (const level of LEVELS) for (let i = 0; i < N; i++) {
       const q = gen("compound", level, { perimeter: true, area: true, boundingRectangle: i % 2 === 0, addSides: i % 2 === 1, subtract: i % 3 === 0, split: i % 3 !== 0, mixed: level === "level3" && i % 2 === 0, same: !(level === "level3" && i % 2 === 0) });
@@ -196,51 +198,60 @@ describe("Compound Shapes", () => {
     }
     expect(seen).toBeGreaterThan(50);
   });
-  it("Reduced Labelling leaves out only twins: the same length as a labelled side that is opposite it or a step away on a staircase, with no ticks and no sums", () => {
-    for (const level of ["level1", "level2", "level3"] as L[]) for (let i = 0; i < N; i++) {
+  it("Reduced Labelling only omits geometrically implied lengths, and retains shapes with no redundant labels", () => withSeededRandom(20261110, () => {
+    let hiddenCount = 0, fullyLabelledCount = 0;
+    for (const level of LEVELS) for (let i = 0; i < N; i++) {
       const q = gen("compound", level, { all: true, missing: false }, { reducedLabels: true });
-      const d = q._diagram, hidden = d.edges.map((e, k) => ({ e, k })).filter((x) => x.e.kind === "hidden");
+      const d = q._diagram, hidden = d.edges.filter((e) => e.kind === "hidden");
+      hiddenCount += hidden.length;
+      if (!hidden.length) fullyLabelledCount++;
       expect(d.edges.some((e) => e.kind === "missing")).toBe(false);
       expect(d.edges.some((e) => e.ticks)).toBe(false);
-      expect(hidden.length).toBeGreaterThanOrEqual(1);
-      const where = d.polys.flatMap((p, pi) => p.map((_, k) => ({ pi, k, n: p.length })));
-      const start = d.polys.map((_, pi) => where.findIndex((w) => w.pi === pi));
-      const at = (k: number, step: number) => d.edges[start[where[k].pi] + ((where[k].k + step + where[k].n) % where[k].n)];
-      const dir = (e: (typeof d.edges)[number]) => `${Math.sign(e.b[0] - e.a[0])},${Math.sign(e.b[1] - e.a[1])}`;
-      const horiz = (e: (typeof d.edges)[number]) => e.a[1] === e.b[1];
-      const lo = (e: (typeof d.edges)[number]) => (horiz(e) ? Math.min(e.a[0], e.b[0]) : Math.min(e.a[1], e.b[1]));
-      hidden.forEach(({ e, k }) => {
+      const polygonOf = d.polys.flatMap((p, pi) => p.map(() => pi));
+      hidden.forEach((e) => {
         expect(e.label).toBe("");
         expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6);
-        const twin = d.edges.some((f, j) => {
-          if (j === k || f.kind !== "plain" || where[j].pi !== where[k].pi || horiz(f) !== horiz(e) || Math.abs(len(f.a, f.b) - len(e.a, e.b)) > 1e-9) return false;
-          if (lo(f) === lo(e)) return true;                                   // directly opposite: the same stretch
-          const ahead = (where[k].k + 2) % where[k].n === where[j].k, behind = (where[j].k + 2) % where[k].n === where[k].k;
-          if (!ahead && !behind) return false;
-          const [first, firstK, second, secondK] = ahead ? [e, k, f, j] : [f, j, e, k];
-          return dir(at(firstK, 1)) === dir(at(firstK, -1)) || dir(at(firstK, 1)) === dir(at(secondK, 1)) ? (void first, void second, true) : false;
-        });
-        expect(twin, "a labelled side directly opposite, or a staircase step away, of the same length").toBe(true);
+        const k = d.edges.indexOf(e), horizontal = e.a[1] === e.b[1];
+        const axis = horizontal ? 0 : 1;
+        const twin = d.edges.some((f, j) => f.kind === "plain" && polygonOf[k] === polygonOf[j]
+          && horizontal === (f.a[1] === f.b[1])
+          && Math.min(e.a[axis], e.b[axis]) === Math.min(f.a[axis], f.b[axis])
+          && Math.max(e.a[axis], e.b[axis]) === Math.max(f.a[axis], f.b[axis]));
+        expect(twin, "each unlabelled side has a labelled side spanning the same interval").toBe(true);
       });
       expect(d.edges.filter((e) => e.kind === "plain").length).toBe(d.edges.length - hidden.length);
       expect(q.working.filter((w) => w.label === "Equal sides are the same length:").length).toBe(hidden.length);
     }
+    expect(hiddenCount).toBeGreaterThan(0);
+    expect(fullyLabelledCount).toBeGreaterThan(0);
+  }));
+  it("keeps both 4 cm staircase treads labelled instead of requiring 13 - 4 - 5, in every orientation", () => {
+    const staircase: Pt[][] = [[[13, 11], [0, 11], [0, 7], [4, 7], [4, 4], [8, 4], [8, 0], [13, 0]]];
+    const build = vi.spyOn(rectilinear, "buildRect");
+    try {
+      for (let orientation = 0; orientation < 8; orientation++) {
+        build.mockReturnValue(dihedral(staircase, orientation));
+        const q = gen("compound", "level1", { area: true, perimeter: false, all: true, missing: false }, { reducedLabels: true });
+        expect(q.answer).toBe("99");
+        expect(q._diagram.edges.every((e) => e.kind === "plain" && e.label)).toBe(true);
+        expect(q.working.some((w) => w.label === "Equal sides are the same length:")).toBe(false);
+      }
+    } finally { build.mockRestore(); }
   });
-  it("Reduced Labelling pairs with Some Missing: twins are implied, the ? sides are sums or differences, and the working finds the twins first", () => {
+  it("Reduced Labelling pairs with Some Missing: implied sides need no calculation, ? sides need sums or differences", () => withSeededRandom(20261111, () => {
     let both = 0;
     for (const level of ["level2", "level3"] as L[]) for (let i = 0; i < N * 2; i++) {
       const q = gen("compound", level, { missing: true, all: false }, { reducedLabels: true });
       const d = q._diagram, lens = d.edges.map((e) => len(e.a, e.b));
       const hidden = d.edges.filter((e) => e.kind === "hidden"), missing = d.edges.filter((e) => e.kind === "missing");
-      expect(hidden.length).toBeGreaterThanOrEqual(1);
       if (d.polys.length === 1) expect(missing.length).toBeGreaterThanOrEqual(1);
       missing.forEach((e) => { expect(lens.filter((l) => Math.abs(l - len(e.a, e.b)) < 1e-9).length).toBe(1); expect(toCm(e.value!)).toBeCloseTo(len(e.a, e.b), 6); });
       const labels = q.working.map((w) => w.label);
       const lastTwin = labels.lastIndexOf("Equal sides are the same length:"), firstMissing = labels.findIndex((l) => /^The sides along/.test(l ?? ""));
-      if (missing.length) { expect(lastTwin).toBeGreaterThanOrEqual(0); expect(lastTwin).toBeLessThan(firstMissing); both++; }
+      if (hidden.length && missing.length) { expect(lastTwin).toBeGreaterThanOrEqual(0); expect(lastTwin).toBeLessThan(firstMissing); both++; }
     }
     expect(both).toBeGreaterThan(20);
-  });
+  }));
   it("All Sides on a standard shape labels every side, as long as it says and with no equal-side ticks; Reduced Labelling keeps the exam-style few", () => {
     for (const level of ["level1", "level2"] as L[]) for (const all of [true, false]) for (let i = 0; i < N; i++) {
       const q = gen("shapes", level, {}, { reducedLabels: !all });
