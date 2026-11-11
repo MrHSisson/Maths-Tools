@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-11 — Decks move from Vercel Blob to Neon Postgres
+
+Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `api/decks.ts`, `api/_db.ts`, `api/_deckStore.ts`, `api/migrate-decks.ts` (temporary), `vercel.json`, `src/tests/testDb.ts` and the deck API tests.
+
+- **Why:** a day of deck editing used about 1,470 Blob operations (each read is two, each save about eight), and the decks need a proper home before accounts. Postgres is queried, not billed per file operation.
+- **What changed:** `/api/decks` keeps the same requests and answers, so the editor, `npm run deck` and the login (the shared `x-admin-key`) are untouched. Storage is four tables in schema `maths` (`decks`, `deck_versions`, `published_decks`, `questions`), created on first use. A save is one read and one conditional write (a `version` column), and the list of decks is a query on summary columns, so there is no index file to rewrite.
+- **Public reads are cached:** the published list and a published deck carry `s-maxage=60`, so pupils browsing published decks barely touch the database; a newly published or unpublished deck can take up to a minute to appear or go.
+- **Move:** `POST /api/migrate-decks` (admin key; `{dryRun: true}` first; `{ids: [...]}` to move in pieces) copies decks, history, published copies and questions from Blob. It never deletes from Blob and never overwrites a newer database copy, so it can be run again before and after the switch. Delete the file and `vercel.json`'s function entry once confirmed.
+- **Tests** now run the real SQL against an in-memory Postgres (PGlite, a dev dependency). Behaviour that differs from Blob and is covered: JSON key order is not kept, so "did this save change anything?" compares canonically.
+- **Not done:** the dashboard notes (`/api/tool-notes`) and the Advent Calendar still use Blob; accounts and the password in the source are untouched (parked).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
 ## 2026-11-11 — Decks are no longer bundled into the app; the rectilinear foundations draft is deleted
 
 Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `src/decks/index.ts`, `store.ts`, `Editor.tsx`, `useSyncedDecks.ts`, `DecksTab.tsx`, `admin/DecksSection.tsx`, `shared/ToolShellCore.tsx`, `src/tests/snapshotDecks.ts`.

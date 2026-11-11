@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/migrate-decks.ts": { "maxDuration": 60 }
+  },
   "rewrites": [
     {
       "source": "/(.*)",

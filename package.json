@@ -28,6 +28,7 @@
     "smoke:rectilinear-deck": "node scripts/rectilinearDeckSmoke.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
     "@vercel/blob": "^2.8.2",
     "katex": "^0.16.47",
     "lucide-react": "^0.263.1",
@@ -38,6 +39,7 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@types/node": "^26.6.5",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",

@@ -1,23 +1,12 @@
-// The shared version history: a snapshot of the deck as it stood before a burst of edits, at most one per gap, newest 40 kept.
+// The shared version history (kept in Postgres): a snapshot of the deck as it stood before a burst of edits, at most one per gap, newest 40 kept.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_SNAPSHOTS, SNAPSHOT_GAP_MS, emptyHistory, historyWith, shouldSnapshot, snapshotKey, validSnapshotKey } from "../../api/_decks";
 
-const store = new Map<string, { body: string; etag: number }>();
-class Missing extends Error {}
-class Precondition extends Error {}
-vi.mock("@vercel/blob", () => ({
-  BlobNotFoundError: Missing, BlobPreconditionFailedError: Precondition,
-  head: async (p: string) => { const e = store.get(p); if (!e) throw new Missing(); return { etag: `"${e.etag}"` }; },
-  get: async (p: string) => { const e = store.get(p); return e ? { statusCode: 200, stream: new Response(e.body).body } : null; },
-  put: async (p: string, body: string, opts: { allowOverwrite?: boolean; ifMatch?: string }) => {
-    const e = store.get(p);
-    if (e && !opts.allowOverwrite) throw new Error("already exists");
-    if (e && opts.ifMatch && opts.ifMatch !== `"${e.etag}"`) throw new Precondition();
-    store.set(p, { body, etag: (e?.etag ?? 0) + 1 });
-    return {};
-  },
-  del: async (p: string) => { store.delete(p); },
-}));
+import { setDb } from "../../api/_db";
+import { makeTestDb } from "./testDb";
+
+const db = await makeTestDb();
+setDb(db);
 process.env.ADMIN_KEY = "k";
 const { POST, GET } = await import("../../api/decks");
 
@@ -48,7 +37,7 @@ describe("pure history rules", () => {
 });
 
 describe("the live copy keeps a rollback", () => {
-  beforeEach(() => { store.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-11-05T10:00:00.000Z")); });
+  beforeEach(async () => { await db.reset(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-11-05T10:00:00.000Z")); });
   afterEach(() => vi.useRealTimers());
 
   it("the first save has nothing before it; the next one keeps what was there", async () => {
