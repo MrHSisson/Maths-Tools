@@ -8,60 +8,60 @@
 
 Systematic listing only: label two lists, start with each number itself, list positive multiples in order, extend until a match appears, circle it in both lists, then state the LCM. Times-table grids are optional support; repeated addition provides a route when recall is insecure. No starter slide, prime factorisation, factor trees, formula or generator. All content uses existing editable slide elements and slide-owned authored questions.
 
-The lesson sequence, question ladder and misconception targets were proposed and approved in chat on 2026-11-11. Harry confirmed mixed times-table confidence and optional table grids. He clarified that the full lesson is 60 minutes and these 45 minutes already exclude his TT starter.
+The lesson sequence, question ladder and misconception targets were proposed and approved in chat on 2026-11-11. Harry confirmed mixed times-table confidence and optional table grids. He clarified that the full lesson is 60 minutes and these 45 minutes already exclude his TT starter. On review, Harry corrected the pitch: this group can list multiples of arbitrary numbers through repeated addition; insecure times-table recall does not justify single-digit examples. Raise listing to numbers such as 15, 18, 21 and 30 and LCM to pairs such as 12 and 16, 15 and 20, 21 and 14, preserving the agreed method and structure.
 
 ## Teaching sequence
 
 | Minutes | Slides | Activity |
 |---|---|---|
-| 0–4 | 1–3 | Topic, short definition, then first five multiples of 4 revealed through repeated addition. |
-| 4–10 | 4 | Structure-only board: model the 2-list, build the 5-list together, pupils attempt the 3-list; six entries per list. |
+| 0–4 | 1–3 | Topic, short definition, then first five multiples of 15 revealed through repeated addition. |
+| 4–10 | 4 | Structure-only board: model the 15-list, build the 21-list together, pupils attempt the 30-list; five entries per list. |
 | 10–16 | 5 | Six whiteboard questions: partial lists → prompted repeated addition → independent listing. |
 | 16–20 | 6 | Four independent listing questions in books; check before moving on. |
-| 20–25 | 7–8 | Define common multiple. List multiples of 3 and 4; circle 12 in both lists. Extend to show 24 is another common multiple. |
-| 25–29 | 9–10 | Define LCM. Model 4 and 6: two terms each initially have no match; continue the 4-list to 12, then circle both 12s. |
-| 29–35 | 11 | Five guided LCM questions with fading scaffolds; one nested pair. |
+| 20–25 | 7–8 | Define common multiple. List multiples of 12 and 18; circle 36 in both lists. Extend to show 72 is another common multiple. |
+| 25–29 | 9–10 | Define LCM. Model 12 and 16: two terms each initially have no match; continue both lists to 48, then circle both 48s. |
+| 29–35 | 11 | Five guided LCM questions with fading scaffolds; all are selected two-digit pairs. A nested pair appears in book work. |
 | 35–42 | 12 | Twelve book questions in a title-free 3 × 4 grid. Work in order; not all pupils finish. Check answers in the final two minutes. |
 | 42–45 | 13 | Three-part exit ticket: listing, shared-number recognition, independent LCM. |
 
 ## Question ladder and checks
 
-All sequences start with the given positive number, include every multiple, and increase by a constant amount. Examples stay within familiar tables; the longest search is eight entries. Intentional answer repetition reinforces the method. Two-list worked answers circle both copies of the first match; the book-work and independent exit LCM answers are compact, with both lists retained in their authored working.
+All sequences start with the given positive number, include every multiple, and increase by a constant amount. Listing uses two-digit starting numbers from 12 to 42; every standalone task asks for the first five multiples. Pupils may repeatedly add the starting number instead of relying on fluent multiplication recall. LCM pairs are selected to keep searches short (at most four entries per list). Intentional answer repetition reinforces the method. Two-list worked answers circle both copies of the first match; the book-work and independent exit LCM answers are compact, with both lists retained in their authored working.
 
-| Set | Rung | Answer | Trap / tempting wrong response |
+| Set | Rung | Answer | Trap / teaching focus |
 |---|---|---|---|
-| Listing 1 | Complete two missing entries, multiples of 2 | 2, 4, 6, 8, 10 | Adding 1: 7, 8 for the missing terms. |
-| Listing 2 | Same scaffold, multiples of 5 | 5, 10, 15, 20, 25 | Losing the constant step. |
-| Listing 3 | Three missing entries, multiples of 10 | 10, 20, 30, 40, 50 | Counting individual numbers instead of tens. |
-| Listing 4 | Repeated-addition prompt, multiples of 3 | 3, 6, 9, 12, 15 | Skipping 9: 3, 6, 12, 15, 18. |
-| Listing 5 | No list starter, multiples of 4 | 4, 8, 12, 16, 20 | Starting at 1 rather than 4. |
-| Listing 6 | Same task, multiples of 6 | 6, 12, 18, 24, 30 | Skipping a multiple. |
-| Check 1 | Independent, multiples of 4 | 4, 8, 12, 16, 20 | Check the first entry and constant step. |
-| Check 2 | Independent, multiples of 6 | 6, 12, 18, 24, 30 | Check the first entry and constant step. |
-| Check 3 | Independent, multiples of 7 | 7, 14, 21, 28, 35 | Grid support available. |
-| Check 4 | Independent, multiples of 8 | 8, 16, 24, 32, 40 | Grid support available. |
-| Guided LCM 1 | Complete supplied lists, 2 and 3 | 6 | Circling a number found in only one list: 4. |
-| Guided LCM 2 | Extend list starters, 2 and 5 | 10 | Stop after equal-length lists: 2, 4 and 5, 10 have no match. |
-| Guided LCM 3 | Write both lists, 3 and 5 | 15 | A later shared number, 30, is common but not lowest. |
-| Guided LCM 4 | Nested pair, 3 and 6 | 6 | Needlessly multiplying the numbers: 18. |
-| Guided LCM 5 | Independent, 4 and 5 | 20 | Keeping lists ordered and scanning both. |
-| Book 1 | First four multiples of 2 | 2, 4, 6, 8 | Start with the number. |
-| Book 2 | First four multiples of 5 | 5, 10, 15, 20 | Constant step. |
-| Book 3 | First four multiples of 3 | 3, 6, 9, 12 | No missing term. |
-| Book 4 | First four multiples of 4 | 4, 8, 12, 16 | Independent listing. |
-| Book 5 | Supported LCM, 2 and 4 | 4 | Nested pair; 8 is common but not lowest. |
-| Book 6 | Supported LCM, 3 and 4 | 12 | Extend both lists. |
-| Book 7 | Supported LCM, 4 and 6 | 12 | 24 is common but not lowest. |
-| Book 8 | Supported LCM, 5 and 10 | 10 | Larger given number can be the LCM. |
-| Book 9 | Independent LCM, 3 and 8 | 24 | Continue beyond five terms where needed. |
-| Book 10 | Independent LCM, 4 and 10 | 20 | Extend one list farther than the other. |
-| Book 11 | Independent LCM, 6 and 8 | 24 | 48 is common but not lowest. |
-| Book 12 | Independent LCM, 6 and 9 | 18 | 54 is common but not lowest. |
-| Exit 1 | First four multiples of 6 | 6, 12, 18, 24 | Check listing independently. |
-| Exit 2 | Circle a shared number in supplied 4- and 10-lists | 20 in both lists | Circling 10, which appears in only one list. |
-| Exit 3 | Independently list for 4 and 8 | 8 | 32 from multiplying the givens is not the LCM. |
+| list-1 | Complete a partial list: 15 | 15, 30, 45, 60, 75 | Keep a constant step; include every multiple. |
+| list-2 | Complete a partial list: 18 | 18, 36, 54, 72, 90 | Keep a constant step; include every multiple. |
+| list-3 | Complete a partial list: 21 | 21, 42, 63, 84, 105 | Keep a constant step; include every multiple. |
+| list-4 | Repeated-addition prompt: 30 | 30, 60, 90, 120, 150 | Keep a constant step; include every multiple. |
+| list-5 | Independent first five multiples: 24 | 24, 48, 72, 96, 120 | Keep a constant step; include every multiple. |
+| list-6 | Independent first five multiples: 35 | 35, 70, 105, 140, 175 | Keep a constant step; include every multiple. |
+| check-1 | Independent first five multiples: 16 | 16, 32, 48, 64, 80 | Repeated addition is available; no need for fluent product recall. |
+| check-2 | Independent first five multiples: 25 | 25, 50, 75, 100, 125 | Repeated addition is available; no need for fluent product recall. |
+| check-3 | Independent first five multiples: 32 | 32, 64, 96, 128, 160 | Repeated addition is available; no need for fluent product recall. |
+| check-4 | Independent first five multiples: 42 | 42, 84, 126, 168, 210 | Repeated addition is available; no need for fluent product recall. |
+| lcm-1 | Supported two-list LCM: 12 and 18 | 36 | Continue until the first shared number appears; circle it in both. |
+| lcm-2 | Supported two-list LCM: 12 and 16 | 48 | Continue until the first shared number appears; circle it in both. |
+| lcm-3 | Independent two-list LCM: 15 and 20 | 60 | Continue until the first shared number appears; circle it in both. |
+| lcm-4 | Independent two-list LCM: 21 and 14 | 42 | Continue until the first shared number appears; circle it in both. |
+| lcm-5 | Independent two-list LCM: 18 and 24 | 72 | Continue until the first shared number appears; circle it in both. |
+| book-1 | First five multiples: First 5 multiples of 12. | 12, 24, 36, 48, 60 | Start with the number itself; keep the same step. |
+| book-2 | First five multiples: First 5 multiples of 18. | 18, 36, 54, 72, 90 | Start with the number itself; keep the same step. |
+| book-3 | First five multiples: First 5 multiples of 21. | 21, 42, 63, 84, 105 | Start with the number itself; keep the same step. |
+| book-4 | First five multiples: First 5 multiples of 30. | 30, 60, 90, 120, 150 | Start with the number itself; keep the same step. |
+| book-5 | Supported LCM: LCM of 12 and 18. | 36 | Show both ordered lists and choose the smallest match. |
+| book-6 | Supported LCM: LCM of 12 and 16. | 48 | Show both ordered lists and choose the smallest match. |
+| book-7 | Supported LCM: LCM of 15 and 20. | 60 | Show both ordered lists and choose the smallest match. |
+| book-8 | Supported LCM: LCM of 15 and 30. | 30 | The larger number is already a multiple of the smaller. |
+| book-9 | Independent LCM: LCM of 14 and 21. | 42 | Show both ordered lists and choose the smallest match. |
+| book-10 | Independent LCM: LCM of 16 and 24. | 48 | Show both ordered lists and choose the smallest match. |
+| book-11 | Independent LCM: LCM of 18 and 24. | 72 | Show both ordered lists and choose the smallest match. |
+| book-12 | Independent LCM: LCM of 20 and 30. | 60 | Show both ordered lists and choose the smallest match. |
+| exit-1 | Listing: First 5 multiples of 28. | 28, 56, 84, 112, 140 | Check independently with two-digit numbers. |
+| exit-2 | Recognise a common multiple: 18 and 30 | 90 in both lists | Check independently with two-digit numbers. |
+| exit-3 | Independent LCM: Find the LCM of 18 and 27. | 54 | Check independently with two-digit numbers. |
 
-**Stretch within book-work time:** extend question 12 to the next common multiple, 36; explain why it is not the lowest.
+**Stretch within book-work time:** extend question 12 to the next common multiple, 120; explain why it is not the lowest.
 
 ## Verification and delivery
 
