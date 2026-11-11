@@ -2,7 +2,7 @@ import { createElement } from "react";
 import ActivityNodeView from "./representations/ActivityNodeView";
 import GanttView from "./representations/GanttView";
 import HistogramView from "./representations/HistogramView";
-import { cascadeSequence, criticalActivities, fullGraph, type CpaActivity, type HistogramData } from "./cpa";
+import { cascadeSequence, criticalActivities, fullGraph, layoutIssues, type CpaLayout, type CpaActivity, type CpaViewState, type HistogramData } from "./cpa";
 import { solveCpa } from "./cpaSolve";
 import type { DecisionProblem } from "./types";
 import type { CpaSheetFigure, CpaSheetInput } from "./printCpa";
@@ -12,10 +12,79 @@ import type { CpaSheetFigure, CpaSheetInput } from "./printCpa";
 // The tool hands `buildCpaSheet` to the shell (`config.questionSheet`); the shell prints what it returns.
 
 /** which sub-tools have a sheet */
-export const CPA_SHEET_TABS = ["histogram", "level"];
+export const CPA_SHEET_TABS = ["network", "forward", "backward", "full", "histogram", "level"];
+
+// ── The working sheets: draw the network, forward pass, backward pass, full analysis ──────────────────────────────────────────────────────
+// One A4 portrait page each, laid out for the student to write on. The network is the whole figure: drawn as large as the page allows, and
+// turned a quarter turn when that makes it bigger (the long side of the page then carries the width of the network). The header and the
+// write-in lines stay upright. Layout maths here mirrors the CSS in printCpa.ts (190mm wide, 276mm high, 10mm margins).
+
+const PAGE_W = 190, PAGE_H = 276;
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const WORK_TITLE: Record<string, string> = { cpaNetwork: "Drawing the network", cpaForward: "Forward pass", cpaBackward: "Backward pass", cpaFull: "Full analysis" };
+
+/** The same layout with every box grown about its centre (the gaps between boxes take it up), so the three cells of a box are big enough to write in by hand.
+ *  The largest growth that leaves no box touching another or an arrow passing through one is used. */
+function enlargedLayout(l: CpaLayout): CpaLayout {
+  for (const k of [1.3, 1.2, 1.1]) {
+    const boxes = Object.fromEntries(Object.entries(l.boxes).map(([id, b]) => [id, { ...b, x: b.x - (b.w * (k - 1)) / 2, y: b.y - (b.h * (k - 1)) / 2, w: b.w * k, h: b.h * k }]));
+    const edges = l.edges.map((e) => {
+      const u = l.boxes[e.from], v = l.boxes[e.to];
+      const pts = e.pts.map((pt, i) => (i === 0 ? [pt[0] + (u.w * (k - 1)) / 2, pt[1]] : i === e.pts.length - 1 ? [pt[0] - (v.w * (k - 1)) / 2, pt[1]] : [pt[0], pt[1]]) as [number, number]);
+      return { ...e, pts };
+    });
+    const grown = { ...l, boxes, edges };
+    if (layoutIssues(grown).length === 0) return grown;
+  }
+  return l;
+}
+
+/** the precedence table laid across the page (one column per activity), the exam format */
+function precedenceAcross(d: NonNullable<DecisionProblem["cpa"]>): string {
+  const cells = (f: (a: CpaActivity) => string, cls = "") => d.acts.map((a) => `<td class="${cls}">${f(a)}</td>`).join("");
+  return `<table class="prec"><tr><th>Activity</th>${cells((a) => esc(a.id))}</tr>`
+    + `<tr><th>Duration (${esc(d.unit)})</th>${cells((a) => String(a.duration), "n")}</tr>`
+    + `<tr><th>Immediate predecessors</th>${cells((a) => (a.preds.length ? esc(a.preds.join(", ")) : "&ndash;"))}</tr></table>`;
+}
+
+async function buildWorkSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
+  const d = p.cpa;
+  if (!d || !WORK_TITLE[d.kind]) return null;
+  const all = fullGraph(d.acts);
+  const T = d.times.projectTime;
+  const crit = criticalActivities(d.acts);
+  const arrows = [...new Set(d.criticalPaths.flatMap((path) => path.slice(1).map((id, i) => `${path[i]}→${id}`)))];
+  const everyEs = Object.fromEntries(all.map((a) => [a.id, d.times.es[a.id]]));
+  const everyLf = Object.fromEntries(all.map((a) => [a.id, d.times.lf[a.id]]));
+  // what the question gives (the same as the screen), or, on the answer sheet, what the answer fills in
+  let view: CpaViewState;
+  if (answers) view = d.kind === "cpaNetwork" ? {} : d.kind === "cpaForward" ? { es: everyEs } : d.kind === "cpaBackward" ? { es: everyEs, lf: everyLf } : { es: everyEs, lf: everyLf, critical: crit, criticalArrows: arrows };
+  else view = d.kind === "cpaBackward" ? { es: everyEs, lf: { End: T } } : { es: { Start: 0 } };
+  const drawing = d.kind === "cpaNetwork" && !answers;
+  const fill = answers ? undefined
+    : d.kind === "cpaForward" ? [`Minimum completion time (${d.unit})`]
+      : d.kind === "cpaFull" ? ["Critical activities", d.criticalPaths.length > 1 ? "Critical paths" : "Critical path", `Minimum completion time (${d.unit})`]
+        : undefined;
+  // a drawing space has a table over it; the page left for a figure is what the header and write-in lines leave
+  const promptMm = Math.ceil(p.prompt.length / 100) * 5 + 2;
+  const availH = PAGE_H - 16 - promptMm - 10 - (fill?.length ?? 0) * 8.5 - (answers ? 14 : 0);
+  const layout = enlargedLayout(d.layout);
+  const { width: lw, height: lh } = layout;
+  const up = Math.min(PAGE_W / lw, availH / lh), turned = Math.min(availH / lw, PAGE_W / lh);
+  const rotate = drawing || turned > up * 1.03;
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const svg = drawing ? "" : renderToStaticMarkup(createElement(ActivityNodeView, { acts: d.acts as CpaActivity[], layout, view }));
+  const turn = rotate ? " (turn the page a quarter turn clockwise)" : "";
+  const fig: CpaSheetFigure = drawing
+    ? { caption: `Draw the network in the space below the table${turn}`, svg: `<div class="drawin">${precedenceAcross(d)}<div class="space"></div></div>`, kind: "draw", rotate }
+    : { caption: answers && d.kind === "cpaNetwork" ? "The activity network" : `The activity network: each box is the activity, then earliest start | duration | latest finish${turn}`, svg, kind: "work", rotate };
+  const level = p.level ? ` · Level ${p.level}` : "";
+  return { title: "Critical Path Analysis", subtitle: `${WORK_TITLE[d.kind]}${level}`, prompt: p.prompt, figures: [fig], work: true, ...(fill ? { fill } : {}), answerSheet: answers, ...(answers ? { answer: [p.answer.text] } : {}) };
+}
 
 async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
   const d = p.cpa;
+  if (d && WORK_TITLE[d.kind]) return buildWorkSheetInput(p, answers);
   if (!d || (d.kind !== "cpaHistogram" && d.kind !== "cpaLevel")) return null;
   const hist = d.extra?.histogram, lv = d.extra?.level, cut = d.extra?.cut;
   if (!hist) return null;

@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-11 — Critical Path: question sheets for Network from a table, Forward pass, Backward pass and Full analysis
+
+Branch `ccr-e6eb6c62-cm7j2k`. Areas: `src/shared/decision/cpaSheet.tsx`, `printCpa.ts`, `src/tests/cpaSheet.test.ts`.
+
+- **What teachers get:** the saved-questions basket (Print saved questions…) now prints these four sub-tools, questions and answer sheets, as well as the histogram and levelling ones. One A4 portrait page each, laid out to write on.
+- **The network is the page.** Forward pass, Backward pass and Full analysis print the activity network as large as the page allows, shown as the screen shows it (forward: only Start's 0; backward: every earliest start and End's latest finish; full: both passes blank). Boxes are grown about 30% for the sheet (the largest growth that touches nothing), so each of the three cells is about 10 mm wide to write in. The network is turned a quarter turn when that makes it bigger (nearly always); the header, prompt and write-in lines stay upright, and the caption says to turn the page clockwise.
+- **Drawing the network:** the precedence table laid across the top of the turned area (activity, duration, immediate predecessors), then a large dotted drawing space with 5 mm dots.
+- **Write-in lines:** Forward pass, minimum completion time; Full analysis, critical activities, critical path (or paths), minimum completion time.
+- **Answer sheets** show the filled-in network (Full analysis with the critical path in green) and the answer line.
+- **Not done:** Table from a network, Float and critical paths, and the other Critical Path sub-tools still have no sheet; the single-question Print button is unchanged (printing goes through the basket).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
 ## 2026-11-11 — Decks move from Vercel Blob to Neon Postgres
 
 Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `api/decks.ts`, `api/_db.ts`, `api/_deckStore.ts`, `api/migrate-decks.ts` (temporary), `vercel.json`, `src/tests/testDb.ts` and the deck API tests.

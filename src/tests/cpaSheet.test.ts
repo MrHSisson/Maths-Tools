@@ -10,7 +10,7 @@ const figs = (h: string) => (h.match(/class="fig (network|gantt|hist)/g) ?? []).
 const blocksIn = (h: string) => (h.match(/<rect/g) ?? []).length;
 
 describe("A4 question sheet", () => {
-  it("is offered on the histogram and levelling tabs only", () => { expect(CPA_SHEET_TABS).toEqual(["histogram", "level"]); });
+  it("is offered on the network, pass, full analysis, histogram and levelling tabs", () => { expect(CPA_SHEET_TABS).toEqual(["network", "forward", "backward", "full", "histogram", "level"]); });
   it("histogram Level 3, histogram given: network, Gantt chart, the given histogram and one blank to cut the peak", async () => {
     await withSeededRandom(31, async () => {
       const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histGiven: true, histWorkers: "mixed" });
@@ -55,8 +55,27 @@ describe("A4 question sheet", () => {
       expect(a).toContain("The new minimum completion time is");
     });
   }, 100_000);
+  it("working sheets: one portrait page with the network as the figure, turned when that makes it bigger", async () => {
+    await withSeededRandom(35, async () => {
+      for (const kind of ["cpaNetwork", "cpaForward", "cpaBackward", "cpaFull"] as const) {
+        const g = generateCpa(2, kind, { paths: "one" });
+        const p = { network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind, level: 2 } as never;
+        const q = await html(p, false), a = await html(p, true);
+        expect(q).toContain("sheet work");
+        expect(q).toContain("Name ____");
+        expect(q.match(/class="fig /g)).toHaveLength(1);
+        expect(a).toContain("answers");
+        if (kind === "cpaNetwork") { expect(q).toContain("fig draw rot"); expect(q).toContain("Immediate predecessors"); expect(a).toContain("fig work"); }
+        else expect(q).toContain("fig work");
+        if (kind === "cpaFull") { expect(q).toContain("Critical activities"); expect(q).toContain("Minimum completion time"); }
+        // the answer sheet fills the boxes in
+        if (kind !== "cpaNetwork") expect(blocksIn(a)).toBe(blocksIn(q));
+        expect((a.match(/<text/g) ?? []).length).toBeGreaterThan((q.match(/<text/g) ?? []).length - 1);
+      }
+    });
+  }, 100_000);
   it("other tabs have no sheet", async () => {
-    const g = generateCpa(2, "cpaForward", {});
-    expect(await buildCpaSheet({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaForward" } as never, false)).toBeNull();
+    const g = generateCpa(2, "cpaFloat", {});
+    expect(await buildCpaSheet({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaFloat" } as never, false)).toBeNull();
   });
 });

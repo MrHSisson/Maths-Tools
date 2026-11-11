@@ -5,7 +5,17 @@
 // histograms filled in, and the answer) can follow.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export interface CpaSheetFigure { caption: string; svg: string; kind: "network" | "gantt" | "hist"; /** a tall histogram when it is the only one */ tall?: boolean }
+export interface CpaSheetFigure {
+  caption: string;
+  /** the picture as markup (an SVG; for `draw`, the precedence table and the drawing space) */
+  svg: string;
+  /** `work` is a whole-page network the student writes on; `draw` is the table with a large space to draw the network in */
+  kind: "network" | "gantt" | "hist" | "work" | "draw";
+  /** a tall histogram when it is the only one */
+  tall?: boolean;
+  /** `work` and `draw` figures: turned a quarter turn (anticlockwise) so the long side of the portrait page carries the width of the network; the student turns the page to read it */
+  rotate?: boolean;
+}
 export interface CpaSheetInput {
   title: string;
   subtitle: string;
@@ -16,6 +26,9 @@ export interface CpaSheetInput {
   /** an answer sheet: what to write (one line each) */
   answer?: string[];
   answerSheet?: boolean;
+  /** a sheet the student works on directly: the figure takes the rest of the page (no fixed picture heights), and `fill` are write-in lines under it */
+  work?: boolean;
+  fill?: string[];
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -51,6 +64,23 @@ const CSS = `
   .answer { margin-top: 2mm; font-size: 9pt; line-height: 1.25; }
   .answer ol { margin: 1mm 0 0 5mm; padding: 0; }
   .answer li { margin-bottom: 0.8mm; }
+  /* a working sheet: the page is one column, the figure takes whatever the question, header and write-in lines leave */
+  .sheet.work { display: flex; flex-direction: column; height: 276mm; overflow: hidden; break-inside: avoid; }
+  .sheet.work .fig.work, .sheet.work .fig.draw { flex: 1 1 0; min-height: 0; height: auto; }
+  .fig.rot { position: relative; display: block; container-type: size; }
+  /* turned a quarter turn anticlockwise: its top is the left edge of the page, so the student turns the page clockwise to read it */
+  .fig.rot .rotin { position: absolute; left: 0; top: 100cqh; width: 100cqh; height: 100cqw; transform-origin: 0 0; transform: rotate(-90deg); }
+  .fig.rot .rotin svg { display: block; }
+  .drawin { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 3mm; }
+  table.prec { border-collapse: collapse; width: 100%; font-size: 10.5pt; }
+  table.prec th { width: 1%; background: #1e3a8a; color: #fff; padding: 1mm 2mm; border: 0.3mm solid #1e3a8a; text-align: left; white-space: nowrap; }
+  table.prec td { border: 0.3mm solid #1e3a8a; padding: 1mm 2mm; text-align: center; font-style: italic; }
+  table.prec td.n { font-style: normal; }
+  .space { flex: 1 1 0; min-height: 0; margin-top: 3mm; border: 0.3mm dashed #94a3b8; border-radius: 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    background-image: radial-gradient(circle, #94a3b8 0.25mm, transparent 0.3mm); background-size: 5mm 5mm; background-position: 2.5mm 2.5mm; }
+  .fill { margin-top: 2mm; font-size: 10pt; }
+  .fill .row { display: flex; align-items: flex-end; gap: 2mm; height: 8.5mm; }
+  .fill .row .line { flex: 1; border-bottom: 0.3mm solid #111827; height: 6mm; }
   .tag { font-size: 8.5pt; font-weight: 700; color: #fff; background: #166534; border-radius: 1mm; padding: 0 1.5mm; margin-left: 2mm; }
 `;
 
@@ -58,12 +88,15 @@ function sheetHtml(s: CpaSheetInput): string {
   const workers = s.workers && s.workers.length > 0
     ? `<table class="workers"><tr><th>Activity</th>${s.workers.map((w) => `<td>${esc(w.id)}</td>`).join("")}</tr><tr><th>Workers</th>${s.workers.map((w) => `<td class="n">${w.n}</td>`).join("")}</tr></table>`
     : "";
-  const figs = s.figures.map((f) => `<div class="cap">${esc(f.caption)}</div><div class="fig ${f.kind}${f.tall ? " tall" : ""}">${f.svg}</div>`).join("");
+  const figs = s.figures.map((f) => `<div class="cap">${esc(f.caption)}</div>${f.rotate
+    ? `<div class="fig ${f.kind} rot"><div class="rotin">${f.svg}</div></div>`
+    : `<div class="fig ${f.kind}${f.tall ? " tall" : ""}">${f.svg}</div>`}`).join("");
+  const fill = s.fill && s.fill.length > 0 ? `<div class="fill">${s.fill.map((l) => `<div class="row"><span>${esc(l)}</span><span class="line"></span></div>`).join("")}</div>` : "";
   const answer = s.answer && s.answer.length > 0
     ? `<div class="answer"><b>Answer</b><ol>${s.answer.map((l) => `<li>${esc(l)}</li>`).join("")}</ol></div>`
     : "";
-  return `<section class="sheet${s.answerSheet ? " ans" : ""}"><header><h1>${esc(s.title)} — ${esc(s.subtitle)}${s.answerSheet ? `<span class="tag">answers</span>` : ""}</h1><div class="who">${s.answerSheet ? "" : "Name ____________________ &nbsp; Date _________"}</div></header>
-    <div class="prompt">${esc(s.prompt)}</div>${workers}${figs}${answer}</section>`;
+  return `<section class="sheet${s.answerSheet ? " ans" : ""}${s.work ? " work" : ""}"><header><h1>${esc(s.title)} — ${esc(s.subtitle)}${s.answerSheet ? `<span class="tag">answers</span>` : ""}</h1><div class="who">${s.answerSheet ? "" : "Name ____________________ &nbsp; Date _________"}</div></header>
+    <div class="prompt">${esc(s.prompt)}</div>${workers}${figs}${fill}${answer}</section>`;
 }
 
 /** the HTML of one or more sheets (exported so it can be tested without a window) */
