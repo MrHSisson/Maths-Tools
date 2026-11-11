@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-11 — Multiples and common multiples: systematic listing for Set 6
+
+Branch `codex/multiples-listing-lesson`. Areas: new `src/decks/data/multiples-systematic-listing.json`, `specs/decks/multiples-systematic-listing.md`, Decks pathway and generated admin docs.
+
+- **Lesson:** 13 editable slides for 45 minutes after Harry's separate TT starter. Begin with multiples and repeated addition, then find common multiples in two labelled lists, then introduce LCM by circling the first shared positive number in both lists. No generator or new tool.
+- **Practice:** 30 fixed authored questions: six listing, four consolidation, five guided LCM, twelve book-work and three exit questions. List starters fade; times-table grids are optional. One model begins with equally long lists with no match and extends a list before stopping. Nested pairs show the larger given number can be the LCM.
+- **Authoring:** ladder, traps and support follow the plan Harry approved in chat. All answers independently recomputed, each worked list checked for missing multiples, and both matching numbers circled. Book work uses the standard title-free 3 × 4 grid; the spec carries the timing and question/answer/trap table.
+- **Checks:** all 30 answers independently recomputed; shared-service schema validation, content check, 13-slide final layout audit, build and lint pass. Browser checks cover staged reveals, all 11 guided question/answer states, book/exit answers, and phone/tablet/laptop views; representative slide pictures inspected. Full suite: 135 files pass, 2,588 tests pass, 18 skipped (`--pool=threads --maxWorkers=4`; the default fork pool stalled in this environment). The 163 deck-specific tests also pass separately.
+- **Shared save pending:** automatic approval review rejected reading and sending the repository's admin password to the deck service, because credential egress and service access were not specifically authorized. No shared deck was created or changed. The local editable JSON is complete; saving it to the shared service requires Harry's approval. Public publishing, PR and merge were not requested.
+- **Repository push pending:** automatic review also rejected `git push -u origin codex/multiples-listing-lesson`, citing external data transfer, remote mutation and unestablished trusted ownership. The work is committed locally; no push was performed and no workaround attempted.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Multiples by systematic listing — Set 6 lesson (Codex)”.
+
 ## 2026-11-11 — Critical Path: question sheets for Network from a table, Forward pass, Backward pass and Full analysis
 
 Branch `ccr-e6eb6c62-cm7j2k`. Areas: `src/shared/decision/cpaSheet.tsx`, `printCpa.ts`, `src/tests/cpaSheet.test.ts`.
