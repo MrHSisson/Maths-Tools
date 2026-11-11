@@ -22,7 +22,7 @@ import { useDevMode } from "../devMode";
 import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
 import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
-import { allDecks, loadDeck, newDeckId, saveDeck, syncFromCloud } from "./store";
+import { allDecks, loadDeck, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,6 +71,14 @@ function DeckIndex() {
   }, []);
   const published = usePublishedIndex();
   const decks = allDecks();
+  // Nothing checks in the background (it would keep the database awake): this looks for decks changed elsewhere, only when pressed.
+  const [checking, setChecking] = useState<string | null>(null);
+  const check = async () => {
+    setChecking("Checking…");
+    const updated = await syncAllDecks();
+    refresh((n) => n + 1);
+    setChecking(updated === null ? "Could not reach the shared copy" : updated.length ? `Updated: ${updated.join(", ")}` : "All decks are up to date");
+  };
   const create = () => {
     const id = newDeckId();
     saveDeck({ id, title: "New deck", summary: "", slides: [titleSlide(`${id}-title`, "New deck", "")] });
@@ -82,7 +90,9 @@ function DeckIndex() {
         <Link to="/deck-gallery" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
-          <Link to="/decks/library" className="ml-auto rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
+          {checking && <span className="ml-auto text-sm text-slate-500" role="status">{checking}</span>}
+          <button onClick={() => void check()} disabled={checking === "Checking…"} title="Look for decks changed on another device or by Claude" className={`${checking ? "" : "ml-auto "}rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-60`}>Check for changes</button>
+          <Link to="/decks/library" className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
         <div className="mt-6">

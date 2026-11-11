@@ -9,7 +9,8 @@ vi.mock("../decks/cloud", () => ({
   pushDeck: (deck: DeckDef, base?: DeckDef) => { sent.push({ deck, base }); },
   setSyncHandler: (fn: typeof handler) => { handler = fn; },
 }));
-const { saveDeck, loadDeck, deckBase, onDeckMerged } = await import("../decks/store");
+const { saveDeck, loadDeck, deckBase, onDeckMerged, syncAllDecks } = await import("../decks/store");
+const cloud = await import("../decks/cloud");
 
 const el = (id: string, text: string) => ({ id, kind: "text" as const, x: 0, y: 0, w: 10, h: 10, text, size: 40 });
 const slide = (id: string, text: string) => ({ id, family: "teach" as const, title: id, els: [el(`${id}-1`, text)] });
@@ -69,3 +70,36 @@ describe("shared editing on this device", () => {
     expect((deckBase("my-sync") as DeckDef).slides[1].els[0]).toMatchObject({ text: "c-from-claude" });   // the base moved on, so the next save starts from it
   });
 });
+
+describe("Check for changes across all decks", () => {
+  const stamp = (id: string, title: string, updatedAt: string) => ({ ...deck("a", "c", { id, title, updatedAt }) });
+  const index = (entries: Record<string, string>) => ({ index: Object.fromEntries(Object.entries(entries).map(([id, updatedAt]) => [id, { updatedAt }])), questions: {} });
+  beforeEach(() => {
+    memory.clear();
+    vi.stubGlobal("localStorage", { getItem: (k: string) => memory.get(k) ?? null, setItem: (k: string, v: string) => memory.set(k, v), removeItem: (k: string) => memory.delete(k), clear: () => memory.clear(), key: (i: number) => [...memory.keys()][i] ?? null, get length() { return memory.size; } });
+  });
+
+  it("brings in decks that are newer than this device's copy, names them, and leaves up-to-date ones alone", async () => {
+    saveDeck(stamp("one", "One", "2026-11-01T10:00:00.000Z"), false);
+    saveDeck(stamp("two", "Two", "2026-11-01T10:00:00.000Z"), false);
+    vi.mocked(cloud.fetchIndex).mockResolvedValue(index({ one: "2026-11-01T10:00:00.000Z", two: "2026-11-02T10:00:00.000Z", three: "2026-11-02T10:00:00.000Z" }) as never);
+    vi.mocked(cloud.fetchDeck).mockImplementation((async (id: string) => stamp(id, `${id} (newer)`, "2026-11-02T10:00:00.000Z")) as never);
+    expect(await syncAllDecks()).toEqual(["two (newer)", "three (newer)"]);          // "one" was already current; "three" is new to this device
+    expect(loadDeck("two")?.title).toBe("two (newer)");
+    expect(await syncAllDecks()).toEqual([]);                                         // nothing newer now
+  });
+
+  it("skips the deck that is open in the editor (it merges that one itself)", async () => {
+    saveDeck(stamp("open", "Open", "2026-11-01T10:00:00.000Z"), false);
+    vi.mocked(cloud.fetchIndex).mockResolvedValue(index({ open: "2026-11-05T10:00:00.000Z" }) as never);
+    vi.mocked(cloud.fetchDeck).mockResolvedValue(stamp("open", "Replaced", "2026-11-05T10:00:00.000Z") as never);
+    expect(await syncAllDecks("open")).toEqual([]);
+    expect(loadDeck("open")?.title).toBe("Open");
+  });
+
+  it("says so (null) when the shared copy cannot be reached", async () => {
+    vi.mocked(cloud.fetchIndex).mockResolvedValue(null);
+    expect(await syncAllDecks()).toBeNull();
+  });
+});
+

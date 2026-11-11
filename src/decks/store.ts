@@ -120,21 +120,28 @@ export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(
 // ── Pulling from the teacher's other devices ──
 /** Brings in every shared deck newer than this device's copy, and the shared questions. Resolves to whether anything
  *  changed (so a page can re-read), or false when sharing is not available. */
-export async function syncFromCloud(onlyId?: string): Promise<boolean> {
+export const syncFromCloud = async (onlyId?: string): Promise<boolean> => (await syncDecks(onlyId))?.changed ?? false;
+
+/** The "Check for changes" button: every deck (except `except`, which an open editor handles itself, merging rather than replacing).
+ *  Resolves to the titles of the decks that were updated, or null when sharing is not available. */
+export const syncAllDecks = async (except?: string): Promise<string[] | null> => (await syncDecks(undefined, except))?.updated ?? null;
+
+async function syncDecks(onlyId?: string, except?: string): Promise<{ changed: boolean; updated: string[] } | null> {
   const snap = await fetchIndex();
-  if (!snap) return false;
+  if (!snap) return null;
   let changed = false;
+  const updated: string[] = [];
   const mine = myQuestions();
   // New library entries are immutable copies with unique ids. Keep unsent local copies on reconnect.
   const merged = { ...snap.questions, ...mine };
   if (JSON.stringify(merged) !== JSON.stringify(mine)) { write(BANK_KEY, merged); changed = true; }
   for (const [id, entry] of Object.entries(snap.index)) {
-    if (onlyId && id !== onlyId) continue;
+    if ((onlyId && id !== onlyId) || id === except) continue;
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
     if (local?.updatedAt && local.updatedAt >= entry.updatedAt) continue;
     const deck = await fetchDeck(id);
-    if (deck) { if (local) saveVersion(local, "Before an update from another device"); saveDeck(deck, false); changed = true; }
+    if (deck) { if (local) saveVersion(local, "Before an update from another device"); saveDeck(deck, false); changed = true; updated.push(deck.title); }
   }
-  return changed;
+  return { changed, updated };
 }
 export const newQuestionId = () => `my-q-${Date.now().toString(36)}`;
