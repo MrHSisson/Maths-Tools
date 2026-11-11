@@ -63,10 +63,14 @@ All sequences start with the given positive number, include every multiple, and 
 
 **Stretch within book-work time:** extend question 12 to the next common multiple, 120; explain why it is not the lowest.
 
+## Presentation
+
+Definition slides use the native three-element template only: heading, term and formal definition, with no added footer sentences. Two-list labels and numbers share vertical centres and consistent columns; rings are centred on their matched terms. Repeated-addition equations sit directly under the multiple they produce. Guided answer lists align their labels and first entries. Teaching and quick-check headings share common margins.
+
 ## Verification and delivery
 
 Recompute all 30 authored answers independently: multiplication for the single lists; a positive-integer divisibility scan for LCM, plus a constant-step check of each worked list and both circled values. This verification is an authoring check, not an alternative method shown to pupils. Check the model circles and each reveal in a browser, including revealed answers and representative phone/tablet/laptop views. Run the existing content/layout checks, build, test suite and lint. Save the shared working deck and read it back; public publishing is outside this request.
 
-**Completed:** all 30 answers independently verified; shared-service schema, content and all 13 slide layouts pass. Staged examples, every guided question/answer, book/exit answer reveals and phone/tablet/laptop views checked in Chromium; representative slide images inspected. Build and lint pass. Full suite: 135 files, 2,588 passed and 18 skipped (thread pool with four workers); 163 deck-specific checks also pass separately.
+**Completed:** all 30 answers independently verified; shared-service schema, content and all 13 slide layouts pass. Staged examples, every guided question/answer, book/exit answer reveals and phone/tablet/laptop views checked in Chromium; representative slide images inspected. Build and lint pass. Full suite: 135 files, 2,588 passed and 18 skipped for the content revision (thread pool with four workers). After the alignment pass, all 163 deck-specific checks, content/layout and browser checks, build and lint pass again; all questions and numerical answers are retained.
 
 **Delivered:** after Harry explicitly granted all permissions, saved the working deck through the shared API into Neon and verified the read-back: all 13 slides exactly match the checked snapshot. Open `/decks/multiples-systematic-listing` in the deck builder. The JSON in `src/decks/data/multiples-systematic-listing.json` is the repository backup; the Neon copy is the master. Public publishing was not requested.

@@ -73,21 +73,9 @@
      "size": 52,
      "text": "A multiple of a number is the result of multiplying it by a whole number.",
      "colour": "#0f172a"
-    },
-    {
-     "h": 100,
-     "w": 1400,
-     "x": 100,
-     "y": 720,
-     "id": "temp-note",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Today: start with the number itself and list in order.",
-     "colour": "#0f172a"
     }
    ],
-   "built": "1wgxqps",
+   "built": "165d30x",
    "title": "Multiple",
    "family": "language"
   },
@@ -107,10 +95,10 @@
      "colour": "#0f172a"
     },
     {
-     "h": 90,
+     "h": 80,
      "w": 1400,
      "x": 100,
-     "y": 195,
+     "y": 190,
      "id": "msl-model-list-prompt",
      "kind": "text",
      "size": 44,
@@ -132,8 +120,8 @@
     },
     {
      "h": 110,
-     "w": 160,
-     "x": 160,
+     "w": 280,
+     "x": 100,
      "y": 380,
      "id": "msl-model-list-term-0",
      "kind": "text",
@@ -146,8 +134,8 @@
     },
     {
      "h": 110,
-     "w": 160,
-     "x": 425,
+     "w": 280,
+     "x": 380,
      "y": 380,
      "id": "msl-model-list-term-1",
      "kind": "text",
@@ -160,8 +148,8 @@
     },
     {
      "h": 110,
-     "w": 160,
-     "x": 690,
+     "w": 280,
+     "x": 660,
      "y": 380,
      "id": "msl-model-list-term-2",
      "kind": "text",
@@ -174,8 +162,8 @@
     },
     {
      "h": 110,
-     "w": 160,
-     "x": 955,
+     "w": 280,
+     "x": 940,
      "y": 380,
      "id": "msl-model-list-term-3",
      "kind": "text",
@@ -188,7 +176,7 @@
     },
     {
      "h": 110,
-     "w": 160,
+     "w": 280,
      "x": 1220,
      "y": 380,
      "id": "msl-model-list-term-4",
@@ -202,55 +190,63 @@
     },
     {
      "h": 80,
-     "w": 330,
-     "x": 120,
+     "w": 240,
+     "x": 400,
      "y": 510,
      "id": "msl-model-list-add-0",
      "kind": "text",
      "size": 44,
      "step": 1,
      "text": "15 + 15 = 30",
-     "colour": "#0f172a"
+     "align": "center",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 80,
-     "w": 330,
-     "x": 475,
+     "w": 240,
+     "x": 680,
      "y": 510,
      "id": "msl-model-list-add-1",
      "kind": "text",
      "size": 44,
      "step": 2,
      "text": "30 + 15 = 45",
-     "colour": "#0f172a"
+     "align": "center",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 80,
-     "w": 330,
-     "x": 830,
+     "w": 240,
+     "x": 960,
      "y": 510,
      "id": "msl-model-list-add-2",
      "kind": "text",
      "size": 44,
      "step": 3,
      "text": "45 + 15 = 60",
-     "colour": "#0f172a"
+     "align": "center",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 80,
-     "w": 330,
-     "x": 1185,
+     "w": 240,
+     "x": 1240,
      "y": 510,
      "id": "msl-model-list-add-3",
      "kind": "text",
      "size": 44,
      "step": 4,
      "text": "60 + 15 = 75",
-     "colour": "#0f172a"
+     "align": "center",
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
    "brief": "0–4 minutes, after the definition. Reveal each multiple by repeated addition; a times-table grid is optional support.",
-   "built": "5yhq4b",
+   "built": "rbcb7g",
    "title": "Listing multiples",
    "family": "teach"
   },
@@ -258,10 +254,10 @@
    "id": "msl-together",
    "els": [
     {
-     "h": 100,
+     "h": 110,
      "w": 1400,
      "x": 100,
-     "y": 60,
+     "y": 80,
      "id": "msl-together-1",
      "bold": true,
      "kind": "text",
@@ -270,10 +266,10 @@
      "colour": "#0f172a"
     },
     {
-     "h": 60,
+     "h": 80,
      "w": 1400,
      "x": 100,
-     "y": 165,
+     "y": 190,
      "id": "msl-together-2",
      "kind": "text",
      "size": 40,
@@ -284,7 +280,7 @@
      "h": 420,
      "w": 1400,
      "x": 100,
-     "y": 250,
+     "y": 300,
      "id": "msl-together-3",
      "fill": "structure",
      "grid": {
@@ -313,7 +309,7 @@
     }
    ],
    "brief": "4–10 minutes. Model the 15-list, build the 21-list together, then pupils try the 30-list. Use the pen in the empty answer cells, then show the completed table to check.",
-   "built": "16l4t28",
+   "built": "2d8h6n",
    "title": "List multiples together",
    "family": "teach"
   },
@@ -485,10 +481,10 @@
    "id": "msl-list-check",
    "els": [
     {
-     "h": 100,
+     "h": 110,
      "w": 1400,
      "x": 100,
-     "y": 60,
+     "y": 80,
      "id": "msl-list-check-1",
      "bold": true,
      "kind": "text",
@@ -497,10 +493,10 @@
      "colour": "#0f172a"
     },
     {
-     "h": 50,
+     "h": 80,
      "w": 1400,
      "x": 100,
-     "y": 160,
+     "y": 190,
      "id": "msl-list-check-2",
      "kind": "text",
      "size": 34,
@@ -508,10 +504,10 @@
      "colour": "#64748b"
     },
     {
-     "h": 620,
+     "h": 550,
      "w": 1400,
      "x": 100,
-     "y": 230,
+     "y": 300,
      "id": "msl-list-check-3",
      "bank": [],
      "cols": 2,
@@ -613,7 +609,7 @@
     }
    ],
    "brief": "16–20 minutes. Four short independent lists; allow a times-table grid. Check a constant step and no missing terms before moving on.",
-   "built": "jkv56s",
+   "built": "1phem6l",
    "title": "List multiples",
    "family": "retrieval"
   },
@@ -654,21 +650,9 @@
      "size": 52,
      "text": "A common multiple is a number that is a multiple of both numbers.",
      "colour": "#0f172a"
-    },
-    {
-     "h": 100,
-     "w": 1400,
-     "x": 100,
-     "y": 720,
-     "id": "temp-note",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Common means shared: the number is in both lists.",
-     "colour": "#0f172a"
     }
    ],
-   "built": "q0wpip",
+   "built": "16f4pub",
    "title": "Common multiple",
    "family": "language"
   },
@@ -709,7 +693,9 @@
      "size": 44,
      "step": 0,
      "text": "12:",
-     "colour": "#0f172a"
+     "align": "left",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 95,
@@ -721,7 +707,9 @@
      "size": 44,
      "step": 0,
      "text": "18:",
-     "colour": "#0f172a"
+     "align": "left",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 95,
@@ -867,7 +855,7 @@
      "h": 92,
      "w": 102,
      "x": 559,
-     "y": 340,
+     "y": 341.5,
      "id": "msl-common-circle-12a",
      "kind": "shape",
      "step": 3,
@@ -879,7 +867,7 @@
      "h": 92,
      "w": 102,
      "x": 394,
-     "y": 510,
+     "y": 511.5,
      "id": "msl-common-circle-12b",
      "kind": "shape",
      "step": 3,
@@ -903,7 +891,7 @@
      "h": 92,
      "w": 102,
      "x": 1054,
-     "y": 340,
+     "y": 341.5,
      "id": "msl-common-circle-24a",
      "kind": "shape",
      "step": 5,
@@ -915,7 +903,7 @@
      "h": 92,
      "w": 102,
      "x": 724,
-     "y": 510,
+     "y": 511.5,
      "id": "msl-common-circle-24b",
      "kind": "shape",
      "step": 5,
@@ -937,7 +925,7 @@
     }
    ],
    "brief": "21–25 minutes. First stop and circle 36 in both lists. Then ask whether another shared number exists; extend to 72 and circle it. Do not name LCM until the next slide.",
-   "built": "h47uw5",
+   "built": "y56nqn",
    "title": "Find a common multiple",
    "family": "teach"
   },
@@ -1021,7 +1009,9 @@
      "size": 44,
      "step": 0,
      "text": "12:",
-     "colour": "#0f172a"
+     "align": "left",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 95,
@@ -1033,12 +1023,14 @@
      "size": 44,
      "step": 0,
      "text": "16:",
-     "colour": "#0f172a"
+     "align": "left",
+     "colour": "#0f172a",
+     "middle": true
     },
     {
      "h": 95,
      "w": 100,
-     "x": 260,
+     "x": 230,
      "y": 340,
      "id": "msl-lcm-model-four-0",
      "kind": "text",
@@ -1052,7 +1044,7 @@
     {
      "h": 95,
      "w": 100,
-     "x": 410,
+     "x": 395,
      "y": 340,
      "id": "msl-lcm-model-four-1",
      "kind": "text",
@@ -1080,7 +1072,7 @@
     {
      "h": 95,
      "w": 100,
-     "x": 710,
+     "x": 725,
      "y": 340,
      "id": "msl-lcm-model-four-3",
      "kind": "text",
@@ -1094,7 +1086,7 @@
     {
      "h": 95,
      "w": 100,
-     "x": 260,
+     "x": 230,
      "y": 510,
      "id": "msl-lcm-model-six-0",
      "kind": "text",
@@ -1108,7 +1100,7 @@
     {
      "h": 95,
      "w": 100,
-     "x": 410,
+     "x": 395,
      "y": 510,
      "id": "msl-lcm-model-six-1",
      "kind": "text",
@@ -1134,10 +1126,10 @@
      "middle": true
     },
     {
-     "h": 240,
-     "w": 650,
-     "x": 850,
-     "y": 350,
+     "h": 60,
+     "w": 1400,
+     "x": 100,
+     "y": 275,
      "id": "msl-lcm-model-extend",
      "kind": "text",
      "size": 44,
@@ -1148,8 +1140,8 @@
     {
      "h": 92,
      "w": 102,
-     "x": 709,
-     "y": 340,
+     "x": 724,
+     "y": 341.5,
      "id": "msl-lcm-circle-a",
      "kind": "shape",
      "step": 4,
@@ -1161,7 +1153,7 @@
      "h": 92,
      "w": 102,
      "x": 559,
-     "y": 510,
+     "y": 511.5,
      "id": "msl-lcm-circle-b",
      "kind": "shape",
      "step": 4,
@@ -1173,7 +1165,7 @@
      "h": 100,
      "w": 1400,
      "x": 100,
-     "y": 690,
+     "y": 685,
      "id": "msl-lcm-model-answer",
      "kind": "text",
      "size": 44,
@@ -1183,7 +1175,7 @@
     }
    ],
    "brief": "26–29 minutes. Initially show two entries per list, with no match. Extend the lists to 48; circle both 48s. Equal list lengths are not a stopping rule.",
-   "built": "lmipld",
+   "built": "710i2o",
    "title": "Find the lowest common multiple",
    "family": "teach"
   },
@@ -1205,8 +1197,7 @@
        "level": "level1",
        "title": "Complete both lists. Circle the first match",
        "answer": [
-        "12: $12$, $24$, $\\text{\\textcircled{\\scriptsize 36}}$",
-        "18: $18$, $\\text{\\textcircled{\\scriptsize 36}}$",
+        "$\\begin{aligned}12&:\\;12, 24, \\text{\\textcircled{\\scriptsize 36}}\\\\18&:\\;18, \\text{\\textcircled{\\scriptsize 36}}\\end{aligned}$",
         "LCM = $36$."
        ],
        "format": "open",
@@ -1234,8 +1225,7 @@
        "level": "level1",
        "title": "Continue both lists. Find the LCM",
        "answer": [
-        "12: $12$, $24$, $36$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
+        "$\\begin{aligned}12&:\\;12, 24, 36, \\text{\\textcircled{\\scriptsize 48}}\\\\16&:\\;16, 32, \\text{\\textcircled{\\scriptsize 48}}\\end{aligned}$",
         "LCM = $48$."
        ],
        "format": "open",
@@ -1263,8 +1253,7 @@
        "level": "level1",
        "title": "Find the LCM of $15$ and $20$",
        "answer": [
-        "15: $15$, $30$, $45$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
+        "$\\begin{aligned}15&:\\;15, 30, 45, \\text{\\textcircled{\\scriptsize 60}}\\\\20&:\\;20, 40, \\text{\\textcircled{\\scriptsize 60}}\\end{aligned}$",
         "LCM = $60$."
        ],
        "format": "open",
@@ -1290,8 +1279,7 @@
        "level": "level1",
        "title": "Find the LCM of $21$ and $14$",
        "answer": [
-        "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$",
-        "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$",
+        "$\\begin{aligned}21&:\\;21, \\text{\\textcircled{\\scriptsize 42}}\\\\14&:\\;14, 28, \\text{\\textcircled{\\scriptsize 42}}\\end{aligned}$",
         "LCM = $42$."
        ],
        "format": "open",
@@ -1317,8 +1305,7 @@
        "level": "level1",
        "title": "Find the LCM of $18$ and $24$",
        "answer": [
-        "18: $18$, $36$, $54$, $\\text{\\textcircled{\\scriptsize 72}}$",
-        "24: $24$, $48$, $\\text{\\textcircled{\\scriptsize 72}}$",
+        "$\\begin{aligned}18&:\\;18, 36, 54, \\text{\\textcircled{\\scriptsize 72}}\\\\24&:\\;24, 48, \\text{\\textcircled{\\scriptsize 72}}\\end{aligned}$",
         "LCM = $72$."
        ],
        "format": "open",
@@ -1344,7 +1331,7 @@
     }
    ],
    "brief": "29–35 minutes. Five questions fade list starters to independent listing. Answers show both lists with the first match circled; use two-digit pairs chosen so each search stays short. The nested pair appears in book work.",
-   "built": "mxz5tr",
+   "built": "1g1gbz1",
    "title": "Find the LCM",
    "family": "practice"
   },
@@ -1676,10 +1663,10 @@
    "id": "msl-exit",
    "els": [
     {
-     "h": 100,
+     "h": 110,
      "w": 1400,
      "x": 100,
-     "y": 60,
+     "y": 80,
      "id": "msl-exit-1",
      "bold": true,
      "kind": "text",
@@ -1688,10 +1675,10 @@
      "colour": "#0f172a"
     },
     {
-     "h": 50,
+     "h": 80,
      "w": 1400,
      "x": 100,
-     "y": 160,
+     "y": 190,
      "id": "msl-exit-2",
      "kind": "text",
      "size": 34,
@@ -1699,10 +1686,10 @@
      "colour": "#64748b"
     },
     {
-     "h": 620,
+     "h": 550,
      "w": 1400,
      "x": 100,
-     "y": 230,
+     "y": 300,
      "id": "msl-exit-3",
      "bank": [],
      "cols": 3,
@@ -1737,8 +1724,7 @@
        "level": "level1",
        "title": "Circle the common multiple in both lists",
        "answer": [
-        "18: $18$, $36$, $54$, $72$, $\\text{\\textcircled{\\scriptsize 90}}$",
-        "30: $30$, $60$, $\\text{\\textcircled{\\scriptsize 90}}$"
+        "$\\begin{aligned}18&:\\;18, 36, 54, 72, \\text{\\textcircled{\\scriptsize 90}}\\\\30&:\\;30, 60, \\text{\\textcircled{\\scriptsize 90}}\\end{aligned}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1785,7 +1771,7 @@
     }
    ],
    "brief": "42–45 minutes. Check listing, recognising a shared multiple and independently finding LCM; use answers to decide which step needs revisiting.",
-   "built": "1igdtk5",
+   "built": "18imado",
    "title": "Exit ticket",
    "family": "retrieval"
   }
