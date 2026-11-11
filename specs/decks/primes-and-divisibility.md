@@ -1,6 +1,6 @@
 # Lesson plan: Prime numbers and divisibility rules
 
-**Status:** implemented (deck `src/decks/data/primes-divisibility.json`, 36 slides; verified 2026-11-01). Not yet taught · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
+**Status:** implemented (deck `src/decks/data/primes-divisibility.json`, 45 slides after the rule for 9 was added on 2026-11-11 (see "Added 2026-11-11" below); first built at 36 slides; verified 2026-11-01). Not yet taught · **Tool:** none (every question is authored) · **Class:** Year 9 · **First test of the authoring routine** (`docs/design/DECK_BUILD_CHECKLIST.md`, "Authoring a question set")
 
 **Objective:** find the primes up to 100 with the sieve of Eratosthenes and say why it works; use divisibility rules for 2, 3 and 5 (and 10) without dividing. **Stretch:** the rule for 11, with the rule for 7 as an extra.
 
@@ -189,3 +189,12 @@ Both would use the **Number grid** from this deck as their picture (multiples on
 2. Write the sets from this plan and send you the **table** (rung, answer, trap, wrong-method result) before the deck is assembled.
 3. Recompute every answer in the session by a different route (a script for the numeric sets).
 4. Build the deck script, run `npm run deck -- verify <id>` and `--layout`, and show you.
+
+## Added 2026-11-11: the rule for 9 (after the rule for 3)
+
+Harry asked for divisibility by 9 straight after 3, with everything after it updated and a task on "divisible by 3 and/or 9". The deck order is now: Divisible by 3 · The rule for 3 · Set D · **Divisible by 9 (key point) · The rule for 9 (board) · Set H: the rule for 9 · Discuss (9 implies 3, not the reverse) · Set I: divisible by 3, by 9, or both** · Set E · Book work · Depth · …
+
+- **Set H ladder:** 1 digit sum exactly 9 (63) · 2 digit sum in the 3 table but not the 9 table (84; trap: checking the 3 table) · 3 digit sum 18 (396) · 4 zeros add nothing (2007) · 5 ends in 9 (479; trap: last digit) · 6 digit sum 36 needs adding again (89991; five digits, the last rung only).
+- **Set I ladder:** 1 both (54) · 2 neither (83) · 3 only 3 (69; trap: "3 goes in, so 9 does") · 4 both, digit sum 18 (297) · 5 only 3, four digits (2652) · 6 missing digit in 6□3 for "3 but not 9" (3 or 6) · 7 explain why no number is divisible by 9 but not by 3.
+- **Changed after it:** Set E is "which of 2, 3, 5 and 9" (90, 45, 84, 130; plus 4□6 divisible by 9 → 8); the book work is "which of 2, 3, 5 and 9"; exit ticket question 1 is "which of 3 and 9 does 135 divide by"; the objective and the summary mention 9.
+- **Convention:** as for 3, a digit sum is added again only when it is over 30.
