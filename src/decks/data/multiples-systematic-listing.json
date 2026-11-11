@@ -189,64 +189,112 @@
      "middle": true
     },
     {
-     "h": 80,
-     "w": 240,
-     "x": 400,
-     "y": 510,
+     "h": 0,
+     "w": 160,
+     "x": 300,
+     "y": 435,
+     "id": "msl-model-list-arrow-0",
+     "kind": "line",
+     "step": 1,
+     "arrow": true,
+     "width": 4,
+     "colour": "#0f172a"
+    },
+    {
+     "h": 0,
+     "w": 160,
+     "x": 580,
+     "y": 435,
+     "id": "msl-model-list-arrow-1",
+     "kind": "line",
+     "step": 2,
+     "arrow": true,
+     "width": 4,
+     "colour": "#0f172a"
+    },
+    {
+     "h": 0,
+     "w": 160,
+     "x": 860,
+     "y": 435,
+     "id": "msl-model-list-arrow-2",
+     "kind": "line",
+     "step": 3,
+     "arrow": true,
+     "width": 4,
+     "colour": "#0f172a"
+    },
+    {
+     "h": 0,
+     "w": 160,
+     "x": 1140,
+     "y": 435,
+     "id": "msl-model-list-arrow-3",
+     "kind": "line",
+     "step": 4,
+     "arrow": true,
+     "width": 4,
+     "colour": "#0f172a"
+    },
+    {
+     "h": 70,
+     "w": 160,
+     "x": 300,
+     "y": 480,
      "id": "msl-model-list-add-0",
      "kind": "text",
      "size": 44,
      "step": 1,
-     "text": "15 + 15 = 30",
+     "text": "+15",
      "align": "center",
      "colour": "#0f172a",
      "middle": true
     },
     {
-     "h": 80,
-     "w": 240,
-     "x": 680,
-     "y": 510,
+     "h": 70,
+     "w": 160,
+     "x": 580,
+     "y": 480,
      "id": "msl-model-list-add-1",
      "kind": "text",
      "size": 44,
      "step": 2,
-     "text": "30 + 15 = 45",
+     "text": "+15",
      "align": "center",
      "colour": "#0f172a",
      "middle": true
     },
     {
-     "h": 80,
-     "w": 240,
-     "x": 960,
-     "y": 510,
+     "h": 70,
+     "w": 160,
+     "x": 860,
+     "y": 480,
      "id": "msl-model-list-add-2",
      "kind": "text",
      "size": 44,
      "step": 3,
-     "text": "45 + 15 = 60",
+     "text": "+15",
      "align": "center",
      "colour": "#0f172a",
      "middle": true
     },
     {
-     "h": 80,
-     "w": 240,
-     "x": 1240,
-     "y": 510,
+     "h": 70,
+     "w": 160,
+     "x": 1140,
+     "y": 480,
      "id": "msl-model-list-add-3",
      "kind": "text",
      "size": 44,
      "step": 4,
-     "text": "60 + 15 = 75",
+     "text": "+15",
      "align": "center",
      "colour": "#0f172a",
      "middle": true
     }
    ],
-   "brief": "0–4 minutes, after the definition. Reveal each multiple by repeated addition; a times-table grid is optional support.",
-   "built": "rbcb7g",
+   "brief": "0–3 minutes, after the definition. Reveal each new multiple with an arrow from the previous term and +15 underneath the arrow; a times-table grid is optional support.",
+   "built": "12gy81w",
    "title": "Listing multiples",
    "family": "teach"
   },
@@ -308,8 +356,8 @@
      "size": 46
     }
    ],
-   "brief": "4–10 minutes. Model the 15-list, build the 21-list together, then pupils try the 30-list. Use the pen in the empty answer cells, then show the completed table to check.",
-   "built": "2d8h6n",
+   "brief": "3–7 minutes. Model the 15-list, build the 21-list together, then pupils try the 30-list. Use the pen in the empty answer cells, then show the completed table to check.",
+   "built": "md4ljo",
    "title": "List multiples together",
    "family": "teach"
   },
@@ -472,8 +520,8 @@
      "presentation": "whiteboard"
     }
    ],
-   "brief": "10–16 minutes. Six whiteboard questions: partial lists first, then a repeated-addition prompt, then independent listing. Accept times-table grids throughout.",
-   "built": "1shnk50",
+   "brief": "7–12 minutes. Six whiteboard questions: partial lists first, then a repeated-addition prompt, then independent listing. Accept times-table grids throughout.",
+   "built": "1w6rtt2",
    "title": "List multiples",
    "family": "practice"
   },
@@ -481,43 +529,31 @@
    "id": "msl-list-check",
    "els": [
     {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
+     "h": 64,
+     "w": 1480,
+     "x": 60,
+     "y": 46,
      "id": "msl-list-check-1",
-     "bold": true,
      "kind": "text",
-     "size": 64,
-     "text": "List multiples",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-list-check-2",
-     "kind": "text",
-     "size": 34,
-     "text": "Write each list in your book.",
+     "size": 38,
+     "text": "Write the first five multiples of each number in your book.",
      "colour": "#64748b"
     },
     {
-     "h": 550,
-     "w": 1400,
-     "x": 100,
-     "y": 300,
-     "id": "msl-list-check-3",
+     "h": 748,
+     "w": 1480,
+     "x": 60,
+     "y": 124,
+     "id": "msl-list-check-2",
      "bank": [],
-     "cols": 2,
+     "cols": 3,
      "kind": "grid",
      "items": [
       {
        "id": "msl-check-1",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "Write the first 5 multiples of $16$",
+       "title": "$16$",
        "answer": [
         "$16$, $32$, $48$, $64$, $80$"
        ],
@@ -527,7 +563,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write the first 5 multiples of $16$."
+        "$16$"
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
@@ -540,7 +576,30 @@
        "id": "msl-check-2",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "Write the first 5 multiples of $25$",
+       "title": "$22$",
+       "answer": [
+        "$22$, $44$, $66$, $88$, $110$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$22$"
+       ],
+       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "explanation": [
+        "Start at $22$. Add $22$ each time.",
+        "$22$, $44$, $66$, $88$, $110$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-check-3",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "$25$",
        "answer": [
         "$25$, $50$, $75$, $100$, $125$"
        ],
@@ -550,7 +609,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write the first 5 multiples of $25$."
+        "$25$"
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
@@ -560,10 +619,56 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-check-3",
+       "id": "msl-check-4",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "Write the first 5 multiples of $32$",
+       "title": "$26$",
+       "answer": [
+        "$26$, $52$, $78$, $104$, $130$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$26$"
+       ],
+       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "explanation": [
+        "Start at $26$. Add $26$ each time.",
+        "$26$, $52$, $78$, $104$, $130$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-check-5",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "$27$",
+       "answer": [
+        "$27$, $54$, $81$, $108$, $135$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$27$"
+       ],
+       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "explanation": [
+        "Start at $27$. Add $27$ each time.",
+        "$27$, $54$, $81$, $108$, $135$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-check-6",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "$32$",
        "answer": [
         "$32$, $64$, $96$, $128$, $160$"
        ],
@@ -573,7 +678,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write the first 5 multiples of $32$."
+        "$32$"
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
@@ -583,10 +688,33 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-check-4",
+       "id": "msl-check-7",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "Write the first 5 multiples of $42$",
+       "title": "$34$",
+       "answer": [
+        "$34$, $68$, $102$, $136$, $170$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$34$"
+       ],
+       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "explanation": [
+        "Start at $34$. Add $34$ each time.",
+        "$34$, $68$, $102$, $136$, $170$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-check-8",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "$42$",
        "answer": [
         "$42$, $84$, $126$, $168$, $210$"
        ],
@@ -596,7 +724,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write the first 5 multiples of $42$."
+        "$42$"
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
@@ -604,13 +732,36 @@
         "$42$, $84$, $126$, $168$, $210$"
        ],
        "expectedErrors": []
+      },
+      {
+       "id": "msl-check-9",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "$45$",
+       "answer": [
+        "$45$, $90$, $135$, $180$, $225$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$45$"
+       ],
+       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "explanation": [
+        "Start at $45$. Add $45$ each time.",
+        "$45$, $90$, $135$, $180$, $225$"
+       ],
+       "expectedErrors": []
       }
      ]
     }
    ],
-   "brief": "16–20 minutes. Four short independent lists; allow a times-table grid. Check a constant step and no missing terms before moving on.",
-   "built": "1phem6l",
-   "title": "List multiples",
+   "brief": "12–20 minutes. Nine fresh listing questions in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No LCM questions in this activity.",
+   "built": "1evvqp7",
+   "title": "Multiples book work",
    "family": "retrieval"
   },
   {
@@ -1330,8 +1481,8 @@
      "presentation": "whiteboard"
     }
    ],
-   "brief": "29–35 minutes. Five questions fade list starters to independent listing. Answers show both lists with the first match circled; use two-digit pairs chosen so each search stays short. The nested pair appears in book work.",
-   "built": "1g1gbz1",
+   "brief": "29–34 minutes. Five questions fade list starters to independent listing. Answers show both lists with the first match circled; use two-digit pairs chosen so each search stays short. The nested pair appears in book work.",
+   "built": "1tr5a4",
    "title": "Find the LCM",
    "family": "practice"
   },
@@ -1363,98 +1514,6 @@
        "id": "msl-book-1",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $22$",
-       "answer": [
-        "$22$, $44$, $66$, $88$, $110$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "First 5 multiples of $22$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $22$. Add $22$ each time.",
-        "$22$, $44$, $66$, $88$, $110$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "First 5 multiples of $26$",
-       "answer": [
-        "$26$, $52$, $78$, $104$, $130$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "First 5 multiples of $26$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $26$. Add $26$ each time.",
-        "$26$, $52$, $78$, $104$, $130$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "First 5 multiples of $34$",
-       "answer": [
-        "$34$, $68$, $102$, $136$, $170$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "First 5 multiples of $34$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $34$. Add $34$ each time.",
-        "$34$, $68$, $102$, $136$, $170$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-4",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "First 5 multiples of $45$",
-       "answer": [
-        "$45$, $90$, $135$, $180$, $225$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "First 5 multiples of $45$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $45$. Add $45$ each time.",
-        "$45$, $90$, $135$, $180$, $225$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-5",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
        "title": "LCM of $12$ and $20$",
        "answer": [
         "$60$"
@@ -1478,7 +1537,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-6",
+       "id": "msl-book-2",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $16$ and $20$",
@@ -1504,7 +1563,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-7",
+       "id": "msl-book-3",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $14$ and $35$",
@@ -1530,7 +1589,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-8",
+       "id": "msl-book-4",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $18$ and $36$",
@@ -1556,7 +1615,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-9",
+       "id": "msl-book-5",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $21$ and $28$",
@@ -1580,7 +1639,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-10",
+       "id": "msl-book-6",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $22$ and $33$",
@@ -1604,7 +1663,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-11",
+       "id": "msl-book-7",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $24$ and $40$",
@@ -1628,7 +1687,7 @@
        "expectedErrors": []
       },
       {
-       "id": "msl-book-12",
+       "id": "msl-book-8",
        "tool": "multiples-systematic-listing",
        "level": "level1",
        "title": "LCM of $30$ and $45$",
@@ -1650,12 +1709,108 @@
         "LCM = $90$."
        ],
        "expectedErrors": []
+      },
+      {
+       "id": "msl-book-9",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $10$ and $25$",
+       "answer": [
+        "$50$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $10$ and $25$."
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "10: $10$, $20$, $30$, $40$, $\\text{\\textcircled{\\scriptsize 50}}$",
+        "25: $25$, $\\text{\\textcircled{\\scriptsize 50}}$",
+        "LCM = $50$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-10",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $15$ and $25$",
+       "answer": [
+        "$75$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $15$ and $25$."
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "15: $15$, $30$, $45$, $60$, $\\text{\\textcircled{\\scriptsize 75}}$",
+        "25: $25$, $50$, $\\text{\\textcircled{\\scriptsize 75}}$",
+        "LCM = $75$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-11",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $20$ and $50$",
+       "answer": [
+        "$100$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $20$ and $50$."
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "20: $20$, $40$, $60$, $80$, $\\text{\\textcircled{\\scriptsize 100}}$",
+        "50: $50$, $\\text{\\textcircled{\\scriptsize 100}}$",
+        "LCM = $100$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-12",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $28$ and $42$",
+       "answer": [
+        "$84$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $28$ and $42$."
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "28: $28$, $56$, $\\text{\\textcircled{\\scriptsize 84}}$",
+        "42: $42$, $\\text{\\textcircled{\\scriptsize 84}}$",
+        "LCM = $84$."
+       ],
+       "expectedErrors": []
       }
      ]
     }
    ],
-   "brief": "35–42 minutes. Fresh questions, not repeats of the board examples or practice. Work in number order: 1–4 listing, 5–8 supported LCM, 9–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
-   "built": "ll8z4m",
+   "brief": "34–42 minutes. Twelve fresh LCM questions only, not repeats of the board examples or practice. Work in number order: 1–4 supported LCM, 5–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
+   "built": "1kc1onl",
    "title": "Book work",
    "family": "retrieval"
   },
@@ -1699,9 +1854,9 @@
        "id": "msl-exit-1",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $28$",
+       "title": "Find the LCM of $16$ and $40$",
        "answer": [
-        "$28$, $56$, $84$, $112$, $140$"
+        "$80$"
        ],
        "format": "open",
        "status": "ready",
@@ -1709,12 +1864,14 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "First 5 multiples of $28$."
+        "Find the LCM of $16$ and $40$.",
+        "Write both lists. Circle the match."
        ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "Start at $28$. Add $28$ each time.",
-        "$28$, $56$, $84$, $112$, $140$"
+        "16: $16$, $32$, $48$, $64$, $\\text{\\textcircled{\\scriptsize 80}}$",
+        "40: $40$, $\\text{\\textcircled{\\scriptsize 80}}$",
+        "LCM = $80$."
        ],
        "expectedErrors": []
       },
@@ -1770,8 +1927,8 @@
      ]
     }
    ],
-   "brief": "42–45 minutes. Check listing, recognising a shared multiple and independently finding LCM; use answers to decide which step needs revisiting.",
-   "built": "18imado",
+   "brief": "42–45 minutes. Check common multiples and independently finding LCM; use answers to decide which step needs revisiting.",
+   "built": "1v626v0",
    "title": "Exit ticket",
    "family": "retrieval"
   }
