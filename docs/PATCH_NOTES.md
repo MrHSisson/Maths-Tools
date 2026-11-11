@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-11 — Decks are no longer bundled into the app; the rectilinear foundations draft is deleted
+
+Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `src/decks/index.ts`, `store.ts`, `Editor.tsx`, `useSyncedDecks.ts`, `DecksTab.tsx`, `admin/DecksSection.tsx`, `shared/ToolShellCore.tsx`, `src/tests/snapshotDecks.ts`.
+
+- **The app no longer bundles `src/decks/data/*.json`.** The shared (cloud) copy is the only source: a device lists the decks it has synced. The deck editor's list already synced on open; the Decks tab (Developing tools on), the dashboard's Decks section and a tool's menu now sync when they open (`useSyncedDecks`). A deck saved on a device before this change keeps showing, because the list now also includes any saved copy on the device.
+- **Deleting a deck is now real.** A bundled deck could only be "reset", so it always came back. Delete now removes the shared copy and the device copy (the editor's Delete this deck); there is no Reset to the original.
+- **Trade-off:** a brand-new device that is offline shows no decks (before, it showed the repo's). The repo JSON stays as a backup and is what the tests read (they now use `src/tests/snapshotDecks.ts`); `npm run deck` is unchanged.
+- **Deleted:** `my-rectilinear-foundations-mwb163ic` (an unused editor demonstration draft; not published), from the repo and from the shared copy. `year7-rectilinear-area` is the real lesson and is untouched.
+- Not checked by eye in a browser: the three listing pages after a sync, and a fresh-device first load.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
 ## 2026-11-11 — Primes and divisibility deck: the rule for 9, straight after the rule for 3
 
 Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `src/decks/data/primes-divisibility.json` (the live copy was pulled first and the change pushed through the merging push), `specs/decks/primes-and-divisibility.md` and `-questions.md`.

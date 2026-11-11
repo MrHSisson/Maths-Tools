@@ -1,6 +1,6 @@
 // The deck builder (src/decks/builder.ts) and the deck checks (src/decks/deckChecks.ts).
 import { describe, expect, it } from "vitest";
-import { DECKS } from "../decks";
+import { DECKS } from "./snapshotDecks";
 import { buildDeck, Q, S } from "../decks/builder";
 import { checkDeckContent } from "../decks/deckChecks";
 import { authoredEstimationWorking } from "../shared/estimationWorking";

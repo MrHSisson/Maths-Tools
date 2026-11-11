@@ -4,6 +4,7 @@ import { useDevMode } from '../devMode';
 import { usePhoneDevice } from '../shared/layoutMode';
 import { usePublishedIndex } from '../decks/published';
 import { allDecks } from '../decks/store';
+import { useSyncedDecks } from '../decks/useSyncedDecks';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -14,6 +15,7 @@ const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day:
 export default function DecksTab() {
   const published = usePublishedIndex();
   const unlocked = useDevMode();
+  useSyncedDecks(unlocked);   // decks are not bundled: ask the shared copy, then re-render with what this device holds
   const phone = usePhoneDevice();   // a phone only previews a deck: no editor
   const pub = published ?? {};
   const fromPublished: GalleryDeck[] = Object.entries(pub).sort((a, b) => b[1].publishedAt.localeCompare(a[1].publishedAt))

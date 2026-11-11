@@ -1,5 +1,5 @@
-// Decks are data. The shared copy (what Harry sees and edits) is the LIVE one and the master; src/decks/data/<id>.json is its snapshot
-// in the repo: git's backup and history of it, what the tests read, and the first-run fallback on a fresh device.
+// Decks are data. The shared copy (what Harry sees and edits) is the LIVE one and the master; src/decks/data/<id>.json is its backup
+// in the repo: git's history of it and what the tests read. The app does not bundle it (since 2026-11-11): a device gets decks from the shared copy.
 //   npm run deck -- check <id|all> --live  check the LIVE copy(ies) directly: nothing is read from or written to the repo (add --layout to measure every slide too)
 //   npm run deck -- backup [<id>|all]     write the live copy(ies) into src/decks/data as the repo snapshot (commit it); a file with unpushed edits is left alone
 //   npm run deck -- pull <id>             write the shared copy to src/decks/data/<id>.json (always do this before changing a deck)

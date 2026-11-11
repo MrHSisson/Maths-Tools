@@ -1,7 +1,8 @@
 // Decks — every built deck, layout and hand-picked bank must be well-formed (src/decks, docs/reference/decks.md).
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import { BANK, DECKS, decksForPath } from "../decks";
+import { BANK } from "../decks";
+import { DECKS, decksForPath } from "./snapshotDecks";
 import { LAYOUTS } from "../decks/layouts";
 import { MISCONCEPTIONS } from "../shared/misconceptions";
 import { GENERATOR_TOOLS, generateFrom, generateSet, loadConfig, loadDepthItems, loadGenerator } from "../decks/generators";

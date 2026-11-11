@@ -5,7 +5,7 @@ import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, Move, MoveUpRight, Shapes,
   AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
   Printer,
 } from "lucide-react";
 import { loadKaTeX } from "../shared/katex";
@@ -32,7 +32,7 @@ import { QuestionWorkspace } from "./QuestionWorkspace";
 import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
 import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
-import { adoptShared, bankQuestion, builtDeck, deckBase, mergeIn, onDeckMerged, resetDeck, saveDeck } from "./store";
+import { adoptShared, bankQuestion, deckBase, deleteDeck, mergeIn, onDeckMerged, saveDeck } from "./store";
 import { fetchDeck, fetchIndex } from "./cloud";
 import { inkPath } from "./InkLayer";
 import { strokeTouches } from "./inkMath";
@@ -665,7 +665,6 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   };
 
   const hist = { canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
-  const isBuilt = !!builtDeck(deck.id);
   const group = chosen.length > 1 ? unionBox(chosen.map(bbox)) : null;
 
   const present = () => { stopEditing(); onPresent(deckRef.current, si); };
@@ -752,8 +751,8 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
           <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
           <MenuDivider />
-          <MenuItem danger icon={isBuilt ? <RotateCcw size={14} /> : <Trash2 size={14} />} label={isBuilt ? "Reset to the original" : "Delete this deck"} note={isBuilt ? "Your changes on this device are lost." : "Removes it from this device."}
-            onClick={() => { close(); if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }} />
+          <MenuItem danger icon={<Trash2 size={14} />} label="Delete this deck" note="Removes it from the shared copy and this device."
+            onClick={() => { close(); if (window.confirm("Delete this deck? It is removed from the shared copy and from this device. Version history can bring it back.")) { deleteDeck(deck.id); window.location.href = "/decks"; } }} />
         </>
       )}
     </Menu>

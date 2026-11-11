@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { allDecks } from "../decks/store";
+import { useSyncedDecks } from "../decks/useSyncedDecks";
 import { usePublishedIndex } from "../decks/published";
 import { DECK_STRANDS, FAMILY_STYLE, type DeckDef, type DeckFamily } from "../decks/types";
 import { TOOLS } from "./facts";
@@ -17,12 +18,13 @@ const familyCounts = (d: DeckDef) => FAMILIES.map(f => ({ f, n: d.slides.filter(
 /** Every deck at a glance: strand, slides by kind, the tool it belongs to and whether it is published. Read from the decks themselves, never typed. */
 export function DecksSection() {
   const published = usePublishedIndex();
+  const synced = useSyncedDecks();
   const [query, setQuery] = useState("");
   const [strand, setStrand] = useState("all");
   const [state, setState] = useState<"all" | "published" | "not">("all");
   const [open, setOpen] = useState<string | null>(null);
 
-  const rows: Row[] = useMemo(() => allDecks().map(x => ({ ...x, publishedAt: published?.[x.deck.id]?.publishedAt })), [published]);
+  const rows: Row[] = useMemo(() => allDecks().map(x => ({ ...x, publishedAt: published?.[x.deck.id]?.publishedAt })), [published, synced]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: synced changes when the shared decks have been read into this device
   const shown = rows.filter(r => {
     if (strand !== "all" && (r.deck.strand ?? "") !== strand) return false;
     if (state === "published" && !r.publishedAt) return false;
