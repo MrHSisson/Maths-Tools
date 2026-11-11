@@ -1363,9 +1363,9 @@
        "id": "msl-book-1",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $12$",
+       "title": "First 5 multiples of $22$",
        "answer": [
-        "$12$, $24$, $36$, $48$, $60$"
+        "$22$, $44$, $66$, $88$, $110$"
        ],
        "format": "open",
        "status": "ready",
@@ -1373,12 +1373,12 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "First 5 multiples of $12$."
+        "First 5 multiples of $22$."
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
-        "Start at $12$. Add $12$ each time.",
-        "$12$, $24$, $36$, $48$, $60$"
+        "Start at $22$. Add $22$ each time.",
+        "$22$, $44$, $66$, $88$, $110$"
        ],
        "expectedErrors": []
       },
@@ -1386,9 +1386,9 @@
        "id": "msl-book-2",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $18$",
+       "title": "First 5 multiples of $26$",
        "answer": [
-        "$18$, $36$, $54$, $72$, $90$"
+        "$26$, $52$, $78$, $104$, $130$"
        ],
        "format": "open",
        "status": "ready",
@@ -1396,12 +1396,12 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "First 5 multiples of $18$."
+        "First 5 multiples of $26$."
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
-        "Start at $18$. Add $18$ each time.",
-        "$18$, $36$, $54$, $72$, $90$"
+        "Start at $26$. Add $26$ each time.",
+        "$26$, $52$, $78$, $104$, $130$"
        ],
        "expectedErrors": []
       },
@@ -1409,9 +1409,9 @@
        "id": "msl-book-3",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $21$",
+       "title": "First 5 multiples of $34$",
        "answer": [
-        "$21$, $42$, $63$, $84$, $105$"
+        "$34$, $68$, $102$, $136$, $170$"
        ],
        "format": "open",
        "status": "ready",
@@ -1419,12 +1419,12 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "First 5 multiples of $21$."
+        "First 5 multiples of $34$."
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
-        "Start at $21$. Add $21$ each time.",
-        "$21$, $42$, $63$, $84$, $105$"
+        "Start at $34$. Add $34$ each time.",
+        "$34$, $68$, $102$, $136$, $170$"
        ],
        "expectedErrors": []
       },
@@ -1432,9 +1432,9 @@
        "id": "msl-book-4",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "First 5 multiples of $30$",
+       "title": "First 5 multiples of $45$",
        "answer": [
-        "$30$, $60$, $90$, $120$, $150$"
+        "$45$, $90$, $135$, $180$, $225$"
        ],
        "format": "open",
        "status": "ready",
@@ -1442,12 +1442,12 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "First 5 multiples of $30$."
+        "First 5 multiples of $45$."
        ],
        "rationale": "List every positive multiple in order, starting with the number itself.",
        "explanation": [
-        "Start at $30$. Add $30$ each time.",
-        "$30$, $60$, $90$, $120$, $150$"
+        "Start at $45$. Add $45$ each time.",
+        "$45$, $90$, $135$, $180$, $225$"
        ],
        "expectedErrors": []
       },
@@ -1455,7 +1455,85 @@
        "id": "msl-book-5",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "LCM of $12$ and $18$",
+       "title": "LCM of $12$ and $20$",
+       "answer": [
+        "$60$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $12$ and $20$.",
+        "$12: \\;12,\\;\\ldots$",
+        "$20: \\;20,\\;\\ldots$"
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "12: $12$, $24$, $36$, $48$, $\\text{\\textcircled{\\scriptsize 60}}$",
+        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
+        "LCM = $60$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-6",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $16$ and $20$",
+       "answer": [
+        "$80$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $16$ and $20$.",
+        "$16: \\;16,\\;32,\\;\\ldots$",
+        "$20: \\;20,\\;40,\\;\\ldots$"
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "16: $16$, $32$, $48$, $64$, $\\text{\\textcircled{\\scriptsize 80}}$",
+        "20: $20$, $40$, $60$, $\\text{\\textcircled{\\scriptsize 80}}$",
+        "LCM = $80$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-7",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $14$ and $35$",
+       "answer": [
+        "$70$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "LCM of $14$ and $35$.",
+        "$14: \\;14,\\;28,\\;\\ldots$",
+        "$35: \\;35,\\;\\ldots$"
+       ],
+       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+       "explanation": [
+        "14: $14$, $28$, $42$, $56$, $\\text{\\textcircled{\\scriptsize 70}}$",
+        "35: $35$, $\\text{\\textcircled{\\scriptsize 70}}$",
+        "LCM = $70$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "msl-book-8",
+       "tool": "multiples-systematic-listing",
+       "level": "level1",
+       "title": "LCM of $18$ and $36$",
        "answer": [
         "$36$"
        ],
@@ -1465,93 +1543,15 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "LCM of $12$ and $18$.",
-        "$12: \\;12,\\;\\ldots$",
-        "$18: \\;18,\\;\\ldots$"
+        "LCM of $18$ and $36$.",
+        "$18: \\;18,\\;\\ldots$",
+        "$36: \\;36,\\;\\ldots$"
        ],
        "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "12: $12$, $24$, $\\text{\\textcircled{\\scriptsize 36}}$",
         "18: $18$, $\\text{\\textcircled{\\scriptsize 36}}$",
+        "36: $\\text{\\textcircled{\\scriptsize 36}}$",
         "LCM = $36$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-6",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $12$ and $16$",
-       "answer": [
-        "$48$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $12$ and $16$.",
-        "$12: \\;12,\\;24,\\;\\ldots$",
-        "$16: \\;16,\\;32,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "12: $12$, $24$, $36$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "LCM = $48$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-7",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $15$ and $20$",
-       "answer": [
-        "$60$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $15$ and $20$.",
-        "$15: \\;15,\\;30,\\;\\ldots$",
-        "$20: \\;20,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "15: $15$, $30$, $45$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "LCM = $60$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-8",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $15$ and $30$",
-       "answer": [
-        "$30$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $15$ and $30$.",
-        "$15: \\;15,\\;\\ldots$",
-        "$30: \\;30,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "15: $15$, $\\text{\\textcircled{\\scriptsize 30}}$",
-        "30: $\\text{\\textcircled{\\scriptsize 30}}$",
-        "LCM = $30$."
        ],
        "expectedErrors": []
       },
@@ -1559,9 +1559,9 @@
        "id": "msl-book-9",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "LCM of $14$ and $21$",
+       "title": "LCM of $21$ and $28$",
        "answer": [
-        "$42$"
+        "$84$"
        ],
        "format": "open",
        "status": "ready",
@@ -1569,13 +1569,13 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "LCM of $14$ and $21$."
+        "LCM of $21$ and $28$."
        ],
        "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$",
-        "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$",
-        "LCM = $42$."
+        "21: $21$, $42$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
+        "28: $28$, $56$, $\\text{\\textcircled{\\scriptsize 84}}$",
+        "LCM = $84$."
        ],
        "expectedErrors": []
       },
@@ -1583,9 +1583,9 @@
        "id": "msl-book-10",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "LCM of $16$ and $24$",
+       "title": "LCM of $22$ and $33$",
        "answer": [
-        "$48$"
+        "$66$"
        ],
        "format": "open",
        "status": "ready",
@@ -1593,13 +1593,13 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "LCM of $16$ and $24$."
+        "LCM of $22$ and $33$."
        ],
        "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "24: $24$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "LCM = $48$."
+        "22: $22$, $44$, $\\text{\\textcircled{\\scriptsize 66}}$",
+        "33: $33$, $\\text{\\textcircled{\\scriptsize 66}}$",
+        "LCM = $66$."
        ],
        "expectedErrors": []
       },
@@ -1607,9 +1607,9 @@
        "id": "msl-book-11",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "LCM of $18$ and $24$",
+       "title": "LCM of $24$ and $40$",
        "answer": [
-        "$72$"
+        "$120$"
        ],
        "format": "open",
        "status": "ready",
@@ -1617,13 +1617,13 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "LCM of $18$ and $24$."
+        "LCM of $24$ and $40$."
        ],
        "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "18: $18$, $36$, $54$, $\\text{\\textcircled{\\scriptsize 72}}$",
-        "24: $24$, $48$, $\\text{\\textcircled{\\scriptsize 72}}$",
-        "LCM = $72$."
+        "24: $24$, $48$, $72$, $96$, $\\text{\\textcircled{\\scriptsize 120}}$",
+        "40: $40$, $80$, $\\text{\\textcircled{\\scriptsize 120}}$",
+        "LCM = $120$."
        ],
        "expectedErrors": []
       },
@@ -1631,9 +1631,9 @@
        "id": "msl-book-12",
        "tool": "multiples-systematic-listing",
        "level": "level1",
-       "title": "LCM of $20$ and $30$",
+       "title": "LCM of $30$ and $45$",
        "answer": [
-        "$60$"
+        "$90$"
        ],
        "format": "open",
        "status": "ready",
@@ -1641,21 +1641,21 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "LCM of $20$ and $30$."
+        "LCM of $30$ and $45$."
        ],
        "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
        "explanation": [
-        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "30: $30$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "LCM = $60$."
+        "30: $30$, $60$, $\\text{\\textcircled{\\scriptsize 90}}$",
+        "45: $45$, $\\text{\\textcircled{\\scriptsize 90}}$",
+        "LCM = $90$."
        ],
        "expectedErrors": []
       }
      ]
     }
    ],
-   "brief": "35–42 minutes. Work in number order: 1–4 listing, 5–8 supported LCM, 9–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
-   "built": "lfxjdo",
+   "brief": "35–42 minutes. Fresh questions, not repeats of the board examples or practice. Work in number order: 1–4 listing, 5–8 supported LCM, 9–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
+   "built": "ll8z4m",
    "title": "Book work",
    "family": "retrieval"
   },

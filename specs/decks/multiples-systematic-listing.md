@@ -26,7 +26,7 @@ The lesson sequence, question ladder and misconception targets were proposed and
 
 ## Question ladder and checks
 
-All sequences start with the given positive number, include every multiple, and increase by a constant amount. Listing uses two-digit starting numbers from 12 to 42; every standalone task asks for the first five multiples. Pupils may repeatedly add the starting number instead of relying on fluent multiplication recall. LCM pairs are selected to keep searches short (at most four entries per list). Intentional answer repetition reinforces the method. Two-list worked answers circle both copies of the first match; the book-work and independent exit LCM answers are compact, with both lists retained in their authored working.
+All sequences start with the given positive number, include every multiple, and increase by a constant amount. Listing uses two-digit starting numbers; every standalone task asks for the first five multiples. Pupils may repeatedly add the starting number instead of relying on fluent multiplication recall. LCM pairs are selected to keep searches short (at most five entries per list). Intentional answer repetition reinforces the method. Two-list worked answers circle both copies of the first match; the book-work and independent exit LCM answers are compact, with both lists retained in their authored working.
 
 | Set | Rung | Answer | Trap / teaching focus |
 |---|---|---|---|
@@ -45,23 +45,25 @@ All sequences start with the given positive number, include every multiple, and 
 | lcm-3 | Independent two-list LCM: 15 and 20 | 60 | Continue until the first shared number appears; circle it in both. |
 | lcm-4 | Independent two-list LCM: 21 and 14 | 42 | Continue until the first shared number appears; circle it in both. |
 | lcm-5 | Independent two-list LCM: 18 and 24 | 72 | Continue until the first shared number appears; circle it in both. |
-| book-1 | First five multiples: First 5 multiples of 12. | 12, 24, 36, 48, 60 | Start with the number itself; keep the same step. |
-| book-2 | First five multiples: First 5 multiples of 18. | 18, 36, 54, 72, 90 | Start with the number itself; keep the same step. |
-| book-3 | First five multiples: First 5 multiples of 21. | 21, 42, 63, 84, 105 | Start with the number itself; keep the same step. |
-| book-4 | First five multiples: First 5 multiples of 30. | 30, 60, 90, 120, 150 | Start with the number itself; keep the same step. |
-| book-5 | Supported LCM: LCM of 12 and 18. | 36 | Show both ordered lists and choose the smallest match. |
-| book-6 | Supported LCM: LCM of 12 and 16. | 48 | Show both ordered lists and choose the smallest match. |
-| book-7 | Supported LCM: LCM of 15 and 20. | 60 | Show both ordered lists and choose the smallest match. |
-| book-8 | Supported LCM: LCM of 15 and 30. | 30 | The larger number is already a multiple of the smaller. |
-| book-9 | Independent LCM: LCM of 14 and 21. | 42 | Show both ordered lists and choose the smallest match. |
-| book-10 | Independent LCM: LCM of 16 and 24. | 48 | Show both ordered lists and choose the smallest match. |
-| book-11 | Independent LCM: LCM of 18 and 24. | 72 | Show both ordered lists and choose the smallest match. |
-| book-12 | Independent LCM: LCM of 20 and 30. | 60 | Show both ordered lists and choose the smallest match. |
+| book-1 | Fresh first five multiples: First 5 multiples of 22. | 22, 44, 66, 88, 110 | Start with the number itself; keep the same step. |
+| book-2 | Fresh first five multiples: First 5 multiples of 26. | 26, 52, 78, 104, 130 | Start with the number itself; keep the same step. |
+| book-3 | Fresh first five multiples: First 5 multiples of 34. | 34, 68, 102, 136, 170 | Start with the number itself; keep the same step. |
+| book-4 | Fresh first five multiples: First 5 multiples of 45. | 45, 90, 135, 180, 225 | Start with the number itself; keep the same step. |
+| book-5 | Fresh supported LCM: LCM of 12 and 20. | 60 | Show both ordered lists and choose the smallest match. |
+| book-6 | Fresh supported LCM: LCM of 16 and 20. | 80 | Show both ordered lists and choose the smallest match. |
+| book-7 | Fresh supported LCM: LCM of 14 and 35. | 70 | Show both ordered lists and choose the smallest match. |
+| book-8 | Fresh supported LCM: LCM of 18 and 36. | 36 | The larger number is already a multiple of the smaller. |
+| book-9 | Fresh independent LCM: LCM of 21 and 28. | 84 | Show both ordered lists and choose the smallest match. |
+| book-10 | Fresh independent LCM: LCM of 22 and 33. | 66 | Show both ordered lists and choose the smallest match. |
+| book-11 | Fresh independent LCM: LCM of 24 and 40. | 120 | Show both ordered lists and choose the smallest match. |
+| book-12 | Fresh independent LCM: LCM of 30 and 45. | 90 | Show both ordered lists and choose the smallest match. |
 | exit-1 | Listing: First 5 multiples of 28. | 28, 56, 84, 112, 140 | Check independently with two-digit numbers. |
 | exit-2 | Recognise a common multiple: 18 and 30 | 90 in both lists | Check independently with two-digit numbers. |
 | exit-3 | Independent LCM: Find the LCM of 18 and 27. | 54 | Check independently with two-digit numbers. |
 
-**Stretch within book-work time:** extend question 12 to the next common multiple, 120; explain why it is not the lowest.
+**Stretch within book-work time:** extend question 12 to the next common multiple, 180; explain why it is not the lowest.
+
+Independent book work uses twelve fresh questions. The four listing bases and eight unordered LCM pairs are checked against the rest of the deck, including worked examples and whiteboard practice; reversed pairs count as repeats. Answers may recur when different pairs have the same LCM.
 
 ## Presentation
 

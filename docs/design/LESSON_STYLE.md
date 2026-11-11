@@ -16,6 +16,7 @@ A living page, one screen long. Read it before planning or building a deck; chan
 - Calculators are available, so numbers are not limited to mental arithmetic beyond what the method needs. Worked boards end with a **Calculator** column beside the estimate.
 - Answers should spread across the tool's range, not pile on 5, 10 and 2. Check the generator's answers before relying on it.
 - Authored working matches the generator's method and labels.
+- **Independent book work uses fresh questions**, rather than repeating worked examples or whiteboard practice. For common multiples, reversing the numbers does not make a new question.
 
 ## Words and definitions
 
