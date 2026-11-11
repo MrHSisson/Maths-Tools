@@ -32,7 +32,7 @@ import { QuestionWorkspace } from "./QuestionWorkspace";
 import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
 import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
-import { adoptShared, bankQuestion, deckBase, deleteDeck, mergeIn, onDeckMerged, saveDeck, syncAllDecks } from "./store";
+import { adoptShared, bankQuestion, deckBase, deleteDeck, mergeIn, onDeckMerged, saveDeck } from "./store";
 import { fetchDeck } from "./cloud";
 import { inkPath } from "./InkLayer";
 import { strokeTouches } from "./inkMath";
@@ -193,28 +193,14 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   useEffect(() => onDeckMerged(start.id, takeShared), [start.id, takeShared]);                       // right after one of this editor's saves
   // Nothing polls: the deck is read when it opens, a save is merged by the server, and this looks for newer changes only when asked
   // (File → Check for changes), so an editor left open does not keep the database awake.
-  /** Looks in the shared copy for newer changes to this deck and merges them in; says what it found. */
-  const checkThisDeck = useCallback(async (): Promise<string> => {
-    const shared = await fetchDeck(start.id), base = deckBase(start.id);
-    if (!shared) return "Could not reach the shared copy";
-    if (!base || (base.updatedAt ?? "") >= (shared.updatedAt ?? "")) return "this deck is up to date";
-    takeShared(shared, base);
-    return "changes to this deck were merged in";
-  }, [start.id, takeShared]);
   const checkForUpdates = useCallback(async () => {
     setStatus("Checking the shared copy…");
-    const r = await checkThisDeck();
-    setStatus(r.startsWith("Could not") ? r : r[0].toUpperCase() + r.slice(1));
-  }, [checkThisDeck]);
-  /** Every other deck is brought up to date on this device (they are not open here), then this one is merged. */
-  const checkAllDecks = useCallback(async () => {
-    setStatus("Checking all decks…");
-    const updated = await syncAllDecks(start.id);
-    if (updated === null) { setStatus("Could not reach the shared copy"); return; }
-    const others = updated.length ? `${updated.length} other deck${updated.length === 1 ? "" : "s"} updated` : "other decks are up to date";
-    const mine = await checkThisDeck();
-    setStatus(mine.startsWith("Could not") ? mine : `${others[0].toUpperCase()}${others.slice(1)}; ${mine}`);
-  }, [start.id, checkThisDeck]);
+    const shared = await fetchDeck(start.id), base = deckBase(start.id);
+    if (!shared) { setStatus("Could not reach the shared copy"); return; }
+    if (!base || (base.updatedAt ?? "") >= (shared.updatedAt ?? "")) { setStatus("Up to date: nothing newer in the shared copy"); return; }
+    takeShared(shared, base);
+    setStatus("Changes from the shared copy were merged in");
+  }, [start.id, takeShared]);
 
   const slide = deck.slides[Math.min(si, deck.slides.length - 1)];
   const selSet = new Set(sel);
@@ -760,7 +746,6 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
           <MenuItem icon={<Printer size={14} />} label="Print slides…" note="Key points or every slide, 1, 2, 4 or 8 to an A4 sheet, to stick into books." onClick={() => { close(); setPrintSlidesOpen(true); }} />
           <MenuItem icon={<RefreshCw size={14} />} label="Check for changes" note="Look in the shared copy for edits made on another device or by Claude." onClick={() => { close(); void checkForUpdates(); }} />
-          <MenuItem icon={<RefreshCw size={14} />} label="Check all decks for changes" note="Look for changes to every deck, not just this one." onClick={() => { close(); void checkAllDecks(); }} />
           <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
           <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
           <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />

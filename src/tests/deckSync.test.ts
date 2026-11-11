@@ -89,14 +89,6 @@ describe("Check for changes across all decks", () => {
     expect(await syncAllDecks()).toEqual([]);                                         // nothing newer now
   });
 
-  it("skips the deck that is open in the editor (it merges that one itself)", async () => {
-    saveDeck(stamp("open", "Open", "2026-11-01T10:00:00.000Z"), false);
-    vi.mocked(cloud.fetchIndex).mockResolvedValue(index({ open: "2026-11-05T10:00:00.000Z" }) as never);
-    vi.mocked(cloud.fetchDeck).mockResolvedValue(stamp("open", "Replaced", "2026-11-05T10:00:00.000Z") as never);
-    expect(await syncAllDecks("open")).toEqual([]);
-    expect(loadDeck("open")?.title).toBe("Open");
-  });
-
   it("says so (null) when the shared copy cannot be reached", async () => {
     vi.mocked(cloud.fetchIndex).mockResolvedValue(null);
     expect(await syncAllDecks()).toBeNull();

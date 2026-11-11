@@ -122,11 +122,10 @@ export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(
  *  changed (so a page can re-read), or false when sharing is not available. */
 export const syncFromCloud = async (onlyId?: string): Promise<boolean> => (await syncDecks(onlyId))?.changed ?? false;
 
-/** The "Check for changes" button: every deck (except `except`, which an open editor handles itself, merging rather than replacing).
- *  Resolves to the titles of the decks that were updated, or null when sharing is not available. */
-export const syncAllDecks = async (except?: string): Promise<string[] | null> => (await syncDecks(undefined, except))?.updated ?? null;
+/** The deck list's "Check for changes" button: every deck. Resolves to the titles of the decks that were updated, or null when sharing is not available. */
+export const syncAllDecks = async (): Promise<string[] | null> => (await syncDecks())?.updated ?? null;
 
-async function syncDecks(onlyId?: string, except?: string): Promise<{ changed: boolean; updated: string[] } | null> {
+async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: string[] } | null> {
   const snap = await fetchIndex();
   if (!snap) return null;
   let changed = false;
@@ -136,7 +135,7 @@ async function syncDecks(onlyId?: string, except?: string): Promise<{ changed: b
   const merged = { ...snap.questions, ...mine };
   if (JSON.stringify(merged) !== JSON.stringify(mine)) { write(BANK_KEY, merged); changed = true; }
   for (const [id, entry] of Object.entries(snap.index)) {
-    if ((onlyId && id !== onlyId) || id === except) continue;
+    if (onlyId && id !== onlyId) continue;
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
     if (local?.updatedAt && local.updatedAt >= entry.updatedAt) continue;
     const deck = await fetchDeck(id);
