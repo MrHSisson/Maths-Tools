@@ -1,9 +1,9 @@
-// Where a teacher's work is kept: on this device for now (localStorage). A built deck the teacher edits is saved
-// as a whole copy under its own id ("Reset to original" removes it); a teacher's own decks and questions live
-// beside them. Every read is guarded, so a private window or full storage falls back to the built decks.
+// Where a teacher's work is kept: the shared copy (cloud) is the master and this device keeps what it has opened (localStorage, one whole
+// copy per deck under its own id). Decks are not bundled into the app, so a deck a device has never synced is not listed until it does
+// (syncFromCloud). Every read is guarded, so a private window or full storage just means nothing is kept here.
 import { mergeDecks, sameDeck } from "../../api/_deckMerge";
 import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck, setSyncHandler } from "./cloud";
-import { BANK, DECKS } from "./index";
+import { BANK } from "./index";
 import { normaliseDeck } from "./normalise";
 import type { LibraryQuestion, DeckDef } from "./types";
 
@@ -19,14 +19,17 @@ const write = (key: string, value: unknown): boolean => {
   try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
 };
 
-export const builtDeck = (id: string): DeckDef | undefined => DECKS.find((d) => d.id === id);
-const myDeckIds = (): string[] => read<string[]>(MINE_KEY, []);
-const isEdited = (id: string): boolean => { try { return localStorage.getItem(DECK_KEY(id)) !== null; } catch { return false; } };
+/** Every deck this device holds: the listed ones plus any saved copy (a deck once bundled and edited here has a copy but no list entry). */
+const myDeckIds = (): string[] => {
+  const ids = new Set(read<string[]>(MINE_KEY, []));
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith("mt-deck:")) ids.add(k.slice("mt-deck:".length)); } } catch { /* ignore */ }
+  return [...ids];
+};
 
-/** The deck as this device sees it: the teacher's saved copy, else the built one. */
+/** The deck as this device holds it (the last copy synced or saved here), or undefined. */
 export const loadDeck = (id: string): DeckDef | undefined => {
   const saved = read<DeckDef | undefined>(DECK_KEY(id), undefined);
-  const deck = saved ? normaliseDeck(saved) : builtDeck(id);
+  const deck = saved ? normaliseDeck(saved) : undefined;
   if (deck && !seen.has(id)) seen.set(id, deck);
   return deck;
 };
@@ -68,7 +71,7 @@ export const saveDeck = (deck: DeckDef, share = true): boolean => {
   const stamped = share ? { ...deck, updatedAt: new Date().toISOString() } : deck;
   const ok = write(DECK_KEY(deck.id), stamped);
   if (ok && share) autoVersion(stamped);
-  if (ok && !builtDeck(deck.id) && !myDeckIds().includes(deck.id)) write(MINE_KEY, [...myDeckIds(), deck.id]);
+  if (ok && !read<string[]>(MINE_KEY, []).includes(deck.id)) write(MINE_KEY, [...read<string[]>(MINE_KEY, []), deck.id]);
   if (share) {
     const base = deckBase(deck.id);
     if (!base || !sameDeck(base as never, stamped as never)) pushDeck(stamped, base);     // nothing new relative to the shared copy: nothing to send
@@ -93,17 +96,18 @@ function autoVersion(deck: DeckDef) {
   if (!last || Date.now() - Date.parse(last.at) > AUTO_MINUTES * 60000) saveVersion(deck, "While editing");
 }
 
-/** A built deck: drop the saved copy. A teacher's own deck: delete it. */
-export const resetDeck = (id: string) => {
+/** Delete a deck: this device's copy, and the shared copy (so it goes from every device that syncs next). */
+export const deleteDeck = (id: string) => {
   try { localStorage.removeItem(DECK_KEY(id)); } catch { /* ignore */ }
-  if (!builtDeck(id)) write(MINE_KEY, myDeckIds().filter((x) => x !== id));
+  write(MINE_KEY, read<string[]>(MINE_KEY, []).filter((x) => x !== id));
   pushRemoveDeck(id);
 };
 
-export const allDecks = (): { deck: DeckDef; mine: boolean; edited: boolean }[] => [
-  ...DECKS.map((d) => ({ deck: loadDeck(d.id) ?? d, mine: false, edited: isEdited(d.id) })),
-  ...myDeckIds().flatMap((id) => { const d = loadDeck(id); return d ? [{ deck: d, mine: true, edited: false }] : []; }),
-];
+export const allDecks = (): { deck: DeckDef; mine: boolean; edited: boolean }[] =>
+  myDeckIds().flatMap((id) => { const d = loadDeck(id); return d ? [{ deck: d, mine: true, edited: false }] : []; });
+
+/** The decks this device holds for a tool's page. */
+export const decksForPath = (path: string): DeckDef[] => allDecks().map((x) => x.deck).filter((d) => d.toolPath === path);
 
 export const newDeckId = () => `my-${Date.now().toString(36)}`;
 
@@ -116,10 +120,16 @@ export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(
 // ── Pulling from the teacher's other devices ──
 /** Brings in every shared deck newer than this device's copy, and the shared questions. Resolves to whether anything
  *  changed (so a page can re-read), or false when sharing is not available. */
-export async function syncFromCloud(onlyId?: string): Promise<boolean> {
+export const syncFromCloud = async (onlyId?: string): Promise<boolean> => (await syncDecks(onlyId))?.changed ?? false;
+
+/** The deck list's "Check for changes" button: every deck. Resolves to the titles of the decks that were updated, or null when sharing is not available. */
+export const syncAllDecks = async (): Promise<string[] | null> => (await syncDecks())?.updated ?? null;
+
+async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: string[] } | null> {
   const snap = await fetchIndex();
-  if (!snap) return false;
+  if (!snap) return null;
   let changed = false;
+  const updated: string[] = [];
   const mine = myQuestions();
   // New library entries are immutable copies with unique ids. Keep unsent local copies on reconnect.
   const merged = { ...snap.questions, ...mine };
@@ -129,8 +139,8 @@ export async function syncFromCloud(onlyId?: string): Promise<boolean> {
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
     if (local?.updatedAt && local.updatedAt >= entry.updatedAt) continue;
     const deck = await fetchDeck(id);
-    if (deck) { if (local) saveVersion(local, "Before an update from another device"); saveDeck(deck, false); changed = true; }
+    if (deck) { if (local) saveVersion(local, "Before an update from another device"); saveDeck(deck, false); changed = true; updated.push(deck.title); }
   }
-  return changed;
+  return { changed, updated };
 }
 export const newQuestionId = () => `my-q-${Date.now().toString(36)}`;

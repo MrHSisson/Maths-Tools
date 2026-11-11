@@ -5,8 +5,8 @@ import {
   AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignHorizontalDistributeCenter, AlignStartHorizontal, AlignStartVertical,
   AlignVerticalDistributeCenter, ArrowDown, ArrowUp, Replace, ChevronsDown, ChevronsUp, Circle, Copy, Download, Image as ImageIcon, Minus, Move, MoveUpRight, Shapes,
   AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, Bold, BookOpen, Eraser, PenLine, ChevronLeft, ChevronRight, Clipboard, ClipboardPaste, Dices, Globe, History, Keyboard, Layers, LayoutGrid, ListTree, MessagesSquare,
-  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, RotateCcw, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
-  Printer,
+  BarChartHorizontal, FileText, PaintBucket, PanelLeft, PanelRight, Pencil, Play, Plus, Redo2, Sigma, Square, Table2, Trash2, Type, Undo2, Upload,
+  Printer, RefreshCw,
 } from "lucide-react";
 import { loadKaTeX } from "../shared/katex";
 import { useLayoutMode } from "../shared/layoutMode";
@@ -32,8 +32,8 @@ import { QuestionWorkspace } from "./QuestionWorkspace";
 import { editableDepthCopy, legacyItems, materializeDeck } from "./questions";
 import { loadDepthItems } from "./generators";
 import { withBriefs } from "./questionBrief";
-import { adoptShared, bankQuestion, builtDeck, deckBase, mergeIn, onDeckMerged, resetDeck, saveDeck } from "./store";
-import { fetchDeck, fetchIndex } from "./cloud";
+import { adoptShared, bankQuestion, deckBase, deleteDeck, mergeIn, onDeckMerged, saveDeck } from "./store";
+import { fetchDeck } from "./cloud";
 import { inkPath } from "./InkLayer";
 import { strokeTouches } from "./inkMath";
 import { PEN_COLORS } from "../shared/components/BoardTools";
@@ -191,17 +191,15 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     deckRef.current = adopted; setDeck(adopted); setHist((h) => h + 1);
   }, []);
   useEffect(() => onDeckMerged(start.id, takeShared), [start.id, takeShared]);                       // right after one of this editor's saves
-  useEffect(() => {                                                                                  // and now and then while it is open
-    let live = true;
-    const check = async () => {
-      if (document.hidden) return;
-      const snap = await fetchIndex(), entry = snap?.index[start.id], base = deckBase(start.id);
-      if (!live || !entry || !base || (base.updatedAt ?? "") >= entry.updatedAt) return;
-      const shared = await fetchDeck(start.id);
-      if (live && shared) takeShared(shared, base);
-    };
-    const timer = window.setInterval(() => void check(), 20000);
-    return () => { live = false; window.clearInterval(timer); };
+  // Nothing polls: the deck is read when it opens, a save is merged by the server, and this looks for newer changes only when asked
+  // (File → Check for changes), so an editor left open does not keep the database awake.
+  const checkForUpdates = useCallback(async () => {
+    setStatus("Checking the shared copy…");
+    const shared = await fetchDeck(start.id), base = deckBase(start.id);
+    if (!shared) { setStatus("Could not reach the shared copy"); return; }
+    if (!base || (base.updatedAt ?? "") >= (shared.updatedAt ?? "")) { setStatus("Up to date: nothing newer in the shared copy"); return; }
+    takeShared(shared, base);
+    setStatus("Changes from the shared copy were merged in");
   }, [start.id, takeShared]);
 
   const slide = deck.slides[Math.min(si, deck.slides.length - 1)];
@@ -665,7 +663,6 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
   };
 
   const hist = { canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
-  const isBuilt = !!builtDeck(deck.id);
   const group = chosen.length > 1 ? unionBox(chosen.map(bbox)) : null;
 
   const present = () => { stopEditing(); onPresent(deckRef.current, si); };
@@ -748,12 +745,13 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           <MenuDivider />
           <MenuItem icon={<FileText size={14} />} label="Worksheets…" note="Print the worksheets pinned to this lesson, and their answer sheets." onClick={() => { close(); setSheetsOpen(true); }} />
           <MenuItem icon={<Printer size={14} />} label="Print slides…" note="Key points or every slide, 1, 2, 4 or 8 to an A4 sheet, to stick into books." onClick={() => { close(); setPrintSlidesOpen(true); }} />
+          <MenuItem icon={<RefreshCw size={14} />} label="Check for changes" note="Look in the shared copy for edits made on another device or by Claude." onClick={() => { close(); void checkForUpdates(); }} />
           <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
           <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
           <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
           <MenuDivider />
-          <MenuItem danger icon={isBuilt ? <RotateCcw size={14} /> : <Trash2 size={14} />} label={isBuilt ? "Reset to the original" : "Delete this deck"} note={isBuilt ? "Your changes on this device are lost." : "Removes it from this device."}
-            onClick={() => { close(); if (window.confirm(isBuilt ? "Put this deck back to the original? Your changes on this device are lost." : "Delete this deck from this device?")) { resetDeck(deck.id); window.location.href = isBuilt ? `/decks/${deck.id}` : "/decks"; } }} />
+          <MenuItem danger icon={<Trash2 size={14} />} label="Delete this deck" note="Removes it from the shared copy and this device."
+            onClick={() => { close(); if (window.confirm("Delete this deck? It is removed from the shared copy and from this device. Version history can bring it back.")) { deleteDeck(deck.id); window.location.href = "/decks"; } }} />
         </>
       )}
     </Menu>

@@ -1,24 +1,15 @@
-// POST /api/decks with an in-memory blob store: two savers editing one deck merge instead of overwriting each other.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// POST /api/decks with an in-memory Postgres: two savers editing one deck merge instead of overwriting each other.
+import { beforeEach, describe, expect, it } from "vitest";
+import { setDb } from "../../api/_db";
+import { makeTestDb } from "./testDb";
 
-const store = new Map<string, { body: string; etag: number }>();
-class Missing extends Error {}
-class Precondition extends Error {}
-let writesBeforeConflict = 0;       // make the next N conditional writes fail, as if another save got in first
-vi.mock("@vercel/blob", () => ({
-  BlobNotFoundError: Missing, BlobPreconditionFailedError: Precondition,
-  head: async (p: string) => { const e = store.get(p); if (!e) throw new Missing(); return { etag: `"${e.etag}"` }; },
-  get: async (p: string) => { const e = store.get(p); return e ? { statusCode: 200, stream: new Response(e.body).body } : null; },
-  put: async (p: string, body: string, opts: { allowOverwrite?: boolean; ifMatch?: string }) => {
-    const e = store.get(p);
-    if (writesBeforeConflict > 0 && e) { writesBeforeConflict--; store.set(p, { body: e.body, etag: e.etag + 1 }); throw new Precondition(); }
-    if (e && !opts.allowOverwrite) throw new Error("already exists");
-    if (e && opts.ifMatch && opts.ifMatch !== `"${e.etag}"`) throw new Precondition();
-    store.set(p, { body, etag: (e?.etag ?? 0) + 1 });
-    return {};
-  },
-  del: async (p: string) => { store.delete(p); },
-}));
+const db = await makeTestDb();
+setDb(db);
+let writesBeforeConflict = 0;       // make the next N writes of a deck fail, as if another save got in first
+const hook = async (text: string) => {
+  if (writesBeforeConflict > 0 && text.startsWith("UPDATE maths.decks")) { writesBeforeConflict--; await db.raw.query(`UPDATE maths.decks SET version = version + 1`); }
+};
+db.hook = hook;
 process.env.ADMIN_KEY = "k";
 const { POST, GET } = await import("../../api/decks");
 
@@ -30,7 +21,7 @@ const stored = async () => (await (await GET(new Request("http://x/api/decks?id=
 const edit = (d: typeof base, s: string, text: string) => ({ ...d, slides: d.slides.map((x) => (x.id === s ? slide(s, text) : x)), updatedAt: new Date().toISOString() });
 
 describe("saving a deck that someone else has also changed", () => {
-  beforeEach(() => { store.clear(); writesBeforeConflict = 0; });
+  beforeEach(async () => { await db.reset(); writesBeforeConflict = 0; });
 
   it("a save with no base replaces the stored deck, as before", async () => {
     await post({ deck: base, by: "Harry" });
@@ -41,7 +32,7 @@ describe("saving a deck that someone else has also changed", () => {
 
   it("Harry's save and Claude's save, both made from the same base, both survive, in either order", async () => {
     for (const order of [["Harry", "Claude"], ["Claude", "Harry"]]) {
-      store.clear();
+      await db.reset();
       await post({ deck: base, by: "Harry" });
       const saves: Record<string, unknown> = { Harry: edit(base, "a", "Harry's words"), Claude: edit(base, "c", "Claude's words") };
       for (const who of order) await post({ deck: saves[who], base, by: who });
@@ -67,7 +58,7 @@ describe("saving a deck that someone else has also changed", () => {
     expect(res.conflicts).toEqual(["b/b-1.text"]);
     expect((await stored()).slides[1].els[0].text).toBe("Harry's");
     // and if Claude saved first, Harry's later save wins too
-    store.clear();
+    await db.reset();
     await post({ deck: base, by: "Harry" });
     await post({ deck: edit(base, "b", "Claude's"), base, by: "Claude" });
     await post({ deck: edit(base, "b", "Harry's"), base, by: "Harry" });

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { isCuratedQuestion } from "../../api/_questions";
 import { checkDeck, checkQuestion } from "../../api/_decks";
-import { BANK, DECKS } from "../decks";
+import { BANK } from "../decks";
+import { DECKS } from "./snapshotDecks";
 import { copyQuestion, fromBank, fromDepth, materializeDeck, newQuestion, readyProblems } from "../decks/questions";
 import { ESTIMATION_DEPTH } from "../tools/Number/EstimationDepth";
 import { loadDepthItems } from "../decks/generators";

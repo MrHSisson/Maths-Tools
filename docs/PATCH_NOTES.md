@@ -29,6 +29,45 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-11 — Decks move from Vercel Blob to Neon Postgres
+
+Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `api/decks.ts`, `api/_db.ts`, `api/_deckStore.ts`, `api/migrate-decks.ts` (temporary), `vercel.json`, `src/tests/testDb.ts` and the deck API tests.
+
+- **Why:** a day of deck editing used about 1,470 Blob operations (each read is two, each save about eight), and the decks need a proper home before accounts. Postgres is queried, not billed per file operation.
+- **What changed:** `/api/decks` keeps the same requests and answers, so the editor, `npm run deck` and the login (the shared `x-admin-key`) are untouched. Storage is four tables in schema `maths` (`decks`, `deck_versions`, `published_decks`, `questions`), created on first use. A save is one read and one conditional write (a `version` column), and the list of decks is a query on summary columns, so there is no index file to rewrite.
+- **Public reads are cached:** the published list and a published deck carry `s-maxage=60`, so pupils browsing published decks barely touch the database; a newly published or unpublished deck can take up to a minute to appear or go.
+- **Move:** `POST /api/migrate-decks` (admin key; `{dryRun: true}` first; `{ids: [...]}` to move in pieces) copies decks, history, published copies and questions from Blob. It never deletes from Blob and never overwrites a newer database copy, so it can be run again before and after the switch. Delete the file and `vercel.json`'s function entry once confirmed.
+- **Tests** now run the real SQL against an in-memory Postgres (PGlite, a dev dependency). Behaviour that differs from Blob and is covered: JSON key order is not kept, so "did this save change anything?" compares canonically.
+- **The editor no longer polls.** It used to ask the shared copy for changes every 20 seconds while its tab was visible (an open editor kept the database awake, and cost about 700 Blob reads an hour, likely most of the 1,470). Now the deck is read when it opens, a save is merged by the server, and File → **Check for changes** looks for newer edits (made on another device or by Claude) only when pressed, one query for that deck. Teaching in the player never polled. **Check across all decks:** the deck list (the Deck editor page) has a **Check for changes** button that brings every deck up to date on the device and says which changed (`syncAllDecks`); inside a deck, File → Check for changes checks only that deck.
+- **Not done:** the dashboard notes (`/api/tool-notes`) and the Advent Calendar still use Blob; accounts and the password in the source are untouched (parked).
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
+## 2026-11-11 — Decks are no longer bundled into the app; the rectilinear foundations draft is deleted
+
+Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `src/decks/index.ts`, `store.ts`, `Editor.tsx`, `useSyncedDecks.ts`, `DecksTab.tsx`, `admin/DecksSection.tsx`, `shared/ToolShellCore.tsx`, `src/tests/snapshotDecks.ts`.
+
+- **The app no longer bundles `src/decks/data/*.json`.** The shared (cloud) copy is the only source: a device lists the decks it has synced. The deck editor's list already synced on open; the Decks tab (Developing tools on), the dashboard's Decks section and a tool's menu now sync when they open (`useSyncedDecks`). A deck saved on a device before this change keeps showing, because the list now also includes any saved copy on the device.
+- **Deleting a deck is now real.** A bundled deck could only be "reset", so it always came back. Delete now removes the shared copy and the device copy (the editor's Delete this deck); there is no Reset to the original.
+- **Trade-off:** a brand-new device that is offline shows no decks (before, it showed the repo's). The repo JSON stays as a backup and is what the tests read (they now use `src/tests/snapshotDecks.ts`); `npm run deck` is unchanged.
+- **Deleted:** `my-rectilinear-foundations-mwb163ic` (an unused editor demonstration draft; not published), from the repo and from the shared copy. `year7-rectilinear-area` is the real lesson and is untouched.
+- Not checked by eye in a browser: the three listing pages after a sync, and a fresh-device first load.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
+## 2026-11-11 — Primes and divisibility deck: the rule for 9, straight after the rule for 3
+
+Branch `claude/divisibility-by-9-lesson-3eckyw`. Areas: `src/decks/data/primes-divisibility.json` (the live copy was pulled first and the change pushed through the merging push), `specs/decks/primes-and-divisibility.md` and `-questions.md`.
+
+- **Five new slides after Set D:** Divisible by 9 (key point with the flowchart, as for 3), The rule for 9 (board: 63, 74, 108, 534, 288, 4617), **Set H: the rule for 9** (6 questions: 63; 84, where 12 is in the 3 table but not the 9 table; 396; 2007, zeros add nothing; 479, ends in 9; 89991, digit sum 36 needs adding again), a **Discuss** slide (Mei: "divisible by 9 means divisible by 3"; Leo: the other way round; test 87), and **Set I: divisible by 3, by 9, or both** (7 questions: 54, 83, 69, 297, 2652, the missing digit in 6□3 that is a 3 but not a 9, and why "divisible by 9 but not by 3" cannot happen).
+- **Everything after it now includes 9:** Set E asks "which of 2, 3, 5 and 9" (opening with 90 for all four, 84 as the 3-but-not-9 trap) and gains a missing-digit question for 9; the book work is "which of 2, 3, 5 and 9" with every answer recomputed; exit ticket question 1 is "which of 3 and 9 does 135 divide by"; the learning objective and the summary name the rule for 9 and that 9 implies 3.
+- **Checked:** every answer in the new and changed questions was recomputed in code by division against the digit-sum rule (the missing-digit answers by trying every digit); `npm run deck -- verify primes-divisibility` passes (content, 45 slides measured). Ladder and traps follow the plan but were not agreed with Harry beforehand: for review. Slide look checked by layout measurement only, not by eye.
+
+Agent: Claude Code
+Notes: Build Log block not written this session (planner not used); the repo is the record.
+
 ## 2026-11-10 — Decks on a phone: preview only, landscape, swipe to move
 
 Branch `claude/loving-bell-i2troy`. Areas: `src/decks/DeckPage.tsx`, `src/decks/PlayerBar.tsx`, `src/decks/swipe.ts`, `src/shared/layoutMode.ts` (`usePhoneDevice`), `src/components/DecksTab.tsx`, `src/shared/ToolShellCore.tsx`, `src/App.tsx`, `src/tests/deckSwipe.test.ts`.

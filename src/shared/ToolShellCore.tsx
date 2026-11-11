@@ -19,7 +19,8 @@ import {
 import { InfoModal } from "./components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen } from "./about";
 import { MenuDropdown } from "./components/MenuDropdown";
-import { decksForPath } from "../decks";
+import { decksForPath } from "../decks/store";
+import { useSyncedDecks } from "../decks/useSyncedDecks";
 import { type ToolLesson, type TeachHandoff } from "./lessons";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
@@ -364,6 +365,7 @@ export const ToolShellCore = ({ config, infoSections, generateQuestion, generate
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update); renderers still receive the value
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  useSyncedDecks(devMode && isMenuOpen);   // decks are not bundled: the menu asks the shared copy when it opens, and re-renders with the result
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   // "About this tool" opens by itself the first time a live tool is opened on this device from a plain address (never from a shared link,
   // a lesson step or a set-up worksheet), then stays out of the way. The address is read at arrival, before the shell writes its own state to it.
