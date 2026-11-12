@@ -1034,7 +1034,7 @@
           "id": "msl-discuss-2",
           "kind": "text",
           "size": 50,
-          "text": "Mei says: \"The only common multiple of $4$ and $6$ is $12$.\" Is she right?",
+          "text": "Mei says: \"The only common multiple of $3$ and $5$ is $15$.\" Is she right?",
           "colour": "#0f172a"
         },
         {
@@ -1070,7 +1070,7 @@
           "kind": "text",
           "size": 44,
           "step": 1,
-          "text": "No. $24$ is a common multiple too, and so is $36$. Keep adding $12$ and you keep finding more: the list never stops.",
+          "text": "No. $30$ is a common multiple too, and so is $45$. Keep adding $15$ and you keep finding more: the list never stops.",
           "colour": "#0f172a"
         },
         {
@@ -1260,9 +1260,7 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $2$ and $3$.",
-                "$2: \\;2,\\;4,\\;\\ldots$",
-                "$3: \\;3,\\;6,\\;\\ldots$"
+                "Find a common multiple of $2$ and $3$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
@@ -1286,9 +1284,7 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $5$ and $7$.",
-                "$5: \\;5,\\;10,\\;\\ldots$",
-                "$7: \\;7,\\;14,\\;\\ldots$"
+                "Find a common multiple of $5$ and $7$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
@@ -1312,9 +1308,7 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $16$ and $24$.",
-                "$16: \\;16,\\;32,\\;\\ldots$",
-                "$24: \\;24,\\;48,\\;\\ldots$"
+                "Find a common multiple of $16$ and $24$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
@@ -1471,7 +1465,7 @@
           ]
         }
       ],
-      "brief": "Nine fresh common-multiple questions in books, 3 × 3, easiest first. Questions 1–3 give list starters; 7–9 ask for the first two common multiples. Check answers in the last two minutes.",
+      "brief": "Nine fresh common-multiple questions in books, 3 × 3, easiest first. Questions 1–6 find a common multiple; 7–9 ask for the first two common multiples. Check answers in the last two minutes.",
       "built": "1kc1onl",
       "title": "Common multiples book work",
       "family": "retrieval"
