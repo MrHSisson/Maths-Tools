@@ -554,6 +554,98 @@
               "id": "msl-check-1",
               "tool": "multiples-systematic-listing",
               "level": "level1",
+              "title": "$5$",
+              "answer": [
+                "$5$, $10$, $15$, $20$, $25$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$5$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $5$. Add $5$ each time.",
+                "$5$, $10$, $15$, $20$, $25$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$8$",
+              "answer": [
+                "$8$, $16$, $24$, $32$, $40$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$8$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $8$. Add $8$ each time.",
+                "$8$, $16$, $24$, $32$, $40$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$12$",
+              "answer": [
+                "$12$, $24$, $36$, $48$, $60$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$12$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $12$. Add $12$ each time.",
+                "$12$, $24$, $36$, $48$, $60$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-4",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$13$",
+              "answer": [
+                "$13$, $26$, $39$, $52$, $65$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$13$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $13$. Add $13$ each time.",
+                "$13$, $26$, $39$, $52$, $65$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-5",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
               "title": "$22$",
               "answer": [
                 "$22$, $44$, $66$, $88$, $110$"
@@ -574,30 +666,7 @@
               "expectedErrors": []
             },
             {
-              "id": "msl-check-2",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "$25$",
-              "answer": [
-                "$25$, $50$, $75$, $100$, $125$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "$25$"
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $25$. Add $25$ each time.",
-                "$25$, $50$, $75$, $100$, $125$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-check-3",
+              "id": "msl-check-6",
               "tool": "multiples-systematic-listing",
               "level": "level1",
               "title": "$26$",
@@ -620,30 +689,7 @@
               "expectedErrors": []
             },
             {
-              "id": "msl-check-4",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "$32$",
-              "answer": [
-                "$32$, $64$, $96$, $128$, $160$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "$32$"
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $32$. Add $32$ each time.",
-                "$32$, $64$, $96$, $128$, $160$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-check-5",
+              "id": "msl-check-7",
               "tool": "multiples-systematic-listing",
               "level": "level1",
               "title": "$34$",
@@ -666,7 +712,7 @@
               "expectedErrors": []
             },
             {
-              "id": "msl-check-6",
+              "id": "msl-check-8",
               "tool": "multiples-systematic-listing",
               "level": "level1",
               "title": "$38$",
@@ -685,52 +731,6 @@
               "explanation": [
                 "Start at $38$. Add $38$ each time.",
                 "$38$, $76$, $114$, $152$, $190$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-check-7",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "$42$",
-              "answer": [
-                "$42$, $84$, $126$, $168$, $210$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "$42$"
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $42$. Add $42$ each time.",
-                "$42$, $84$, $126$, $168$, $210$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-check-8",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "$44$",
-              "answer": [
-                "$44$, $88$, $132$, $176$, $220$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "$44$"
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $44$. Add $44$ each time.",
-                "$44$, $88$, $132$, $176$, $220$"
               ],
               "expectedErrors": []
             },
@@ -760,7 +760,7 @@
           ]
         }
       ],
-      "brief": "12–20 minutes. Nine fresh listing questions in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No LCM questions in this activity.",
+      "brief": "12–20 minutes. Nine fresh listing questions, easiest first (5, 8, 12 as low starters) in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No LCM questions in this activity.",
       "built": "1evvqp7",
       "title": "Multiples book work",
       "family": "retrieval"
