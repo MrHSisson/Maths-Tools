@@ -19,8 +19,8 @@ After review, Harry requested two distinct book activities: nine first-five-mult
 | 0–3 | 1–3 | Topic, definition, then first five multiples of 15. Each new term appears with an arrow from the previous term and +15 below the arrow. |
 | 3–7 | 4 | Structure-only board: model the 15-list, build the 21-list together, pupils attempt the 30-list; five entries each. |
 | 7–12 | 5 | Six whiteboard questions: partial lists → repeated-addition prompt → independent listing. |
-| 12–20 | 6 | Nine fresh first-five-multiples questions in books, 3 × 3. Numbers 16, 22, 25, 26, 27, 32, 34, 42, 45. Check answers in the last two minutes. |
-| 20–25 | 7–8 | Define common multiple. List multiples of 12 and 18; circle 36 in both. Extend to show 72 is another common multiple. |
+| 12–20 | 6 | Nine fresh first-five-multiples questions in books, 3 × 3. Numbers 22, 25, 26, 32, 34, 38, 42, 44, 45. Check answers in the last two minutes. |
+| 20–25 | 7–8 | Define common multiple. List multiples of 18 and 27; circle 54 in both. Extend to show 108 is another common multiple. |
 | 25–29 | 9–10 | Define LCM. Model 12 and 16: two terms each initially have no match; extend to 48 and circle both 48s. |
 | 29–34 | 11 | Five guided LCM questions with fading scaffolds. |
 | 34–42 | 12 | Twelve fresh LCM questions only, 3 × 4. Questions 1–4 have list starters; 5–12 are independent. Completion is not expected; check answers in the last two minutes. |
@@ -28,49 +28,49 @@ After review, Harry requested two distinct book activities: nine first-five-mult
 
 ## Question ladder and checks
 
-All standalone listing tasks ask for five positive multiples. The first nine-question book activity uses numbers not used as listing bases in the earlier board work. The twelve LCM book pairs do not repeat the worked or guided pairs; reversed pairs count as repeats. Searches take at most five entries per list. A nested pair shows the larger given number can itself be the LCM. Shared answers from different pairs are valid and deliberate.
+**No-repeat rule (revised after review).** A number used in a worked example (listing model 15 and together 11, 21, 30; common-multiple model 18 and 27; LCM model 12 and 16) never reappears as a base later. Every listing base (model, together, practice, book work) is different; every LCM base in the guided and book sets is different; the exit ticket reuses only four guided bases (20, 24, 50, 33) in new pairs. The listing half and the LCM half are separate activities, so a listing-book number may reappear in an LCM pair (e.g. 22, 25, 32, 42, 44, 45 in the nine-question book work; 24 and 35 from the whiteboard practice; 30 from the together table in the nested 10 and 30 pair). No pair repeats, reversed or not, and no answer repeats within a set. Lists may run to eight entries but only one does (25 and 40, guided question 3); most searches need two to five. The nested pair is 10 and 30 (book question 4, supported); question 12 (26 and 39) is the stretch, next common multiple 156.
 
 | Set | Task | Answer |
 |---|---|---|
-| list-1 | First five multiples of 15 | 15, 30, 45, 60, 75 |
-| list-2 | First five multiples of 18 | 18, 36, 54, 72, 90 |
-| list-3 | First five multiples of 21 | 21, 42, 63, 84, 105 |
-| list-4 | First five multiples of 30 | 30, 60, 90, 120, 150 |
-| list-5 | First five multiples of 24 | 24, 48, 72, 96, 120 |
-| list-6 | First five multiples of 35 | 35, 70, 105, 140, 175 |
-| check-1 | First five multiples of 16 | 16, 32, 48, 64, 80 |
-| check-2 | First five multiples of 22 | 22, 44, 66, 88, 110 |
-| check-3 | First five multiples of 25 | 25, 50, 75, 100, 125 |
-| check-4 | First five multiples of 26 | 26, 52, 78, 104, 130 |
-| check-5 | First five multiples of 27 | 27, 54, 81, 108, 135 |
-| check-6 | First five multiples of 32 | 32, 64, 96, 128, 160 |
-| check-7 | First five multiples of 34 | 34, 68, 102, 136, 170 |
-| check-8 | First five multiples of 42 | 42, 84, 126, 168, 210 |
+| list-1 | First five multiples of 14 | 14, 28, 42, 56, 70 |
+| list-2 | First five multiples of 17 | 17, 34, 51, 68, 85 |
+| list-3 | First five multiples of 19 | 19, 38, 57, 76, 95 |
+| list-4 | First five multiples of 24 | 24, 48, 72, 96, 120 |
+| list-5 | First five multiples of 35 | 35, 70, 105, 140, 175 |
+| list-6 | First five multiples of 29 | 29, 58, 87, 116, 145 |
+| check-1 | First five multiples of 22 | 22, 44, 66, 88, 110 |
+| check-2 | First five multiples of 25 | 25, 50, 75, 100, 125 |
+| check-3 | First five multiples of 26 | 26, 52, 78, 104, 130 |
+| check-4 | First five multiples of 32 | 32, 64, 96, 128, 160 |
+| check-5 | First five multiples of 34 | 34, 68, 102, 136, 170 |
+| check-6 | First five multiples of 38 | 38, 76, 114, 152, 190 |
+| check-7 | First five multiples of 42 | 42, 84, 126, 168, 210 |
+| check-8 | First five multiples of 44 | 44, 88, 132, 176, 220 |
 | check-9 | First five multiples of 45 | 45, 90, 135, 180, 225 |
-| lcm-1 | LCM of 12 and 18 | 36 |
-| lcm-2 | LCM of 12 and 16 | 48 |
-| lcm-3 | LCM of 15 and 20 | 60 |
-| lcm-4 | LCM of 21 and 14 | 42 |
-| lcm-5 | LCM of 18 and 24 | 72 |
-| book-1 | LCM of 12 and 20 | 60 |
-| book-2 | LCM of 16 and 20 | 80 |
-| book-3 | LCM of 14 and 35 | 70 |
-| book-4 | LCM of 18 and 36 | 36 |
-| book-5 | LCM of 21 and 28 | 84 |
-| book-6 | LCM of 22 and 33 | 66 |
-| book-7 | LCM of 24 and 40 | 120 |
-| book-8 | LCM of 30 and 45 | 90 |
-| book-9 | LCM of 10 and 25 | 50 |
-| book-10 | LCM of 15 and 25 | 75 |
-| book-11 | LCM of 20 and 50 | 100 |
-| book-12 | LCM of 28 and 42 | 84 |
-| exit-1 | LCM of 16 and 40 | 80 |
-| exit-2 | Circle the common multiple in the supplied 18- and 30-lists | 90 in both lists |
-| exit-3 | LCM of 18 and 27 | 54 |
+| lcm-1 | LCM of 20 and 50 | 100 |
+| lcm-2 | LCM of 24 and 36 | 72 |
+| lcm-3 | LCM of 25 and 40 | 200 |
+| lcm-4 | LCM of 22 and 33 | 66 |
+| lcm-5 | LCM of 35 and 28 | 140 |
+| book-1 | LCM of 32 and 48 | 96 |
+| book-2 | LCM of 45 and 60 | 180 |
+| book-3 | LCM of 42 and 63 | 126 |
+| book-4 | LCM of 10 and 30 | 30 |
+| book-5 | LCM of 54 and 81 | 162 |
+| book-6 | LCM of 44 and 66 | 132 |
+| book-7 | LCM of 34 and 51 | 102 |
+| book-8 | LCM of 38 and 57 | 114 |
+| book-9 | LCM of 52 and 78 | 156 |
+| book-10 | LCM of 56 and 84 | 168 |
+| book-11 | LCM of 46 and 69 | 138 |
+| book-12 | LCM of 26 and 39 | 78 |
+| exit-1 | LCM of 20 and 24 | 120 |
+| exit-2 | Circle the common multiple in the supplied 50- and 75-lists | 150 in both lists |
+| exit-3 | LCM of 33 and 55 | 165 |
 
 **Misconceptions checked:** adding the wrong amount; missing a multiple; stopping equally long lists before a match; selecting a later shared number instead of the smallest. The list starters fade, and the larger-given-number case is confined to one supported book question.
 
-**Stretch:** extend the last LCM book question (28 and 42) to the next common multiple, 168; explain why it is not the lowest.
+**Stretch:** extend the last LCM book question (26 and 39) to the next common multiple, 156; explain why it is not the lowest.
 
 ## Presentation and verification
 
