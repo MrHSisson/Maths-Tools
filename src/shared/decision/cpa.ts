@@ -360,6 +360,8 @@ export interface HistViewState {
   ghost?: { id: string; start: number; end: number; workers: number; y: number };
   /** the quick-sum table shown in place of the reference picture */
   quick?: { head: string[]; rows: { cells: string[]; tone: "top" | "tie" | "normal" }[] };
+  /** the list of options so far, smallest first, each coloured by what happened to it (shown in its own tab beside the reference pictures) */
+  options?: { items: { text: string; tone: "current" | "good" | "bad" | "pending" }[] };
 }
 
 /** Workers needed in each time unit, from the blocks (every block counts in every unit it covers). */
@@ -859,7 +861,7 @@ export interface CpaViewState {
 
 export type CpaLevel = 1 | 2 | 3;
 type CpaPathsChoice = "one" | "more" | "either";
-export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Cascade chart: the times are not given, so the passes come first */ cascadePasses?: boolean; /** Resource levelling: what the histogram is shown with */ levelRef?: "cascade" | "floats" | "network"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra"; /** Resource levelling, the three levels of specs/resource-levelling.md (when set, levelType is ignored): 1 one worker each and the top option clears the clash; 2 several workers, the same; 3 the top option leaves a clash (knock-on) */ levelLevel?: 1 | 2 | 3; /** Resource levelling, Level 3: workers per activity */ levelWorkers?: "one" | "several" | "mixed"; /** Resource levelling, Level 3: the most tries a question may need */ levelMaxTries?: number; /** Resource levelling: what is asked */ levelWording?: "time" | "extra" | "startLast" | "explain"; /** Resource histogram level 3: cut the peak within the float (when 3, the options below apply; 1 and 2 are the drawing questions) */ histLevel?: 1 | 2 | 3; histWorkers?: "one" | "several" | "mixed"; histCut?: "fewest" | "show" | "canFewer"; /** Resource histogram level 3: the histogram is given (default), or the student draws it first */ histGiven?: boolean; /** the network ends in one activity (nothing else is last) */ singleEnd?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
+export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Cascade chart: the times are not given, so the passes come first */ cascadePasses?: boolean; /** Resource levelling: what the histogram is shown with */ levelRef?: "cascade" | "floats" | "network"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra"; /** Resource levelling, the three levels of specs/resource-levelling.md (when set, levelType is ignored): 1 one worker each and the top option clears the clash; 2 several workers, the same; 3 the top option leaves a clash (knock-on) */ levelLevel?: 1 | 2 | 3; /** Resource levelling, Level 3: workers per activity */ levelWorkers?: "one" | "several" | "mixed"; /** Resource levelling, Level 3: the most tries a question may need */ /** Level 3 levelling: how big a question may be (default Exam) */ levelSize?: LevelSize; /** Resource levelling: what is asked */ levelWording?: "time" | "extra" | "startLast" | "explain"; /** Resource histogram level 3: cut the peak within the float (when 3, the options below apply; 1 and 2 are the drawing questions) */ histLevel?: 1 | 2 | 3; histWorkers?: "one" | "several" | "mixed"; histCut?: "fewest" | "show" | "canFewer"; /** Resource histogram level 3: the histogram is given (default), or the student draws it first */ histGiven?: boolean; /** the network ends in one activity (nothing else is last) */ singleEnd?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
   1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
@@ -1014,7 +1016,29 @@ function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string,
 }
 
 /** Resource levelling, the three levels: look for workers per activity and a limit that give a question of this level (see specs/resource-levelling.md). */
-function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "one" | "several" | "mixed", cap: number, histShape: HistShape, keepWorkers: boolean): { before: HistogramData; limit: number; m: LevelMethod; workers: Record<string, number> } | null {
+/** Level 3 question size. Every Level 3 question has a first try that leaves a clash (the one knock-on every size allows); the size says what comes next.
+ *  Short: the smallest option at that knock-on clash clears it (2 tries, 1 knock-on, no going back).
+ *  Exam (default): still one knock-on and 2 tries, but the next try may be an option from the first list (the knock-on's own options all exceed it) as long as it clears at once.
+ *  Stretch: up to 2 knock-ons (3 tries): the go-back option may leave a clash too, and its best option then clears it. Not encouraged.
+ *  Questions needing more (Legacy Q15, OUP 29.2B Q1) are spot-it questions the method does not cover. */
+export type LevelSize = "short" | "exam" | "stretch";
+export const LEVEL_SIZES: Record<LevelSize, { tries: number; sums: number; clashes: number; ownClashOnly: boolean }> = {
+  short: { tries: 2, sums: 6, clashes: 1, ownClashOnly: true },
+  exam: { tries: 2, sums: 6, clashes: 1, ownClashOnly: false },
+  stretch: { tries: 3, sums: 9, clashes: 2, ownClashOnly: false },
+};
+type LevelShape = { options: unknown[]; tries: { option: { parent: number }; added: unknown[]; clash: unknown | null }[] };
+/** What a method costs the student: options tried, quick sums on the whole ranked list (the first clash's options plus every option a try adds), and knock-on clashes (tries that leave a clash). */
+export function levelCounts(m: LevelShape): { tries: number; sums: number; clashes: number } {
+  return { tries: m.tries.length, sums: m.options.length + m.tries.reduce((n, t) => n + t.added.length, 0), clashes: m.tries.filter((t) => t.clash !== null).length };
+}
+/** Does this method fit the size: at least 2 tries (the first leaves a clash), within the three caps, and for Short the second try comes from the knock-on clash's own options. */
+export const levelFits = (m: LevelShape, size: LevelSize): boolean => {
+  const c = levelCounts(m), cap = LEVEL_SIZES[size];
+  if (c.tries < 2 || c.tries > cap.tries || c.sums > cap.sums || c.clashes > cap.clashes) return false;
+  return !cap.ownClashOnly || m.tries[1].option.parent === 0;
+};
+function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "one" | "several" | "mixed", size: LevelSize, histShape: HistShape, keepWorkers: boolean): { before: HistogramData; limit: number; m: LevelMethod; workers: Record<string, number> } | null {
   const T = times.projectTime;
   // several sets of workers per activity on the same network, before asking for a new network
   for (let attempt = 0; attempt < (wk === "one" || keepWorkers ? 1 : 40); attempt++) {
@@ -1030,8 +1054,7 @@ function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "
       if (countClashes(before.profile, limit) > 2) continue;
       const m = levelMethod(acts, times, limit);
       if (!m || !m.exact || m.minimum <= T) continue;
-      const tries = m.tries.length;
-      if (lvl < 3 ? tries !== 1 : tries < 2 || tries > cap) continue;
+      if (lvl < 3 ? m.tries.length !== 1 : !levelFits(m, size)) continue;
       const truth = levelSchedule(acts, times, limit);
       if (!truth || truth.makespan !== m.minimum) continue;
       return { before, limit, m, workers: Object.fromEntries(acts.map((a) => [a.id, a.workers ?? 1])) };
@@ -1060,7 +1083,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   // the three-level levelling questions test each network for a question of the level before laying it out
   levelStash.cur = null; histStash.cur = null;
   const pre = kind === "cpaLevel" && opts.levelLevel && !opts.fixed
-    ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelMaxTries ?? 8, opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
+    ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelSize ?? "exam", opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
     : kind === "cpaHistogram" && !opts.histLevel && !opts.fixed
     // the drawing questions: a network whose histogram does not stack as asked is thrown away before it is laid out
     ? (c: CpaActivity[]) => {
@@ -1268,13 +1291,13 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     }
   } else if (kind === "cpaLevel" && opts.levelLevel) {
     const lvl = opts.levelLevel;
-    const cap = opts.levelMaxTries ?? 8;
+    const size = opts.levelSize ?? "exam";
     const wk = lvl === 1 ? "one" : lvl === 2 ? "mixed" : opts.levelWorkers ?? "one";
     const sinks = acts.filter((a) => !acts.some((b) => b.preds.includes(a.id)));
     // the new start of the last activity is only unique when one activity ends the project; the 10–12 activity networks never do, so they ask for the time instead
     const wording = opts.levelWording === "startLast" && sinks.length !== 1 ? "time" : opts.levelWording ?? "time";
     const stash = takeLevelStash();
-    const found = stash && stash.acts === acts ? stash.found : opts.fixed ? searchLevel(acts, times, lvl, wk, cap, opts.histShape ?? "step", true) : searchLevel(acts, times, lvl, wk, cap, opts.histShape ?? "step", false);
+    const found = stash && stash.acts === acts ? stash.found : opts.fixed ? searchLevel(acts, times, lvl, wk, size, opts.histShape ?? "step", true) : searchLevel(acts, times, lvl, wk, size, opts.histShape ?? "step", false);
     if (!found) throw new Error("histogram: no hole-free stack");
     const { before, limit, m } = found;
     acts.forEach((a) => { a.workers = found.workers[a.id]; });

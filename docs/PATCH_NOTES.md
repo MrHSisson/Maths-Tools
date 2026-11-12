@@ -29,6 +29,41 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-12 — Resource levelling: Write it up removed, list of options is a tab
+
+Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpaSolve.ts`, `cpa.ts`, `cpaSheet.tsx`, `src/tools/Decision/CriticalPath.tsx`, tests.
+
+- **Write it up removed:** the final step of a levelling walkthrough is now the answer and the levelled histogram only. The printed answer sheet gives the answer, the quick sums and the tries (built from the method data, no write-up sentence).
+- **List of options as a tab:** it was a card of chips under the step text whose height changed from step to step. It is now a tab beside the network, cascade chart and floats (and the quick-sum table, also a tab now), so there are always five tabs and the layout stops moving. A step opens the tab it is about; a tab chosen by hand stays for that step.
+- **Checked:** walkthrough tests rewritten (no `list` on any levelling step; the options carried on `histView.options`); seen in the dev server at Level 3 (quick sums tab on the quick-sum step, list of options on the tries); build, lint and tests pass.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
+## 2026-11-12 — Resource levelling lesson deck
+
+Branch `claude/levelling-question-size`. Areas: new `src/decks/data/resource-levelling.json`, `specs/decks/resource-levelling.md`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.
+
+- **Deck:** 8 slides in plain English: the problem, the quick sum and why it helps, working out quick sums (a self-contained table with each activity's LFT given, since the lesson has no path analysis), trying the smallest, the routine, a try that leaves another clash and exam technique. Practice is on the generator, so the quick-sum questions and exit ticket were cut. Histograms are drawn from shapes with the tool's own stacking rule, so they are editable.
+- **Print fix:** the blank levelled histogram on a printed levelling question was drawn to the answer, so its axis gave the answer away. Both levelling histograms now share an axis that runs 10 past the time with no limit, to the next multiple of 5 (`levelAxisT` in `cpaSheet.tsx`); only an answer that does not fit sets it (167 gives 175, 53 gives 60). Tested: same printed question whatever the answer.
+- **Recorded:** Harry's exam technique for queue-type questions (look first, then the routine, then draw it for 2 of 3 marks) is in the spec; no spot-it question style was built.
+- **Checks:** all worked numbers come from `levelMethod`; deck content checks pass; key slides looked at in the browser.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
+## 2026-11-12 — Resource levelling: Level 3 Question size
+
+Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpa.ts` (`searchLevel`, `LEVEL_SIZES`, `levelCounts`, `levelFits`), `src/tools/Decision/CriticalPath.tsx`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`, tests.
+
+- **Why:** Level 3 was capped only by tries (default 8), so questions reached about 20 walkthrough steps and up to 28 quick sums; real papers need at most 4 tries, 12 quick sums and 3 knock-on clashes.
+- **Change (shaped with Harry):** every Level 3 question's first try leaves one knock-on clash. *Question size* then sets what follows: **Short** the smallest option at the new clash clears it (2 tries, at most 6 quick sums); **Exam** (default) one knock-on and 2 tries, but the second try may go back to an option from the first list if it clears at once (at most 6 quick sums); **Stretch** up to 2 knock-ons, 3 tries, 9 quick sums (not encouraged). Questions needing 3+ knock-ons are spot-it questions the method deliberately does not cover (Legacy Q15, OUP 29.2B Q1; both from older papers). The *Most tries* option is replaced (`levelMaxTries` is now `levelSize`); an old saved or shared `levelTries` value is ignored and the size is Exam.
+- **Checked:** every generated Level 3 question meets its size (12 per size and workers setting, plus the Exam default and Short's route); Legacy Q4 fits all three, Q11 and Q14 fit Stretch only, Q15 and 29.2B Q1 fit none. Supply and speed: 30 questions for each size and workers setting (one, several, mixed) all generated, about 0.2 to 0.4 s each and 1.1 s at most. Walkthroughs are 8 steps (Short, Exam) and 8 to 10 (Stretch), counted from the generated steps, not looked at in a browser. Exam goes back to the first list in about 1 question in 10. Build, tests, lint and `npm run facts` clean.
+- **Not done:** `specs/resource-levelling.md` was not replaced because Harry's updated file (with the "Change planned 2026-11-12" section) was not in the repo or the kickoff; the caps come from the kickoff and the spec's "As built" now records them.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
 ## 2026-11-12 — Multiples lesson: repeats removed, lists up to eight
 
 Branch `claude/inspiring-cannon-esg9yk`. Areas: `src/decks/data/multiples-systematic-listing.json`, `specs/decks/multiples-systematic-listing.md`.

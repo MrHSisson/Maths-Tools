@@ -372,13 +372,13 @@ describe("CPA — the harder cases (more than one critical path, late start, par
       }
     }
   }, 120_000);
-  it("Level 3 levelling needs a knock-on: the first option tried leaves a clash, within the most tries asked for", () => {
+  it("Level 3 levelling needs a knock-on: the first option tried leaves a clash, within the Exam size", () => {
     for (let i = 0; i < 5; i++) {
-      const { data } = run(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelMaxTries: 5 });
+      const { data } = run(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelSize: "exam" });
       const m = data.extra!.level!.method!;
       expect(m.tries[0].clash, "the top option leaves a clash").not.toBeNull();
       expect(m.tries.length).toBeGreaterThanOrEqual(2);
-      expect(m.tries.length).toBeLessThanOrEqual(5);
+      expect(m.tries.length).toBeLessThanOrEqual(2);
     }
   }, 300_000);
 });

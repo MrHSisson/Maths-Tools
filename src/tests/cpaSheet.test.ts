@@ -1,6 +1,6 @@
 // The printable A4 sheet for Critical Path histogram and levelling questions.
 import { describe, expect, it } from "vitest";
-import { buildCpaSheet, CPA_SHEET_TABS, generateCpa } from "../shared/decision";
+import { buildCpaSheet, CPA_SHEET_TABS, generateCpa, levelAxisT } from "../shared/decision";
 import { cpaSheetsHtml } from "../shared/decision/printCpa";
 import { withSeededRandom } from "./seededRandom";
 
@@ -44,7 +44,7 @@ describe("A4 question sheet", () => {
       }
     });
   }, 100_000);
-  it("levelling: network, Gantt chart, the given histogram with its limit line and a blank one to draw the levelled histogram; answers add the write-up", async () => {
+  it("levelling: network, Gantt chart, the given histogram with its limit line and a blank one to draw the levelled histogram; answers add the quick sums and the tries (no write-up)", async () => {
     await withSeededRandom(34, async () => {
       const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, histShape: "step" });
       const L = g.data.extra!.level!;
@@ -52,7 +52,9 @@ describe("A4 question sheet", () => {
       expect(figs(q)).toEqual(["network", "gantt", "hist", "hist"]);
       expect(q).toContain(`limit ${L.limit}`);
       const a = await html(problemOf(g, "cpaLevel", 3), true);
-      expect(a).toContain("The new minimum completion time is");
+      expect(a).toContain("Quick sums:");
+      expect(a).toContain("Tries:");
+      expect(a).not.toContain("The new minimum completion time is");
     });
   }, 100_000);
   it("working sheets: one portrait page with the network as the figure, turned when that makes it bigger", async () => {
@@ -78,4 +80,43 @@ describe("A4 question sheet", () => {
     const g = generateCpa(2, "cpaFloat", {});
     expect(await buildCpaSheet({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaFloat" } as never, false)).toBeNull();
   });
+});
+
+describe("levelling question sheet: the blank levelled histogram does not give the answer away", () => {
+  it("the axis runs 10 past the time with no limit, to the next multiple of 5, whatever the answer; only an answer that does not fit sets it (167 gives 175, 53 gives 60)", () => {
+    expect(levelAxisT(94, 95)).toBe(105);
+    expect(levelAxisT(94, 103)).toBe(105);
+    expect(levelAxisT(43, 44)).toBe(55);
+    for (let T = 20; T <= 120; T++) for (let extra = 1; extra <= 9; extra++) {
+      const ax = levelAxisT(T, T + extra);
+      expect(ax % 5).toBe(0);
+      expect(ax).toBeGreaterThan(T + extra);
+      expect(ax).toBe(levelAxisT(T, T + 1));          // the same axis for every answer that fits
+    }
+    expect(levelAxisT(50, 53 + 10)).toBe(70);          // an answer that does not fit sets the axis: next multiple of 5 above answer + 5
+    expect(levelAxisT(40, 53)).toBe(60);          // 53 gives 60
+    expect(levelAxisT(150, 167 + 10)).toBe(185);
+    expect(levelAxisT(150, 167)).toBe(175);          // 167 gives 175
+  });
+  it("on the printed question both histograms share one axis, and changing the answer does not change what is printed", async () => {
+    await withSeededRandom(77, async () => {
+      for (let i = 0; i < 3; i++) {
+        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" });
+        const p = problemOf(g, "cpaLevel", 3) as never;
+        const q = await html(p, false);
+        const hist = [...q.matchAll(/class="fig hist[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+        expect(hist.length).toBe(2);
+        expect(hist[0].match(/viewBox="[^"]*"/)![0]).toBe(hist[1].match(/viewBox="[^"]*"/)![0]);
+        // a different (smaller) answer on the same network prints the same question
+        const lv = g.data.extra!.level!, T = g.data.times.projectTime;
+        if (lv.after.T > T + 1) {
+          const saved = lv.after.T;
+          lv.after.T = T + 1;
+          const q2 = await html(p, false);
+          lv.after.T = saved;
+          expect(q2).toBe(q);
+        }
+      }
+    });
+  }, 100_000);
 });

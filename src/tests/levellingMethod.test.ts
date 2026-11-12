@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { withSeededRandom } from "./seededRandom";
 import fixture from "./fixtures/levelling-real.json";
-import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, solveCpa, histBaseAt, type CpaActivity } from "../shared/decision";
+import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, solveCpa, histBaseAt, levelCounts, levelFits, LEVEL_SIZES, type CpaActivity, type LevelSize } from "../shared/decision";
 
 const toActs = (q: (typeof fixture.questions)[number]): CpaActivity[] => q.activities.map((a) => ({ id: a.id, duration: a.duration, workers: a.workers, preds: a.after }));
 const profileOf = (acts: CpaActivity[], st: Record<string, number>): number[] => {
@@ -22,11 +22,11 @@ describe("levelling — the real exam questions", () => {
       const prof = profileOf(acts, early);
       expect(Math.max(...prof) - q.limit).toBe(q.peakOverLimit);
       expect(countClashes(prof, q.limit)).toBe(q.clashes);
-      // heavy-task queues (most tasks need over half the workers) are left out of the levels by the tries cap: the method needs far more than the
-      // most any level allows (8), so none can be generated. (A rule on the share of heavy tasks would wrongly drop Legacy Q11, a Level 3 question.)
+      // heavy-task queues (most tasks need over half the workers) are left out of the levels by the size caps: the method needs far more than the
+      // most any size allows (Stretch: 6 tries), so none can be generated. (A rule on the share of heavy tasks would wrongly drop Legacy Q11, a Level 3 question.)
       if (q.fits.startsWith("beyond caps")) {
         const m = levelMethod(acts, times, q.limit, 5000);
-        expect(m === null || m.tries.length > 8, `${q.question} needs ${m?.tries.length} tries`).toBe(true);
+        expect(m === null || !(["short", "exam", "stretch"] as const).some((s) => levelFits(m, s)), `${q.question} needs ${m?.tries.length} tries`).toBe(true);
       }
       if (q.fits.startsWith("levelling")) {
         const m = levelMethod(acts, times, q.limit)!;
@@ -67,15 +67,15 @@ describe("levelling — the method against the solver on random networks", () =>
 });
 
 describe("levelling — generated questions meet their level", () => {
-  const cases: { lvl: 1 | 2 | 3; workers?: "one" | "several" | "mixed"; cap?: number }[] = [
-    { lvl: 1 }, { lvl: 2 }, { lvl: 3, workers: "one", cap: 8 }, { lvl: 3, workers: "several", cap: 5 }, { lvl: 3, workers: "mixed", cap: 3 }, { lvl: 3, workers: "one", cap: 3 },
+  const cases: { lvl: 1 | 2 | 3; workers?: "one" | "several" | "mixed"; size?: LevelSize }[] = [
+    { lvl: 1 }, { lvl: 2 }, { lvl: 3, workers: "one", size: "stretch" }, { lvl: 3, workers: "several", size: "exam" }, { lvl: 3, workers: "mixed", size: "short" }, { lvl: 3, workers: "one", size: "exam" },
   ];
   for (const c of cases) {
-    it(`Level ${c.lvl}${c.lvl === 3 ? `, ${c.workers} workers, at most ${c.cap} tries` : ""}`, () => {
+    it(`Level ${c.lvl}${c.lvl === 3 ? `, ${c.workers} workers, size ${c.size}` : ""}`, () => {
       withSeededRandom(1107 + c.lvl, () => {
         for (let i = 0; i < 8; i++) {
           const wording = (["time", "extra", "startLast", "explain"] as const)[i % 4];
-          const { data, answerText, prompt } = generateCpa(c.lvl === 1 ? 2 : c.lvl, "cpaLevel", { paths: "one", levelLevel: c.lvl, levelWorkers: c.workers, levelMaxTries: c.cap, levelWording: wording, singleEnd: wording === "startLast" && c.lvl < 3, histShape: "step" });
+          const { data, answerText, prompt } = generateCpa(c.lvl === 1 ? 2 : c.lvl, "cpaLevel", { paths: "one", levelLevel: c.lvl, levelWorkers: c.workers, levelSize: c.size, levelWording: wording, singleEnd: wording === "startLast" && c.lvl < 3, histShape: "step" });
           const L = data.extra!.level!, m = L.method!;
           const acts = data.acts, times = data.times, T = times.projectTime;
           expect(m.minimum).toBe(levelSchedule(acts, times, L.limit)!.makespan);
@@ -92,7 +92,7 @@ describe("levelling — generated questions meet their level", () => {
           if (c.workers === "one") expect(ws.every((w) => w === 1)).toBe(true);
           if (c.workers === "several") expect(Math.min(...ws)).toBeGreaterThanOrEqual(2);
           if (c.lvl < 3) expect(m.tries.length).toBe(1);
-          else { expect(m.tries.length).toBeGreaterThanOrEqual(2); expect(m.tries.length).toBeLessThanOrEqual(c.cap!); }
+          else { expect(m.tries.length).toBeGreaterThanOrEqual(2); expect(levelFits(m, c.size!), JSON.stringify(levelCounts(m))).toBe(true); }
           // the top option of the first list is the first try, and the ranked list is smallest first
           expect(m.tries[0].option.held).toBe(m.options[0].held);
           m.options.forEach((o, k) => k && expect(o.quick).toBeGreaterThanOrEqual(m.options[k - 1].quick));
@@ -110,6 +110,65 @@ describe("levelling — generated questions meet their level", () => {
       });
     }, 240_000);
   }
+});
+
+describe("levelling — Level 3 question size", () => {
+  const sizes = ["short", "exam", "stretch"] as const;
+  const workerSets = ["one", "several", "mixed"] as const;
+  for (const size of sizes) for (const workers of workerSets) {
+    it(`${size}, ${workers} workers: every generated question stays within tries ${LEVEL_SIZES[size].tries}, quick sums ${LEVEL_SIZES[size].sums}, knock-on clashes ${LEVEL_SIZES[size].clashes}`, () => {
+      withSeededRandom(121100 + sizes.indexOf(size) * 10 + workerSets.indexOf(workers), () => {
+        for (let i = 0; i < 12; i++) {
+          const { data } = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: workers, levelSize: size, histShape: "step" });
+          const c = levelCounts(data.extra!.level!.method!), cap = LEVEL_SIZES[size];
+          expect(c.tries).toBeGreaterThanOrEqual(2);
+          expect(c.tries).toBeLessThanOrEqual(cap.tries);
+          expect(c.sums).toBeLessThanOrEqual(cap.sums);
+          expect(c.clashes).toBeLessThanOrEqual(cap.clashes);
+        }
+      });
+    }, 240_000);
+  }
+  it("defaults to Exam when no size is given", () => {
+    withSeededRandom(5, () => {
+      for (let i = 0; i < 6; i++) {
+        const { data } = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" });
+        expect(levelFits(data.extra!.level!.method!, "exam")).toBe(true);
+      }
+    });
+  });
+  const fitsOf = (source: string, question: string): LevelSize[] => {
+    const q = fixture.questions.find((x) => x.source.startsWith(source) && x.question === question)!;
+    const acts = toActs(q);
+    const m = levelMethod(acts, cpaTimes(acts), q.limit, 5000);
+    return m ? sizes.filter((s) => levelFits(m, s)) : [];
+  };
+  it("the real questions fit the size they should: Legacy Q4 fits all three; Q11 and Q14 (two knock-ons) fit Stretch only; Q15 and OUP 29.2B Q1 (three or more) fit none", () => {
+    expect(fitsOf("Legacy", "Q4(d)")).toEqual(["short", "exam", "stretch"]);
+    expect(fitsOf("Legacy", "Q11")).toEqual(["stretch"]);
+    expect(fitsOf("Legacy", "Q14(e)(i)")).toEqual(["stretch"]);
+    expect(fitsOf("Legacy", "Q15(d)(i)")).toEqual([]);
+    expect(fitsOf("OUP", "29.2B Q1 with 11 workers")).toEqual([]);
+    expect(fitsOf("OUP", "29.2B Q4 with 6 workers")).toContain("exam");
+  });
+  it("Short's second try comes from the knock-on clash's own options; Exam may go back to the first list", () => {
+    withSeededRandom(8, () => {
+      const parents = new Set<number>();
+      for (let i = 0; i < 30; i++) {
+        const m = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelSize: "exam", histShape: "step" }).data.extra!.level!.method!;
+        expect(m.tries.length).toBe(2);
+        expect(m.tries[0].clash).not.toBeNull();
+        expect(m.tries[1].clash).toBeNull();
+        parents.add(m.tries[1].option.parent);
+        const s = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelSize: "short", histShape: "step" }).data.extra!.level!.method!;
+        expect(s.tries[1].option.parent).toBe(0);
+      }
+      expect(parents.has(-1) || parents.has(0)).toBe(true);
+    });
+  }, 120_000);
+  it("the beyond-the-caps questions fit no size", () => {
+    for (const q of fixture.questions.filter((x) => x.fits.startsWith("beyond caps"))) expect(fitsOf(q.source.slice(0, 4), q.question), q.question).toEqual([]);
+  });
 });
 
 describe("levelling — the walkthrough follows the method", () => {
@@ -142,10 +201,13 @@ describe("levelling — the walkthrough follows the method", () => {
           }
           expect(h.T).toBe(m.tries[k].finish);
         });
-        // the last try is clash-free and the answer text carries the finish
-        expect(steps[steps.length - 1].list!.items[steps[steps.length - 1].list!.items.length - 1].text).toContain("The new minimum completion time is");
-        expect(steps[steps.length - 1].histView!.which).toBe("after");
-        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 3);
+        // the answer step shows the levelled histogram and the finished list of options; there is no write-up card
+        const last = steps[steps.length - 1];
+        expect(last.histView!.which).toBe("after");
+        expect(last.list).toBeUndefined();
+        // the list of options is a tab: it carries every option known at that step, never a card under the step text
+        expect(steps.every((s) => !s.list)).toBe(true);
+        steps.filter((s) => s.histView?.options).forEach((s) => expect(s.histView!.options!.items.length).toBeGreaterThanOrEqual(m.options.length));
       }
     });
   }, 120_000);
@@ -307,7 +369,7 @@ describe("QA regressions — wording, clash bands and chips", () => {
         const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "mixed", levelWording: "explain", histShape: "step" });
         const steps = stepsOf(g, "cpaLevel");
         expect(steps[steps.length - 1].caption).toMatch(/longer/);
-        for (const s of steps) if (s.list && s.list.title.startsWith("The list")) { const texts = s.list.items.map((x) => x.text); expect(new Set(texts).size, texts.join(" | ")).toBe(texts.length); }
+        for (const s of steps) if (s.histView?.options) { const texts = s.histView.options.items.map((x) => x.text); expect(new Set(texts).size, texts.join(" | ")).toBe(texts.length); }
       }
     });
   }, 200_000);

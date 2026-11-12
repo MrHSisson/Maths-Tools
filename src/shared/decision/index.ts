@@ -34,7 +34,7 @@ export { generateCpaExam, AS_CHAINS, AL_CHAINS, type CpaChain } from "./cpaExam"
 export { default as ActivityNodeView } from "./representations/ActivityNodeView";
 export { default as GanttView } from "./representations/GanttView";
 export { default as HistogramView } from "./representations/HistogramView";
-export { buildCpaSheet, CPA_SHEET_TABS } from "./cpaSheet";
+export { buildCpaSheet, CPA_SHEET_TABS, levelAxisT } from "./cpaSheet";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {
