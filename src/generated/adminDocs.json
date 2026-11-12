@@ -1363,7 +1363,7 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-12: **Level 3 Question size** (branch `claude/levelling-question-size`, not merged). \"Most tries\" is replaced by *Question size*: Short / Exam (default) / Stretch, each capping tries, quick sums and knock-on clashes (2/6/1, 4/12/3, 6/18/5). Exam matches real papers (Legacy Q11, Q14, Q15 fit; Q4 fits Short; 29.2B Q1 with 11 workers fits Stretch; the queue questions fit none). Supply and speed checked: 30 questions for every size and workers setting all generated, about 0.2 to 0.3 s each, 1 s at most; walkthroughs are 8 steps (Short), 8 to 12 (Exam), 8 to 16 (Stretch)."
+        "2026-11-12: **Level 3 Question size** (branch `claude/levelling-question-size`, not merged). \"Most tries\" is replaced by *Question size*: Short (the knock-on's own best option clears it, 2 tries), Exam (default: one knock-on, 2 tries, may go back to a first-list option that clears at once) and Stretch (up to 2 knock-ons, 3 tries; not encouraged). Quick sums are capped at 6 / 6 / 9. Real questions: Legacy Q4 fits all three, Q11 and Q14 fit Stretch only, Q15 and 29.2B Q1 (3+ knock-ons) are spot-it questions and fit none, by Harry's decision. Supply and speed: 30 questions for each size and workers setting all generated, about 0.2 to 0.4 s each and 1.1 s at most; walkthroughs are 8 steps (Short, Exam) and 8 to 10 (Stretch); Exam goes back to the first list in about 1 question in 10."
        ]
       }
      ]

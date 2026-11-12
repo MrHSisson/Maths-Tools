@@ -1014,20 +1014,27 @@ function levelOptions(acts: CpaActivity[], limit: number, starts: Record<string,
 }
 
 /** Resource levelling, the three levels: look for workers per activity and a limit that give a question of this level (see specs/resource-levelling.md). */
-/** Level 3 question size: the three caps a levelling question must stay within (real exam questions need at most the Exam size). */
+/** Level 3 question size. Every Level 3 question has a first try that leaves a clash (the one knock-on every size allows); the size says what comes next.
+ *  Short: the smallest option at that knock-on clash clears it (2 tries, 1 knock-on, no going back).
+ *  Exam (default): still one knock-on and 2 tries, but the next try may be an option from the first list (the knock-on's own options all exceed it) as long as it clears at once.
+ *  Stretch: up to 2 knock-ons (3 tries): the go-back option may leave a clash too, and its best option then clears it. Not encouraged.
+ *  Questions needing more (Legacy Q15, OUP 29.2B Q1) are spot-it questions the method does not cover. */
 export type LevelSize = "short" | "exam" | "stretch";
-export const LEVEL_SIZES: Record<LevelSize, { tries: number; sums: number; clashes: number }> = {
-  short: { tries: 2, sums: 6, clashes: 1 },
-  exam: { tries: 4, sums: 12, clashes: 3 },
-  stretch: { tries: 6, sums: 18, clashes: 5 },
+export const LEVEL_SIZES: Record<LevelSize, { tries: number; sums: number; clashes: number; ownClashOnly: boolean }> = {
+  short: { tries: 2, sums: 6, clashes: 1, ownClashOnly: true },
+  exam: { tries: 2, sums: 6, clashes: 1, ownClashOnly: false },
+  stretch: { tries: 3, sums: 9, clashes: 2, ownClashOnly: false },
 };
+type LevelShape = { options: unknown[]; tries: { option: { parent: number }; added: unknown[]; clash: unknown | null }[] };
 /** What a method costs the student: options tried, quick sums on the whole ranked list (the first clash's options plus every option a try adds), and knock-on clashes (tries that leave a clash). */
-export function levelCounts(m: { options: unknown[]; tries: { added: unknown[]; clash: unknown | null }[] }): { tries: number; sums: number; clashes: number } {
+export function levelCounts(m: LevelShape): { tries: number; sums: number; clashes: number } {
   return { tries: m.tries.length, sums: m.options.length + m.tries.reduce((n, t) => n + t.added.length, 0), clashes: m.tries.filter((t) => t.clash !== null).length };
 }
-export const levelFits = (m: Parameters<typeof levelCounts>[0], size: LevelSize): boolean => {
+/** Does this method fit the size: at least 2 tries (the first leaves a clash), within the three caps, and for Short the second try comes from the knock-on clash's own options. */
+export const levelFits = (m: LevelShape, size: LevelSize): boolean => {
   const c = levelCounts(m), cap = LEVEL_SIZES[size];
-  return c.tries >= 2 && c.tries <= cap.tries && c.sums <= cap.sums && c.clashes <= cap.clashes;
+  if (c.tries < 2 || c.tries > cap.tries || c.sums > cap.sums || c.clashes > cap.clashes) return false;
+  return !cap.ownClashOnly || m.tries[1].option.parent === 0;
 };
 function searchLevel(acts: CpaActivity[], times: CpaTimes, lvl: 1 | 2 | 3, wk: "one" | "several" | "mixed", size: LevelSize, histShape: HistShape, keepWorkers: boolean): { before: HistogramData; limit: number; m: LevelMethod; workers: Record<string, number> } | null {
   const T = times.projectTime;

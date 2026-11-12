@@ -800,7 +800,7 @@ export default function App() {
           {
             key: "levelSize",
             label: "Question size",
-            info: "How long a Level 3 levelling question may run. Exam matches real papers: at most 4 tries, 12 quick sums and 3 knock-on clashes. Short suits a first lesson on knock-ons; Stretch goes a little past a real paper.",
+            info: "How a Level 3 levelling question unfolds. The first try always leaves one knock-on clash. Short: the smallest option at that new clash clears it. Exam: the same one knock-on, but the next try may go back to an option from the first list if every new option is bigger. Stretch: allows a second knock-on (three tries); real papers rarely ask for it.",
             forSubTools: ["level"],
             forLevels: [3],
             defaultFor: () => "exam",

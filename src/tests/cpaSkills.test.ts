@@ -378,7 +378,7 @@ describe("CPA — the harder cases (more than one critical path, late start, par
       const m = data.extra!.level!.method!;
       expect(m.tries[0].clash, "the top option leaves a clash").not.toBeNull();
       expect(m.tries.length).toBeGreaterThanOrEqual(2);
-      expect(m.tries.length).toBeLessThanOrEqual(4);
+      expect(m.tries.length).toBeLessThanOrEqual(2);
     }
   }, 300_000);
 });
