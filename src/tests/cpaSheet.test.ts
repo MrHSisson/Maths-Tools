@@ -44,7 +44,7 @@ describe("A4 question sheet", () => {
       }
     });
   }, 100_000);
-  it("levelling: network, Gantt chart, the given histogram with its limit line and a blank one to draw the levelled histogram; answers add the write-up", async () => {
+  it("levelling: network, Gantt chart, the given histogram with its limit line and a blank one to draw the levelled histogram; answers add the quick sums and the tries (no write-up)", async () => {
     await withSeededRandom(34, async () => {
       const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, histShape: "step" });
       const L = g.data.extra!.level!;
@@ -52,7 +52,9 @@ describe("A4 question sheet", () => {
       expect(figs(q)).toEqual(["network", "gantt", "hist", "hist"]);
       expect(q).toContain(`limit ${L.limit}`);
       const a = await html(problemOf(g, "cpaLevel", 3), true);
-      expect(a).toContain("The new minimum completion time is");
+      expect(a).toContain("Quick sums:");
+      expect(a).toContain("Tries:");
+      expect(a).not.toContain("The new minimum completion time is");
     });
   }, 100_000);
   it("working sheets: one portrait page with the network as the figure, turned when that makes it bigger", async () => {

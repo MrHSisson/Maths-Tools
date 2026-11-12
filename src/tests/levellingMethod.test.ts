@@ -201,10 +201,13 @@ describe("levelling — the walkthrough follows the method", () => {
           }
           expect(h.T).toBe(m.tries[k].finish);
         });
-        // the last try is clash-free and the answer text carries the finish
-        expect(steps[steps.length - 1].list!.items[steps[steps.length - 1].list!.items.length - 1].text).toContain("The new minimum completion time is");
-        expect(steps[steps.length - 1].histView!.which).toBe("after");
-        expect(steps[steps.length - 1].list!.items.length).toBe(m.tries.length + 3);
+        // the answer step shows the levelled histogram and the finished list of options; there is no write-up card
+        const last = steps[steps.length - 1];
+        expect(last.histView!.which).toBe("after");
+        expect(last.list).toBeUndefined();
+        // the list of options is a tab: it carries every option known at that step, never a card under the step text
+        expect(steps.every((s) => !s.list)).toBe(true);
+        steps.filter((s) => s.histView?.options).forEach((s) => expect(s.histView!.options!.items.length).toBeGreaterThanOrEqual(m.options.length));
       }
     });
   }, 120_000);
@@ -366,7 +369,7 @@ describe("QA regressions — wording, clash bands and chips", () => {
         const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "mixed", levelWording: "explain", histShape: "step" });
         const steps = stepsOf(g, "cpaLevel");
         expect(steps[steps.length - 1].caption).toMatch(/longer/);
-        for (const s of steps) if (s.list && s.list.title.startsWith("The list")) { const texts = s.list.items.map((x) => x.text); expect(new Set(texts).size, texts.join(" | ")).toBe(texts.length); }
+        for (const s of steps) if (s.histView?.options) { const texts = s.histView.options.items.map((x) => x.text); expect(new Set(texts).size, texts.join(" | ")).toBe(texts.length); }
       }
     });
   }, 200_000);

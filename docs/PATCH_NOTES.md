@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-12 — Resource levelling: Write it up removed, list of options is a tab
+
+Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpaSolve.ts`, `cpa.ts`, `cpaSheet.tsx`, `src/tools/Decision/CriticalPath.tsx`, tests.
+
+- **Write it up removed:** the final step of a levelling walkthrough is now the answer and the levelled histogram only. The printed answer sheet gives the answer, the quick sums and the tries (built from the method data, no write-up sentence).
+- **List of options as a tab:** it was a card of chips under the step text whose height changed from step to step. It is now a tab beside the network, cascade chart and floats (and the quick-sum table, also a tab now), so there are always five tabs and the layout stops moving. A step opens the tab it is about; a tab chosen by hand stays for that step.
+- **Checked:** walkthrough tests rewritten (no `list` on any levelling step; the options carried on `histView.options`); seen in the dev server at Level 3 (quick sums tab on the quick-sum step, list of options on the tries); build, lint and tests pass.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
 ## 2026-11-12 — Resource levelling lesson deck
 
 Branch `claude/levelling-question-size`. Areas: new `src/decks/data/resource-levelling.json`, `specs/decks/resource-levelling.md`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.

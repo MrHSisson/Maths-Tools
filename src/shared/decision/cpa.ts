@@ -360,6 +360,8 @@ export interface HistViewState {
   ghost?: { id: string; start: number; end: number; workers: number; y: number };
   /** the quick-sum table shown in place of the reference picture */
   quick?: { head: string[]; rows: { cells: string[]; tone: "top" | "tie" | "normal" }[] };
+  /** the list of options so far, smallest first, each coloured by what happened to it (shown in its own tab beside the reference pictures) */
+  options?: { items: { text: string; tone: "current" | "good" | "bad" | "pending" }[] };
 }
 
 /** Workers needed in each time unit, from the blocks (every block counts in every unit it covers). */

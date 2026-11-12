@@ -3,7 +3,6 @@ import ActivityNodeView from "./representations/ActivityNodeView";
 import GanttView from "./representations/GanttView";
 import HistogramView from "./representations/HistogramView";
 import { cascadeSequence, criticalActivities, fullGraph, layoutIssues, type CpaLayout, type CpaActivity, type CpaViewState, type HistogramData } from "./cpa";
-import { solveCpa } from "./cpaSolve";
 import type { DecisionProblem } from "./types";
 import type { CpaSheetFigure, CpaSheetInput } from "./printCpa";
 
@@ -123,12 +122,10 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
     figures.push({ caption: `The resource histogram with every activity as early as possible (limit ${lv.limit})`, svg: draw(lv.before, true, lv.limit), kind: "hist" });
     figures.push({ caption: `Your levelled histogram (limit ${lv.limit})`, svg: draw(lv.after, answers, lv.limit), kind: "hist" });
     if (answers) {
-      const steps = solveCpa(p);
-      const last = steps[steps.length - 1];
-      // the answer, the quick sums, the tries on one line (there can be eight), then the write-up (which opens with the clash sentence, so that is not listed twice)
-      const items = (last?.list?.items ?? []).map((i: { text: string }) => i.text);
-      const tries = items.slice(2, -1).map((t: string) => t.replace(/^Try \d+: /, "").replace(/\.$/, ""));
-      out.answer = [p.answer.text, items[1], ...(tries.length ? [`Tries: ${tries.map((t: string, k: number) => `(${k + 1}) ${t}`).join("; ")}.`] : []), items[items.length - 1]].filter(Boolean);
+      // the answer, the quick sums at the first clash, and the tries on one line (there can be several)
+      const m = lv.method;
+      const tries = (m?.tries ?? []).map((tr, k) => `(${k + 1}) hold ${tr.option.held} until ${tr.option.until}: ${tr.clash ? `a clash is left (${tr.clash.from}–${tr.clash.to})` : `no clash, finish ${tr.finish}`}`);
+      out.answer = [p.answer.text, ...(m ? [`Quick sums: ${m.options.map((o) => `${o.held} ${o.quick}`).join(", ")}.`] : []), ...(tries.length ? [`Tries: ${tries.join("; ")}.`] : [])];
     }
   } else if (cut) {
     out.subtitle = `Resource histogram${level}`;

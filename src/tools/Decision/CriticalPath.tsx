@@ -291,11 +291,30 @@ function FloatTable({ p, current }: { p: DecisionProblem; current?: string }) {
   );
 }
 
+// The list of options so far, smallest first, each coloured by what happened to it (the one being tried, one that cleared the clash, one that left a clash, one still waiting).
+const OPTION_TONE: Record<"current" | "good" | "bad" | "pending", { bg: string; fg: string; border: string }> = {
+  current: { bg: "#fef3c7", fg: "#92400e", border: "#f59e0b" },
+  good: { bg: "#dcfce7", fg: "#166534", border: "#22c55e" },
+  bad: { bg: "#fee2e2", fg: "#991b1b", border: "#ef4444" },
+  pending: { bg: "#f1f5f9", fg: "#475569", border: "#cbd5e1" },
+};
+function OptionList({ items }: { items: { text: string; tone: "current" | "good" | "bad" | "pending" }[] }) {
+  return (
+    <div style={{ margin: "auto", padding: "8px 16px", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, maxWidth: 900 }}>
+      {items.map((it, i) => {
+        const c = OPTION_TONE[it.tone];
+        return <span key={i} style={{ padding: "4px 10px", borderRadius: 8, fontWeight: 800, fontSize: 15, background: c.bg, color: c.fg, border: `1.5px solid ${c.border}` }}>{it.text}</span>;
+      })}
+    </div>
+  );
+}
+
 // The picture scrolls sideways on a phone (the boxes keep a readable size), so it follows the box being worked on.
 function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
   const d = p.cpa!;
   const box = useRef<HTMLDivElement>(null);
-  const [refIdx, setRefIdx] = useState(0); // resource levelling: which of the reference pictures (network, cascade chart, floats) is showing
+  const [refIdx, setRefIdx] = useState(0); // resource levelling: which of the reference tabs (network, cascade chart, floats…) the student last chose
+  const [pick, setPick] = useState<{ key: string; idx: number } | null>(null); // a tab chosen on one particular step, which beats the tab the step would open by itself
   const current = step?.cpaView?.current ?? step?.cpaView?.compare?.[0];
   useEffect(() => {
     const host = box.current, svg = host?.querySelector("svg");
@@ -427,16 +446,23 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
       ...(cas ? [{ title: "Cascade chart", width: "min(92%, 900px)", body: <GanttView data={cas} view={step?.ganttView ?? { bars: d.acts.map((a) => a.id), floats: d.acts.filter((a) => d.times.float[a.id] > 0).map((a) => a.id) }} unit={d.unit} axisT={axis} /> }] : []),
       { title: several ? "Floats and workers" : "Floats", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><FloatTable p={p} current={step?.cpaView?.current} /></FitBox></div> },
     ];
-    // the quick-sum step swaps its table in for the reference picture
-    if (g.quick) panels.push({ title: "Quick sums", width: "auto", body: <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><QuickSumTable quick={g.quick} /></FitBox></div> });
-    const cur = g.quick ? panels.length - 1 : Math.min(refIdx, panels.length - (g.quick ? 1 : 0) - 1);
+    // the quick sums and the list of options are tabs too, always there so the tabs never change in number or the picture in height; a step that is about one of
+    // them opens it (the quick-sum steps the table, the tries the list), and a tab chosen by hand stays for that step
+    const noteStyle = { margin: "auto", padding: "0 16px", color: "#94a3b8", fontSize: 14, textAlign: "center" as const };
+    panels.push({ title: "Quick sums", width: "auto", body: g.quick ? <div style={{ margin: "auto", padding: "0 12px" }}><FitBox><QuickSumTable quick={g.quick} /></FitBox></div> : <div style={noteStyle}>The quick sums for a clash appear on the quick-sum steps.</div> });
+    panels.push({ title: "List of options", width: "auto", body: g.options ? <OptionList items={g.options.items} /> : <div style={noteStyle}>The list of options starts at the quick-sum step.</div> });
+    const quickIdx = panels.length - 2, listIdx = panels.length - 1;
+    const stepKey = step?.phase ?? "";
+    const auto = g.quick ? quickIdx : g.options ? listIdx : Math.min(refIdx, panels.length - 3);
+    const cur = Math.min(pick && pick.key === stepKey ? pick.idx : auto, panels.length - 1);
+    const goto = (idx: number) => { setPick({ key: stepKey, idx }); if (idx < panels.length - 2) setRefIdx(idx); };
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div style={{ flex: "6 1 0", minHeight: 0, display: "flex", flexDirection: "column", margin: "0 8px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px 0 56px" }}>
-            <button onClick={() => setRefIdx((refIdx - 1 + panels.length) % panels.length)} aria-label="Previous picture" title="Previous picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>‹</button>
+            <button onClick={() => goto((cur - 1 + panels.length) % panels.length)} aria-label="Previous picture" title="Previous picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>‹</button>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#64748b", minWidth: 150, textAlign: "center" }}>{panels[cur].title} <span style={{ color: "#94a3b8" }}>· {cur + 1} of {panels.length}</span></div>
-            <button onClick={() => setRefIdx((refIdx + 1) % panels.length)} aria-label="Next picture" title="Next picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>›</button>
+            <button onClick={() => goto((cur + 1) % panels.length)} aria-label="Next picture" title="Next picture" style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #cbd5e1", background: "#fff", color: "#1e3a8a", fontWeight: 800, fontSize: 16, lineHeight: 1 }}>›</button>
           </div>
           <div ref={panels[cur].ref ? box : undefined} style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex" }}>{panels[cur].body}</div>
         </div>
