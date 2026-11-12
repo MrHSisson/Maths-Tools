@@ -13,7 +13,7 @@ describe("Critical Path — level-specific Question Options", () => {
   const expected: [string, string, string][] = [
     ["levelWording", "level", ""],
     ["levelWorkers", "level", "[3]"],
-    ["levelTries", "level", "[3]"],
+    ["levelSize", "level", "[3]"],
     ["histSize", "histogram", "[1]"],
     ["histWorkers", "histogram", "[3]"],
     ["histCut", "histogram", "[3]"],

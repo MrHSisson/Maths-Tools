@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-12 — Resource levelling: Level 3 Question size
+
+Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpa.ts` (`searchLevel`, `LEVEL_SIZES`, `levelCounts`, `levelFits`), `src/tools/Decision/CriticalPath.tsx`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`, tests.
+
+- **Why:** Level 3 was capped only by tries (default 8), so questions reached about 20 walkthrough steps and up to 28 quick sums; real papers need at most 4 tries, 12 quick sums and 3 knock-on clashes.
+- **Change:** a Level 3 question must now meet all three caps of its *Question size*: Short 2 / 6 / 1, Exam 4 / 12 / 3 (default), Stretch 6 / 18 / 5 (tries / quick sums over the whole ranked list / tries that leave a clash), still at least 2 tries. The *Most tries* option is replaced by *Question size* (`levelMaxTries` is now `levelSize`). An old saved or shared `levelTries` value is ignored and the size is Exam.
+- **Checked:** every generated Level 3 question stays within its size (12 per size and workers setting, plus the Exam default); Legacy Q11, Q14, Q15 fit Exam, Legacy Q4 fits Short, 29.2B Q1 with 11 workers fits Stretch, and the queue questions fit no size. Supply and speed: 30 questions for each size and workers setting (one, several, mixed) all generated, about 0.2 to 0.3 s each and 1 s at most. Walkthroughs are 8 steps (Short), 8 to 12 (Exam), 8 to 16 (Stretch); counted from the generated steps, not looked at in a browser. Build, tests, lint and `npm run facts` clean.
+- **Not done:** `specs/resource-levelling.md` was not replaced because Harry's updated file (with the "Change planned 2026-11-12" section) was not in the repo or the kickoff; the caps come from the kickoff and the spec's "As built" now records them.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
 ## 2026-11-11 — Multiples and common multiples: systematic listing for Set 6
 
 Branch `codex/multiples-listing-lesson`. Areas: new `src/decks/data/multiples-systematic-listing.json`, `specs/decks/multiples-systematic-listing.md`, Decks pathway and generated admin docs.
