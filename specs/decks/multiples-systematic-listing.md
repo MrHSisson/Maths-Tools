@@ -28,7 +28,7 @@ The exit ticket takes the last 3 minutes; trim the book work if time is short.
 
 ## Question ladder and checks
 
-Rules: a worked-example number never reappears in a question in its own half; no pair repeats; every base in the book work is different; the listing and common-multiple halves are separate, so a listing number may return in a pair but never beside its listing partner. Lists may run to eight entries; only 9 and 12 (question 8) does.
+Rules: a worked-example number never reappears in a question in its own half; no pair repeats; every base in the book work is different; the listing and common-multiple halves are separate, so a listing number may return in a pair but never beside its listing partner. No list needs more than eight entries. The common-multiple questions deliberately vary the length: most need five to eight terms in the longer list (3 and 8, 5 and 7, 9 and 12 need seven or eight), with 2 and 3 as the one quick starter.
 
 | Set | Task | Answer |
 |---|---|---|
@@ -49,13 +49,13 @@ Rules: a worked-example number never reappears in a question in its own half; no
 | cm-3 | A common multiple of 8 and 10 | 40 |
 | book-1 | A common multiple of 2 and 3 | 6 |
 | book-2 | A common multiple of 5 and 7 | 35 |
-| book-3 | A common multiple of 16 and 24 | 48 |
-| book-4 | A common multiple of 10 and 15 | 30 |
-| book-5 | A common multiple of 20 and 30 | 60 |
-| book-6 | A common multiple of 18 and 27 | 54 |
-| book-7 | First two common multiples of 25 and 50 | 50 and 100 |
+| book-3 | A common multiple of 9 and 15 | 45 |
+| book-4 | A common multiple of 3 and 8 | 24 |
+| book-5 | A common multiple of 14 and 35 | 70 |
+| book-6 | A common multiple of 10 and 12 | 60 |
+| book-7 | First two common multiples of 14 and 21 | 42 and 84 |
 | book-8 | First two common multiples of 9 and 12 | 36 and 72 |
-| book-9 | First two common multiples of 14 and 21 | 42 and 84 |
+| book-9 | First two common multiples of 16 and 24 | 48 and 96 |
 
 | exit-1 | First five multiples of 9 | 9, 18, 27, 36, 45 |
 | exit-2 | Circle the common multiple in the lists for 2 and 5 | 10 |

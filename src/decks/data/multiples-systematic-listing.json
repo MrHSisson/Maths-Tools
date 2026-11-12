@@ -1296,9 +1296,9 @@
               "id": "msl-book-3",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Common multiple of $16$ and $24$",
+              "title": "Common multiple of $9$ and $15$",
               "answer": [
-                "$48$"
+                "$45$"
               ],
               "format": "open",
               "status": "ready",
@@ -1306,13 +1306,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $16$ and $24$."
+                "Find a common multiple of $9$ and $15$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
-                "24: $24$, $\\text{\\textcircled{\\scriptsize 48}}$",
-                "A common multiple is $48$."
+                "9: $9$, $18$, $27$, $36$, $\\text{\\textcircled{\\scriptsize 45}}$",
+                "15: $15$, $30$, $\\text{\\textcircled{\\scriptsize 45}}$",
+                "A common multiple is $45$."
               ],
               "expectedErrors": []
             },
@@ -1320,9 +1320,9 @@
               "id": "msl-book-4",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Common multiple of $10$ and $15$",
+              "title": "Common multiple of $3$ and $8$",
               "answer": [
-                "$30$"
+                "$24$"
               ],
               "format": "open",
               "status": "ready",
@@ -1330,13 +1330,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $10$ and $15$."
+                "Find a common multiple of $3$ and $8$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "10: $10$, $20$, $\\text{\\textcircled{\\scriptsize 30}}$",
-                "15: $15$, $\\text{\\textcircled{\\scriptsize 30}}$",
-                "A common multiple is $30$."
+                "3: $3$, $6$, $9$, $12$, $15$, $18$, $21$, $\\text{\\textcircled{\\scriptsize 24}}$",
+                "8: $8$, $16$, $\\text{\\textcircled{\\scriptsize 24}}$",
+                "A common multiple is $24$."
               ],
               "expectedErrors": []
             },
@@ -1344,7 +1344,31 @@
               "id": "msl-book-5",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Common multiple of $20$ and $30$",
+              "title": "Common multiple of $14$ and $35$",
+              "answer": [
+                "$70$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $14$ and $35$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "14: $14$, $28$, $42$, $56$, $\\text{\\textcircled{\\scriptsize 70}}$",
+                "35: $35$, $\\text{\\textcircled{\\scriptsize 70}}$",
+                "A common multiple is $70$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-6",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $10$ and $12$",
               "answer": [
                 "$60$"
               ],
@@ -1354,37 +1378,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $20$ and $30$."
+                "Find a common multiple of $10$ and $12$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
-                "30: $30$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "10: $10$, $20$, $30$, $40$, $50$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "12: $12$, $24$, $36$, $48$, $\\text{\\textcircled{\\scriptsize 60}}$",
                 "A common multiple is $60$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-book-6",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Common multiple of $18$ and $27$",
-              "answer": [
-                "$54$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Find a common multiple of $18$ and $27$."
-              ],
-              "rationale": "Use two ordered lists and find a number that appears in both.",
-              "explanation": [
-                "18: $18$, $36$, $\\text{\\textcircled{\\scriptsize 54}}$",
-                "27: $27$, $\\text{\\textcircled{\\scriptsize 54}}$",
-                "A common multiple is $54$."
               ],
               "expectedErrors": []
             },
@@ -1392,9 +1392,9 @@
               "id": "msl-book-7",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "First two common multiples of $25$ and $50$",
+              "title": "First two common multiples of $14$ and $21$",
               "answer": [
-                "$50$ and $100$"
+                "$42$ and $84$"
               ],
               "format": "open",
               "status": "ready",
@@ -1402,13 +1402,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find the first two common multiples of $25$ and $50$."
+                "Find the first two common multiples of $14$ and $21$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "25: $25$, $\\text{\\textcircled{\\scriptsize 50}}$, $75$, $\\text{\\textcircled{\\scriptsize 100}}$",
-                "50: $\\text{\\textcircled{\\scriptsize 50}}$, $\\text{\\textcircled{\\scriptsize 100}}$",
-                "The first two common multiples are $50$ and $100$."
+                "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$, $56$, $70$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "The first two common multiples are $42$ and $84$."
               ],
               "expectedErrors": []
             },
@@ -1440,9 +1440,9 @@
               "id": "msl-book-9",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "First two common multiples of $14$ and $21$",
+              "title": "First two common multiples of $16$ and $24$",
               "answer": [
-                "$42$ and $84$"
+                "$48$ and $96$"
               ],
               "format": "open",
               "status": "ready",
@@ -1450,13 +1450,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find the first two common multiples of $14$ and $21$."
+                "Find the first two common multiples of $16$ and $24$."
               ],
               "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$, $56$, $70$, $\\text{\\textcircled{\\scriptsize 84}}$",
-                "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
-                "The first two common multiples are $42$ and $84$."
+                "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$, $64$, $80$, $\\text{\\textcircled{\\scriptsize 96}}$",
+                "24: $24$, $\\text{\\textcircled{\\scriptsize 48}}$, $72$, $\\text{\\textcircled{\\scriptsize 96}}$",
+                "The first two common multiples are $48$ and $96$."
               ],
               "expectedErrors": []
             }

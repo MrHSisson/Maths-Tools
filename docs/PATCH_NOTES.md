@@ -40,6 +40,7 @@ Branch `claude/inspiring-cannon-esg9yk`. Areas: `src/decks/data/multiples-system
 
 - **Shortened for a low-ability group (same day):** the lesson is now two halves, each direct instruction, three whiteboard questions and nine book questions. Removed the LCM definition, LCM model, guided LCM and exit ticket (LCM is left for a later lesson, possibly with calculators). Common-multiple model is 4 and 6 (12, then 24); whiteboards 3/5, 2/7, 8/10; book questions 1–6 find a common multiple, 7–9 the first two. The two whiteboard slides moved to the teach family because the content check requires five questions on a practice slide. Nine listing book numbers are now 5, 8, 12, 13, 22, 26, 34, 38, 45.
 - **Discussion and exit ticket added:** a Mei-says discussion slide after the 4 and 6 model (the only common multiple of 4 and 6 is 12?, then is 24 a common multiple of 2 and 3?), and a three-question exit ticket (multiples of 9; spot the common multiple in the 2 and 5 lists; common multiple of 3 and 7). The common-multiple whiteboard slide was tidied: each answer is now just the two lists with the match circled, and each question is shorter so the text stays large.
+- **No list starters; longer searches:** the common-multiple whiteboard and book questions are now the bare question. Book pairs are 2/3, 5/7, 9/15, 3/8, 14/35, 10/12, then first-two-common-multiples for 14/21, 9/12 and 16/24; no list needs more than eight terms and only two reach eight.
 
 Agent: Claude Code
 Notes: no Build Log block written (planner not reachable this session).
