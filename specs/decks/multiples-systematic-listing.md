@@ -19,10 +19,12 @@ The lesson has two halves of the same shape: direct instruction, a few whiteboar
 | 5 | Three whiteboard questions: two partly completed lists, then one independent list (14, 17, 19). |
 | 6 | Nine first-five-multiples questions in books, 3 × 3, easiest first (5, 8, 12 low starters). |
 | 7–8 | Definition of a common multiple; model with 4 and 6: circle 12 in both lists, then extend to show 24 is another. |
-| 9 | Three whiteboard questions: 3 and 5 with starters, then 2 and 7, then 8 and 10. |
-| 10 | Nine common-multiple questions in books, 3 × 3: questions 1–6 find a common multiple (1–3 with starters); questions 7–9 find the first two. |
+| 9 | Discussion: Mei says the only common multiple of 4 and 6 is 12. Key point: 24 and 36 are too, and the list never stops; then is 36 a common multiple of 4 and 6? |
+| 10 | Three whiteboard questions: 3 and 5 with starters, then 2 and 7, then 8 and 10 (compact: question, lists, circled answer). |
+| 11 | Nine common-multiple questions in books, 3 × 3: questions 1–6 find a common multiple (1–3 with starters); questions 7–9 find the first two. |
+| 12 | Exit ticket: first five multiples of 9; circle the common multiple in the 2 and 5 lists (10); find a common multiple of 3 and 7 (21). |
 
-No exit ticket (45 minutes are full); one can be added later.
+The exit ticket takes the last 3 minutes; trim the book work if time is short.
 
 ## Question ladder and checks
 
@@ -54,6 +56,10 @@ Rules: a worked-example number never reappears in a question in its own half; no
 | book-7 | First two common multiples of 25 and 50 | 50 and 100 |
 | book-8 | First two common multiples of 9 and 12 | 36 and 72 |
 | book-9 | First two common multiples of 14 and 21 | 42 and 84 |
+
+| exit-1 | First five multiples of 9 | 9, 18, 27, 36, 45 |
+| exit-2 | Circle the common multiple in the lists for 2 and 5 | 10 |
+| exit-3 | A common multiple of 3 and 7 | 21 |
 
 **Misconceptions checked:** adding the wrong amount; missing a multiple; stopping equally long lists before a match; listing only the first match when two are asked for.
 
