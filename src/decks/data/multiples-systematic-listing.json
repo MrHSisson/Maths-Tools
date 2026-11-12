@@ -445,86 +445,16 @@
                 "$19$, $38$, $57$, $76$, $95$"
               ],
               "expectedErrors": []
-            },
-            {
-              "id": "msl-list-4",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Write the first five multiples of $24$",
-              "answer": [
-                "$24$, $48$, $72$, $96$, $120$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Write the first five multiples of $24$.",
-                "Start at $24$. Keep adding $24$."
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $24$. Add $24$ each time.",
-                "$24$, $48$, $72$, $96$, $120$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-list-5",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Write the first 5 multiples of $35$",
-              "answer": [
-                "$35$, $70$, $105$, $140$, $175$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Write the first 5 multiples of $35$."
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $35$. Add $35$ each time.",
-                "$35$, $70$, $105$, $140$, $175$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-list-6",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Write the first 5 multiples of $29$",
-              "answer": [
-                "$29$, $58$, $87$, $116$, $145$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Write the first 5 multiples of $29$."
-              ],
-              "rationale": "List every positive multiple in order, starting with the number itself.",
-              "explanation": [
-                "Start at $29$. Add $29$ each time.",
-                "$29$, $58$, $87$, $116$, $145$"
-              ],
-              "expectedErrors": []
             }
           ],
           "visualiser": false,
           "presentation": "whiteboard"
         }
       ],
-      "brief": "7–12 minutes. Six whiteboard questions: partial lists first, then a repeated-addition prompt, then independent listing. Accept times-table grids throughout.",
+      "brief": "Three whiteboard questions: two with partly completed lists, then one independent list. Accept times-table grids.",
       "built": "1w6rtt2",
       "title": "List multiples",
-      "family": "practice"
+      "family": "teach"
     },
     {
       "id": "msl-list-check",
@@ -760,7 +690,7 @@
           ]
         }
       ],
-      "brief": "12–20 minutes. Nine fresh listing questions, easiest first (5, 8, 12 as low starters) in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No LCM questions in this activity.",
+      "brief": "12–20 minutes. Nine fresh listing questions, easiest first (5, 8, 12 as low starters) in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No common-multiple questions in this activity.",
       "built": "1evvqp7",
       "title": "Multiples book work",
       "family": "retrieval"
@@ -844,7 +774,7 @@
           "kind": "text",
           "size": 44,
           "step": 0,
-          "text": "18:",
+          "text": "4:",
           "align": "left",
           "colour": "#0f172a",
           "middle": true
@@ -858,7 +788,7 @@
           "kind": "text",
           "size": 44,
           "step": 0,
-          "text": "27:",
+          "text": "6:",
           "align": "left",
           "colour": "#0f172a",
           "middle": true
@@ -872,7 +802,7 @@
           "kind": "text",
           "size": 44,
           "step": 1,
-          "text": "18",
+          "text": "4",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -886,7 +816,7 @@
           "kind": "text",
           "size": 44,
           "step": 1,
-          "text": "36",
+          "text": "8",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -900,7 +830,7 @@
           "kind": "text",
           "size": 44,
           "step": 1,
-          "text": "54",
+          "text": "12",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -914,7 +844,7 @@
           "kind": "text",
           "size": 44,
           "step": 4,
-          "text": "72",
+          "text": "16",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -928,7 +858,7 @@
           "kind": "text",
           "size": 44,
           "step": 4,
-          "text": "90",
+          "text": "20",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -942,7 +872,7 @@
           "kind": "text",
           "size": 44,
           "step": 4,
-          "text": "108",
+          "text": "24",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -956,7 +886,7 @@
           "kind": "text",
           "size": 44,
           "step": 2,
-          "text": "27",
+          "text": "6",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -970,7 +900,7 @@
           "kind": "text",
           "size": 44,
           "step": 2,
-          "text": "54",
+          "text": "12",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -984,7 +914,7 @@
           "kind": "text",
           "size": 44,
           "step": 4,
-          "text": "81",
+          "text": "18",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -998,7 +928,7 @@
           "kind": "text",
           "size": 44,
           "step": 4,
-          "text": "108",
+          "text": "24",
           "align": "center",
           "colour": "#0f172a",
           "middle": true
@@ -1036,7 +966,7 @@
           "kind": "text",
           "size": 44,
           "step": 3,
-          "text": "54 is a common multiple: it is in both lists.",
+          "text": "12 is a common multiple: it is in both lists.",
           "colour": "#0f172a"
         },
         {
@@ -1072,263 +1002,13 @@
           "kind": "text",
           "size": 44,
           "step": 5,
-          "text": "108 is another common multiple.",
+          "text": "24 is another common multiple.",
           "colour": "#0f172a"
         }
       ],
-      "brief": "21–25 minutes. First stop and circle 54 in both lists. Then ask whether another shared number exists; extend to 108 and circle it. Do not name LCM until the next slide.",
+      "brief": "Common multiples, direct instruction. Circle 12 in both lists. Then ask whether another shared number exists; extend to 24 and circle it.",
       "built": "y56nqn",
       "title": "Find a common multiple",
-      "family": "teach"
-    },
-    {
-      "id": "msl-lcm-definition",
-      "els": [
-        {
-          "h": 50,
-          "w": 1400,
-          "x": 100,
-          "y": 120,
-          "id": "msl-lcm-definition-1",
-          "bold": true,
-          "kind": "text",
-          "size": 30,
-          "text": "KEY DEFINITION",
-          "colour": "#6d28d9"
-        },
-        {
-          "h": 140,
-          "w": 1400,
-          "x": 100,
-          "y": 190,
-          "id": "msl-lcm-definition-2",
-          "bold": true,
-          "kind": "text",
-          "size": 96,
-          "text": "Lowest common multiple",
-          "colour": "#0f172a"
-        },
-        {
-          "h": 420,
-          "w": 1400,
-          "x": 100,
-          "y": 370,
-          "id": "msl-lcm-definition-3",
-          "kind": "text",
-          "size": 52,
-          "text": "The lowest common multiple (LCM) is the smallest positive multiple shared by both numbers.",
-          "colour": "#0f172a"
-        }
-      ],
-      "built": "1mmqvms",
-      "title": "Lowest common multiple",
-      "family": "language"
-    },
-    {
-      "id": "msl-lcm-model",
-      "els": [
-        {
-          "h": 110,
-          "w": 1400,
-          "x": 100,
-          "y": 80,
-          "id": "msl-lcm-model-1",
-          "bold": true,
-          "kind": "text",
-          "size": 64,
-          "text": "Find the lowest common multiple",
-          "colour": "#0f172a"
-        },
-        {
-          "h": 80,
-          "w": 1400,
-          "x": 100,
-          "y": 190,
-          "id": "msl-lcm-model-prompt",
-          "kind": "text",
-          "size": 44,
-          "step": 0,
-          "text": "Find the LCM of 12 and 16.",
-          "colour": "#0f172a"
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 100,
-          "y": 340,
-          "id": "msl-lcm-model-label-4",
-          "kind": "text",
-          "size": 44,
-          "step": 0,
-          "text": "12:",
-          "align": "left",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 100,
-          "y": 510,
-          "id": "msl-lcm-model-label-6",
-          "kind": "text",
-          "size": 44,
-          "step": 0,
-          "text": "16:",
-          "align": "left",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 230,
-          "y": 340,
-          "id": "msl-lcm-model-four-0",
-          "kind": "text",
-          "size": 44,
-          "step": 1,
-          "text": "12",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 395,
-          "y": 340,
-          "id": "msl-lcm-model-four-1",
-          "kind": "text",
-          "size": 44,
-          "step": 1,
-          "text": "24",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 560,
-          "y": 340,
-          "id": "msl-lcm-model-four-2",
-          "kind": "text",
-          "size": 44,
-          "step": 3,
-          "text": "36",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 725,
-          "y": 340,
-          "id": "msl-lcm-model-four-3",
-          "kind": "text",
-          "size": 44,
-          "step": 3,
-          "text": "48",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 230,
-          "y": 510,
-          "id": "msl-lcm-model-six-0",
-          "kind": "text",
-          "size": 44,
-          "step": 2,
-          "text": "16",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 395,
-          "y": 510,
-          "id": "msl-lcm-model-six-1",
-          "kind": "text",
-          "size": 44,
-          "step": 2,
-          "text": "32",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 95,
-          "w": 100,
-          "x": 560,
-          "y": 510,
-          "id": "msl-lcm-model-six-2",
-          "kind": "text",
-          "size": 44,
-          "step": 3,
-          "text": "48",
-          "align": "center",
-          "colour": "#0f172a",
-          "middle": true
-        },
-        {
-          "h": 60,
-          "w": 1400,
-          "x": 100,
-          "y": 275,
-          "id": "msl-lcm-model-extend",
-          "kind": "text",
-          "size": 44,
-          "step": 2,
-          "text": "No match yet? Keep listing in order.",
-          "colour": "#0f172a"
-        },
-        {
-          "h": 92,
-          "w": 102,
-          "x": 724,
-          "y": 341.5,
-          "id": "msl-lcm-circle-a",
-          "kind": "shape",
-          "step": 4,
-          "shape": "ellipse",
-          "stroke": "#6d28d9",
-          "strokeWidth": 4
-        },
-        {
-          "h": 92,
-          "w": 102,
-          "x": 559,
-          "y": 511.5,
-          "id": "msl-lcm-circle-b",
-          "kind": "shape",
-          "step": 4,
-          "shape": "ellipse",
-          "stroke": "#6d28d9",
-          "strokeWidth": 4
-        },
-        {
-          "h": 100,
-          "w": 1400,
-          "x": 100,
-          "y": 685,
-          "id": "msl-lcm-model-answer",
-          "kind": "text",
-          "size": 44,
-          "step": 4,
-          "text": "LCM = 48. It is the smallest number in both lists.",
-          "colour": "#0f172a"
-        }
-      ],
-      "brief": "26–29 minutes. Initially show two entries per list, with no match. Extend the lists to 48; circle both 48s. Equal list lengths are not a stopping rule.",
-      "built": "710i2o",
-      "title": "Find the lowest common multiple",
       "family": "teach"
     },
     {
@@ -1347,10 +1027,10 @@
               "id": "msl-lcm-1",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Complete both lists. Circle the first match",
+              "title": "Complete both lists. Find a common multiple",
               "answer": [
-                "$\\begin{aligned}20&:\\;20, 40, 60, 80, \\text{\\textcircled{\\scriptsize 100}}\\\\50&:\\;50, \\text{\\textcircled{\\scriptsize 100}}\\end{aligned}$",
-                "LCM = $100$."
+                "$\\begin{aligned}3&:\\;3, 6, 9, 12, \\text{\\textcircled{\\scriptsize 15}}\\\\5&:\\;5, 10, \\text{\\textcircled{\\scriptsize 15}}\\end{aligned}$",
+                "A common multiple of $3$ and $5$ is $15$."
               ],
               "format": "open",
               "status": "ready",
@@ -1358,16 +1038,16 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Complete both lists. Circle the first match.",
-                "$20: \\;20,\\;40,\\;60,\\;80,\\;\\square$",
-                "$50: \\;50,\\;\\square$",
-                "What is the LCM?"
+                "Complete both lists. Find a common multiple.",
+                "$3: \\;3,\\;6,\\;9,\\;\\square,\\;\\square$",
+                "$5: \\;5,\\;10,\\;\\square$",
+                "Circle the number in both lists."
               ],
               "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
               "explanation": [
-                "20: $20$, $40$, $60$, $80$, $\\text{\\textcircled{\\scriptsize 100}}$",
-                "50: $50$, $\\text{\\textcircled{\\scriptsize 100}}$",
-                "LCM = $100$."
+                "3: $3$, $6$, $9$, $12$, $\\text{\\textcircled{\\scriptsize 15}}$",
+                "5: $5$, $10$, $\\text{\\textcircled{\\scriptsize 15}}$",
+                "A common multiple of $3$ and $5$ is $15$."
               ],
               "expectedErrors": []
             },
@@ -1375,10 +1055,10 @@
               "id": "msl-lcm-2",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Continue both lists. Find the LCM",
+              "title": "Find a common multiple of $2$ and $7$",
               "answer": [
-                "$\\begin{aligned}24&:\\;24, 48, \\text{\\textcircled{\\scriptsize 72}}\\\\36&:\\;36, \\text{\\textcircled{\\scriptsize 72}}\\end{aligned}$",
-                "LCM = $72$."
+                "$\\begin{aligned}2&:\\;2, 4, 6, 8, 10, 12, \\text{\\textcircled{\\scriptsize 14}}\\\\7&:\\;7, \\text{\\textcircled{\\scriptsize 14}}\\end{aligned}$",
+                "A common multiple of $2$ and $7$ is $14$."
               ],
               "format": "open",
               "status": "ready",
@@ -1386,16 +1066,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Continue both lists. Find the LCM.",
-                "$24: \\;24,\\;48,\\;\\ldots$",
-                "$36: \\;36,\\;72,\\;\\ldots$",
-                "Circle the first match in both."
+                "Find a common multiple of $2$ and $7$.",
+                "Write both lists. Circle a number in both."
               ],
               "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
               "explanation": [
-                "24: $24$, $48$, $\\text{\\textcircled{\\scriptsize 72}}$",
-                "36: $36$, $\\text{\\textcircled{\\scriptsize 72}}$",
-                "LCM = $72$."
+                "2: $2$, $4$, $6$, $8$, $10$, $12$, $\\text{\\textcircled{\\scriptsize 14}}$",
+                "7: $7$, $\\text{\\textcircled{\\scriptsize 14}}$",
+                "A common multiple of $2$ and $7$ is $14$."
               ],
               "expectedErrors": []
             },
@@ -1403,10 +1081,10 @@
               "id": "msl-lcm-3",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "Find the LCM of $25$ and $40$",
+              "title": "Find a common multiple of $8$ and $10$",
               "answer": [
-                "$\\begin{aligned}25&:\\;25, 50, 75, 100, 125, 150, 175, \\text{\\textcircled{\\scriptsize 200}}\\\\40&:\\;40, 80, 120, 160, \\text{\\textcircled{\\scriptsize 200}}\\end{aligned}$",
-                "LCM = $200$."
+                "$\\begin{aligned}8&:\\;8, 16, 24, 32, \\text{\\textcircled{\\scriptsize 40}}\\\\10&:\\;10, 20, 30, \\text{\\textcircled{\\scriptsize 40}}\\end{aligned}$",
+                "A common multiple of $8$ and $10$ is $40$."
               ],
               "format": "open",
               "status": "ready",
@@ -1414,66 +1092,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find the LCM of $25$ and $40$.",
-                "Write both lists. Circle the first match in both."
+                "Find a common multiple of $8$ and $10$.",
+                "Write both lists. Circle a number in both."
               ],
               "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
               "explanation": [
-                "25: $25$, $50$, $75$, $100$, $125$, $150$, $175$, $\\text{\\textcircled{\\scriptsize 200}}$",
-                "40: $40$, $80$, $120$, $160$, $\\text{\\textcircled{\\scriptsize 200}}$",
-                "LCM = $200$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-lcm-4",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Find the LCM of $22$ and $33$",
-              "answer": [
-                "$\\begin{aligned}22&:\\;22, 44, \\text{\\textcircled{\\scriptsize 66}}\\\\33&:\\;33, \\text{\\textcircled{\\scriptsize 66}}\\end{aligned}$",
-                "LCM = $66$."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Find the LCM of $22$ and $33$.",
-                "Write both lists. Circle the first match in both."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "22: $22$, $44$, $\\text{\\textcircled{\\scriptsize 66}}$",
-                "33: $33$, $\\text{\\textcircled{\\scriptsize 66}}$",
-                "LCM = $66$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-lcm-5",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Find the LCM of $35$ and $28$",
-              "answer": [
-                "$\\begin{aligned}35&:\\;35, 70, 105, \\text{\\textcircled{\\scriptsize 140}}\\\\28&:\\;28, 56, 84, 112, \\text{\\textcircled{\\scriptsize 140}}\\end{aligned}$",
-                "LCM = $140$."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Find the LCM of $35$ and $28$.",
-                "Write both lists. Circle the first match in both."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "35: $35$, $70$, $105$, $\\text{\\textcircled{\\scriptsize 140}}$",
-                "28: $28$, $56$, $84$, $112$, $\\text{\\textcircled{\\scriptsize 140}}$",
-                "LCM = $140$."
+                "8: $8$, $16$, $24$, $32$, $\\text{\\textcircled{\\scriptsize 40}}$",
+                "10: $10$, $20$, $30$, $\\text{\\textcircled{\\scriptsize 40}}$",
+                "A common multiple of $8$ and $10$ is $40$."
               ],
               "expectedErrors": []
             }
@@ -1482,10 +1108,10 @@
           "presentation": "whiteboard"
         }
       ],
-      "brief": "29–34 minutes. Five questions fade list starters to independent listing. Answers show both lists with the first match circled; use two-digit pairs chosen so each search stays short. The nested pair appears in book work.",
+      "brief": "Three whiteboard questions: a partly completed pair of lists, then two independent pairs. Any number in both lists is a common multiple; accept the first one as the model answer.",
       "built": "1tr5a4",
-      "title": "Find the LCM",
-      "family": "practice"
+      "title": "Find a common multiple",
+      "family": "teach"
     },
     {
       "id": "msl-book",
@@ -1498,7 +1124,7 @@
           "id": "msl-book-1",
           "kind": "text",
           "size": 38,
-          "text": "Write in your book. For each LCM: write both lists and circle the first match.",
+          "text": "Write in your book. Questions 1–6: find a common multiple. Questions 7–9: find the first two common multiples.",
           "colour": "#64748b"
         },
         {
@@ -1515,9 +1141,9 @@
               "id": "msl-book-1",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $32$ and $48$",
+              "title": "Common multiple of $2$ and $3$",
               "answer": [
-                "$96$"
+                "$6$"
               ],
               "format": "open",
               "status": "ready",
@@ -1525,15 +1151,15 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $32$ and $48$.",
-                "$32: \\;32,\\;64,\\;\\ldots$",
-                "$48: \\;48,\\;\\ldots$"
+                "Find a common multiple of $2$ and $3$.",
+                "$2: \\;2,\\;4,\\;\\ldots$",
+                "$3: \\;3,\\;6,\\;\\ldots$"
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "32: $32$, $64$, $\\text{\\textcircled{\\scriptsize 96}}$",
-                "48: $48$, $\\text{\\textcircled{\\scriptsize 96}}$",
-                "LCM = $96$."
+                "2: $2$, $4$, $\\text{\\textcircled{\\scriptsize 6}}$",
+                "3: $3$, $\\text{\\textcircled{\\scriptsize 6}}$",
+                "A common multiple is $6$."
               ],
               "expectedErrors": []
             },
@@ -1541,9 +1167,9 @@
               "id": "msl-book-2",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $45$ and $60$",
+              "title": "Common multiple of $5$ and $7$",
               "answer": [
-                "$180$"
+                "$35$"
               ],
               "format": "open",
               "status": "ready",
@@ -1551,15 +1177,15 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $45$ and $60$.",
-                "$45: \\;45,\\;90,\\;\\ldots$",
-                "$60: \\;60,\\;120,\\;\\ldots$"
+                "Find a common multiple of $5$ and $7$.",
+                "$5: \\;5,\\;10,\\;\\ldots$",
+                "$7: \\;7,\\;14,\\;\\ldots$"
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "45: $45$, $90$, $135$, $\\text{\\textcircled{\\scriptsize 180}}$",
-                "60: $60$, $120$, $\\text{\\textcircled{\\scriptsize 180}}$",
-                "LCM = $180$."
+                "5: $5$, $10$, $15$, $20$, $25$, $30$, $\\text{\\textcircled{\\scriptsize 35}}$",
+                "7: $7$, $14$, $21$, $28$, $\\text{\\textcircled{\\scriptsize 35}}$",
+                "A common multiple is $35$."
               ],
               "expectedErrors": []
             },
@@ -1567,9 +1193,9 @@
               "id": "msl-book-3",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $42$ and $63$",
+              "title": "Common multiple of $16$ and $24$",
               "answer": [
-                "$126$"
+                "$48$"
               ],
               "format": "open",
               "status": "ready",
@@ -1577,15 +1203,15 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $42$ and $63$.",
-                "$42: \\;42,\\;84,\\;\\ldots$",
-                "$63: \\;63,\\;\\ldots$"
+                "Find a common multiple of $16$ and $24$.",
+                "$16: \\;16,\\;32,\\;\\ldots$",
+                "$24: \\;24,\\;48,\\;\\ldots$"
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "42: $42$, $84$, $\\text{\\textcircled{\\scriptsize 126}}$",
-                "63: $63$, $\\text{\\textcircled{\\scriptsize 126}}$",
-                "LCM = $126$."
+                "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
+                "24: $24$, $\\text{\\textcircled{\\scriptsize 48}}$",
+                "A common multiple is $48$."
               ],
               "expectedErrors": []
             },
@@ -1593,7 +1219,7 @@
               "id": "msl-book-4",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $10$ and $30$",
+              "title": "Common multiple of $10$ and $15$",
               "answer": [
                 "$30$"
               ],
@@ -1603,15 +1229,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $10$ and $30$.",
-                "$10: \\;10,\\;20,\\;\\ldots$",
-                "$30: \\;30,\\;\\ldots$"
+                "Find a common multiple of $10$ and $15$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
                 "10: $10$, $20$, $\\text{\\textcircled{\\scriptsize 30}}$",
-                "30: $\\text{\\textcircled{\\scriptsize 30}}$",
-                "LCM = $30$."
+                "15: $15$, $\\text{\\textcircled{\\scriptsize 30}}$",
+                "A common multiple is $30$."
               ],
               "expectedErrors": []
             },
@@ -1619,9 +1243,9 @@
               "id": "msl-book-5",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $54$ and $81$",
+              "title": "Common multiple of $20$ and $30$",
               "answer": [
-                "$162$"
+                "$60$"
               ],
               "format": "open",
               "status": "ready",
@@ -1629,13 +1253,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $54$ and $81$."
+                "Find a common multiple of $20$ and $30$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "54: $54$, $108$, $\\text{\\textcircled{\\scriptsize 162}}$",
-                "81: $81$, $\\text{\\textcircled{\\scriptsize 162}}$",
-                "LCM = $162$."
+                "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "30: $30$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "A common multiple is $60$."
               ],
               "expectedErrors": []
             },
@@ -1643,9 +1267,9 @@
               "id": "msl-book-6",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $44$ and $66$",
+              "title": "Common multiple of $18$ and $27$",
               "answer": [
-                "$132$"
+                "$54$"
               ],
               "format": "open",
               "status": "ready",
@@ -1653,13 +1277,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $44$ and $66$."
+                "Find a common multiple of $18$ and $27$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "44: $44$, $88$, $\\text{\\textcircled{\\scriptsize 132}}$",
-                "66: $66$, $\\text{\\textcircled{\\scriptsize 132}}$",
-                "LCM = $132$."
+                "18: $18$, $36$, $\\text{\\textcircled{\\scriptsize 54}}$",
+                "27: $27$, $\\text{\\textcircled{\\scriptsize 54}}$",
+                "A common multiple is $54$."
               ],
               "expectedErrors": []
             },
@@ -1667,9 +1291,9 @@
               "id": "msl-book-7",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $34$ and $51$",
+              "title": "First two common multiples of $25$ and $50$",
               "answer": [
-                "$102$"
+                "$50$ and $100$"
               ],
               "format": "open",
               "status": "ready",
@@ -1677,13 +1301,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $34$ and $51$."
+                "Find the first two common multiples of $25$ and $50$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "34: $34$, $68$, $\\text{\\textcircled{\\scriptsize 102}}$",
-                "51: $51$, $\\text{\\textcircled{\\scriptsize 102}}$",
-                "LCM = $102$."
+                "25: $25$, $\\text{\\textcircled{\\scriptsize 50}}$, $75$, $\\text{\\textcircled{\\scriptsize 100}}$",
+                "50: $\\text{\\textcircled{\\scriptsize 50}}$, $\\text{\\textcircled{\\scriptsize 100}}$",
+                "The first two common multiples are $50$ and $100$."
               ],
               "expectedErrors": []
             },
@@ -1691,9 +1315,9 @@
               "id": "msl-book-8",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $38$ and $57$",
+              "title": "First two common multiples of $9$ and $12$",
               "answer": [
-                "$114$"
+                "$36$ and $72$"
               ],
               "format": "open",
               "status": "ready",
@@ -1701,13 +1325,13 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $38$ and $57$."
+                "Find the first two common multiples of $9$ and $12$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "38: $38$, $76$, $\\text{\\textcircled{\\scriptsize 114}}$",
-                "57: $57$, $\\text{\\textcircled{\\scriptsize 114}}$",
-                "LCM = $114$."
+                "9: $9$, $18$, $27$, $\\text{\\textcircled{\\scriptsize 36}}$, $45$, $54$, $63$, $\\text{\\textcircled{\\scriptsize 72}}$",
+                "12: $12$, $24$, $\\text{\\textcircled{\\scriptsize 36}}$, $48$, $60$, $\\text{\\textcircled{\\scriptsize 72}}$",
+                "The first two common multiples are $36$ and $72$."
               ],
               "expectedErrors": []
             },
@@ -1715,9 +1339,9 @@
               "id": "msl-book-9",
               "tool": "multiples-systematic-listing",
               "level": "level1",
-              "title": "LCM of $52$ and $78$",
+              "title": "First two common multiples of $14$ and $21$",
               "answer": [
-                "$156$"
+                "$42$ and $84$"
               ],
               "format": "open",
               "status": "ready",
@@ -1725,212 +1349,22 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "LCM of $52$ and $78$."
+                "Find the first two common multiples of $14$ and $21$."
               ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "rationale": "Use two ordered lists and find a number that appears in both.",
               "explanation": [
-                "52: $52$, $104$, $\\text{\\textcircled{\\scriptsize 156}}$",
-                "78: $78$, $\\text{\\textcircled{\\scriptsize 156}}$",
-                "LCM = $156$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-book-10",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "LCM of $56$ and $84$",
-              "answer": [
-                "$168$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "LCM of $56$ and $84$."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "56: $56$, $112$, $\\text{\\textcircled{\\scriptsize 168}}$",
-                "84: $84$, $\\text{\\textcircled{\\scriptsize 168}}$",
-                "LCM = $168$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-book-11",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "LCM of $46$ and $69$",
-              "answer": [
-                "$138$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "LCM of $46$ and $69$."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "46: $46$, $92$, $\\text{\\textcircled{\\scriptsize 138}}$",
-                "69: $69$, $\\text{\\textcircled{\\scriptsize 138}}$",
-                "LCM = $138$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-book-12",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "LCM of $26$ and $39$",
-              "answer": [
-                "$78$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "LCM of $26$ and $39$."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "26: $26$, $52$, $\\text{\\textcircled{\\scriptsize 78}}$",
-                "39: $39$, $\\text{\\textcircled{\\scriptsize 78}}$",
-                "LCM = $78$."
+                "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$, $56$, $70$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "The first two common multiples are $42$ and $84$."
               ],
               "expectedErrors": []
             }
           ]
         }
       ],
-      "brief": "34–42 minutes. Twelve fresh LCM questions only, not repeats of the board examples or practice. Work in number order: 1–4 supported LCM, 5–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
+      "brief": "Nine fresh common-multiple questions in books, 3 × 3, easiest first. Questions 1–3 give list starters; 7–9 ask for the first two common multiples. Check answers in the last two minutes.",
       "built": "1kc1onl",
-      "title": "Book work",
-      "family": "retrieval"
-    },
-    {
-      "id": "msl-exit",
-      "els": [
-        {
-          "h": 110,
-          "w": 1400,
-          "x": 100,
-          "y": 80,
-          "id": "msl-exit-1",
-          "bold": true,
-          "kind": "text",
-          "size": 64,
-          "text": "Exit ticket",
-          "colour": "#0f172a"
-        },
-        {
-          "h": 80,
-          "w": 1400,
-          "x": 100,
-          "y": 190,
-          "id": "msl-exit-2",
-          "kind": "text",
-          "size": 34,
-          "text": "Work on your own. Show your lists.",
-          "colour": "#64748b"
-        },
-        {
-          "h": 550,
-          "w": 1400,
-          "x": 100,
-          "y": 300,
-          "id": "msl-exit-3",
-          "bank": [],
-          "cols": 3,
-          "kind": "grid",
-          "items": [
-            {
-              "id": "msl-exit-1",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Find the LCM of $20$ and $24$",
-              "answer": [
-                "$120$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Find the LCM of $20$ and $24$.",
-                "Write both lists. Circle the match."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "20: $20$, $40$, $60$, $80$, $100$, $\\text{\\textcircled{\\scriptsize 120}}$",
-                "24: $24$, $48$, $72$, $96$, $\\text{\\textcircled{\\scriptsize 120}}$",
-                "LCM = $120$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-exit-2",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Circle the common multiple in both lists",
-              "answer": [
-                "$\\begin{aligned}50&:\\;50, 100, \\text{\\textcircled{\\scriptsize 150}}\\\\75&:\\;75, \\text{\\textcircled{\\scriptsize 150}}\\end{aligned}$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Circle the common multiple in both lists.",
-                "$50: \\;50,\\;100,\\;150$",
-                "$75: \\;75,\\;150$"
-              ],
-              "rationale": "Recognise a shared number in two given ordered lists.",
-              "explanation": [
-                "$150$ appears in both lists."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "msl-exit-3",
-              "tool": "multiples-systematic-listing",
-              "level": "level1",
-              "title": "Find the LCM of $33$ and $55$",
-              "answer": [
-                "$165$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Find the LCM of $33$ and $55$.",
-                "Write both lists. Circle the match."
-              ],
-              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-              "explanation": [
-                "33: $33$, $66$, $99$, $132$, $\\text{\\textcircled{\\scriptsize 165}}$",
-                "55: $55$, $110$, $\\text{\\textcircled{\\scriptsize 165}}$",
-                "LCM = $165$."
-              ],
-              "expectedErrors": []
-            }
-          ]
-        }
-      ],
-      "brief": "42–45 minutes. Check common multiples and independently finding LCM; use answers to decide which step needs revisiting.",
-      "built": "1v626v0",
-      "title": "Exit ticket",
+      "title": "Common multiples book work",
       "family": "retrieval"
     }
   ],

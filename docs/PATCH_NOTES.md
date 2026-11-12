@@ -38,6 +38,8 @@ Branch `claude/inspiring-cannon-esg9yk`. Areas: `src/decks/data/multiples-system
 - **Deliberately kept:** Harry's live edits (11 in the together table, the longer Multiple definition); the definition text box was made taller so the content check passes. Listing-book numbers may reappear in the LCM half (listed in the spec).
 - **Checks:** every pair recomputed by script; deck tests pass. The layout check could not render slides in this container.
 
+- **Shortened for a low-ability group (same day):** the lesson is now two halves, each direct instruction, three whiteboard questions and nine book questions. Removed the LCM definition, LCM model, guided LCM and exit ticket (LCM is left for a later lesson, possibly with calculators). Common-multiple model is 4 and 6 (12, then 24); whiteboards 3/5, 2/7, 8/10; book questions 1–6 find a common multiple, 7–9 the first two. The two whiteboard slides moved to the teach family because the content check requires five questions on a practice slide. Nine listing book numbers are now 5, 8, 12, 13, 22, 26, 34, 38, 45.
+
 Agent: Claude Code
 Notes: no Build Log block written (planner not reachable this session).
 
