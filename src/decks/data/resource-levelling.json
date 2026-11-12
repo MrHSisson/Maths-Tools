@@ -2,7 +2,7 @@
   "id": "resource-levelling",
   "title": "Resource Levelling",
   "strand": "Decision Mathematics",
-  "summary": "The routine for resource levelling: clashes, options and quick sums, worked at Level 1 and Level 2, with Level 3 knock-ons and exam technique. Quick-sum practice and an exit ticket.",
+  "summary": "Resource levelling in plain words: a clash, the quick sum and why it helps, the routine, what to do when a try leaves another clash, exam technique, quick-sum practice and an exit ticket. Most practice is on the Critical Path generator.",
   "tool": "critical-path",
   "toolPath": "/critical-path",
   "questionVersion": 2,
@@ -32,7 +32,7 @@
           "y": 480,
           "w": 1400,
           "h": 120,
-          "text": "Finding the minimum time when workers are limited",
+          "text": "Finishing a project when there are not enough workers",
           "size": 50,
           "colour": "#64748b",
           "align": "center",
@@ -41,304 +41,9 @@
       ]
     },
     {
-      "id": "rl-obj",
-      "family": "structure",
-      "title": "Learning objective",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 100,
-          "w": 1400,
-          "h": 50,
-          "text": "LEARNING OBJECTIVE",
-          "size": 30,
-          "colour": "#64748b",
-          "bold": true,
-          "id": "rl-obj-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 170,
-          "w": 1400,
-          "h": 230,
-          "text": "Level a resource histogram using quick sums to find the minimum completion time.",
-          "size": 60,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-obj-2"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 440,
-          "w": 1400,
-          "h": 380,
-          "text": "•  Spot a clash on a resource histogram\n•  Work out the quick sum for an option, and say why it helps\n•  Use the routine to find the minimum completion time\n•  See what to do when a try leaves another clash",
-          "size": 44,
-          "colour": "#0f172a",
-          "id": "rl-obj-3"
-        }
-      ]
-    },
-    {
-      "id": "rl-vocab",
-      "family": "language",
-      "title": "Key vocabulary",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 70,
-          "w": 1400,
-          "h": 110,
-          "text": "Key vocabulary",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-vocab-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 205,
-          "w": 380,
-          "h": 110,
-          "text": "Clash",
-          "size": 44,
-          "colour": "#6d28d9",
-          "bold": true,
-          "middle": true,
-          "id": "rl-vocab-2"
-        },
-        {
-          "kind": "text",
-          "x": 510,
-          "y": 205,
-          "w": 990,
-          "h": 110,
-          "text": "A time when the activities running need more workers than the limit.",
-          "size": 36,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-vocab-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 340,
-          "w": 380,
-          "h": 110,
-          "text": "Option",
-          "size": 44,
-          "colour": "#6d28d9",
-          "bold": true,
-          "middle": true,
-          "id": "rl-vocab-4"
-        },
-        {
-          "kind": "text",
-          "x": 510,
-          "y": 340,
-          "w": 990,
-          "h": 110,
-          "text": "Hold back one activity in the clash until the next activity in the clash finishes.",
-          "size": 36,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-vocab-5"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 475,
-          "w": 380,
-          "h": 110,
-          "text": "Quick sum",
-          "size": 44,
-          "colour": "#6d28d9",
-          "bold": true,
-          "middle": true,
-          "id": "rl-vocab-6"
-        },
-        {
-          "kind": "text",
-          "x": 510,
-          "y": 475,
-          "w": 990,
-          "h": 110,
-          "text": "A floor for the project time if we hold an activity back: it cannot finish sooner than this.",
-          "size": 36,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-vocab-7"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 610,
-          "w": 380,
-          "h": 110,
-          "text": "Try",
-          "size": 44,
-          "colour": "#6d28d9",
-          "bold": true,
-          "middle": true,
-          "id": "rl-vocab-8"
-        },
-        {
-          "kind": "text",
-          "x": 510,
-          "y": 610,
-          "w": 990,
-          "h": 110,
-          "text": "Checking one option properly: hold the activity back and follow what it knocks on.",
-          "size": 36,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-vocab-9"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 745,
-          "w": 380,
-          "h": 110,
-          "text": "Knock-on",
-          "size": 44,
-          "colour": "#6d28d9",
-          "bold": true,
-          "middle": true,
-          "id": "rl-vocab-10"
-        },
-        {
-          "kind": "text",
-          "x": 510,
-          "y": 745,
-          "w": 990,
-          "h": 110,
-          "text": "Another activity that has to start later because something before it now finishes later.",
-          "size": 36,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-vocab-11"
-        }
-      ]
-    },
-    {
-      "id": "rl-network",
+      "id": "rl-problem",
       "family": "teach",
-      "title": "The activities",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 70,
-          "w": 1400,
-          "h": 110,
-          "text": "The activities",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-network-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 1400,
-          "h": 80,
-          "text": "Each activity needs one worker. Only 2 workers are available. The project takes 23 days with no limit.",
-          "size": 38,
-          "colour": "#64748b",
-          "id": "rl-network-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 290,
-          "w": 1400,
-          "h": 560,
-          "grid": {
-            "head": [
-              "Activity",
-              "Duration",
-              "After",
-              "Earliest start",
-              "LFT"
-            ],
-            "rows": [
-              [
-                "A",
-                "6",
-                "-",
-                "0",
-                "6"
-              ],
-              [
-                "B",
-                "5",
-                "-",
-                "0",
-                "9"
-              ],
-              [
-                "C",
-                "6",
-                "A",
-                "6",
-                "12"
-              ],
-              [
-                "D",
-                "3",
-                "A, B",
-                "6",
-                "12"
-              ],
-              [
-                "E",
-                "9",
-                "C, D",
-                "12",
-                "21"
-              ],
-              [
-                "F",
-                "7",
-                "D",
-                "9",
-                "21"
-              ],
-              [
-                "G",
-                "8",
-                "C",
-                "12",
-                "23"
-              ],
-              [
-                "H",
-                "2",
-                "E, F",
-                "21",
-                "23"
-              ]
-            ],
-            "given": 5
-          },
-          "fill": "filled",
-          "size": 36,
-          "id": "rl-network-3"
-        }
-      ],
-      "brief": "Level 1 worked example: eight activities, one worker each, two workers available. The earliest and latest times are already known from earlier lessons."
-    },
-    {
-      "id": "rl-histogram",
-      "family": "teach",
-      "title": "The earliest start histogram",
+      "title": "The problem",
       "els": [
         {
           "kind": "text",
@@ -346,11 +51,11 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "The earliest start histogram",
+          "text": "The problem",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
-          "id": "rl-histogram-1"
+          "id": "rl-problem-1"
         },
         {
           "kind": "line",
@@ -360,7 +65,7 @@
           "h": 0,
           "colour": "#0f172a",
           "width": 3,
-          "id": "rl-histogram-2"
+          "id": "rl-problem-2"
         },
         {
           "kind": "line",
@@ -370,7 +75,7 @@
           "h": 540,
           "colour": "#0f172a",
           "width": 3,
-          "id": "rl-histogram-3"
+          "id": "rl-problem-3"
         },
         {
           "kind": "line",
@@ -380,7 +85,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-4"
+          "id": "rl-problem-4"
         },
         {
           "kind": "text",
@@ -392,7 +97,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-5"
+          "id": "rl-problem-5"
         },
         {
           "kind": "line",
@@ -402,7 +107,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-6"
+          "id": "rl-problem-6"
         },
         {
           "kind": "text",
@@ -414,7 +119,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-7"
+          "id": "rl-problem-7"
         },
         {
           "kind": "line",
@@ -424,7 +129,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-8"
+          "id": "rl-problem-8"
         },
         {
           "kind": "text",
@@ -436,7 +141,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-9"
+          "id": "rl-problem-9"
         },
         {
           "kind": "line",
@@ -446,7 +151,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-10"
+          "id": "rl-problem-10"
         },
         {
           "kind": "text",
@@ -458,7 +163,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-11"
+          "id": "rl-problem-11"
         },
         {
           "kind": "line",
@@ -468,7 +173,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-12"
+          "id": "rl-problem-12"
         },
         {
           "kind": "text",
@@ -480,7 +185,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-13"
+          "id": "rl-problem-13"
         },
         {
           "kind": "line",
@@ -490,7 +195,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-14"
+          "id": "rl-problem-14"
         },
         {
           "kind": "text",
@@ -502,7 +207,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-15"
+          "id": "rl-problem-15"
         },
         {
           "kind": "line",
@@ -512,7 +217,7 @@
           "h": 12,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-16"
+          "id": "rl-problem-16"
         },
         {
           "kind": "text",
@@ -524,7 +229,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "center",
-          "id": "rl-histogram-17"
+          "id": "rl-problem-17"
         },
         {
           "kind": "line",
@@ -534,7 +239,7 @@
           "h": 0.0,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-18"
+          "id": "rl-problem-18"
         },
         {
           "kind": "text",
@@ -546,7 +251,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "right",
-          "id": "rl-histogram-19"
+          "id": "rl-problem-19"
         },
         {
           "kind": "line",
@@ -556,7 +261,7 @@
           "h": 0.0,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-20"
+          "id": "rl-problem-20"
         },
         {
           "kind": "text",
@@ -568,7 +273,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "right",
-          "id": "rl-histogram-21"
+          "id": "rl-problem-21"
         },
         {
           "kind": "line",
@@ -578,7 +283,7 @@
           "h": 0.0,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-22"
+          "id": "rl-problem-22"
         },
         {
           "kind": "text",
@@ -590,7 +295,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "right",
-          "id": "rl-histogram-23"
+          "id": "rl-problem-23"
         },
         {
           "kind": "line",
@@ -600,7 +305,7 @@
           "h": 0.0,
           "colour": "#0f172a",
           "width": 2,
-          "id": "rl-histogram-24"
+          "id": "rl-problem-24"
         },
         {
           "kind": "text",
@@ -612,7 +317,7 @@
           "size": 26,
           "colour": "#64748b",
           "align": "right",
-          "id": "rl-histogram-25"
+          "id": "rl-problem-25"
         },
         {
           "kind": "text",
@@ -625,7 +330,7 @@
           "colour": "#64748b",
           "bold": true,
           "align": "left",
-          "id": "rl-histogram-26"
+          "id": "rl-problem-26"
         },
         {
           "kind": "text",
@@ -638,7 +343,7 @@
           "colour": "#64748b",
           "bold": true,
           "align": "right",
-          "id": "rl-histogram-27"
+          "id": "rl-problem-27"
         },
         {
           "kind": "shape",
@@ -650,7 +355,7 @@
           "strokeWidth": 2,
           "fill": "#ddd6fe",
           "stroke": "#0f172a",
-          "id": "rl-histogram-28"
+          "id": "rl-problem-28"
         },
         {
           "kind": "text",
@@ -664,7 +369,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-29"
+          "id": "rl-problem-29"
         },
         {
           "kind": "shape",
@@ -676,7 +381,7 @@
           "strokeWidth": 2,
           "fill": "#ddd6fe",
           "stroke": "#0f172a",
-          "id": "rl-histogram-30"
+          "id": "rl-problem-30"
         },
         {
           "kind": "text",
@@ -690,7 +395,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-31"
+          "id": "rl-problem-31"
         },
         {
           "kind": "shape",
@@ -702,7 +407,7 @@
           "strokeWidth": 2,
           "fill": "#ddd6fe",
           "stroke": "#0f172a",
-          "id": "rl-histogram-32"
+          "id": "rl-problem-32"
         },
         {
           "kind": "text",
@@ -716,7 +421,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-33"
+          "id": "rl-problem-33"
         },
         {
           "kind": "shape",
@@ -728,7 +433,7 @@
           "strokeWidth": 2,
           "fill": "#ddd6fe",
           "stroke": "#0f172a",
-          "id": "rl-histogram-34"
+          "id": "rl-problem-34"
         },
         {
           "kind": "text",
@@ -742,7 +447,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-35"
+          "id": "rl-problem-35"
         },
         {
           "kind": "shape",
@@ -754,7 +459,7 @@
           "strokeWidth": 2,
           "fill": "#e2e8f0",
           "stroke": "#0f172a",
-          "id": "rl-histogram-36"
+          "id": "rl-problem-36"
         },
         {
           "kind": "text",
@@ -768,7 +473,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-37"
+          "id": "rl-problem-37"
         },
         {
           "kind": "shape",
@@ -780,7 +485,7 @@
           "strokeWidth": 2,
           "fill": "#e2e8f0",
           "stroke": "#0f172a",
-          "id": "rl-histogram-38"
+          "id": "rl-problem-38"
         },
         {
           "kind": "shape",
@@ -792,7 +497,7 @@
           "strokeWidth": 2,
           "fill": "#e2e8f0",
           "stroke": "#0f172a",
-          "id": "rl-histogram-39"
+          "id": "rl-problem-39"
         },
         {
           "kind": "text",
@@ -806,7 +511,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-40"
+          "id": "rl-problem-40"
         },
         {
           "kind": "shape",
@@ -818,7 +523,7 @@
           "strokeWidth": 2,
           "fill": "#e2e8f0",
           "stroke": "#0f172a",
-          "id": "rl-histogram-41"
+          "id": "rl-problem-41"
         },
         {
           "kind": "text",
@@ -832,7 +537,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-42"
+          "id": "rl-problem-42"
         },
         {
           "kind": "shape",
@@ -844,7 +549,7 @@
           "strokeWidth": 2,
           "fill": "#e2e8f0",
           "stroke": "#0f172a",
-          "id": "rl-histogram-43"
+          "id": "rl-problem-43"
         },
         {
           "kind": "text",
@@ -858,7 +563,7 @@
           "bold": true,
           "align": "center",
           "middle": true,
-          "id": "rl-histogram-44"
+          "id": "rl-problem-44"
         },
         {
           "kind": "line",
@@ -868,7 +573,7 @@
           "h": 0.0,
           "colour": "#dc2626",
           "width": 5,
-          "id": "rl-histogram-45"
+          "id": "rl-problem-45"
         },
         {
           "kind": "text",
@@ -881,7 +586,7 @@
           "colour": "#dc2626",
           "bold": true,
           "align": "right",
-          "id": "rl-histogram-46"
+          "id": "rl-problem-46"
         },
         {
           "kind": "shape",
@@ -892,7 +597,7 @@
           "h": 405.0,
           "strokeWidth": 6,
           "stroke": "#dc2626",
-          "id": "rl-histogram-47",
+          "id": "rl-problem-47",
           "step": 1
         },
         {
@@ -900,413 +605,45 @@
           "x": 1130,
           "y": 200,
           "w": 430,
-          "h": 120,
-          "text": "Every activity starts as early as it can.",
+          "h": 200,
+          "text": "Each activity needs 1 worker and starts as early as it can.",
           "size": 34,
           "colour": "#0f172a",
-          "id": "rl-histogram-48"
+          "id": "rl-problem-48"
         },
         {
           "kind": "text",
           "x": 1130,
-          "y": 380,
+          "y": 430,
           "w": 430,
           "h": 300,
-          "text": "Between 12 and 16, E, F and G are all running: 3 workers, but only 2 are available.",
+          "text": "Between day 12 and day 16, E, F and G all run together. That needs 3 workers, but we only have 2.",
           "size": 36,
           "colour": "#dc2626",
           "bold": true,
-          "id": "rl-histogram-49",
+          "id": "rl-problem-49",
           "step": 1
         },
         {
           "kind": "text",
           "x": 1130,
-          "y": 720,
+          "y": 760,
           "w": 430,
-          "h": 120,
+          "h": 100,
           "text": "This is a clash.",
           "size": 40,
           "colour": "#dc2626",
           "bold": true,
-          "id": "rl-histogram-50",
+          "id": "rl-problem-50",
           "step": 1
         }
       ],
-      "brief": "Level 1 worked example. Click: the clash, then the reading of it."
+      "brief": "Worked example: eight activities, one worker each, only 2 workers available. The project takes 23 days with no limit. Click: the clash."
     },
     {
-      "id": "rl-def-clash",
-      "family": "language",
-      "title": "Clash",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 120,
-          "w": 1400,
-          "h": 50,
-          "text": "KEY DEFINITION",
-          "size": 30,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-def-clash-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 1400,
-          "h": 140,
-          "text": "Clash",
-          "size": 96,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-def-clash-2"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 370,
-          "w": 1400,
-          "h": 430,
-          "text": "A clash is a time when the activities running need more workers than the limit.",
-          "size": 52,
-          "colour": "#0f172a",
-          "id": "rl-def-clash-3"
-        }
-      ]
-    },
-    {
-      "id": "rl-def-option",
-      "family": "language",
-      "title": "Option",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 120,
-          "w": 1400,
-          "h": 50,
-          "text": "KEY DEFINITION",
-          "size": 30,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-def-option-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 1400,
-          "h": 140,
-          "text": "Option",
-          "size": 96,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-def-option-2"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 370,
-          "w": 1400,
-          "h": 430,
-          "text": "An option is to hold back one activity in the clash until the next activity in the clash finishes.",
-          "size": 52,
-          "colour": "#0f172a",
-          "id": "rl-def-option-3"
-        }
-      ],
-      "brief": "Show the three options for the clash: E, F, G. For each, name when it is held until."
-    },
-    {
-      "id": "rl-def-quick",
-      "family": "language",
-      "title": "Quick sum",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 120,
-          "w": 1400,
-          "h": 50,
-          "text": "KEY DEFINITION",
-          "size": 30,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-def-quick-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 1400,
-          "h": 140,
-          "text": "Quick sum",
-          "size": 96,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-def-quick-2"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 370,
-          "w": 1400,
-          "h": 430,
-          "text": "A quick sum is a floor for the project time if we hold an activity back: the project cannot finish any sooner than this.",
-          "size": 52,
-          "colour": "#0f172a",
-          "id": "rl-def-quick-3"
-        }
-      ],
-      "brief": "The one idea of the lesson. Plain English first; the formula comes on the next slide."
-    },
-    {
-      "id": "rl-quick-how",
+      "id": "rl-idea",
       "family": "teach",
-      "title": "How to find a quick sum",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 60,
-          "w": 1400,
-          "h": 110,
-          "text": "How to find a quick sum",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-quick-how-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 110,
-          "h": 120,
-          "text": "1",
-          "size": 60,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-quick-how-2"
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 190,
-          "w": 1260,
-          "h": 120,
-          "text": "Hold the activity back. It now starts later, when the activity we are waiting for finishes.",
-          "size": 38,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-quick-how-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 320,
-          "w": 110,
-          "h": 120,
-          "text": "2",
-          "size": 60,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-quick-how-4",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 320,
-          "w": 1260,
-          "h": 120,
-          "text": "Add its duration to find its new finish.",
-          "size": 38,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-quick-how-5",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 450,
-          "w": 110,
-          "h": 120,
-          "text": "3",
-          "size": 60,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-quick-how-6",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 450,
-          "w": 1260,
-          "h": 120,
-          "text": "Compare with its LFT, the latest it can finish without delaying the project. Holding it back uses up its float. How far past the LFT is it?",
-          "size": 38,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-quick-how-7",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 580,
-          "w": 110,
-          "h": 120,
-          "text": "4",
-          "size": 60,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-quick-how-8",
-          "step": 3
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 580,
-          "w": 1260,
-          "h": 120,
-          "text": "Add that extra on to the unlimited time. That gives a floor for the project time.",
-          "size": 38,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-quick-how-9",
-          "step": 3
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 720,
-          "w": 1400,
-          "h": 100,
-          "text": "Quick sum = unlimited time + (new finish − LFT)",
-          "size": 48,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-quick-how-10",
-          "step": 4
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 820,
-          "w": 1400,
-          "h": 50,
-          "text": "If it finishes by its LFT there is no extra, so the quick sum is just the unlimited time.",
-          "size": 26,
-          "colour": "#64748b",
-          "id": "rl-quick-how-11",
-          "step": 4
-        }
-      ],
-      "brief": "Say it in plain English first, then show the formula. Hold the activity back, find its new finish, see how far past its latest finish that is, and add that on to the unlimited time."
-    },
-    {
-      "id": "rl-quick-worked",
-      "family": "teach",
-      "title": "Quick sums at the first clash",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 50,
-          "w": 1400,
-          "h": 110,
-          "text": "Quick sums at the first clash",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-quick-worked-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 170,
-          "w": 1400,
-          "h": 80,
-          "text": "Unlimited time = 23 days. The clash is 12 to 16, so the options are E, F and G.",
-          "size": 36,
-          "colour": "#64748b",
-          "id": "rl-quick-worked-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 290,
-          "w": 1400,
-          "h": 380,
-          "grid": {
-            "head": [
-              "Option",
-              "Held until",
-              "New finish",
-              "LFT",
-              "Quick sum"
-            ],
-            "rows": [
-              [
-                "G",
-                "16",
-                "24",
-                "23",
-                "$23+(24-23)=24$"
-              ],
-              [
-                "E",
-                "16",
-                "25",
-                "21",
-                "$23+(25-21)=27$"
-              ],
-              [
-                "F",
-                "20",
-                "27",
-                "21",
-                "$23+(27-21)=29$"
-              ]
-            ],
-            "given": 2
-          },
-          "fill": "structure",
-          "size": 40,
-          "id": "rl-quick-worked-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 710,
-          "w": 1400,
-          "h": 160,
-          "text": "G starts again at 16, when F finishes. It lasts 8 days, so it finishes at 24. Its LFT is 23, so it is 1 day past. The project cannot finish before 23 + 1 = 24.",
-          "size": 36,
-          "colour": "#0f172a",
-          "id": "rl-quick-worked-4"
-        }
-      ],
-      "brief": "Level 1 worked example. Pupils fill the last three columns, then show the answers. Unlimited time is 23."
-    },
-    {
-      "id": "rl-why",
-      "family": "teach",
-      "title": "Why does the quick sum help?",
+      "title": "The quick sum",
       "els": [
         {
           "kind": "text",
@@ -1314,11 +651,11 @@
           "y": 70,
           "w": 1400,
           "h": 110,
-          "text": "Why does the quick sum help?",
+          "text": "The quick sum",
           "size": 72,
           "colour": "#0f172a",
           "bold": true,
-          "id": "rl-why-1"
+          "id": "rl-idea-1"
         },
         {
           "kind": "text",
@@ -1326,40 +663,731 @@
           "y": 230,
           "w": 1400,
           "h": 170,
-          "text": "It tells us, without drawing anything, the least that holding each activity back could cost the project.",
+          "text": "To fix a clash we hold one activity back. We could draw every choice, but that takes ages.",
           "size": 46,
           "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-why-2"
+          "id": "rl-idea-2"
         },
         {
           "kind": "text",
           "x": 100,
           "y": 430,
           "w": 1400,
-          "h": 170,
-          "text": "It is a floor: the project cannot finish sooner than the quick sum. It might finish later.",
+          "h": 200,
+          "text": "A quick sum is a fast estimate for each choice: the soonest the whole project could possibly finish if we hold that activity back.",
           "size": 46,
           "colour": "#0f172a",
           "bold": true,
-          "id": "rl-why-3",
+          "id": "rl-idea-3",
           "step": 1
         },
         {
           "kind": "text",
           "x": 100,
-          "y": 630,
+          "y": 670,
           "w": 1400,
           "h": 200,
-          "text": "So we try the smallest first. If that one works with no clash left, nothing else can beat it.",
+          "text": "The project might finish later than the quick sum, but never sooner. So the smallest quick sum is the best one to try first.",
           "size": 46,
           "colour": "#6d28d9",
           "bold": true,
-          "id": "rl-why-4",
+          "id": "rl-idea-4",
           "step": 2
         }
       ],
-      "brief": "The reason the routine works, in plain English. Click through."
+      "brief": "The one idea. Plain words: a fast estimate, a floor, so we can pick the best option without drawing every one."
+    },
+    {
+      "id": "rl-working",
+      "family": "teach",
+      "title": "Working out quick sums",
+      "els": [
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 40,
+          "w": 1400,
+          "h": 100,
+          "text": "Working out quick sums",
+          "size": 64,
+          "colour": "#0f172a",
+          "bold": true,
+          "id": "rl-working-1"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 140,
+          "w": 1400,
+          "h": 170,
+          "text": "The project takes 23 days with no limit. Each activity has a deadline: the latest it can finish without making the project longer.\nQuick sum = 23 + the days it finishes past its deadline.",
+          "size": 36,
+          "colour": "#0f172a",
+          "id": "rl-working-2"
+        },
+        {
+          "kind": "board",
+          "x": 100,
+          "y": 340,
+          "w": 1400,
+          "h": 360,
+          "grid": {
+            "head": [
+              "Held back",
+              "Starts again day",
+              "Takes (days)",
+              "Finishes day",
+              "Deadline day",
+              "Days past",
+              "Quick sum"
+            ],
+            "rows": [
+              [
+                "G",
+                "16",
+                "8",
+                "24",
+                "23",
+                "1",
+                "$23+1=24$"
+              ],
+              [
+                "E",
+                "16",
+                "9",
+                "25",
+                "21",
+                "4",
+                "$23+4=27$"
+              ],
+              [
+                "F",
+                "20",
+                "7",
+                "27",
+                "21",
+                "6",
+                "$23+6=29$"
+              ]
+            ],
+            "given": 3
+          },
+          "fill": "structure",
+          "size": 34,
+          "id": "rl-working-3"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 740,
+          "w": 1400,
+          "h": 140,
+          "text": "G is held back until F finishes on day 16. It takes 8 days, so it finishes on day 24. Its deadline is day 23, so it is 1 day past: 23 + 1 = 24.",
+          "size": 36,
+          "colour": "#0f172a",
+          "id": "rl-working-4",
+          "step": 1
+        }
+      ],
+      "brief": "Self-contained: the project time with no limit, each held activity's restart and length, and its deadline are all on the slide. Pupils fill the last three columns, then show the answers. Example: G is held until F finishes at day 16."
+    },
+    {
+      "id": "rl-try",
+      "family": "teach",
+      "title": "Try the smallest",
+      "els": [
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 30,
+          "w": 1400,
+          "h": 100,
+          "text": "Try the smallest quick sum",
+          "size": 64,
+          "colour": "#0f172a",
+          "bold": true,
+          "id": "rl-try-1"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 125,
+          "w": 1400,
+          "h": 60,
+          "text": "Quick sums: G 24, E 27, F 29. Hold G back until day 16.",
+          "size": 36,
+          "colour": "#64748b",
+          "id": "rl-try-2"
+        },
+        {
+          "kind": "line",
+          "x": 170,
+          "y": 730,
+          "w": 900,
+          "h": 0,
+          "colour": "#0f172a",
+          "width": 3,
+          "id": "rl-try-3"
+        },
+        {
+          "kind": "line",
+          "x": 170,
+          "y": 230,
+          "w": 0,
+          "h": 500,
+          "colour": "#0f172a",
+          "width": 3,
+          "id": "rl-try-4"
+        },
+        {
+          "kind": "line",
+          "x": 170.0,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-5"
+        },
+        {
+          "kind": "text",
+          "x": 140.0,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "0",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-6"
+        },
+        {
+          "kind": "line",
+          "x": 308.46153846153845,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-7"
+        },
+        {
+          "kind": "text",
+          "x": 278.46153846153845,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "4",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-8"
+        },
+        {
+          "kind": "line",
+          "x": 446.9230769230769,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-9"
+        },
+        {
+          "kind": "text",
+          "x": 416.9230769230769,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "8",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-10"
+        },
+        {
+          "kind": "line",
+          "x": 585.3846153846154,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-11"
+        },
+        {
+          "kind": "text",
+          "x": 555.3846153846154,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "12",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-12"
+        },
+        {
+          "kind": "line",
+          "x": 723.8461538461538,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-13"
+        },
+        {
+          "kind": "text",
+          "x": 693.8461538461538,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "16",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-14"
+        },
+        {
+          "kind": "line",
+          "x": 862.3076923076923,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-15"
+        },
+        {
+          "kind": "text",
+          "x": 832.3076923076923,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "20",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-16"
+        },
+        {
+          "kind": "line",
+          "x": 1000.7692307692307,
+          "y": 730,
+          "w": 0.0,
+          "h": 12,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-17"
+        },
+        {
+          "kind": "text",
+          "x": 970.7692307692307,
+          "y": 744,
+          "w": 60,
+          "h": 40,
+          "text": "24",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "center",
+          "id": "rl-try-18"
+        },
+        {
+          "kind": "line",
+          "x": 158,
+          "y": 605.0,
+          "w": 12,
+          "h": 0.0,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-19"
+        },
+        {
+          "kind": "text",
+          "x": 90,
+          "y": 585.0,
+          "w": 60,
+          "h": 40,
+          "text": "1",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "right",
+          "id": "rl-try-20"
+        },
+        {
+          "kind": "line",
+          "x": 158,
+          "y": 480.0,
+          "w": 12,
+          "h": 0.0,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-21"
+        },
+        {
+          "kind": "text",
+          "x": 90,
+          "y": 460.0,
+          "w": 60,
+          "h": 40,
+          "text": "2",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "right",
+          "id": "rl-try-22"
+        },
+        {
+          "kind": "line",
+          "x": 158,
+          "y": 355.0,
+          "w": 12,
+          "h": 0.0,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-23"
+        },
+        {
+          "kind": "text",
+          "x": 90,
+          "y": 335.0,
+          "w": 60,
+          "h": 40,
+          "text": "3",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "right",
+          "id": "rl-try-24"
+        },
+        {
+          "kind": "line",
+          "x": 158,
+          "y": 230.0,
+          "w": 12,
+          "h": 0.0,
+          "colour": "#0f172a",
+          "width": 2,
+          "id": "rl-try-25"
+        },
+        {
+          "kind": "text",
+          "x": 90,
+          "y": 210.0,
+          "w": 60,
+          "h": 40,
+          "text": "4",
+          "size": 26,
+          "colour": "#64748b",
+          "align": "right",
+          "id": "rl-try-26"
+        },
+        {
+          "kind": "text",
+          "x": 160,
+          "y": 168,
+          "w": 360,
+          "h": 44,
+          "text": "Workers",
+          "size": 28,
+          "colour": "#64748b",
+          "bold": true,
+          "align": "left",
+          "id": "rl-try-27"
+        },
+        {
+          "kind": "text",
+          "x": 690,
+          "y": 784,
+          "w": 380,
+          "h": 44,
+          "text": "Time (days)",
+          "size": 28,
+          "colour": "#64748b",
+          "bold": true,
+          "align": "right",
+          "id": "rl-try-28"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 585.3846153846154,
+          "y": 605.0,
+          "w": 311.53846153846155,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#ddd6fe",
+          "stroke": "#0f172a",
+          "id": "rl-try-29"
+        },
+        {
+          "kind": "text",
+          "x": 585.3846153846154,
+          "y": 605.0,
+          "w": 311.53846153846155,
+          "h": 125.0,
+          "text": "E",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-30"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 170.0,
+          "y": 605.0,
+          "w": 207.69230769230768,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#ddd6fe",
+          "stroke": "#0f172a",
+          "id": "rl-try-31"
+        },
+        {
+          "kind": "text",
+          "x": 170.0,
+          "y": 605.0,
+          "w": 207.69230769230768,
+          "h": 125.0,
+          "text": "A",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-32"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 377.6923076923077,
+          "y": 605.0,
+          "w": 207.69230769230768,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#ddd6fe",
+          "stroke": "#0f172a",
+          "id": "rl-try-33"
+        },
+        {
+          "kind": "text",
+          "x": 377.6923076923077,
+          "y": 605.0,
+          "w": 207.69230769230768,
+          "h": 125.0,
+          "text": "C",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-34"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 896.9230769230769,
+          "y": 605.0,
+          "w": 69.23076923076923,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#ddd6fe",
+          "stroke": "#0f172a",
+          "id": "rl-try-35"
+        },
+        {
+          "kind": "text",
+          "x": 896.9230769230769,
+          "y": 605.0,
+          "w": 69.23076923076923,
+          "h": 125.0,
+          "text": "H",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-36"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 723.8461538461538,
+          "y": 480.0,
+          "w": 242.3076923076923,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#fde68a",
+          "stroke": "#0f172a",
+          "id": "rl-try-37"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 966.1538461538461,
+          "y": 605.0,
+          "w": 34.61538461538461,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#fde68a",
+          "stroke": "#0f172a",
+          "id": "rl-try-38"
+        },
+        {
+          "kind": "text",
+          "x": 723.8461538461538,
+          "y": 480.0,
+          "w": 242.3076923076923,
+          "h": 125.0,
+          "text": "G",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-39"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 481.53846153846155,
+          "y": 480.0,
+          "w": 242.3076923076923,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#e2e8f0",
+          "stroke": "#0f172a",
+          "id": "rl-try-40"
+        },
+        {
+          "kind": "text",
+          "x": 481.53846153846155,
+          "y": 480.0,
+          "w": 242.3076923076923,
+          "h": 125.0,
+          "text": "F",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-41"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 170.0,
+          "y": 480.0,
+          "w": 173.07692307692307,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#e2e8f0",
+          "stroke": "#0f172a",
+          "id": "rl-try-42"
+        },
+        {
+          "kind": "text",
+          "x": 170.0,
+          "y": 480.0,
+          "w": 173.07692307692307,
+          "h": 125.0,
+          "text": "B",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-43"
+        },
+        {
+          "kind": "shape",
+          "shape": "rect",
+          "x": 377.6923076923077,
+          "y": 480.0,
+          "w": 103.84615384615384,
+          "h": 125.0,
+          "strokeWidth": 2,
+          "fill": "#e2e8f0",
+          "stroke": "#0f172a",
+          "id": "rl-try-44"
+        },
+        {
+          "kind": "text",
+          "x": 377.6923076923077,
+          "y": 480.0,
+          "w": 103.84615384615384,
+          "h": 125.0,
+          "text": "D",
+          "size": 30,
+          "colour": "#0f172a",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-try-45"
+        },
+        {
+          "kind": "line",
+          "x": 170,
+          "y": 480.0,
+          "w": 900,
+          "h": 0.0,
+          "colour": "#dc2626",
+          "width": 5,
+          "id": "rl-try-46"
+        },
+        {
+          "kind": "text",
+          "x": 650,
+          "y": 430.0,
+          "w": 420,
+          "h": 44,
+          "text": "Limit: 2 workers",
+          "size": 30,
+          "colour": "#dc2626",
+          "bold": true,
+          "align": "right",
+          "id": "rl-try-47"
+        },
+        {
+          "kind": "text",
+          "x": 1130,
+          "y": 230,
+          "w": 430,
+          "h": 200,
+          "text": "G now runs from day 16 to day 24.",
+          "size": 36,
+          "colour": "#0f172a",
+          "id": "rl-try-48"
+        },
+        {
+          "kind": "text",
+          "x": 1130,
+          "y": 450,
+          "w": 430,
+          "h": 160,
+          "text": "No clash is left: never more than 2 workers.",
+          "size": 36,
+          "colour": "#0f172a",
+          "id": "rl-try-49",
+          "step": 1
+        },
+        {
+          "kind": "text",
+          "x": 1130,
+          "y": 640,
+          "w": 430,
+          "h": 230,
+          "text": "The project takes 24 days. That is the minimum.",
+          "size": 42,
+          "colour": "#6d28d9",
+          "bold": true,
+          "id": "rl-try-50",
+          "step": 2
+        }
+      ],
+      "brief": "Self-contained: the options and their quick sums are repeated, then G is held back to day 16 and the histogram is redrawn."
     },
     {
       "id": "rl-routine",
@@ -1398,7 +1426,7 @@
           "y": 200,
           "w": 1260,
           "h": 120,
-          "text": "Draw the histogram: every activity as early as it can start. Mark the limit.",
+          "text": "Draw the histogram with every activity starting as early as it can. Mark the limit.",
           "size": 40,
           "colour": "#0f172a",
           "middle": true,
@@ -1417,7 +1445,7 @@
           "align": "center",
           "middle": true,
           "id": "rl-routine-4",
-          "step": 2
+          "step": 1
         },
         {
           "kind": "text",
@@ -1425,12 +1453,12 @@
           "y": 335,
           "w": 1260,
           "h": 120,
-          "text": "Find the first clash. Do the quick sum for each option.",
+          "text": "Find the first clash. Work out a quick sum for each choice.",
           "size": 40,
           "colour": "#0f172a",
           "middle": true,
           "id": "rl-routine-5",
-          "step": 2
+          "step": 1
         },
         {
           "kind": "text",
@@ -1445,7 +1473,7 @@
           "align": "center",
           "middle": true,
           "id": "rl-routine-6",
-          "step": 3
+          "step": 2
         },
         {
           "kind": "text",
@@ -1453,12 +1481,12 @@
           "y": 470,
           "w": 1260,
           "h": 120,
-          "text": "Try the smallest quick sum. Hold that activity back.",
+          "text": "Try the smallest quick sum: hold that activity back and redraw.",
           "size": 40,
           "colour": "#0f172a",
           "middle": true,
           "id": "rl-routine-7",
-          "step": 3
+          "step": 2
         },
         {
           "kind": "text",
@@ -1473,7 +1501,7 @@
           "align": "center",
           "middle": true,
           "id": "rl-routine-8",
-          "step": 4
+          "step": 3
         },
         {
           "kind": "text",
@@ -1481,12 +1509,12 @@
           "y": 605,
           "w": 1260,
           "h": 120,
-          "text": "No clash left? That is the minimum completion time.",
+          "text": "No clash left? That is the minimum time. Stop.",
           "size": 40,
           "colour": "#0f172a",
           "middle": true,
           "id": "rl-routine-9",
-          "step": 4
+          "step": 3
         },
         {
           "kind": "text",
@@ -1501,7 +1529,7 @@
           "align": "center",
           "middle": true,
           "id": "rl-routine-10",
-          "step": 5
+          "step": 4
         },
         {
           "kind": "text",
@@ -1509,20 +1537,20 @@
           "y": 740,
           "w": 1260,
           "h": 120,
-          "text": "A clash left? Do the quick sums at the new clash, add them to the list, and try the smallest on the whole list.",
+          "text": "Still a clash? Work out quick sums for the new clash, add them to the list, and try the smallest on the whole list.",
           "size": 40,
           "colour": "#0f172a",
           "middle": true,
           "id": "rl-routine-11",
-          "step": 5
+          "step": 4
         }
       ],
-      "brief": "The routine as a formal card. Each step appears on a click."
+      "brief": "The routine on one slide. Each step appears on a click. Practise it on the generator."
     },
     {
-      "id": "rl-l1-answer",
+      "id": "rl-another",
       "family": "teach",
-      "title": "Try G: no clash left",
+      "title": "When a try leaves another clash",
       "els": [
         {
           "kind": "text",
@@ -1530,584 +1558,179 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "Try G: no clash left",
+          "text": "When a try leaves another clash",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
-          "id": "rl-l1-answer-1"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 740,
-          "w": 900,
-          "h": 0,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l1-answer-2"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 200,
-          "w": 0,
-          "h": 540,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l1-answer-3"
-        },
-        {
-          "kind": "line",
-          "x": 170.0,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-4"
+          "id": "rl-another-1"
         },
         {
           "kind": "text",
-          "x": 140.0,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "0",
-          "size": 26,
+          "x": 100,
+          "y": 150,
+          "w": 1400,
+          "h": 80,
+          "text": "The project takes 21 days with no limit.",
+          "size": 36,
           "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-5"
+          "id": "rl-another-2"
         },
         {
-          "kind": "line",
-          "x": 308.46153846153845,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
+          "kind": "text",
+          "x": 100,
+          "y": 240,
+          "w": 1400,
+          "h": 130,
+          "text": "First clash. Quick sums: C 22, D 26, E 26.\nTry C, the smallest.",
+          "size": 42,
           "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-6"
+          "id": "rl-another-3"
         },
         {
           "kind": "text",
-          "x": 278.46153846153845,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-7"
-        },
-        {
-          "kind": "line",
-          "x": 446.9230769230769,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-8"
-        },
-        {
-          "kind": "text",
-          "x": 416.9230769230769,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "8",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-9"
-        },
-        {
-          "kind": "line",
-          "x": 585.3846153846154,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-10"
-        },
-        {
-          "kind": "text",
-          "x": 555.3846153846154,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "12",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-11"
-        },
-        {
-          "kind": "line",
-          "x": 723.8461538461538,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-12"
-        },
-        {
-          "kind": "text",
-          "x": 693.8461538461538,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "16",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-13"
-        },
-        {
-          "kind": "line",
-          "x": 862.3076923076923,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-14"
-        },
-        {
-          "kind": "text",
-          "x": 832.3076923076923,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "20",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-15"
-        },
-        {
-          "kind": "line",
-          "x": 1000.7692307692307,
-          "y": 740,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-16"
-        },
-        {
-          "kind": "text",
-          "x": 970.7692307692307,
-          "y": 754,
-          "w": 60,
-          "h": 40,
-          "text": "24",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l1-answer-17"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 605.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-18"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 585.0,
-          "w": 60,
-          "h": 40,
-          "text": "1",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l1-answer-19"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 470.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-20"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 450.0,
-          "w": 60,
-          "h": 40,
-          "text": "2",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l1-answer-21"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 335.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-22"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 315.0,
-          "w": 60,
-          "h": 40,
-          "text": "3",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l1-answer-23"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 200.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l1-answer-24"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 180.0,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l1-answer-25"
-        },
-        {
-          "kind": "text",
-          "x": 160,
-          "y": 138,
-          "w": 360,
-          "h": 44,
-          "text": "Workers",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "left",
-          "id": "rl-l1-answer-26"
-        },
-        {
-          "kind": "text",
-          "x": 690,
-          "y": 794,
-          "w": 380,
-          "h": 44,
-          "text": "Time (days)",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "right",
-          "id": "rl-l1-answer-27"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 585.3846153846154,
-          "y": 605.0,
-          "w": 311.53846153846155,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-28"
-        },
-        {
-          "kind": "text",
-          "x": 585.3846153846154,
-          "y": 605.0,
-          "w": 311.53846153846155,
-          "h": 135.0,
-          "text": "E",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-29"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 605.0,
-          "w": 207.69230769230768,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-30"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 605.0,
-          "w": 207.69230769230768,
-          "h": 135.0,
-          "text": "A",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-31"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 377.6923076923077,
-          "y": 605.0,
-          "w": 207.69230769230768,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-32"
-        },
-        {
-          "kind": "text",
-          "x": 377.6923076923077,
-          "y": 605.0,
-          "w": 207.69230769230768,
-          "h": 135.0,
-          "text": "C",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-33"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 896.9230769230769,
-          "y": 605.0,
-          "w": 69.23076923076923,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-34"
-        },
-        {
-          "kind": "text",
-          "x": 896.9230769230769,
-          "y": 605.0,
-          "w": 69.23076923076923,
-          "h": 135.0,
-          "text": "H",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-35"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 723.8461538461538,
-          "y": 470.0,
-          "w": 242.3076923076923,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-36"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 966.1538461538461,
-          "y": 605.0,
-          "w": 34.61538461538461,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-37"
-        },
-        {
-          "kind": "text",
-          "x": 723.8461538461538,
-          "y": 470.0,
-          "w": 242.3076923076923,
-          "h": 135.0,
-          "text": "G",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-38"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 481.53846153846155,
-          "y": 470.0,
-          "w": 242.3076923076923,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-39"
-        },
-        {
-          "kind": "text",
-          "x": 481.53846153846155,
-          "y": 470.0,
-          "w": 242.3076923076923,
-          "h": 135.0,
-          "text": "F",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-40"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 470.0,
-          "w": 173.07692307692307,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-41"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 470.0,
-          "w": 173.07692307692307,
-          "h": 135.0,
-          "text": "B",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-42"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 377.6923076923077,
-          "y": 470.0,
-          "w": 103.84615384615384,
-          "h": 135.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l1-answer-43"
-        },
-        {
-          "kind": "text",
-          "x": 377.6923076923077,
-          "y": 470.0,
-          "w": 103.84615384615384,
-          "h": 135.0,
-          "text": "D",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l1-answer-44"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 470.0,
-          "w": 900,
-          "h": 0.0,
-          "colour": "#dc2626",
-          "width": 5,
-          "id": "rl-l1-answer-45"
-        },
-        {
-          "kind": "text",
-          "x": 650,
-          "y": 420.0,
-          "w": 420,
-          "h": 44,
-          "text": "Limit: 2 workers",
-          "size": 30,
+          "x": 100,
+          "y": 400,
+          "w": 1400,
+          "h": 150,
+          "text": "Holding C back causes a new clash. Quick sums there: F 23, G 22, H 29.",
+          "size": 42,
           "colour": "#dc2626",
           "bold": true,
-          "align": "right",
-          "id": "rl-l1-answer-46"
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 200,
-          "w": 430,
-          "h": 200,
-          "text": "G is held until 16, so it runs from 16 to 24.",
-          "size": 36,
-          "colour": "#0f172a",
-          "id": "rl-l1-answer-47"
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 440,
-          "w": 430,
-          "h": 200,
-          "text": "The histogram never goes over 2.",
-          "size": 36,
-          "colour": "#0f172a",
-          "id": "rl-l1-answer-48",
+          "id": "rl-another-4",
           "step": 1
         },
         {
           "kind": "text",
-          "x": 1130,
-          "y": 640,
-          "w": 430,
-          "h": 230,
-          "text": "Minimum completion time: 24 days (1 more than 23).",
-          "size": 40,
+          "x": 100,
+          "y": 580,
+          "w": 1400,
+          "h": 130,
+          "text": "Add them to the same list and try the smallest on the whole list: G, 22.",
+          "size": 42,
+          "colour": "#0f172a",
+          "id": "rl-another-5",
+          "step": 2
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 740,
+          "w": 1400,
+          "h": 120,
+          "text": "No clash left. The minimum is 22 days.",
+          "size": 46,
           "colour": "#6d28d9",
           "bold": true,
-          "id": "rl-l1-answer-49",
+          "id": "rl-another-6",
+          "step": 3
+        }
+      ],
+      "brief": "Self-contained example with numbers only. Project time with no limit 21; first clash quick sums C 22, D 26, E 26; trying C leaves a new clash with F 23, G 22, H 29; G is smallest on the whole list, and trying G leaves no clash."
+    },
+    {
+      "id": "rl-exam",
+      "family": "teach",
+      "title": "In the exam",
+      "els": [
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 60,
+          "w": 1400,
+          "h": 110,
+          "text": "In the exam",
+          "size": 72,
+          "colour": "#0f172a",
+          "bold": true,
+          "id": "rl-exam-1"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 220,
+          "w": 110,
+          "h": 110,
+          "text": "1",
+          "size": 64,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-exam-2"
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 220,
+          "w": 1260,
+          "h": 170,
+          "text": "Look first. Do some activities need so many workers that they can never run together? Add those up.",
+          "size": 42,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-exam-3"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 430,
+          "w": 110,
+          "h": 110,
+          "text": "2",
+          "size": 64,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-exam-4",
+          "step": 1
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 430,
+          "w": 1260,
+          "h": 170,
+          "text": "Use the routine and quick sums.",
+          "size": 42,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-exam-5",
+          "step": 1
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 640,
+          "w": 110,
+          "h": 110,
+          "text": "3",
+          "size": 64,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-exam-6",
+          "step": 2
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 640,
+          "w": 1260,
+          "h": 190,
+          "text": "Stuck? Draw a histogram that fits the limit anyway. It scores 2 of the 3 marks even if it is not the best.",
+          "size": 42,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-exam-7",
           "step": 2
         }
       ],
-      "brief": "Level 1 worked example. G is shown held until 16. Pupils write up the answer."
+      "brief": "Exam technique: look first, then the routine, then draw it (2 of 3 marks)."
     },
     {
-      "id": "rl-quick-practice",
+      "id": "rl-practice",
       "family": "practice",
       "title": "Quick sums",
       "els": [
@@ -2135,13 +1758,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $20$.",
-                "An option has LFT $14$ and new finish $16$.",
+                "With no limit the project takes $20$ days.",
+                "An activity would finish on day $16$. Its deadline is day $14$.",
                 "Work out the quick sum."
               ],
-              "rationale": "Quick sum is unlimited time plus how late the held activity finishes.",
+              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
               "explanation": [
-                "$20+(16-14)=22$"
+                "It is $2$ days past its deadline.",
+                "$20+2=22$"
               ],
               "expectedErrors": []
             },
@@ -2159,13 +1783,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $25$.",
-                "An option has LFT $12$ and new finish $13$.",
+                "With no limit the project takes $25$ days.",
+                "An activity would finish on day $13$. Its deadline is day $12$.",
                 "Work out the quick sum."
               ],
-              "rationale": "Quick sum is unlimited time plus how late the held activity finishes.",
+              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
               "explanation": [
-                "$25+(13-12)=26$"
+                "It is $1$ day past its deadline.",
+                "$25+1=26$"
               ],
               "expectedErrors": []
             },
@@ -2173,7 +1798,7 @@
               "id": "rl-q3",
               "tool": "critical-path",
               "level": "level1",
-              "title": "Finishes exactly on its LFT",
+              "title": "Finishes by its deadline",
               "answer": [
                 "$18$"
               ],
@@ -2183,13 +1808,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $18$.",
-                "An option has LFT $15$ and new finish $15$.",
+                "With no limit the project takes $18$ days.",
+                "An activity would finish on day $15$. Its deadline is day $15$.",
                 "Work out the quick sum."
               ],
-              "rationale": "If the held activity still finishes by its LFT, the project time does not change.",
+              "rationale": "If the activity finishes by its deadline there are no extra days.",
               "explanation": [
-                "It finishes by its LFT, so the time does not change: $18$."
+                "It is not past its deadline, so there are no extra days.",
+                "$18+0=18$"
               ],
               "expectedErrors": []
             },
@@ -2197,7 +1823,7 @@
               "id": "rl-q4",
               "tool": "critical-path",
               "level": "level1",
-              "title": "Finishes before its LFT",
+              "title": "Finishes before its deadline",
               "answer": [
                 "$30$"
               ],
@@ -2207,13 +1833,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $30$.",
-                "An option has LFT $22$ and new finish $20$.",
+                "With no limit the project takes $30$ days.",
+                "An activity would finish on day $20$. Its deadline is day $22$.",
                 "Work out the quick sum."
               ],
-              "rationale": "If the held activity still finishes by its LFT, the project time does not change.",
+              "rationale": "If the activity finishes by its deadline there are no extra days.",
               "explanation": [
-                "It finishes before its LFT, so the time does not change: $30$."
+                "It finishes before its deadline, so there are no extra days.",
+                "$30+0=30$"
               ],
               "expectedErrors": []
             },
@@ -2221,7 +1848,7 @@
               "id": "rl-q5",
               "tool": "critical-path",
               "level": "level1",
-              "title": "Which option first?",
+              "title": "Which one first?",
               "answer": [
                 "A $28$, B $27$, C $26$. Try C first."
               ],
@@ -2231,2000 +1858,26 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $24$.",
-                "A: LFT $10$, new finish $14$.",
-                "B: LFT $12$, new finish $15$.",
-                "C: LFT $9$, new finish $11$.",
-                "Find each quick sum. Which option is tried first?"
+                "With no limit the project takes $24$ days.",
+                "A would finish on day $14$, deadline day $10$.",
+                "B would finish on day $15$, deadline day $12$.",
+                "C would finish on day $11$, deadline day $9$.",
+                "Find each quick sum. Which do you try first?"
               ],
               "rationale": "Try the smallest quick sum first.",
               "explanation": [
-                "A: $24+(14-10)=28$",
-                "B: $24+(15-12)=27$",
-                "C: $24+(11-9)=26$",
-                "The smallest is C, so try C first."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q6",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Which option first?",
-              "answer": [
-                "D $33$, E $31$, F $34$. Try E first: it adds no extra time."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Unlimited time is $31$.",
-                "D: LFT $17$, new finish $19$.",
-                "E: LFT $19$, new finish $19$.",
-                "F: LFT $15$, new finish $18$.",
-                "Find each quick sum. Which is tried first, and what does it tell you?"
-              ],
-              "rationale": "Try the smallest quick sum first.",
-              "explanation": [
-                "D: $31+(19-17)=33$",
-                "E: $31+0=31$ (finishes by its LFT)",
-                "F: $31+(18-15)=34$",
-                "E is smallest. If its try leaves no clash, the minimum is $31$: no extra time."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q7",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Can it happen?",
-              "answer": [
-                "No. The quick sum is a floor: the project cannot finish before $29$."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "An option has quick sum $29$.",
-                "After trying it, the project finishes at $27$.",
-                "Is that possible? Explain."
-              ],
-              "rationale": "A try can never finish below its quick sum.",
-              "explanation": [
-                "A quick sum is the earliest the project can possibly finish if that activity is held back.",
-                "So $27$ is impossible."
+                "A: $24+4=28$",
+                "B: $24+3=27$",
+                "C: $24+2=26$",
+                "C is the smallest, so try C first."
               ],
               "expectedErrors": []
             }
           ],
-          "id": "rl-quick-practice-1"
+          "id": "rl-practice-1"
         }
       ],
-      "brief": "Seven quick-sum questions climbing from the formula to the floor idea. No pictures: the point is the calculation and why the smallest goes first."
-    },
-    {
-      "id": "rl-l2-network",
-      "family": "teach",
-      "title": "Example 2: the activities",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 60,
-          "w": 1400,
-          "h": 110,
-          "text": "Example 2: the activities",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l2-network-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 180,
-          "w": 1400,
-          "h": 90,
-          "text": "This time activities need different numbers of workers. 6 workers are available. Unlimited time: 24 days.",
-          "size": 36,
-          "colour": "#64748b",
-          "id": "rl-l2-network-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 290,
-          "w": 1400,
-          "h": 560,
-          "grid": {
-            "head": [
-              "Activity",
-              "Duration",
-              "Workers",
-              "After",
-              "Earliest start",
-              "LFT"
-            ],
-            "rows": [
-              [
-                "A",
-                "8",
-                "1",
-                "-",
-                "0",
-                "10"
-              ],
-              [
-                "B",
-                "2",
-                "4",
-                "-",
-                "0",
-                "6"
-              ],
-              [
-                "C",
-                "6",
-                "1",
-                "-",
-                "0",
-                "6"
-              ],
-              [
-                "D",
-                "8",
-                "3",
-                "B, C",
-                "6",
-                "14"
-              ],
-              [
-                "E",
-                "4",
-                "4",
-                "A, B",
-                "8",
-                "14"
-              ],
-              [
-                "F",
-                "4",
-                "3",
-                "E",
-                "12",
-                "19"
-              ],
-              [
-                "G",
-                "5",
-                "2",
-                "D, E",
-                "14",
-                "19"
-              ],
-              [
-                "H",
-                "5",
-                "4",
-                "F, G",
-                "19",
-                "24"
-              ]
-            ],
-            "given": 6
-          },
-          "fill": "filled",
-          "size": 34,
-          "id": "rl-l2-network-3"
-        }
-      ],
-      "brief": "Level 2 worked example. The number of workers is written beside the duration in the diagram: D(3). Limit 6 workers."
-    },
-    {
-      "id": "rl-l2-hist",
-      "family": "teach",
-      "title": "Example 2: the clash",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 40,
-          "w": 1400,
-          "h": 100,
-          "text": "Example 2: the clash",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l2-hist-1"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 760,
-          "w": 900,
-          "h": 0,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l2-hist-2"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 200,
-          "w": 0,
-          "h": 560,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l2-hist-3"
-        },
-        {
-          "kind": "line",
-          "x": 170.0,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-4"
-        },
-        {
-          "kind": "text",
-          "x": 140.0,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "0",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-5"
-        },
-        {
-          "kind": "line",
-          "x": 298.57142857142856,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-6"
-        },
-        {
-          "kind": "text",
-          "x": 268.57142857142856,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-7"
-        },
-        {
-          "kind": "line",
-          "x": 427.14285714285717,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-8"
-        },
-        {
-          "kind": "text",
-          "x": 397.14285714285717,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "8",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-9"
-        },
-        {
-          "kind": "line",
-          "x": 555.7142857142858,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-10"
-        },
-        {
-          "kind": "text",
-          "x": 525.7142857142858,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "12",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-11"
-        },
-        {
-          "kind": "line",
-          "x": 684.2857142857143,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-12"
-        },
-        {
-          "kind": "text",
-          "x": 654.2857142857143,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "16",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-13"
-        },
-        {
-          "kind": "line",
-          "x": 812.8571428571429,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-14"
-        },
-        {
-          "kind": "text",
-          "x": 782.8571428571429,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "20",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-15"
-        },
-        {
-          "kind": "line",
-          "x": 941.4285714285716,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-16"
-        },
-        {
-          "kind": "text",
-          "x": 911.4285714285716,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "24",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-17"
-        },
-        {
-          "kind": "line",
-          "x": 1070.0,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-18"
-        },
-        {
-          "kind": "text",
-          "x": 1040.0,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "28",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-hist-19"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 620.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-20"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 600.0,
-          "w": 60,
-          "h": 40,
-          "text": "2",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-hist-21"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 480.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-22"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 460.0,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-hist-23"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 340.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-24"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 320.0,
-          "w": 60,
-          "h": 40,
-          "text": "6",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-hist-25"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 200.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-hist-26"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 180.0,
-          "w": 60,
-          "h": 40,
-          "text": "8",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-hist-27"
-        },
-        {
-          "kind": "text",
-          "x": 160,
-          "y": 138,
-          "w": 360,
-          "h": 44,
-          "text": "Workers",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "left",
-          "id": "rl-l2-hist-28"
-        },
-        {
-          "kind": "text",
-          "x": 690,
-          "y": 814,
-          "w": 380,
-          "h": 44,
-          "text": "Time (days)",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "right",
-          "id": "rl-l2-hist-29"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 362.8571428571429,
-          "y": 550.0,
-          "w": 257.14285714285717,
-          "h": 210.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-30"
-        },
-        {
-          "kind": "text",
-          "x": 362.8571428571429,
-          "y": 550.0,
-          "w": 64.28571428571429,
-          "h": 210.0,
-          "text": "D",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-31"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 690.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-32"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 690.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "text": "C",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-33"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 620.0,
-          "y": 620.0,
-          "w": 160.71428571428572,
-          "h": 140.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-34"
-        },
-        {
-          "kind": "text",
-          "x": 620.0,
-          "y": 620.0,
-          "w": 160.71428571428572,
-          "h": 140.0,
-          "text": "G",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-35"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 780.7142857142858,
-          "y": 480.0,
-          "w": 160.71428571428572,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-36"
-        },
-        {
-          "kind": "text",
-          "x": 780.7142857142858,
-          "y": 480.0,
-          "w": 160.71428571428572,
-          "h": 280.0,
-          "text": "H",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-37"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 620.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-38"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 362.8571428571429,
-          "y": 480.0,
-          "w": 64.28571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-39"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 620.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "text": "A",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-40"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 427.14285714285717,
-          "y": 270.0,
-          "w": 128.57142857142858,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-41"
-        },
-        {
-          "kind": "text",
-          "x": 427.14285714285717,
-          "y": 270.0,
-          "w": 128.57142857142858,
-          "h": 280.0,
-          "text": "E",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-42"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 555.7142857142858,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 210.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-43"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 620.0,
-          "y": 410.0,
-          "w": 64.28571428571429,
-          "h": 210.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-44"
-        },
-        {
-          "kind": "text",
-          "x": 555.7142857142858,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 210.0,
-          "text": "F",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-45"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-hist-46"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 280.0,
-          "text": "B",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-hist-47"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 340.0,
-          "w": 900,
-          "h": 0.0,
-          "colour": "#dc2626",
-          "width": 5,
-          "id": "rl-l2-hist-48"
-        },
-        {
-          "kind": "text",
-          "x": 650,
-          "y": 290.0,
-          "w": 420,
-          "h": 44,
-          "text": "Limit: 6 workers",
-          "size": 30,
-          "colour": "#dc2626",
-          "bold": true,
-          "align": "right",
-          "id": "rl-l2-hist-49"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 427.14285714285717,
-          "y": 270.0,
-          "w": 128.57142857142858,
-          "h": 490.0,
-          "strokeWidth": 6,
-          "stroke": "#dc2626",
-          "id": "rl-l2-hist-50",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 200,
-          "w": 430,
-          "h": 160,
-          "text": "Block height is the number of workers.",
-          "size": 34,
-          "colour": "#0f172a",
-          "id": "rl-l2-hist-51"
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 390,
-          "w": 430,
-          "h": 300,
-          "text": "Between 8 and 12, D needs 3 and E needs 4: that is 7 workers, but the limit is 6.",
-          "size": 36,
-          "colour": "#dc2626",
-          "bold": true,
-          "id": "rl-l2-hist-52",
-          "step": 1
-        }
-      ],
-      "brief": "Level 2 worked example. The block height is the number of workers. Click: the clash."
-    },
-    {
-      "id": "rl-l2-quick",
-      "family": "teach",
-      "title": "Example 2: quick sums",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 50,
-          "w": 1400,
-          "h": 110,
-          "text": "Example 2: quick sums",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l2-quick-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 170,
-          "w": 1400,
-          "h": 80,
-          "text": "Unlimited time = 24 days. The clash is 8 to 12, so the options are D and E.",
-          "size": 36,
-          "colour": "#64748b",
-          "id": "rl-l2-quick-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 290,
-          "w": 1400,
-          "h": 260,
-          "grid": {
-            "head": [
-              "Option",
-              "Held until",
-              "New finish",
-              "LFT",
-              "Quick sum"
-            ],
-            "rows": [
-              [
-                "E",
-                "14",
-                "18",
-                "14",
-                "$24+(18-14)=28$"
-              ],
-              [
-                "D",
-                "12",
-                "20",
-                "14",
-                "$24+(20-14)=30$"
-              ]
-            ],
-            "given": 2
-          },
-          "fill": "structure",
-          "size": 40,
-          "id": "rl-l2-quick-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 600,
-          "w": 1400,
-          "h": 260,
-          "text": "E is held until D finishes at 14, so it runs 14 to 18. D is held until E finishes at 12, so it runs 12 to 20.\nThe smallest is E (28). Try E first.",
-          "size": 36,
-          "colour": "#0f172a",
-          "id": "rl-l2-quick-4"
-        }
-      ],
-      "brief": "Level 2 worked example. Same table, same formula. Pupils fill the last three columns, then show answers. Unlimited time is 24."
-    },
-    {
-      "id": "rl-l2-answer",
-      "family": "teach",
-      "title": "Example 2: try E",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 40,
-          "w": 1400,
-          "h": 100,
-          "text": "Example 2: try E",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l2-answer-1"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 760,
-          "w": 900,
-          "h": 0,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l2-answer-2"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 200,
-          "w": 0,
-          "h": 560,
-          "colour": "#0f172a",
-          "width": 3,
-          "id": "rl-l2-answer-3"
-        },
-        {
-          "kind": "line",
-          "x": 170.0,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-4"
-        },
-        {
-          "kind": "text",
-          "x": 140.0,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "0",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-5"
-        },
-        {
-          "kind": "line",
-          "x": 298.57142857142856,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-6"
-        },
-        {
-          "kind": "text",
-          "x": 268.57142857142856,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-7"
-        },
-        {
-          "kind": "line",
-          "x": 427.14285714285717,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-8"
-        },
-        {
-          "kind": "text",
-          "x": 397.14285714285717,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "8",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-9"
-        },
-        {
-          "kind": "line",
-          "x": 555.7142857142858,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-10"
-        },
-        {
-          "kind": "text",
-          "x": 525.7142857142858,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "12",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-11"
-        },
-        {
-          "kind": "line",
-          "x": 684.2857142857143,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-12"
-        },
-        {
-          "kind": "text",
-          "x": 654.2857142857143,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "16",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-13"
-        },
-        {
-          "kind": "line",
-          "x": 812.8571428571429,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-14"
-        },
-        {
-          "kind": "text",
-          "x": 782.8571428571429,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "20",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-15"
-        },
-        {
-          "kind": "line",
-          "x": 941.4285714285716,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-16"
-        },
-        {
-          "kind": "text",
-          "x": 911.4285714285716,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "24",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-17"
-        },
-        {
-          "kind": "line",
-          "x": 1070.0,
-          "y": 760,
-          "w": 0.0,
-          "h": 12,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-18"
-        },
-        {
-          "kind": "text",
-          "x": 1040.0,
-          "y": 774,
-          "w": 60,
-          "h": 40,
-          "text": "28",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-answer-19"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 620.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-20"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 600.0,
-          "w": 60,
-          "h": 40,
-          "text": "2",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-answer-21"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 480.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-22"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 460.0,
-          "w": 60,
-          "h": 40,
-          "text": "4",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-answer-23"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 340.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-24"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 320.0,
-          "w": 60,
-          "h": 40,
-          "text": "6",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-answer-25"
-        },
-        {
-          "kind": "line",
-          "x": 158,
-          "y": 200.0,
-          "w": 12,
-          "h": 0.0,
-          "colour": "#0f172a",
-          "width": 2,
-          "id": "rl-l2-answer-26"
-        },
-        {
-          "kind": "text",
-          "x": 90,
-          "y": 180.0,
-          "w": 60,
-          "h": 40,
-          "text": "8",
-          "size": 26,
-          "colour": "#64748b",
-          "align": "right",
-          "id": "rl-l2-answer-27"
-        },
-        {
-          "kind": "text",
-          "x": 160,
-          "y": 138,
-          "w": 360,
-          "h": 44,
-          "text": "Workers",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "left",
-          "id": "rl-l2-answer-28"
-        },
-        {
-          "kind": "text",
-          "x": 690,
-          "y": 814,
-          "w": 380,
-          "h": 44,
-          "text": "Time (days)",
-          "size": 28,
-          "colour": "#64748b",
-          "bold": true,
-          "align": "right",
-          "id": "rl-l2-answer-29"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 362.8571428571429,
-          "y": 550.0,
-          "w": 257.14285714285717,
-          "h": 210.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-30"
-        },
-        {
-          "kind": "text",
-          "x": 362.8571428571429,
-          "y": 550.0,
-          "w": 257.14285714285717,
-          "h": 210.0,
-          "text": "D",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-31"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 690.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#ddd6fe",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-32"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 690.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "text": "C",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-33"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 748.5714285714287,
-          "y": 620.0,
-          "w": 160.71428571428572,
-          "h": 140.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-34"
-        },
-        {
-          "kind": "text",
-          "x": 748.5714285714287,
-          "y": 620.0,
-          "w": 160.71428571428572,
-          "h": 140.0,
-          "text": "G",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-35"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 909.2857142857143,
-          "y": 480.0,
-          "w": 160.71428571428572,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-36"
-        },
-        {
-          "kind": "text",
-          "x": 909.2857142857143,
-          "y": 480.0,
-          "w": 160.71428571428572,
-          "h": 280.0,
-          "text": "H",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-37"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 620.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-38"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 362.8571428571429,
-          "y": 480.0,
-          "w": 64.28571428571429,
-          "h": 70.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-39"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 620.0,
-          "w": 192.8571428571429,
-          "h": 70.0,
-          "text": "A",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-40"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 620.0,
-          "y": 480.0,
-          "w": 128.57142857142858,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-41"
-        },
-        {
-          "kind": "text",
-          "x": 620.0,
-          "y": 480.0,
-          "w": 128.57142857142858,
-          "h": 280.0,
-          "text": "E",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-42"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 748.5714285714287,
-          "y": 410.0,
-          "w": 128.57142857142858,
-          "h": 210.0,
-          "strokeWidth": 2,
-          "fill": "#fde68a",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-43"
-        },
-        {
-          "kind": "text",
-          "x": 748.5714285714287,
-          "y": 410.0,
-          "w": 128.57142857142858,
-          "h": 210.0,
-          "text": "F",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-44"
-        },
-        {
-          "kind": "shape",
-          "shape": "rect",
-          "x": 170.0,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 280.0,
-          "strokeWidth": 2,
-          "fill": "#e2e8f0",
-          "stroke": "#0f172a",
-          "id": "rl-l2-answer-45"
-        },
-        {
-          "kind": "text",
-          "x": 170.0,
-          "y": 340.0,
-          "w": 64.28571428571429,
-          "h": 280.0,
-          "text": "B",
-          "size": 30,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-answer-46"
-        },
-        {
-          "kind": "line",
-          "x": 170,
-          "y": 340.0,
-          "w": 900,
-          "h": 0.0,
-          "colour": "#dc2626",
-          "width": 5,
-          "id": "rl-l2-answer-47"
-        },
-        {
-          "kind": "text",
-          "x": 650,
-          "y": 290.0,
-          "w": 420,
-          "h": 44,
-          "text": "Limit: 6 workers",
-          "size": 30,
-          "colour": "#dc2626",
-          "bold": true,
-          "align": "right",
-          "id": "rl-l2-answer-48"
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 200,
-          "w": 430,
-          "h": 240,
-          "text": "E runs 14 to 18. F, G and H have to wait for it, so they move later too.",
-          "size": 34,
-          "colour": "#0f172a",
-          "id": "rl-l2-answer-49"
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 470,
-          "w": 430,
-          "h": 160,
-          "text": "The histogram never goes over 6.",
-          "size": 36,
-          "colour": "#0f172a",
-          "id": "rl-l2-answer-50",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 1130,
-          "y": 640,
-          "w": 430,
-          "h": 230,
-          "text": "Minimum completion time: 28 days (4 more than 24).",
-          "size": 40,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-l2-answer-51",
-          "step": 2
-        }
-      ],
-      "brief": "Level 2 worked example. E held until 14; its successors F, G and H move later with it. Pupils write up the answer."
-    },
-    {
-      "id": "rl-practice-tool",
-      "family": "practice",
-      "title": "Your turn",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 70,
-          "w": 1400,
-          "h": 110,
-          "text": "Your turn",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-practice-tool-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 230,
-          "w": 1400,
-          "h": 640,
-          "text": "1.  Draw the histogram and the limit line.\n2.  Find the first clash. Write the quick sum for each option.\n3.  Try the smallest quick sum.\n4.  No clash left? Write down the minimum completion time.\n5.  Check: it is the smallest quick sum, and it needs no clash.",
-          "size": 46,
-          "colour": "#0f172a",
-          "id": "rl-practice-tool-2"
-        }
-      ],
-      "brief": "Pupils practise on the Critical Path tool: Resource levelling, Level 1 then Level 2. Use the routine card on the previous slides."
-    },
-    {
-      "id": "rl-l3-divider",
-      "family": "structure",
-      "title": "A harder case",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 330,
-          "w": 1400,
-          "h": 150,
-          "text": "A harder case",
-          "size": 92,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l3-divider-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 500,
-          "w": 1400,
-          "h": 80,
-          "text": "When the first try still leaves a clash",
-          "size": 48,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l3-divider-2"
-        }
-      ]
-    },
-    {
-      "id": "rl-l3-worked",
-      "family": "teach",
-      "title": "A try that leaves a clash",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 40,
-          "w": 1400,
-          "h": 100,
-          "text": "A try that leaves a clash",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l3-worked-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 150,
-          "w": 1400,
-          "h": 80,
-          "text": "Unlimited time = 21. The first clash is 1 to 6.",
-          "size": 34,
-          "colour": "#64748b",
-          "id": "rl-l3-worked-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 240,
-          "w": 1400,
-          "h": 300,
-          "grid": {
-            "head": [
-              "Option",
-              "Held until",
-              "New finish",
-              "LFT",
-              "Quick sum"
-            ],
-            "rows": [
-              [
-                "C",
-                "6",
-                "14",
-                "13",
-                "22"
-              ],
-              [
-                "D",
-                "6",
-                "13",
-                "8",
-                "26"
-              ],
-              [
-                "E",
-                "8",
-                "13",
-                "8",
-                "26"
-              ]
-            ],
-            "given": 5
-          },
-          "fill": "filled",
-          "size": 36,
-          "id": "rl-l3-worked-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 570,
-          "w": 1400,
-          "h": 100,
-          "text": "Try C (smallest, 22). It leaves a new clash at 14 to 15: F, G and H.",
-          "size": 38,
-          "colour": "#dc2626",
-          "bold": true,
-          "id": "rl-l3-worked-4",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 680,
-          "w": 1400,
-          "h": 180,
-          "text": "The new quick sums join the same list: F 23, G 22, H 29.\nThe smallest on the whole list is G (22). Try G: no clash left. Minimum: 22.",
-          "size": 38,
-          "colour": "#0f172a",
-          "id": "rl-l3-worked-5",
-          "step": 2
-        }
-      ],
-      "brief": "Level 3 worked example (10 activities, 2 workers, unlimited 21). Click through the list. Only the numbers are shown, no histograms."
-    },
-    {
-      "id": "rl-l3-back",
-      "family": "teach",
-      "title": "Going back",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 40,
-          "w": 1400,
-          "h": 100,
-          "text": "Going back",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-l3-back-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 150,
-          "w": 1400,
-          "h": 80,
-          "text": "Unlimited time = 25. The first clash is 10 to 16.",
-          "size": 34,
-          "colour": "#64748b",
-          "id": "rl-l3-back-2"
-        },
-        {
-          "kind": "board",
-          "x": 100,
-          "y": 240,
-          "w": 1400,
-          "h": 260,
-          "grid": {
-            "head": [
-              "Option",
-              "Held until",
-              "New finish",
-              "LFT",
-              "Quick sum"
-            ],
-            "rows": [
-              [
-                "H",
-                "17",
-                "25",
-                "25",
-                "25"
-              ],
-              [
-                "G",
-                "16",
-                "25",
-                "24",
-                "26"
-              ],
-              [
-                "F",
-                "16",
-                "23",
-                "17",
-                "31"
-              ]
-            ],
-            "given": 5
-          },
-          "fill": "filled",
-          "size": 36,
-          "id": "rl-l3-back-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 530,
-          "w": 1400,
-          "h": 100,
-          "text": "Try H (smallest, 25). It leaves a new clash. The new quick sums are G 29, H 27, I 27.",
-          "size": 38,
-          "colour": "#0f172a",
-          "id": "rl-l3-back-4",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 650,
-          "w": 1400,
-          "h": 150,
-          "text": "The whole list: H 25 (tried), G 26, H 27, I 27, G 29, F 31. The smallest untried is G 26, from the first clash. None of the new options beat it, so go back and try G.",
-          "size": 36,
-          "colour": "#dc2626",
-          "bold": true,
-          "id": "rl-l3-back-5",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 810,
-          "w": 1400,
-          "h": 70,
-          "text": "Try G: no clash left. Minimum: 26 (1 more than 25).",
-          "size": 40,
-          "colour": "#6d28d9",
-          "bold": true,
-          "id": "rl-l3-back-6",
-          "step": 3
-        }
-      ],
-      "brief": "Level 3 worked example (11 activities, 2 workers, unlimited 25). Shows the go-back: the new options are all bigger than an untried one from the first list."
-    },
-    {
-      "id": "rl-discuss",
-      "family": "discussion",
-      "title": "Discuss",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 100,
-          "w": 660,
-          "h": 50,
-          "text": "DISCUSS",
-          "size": 30,
-          "colour": "#be185d",
-          "bold": true,
-          "id": "rl-discuss-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 170,
-          "w": 660,
-          "h": 330,
-          "text": "Mei says: \"The smallest quick sum is always the minimum completion time.\" Is she right?",
-          "size": 50,
-          "colour": "#0f172a",
-          "id": "rl-discuss-2"
-        },
-        {
-          "kind": "line",
-          "x": 800,
-          "y": 100,
-          "w": 0,
-          "h": 720,
-          "colour": "#e2e8f0",
-          "width": 4,
-          "id": "rl-discuss-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 520,
-          "w": 660,
-          "h": 50,
-          "text": "KEY POINT",
-          "size": 30,
-          "colour": "#64748b",
-          "bold": true,
-          "id": "rl-discuss-4",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 580,
-          "w": 660,
-          "h": 260,
-          "text": "Only if its try leaves no clash. A quick sum is a floor, not always the answer.",
-          "size": 44,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-discuss-5",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 860,
-          "y": 100,
-          "w": 640,
-          "h": 50,
-          "text": "QUESTION",
-          "size": 30,
-          "colour": "#64748b",
-          "bold": true,
-          "id": "rl-discuss-6",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 860,
-          "y": 170,
-          "w": 640,
-          "h": 330,
-          "text": "In the going-back example, H has the smallest quick sum, 25. Why is the minimum 26, not 25?",
-          "size": 46,
-          "colour": "#0f172a",
-          "id": "rl-discuss-7",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 860,
-          "y": 520,
-          "w": 640,
-          "h": 50,
-          "text": "ANSWER",
-          "size": 30,
-          "colour": "#64748b",
-          "bold": true,
-          "id": "rl-discuss-8",
-          "step": 3
-        },
-        {
-          "kind": "text",
-          "x": 860,
-          "y": 580,
-          "w": 640,
-          "h": 260,
-          "text": "Holding H leaves a clash, so 25 is only a floor. The first try with no clash is G, giving 26.",
-          "size": 40,
-          "colour": "#1e3a8a",
-          "align": "left",
-          "id": "rl-discuss-9",
-          "step": 3
-        }
-      ]
-    },
-    {
-      "id": "rl-exam",
-      "family": "teach",
-      "title": "In the exam",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 60,
-          "w": 1400,
-          "h": 110,
-          "text": "In the exam",
-          "size": 72,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-exam-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 200,
-          "w": 110,
-          "h": 110,
-          "text": "1",
-          "size": 64,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-exam-2"
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 200,
-          "w": 1260,
-          "h": 170,
-          "text": "Look first. Do any activities need more than half the workers, so they can never run together? Add them up and see.",
-          "size": 40,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-exam-3"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 400,
-          "w": 110,
-          "h": 110,
-          "text": "2",
-          "size": 64,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-exam-4",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 400,
-          "w": 1260,
-          "h": 170,
-          "text": "Use the routine: quick sums, smallest first, until a try leaves no clash.",
-          "size": 40,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-exam-5",
-          "step": 1
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 600,
-          "w": 110,
-          "h": 110,
-          "text": "3",
-          "size": 64,
-          "colour": "#6d28d9",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-exam-6",
-          "step": 2
-        },
-        {
-          "kind": "text",
-          "x": 240,
-          "y": 600,
-          "w": 1260,
-          "h": 200,
-          "text": "Stuck? Draw a levelled histogram anyway. A valid schedule scores 2 of the 3 marks even if it is not the best.",
-          "size": 40,
-          "colour": "#0f172a",
-          "middle": true,
-          "id": "rl-exam-7",
-          "step": 2
-        }
-      ],
-      "brief": "Exam technique for questions that do not fit the routine neatly (queues of heavy activities). Per Harry: look first, then the routine, then draw."
+      "brief": "Five quick-sum questions in plain words. No pictures: the point is the calculation."
     },
     {
       "id": "rl-exit",
@@ -4277,13 +1930,14 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Unlimited time is $27$.",
-                "An option has LFT $24$ and new finish $31$.",
+                "With no limit the project takes $27$ days.",
+                "An activity would finish on day $31$. Its deadline is day $24$.",
                 "Work out the quick sum."
               ],
-              "rationale": "Quick sum is unlimited time plus how late the held activity finishes.",
+              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
               "explanation": [
-                "$27+(31-24)=34$"
+                "It is $7$ days past its deadline.",
+                "$27+7=34$"
               ],
               "expectedErrors": []
             },
@@ -4291,7 +1945,7 @@
               "id": "rl-q102",
               "tool": "critical-path",
               "level": "level1",
-              "title": "Which option first?",
+              "title": "Which one first?",
               "answer": [
                 "$28$"
               ],
@@ -4301,8 +1955,8 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Three options have quick sums $30$, $28$ and $33$.",
-                "Which is tried first?"
+                "Three choices have quick sums $30$, $28$ and $33$.",
+                "Which do you try first?"
               ],
               "rationale": "Try the smallest quick sum first.",
               "explanation": [
@@ -4316,7 +1970,7 @@
               "level": "level1",
               "title": "Can it be 30?",
               "answer": [
-                "No. Every option has a quick sum of at least $31$, so nothing can finish sooner."
+                "No. Even the best choice cannot finish sooner than $31$."
               ],
               "format": "open",
               "status": "ready",
@@ -4324,12 +1978,12 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "The smallest quick sum on the list is $31$.",
-                "Can the minimum completion time be $30$? Explain."
+                "The smallest quick sum is $31$.",
+                "Can the project finish in $30$ days? Explain."
               ],
               "rationale": "A quick sum is a floor.",
               "explanation": [
-                "A quick sum is a floor, so the minimum can never be below $31$."
+                "A quick sum is a floor: the project cannot finish sooner than it."
               ],
               "expectedErrors": []
             }
@@ -4337,37 +1991,7 @@
           "id": "rl-exit-3"
         }
       ],
-      "brief": "Last 5 minutes. Question 1 checks the formula, 2 the order, 3 the floor idea."
-    },
-    {
-      "id": "rl-summary",
-      "family": "structure",
-      "title": "Summary",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 100,
-          "w": 1400,
-          "h": 50,
-          "text": "SUMMARY",
-          "size": 30,
-          "colour": "#64748b",
-          "bold": true,
-          "id": "rl-summary-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 170,
-          "w": 1400,
-          "h": 640,
-          "text": "•  A clash is a time when more workers are needed than the limit.\n•  A quick sum is a floor: hold the activity back, find its new finish, add on how far past its LFT it goes.\n•  Try the smallest quick sum first. No clash left? That is the minimum.\n•  A try can leave a new clash. Add its quick sums to the same list and take the smallest on the whole list, even if that means going back.\n•  Exam: look first, then the routine, then draw it.",
-          "size": 44,
-          "colour": "#0f172a",
-          "id": "rl-summary-2"
-        }
-      ]
+      "brief": "Last 5 minutes. Question 1 checks the calculation, 2 the order, 3 the floor idea."
     }
   ]
 }

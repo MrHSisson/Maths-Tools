@@ -33,7 +33,7 @@ Keep the split even when a session only touches one.
 
 Branch `claude/levelling-question-size`. Areas: new `src/decks/data/resource-levelling.json`, `specs/decks/resource-levelling.md`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.
 
-- **Deck:** 26 slides to teach the routine: key vocabulary and definitions (clash, option, quick sum), a Level 1 worked example (histogram, clash, quick sums, try, answer) and a Level 2 one (several workers), a seven-question quick-sum set, a Level 3 section (a try that leaves a clash, and going back to the first list), a discussion, exam technique and an exit ticket. Histograms are drawn from shapes with the tool's own stacking rule, so they are editable.
+- **Deck:** 10 slides in plain English (no LFT or other acronyms, no talk of levels): the problem, the quick sum and why it helps, working out quick sums (a self-contained table), trying the smallest, the routine, a try that leaves another clash, exam technique, a five-question quick-sum set and an exit ticket. Each slide carries the numbers it needs. Histograms are drawn from shapes with the tool's own stacking rule, so they are editable. An earlier 26-slide version was cut down on Harry's feedback.
 - **Recorded:** Harry's exam technique for queue-type questions (look first, then the routine, then draw it for 2 of 3 marks) is in the spec; no spot-it question style was built.
 - **Checks:** all worked numbers come from `levelMethod`; deck content checks pass; key slides looked at in the browser.
 

@@ -5,25 +5,25 @@
 
 ## Agreed approach
 
-A formal version of the routine to teach from. Levels 1 and 2 are taught and practised first (on the tool); Level 3 is looked at. The one idea to nail is the quick sum: what it is, how it is worked out, and why the smallest goes first. No live generator: the tool is used for practice, and the deck's own questions are pure quick-sum questions with no pictures.
+A short, plain-English deck (10 slides) for the essentials. No jargon or acronyms on the slides: "deadline" stands for the latest finish time, "no limit" for the unlimited time, and levels are not mentioned. Every slide carries the numbers it needs, so none depends on an earlier slide. Most practice is on the Critical Path generator (Resource levelling); the detail (latest finish times, float, levels) is built in afterwards by Harry.
+
+The quick sum in plain words: hold an activity back, work out when it now finishes, see how many days that is past its deadline, and add that on to the project time with no limit. It is a floor: the project cannot finish sooner, but may finish later, so the smallest quick sum is tried first.
 
 ## Slides
 
 | # | Slide | What it does |
 |---|---|---|
-| 1–3 | Title, objective, key vocabulary | Clash, option, quick sum, try, knock-on |
-| 4–5 | The activities, the earliest start histogram | Level 1 worked example (8 activities, one worker each, limit 2). Clash 12 to 16 (E, F, G) |
-| 6–8 | Definitions | Clash; option; quick sum = unlimited time + (new finish − LFT) |
-| 9–10 | Quick sums at the first clash; why smallest first | G 24, E 27, F 29 (unlimited 23); a quick sum is a floor |
-| 11–12 | The routine; try G | Five steps; levelled histogram, minimum 24 |
-| 13 | Quick sums (7 questions) | Formula, finishes by its LFT, which first, and "can it finish below its quick sum?" |
-| 14–18 | Level 2 | Several workers (limit 6): clash 8 to 12 (D 3 + E 4); E 28, D 30; try E, minimum 28 |
-| 19 | Your turn | Levels 1 and 2 on the tool, with the routine card |
-| 20–22 | Level 3 | A try that leaves a clash (unlimited 21: C 22 leaves a clash, G 22 clears, minimum 22); going back (unlimited 25: H 25 leaves a clash, G 26 from the first list is next, minimum 26) |
-| 23 | Discuss | Is the smallest quick sum always the minimum? (No: only if its try leaves no clash) |
-| 24 | In the exam | Look first, then the routine, then draw it (2 of 3 marks) |
-| 25–26 | Exit ticket, summary | Quick sum; which first; can the minimum be below the smallest quick sum? |
+| 1 | Resource levelling | Title |
+| 2 | The problem | Histogram of eight activities, one worker each, 2 workers available; clash at days 12 to 16 (E, F, G) |
+| 3 | The quick sum | Why it helps: a fast estimate, a floor, so try the smallest first |
+| 4 | Working out quick sums | Self-contained table: G, E, F with restart day, length, finish, deadline, days past, quick sum (24, 27, 29; no limit 23) |
+| 5 | Try the smallest | G held until day 16; no clash left; minimum 24 days |
+| 6 | The routine | Five steps, one per click |
+| 7 | When a try leaves another clash | Numbers only: no limit 21; C 22, D 26, E 26; trying C leaves a clash with F 23, G 22, H 29; try G; minimum 22 |
+| 8 | In the exam | Look first, then the routine, then draw a histogram that fits (2 of 3 marks) |
+| 9 | Quick sums (5 questions) | Plain-word practice: days past the deadline, finishing by the deadline, which first |
+| 10 | Exit ticket | Calculate a quick sum; which first; can the project beat the smallest quick sum? |
 
 ## Checks
 
-Every worked network was run through `levelMethod` (quick sums, tries, minimum) before it went on a slide; histograms are drawn with the tool's own stacking rule (critical along the bottom, longest first, stepped blocks). Quick-sum answers are plain arithmetic (unlimited time + (new finish − LFT), or unlimited time when the activity finishes by its LFT).
+The worked networks were run through `levelMethod` before going on a slide; the histograms use the tool's stacking rule. Quick-sum answers are plain arithmetic.
