@@ -33,7 +33,8 @@ Keep the split even when a session only touches one.
 
 Branch `claude/levelling-question-size`. Areas: new `src/decks/data/resource-levelling.json`, `specs/decks/resource-levelling.md`, `specs/resource-levelling.md`, `docs/pathways/resource-levelling.md`.
 
-- **Deck:** 10 slides in plain English (no LFT or other acronyms, no talk of levels): the problem, the quick sum and why it helps, working out quick sums (a self-contained table), trying the smallest, the routine, a try that leaves another clash, exam technique, a five-question quick-sum set and an exit ticket. Each slide carries the numbers it needs. Histograms are drawn from shapes with the tool's own stacking rule, so they are editable. An earlier 26-slide version was cut down on Harry's feedback.
+- **Deck:** 8 slides in plain English: the problem, the quick sum and why it helps, working out quick sums (a self-contained table with each activity's LFT given, since the lesson has no path analysis), trying the smallest, the routine, a try that leaves another clash and exam technique. Practice is on the generator, so the quick-sum questions and exit ticket were cut. Histograms are drawn from shapes with the tool's own stacking rule, so they are editable.
+- **Print fix:** the blank levelled histogram on a printed levelling question was drawn to the answer, so its axis gave the answer away. Both levelling histograms now share an axis that runs 10 past the time with no limit, to the next multiple of 5 (`levelAxisT` in `cpaSheet.tsx`); only an answer that does not fit sets it (167 gives 175, 53 gives 60). Tested: same printed question whatever the answer.
 - **Recorded:** Harry's exam technique for queue-type questions (look first, then the routine, then draw it for 2 of 3 marks) is in the spec; no spot-it question style was built.
 - **Checks:** all worked numbers come from `levelMethod`; deck content checks pass; key slides looked at in the browser.
 

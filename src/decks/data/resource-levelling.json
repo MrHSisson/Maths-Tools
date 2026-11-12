@@ -2,7 +2,7 @@
   "id": "resource-levelling",
   "title": "Resource Levelling",
   "strand": "Decision Mathematics",
-  "summary": "Resource levelling in plain words: a clash, the quick sum and why it helps, the routine, what to do when a try leaves another clash, exam technique, quick-sum practice and an exit ticket. Most practice is on the Critical Path generator.",
+  "summary": "Resource levelling in plain words: a clash, the quick sum and why it helps, the routine, what to do when a try leaves another clash, exam technique. Most practice is on the Critical Path generator.",
   "tool": "critical-path",
   "toolPath": "/critical-path",
   "questionVersion": 2,
@@ -720,7 +720,7 @@
           "y": 140,
           "w": 1400,
           "h": 170,
-          "text": "The project takes 23 days with no limit. Each activity has a deadline: the latest it can finish without making the project longer.\nQuick sum = 23 + the days it finishes past its deadline.",
+          "text": "The project takes 23 days with no limit. Every activity has an LFT, its latest finish time: the latest it can finish without making the project longer.\nQuick sum = 23 + the days it finishes past its LFT.",
           "size": 36,
           "colour": "#0f172a",
           "id": "rl-working-2"
@@ -736,9 +736,9 @@
               "Held back",
               "Starts again day",
               "Takes (days)",
+              "LFT",
               "Finishes day",
-              "Deadline day",
-              "Days past",
+              "Days past LFT",
               "Quick sum"
             ],
             "rows": [
@@ -746,8 +746,8 @@
                 "G",
                 "16",
                 "8",
-                "24",
                 "23",
+                "24",
                 "1",
                 "$23+1=24$"
               ],
@@ -755,8 +755,8 @@
                 "E",
                 "16",
                 "9",
-                "25",
                 "21",
+                "25",
                 "4",
                 "$23+4=27$"
               ],
@@ -764,13 +764,13 @@
                 "F",
                 "20",
                 "7",
-                "27",
                 "21",
+                "27",
                 "6",
                 "$23+6=29$"
               ]
             ],
-            "given": 3
+            "given": 4
           },
           "fill": "structure",
           "size": 34,
@@ -782,14 +782,14 @@
           "y": 740,
           "w": 1400,
           "h": 140,
-          "text": "G is held back until F finishes on day 16. It takes 8 days, so it finishes on day 24. Its deadline is day 23, so it is 1 day past: 23 + 1 = 24.",
+          "text": "G is held back until F finishes on day 16. It takes 8 days, so it finishes on day 24. Its LFT is 23, so it is 1 day past: 23 + 1 = 24.",
           "size": 36,
           "colour": "#0f172a",
           "id": "rl-working-4",
           "step": 1
         }
       ],
-      "brief": "Self-contained: the project time with no limit, each held activity's restart and length, and its deadline are all on the slide. Pupils fill the last three columns, then show the answers. Example: G is held until F finishes at day 16."
+      "brief": "Self-contained: the project time with no limit, each held activity's restart, length and LFT are all given (there is no path analysis to work them out from). Pupils fill the last three columns, then show the answers. Example: G is held until F finishes at day 16."
     },
     {
       "id": "rl-try",
@@ -1728,270 +1728,6 @@
         }
       ],
       "brief": "Exam technique: look first, then the routine, then draw it (2 of 3 marks)."
-    },
-    {
-      "id": "rl-practice",
-      "family": "practice",
-      "title": "Quick sums",
-      "els": [
-        {
-          "kind": "questions",
-          "x": 24,
-          "y": 24,
-          "w": 1552,
-          "h": 852,
-          "size": 46,
-          "visualiser": false,
-          "presentation": "whiteboard",
-          "items": [
-            {
-              "id": "rl-q1",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Work out the quick sum",
-              "answer": [
-                "$22$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $20$ days.",
-                "An activity would finish on day $16$. Its deadline is day $14$.",
-                "Work out the quick sum."
-              ],
-              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
-              "explanation": [
-                "It is $2$ days past its deadline.",
-                "$20+2=22$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q2",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Work out the quick sum",
-              "answer": [
-                "$26$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $25$ days.",
-                "An activity would finish on day $13$. Its deadline is day $12$.",
-                "Work out the quick sum."
-              ],
-              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
-              "explanation": [
-                "It is $1$ day past its deadline.",
-                "$25+1=26$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q3",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Finishes by its deadline",
-              "answer": [
-                "$18$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $18$ days.",
-                "An activity would finish on day $15$. Its deadline is day $15$.",
-                "Work out the quick sum."
-              ],
-              "rationale": "If the activity finishes by its deadline there are no extra days.",
-              "explanation": [
-                "It is not past its deadline, so there are no extra days.",
-                "$18+0=18$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q4",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Finishes before its deadline",
-              "answer": [
-                "$30$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $30$ days.",
-                "An activity would finish on day $20$. Its deadline is day $22$.",
-                "Work out the quick sum."
-              ],
-              "rationale": "If the activity finishes by its deadline there are no extra days.",
-              "explanation": [
-                "It finishes before its deadline, so there are no extra days.",
-                "$30+0=30$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q5",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Which one first?",
-              "answer": [
-                "A $28$, B $27$, C $26$. Try C first."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $24$ days.",
-                "A would finish on day $14$, deadline day $10$.",
-                "B would finish on day $15$, deadline day $12$.",
-                "C would finish on day $11$, deadline day $9$.",
-                "Find each quick sum. Which do you try first?"
-              ],
-              "rationale": "Try the smallest quick sum first.",
-              "explanation": [
-                "A: $24+4=28$",
-                "B: $24+3=27$",
-                "C: $24+2=26$",
-                "C is the smallest, so try C first."
-              ],
-              "expectedErrors": []
-            }
-          ],
-          "id": "rl-practice-1"
-        }
-      ],
-      "brief": "Five quick-sum questions in plain words. No pictures: the point is the calculation."
-    },
-    {
-      "id": "rl-exit",
-      "family": "retrieval",
-      "title": "Exit ticket",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 80,
-          "w": 1400,
-          "h": 110,
-          "text": "Exit ticket",
-          "size": 64,
-          "colour": "#0f172a",
-          "bold": true,
-          "id": "rl-exit-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 190,
-          "w": 1400,
-          "h": 80,
-          "text": "Work on your own. Show your working.",
-          "size": 34,
-          "colour": "#64748b",
-          "id": "rl-exit-2"
-        },
-        {
-          "kind": "grid",
-          "x": 100,
-          "y": 300,
-          "w": 1400,
-          "h": 550,
-          "bank": [],
-          "cols": 3,
-          "items": [
-            {
-              "id": "rl-q101",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Work out the quick sum",
-              "answer": [
-                "$34$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "With no limit the project takes $27$ days.",
-                "An activity would finish on day $31$. Its deadline is day $24$.",
-                "Work out the quick sum."
-              ],
-              "rationale": "Quick sum is the no-limit time plus the days past the deadline.",
-              "explanation": [
-                "It is $7$ days past its deadline.",
-                "$27+7=34$"
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q102",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Which one first?",
-              "answer": [
-                "$28$"
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "Three choices have quick sums $30$, $28$ and $33$.",
-                "Which do you try first?"
-              ],
-              "rationale": "Try the smallest quick sum first.",
-              "explanation": [
-                "Try the smallest quick sum first: $28$."
-              ],
-              "expectedErrors": []
-            },
-            {
-              "id": "rl-q103",
-              "tool": "critical-path",
-              "level": "level1",
-              "title": "Can it be 30?",
-              "answer": [
-                "No. Even the best choice cannot finish sooner than $31$."
-              ],
-              "format": "open",
-              "status": "ready",
-              "purpose": "practice",
-              "version": 2,
-              "followUp": "",
-              "question": [
-                "The smallest quick sum is $31$.",
-                "Can the project finish in $30$ days? Explain."
-              ],
-              "rationale": "A quick sum is a floor.",
-              "explanation": [
-                "A quick sum is a floor: the project cannot finish sooner than it."
-              ],
-              "expectedErrors": []
-            }
-          ],
-          "id": "rl-exit-3"
-        }
-      ],
-      "brief": "Last 5 minutes. Question 1 checks the calculation, 2 the order, 3 the floor idea."
     }
   ]
 }

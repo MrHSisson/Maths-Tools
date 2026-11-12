@@ -104,7 +104,7 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
   }));
   const axisPeak = Math.max(hist.peak, lv?.limit ?? 0, ...(cut?.states ?? []).map((s) => s.peak), lv?.after.peak ?? 0);
   const draw = (data: HistogramData, filled: boolean, limit?: number, tall = false): string => renderToStaticMarkup(createElement(HistogramView, {
-    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: Math.max(T, data.T), axisPeak, minWidth: 0, fineGrid: !filled,
+    data, view: { blocks: filled ? data.blocks.map((b) => b.id) : [] }, unit: d.unit, limit, axisT: lv && limit !== undefined ? levelAxisT(T, lv.after.T) : Math.max(T, data.T), axisPeak, minWidth: 0, fineGrid: !filled,
     // a histogram that has the page to itself is drawn taller, to fill it
     ...(tall ? { plotH: 470, cellMax: 80 } : {}),
   }));
@@ -152,6 +152,16 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
 }
 
 /** the printable HTML of a sheet (questions) or answer sheet, or null when this question has none */
+/**
+ * The time axis of the levelling histograms on a printed question. The blank levelled histogram must not give the answer away, so its axis never
+ * stops at the answer: it runs 10 past the time with no limit, to the next multiple of 5 (the given histogram uses the same axis). Only when the
+ * answer would not fit is the axis taken from it: the next multiple of 5 above the answer plus 5 (167 gives 175, 53 gives 60).
+ */
+export function levelAxisT(unlimited: number, answer: number): number {
+  const base = Math.ceil((unlimited + 10) / 5) * 5;
+  return answer < base ? base : Math.ceil((answer + 5) / 5) * 5;
+}
+
 export async function buildCpaSheet(p: DecisionProblem, answers: boolean): Promise<import("./printCpa").CpaSheetInput[] | null> {
   const q = await buildCpaSheetInput(p, false);
   if (!q) return null;
