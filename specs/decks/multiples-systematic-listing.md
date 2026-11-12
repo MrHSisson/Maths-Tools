@@ -20,7 +20,7 @@ The lesson has two halves of the same shape: direct instruction, a few whiteboar
 | 6 | Nine first-five-multiples questions in books, 3 × 3, easiest first (5, 8, 12 low starters). |
 | 7–8 | Definition of a common multiple; model with 4 and 6: circle 12 in both lists, then extend to show 24 is another. |
 | 9 | Discussion: Mei says the only common multiple of 4 and 6 is 12. Key point: 24 and 36 are too, and the list never stops; then is 24 a common multiple of 2 and 3? |
-| 10 | Three whiteboard questions: 3 and 5 with starters, then 2 and 7, then 8 and 10 (compact: question, lists, circled answer). |
+| 10 | Three whiteboard questions: 3 and 5, 2 and 7, 8 and 10, with no list starters (the answer shows the two lists with the match circled). |
 | 11 | Nine common-multiple questions in books, 3 × 3: questions 1–6 find a common multiple; questions 7–9 find the first two, with no list starters anywhere. |
 | 12 | Exit ticket: first five multiples of 9; circle the common multiple in the 2 and 5 lists (10); find a common multiple of 3 and 7 (21). |
 

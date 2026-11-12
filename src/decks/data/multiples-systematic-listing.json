@@ -1155,9 +1155,7 @@
               "version": 2,
               "followUp": "",
               "question": [
-                "Find a common multiple of $3$ and $5$.",
-                "$3: \\;3,\\;6,\\;9,\\;\\square,\\;\\square$",
-                "$5: \\;5,\\;10,\\;\\square$"
+                "Find a common multiple of $3$ and $5$."
               ],
               "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
               "explanation": [
@@ -1217,7 +1215,7 @@
           "presentation": "whiteboard"
         }
       ],
-      "brief": "Three whiteboard questions: a partly completed pair of lists, then two independent pairs. Any number in both lists is a common multiple; accept the first one as the model answer.",
+      "brief": "Three whiteboard questions on common multiples, with no list starters. Any number in both lists is a common multiple; accept the first one as the model answer.",
       "built": "1tr5a4",
       "title": "Find a common multiple",
       "family": "teach"
