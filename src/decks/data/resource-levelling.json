@@ -75,7 +75,7 @@
           "y": 440,
           "w": 1400,
           "h": 380,
-          "text": "•  Spot a clash on a resource histogram\n•  Work out the quick sum for an option\n•  Use the routine to level a histogram (Levels 1 and 2)\n•  See what changes at Level 3: a try that leaves another clash",
+          "text": "•  Spot a clash on a resource histogram\n•  Work out the quick sum for an option, and say why it helps\n•  Use the routine to find the minimum completion time\n•  See what to do when a try leaves another clash",
           "size": 44,
           "colour": "#0f172a",
           "id": "rl-obj-3"
@@ -168,7 +168,7 @@
           "y": 475,
           "w": 990,
           "h": 110,
-          "text": "A quick calculation of the earliest an option can possibly let the project finish.",
+          "text": "A floor for the project time if we hold an activity back: it cannot finish sooner than this.",
           "size": 36,
           "colour": "#0f172a",
           "middle": true,
@@ -1054,26 +1054,169 @@
           "x": 100,
           "y": 370,
           "w": 1400,
-          "h": 100,
-          "text": "Unlimited time + (new finish − LFT)",
-          "size": 64,
+          "h": 430,
+          "text": "A quick sum is a floor for the project time if we hold an activity back: the project cannot finish any sooner than this.",
+          "size": 52,
+          "colour": "#0f172a",
+          "id": "rl-def-quick-3"
+        }
+      ],
+      "brief": "The one idea of the lesson. Plain English first; the formula comes on the next slide."
+    },
+    {
+      "id": "rl-quick-how",
+      "family": "teach",
+      "title": "How to find a quick sum",
+      "els": [
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 60,
+          "w": 1400,
+          "h": 110,
+          "text": "How to find a quick sum",
+          "size": 72,
           "colour": "#0f172a",
           "bold": true,
-          "id": "rl-def-quick-3"
+          "id": "rl-quick-how-1"
         },
         {
           "kind": "text",
           "x": 100,
-          "y": 510,
-          "w": 1400,
-          "h": 330,
-          "text": "New finish: when the activity would finish if it is held back.\nLFT: the latest finish time of the activity.\nIf it still finishes by its LFT, the project time does not change.",
-          "size": 42,
+          "y": 190,
+          "w": 110,
+          "h": 120,
+          "text": "1",
+          "size": 60,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-quick-how-2"
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 190,
+          "w": 1260,
+          "h": 120,
+          "text": "Hold the activity back. It now starts later, when the activity we are waiting for finishes.",
+          "size": 38,
           "colour": "#0f172a",
-          "id": "rl-def-quick-4"
+          "middle": true,
+          "id": "rl-quick-how-3"
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 320,
+          "w": 110,
+          "h": 120,
+          "text": "2",
+          "size": 60,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-quick-how-4",
+          "step": 1
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 320,
+          "w": 1260,
+          "h": 120,
+          "text": "Add its duration to find its new finish.",
+          "size": 38,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-quick-how-5",
+          "step": 1
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 450,
+          "w": 110,
+          "h": 120,
+          "text": "3",
+          "size": 60,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-quick-how-6",
+          "step": 2
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 450,
+          "w": 1260,
+          "h": 120,
+          "text": "Compare with its LFT, the latest it can finish without delaying the project. Holding it back uses up its float. How far past the LFT is it?",
+          "size": 38,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-quick-how-7",
+          "step": 2
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 580,
+          "w": 110,
+          "h": 120,
+          "text": "4",
+          "size": 60,
+          "colour": "#6d28d9",
+          "bold": true,
+          "align": "center",
+          "middle": true,
+          "id": "rl-quick-how-8",
+          "step": 3
+        },
+        {
+          "kind": "text",
+          "x": 240,
+          "y": 580,
+          "w": 1260,
+          "h": 120,
+          "text": "Add that extra on to the unlimited time. That gives a floor for the project time.",
+          "size": 38,
+          "colour": "#0f172a",
+          "middle": true,
+          "id": "rl-quick-how-9",
+          "step": 3
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 720,
+          "w": 1400,
+          "h": 100,
+          "text": "Quick sum = unlimited time + (new finish − LFT)",
+          "size": 48,
+          "colour": "#6d28d9",
+          "bold": true,
+          "id": "rl-quick-how-10",
+          "step": 4
+        },
+        {
+          "kind": "text",
+          "x": 100,
+          "y": 820,
+          "w": 1400,
+          "h": 50,
+          "text": "If it finishes by its LFT there is no extra, so the quick sum is just the unlimited time.",
+          "size": 26,
+          "colour": "#64748b",
+          "id": "rl-quick-how-11",
+          "step": 4
         }
       ],
-      "brief": "The one idea of the lesson. Hold the formula on the board. Unlimited time is the project time with no worker limit."
+      "brief": "Say it in plain English first, then show the formula. Hold the activity back, find its new finish, see how far past its latest finish that is, and add that on to the unlimited time."
     },
     {
       "id": "rl-quick-worked",
@@ -1152,7 +1295,7 @@
           "y": 710,
           "w": 1400,
           "h": 160,
-          "text": "G is held until F finishes at 16, so it finishes at 16 + 8 = 24. Its LFT is 23, so it is 1 day late.",
+          "text": "G starts again at 16, when F finishes. It lasts 8 days, so it finishes at 24. Its LFT is 23, so it is 1 day past. The project cannot finish before 23 + 1 = 24.",
           "size": 36,
           "colour": "#0f172a",
           "id": "rl-quick-worked-4"
@@ -1163,15 +1306,15 @@
     {
       "id": "rl-why",
       "family": "teach",
-      "title": "Why smallest first",
+      "title": "Why does the quick sum help?",
       "els": [
         {
           "kind": "text",
           "x": 100,
-          "y": 80,
+          "y": 70,
           "w": 1400,
           "h": 110,
-          "text": "Why try the smallest first?",
+          "text": "Why does the quick sum help?",
           "size": 72,
           "colour": "#0f172a",
           "bold": true,
@@ -1180,11 +1323,11 @@
         {
           "kind": "text",
           "x": 100,
-          "y": 240,
+          "y": 230,
           "w": 1400,
-          "h": 200,
-          "text": "A quick sum is a floor: if you hold this activity back, the project cannot finish any sooner.",
-          "size": 50,
+          "h": 170,
+          "text": "It tells us, without drawing anything, the least that holding each activity back could cost the project.",
+          "size": 46,
           "colour": "#0f172a",
           "bold": true,
           "id": "rl-why-2"
@@ -1192,11 +1335,11 @@
         {
           "kind": "text",
           "x": 100,
-          "y": 470,
+          "y": 430,
           "w": 1400,
-          "h": 200,
-          "text": "So if the smallest quick sum gives a schedule with no clash left, nothing can beat it.",
-          "size": 50,
+          "h": 170,
+          "text": "It is a floor: the project cannot finish sooner than the quick sum. It might finish later.",
+          "size": 46,
           "colour": "#0f172a",
           "bold": true,
           "id": "rl-why-3",
@@ -1205,18 +1348,18 @@
         {
           "kind": "text",
           "x": 100,
-          "y": 700,
+          "y": 630,
           "w": 1400,
-          "h": 150,
-          "text": "G has the smallest quick sum (24). Try it first.",
-          "size": 48,
+          "h": 200,
+          "text": "So we try the smallest first. If that one works with no clash left, nothing else can beat it.",
+          "size": 46,
           "colour": "#6d28d9",
           "bold": true,
           "id": "rl-why-4",
           "step": 2
         }
       ],
-      "brief": "The reason the routine works. Click through."
+      "brief": "The reason the routine works, in plain English. Click through."
     },
     {
       "id": "rl-routine",
@@ -2164,42 +2307,9 @@
       "brief": "Seven quick-sum questions climbing from the formula to the floor idea. No pictures: the point is the calculation and why the smallest goes first."
     },
     {
-      "id": "rl-l2-divider",
-      "family": "structure",
-      "title": "Level 2",
-      "els": [
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 330,
-          "w": 1400,
-          "h": 150,
-          "text": "Level 2",
-          "size": 92,
-          "colour": "#0f172a",
-          "bold": true,
-          "align": "center",
-          "middle": true,
-          "id": "rl-l2-divider-1"
-        },
-        {
-          "kind": "text",
-          "x": 100,
-          "y": 500,
-          "w": 1400,
-          "h": 80,
-          "text": "Several workers on each activity: the same routine",
-          "size": 48,
-          "colour": "#64748b",
-          "align": "center",
-          "id": "rl-l2-divider-2"
-        }
-      ]
-    },
-    {
       "id": "rl-l2-network",
       "family": "teach",
-      "title": "Level 2: the activities",
+      "title": "Example 2: the activities",
       "els": [
         {
           "kind": "text",
@@ -2207,7 +2317,7 @@
           "y": 60,
           "w": 1400,
           "h": 110,
-          "text": "Level 2: the activities",
+          "text": "Example 2: the activities",
           "size": 72,
           "colour": "#0f172a",
           "bold": true,
@@ -2219,7 +2329,7 @@
           "y": 180,
           "w": 1400,
           "h": 90,
-          "text": "Now activities need different numbers of workers. 6 workers are available. Unlimited time: 24 days.",
+          "text": "This time activities need different numbers of workers. 6 workers are available. Unlimited time: 24 days.",
           "size": 36,
           "colour": "#64748b",
           "id": "rl-l2-network-2"
@@ -2317,7 +2427,7 @@
     {
       "id": "rl-l2-hist",
       "family": "teach",
-      "title": "Level 2: the clash",
+      "title": "Example 2: the clash",
       "els": [
         {
           "kind": "text",
@@ -2325,7 +2435,7 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "Level 2: the clash",
+          "text": "Example 2: the clash",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
@@ -2938,7 +3048,7 @@
     {
       "id": "rl-l2-quick",
       "family": "teach",
-      "title": "Level 2: quick sums",
+      "title": "Example 2: quick sums",
       "els": [
         {
           "kind": "text",
@@ -2946,7 +3056,7 @@
           "y": 50,
           "w": 1400,
           "h": 110,
-          "text": "Level 2: quick sums",
+          "text": "Example 2: quick sums",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
@@ -3016,7 +3126,7 @@
     {
       "id": "rl-l2-answer",
       "family": "teach",
-      "title": "Level 2: try E",
+      "title": "Example 2: try E",
       "els": [
         {
           "kind": "text",
@@ -3024,7 +3134,7 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "Level 2: try E",
+          "text": "Example 2: try E",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
@@ -3633,7 +3743,7 @@
           "y": 70,
           "w": 1400,
           "h": 110,
-          "text": "Your turn: Levels 1 and 2",
+          "text": "Your turn",
           "size": 72,
           "colour": "#0f172a",
           "bold": true,
@@ -3656,7 +3766,7 @@
     {
       "id": "rl-l3-divider",
       "family": "structure",
-      "title": "Level 3",
+      "title": "A harder case",
       "els": [
         {
           "kind": "text",
@@ -3664,7 +3774,7 @@
           "y": 330,
           "w": 1400,
           "h": 150,
-          "text": "Level 3",
+          "text": "A harder case",
           "size": 92,
           "colour": "#0f172a",
           "bold": true,
@@ -3689,7 +3799,7 @@
     {
       "id": "rl-l3-worked",
       "family": "teach",
-      "title": "Level 3: a knock-on clash",
+      "title": "A try that leaves a clash",
       "els": [
         {
           "kind": "text",
@@ -3697,7 +3807,7 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "Level 3: a knock-on clash",
+          "text": "A try that leaves a clash",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
@@ -3788,7 +3898,7 @@
     {
       "id": "rl-l3-back",
       "family": "teach",
-      "title": "Level 3: going back",
+      "title": "Going back",
       "els": [
         {
           "kind": "text",
@@ -3796,7 +3906,7 @@
           "y": 40,
           "w": 1400,
           "h": 100,
-          "text": "Level 3: going back",
+          "text": "Going back",
           "size": 64,
           "colour": "#0f172a",
           "bold": true,
@@ -4252,7 +4362,7 @@
           "y": 170,
           "w": 1400,
           "h": 640,
-          "text": "•  A clash is a time when more workers are needed than the limit.\n•  Quick sum = unlimited time + (new finish − LFT). It is a floor.\n•  Try the smallest quick sum first. No clash left? That is the minimum.\n•  Level 3: a try can leave a new clash. Add its quick sums to the same list and take the smallest on the whole list, even if that means going back.\n•  Exam: look first, then the routine, then draw it.",
+          "text": "•  A clash is a time when more workers are needed than the limit.\n•  A quick sum is a floor: hold the activity back, find its new finish, add on how far past its LFT it goes.\n•  Try the smallest quick sum first. No clash left? That is the minimum.\n•  A try can leave a new clash. Add its quick sums to the same list and take the smallest on the whole list, even if that means going back.\n•  Exam: look first, then the routine, then draw it.",
           "size": 44,
           "colour": "#0f172a",
           "id": "rl-summary-2"
