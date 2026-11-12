@@ -29,6 +29,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-12 — Multiples lesson: repeats removed, lists up to eight
+
+Branch `claude/inspiring-cannon-esg9yk`. Areas: `src/decks/data/multiples-systematic-listing.json`, `specs/decks/multiples-systematic-listing.md`.
+
+- **Why:** Harry found numbers from the worked examples coming back in the questions (the guided LCM pairs were the two models again; 12, 16, 18, 15, 21 and 30 recurred across the board work, book work and exit).
+- **Changed:** common-multiple model is now 18 and 27 (54, then 108); the LCM model stays 12 and 16. Whiteboard listing uses 14, 17, 19, 24, 35, 29; nine-question book work uses 22, 25, 26, 32, 34, 38, 42, 44, 45. Guided LCM: 20/50, 24/36, 25/40 (one eight-entry list), 22/33, 35/28. Book LCM: twelve pairs with every base different, including the nested 10/30 (supported) and 26/39 as the stretch (next common multiple 156). Exit: 20/24, a 50/75 recognition question, 33/55. No pair or answer repeats within a set. Lists may now run past five entries.
+- **Deliberately kept:** Harry's live edits (11 in the together table, the longer Multiple definition); the definition text box was made taller so the content check passes. Listing-book numbers may reappear in the LCM half (listed in the spec).
+- **Checks:** every pair recomputed by script; deck tests pass. The layout check could not render slides in this container.
+
+- **Shortened for a low-ability group (same day):** the lesson is now two halves, each direct instruction, three whiteboard questions and nine book questions. Removed the LCM definition, LCM model, guided LCM and exit ticket (LCM is left for a later lesson, possibly with calculators). Common-multiple model is 4 and 6 (12, then 24); whiteboards 3/5, 2/7, 8/10; book questions 1–6 find a common multiple, 7–9 the first two. The two whiteboard slides moved to the teach family because the content check requires five questions on a practice slide. Nine listing book numbers are now 5, 8, 12, 13, 22, 26, 34, 38, 45.
+- **Discussion and exit ticket added:** a Mei-says discussion slide after the 4 and 6 model (the only common multiple of 4 and 6 is 12?, then is 24 a common multiple of 2 and 3?), and a three-question exit ticket (multiples of 9; spot the common multiple in the 2 and 5 lists; common multiple of 3 and 7). The common-multiple whiteboard slide was tidied: each answer is now just the two lists with the match circled, and each question is shorter so the text stays large.
+- **No list starters; longer searches:** the common-multiple whiteboard and book questions are now the bare question. Book pairs are 2/3, 5/7, 9/15, 3/8, 14/35, 10/12, then first-two-common-multiples for 14/21, 9/12 and 16/24; no list needs more than eight terms and only two reach eight.
+
+Agent: Claude Code
+Notes: no Build Log block written (planner not reachable this session).
+
 ## 2026-11-11 — Multiples and common multiples: systematic listing for Set 6
 
 Branch `codex/multiples-listing-lesson`. Areas: new `src/decks/data/multiples-systematic-listing.json`, `specs/decks/multiples-systematic-listing.md`, Decks pathway and generated admin docs.

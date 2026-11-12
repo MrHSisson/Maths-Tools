@@ -1,1939 +1,1589 @@
 {
- "id": "multiples-systematic-listing",
- "title": "Multiples and common multiples",
- "slides": [
-  {
-   "id": "msl-title",
-   "els": [
+  "id": "multiples-systematic-listing",
+  "title": "Multiples & Common Multiples",
+  "slides": [
     {
-     "h": 170,
-     "w": 1400,
-     "x": 100,
-     "y": 290,
-     "id": "msl-title-1",
-     "bold": true,
-     "kind": "text",
-     "size": 120,
-     "text": "Multiples and common multiples",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 90,
-     "w": 1400,
-     "x": 100,
-     "y": 480,
-     "id": "msl-title-2",
-     "kind": "text",
-     "size": 56,
-     "text": "List in order. Find a match. Circle it.",
-     "align": "center",
-     "colour": "#64748b"
-    }
-   ],
-   "built": "12mr7qk",
-   "title": "Multiples and common multiples",
-   "family": "structure"
-  },
-  {
-   "id": "msl-definition",
-   "els": [
-    {
-     "h": 50,
-     "w": 1400,
-     "x": 100,
-     "y": 120,
-     "id": "msl-definition-1",
-     "bold": true,
-     "kind": "text",
-     "size": 30,
-     "text": "KEY DEFINITION",
-     "colour": "#6d28d9"
-    },
-    {
-     "h": 140,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-definition-2",
-     "bold": true,
-     "kind": "text",
-     "size": 96,
-     "text": "Multiple",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 420,
-     "w": 1400,
-     "x": 100,
-     "y": 370,
-     "id": "msl-definition-3",
-     "kind": "text",
-     "size": 52,
-     "text": "A multiple of a number is the result of multiplying it by a whole number.",
-     "colour": "#0f172a"
-    }
-   ],
-   "built": "165d30x",
-   "title": "Multiple",
-   "family": "language"
-  },
-  {
-   "id": "msl-model-list",
-   "els": [
-    {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
-     "id": "msl-model-list-1",
-     "bold": true,
-     "kind": "text",
-     "size": 64,
-     "text": "Listing multiples",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-model-list-prompt",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Write the first five multiples of 15.",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 90,
-     "w": 1400,
-     "x": 100,
-     "y": 610,
-     "id": "msl-model-list-rule",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Start at 15. Add 15 each time.",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 110,
-     "w": 280,
-     "x": 100,
-     "y": 380,
-     "id": "msl-model-list-term-0",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "15",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 110,
-     "w": 280,
-     "x": 380,
-     "y": 380,
-     "id": "msl-model-list-term-1",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "30",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 110,
-     "w": 280,
-     "x": 660,
-     "y": 380,
-     "id": "msl-model-list-term-2",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "45",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 110,
-     "w": 280,
-     "x": 940,
-     "y": 380,
-     "id": "msl-model-list-term-3",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "60",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 110,
-     "w": 280,
-     "x": 1220,
-     "y": 380,
-     "id": "msl-model-list-term-4",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "75",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 0,
-     "w": 160,
-     "x": 300,
-     "y": 435,
-     "id": "msl-model-list-arrow-0",
-     "kind": "line",
-     "step": 1,
-     "arrow": true,
-     "width": 4,
-     "colour": "#0f172a"
-    },
-    {
-     "h": 0,
-     "w": 160,
-     "x": 580,
-     "y": 435,
-     "id": "msl-model-list-arrow-1",
-     "kind": "line",
-     "step": 2,
-     "arrow": true,
-     "width": 4,
-     "colour": "#0f172a"
-    },
-    {
-     "h": 0,
-     "w": 160,
-     "x": 860,
-     "y": 435,
-     "id": "msl-model-list-arrow-2",
-     "kind": "line",
-     "step": 3,
-     "arrow": true,
-     "width": 4,
-     "colour": "#0f172a"
-    },
-    {
-     "h": 0,
-     "w": 160,
-     "x": 1140,
-     "y": 435,
-     "id": "msl-model-list-arrow-3",
-     "kind": "line",
-     "step": 4,
-     "arrow": true,
-     "width": 4,
-     "colour": "#0f172a"
-    },
-    {
-     "h": 70,
-     "w": 160,
-     "x": 300,
-     "y": 480,
-     "id": "msl-model-list-add-0",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "+15",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 70,
-     "w": 160,
-     "x": 580,
-     "y": 480,
-     "id": "msl-model-list-add-1",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "+15",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 70,
-     "w": 160,
-     "x": 860,
-     "y": 480,
-     "id": "msl-model-list-add-2",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "+15",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 70,
-     "w": 160,
-     "x": 1140,
-     "y": 480,
-     "id": "msl-model-list-add-3",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "+15",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    }
-   ],
-   "brief": "0–3 minutes, after the definition. Reveal each new multiple with an arrow from the previous term and +15 underneath the arrow; a times-table grid is optional support.",
-   "built": "12gy81w",
-   "title": "Listing multiples",
-   "family": "teach"
-  },
-  {
-   "id": "msl-together",
-   "els": [
-    {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
-     "id": "msl-together-1",
-     "bold": true,
-     "kind": "text",
-     "size": 64,
-     "text": "List multiples together",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-together-2",
-     "kind": "text",
-     "size": 40,
-     "text": "Start with the number. Keep adding that number.",
-     "colour": "#64748b"
-    },
-    {
-     "h": 420,
-     "w": 1400,
-     "x": 100,
-     "y": 300,
-     "id": "msl-together-3",
-     "fill": "structure",
-     "grid": {
-      "head": [
-       "Number",
-       "First five multiples"
+      "id": "msl-title",
+      "els": [
+        {
+          "h": 170,
+          "w": 1400,
+          "x": 100,
+          "y": 290,
+          "id": "msl-title-1",
+          "bold": true,
+          "kind": "text",
+          "size": 120,
+          "text": "Multiples & Common Multiples",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 90,
+          "w": 1400,
+          "x": 100,
+          "y": 480,
+          "id": "msl-title-2",
+          "kind": "text",
+          "size": 56,
+          "text": "List in order. Find a match. Circle it.",
+          "align": "center",
+          "colour": "#64748b"
+        }
       ],
-      "rows": [
-       [
-        "15",
-        "$15,30,45,60,75$"
-       ],
-       [
-        "21",
-        "$21,42,63,84,105$"
-       ],
-       [
-        "30",
-        "$30,60,90,120,150$"
-       ]
+      "built": "12mr7qk",
+      "title": "Multiples and common multiples",
+      "family": "structure"
+    },
+    {
+      "id": "msl-definition",
+      "els": [
+        {
+          "h": 50,
+          "w": 1400,
+          "x": 100,
+          "y": 120,
+          "id": "msl-definition-1",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "text": "KEY DEFINITION",
+          "colour": "#6d28d9"
+        },
+        {
+          "h": 140,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-definition-2",
+          "bold": true,
+          "kind": "text",
+          "size": 96,
+          "text": "Multiple",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 520,
+          "w": 1400,
+          "x": 100,
+          "y": 370,
+          "id": "msl-definition-3",
+          "kind": "text",
+          "size": 52,
+          "text": "A multiple of a number is the result of multiplying it by a whole number. \n\nIt is a multiple if it is in the numbers times tables e.g. 20 is in the 5 times tables, so 20 is a multiple of 5.\n ",
+          "fixed": true,
+          "colour": "#0f172a"
+        }
       ],
-      "given": 1
-     },
-     "kind": "board",
-     "size": 46
+      "built": "165d30x",
+      "title": "Multiple",
+      "family": "language"
+    },
+    {
+      "id": "msl-model-list",
+      "els": [
+        {
+          "h": 110,
+          "w": 1400,
+          "x": 100,
+          "y": 80,
+          "id": "msl-model-list-1",
+          "bold": true,
+          "kind": "text",
+          "size": 64,
+          "text": "Listing multiples",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 80,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-model-list-prompt",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "Write the first five multiples of 15.",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 90,
+          "w": 1400,
+          "x": 100,
+          "y": 610,
+          "id": "msl-model-list-rule",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "Start at 15. Add 15 each time.",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 110,
+          "w": 280,
+          "x": 100,
+          "y": 380,
+          "id": "msl-model-list-term-0",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "15",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 110,
+          "w": 280,
+          "x": 380,
+          "y": 380,
+          "id": "msl-model-list-term-1",
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "30",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 110,
+          "w": 280,
+          "x": 660,
+          "y": 380,
+          "id": "msl-model-list-term-2",
+          "kind": "text",
+          "size": 44,
+          "step": 2,
+          "text": "45",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 110,
+          "w": 280,
+          "x": 940,
+          "y": 380,
+          "id": "msl-model-list-term-3",
+          "kind": "text",
+          "size": 44,
+          "step": 3,
+          "text": "60",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 110,
+          "w": 280,
+          "x": 1220,
+          "y": 380,
+          "id": "msl-model-list-term-4",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "75",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 0,
+          "w": 160,
+          "x": 300,
+          "y": 435,
+          "id": "msl-model-list-arrow-0",
+          "kind": "line",
+          "step": 1,
+          "arrow": true,
+          "width": 4,
+          "colour": "#0f172a"
+        },
+        {
+          "h": 0,
+          "w": 160,
+          "x": 580,
+          "y": 435,
+          "id": "msl-model-list-arrow-1",
+          "kind": "line",
+          "step": 2,
+          "arrow": true,
+          "width": 4,
+          "colour": "#0f172a"
+        },
+        {
+          "h": 0,
+          "w": 160,
+          "x": 860,
+          "y": 435,
+          "id": "msl-model-list-arrow-2",
+          "kind": "line",
+          "step": 3,
+          "arrow": true,
+          "width": 4,
+          "colour": "#0f172a"
+        },
+        {
+          "h": 0,
+          "w": 160,
+          "x": 1140,
+          "y": 435,
+          "id": "msl-model-list-arrow-3",
+          "kind": "line",
+          "step": 4,
+          "arrow": true,
+          "width": 4,
+          "colour": "#0f172a"
+        },
+        {
+          "h": 70,
+          "w": 160,
+          "x": 300,
+          "y": 480,
+          "id": "msl-model-list-add-0",
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "+15",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 70,
+          "w": 160,
+          "x": 580,
+          "y": 480,
+          "id": "msl-model-list-add-1",
+          "kind": "text",
+          "size": 44,
+          "step": 2,
+          "text": "+15",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 70,
+          "w": 160,
+          "x": 860,
+          "y": 480,
+          "id": "msl-model-list-add-2",
+          "kind": "text",
+          "size": 44,
+          "step": 3,
+          "text": "+15",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 70,
+          "w": 160,
+          "x": 1140,
+          "y": 480,
+          "id": "msl-model-list-add-3",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "+15",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        }
+      ],
+      "brief": "0–3 minutes, after the definition. Reveal each new multiple with an arrow from the previous term and +15 underneath the arrow; a times-table grid is optional support.",
+      "built": "12gy81w",
+      "title": "Listing multiples",
+      "family": "teach"
+    },
+    {
+      "id": "msl-together",
+      "els": [
+        {
+          "h": 110,
+          "w": 1400,
+          "x": 100,
+          "y": 80,
+          "id": "msl-together-1",
+          "bold": true,
+          "kind": "text",
+          "size": 64,
+          "text": "List multiples together",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 80,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-together-2",
+          "kind": "text",
+          "size": 40,
+          "text": "Start with the number. Keep adding that number.",
+          "colour": "#64748b"
+        },
+        {
+          "h": 420,
+          "w": 1400,
+          "x": 100,
+          "y": 300,
+          "id": "msl-together-3",
+          "fill": "structure",
+          "grid": {
+            "head": [
+              "Number",
+              "First five multiples"
+            ],
+            "rows": [
+              [
+                "11",
+                "$11,22,33,44,55$"
+              ],
+              [
+                "21",
+                "$21,42,63,84,105$"
+              ],
+              [
+                "30",
+                "$30,60,90,120,150$"
+              ]
+            ],
+            "given": 1
+          },
+          "kind": "board",
+          "size": 46
+        }
+      ],
+      "brief": "3–7 minutes. Model the 11-list, build the 21-list together, then pupils try the 30-list. Use the pen in the empty answer cells, then show the completed table to check.",
+      "built": "md4ljo",
+      "title": "List multiples together",
+      "family": "teach"
+    },
+    {
+      "id": "msl-list-practice",
+      "els": [
+        {
+          "h": 852,
+          "w": 1552,
+          "x": 24,
+          "y": 24,
+          "id": "msl-list-practice-1",
+          "kind": "questions",
+          "size": 46,
+          "items": [
+            {
+              "id": "msl-list-1",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Complete the multiples of $14$",
+              "answer": [
+                "$14$, $28$, $42$, $56$, $70$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Complete the multiples of $14$.",
+                "$14,\\;28,\\;42,\\;\\square,\\;\\square$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $14$. Add $14$ each time.",
+                "$14$, $28$, $42$, $56$, $70$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-list-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Complete the multiples of $17$",
+              "answer": [
+                "$17$, $34$, $51$, $68$, $85$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Complete the multiples of $17$.",
+                "$17,\\;34,\\;51,\\;\\square,\\;\\square$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $17$. Add $17$ each time.",
+                "$17$, $34$, $51$, $68$, $85$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-list-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Complete the multiples of $19$",
+              "answer": [
+                "$19$, $38$, $57$, $76$, $95$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Complete the multiples of $19$.",
+                "$19,\\;38,\\;\\square,\\;\\square,\\;\\square$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $19$. Add $19$ each time.",
+                "$19$, $38$, $57$, $76$, $95$"
+              ],
+              "expectedErrors": []
+            }
+          ],
+          "visualiser": false,
+          "presentation": "whiteboard"
+        }
+      ],
+      "brief": "Three whiteboard questions: two with partly completed lists, then one independent list. Accept times-table grids.",
+      "built": "1w6rtt2",
+      "title": "List multiples",
+      "family": "teach"
+    },
+    {
+      "id": "msl-list-check",
+      "els": [
+        {
+          "h": 64,
+          "w": 1480,
+          "x": 60,
+          "y": 46,
+          "id": "msl-list-check-1",
+          "kind": "text",
+          "size": 38,
+          "text": "Write the first five multiples of each number in your book.",
+          "colour": "#64748b"
+        },
+        {
+          "h": 748,
+          "w": 1480,
+          "x": 60,
+          "y": 124,
+          "id": "msl-list-check-2",
+          "bank": [],
+          "cols": 3,
+          "kind": "grid",
+          "items": [
+            {
+              "id": "msl-check-1",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$5$",
+              "answer": [
+                "$5$, $10$, $15$, $20$, $25$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$5$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $5$. Add $5$ each time.",
+                "$5$, $10$, $15$, $20$, $25$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$8$",
+              "answer": [
+                "$8$, $16$, $24$, $32$, $40$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$8$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $8$. Add $8$ each time.",
+                "$8$, $16$, $24$, $32$, $40$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$12$",
+              "answer": [
+                "$12$, $24$, $36$, $48$, $60$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$12$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $12$. Add $12$ each time.",
+                "$12$, $24$, $36$, $48$, $60$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-4",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$13$",
+              "answer": [
+                "$13$, $26$, $39$, $52$, $65$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$13$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $13$. Add $13$ each time.",
+                "$13$, $26$, $39$, $52$, $65$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-5",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$22$",
+              "answer": [
+                "$22$, $44$, $66$, $88$, $110$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$22$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $22$. Add $22$ each time.",
+                "$22$, $44$, $66$, $88$, $110$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-6",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$26$",
+              "answer": [
+                "$26$, $52$, $78$, $104$, $130$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$26$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $26$. Add $26$ each time.",
+                "$26$, $52$, $78$, $104$, $130$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-7",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$34$",
+              "answer": [
+                "$34$, $68$, $102$, $136$, $170$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$34$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $34$. Add $34$ each time.",
+                "$34$, $68$, $102$, $136$, $170$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-8",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$38$",
+              "answer": [
+                "$38$, $76$, $114$, $152$, $190$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$38$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $38$. Add $38$ each time.",
+                "$38$, $76$, $114$, $152$, $190$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-check-9",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$45$",
+              "answer": [
+                "$45$, $90$, $135$, $180$, $225$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "$45$"
+              ],
+              "rationale": "List every positive multiple in order, starting with the number itself.",
+              "explanation": [
+                "Start at $45$. Add $45$ each time.",
+                "$45$, $90$, $135$, $180$, $225$"
+              ],
+              "expectedErrors": []
+            }
+          ]
+        }
+      ],
+      "brief": "12–20 minutes. Nine fresh listing questions, easiest first (5, 8, 12 as low starters) in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No common-multiple questions in this activity.",
+      "built": "1evvqp7",
+      "title": "Multiples book work",
+      "family": "retrieval"
+    },
+    {
+      "id": "msl-common-definition",
+      "els": [
+        {
+          "h": 50,
+          "w": 1400,
+          "x": 100,
+          "y": 120,
+          "id": "msl-common-definition-1",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "text": "KEY DEFINITION",
+          "colour": "#6d28d9"
+        },
+        {
+          "h": 140,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-common-definition-2",
+          "bold": true,
+          "kind": "text",
+          "size": 96,
+          "text": "Common multiple",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 420,
+          "w": 1400,
+          "x": 100,
+          "y": 370,
+          "id": "msl-common-definition-3",
+          "kind": "text",
+          "size": 52,
+          "text": "A common multiple is a number that is a multiple of both numbers.",
+          "colour": "#0f172a"
+        }
+      ],
+      "built": "16f4pub",
+      "title": "Common multiple",
+      "family": "language"
+    },
+    {
+      "id": "msl-common-model",
+      "els": [
+        {
+          "h": 110,
+          "w": 1400,
+          "x": 100,
+          "y": 80,
+          "id": "msl-common-model-1",
+          "bold": true,
+          "kind": "text",
+          "size": 64,
+          "text": "Find a common multiple",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 80,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-common-model-prompt",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "Write both lists. Which number is in both?",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 100,
+          "y": 340,
+          "id": "msl-common-model-label-3",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "4:",
+          "align": "left",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 100,
+          "y": 510,
+          "id": "msl-common-model-label-4",
+          "kind": "text",
+          "size": 44,
+          "step": 0,
+          "text": "6:",
+          "align": "left",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 230,
+          "y": 340,
+          "id": "msl-common-model-three-0",
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "4",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 395,
+          "y": 340,
+          "id": "msl-common-model-three-1",
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "8",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 560,
+          "y": 340,
+          "id": "msl-common-model-three-2",
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "12",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 725,
+          "y": 340,
+          "id": "msl-common-model-three-3",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "16",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 890,
+          "y": 340,
+          "id": "msl-common-model-three-4",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "20",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 1055,
+          "y": 340,
+          "id": "msl-common-model-three-5",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "24",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 230,
+          "y": 510,
+          "id": "msl-common-model-four-0",
+          "kind": "text",
+          "size": 44,
+          "step": 2,
+          "text": "6",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 395,
+          "y": 510,
+          "id": "msl-common-model-four-1",
+          "kind": "text",
+          "size": 44,
+          "step": 2,
+          "text": "12",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 560,
+          "y": 510,
+          "id": "msl-common-model-four-2",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "18",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 95,
+          "w": 100,
+          "x": 725,
+          "y": 510,
+          "id": "msl-common-model-four-3",
+          "kind": "text",
+          "size": 44,
+          "step": 4,
+          "text": "24",
+          "align": "center",
+          "colour": "#0f172a",
+          "middle": true
+        },
+        {
+          "h": 92,
+          "w": 102,
+          "x": 559,
+          "y": 341.5,
+          "id": "msl-common-circle-12a",
+          "kind": "shape",
+          "step": 3,
+          "shape": "ellipse",
+          "stroke": "#6d28d9",
+          "strokeWidth": 4
+        },
+        {
+          "h": 92,
+          "w": 102,
+          "x": 394,
+          "y": 511.5,
+          "id": "msl-common-circle-12b",
+          "kind": "shape",
+          "step": 3,
+          "shape": "ellipse",
+          "stroke": "#6d28d9",
+          "strokeWidth": 4
+        },
+        {
+          "h": 70,
+          "w": 1400,
+          "x": 100,
+          "y": 685,
+          "id": "msl-common-model-first-match",
+          "kind": "text",
+          "size": 44,
+          "step": 3,
+          "text": "12 is a common multiple: it is in both lists.",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 92,
+          "w": 102,
+          "x": 1054,
+          "y": 341.5,
+          "id": "msl-common-circle-24a",
+          "kind": "shape",
+          "step": 5,
+          "shape": "ellipse",
+          "stroke": "#6d28d9",
+          "strokeWidth": 4
+        },
+        {
+          "h": 92,
+          "w": 102,
+          "x": 724,
+          "y": 511.5,
+          "id": "msl-common-circle-24b",
+          "kind": "shape",
+          "step": 5,
+          "shape": "ellipse",
+          "stroke": "#6d28d9",
+          "strokeWidth": 4
+        },
+        {
+          "h": 70,
+          "w": 1400,
+          "x": 100,
+          "y": 775,
+          "id": "msl-common-model-another-match",
+          "kind": "text",
+          "size": 44,
+          "step": 5,
+          "text": "24 is another common multiple.",
+          "colour": "#0f172a"
+        }
+      ],
+      "brief": "Common multiples, direct instruction. Circle 12 in both lists. Then ask whether another shared number exists; extend to 24 and circle it.",
+      "built": "y56nqn",
+      "title": "Find a common multiple",
+      "family": "teach"
+    },
+    {
+      "id": "msl-discuss",
+      "els": [
+        {
+          "h": 50,
+          "w": 660,
+          "x": 100,
+          "y": 100,
+          "id": "msl-discuss-1",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "text": "DISCUSS",
+          "colour": "#be185d"
+        },
+        {
+          "h": 330,
+          "w": 660,
+          "x": 100,
+          "y": 170,
+          "id": "msl-discuss-2",
+          "kind": "text",
+          "size": 50,
+          "text": "Mei says: \"The only common multiple of $3$ and $5$ is $15$.\" Is she right?",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 720,
+          "w": 0,
+          "x": 800,
+          "y": 100,
+          "id": "msl-discuss-3",
+          "kind": "line",
+          "width": 4,
+          "colour": "#e2e8f0"
+        },
+        {
+          "h": 50,
+          "w": 660,
+          "x": 100,
+          "y": 520,
+          "id": "msl-discuss-4",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "step": 1,
+          "text": "KEY POINT",
+          "colour": "#64748b"
+        },
+        {
+          "h": 260,
+          "w": 660,
+          "x": 100,
+          "y": 580,
+          "id": "msl-discuss-5",
+          "bold": true,
+          "kind": "text",
+          "size": 44,
+          "step": 1,
+          "text": "No. $30$ is a common multiple too, and so is $45$. Keep adding $15$ and you keep finding more: the list never stops.",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 50,
+          "w": 640,
+          "x": 860,
+          "y": 100,
+          "id": "msl-discuss-6",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "step": 2,
+          "text": "QUESTION",
+          "colour": "#64748b"
+        },
+        {
+          "h": 300,
+          "w": 640,
+          "x": 860,
+          "y": 170,
+          "id": "msl-discuss-7",
+          "kind": "text",
+          "size": 52,
+          "step": 2,
+          "text": "Is $24$ a common multiple of $2$ and $3$? How do you know?",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 50,
+          "w": 640,
+          "x": 860,
+          "y": 520,
+          "id": "msl-discuss-8",
+          "bold": true,
+          "kind": "text",
+          "size": 30,
+          "step": 3,
+          "text": "ANSWER",
+          "colour": "#64748b"
+        },
+        {
+          "h": 260,
+          "w": 640,
+          "x": 860,
+          "y": 580,
+          "id": "msl-discuss-9",
+          "kind": "text",
+          "size": 40,
+          "step": 3,
+          "text": "Yes. $24$ is in the $2$ list ($2\\times12$) and in the $3$ list ($3\\times8$).",
+          "align": "left",
+          "colour": "#1e3a8a"
+        }
+      ],
+      "brief": "Short discussion after the 4 and 6 model, before the whiteboards. Pupils meet the idea that a pair of numbers has many common multiples, not just the first one found.",
+      "title": "Discuss",
+      "family": "discussion"
+    },
+    {
+      "id": "msl-lcm-practice",
+      "els": [
+        {
+          "h": 852,
+          "w": 1552,
+          "x": 24,
+          "y": 24,
+          "id": "msl-lcm-practice-1",
+          "kind": "questions",
+          "size": 46,
+          "items": [
+            {
+              "id": "msl-lcm-1",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Find a common multiple of $3$ and $5$",
+              "answer": [
+                "$\\begin{aligned}3&:\\;3, 6, 9, 12, \\text{\\textcircled{\\scriptsize 15}}\\\\5&:\\;5, 10, \\text{\\textcircled{\\scriptsize 15}}\\end{aligned}$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $3$ and $5$."
+              ],
+              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "explanation": [
+                "3: $3$, $6$, $9$, $12$, $\\text{\\textcircled{\\scriptsize 15}}$",
+                "5: $5$, $10$, $\\text{\\textcircled{\\scriptsize 15}}$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-lcm-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Find a common multiple of $2$ and $7$",
+              "answer": [
+                "$\\begin{aligned}2&:\\;2, 4, 6, 8, 10, 12, \\text{\\textcircled{\\scriptsize 14}}\\\\7&:\\;7, \\text{\\textcircled{\\scriptsize 14}}\\end{aligned}$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $2$ and $7$."
+              ],
+              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "explanation": [
+                "2: $2$, $4$, $6$, $8$, $10$, $12$, $\\text{\\textcircled{\\scriptsize 14}}$",
+                "7: $7$, $\\text{\\textcircled{\\scriptsize 14}}$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-lcm-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Find a common multiple of $8$ and $10$",
+              "answer": [
+                "$\\begin{aligned}8&:\\;8, 16, 24, 32, \\text{\\textcircled{\\scriptsize 40}}\\\\10&:\\;10, 20, 30, \\text{\\textcircled{\\scriptsize 40}}\\end{aligned}$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $8$ and $10$."
+              ],
+              "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
+              "explanation": [
+                "8: $8$, $16$, $24$, $32$, $\\text{\\textcircled{\\scriptsize 40}}$",
+                "10: $10$, $20$, $30$, $\\text{\\textcircled{\\scriptsize 40}}$"
+              ],
+              "expectedErrors": []
+            }
+          ],
+          "visualiser": false,
+          "presentation": "whiteboard"
+        }
+      ],
+      "brief": "Three whiteboard questions on common multiples, with no list starters. Any number in both lists is a common multiple; accept the first one as the model answer.",
+      "built": "1tr5a4",
+      "title": "Find a common multiple",
+      "family": "teach"
+    },
+    {
+      "id": "msl-book",
+      "els": [
+        {
+          "h": 64,
+          "w": 1480,
+          "x": 60,
+          "y": 46,
+          "id": "msl-book-1",
+          "kind": "text",
+          "size": 38,
+          "text": "Write in your book. Questions 1–6: find a common multiple. Questions 7–9: find the first two common multiples.",
+          "colour": "#64748b"
+        },
+        {
+          "h": 748,
+          "w": 1480,
+          "x": 60,
+          "y": 124,
+          "id": "msl-book-2",
+          "bank": [],
+          "cols": 3,
+          "kind": "grid",
+          "items": [
+            {
+              "id": "msl-book-1",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $2$ and $3$",
+              "answer": [
+                "$6$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $2$ and $3$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "2: $2$, $4$, $\\text{\\textcircled{\\scriptsize 6}}$",
+                "3: $3$, $\\text{\\textcircled{\\scriptsize 6}}$",
+                "A common multiple is $6$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $5$ and $7$",
+              "answer": [
+                "$35$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $5$ and $7$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "5: $5$, $10$, $15$, $20$, $25$, $30$, $\\text{\\textcircled{\\scriptsize 35}}$",
+                "7: $7$, $14$, $21$, $28$, $\\text{\\textcircled{\\scriptsize 35}}$",
+                "A common multiple is $35$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $9$ and $15$",
+              "answer": [
+                "$45$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $9$ and $15$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "9: $9$, $18$, $27$, $36$, $\\text{\\textcircled{\\scriptsize 45}}$",
+                "15: $15$, $30$, $\\text{\\textcircled{\\scriptsize 45}}$",
+                "A common multiple is $45$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-4",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $3$ and $8$",
+              "answer": [
+                "$24$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $3$ and $8$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "3: $3$, $6$, $9$, $12$, $15$, $18$, $21$, $\\text{\\textcircled{\\scriptsize 24}}$",
+                "8: $8$, $16$, $\\text{\\textcircled{\\scriptsize 24}}$",
+                "A common multiple is $24$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-5",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $14$ and $35$",
+              "answer": [
+                "$70$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $14$ and $35$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "14: $14$, $28$, $42$, $56$, $\\text{\\textcircled{\\scriptsize 70}}$",
+                "35: $35$, $\\text{\\textcircled{\\scriptsize 70}}$",
+                "A common multiple is $70$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-6",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $10$ and $12$",
+              "answer": [
+                "$60$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $10$ and $12$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "10: $10$, $20$, $30$, $40$, $50$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "12: $12$, $24$, $36$, $48$, $\\text{\\textcircled{\\scriptsize 60}}$",
+                "A common multiple is $60$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-7",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "First two common multiples of $14$ and $21$",
+              "answer": [
+                "$42$ and $84$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find the first two common multiples of $14$ and $21$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$, $56$, $70$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
+                "The first two common multiples are $42$ and $84$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-8",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "First two common multiples of $9$ and $12$",
+              "answer": [
+                "$36$ and $72$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find the first two common multiples of $9$ and $12$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "9: $9$, $18$, $27$, $\\text{\\textcircled{\\scriptsize 36}}$, $45$, $54$, $63$, $\\text{\\textcircled{\\scriptsize 72}}$",
+                "12: $12$, $24$, $\\text{\\textcircled{\\scriptsize 36}}$, $48$, $60$, $\\text{\\textcircled{\\scriptsize 72}}$",
+                "The first two common multiples are $36$ and $72$."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-book-9",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "First two common multiples of $16$ and $24$",
+              "answer": [
+                "$48$ and $96$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find the first two common multiples of $16$ and $24$."
+              ],
+              "rationale": "Use two ordered lists and find a number that appears in both.",
+              "explanation": [
+                "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$, $64$, $80$, $\\text{\\textcircled{\\scriptsize 96}}$",
+                "24: $24$, $\\text{\\textcircled{\\scriptsize 48}}$, $72$, $\\text{\\textcircled{\\scriptsize 96}}$",
+                "The first two common multiples are $48$ and $96$."
+              ],
+              "expectedErrors": []
+            }
+          ]
+        }
+      ],
+      "brief": "Nine fresh common-multiple questions in books, 3 × 3, easiest first. Questions 1–6 find a common multiple; 7–9 ask for the first two common multiples. Check answers in the last two minutes.",
+      "built": "1kc1onl",
+      "title": "Common multiples book work",
+      "family": "retrieval"
+    },
+    {
+      "id": "msl-exit",
+      "els": [
+        {
+          "h": 110,
+          "w": 1400,
+          "x": 100,
+          "y": 80,
+          "id": "msl-exit-t1",
+          "bold": true,
+          "kind": "text",
+          "size": 64,
+          "text": "Exit ticket",
+          "colour": "#0f172a"
+        },
+        {
+          "h": 80,
+          "w": 1400,
+          "x": 100,
+          "y": 190,
+          "id": "msl-exit-t2",
+          "kind": "text",
+          "size": 34,
+          "text": "Work on your own. Show your lists.",
+          "colour": "#64748b"
+        },
+        {
+          "h": 550,
+          "w": 1400,
+          "x": 100,
+          "y": 300,
+          "id": "msl-exit-grid",
+          "bank": [],
+          "cols": 3,
+          "kind": "grid",
+          "items": [
+            {
+              "id": "msl-exit-1",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "$9$",
+              "answer": [
+                "$9$, $18$, $27$, $36$, $45$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "First five multiples of $9$."
+              ],
+              "rationale": "Check the listing and common-multiple steps.",
+              "explanation": [
+                "Start at $9$. Add $9$ each time.",
+                "$9$, $18$, $27$, $36$, $45$"
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-exit-2",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Circle the common multiple",
+              "answer": [
+                "$\\begin{aligned}2&:\\;2, 4, 6, 8, \\text{\\textcircled{\\scriptsize 10}}\\\\5&:\\;5, \\text{\\textcircled{\\scriptsize 10}}\\end{aligned}$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Circle the common multiple.",
+                "$2: \\;2,\\;4,\\;6,\\;8,\\;10$",
+                "$5: \\;5,\\;10$"
+              ],
+              "rationale": "Check the listing and common-multiple steps.",
+              "explanation": [
+                "$10$ is in both lists."
+              ],
+              "expectedErrors": []
+            },
+            {
+              "id": "msl-exit-3",
+              "tool": "multiples-systematic-listing",
+              "level": "level1",
+              "title": "Common multiple of $3$ and $7$",
+              "answer": [
+                "$21$"
+              ],
+              "format": "open",
+              "status": "ready",
+              "purpose": "practice",
+              "version": 2,
+              "followUp": "",
+              "question": [
+                "Find a common multiple of $3$ and $7$."
+              ],
+              "rationale": "Check the listing and common-multiple steps.",
+              "explanation": [
+                "3: $3$, $6$, $9$, $12$, $15$, $18$, $\\text{\\textcircled{\\scriptsize 21}}$",
+                "7: $7$, $14$, $\\text{\\textcircled{\\scriptsize 21}}$",
+                "A common multiple is $21$."
+              ],
+              "expectedErrors": []
+            }
+          ]
+        }
+      ],
+      "brief": "Last 3 minutes. Question 1 checks listing multiples, question 2 spotting a common multiple, question 3 finding one independently. Use the answers to decide what to revisit.",
+      "title": "Exit ticket",
+      "family": "retrieval"
     }
-   ],
-   "brief": "3–7 minutes. Model the 15-list, build the 21-list together, then pupils try the 30-list. Use the pen in the empty answer cells, then show the completed table to check.",
-   "built": "md4ljo",
-   "title": "List multiples together",
-   "family": "teach"
-  },
-  {
-   "id": "msl-list-practice",
-   "els": [
-    {
-     "h": 852,
-     "w": 1552,
-     "x": 24,
-     "y": 24,
-     "id": "msl-list-practice-1",
-     "kind": "questions",
-     "size": 46,
-     "items": [
-      {
-       "id": "msl-list-1",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Complete the multiples of $15$",
-       "answer": [
-        "$15$, $30$, $45$, $60$, $75$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Complete the multiples of $15$.",
-        "$15,\\;30,\\;45,\\;\\square,\\;\\square$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $15$. Add $15$ each time.",
-        "$15$, $30$, $45$, $60$, $75$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-list-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Complete the multiples of $18$",
-       "answer": [
-        "$18$, $36$, $54$, $72$, $90$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Complete the multiples of $18$.",
-        "$18,\\;36,\\;54,\\;\\square,\\;\\square$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $18$. Add $18$ each time.",
-        "$18$, $36$, $54$, $72$, $90$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-list-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Complete the multiples of $21$",
-       "answer": [
-        "$21$, $42$, $63$, $84$, $105$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Complete the multiples of $21$.",
-        "$21,\\;42,\\;\\square,\\;\\square,\\;\\square$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $21$. Add $21$ each time.",
-        "$21$, $42$, $63$, $84$, $105$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-list-4",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Write the first five multiples of $30$",
-       "answer": [
-        "$30$, $60$, $90$, $120$, $150$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Write the first five multiples of $30$.",
-        "Start at $30$. Keep adding $30$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $30$. Add $30$ each time.",
-        "$30$, $60$, $90$, $120$, $150$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-list-5",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Write the first 5 multiples of $24$",
-       "answer": [
-        "$24$, $48$, $72$, $96$, $120$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Write the first 5 multiples of $24$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $24$. Add $24$ each time.",
-        "$24$, $48$, $72$, $96$, $120$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-list-6",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Write the first 5 multiples of $35$",
-       "answer": [
-        "$35$, $70$, $105$, $140$, $175$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Write the first 5 multiples of $35$."
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $35$. Add $35$ each time.",
-        "$35$, $70$, $105$, $140$, $175$"
-       ],
-       "expectedErrors": []
-      }
-     ],
-     "visualiser": false,
-     "presentation": "whiteboard"
-    }
-   ],
-   "brief": "7–12 minutes. Six whiteboard questions: partial lists first, then a repeated-addition prompt, then independent listing. Accept times-table grids throughout.",
-   "built": "1w6rtt2",
-   "title": "List multiples",
-   "family": "practice"
-  },
-  {
-   "id": "msl-list-check",
-   "els": [
-    {
-     "h": 64,
-     "w": 1480,
-     "x": 60,
-     "y": 46,
-     "id": "msl-list-check-1",
-     "kind": "text",
-     "size": 38,
-     "text": "Write the first five multiples of each number in your book.",
-     "colour": "#64748b"
-    },
-    {
-     "h": 748,
-     "w": 1480,
-     "x": 60,
-     "y": 124,
-     "id": "msl-list-check-2",
-     "bank": [],
-     "cols": 3,
-     "kind": "grid",
-     "items": [
-      {
-       "id": "msl-check-1",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$16$",
-       "answer": [
-        "$16$, $32$, $48$, $64$, $80$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$16$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $16$. Add $16$ each time.",
-        "$16$, $32$, $48$, $64$, $80$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$22$",
-       "answer": [
-        "$22$, $44$, $66$, $88$, $110$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$22$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $22$. Add $22$ each time.",
-        "$22$, $44$, $66$, $88$, $110$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$25$",
-       "answer": [
-        "$25$, $50$, $75$, $100$, $125$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$25$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $25$. Add $25$ each time.",
-        "$25$, $50$, $75$, $100$, $125$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-4",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$26$",
-       "answer": [
-        "$26$, $52$, $78$, $104$, $130$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$26$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $26$. Add $26$ each time.",
-        "$26$, $52$, $78$, $104$, $130$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-5",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$27$",
-       "answer": [
-        "$27$, $54$, $81$, $108$, $135$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$27$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $27$. Add $27$ each time.",
-        "$27$, $54$, $81$, $108$, $135$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-6",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$32$",
-       "answer": [
-        "$32$, $64$, $96$, $128$, $160$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$32$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $32$. Add $32$ each time.",
-        "$32$, $64$, $96$, $128$, $160$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-7",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$34$",
-       "answer": [
-        "$34$, $68$, $102$, $136$, $170$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$34$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $34$. Add $34$ each time.",
-        "$34$, $68$, $102$, $136$, $170$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-8",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$42$",
-       "answer": [
-        "$42$, $84$, $126$, $168$, $210$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$42$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $42$. Add $42$ each time.",
-        "$42$, $84$, $126$, $168$, $210$"
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-check-9",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "$45$",
-       "answer": [
-        "$45$, $90$, $135$, $180$, $225$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$45$"
-       ],
-       "rationale": "List every positive multiple in order, starting with the number itself.",
-       "explanation": [
-        "Start at $45$. Add $45$ each time.",
-        "$45$, $90$, $135$, $180$, $225$"
-       ],
-       "expectedErrors": []
-      }
-     ]
-    }
-   ],
-   "brief": "12–20 minutes. Nine fresh listing questions in a 3 × 3 book activity, before common multiples. Allow a times-table grid; check answers in the last two minutes. No LCM questions in this activity.",
-   "built": "1evvqp7",
-   "title": "Multiples book work",
-   "family": "retrieval"
-  },
-  {
-   "id": "msl-common-definition",
-   "els": [
-    {
-     "h": 50,
-     "w": 1400,
-     "x": 100,
-     "y": 120,
-     "id": "msl-common-definition-1",
-     "bold": true,
-     "kind": "text",
-     "size": 30,
-     "text": "KEY DEFINITION",
-     "colour": "#6d28d9"
-    },
-    {
-     "h": 140,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-common-definition-2",
-     "bold": true,
-     "kind": "text",
-     "size": 96,
-     "text": "Common multiple",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 420,
-     "w": 1400,
-     "x": 100,
-     "y": 370,
-     "id": "msl-common-definition-3",
-     "kind": "text",
-     "size": 52,
-     "text": "A common multiple is a number that is a multiple of both numbers.",
-     "colour": "#0f172a"
-    }
-   ],
-   "built": "16f4pub",
-   "title": "Common multiple",
-   "family": "language"
-  },
-  {
-   "id": "msl-common-model",
-   "els": [
-    {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
-     "id": "msl-common-model-1",
-     "bold": true,
-     "kind": "text",
-     "size": 64,
-     "text": "Find a common multiple",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-common-model-prompt",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Write both lists. Which number is in both?",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 100,
-     "y": 340,
-     "id": "msl-common-model-label-3",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "12:",
-     "align": "left",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 100,
-     "y": 510,
-     "id": "msl-common-model-label-4",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "18:",
-     "align": "left",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 230,
-     "y": 340,
-     "id": "msl-common-model-three-0",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "12",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 395,
-     "y": 340,
-     "id": "msl-common-model-three-1",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "24",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 560,
-     "y": 340,
-     "id": "msl-common-model-three-2",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "36",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 725,
-     "y": 340,
-     "id": "msl-common-model-three-3",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "48",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 890,
-     "y": 340,
-     "id": "msl-common-model-three-4",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "60",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 1055,
-     "y": 340,
-     "id": "msl-common-model-three-5",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "72",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 230,
-     "y": 510,
-     "id": "msl-common-model-four-0",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "18",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 395,
-     "y": 510,
-     "id": "msl-common-model-four-1",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "36",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 560,
-     "y": 510,
-     "id": "msl-common-model-four-2",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "54",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 725,
-     "y": 510,
-     "id": "msl-common-model-four-3",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "72",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 559,
-     "y": 341.5,
-     "id": "msl-common-circle-12a",
-     "kind": "shape",
-     "step": 3,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 394,
-     "y": 511.5,
-     "id": "msl-common-circle-12b",
-     "kind": "shape",
-     "step": 3,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 70,
-     "w": 1400,
-     "x": 100,
-     "y": 685,
-     "id": "msl-common-model-first-match",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "36 is a common multiple: it is in both lists.",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 1054,
-     "y": 341.5,
-     "id": "msl-common-circle-24a",
-     "kind": "shape",
-     "step": 5,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 724,
-     "y": 511.5,
-     "id": "msl-common-circle-24b",
-     "kind": "shape",
-     "step": 5,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 70,
-     "w": 1400,
-     "x": 100,
-     "y": 775,
-     "id": "msl-common-model-another-match",
-     "kind": "text",
-     "size": 44,
-     "step": 5,
-     "text": "72 is another common multiple.",
-     "colour": "#0f172a"
-    }
-   ],
-   "brief": "21–25 minutes. First stop and circle 36 in both lists. Then ask whether another shared number exists; extend to 72 and circle it. Do not name LCM until the next slide.",
-   "built": "y56nqn",
-   "title": "Find a common multiple",
-   "family": "teach"
-  },
-  {
-   "id": "msl-lcm-definition",
-   "els": [
-    {
-     "h": 50,
-     "w": 1400,
-     "x": 100,
-     "y": 120,
-     "id": "msl-lcm-definition-1",
-     "bold": true,
-     "kind": "text",
-     "size": 30,
-     "text": "KEY DEFINITION",
-     "colour": "#6d28d9"
-    },
-    {
-     "h": 140,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-lcm-definition-2",
-     "bold": true,
-     "kind": "text",
-     "size": 96,
-     "text": "Lowest common multiple",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 420,
-     "w": 1400,
-     "x": 100,
-     "y": 370,
-     "id": "msl-lcm-definition-3",
-     "kind": "text",
-     "size": 52,
-     "text": "The lowest common multiple (LCM) is the smallest positive multiple shared by both numbers.",
-     "colour": "#0f172a"
-    }
-   ],
-   "built": "1mmqvms",
-   "title": "Lowest common multiple",
-   "family": "language"
-  },
-  {
-   "id": "msl-lcm-model",
-   "els": [
-    {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
-     "id": "msl-lcm-model-1",
-     "bold": true,
-     "kind": "text",
-     "size": 64,
-     "text": "Find the lowest common multiple",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-lcm-model-prompt",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "Find the LCM of 12 and 16.",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 100,
-     "y": 340,
-     "id": "msl-lcm-model-label-4",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "12:",
-     "align": "left",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 100,
-     "y": 510,
-     "id": "msl-lcm-model-label-6",
-     "kind": "text",
-     "size": 44,
-     "step": 0,
-     "text": "16:",
-     "align": "left",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 230,
-     "y": 340,
-     "id": "msl-lcm-model-four-0",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "12",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 395,
-     "y": 340,
-     "id": "msl-lcm-model-four-1",
-     "kind": "text",
-     "size": 44,
-     "step": 1,
-     "text": "24",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 560,
-     "y": 340,
-     "id": "msl-lcm-model-four-2",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "36",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 725,
-     "y": 340,
-     "id": "msl-lcm-model-four-3",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "48",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 230,
-     "y": 510,
-     "id": "msl-lcm-model-six-0",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "16",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 395,
-     "y": 510,
-     "id": "msl-lcm-model-six-1",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "32",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 95,
-     "w": 100,
-     "x": 560,
-     "y": 510,
-     "id": "msl-lcm-model-six-2",
-     "kind": "text",
-     "size": 44,
-     "step": 3,
-     "text": "48",
-     "align": "center",
-     "colour": "#0f172a",
-     "middle": true
-    },
-    {
-     "h": 60,
-     "w": 1400,
-     "x": 100,
-     "y": 275,
-     "id": "msl-lcm-model-extend",
-     "kind": "text",
-     "size": 44,
-     "step": 2,
-     "text": "No match yet? Keep listing in order.",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 724,
-     "y": 341.5,
-     "id": "msl-lcm-circle-a",
-     "kind": "shape",
-     "step": 4,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 92,
-     "w": 102,
-     "x": 559,
-     "y": 511.5,
-     "id": "msl-lcm-circle-b",
-     "kind": "shape",
-     "step": 4,
-     "shape": "ellipse",
-     "stroke": "#6d28d9",
-     "strokeWidth": 4
-    },
-    {
-     "h": 100,
-     "w": 1400,
-     "x": 100,
-     "y": 685,
-     "id": "msl-lcm-model-answer",
-     "kind": "text",
-     "size": 44,
-     "step": 4,
-     "text": "LCM = 48. It is the smallest number in both lists.",
-     "colour": "#0f172a"
-    }
-   ],
-   "brief": "26–29 minutes. Initially show two entries per list, with no match. Extend the lists to 48; circle both 48s. Equal list lengths are not a stopping rule.",
-   "built": "710i2o",
-   "title": "Find the lowest common multiple",
-   "family": "teach"
-  },
-  {
-   "id": "msl-lcm-practice",
-   "els": [
-    {
-     "h": 852,
-     "w": 1552,
-     "x": 24,
-     "y": 24,
-     "id": "msl-lcm-practice-1",
-     "kind": "questions",
-     "size": 46,
-     "items": [
-      {
-       "id": "msl-lcm-1",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Complete both lists. Circle the first match",
-       "answer": [
-        "$\\begin{aligned}12&:\\;12, 24, \\text{\\textcircled{\\scriptsize 36}}\\\\18&:\\;18, \\text{\\textcircled{\\scriptsize 36}}\\end{aligned}$",
-        "LCM = $36$."
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Complete both lists. Circle the first match.",
-        "$12: \\;12,\\;24,\\;\\square$",
-        "$18: \\;18,\\;\\square$",
-        "What is the LCM?"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "12: $12$, $24$, $\\text{\\textcircled{\\scriptsize 36}}$",
-        "18: $18$, $\\text{\\textcircled{\\scriptsize 36}}$",
-        "LCM = $36$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-lcm-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Continue both lists. Find the LCM",
-       "answer": [
-        "$\\begin{aligned}12&:\\;12, 24, 36, \\text{\\textcircled{\\scriptsize 48}}\\\\16&:\\;16, 32, \\text{\\textcircled{\\scriptsize 48}}\\end{aligned}$",
-        "LCM = $48$."
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Continue both lists. Find the LCM.",
-        "$12: \\;12,\\;24,\\;\\ldots$",
-        "$16: \\;16,\\;32,\\;\\ldots$",
-        "Circle the first match in both."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "12: $12$, $24$, $36$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "16: $16$, $32$, $\\text{\\textcircled{\\scriptsize 48}}$",
-        "LCM = $48$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-lcm-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Find the LCM of $15$ and $20$",
-       "answer": [
-        "$\\begin{aligned}15&:\\;15, 30, 45, \\text{\\textcircled{\\scriptsize 60}}\\\\20&:\\;20, 40, \\text{\\textcircled{\\scriptsize 60}}\\end{aligned}$",
-        "LCM = $60$."
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Find the LCM of $15$ and $20$.",
-        "Write both lists. Circle the first match in both."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "15: $15$, $30$, $45$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "LCM = $60$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-lcm-4",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Find the LCM of $21$ and $14$",
-       "answer": [
-        "$\\begin{aligned}21&:\\;21, \\text{\\textcircled{\\scriptsize 42}}\\\\14&:\\;14, 28, \\text{\\textcircled{\\scriptsize 42}}\\end{aligned}$",
-        "LCM = $42$."
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Find the LCM of $21$ and $14$.",
-        "Write both lists. Circle the first match in both."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "21: $21$, $\\text{\\textcircled{\\scriptsize 42}}$",
-        "14: $14$, $28$, $\\text{\\textcircled{\\scriptsize 42}}$",
-        "LCM = $42$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-lcm-5",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Find the LCM of $18$ and $24$",
-       "answer": [
-        "$\\begin{aligned}18&:\\;18, 36, 54, \\text{\\textcircled{\\scriptsize 72}}\\\\24&:\\;24, 48, \\text{\\textcircled{\\scriptsize 72}}\\end{aligned}$",
-        "LCM = $72$."
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Find the LCM of $18$ and $24$.",
-        "Write both lists. Circle the first match in both."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "18: $18$, $36$, $54$, $\\text{\\textcircled{\\scriptsize 72}}$",
-        "24: $24$, $48$, $\\text{\\textcircled{\\scriptsize 72}}$",
-        "LCM = $72$."
-       ],
-       "expectedErrors": []
-      }
-     ],
-     "visualiser": false,
-     "presentation": "whiteboard"
-    }
-   ],
-   "brief": "29–34 minutes. Five questions fade list starters to independent listing. Answers show both lists with the first match circled; use two-digit pairs chosen so each search stays short. The nested pair appears in book work.",
-   "built": "1tr5a4",
-   "title": "Find the LCM",
-   "family": "practice"
-  },
-  {
-   "id": "msl-book",
-   "els": [
-    {
-     "h": 64,
-     "w": 1480,
-     "x": 60,
-     "y": 46,
-     "id": "msl-book-1",
-     "kind": "text",
-     "size": 38,
-     "text": "Write in your book. For each LCM: write both lists and circle the first match.",
-     "colour": "#64748b"
-    },
-    {
-     "h": 748,
-     "w": 1480,
-     "x": 60,
-     "y": 124,
-     "id": "msl-book-2",
-     "bank": [],
-     "cols": 3,
-     "kind": "grid",
-     "items": [
-      {
-       "id": "msl-book-1",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $12$ and $20$",
-       "answer": [
-        "$60$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $12$ and $20$.",
-        "$12: \\;12,\\;\\ldots$",
-        "$20: \\;20,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "12: $12$, $24$, $36$, $48$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "20: $20$, $40$, $\\text{\\textcircled{\\scriptsize 60}}$",
-        "LCM = $60$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $16$ and $20$",
-       "answer": [
-        "$80$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $16$ and $20$.",
-        "$16: \\;16,\\;32,\\;\\ldots$",
-        "$20: \\;20,\\;40,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "16: $16$, $32$, $48$, $64$, $\\text{\\textcircled{\\scriptsize 80}}$",
-        "20: $20$, $40$, $60$, $\\text{\\textcircled{\\scriptsize 80}}$",
-        "LCM = $80$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $14$ and $35$",
-       "answer": [
-        "$70$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $14$ and $35$.",
-        "$14: \\;14,\\;28,\\;\\ldots$",
-        "$35: \\;35,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "14: $14$, $28$, $42$, $56$, $\\text{\\textcircled{\\scriptsize 70}}$",
-        "35: $35$, $\\text{\\textcircled{\\scriptsize 70}}$",
-        "LCM = $70$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-4",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $18$ and $36$",
-       "answer": [
-        "$36$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $18$ and $36$.",
-        "$18: \\;18,\\;\\ldots$",
-        "$36: \\;36,\\;\\ldots$"
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "18: $18$, $\\text{\\textcircled{\\scriptsize 36}}$",
-        "36: $\\text{\\textcircled{\\scriptsize 36}}$",
-        "LCM = $36$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-5",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $21$ and $28$",
-       "answer": [
-        "$84$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $21$ and $28$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "21: $21$, $42$, $63$, $\\text{\\textcircled{\\scriptsize 84}}$",
-        "28: $28$, $56$, $\\text{\\textcircled{\\scriptsize 84}}$",
-        "LCM = $84$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-6",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $22$ and $33$",
-       "answer": [
-        "$66$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $22$ and $33$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "22: $22$, $44$, $\\text{\\textcircled{\\scriptsize 66}}$",
-        "33: $33$, $\\text{\\textcircled{\\scriptsize 66}}$",
-        "LCM = $66$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-7",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $24$ and $40$",
-       "answer": [
-        "$120$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $24$ and $40$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "24: $24$, $48$, $72$, $96$, $\\text{\\textcircled{\\scriptsize 120}}$",
-        "40: $40$, $80$, $\\text{\\textcircled{\\scriptsize 120}}$",
-        "LCM = $120$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-8",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $30$ and $45$",
-       "answer": [
-        "$90$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $30$ and $45$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "30: $30$, $60$, $\\text{\\textcircled{\\scriptsize 90}}$",
-        "45: $45$, $\\text{\\textcircled{\\scriptsize 90}}$",
-        "LCM = $90$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-9",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $10$ and $25$",
-       "answer": [
-        "$50$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $10$ and $25$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "10: $10$, $20$, $30$, $40$, $\\text{\\textcircled{\\scriptsize 50}}$",
-        "25: $25$, $\\text{\\textcircled{\\scriptsize 50}}$",
-        "LCM = $50$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-10",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $15$ and $25$",
-       "answer": [
-        "$75$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $15$ and $25$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "15: $15$, $30$, $45$, $60$, $\\text{\\textcircled{\\scriptsize 75}}$",
-        "25: $25$, $50$, $\\text{\\textcircled{\\scriptsize 75}}$",
-        "LCM = $75$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-11",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $20$ and $50$",
-       "answer": [
-        "$100$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $20$ and $50$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "20: $20$, $40$, $60$, $80$, $\\text{\\textcircled{\\scriptsize 100}}$",
-        "50: $50$, $\\text{\\textcircled{\\scriptsize 100}}$",
-        "LCM = $100$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-book-12",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "LCM of $28$ and $42$",
-       "answer": [
-        "$84$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "LCM of $28$ and $42$."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "28: $28$, $56$, $\\text{\\textcircled{\\scriptsize 84}}$",
-        "42: $42$, $\\text{\\textcircled{\\scriptsize 84}}$",
-        "LCM = $84$."
-       ],
-       "expectedErrors": []
-      }
-     ]
-    }
-   ],
-   "brief": "34–42 minutes. Twelve fresh LCM questions only, not repeats of the board examples or practice. Work in number order: 1–4 supported LCM, 5–12 independent LCM. Completion is not expected; check answers in the last two minutes. Faster pupils find the next common multiple for question 12 and explain why it is not the lowest.",
-   "built": "1kc1onl",
-   "title": "Book work",
-   "family": "retrieval"
-  },
-  {
-   "id": "msl-exit",
-   "els": [
-    {
-     "h": 110,
-     "w": 1400,
-     "x": 100,
-     "y": 80,
-     "id": "msl-exit-1",
-     "bold": true,
-     "kind": "text",
-     "size": 64,
-     "text": "Exit ticket",
-     "colour": "#0f172a"
-    },
-    {
-     "h": 80,
-     "w": 1400,
-     "x": 100,
-     "y": 190,
-     "id": "msl-exit-2",
-     "kind": "text",
-     "size": 34,
-     "text": "Work on your own. Show your lists.",
-     "colour": "#64748b"
-    },
-    {
-     "h": 550,
-     "w": 1400,
-     "x": 100,
-     "y": 300,
-     "id": "msl-exit-3",
-     "bank": [],
-     "cols": 3,
-     "kind": "grid",
-     "items": [
-      {
-       "id": "msl-exit-1",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Find the LCM of $16$ and $40$",
-       "answer": [
-        "$80$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Find the LCM of $16$ and $40$.",
-        "Write both lists. Circle the match."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "16: $16$, $32$, $48$, $64$, $\\text{\\textcircled{\\scriptsize 80}}$",
-        "40: $40$, $\\text{\\textcircled{\\scriptsize 80}}$",
-        "LCM = $80$."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-exit-2",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Circle the common multiple in both lists",
-       "answer": [
-        "$\\begin{aligned}18&:\\;18, 36, 54, 72, \\text{\\textcircled{\\scriptsize 90}}\\\\30&:\\;30, 60, \\text{\\textcircled{\\scriptsize 90}}\\end{aligned}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Circle the common multiple in both lists.",
-        "$18: \\;18,\\;36,\\;54,\\;72,\\;90$",
-        "$30: \\;30,\\;60,\\;90$"
-       ],
-       "rationale": "Recognise a shared number in two given ordered lists.",
-       "explanation": [
-        "$90$ appears in both lists."
-       ],
-       "expectedErrors": []
-      },
-      {
-       "id": "msl-exit-3",
-       "tool": "multiples-systematic-listing",
-       "level": "level1",
-       "title": "Find the LCM of $18$ and $27$",
-       "answer": [
-        "$54$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "Find the LCM of $18$ and $27$.",
-        "Write both lists. Circle the match."
-       ],
-       "rationale": "Use two ordered lists, extending until their smallest positive shared number appears.",
-       "explanation": [
-        "18: $18$, $36$, $\\text{\\textcircled{\\scriptsize 54}}$",
-        "27: $27$, $\\text{\\textcircled{\\scriptsize 54}}$",
-        "LCM = $54$."
-       ],
-       "expectedErrors": []
-      }
-     ]
-    }
-   ],
-   "brief": "42–45 minutes. Check common multiples and independently finding LCM; use answers to decide which step needs revisiting.",
-   "built": "1v626v0",
-   "title": "Exit ticket",
-   "family": "retrieval"
-  }
- ],
- "strand": "Number",
- "summary": "45 minutes after a separate times-tables starter. List multiples, find common multiples and find the LCM by systematic listing and circling the first match. Optional times-table grids; all questions authored by hand.",
- "questionVersion": 2
+  ],
+  "strand": "Number",
+  "summary": "45 minutes after a separate times-tables starter. List multiples, find common multiples and find the LCM by systematic listing and circling the first match. Optional times-table grids; all questions authored by hand.",
+  "questionVersion": 2
 }
