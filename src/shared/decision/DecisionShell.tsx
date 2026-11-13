@@ -1061,7 +1061,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {overlay}
       {previewDialog}
       {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
-      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
+      <div className="min-h-screen p-3 sm:px-8 sm:pt-5 sm:pb-3" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}
