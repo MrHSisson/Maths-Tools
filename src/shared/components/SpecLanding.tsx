@@ -165,8 +165,8 @@ function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) 
   );
 }
 
-/** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the AS ones come first and a divider
- *  and "A-level only" label separate the ones that go beyond AS. */
+/** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the AS ones are one row ("Practise")
+ *  and the ones that go beyond AS a second row ("A-level"). */
 function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: string; planning: boolean }) {
   const shown = (links ?? []).filter(l => planning || l.live);
   if (!shown.length) return null;
@@ -178,14 +178,18 @@ function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: strin
       {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
     </a>
   );
+  const row = (name: string | undefined, ls: SpecLink[]) => ls.length > 0 && (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {name && <span className="mr-0.5 w-[4.5rem] shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400">{name}</span>}
+      {ls.map(chip)}
+    </div>
+  );
+  // two rows when a statement has both: the AS practice, then what goes beyond it
+  const both = asLinks.length > 0 && a2Links.length > 0;
   return (
-    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-      {label && <span className="mr-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</span>}
-      {asLinks.map(chip)}
-      {asLinks.length > 0 && a2Links.length > 0 && (
-        <span className="mx-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><span className="h-5 w-px bg-slate-300" />A-level only</span>
-      )}
-      {a2Links.map(chip)}
+    <div className="mt-2.5 flex flex-col gap-1.5">
+      {row(label, asLinks)}
+      {row(both ? "A-level" : label, a2Links)}
     </div>
   );
 }
