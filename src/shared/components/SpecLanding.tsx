@@ -195,12 +195,12 @@ function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: strin
 }
 
 /** the line that starts a section of statements: what the course covers, with a rule across the card */
-function SectionHead({ children, sub }: { children: string; sub: string }) {
+function SectionHead({ children, sub }: { children: string; sub?: string }) {
   return (
     <li className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 sm:px-5">
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">{children}</span>
       <span className="h-px flex-1 bg-slate-300" />
-      <span className="text-xs text-slate-500">{sub}</span>
+      {sub && <span className="text-xs text-slate-500">{sub}</span>}
     </li>
   );
 }
@@ -265,7 +265,6 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {p.chapters.map(c => {
                 const n = c.statements.length;
-                const nAs = c.statements.filter(s => s.as).length;
                 return (
                   <button key={c.id} onClick={() => setView({ kind: "chapter", id: c.id })}
                     className={`${card} group flex min-h-[112px] flex-col justify-between p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift`}>
@@ -277,7 +276,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                       <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
-                      <span>{`${n} statement${n === 1 ? "" : "s"}`}{nAs < n && <span className="text-slate-400">{` · ${nAs} in AS`}</span>}</span>
+                      <span>{`${n} statement${n === 1 ? "" : "s"}`}</span>
                       <span className={`text-xs ${c.tools.some(t => t.live) ? "font-semibold text-emerald-700" : "text-slate-400"}`}>{toolState(c, planning)}</span>
                     </div>
                   </button>
@@ -342,7 +341,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                 const a2S = chapter.statements.filter(s => !s.as);
                 return (
                   <>
-                    {asS.length > 0 && <SectionHead sub={a2S.length > 0 ? "also part of the A-level" : "AS and A-level"}>AS</SectionHead>}
+                    {asS.length > 0 && <SectionHead>AS</SectionHead>}
                     {asS.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
                     {a2S.length > 0 && <SectionHead sub="not in AS">A-level only (A2)</SectionHead>}
                     {a2S.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}

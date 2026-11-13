@@ -33,7 +33,7 @@ Keep the split even when a session only touches one.
 
 Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/components/SpecLanding.tsx`, `src/tools/Decision/decisionSpec.ts`, `DecisionOverview.tsx`, `src/tests/decisionPairings.test.ts`, `docs/FEATURES.md`.
 
-- **No more year tabs.** A chapter lists its AS statements under an "AS" heading (also part of the A-level), then a rule and "A-level only (A2)" with the A2 statements. Under a statement, the A-level-only practice chips sit on a second row labelled "A-level". The home cards show "N statements · M in AS".
+- **No more year tabs.** A chapter lists its AS statements under an "AS" heading, then a rule and "A-level only (A2)" with the A2 statements. Under a statement, the A-level-only practice chips sit on a second row labelled "A-level".
 - **Exam style has its own card** at the top of the chapter, offering the one mixed "Any A-level exam question" (DE). The particular kinds of exam question and the older-papers generators stay in Developing-tools mode (`devOnly` groups); `DECISION_EXAM` holds the exam generator and the pairing test counts it.
 - **"Generators" box replaced** by an "Open <tool>" button per live tool.
 - Shared page, so Further Mechanics gets the same layout. Checked at 1366 and 390 wide; build, lint and the pairing test pass.
