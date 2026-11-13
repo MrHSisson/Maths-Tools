@@ -150,7 +150,6 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     cascade: { start: lv === 3 ? "late" : "early", layout: pickOf(o.critRow, "sequence") === "rows" ? "rows" : "sequence", style: pickOf(o.ganttStyle, "blocks") === "bars" ? "bars" : "blocks" },
   });
   return {
-    network: { nodes: [], edges: [] }, // the picture is the activity network (cpa), not a vertex-and-edge network
     kind, level: lv, cpa: data, prompt,
     answer: { text: answerText, value: data.times.projectTime },
     matrixMode: "off",

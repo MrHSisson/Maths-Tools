@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
+import { netOf } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -319,9 +320,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     };
   })();
 
-  const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
+  const questionNet = problem.vertexOnlyQuestion ? { ...netOf(problem), edges: [] } : netOf(problem); // a table-only question draws just the vertices
+  // a problem with no network draws only through its tool's own `renderCanvas`
   const shownCanvas = (st: SolveStep | undefined) =>
-    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
+    renderCanvas ? renderCanvas(problem, st) : problem.network || st?.network ? <NetworkView network={st?.network ?? (!st ? questionNet : netOf(problem))} step={st} background="#ffffff" /> : null;
   // `problem.caption` sits under the picture as the question is first shown (the working carries its own running figures)
   const shown = (st: SolveStep | undefined) => problem.caption && !st ? (
     <div className="absolute inset-0 flex flex-col">
@@ -652,7 +654,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // The table is the working's main object, so it sits right under the question — above the step text, always in view with it
   const matrixInner = (
     <div className="mx-auto w-fit">
-      <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
+      <MatrixView network={netOf(problem)} step={canvasStep} bare missing={config.matrixMissing} />
     </div>
   );
   const matrixCard = showMatrix ? (

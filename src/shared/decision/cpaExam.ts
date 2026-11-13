@@ -46,7 +46,7 @@ const allTimes = (d: CpaProblemData, which: "es" | "lf" | "both" = "both"): CpaV
 };
 
 function problemOf(c: Ctx, kind: CpaKind, g: { data: CpaProblemData; prompt: string; answerText: string }): DecisionProblem {
-  return { network: { nodes: [], edges: [] }, kind, level: c.level, cpa: g.data, prompt: g.prompt, answer: { text: g.answerText }, matrixMode: "off" } as unknown as DecisionProblem;
+  return { kind, level: c.level, cpa: g.data, prompt: g.prompt, answer: { text: g.answerText }, matrixMode: "off" } as unknown as DecisionProblem;
 }
 /** a part's data and working, built by the skill generator on the shared network */
 function sub(c: Ctx, kind: CpaKind, o: CpaGenOptions = {}) {
@@ -439,7 +439,7 @@ export function generateCpaExam(level: number, chain: CpaChain | "asAny" | "alAn
       const base: CpaProblemData = { ...first.data, kind: "cpaExam", extra: { ...c.extras, examQ: b.q } };
       const exam = { id: `cpaexam${Math.floor(Math.random() * 1e9)}`, intro: b.intro, parts, totalMarks: total, minutes: Math.max(3, Math.round(total * 1.1)) };
       return {
-        network: { nodes: [], edges: [] }, kind: "cpaExam", level: lv, cpa: base, prompt: b.intro, answer: { text: "" }, matrixMode: "off", exam, templateId: ch,
+        kind: "cpaExam", level: lv, cpa: base, prompt: b.intro, answer: { text: "" }, matrixMode: "off", exam, templateId: ch,
       } as unknown as DecisionProblem;
     } catch (e) { lastErr = e; }
   }

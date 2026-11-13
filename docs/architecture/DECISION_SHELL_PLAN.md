@@ -45,6 +45,9 @@ See the increment ladder near the end of this doc for what has shipped, and `doc
 5. **MST thin slice first** — prove Layers 1+2+one tool end-to-end (one question type, Kruskal, one
    level) before breadth. Prim / more question types / levels / sandbox-expand / print all follow.
 
+> **Not only networks (2026-11-13).** `DecisionProblem.network` is optional. A tool whose picture is not a vertex-and-edge network (Critical Path, and the Further Mechanics chapters) leaves it out, carries its own data field (`cpa`, `flow`, …) and draws it through `config.renderCanvas`; the shell, chooser, exam view and print do not care what the picture is. Network-only code reads it with `netOf(problem)` (an empty network when there is none). Names still say "Decision"; renaming the shell and its folder is a separate tidy-up.
+
+
 ---
 
 ## Why a separate shell (not the maths ToolShell)

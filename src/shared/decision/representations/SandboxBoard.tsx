@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLayoutMode } from "../../layoutMode";
 import { ChevronLeft, ChevronRight, Grid, Hash, RotateCcw, Table, X } from "lucide-react";
 import type { CanvasExtras, DecisionProblem, DecisionShellProps, GNode, Network, SolveStep } from "../types";
+import { netOf } from "../types";
 import { flowBox } from "../cutCurve";
 import FlowView from "./FlowView";
 import MatrixView from "./MatrixView";
@@ -42,7 +43,7 @@ interface SandboxBoardProps {
 
 export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, renderCanvas, matrixMissing, panelTop, footer, onWeightChange }: SandboxBoardProps) {
   const isFlow = !!problem.flow;
-  const original = useMemo<GNode[]>(() => (problem.flow ? problem.flow.net.nodes : problem.network.nodes), [problem]);
+  const original = useMemo<GNode[]>(() => (problem.flow ? problem.flow.net.nodes : netOf(problem).nodes), [problem]);
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({});
   const [weights, setWeights] = useState(true);
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null); // a weight being changed (standalone page)
@@ -57,7 +58,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
   const nodes = useMemo<GNode[]>(() => original.map((n) => ({ ...n, ...(pos[n.id] ?? {}) })), [original, pos]);
   // the frame is taken from the ORIGINAL drawing and padded, so the picture keeps its size while a vertex is dragged outwards
   const box = useMemo(() => {
-    const b = problem.flow ? flowBox(problem.flow.net) : networkBox(problem.network);
+    const b = problem.flow ? flowBox(problem.flow.net) : networkBox(netOf(problem));
     return { x: b.x - 30, y: b.y - 30, w: b.w + 60, h: b.h + 60 };
   }, [problem]);
 
@@ -92,7 +93,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
     }
     // a beat that draws its own network (the complete network of least distances) is shown as it is: its vertices are not the question's, so they do not drag
     if (step?.network) return <NetworkView network={step.network} step={step} showWeights={weights} box={networkBox(step.network)} background="transparent" />;
-    return <NetworkView network={{ ...problem.network, nodes }} step={step} showWeights={weights} box={box} onNodeDown={onNodeDown} onWeightClick={onWeightChange ? (id) => setEditing({ id, value: String(problem.network.edges.find((e) => e.id === id)?.weight ?? "") }) : undefined} background="transparent" />;
+    return <NetworkView network={{ ...netOf(problem), nodes }} step={step} showWeights={weights} box={box} onNodeDown={onNodeDown} onWeightClick={onWeightChange ? (id) => setEditing({ id, value: String(netOf(problem).edges.find((e) => e.id === id)?.weight ?? "") }) : undefined} background="transparent" />;
   })();
 
   const moved = Object.keys(pos).length > 0;
@@ -135,7 +136,7 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
           )}
           {matrix && hasMatrix && (
             <div style={{ position: "absolute", left: 12, top: 12, maxWidth: "calc(100% - 24px)", overflow: "auto", background: "#fff", borderRadius: 12, boxShadow: "0 6px 24px rgba(15,23,42,0.14)", border: "1px solid #e2e8f0", padding: 10 }}>
-              <MatrixView network={problem.network} step={step} bare missing={matrixMissing} />
+              <MatrixView network={netOf(problem)} step={step} bare missing={matrixMissing} />
             </div>
           )}
         </div>

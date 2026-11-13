@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-13 — Decision shell: a problem no longer needs a network
+
+Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/types.ts`, `DecisionShell.tsx`, `validate.ts`, `tspSolve.ts`, `routeInspectionSolve.ts`, `representations/SandboxBoard.tsx`, `cpaExam.ts`, `src/tools/Decision/CriticalPath.tsx`, `MinimumSpanningTree.tsx`, `tspBounds.test.ts`.
+
+- `DecisionProblem.network` is now optional, so a tool whose picture is not a network (Critical Path today; Dimensional Analysis and the other Further Mechanics chapters next) just carries its own data field and draws it through `renderCanvas`. Critical Path no longer sets an empty placeholder network.
+- Network-only code reads it through a small accessor, `netOf(problem)` (exported from `shared/decision`), which returns an empty network when there is none. No behaviour change for the network tools.
+- **Checked:** `tsc` clean, lint clean, the Decision tests, and a headless load of Critical Path (skills and exam), Minimum Spanning Tree, Network Flows, Route Inspection and Travelling Salesperson with no console errors and the pictures drawn.
+- **Next:** a brief for Dimensional Analysis (skills and exam-style) on this shell.
+
+Agent: Claude Code
+
 ## 2026-11-13 — Decision hub: AS / A-level labelled in place of tabs, exam card, one "Open tool" button
 
 Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/components/SpecLanding.tsx`, `src/tools/Decision/decisionSpec.ts`, `DecisionOverview.tsx`, `src/tests/decisionPairings.test.ts`, `docs/FEATURES.md`.

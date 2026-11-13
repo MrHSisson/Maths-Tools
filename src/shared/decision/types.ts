@@ -54,8 +54,12 @@ export interface NetworkTemplate {
 }
 
 // ── A generated problem the shell renders ───────────────────────────────────
+/** The network of a problem, or an empty one when the problem has none: for the network tools' own code, which always has one. */
+export const netOf = (p: { network?: Network }): Network => p.network ?? { nodes: [], edges: [] };
+
 export interface DecisionProblem {
-  network: Network;
+  /** The network the question is about. Absent for a tool whose picture is not a network (Critical Path, and Mechanics chapters): those carry their own data field and draw it through `renderCanvas`. */
+  network?: Network;
   prompt: string; // "Find the minimum spanning tree and its total weight."
   answer: {
     text: string;
