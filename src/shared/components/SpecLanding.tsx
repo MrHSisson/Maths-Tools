@@ -166,7 +166,7 @@ function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) 
 }
 
 /** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the AS ones are one row ("Practise")
- *  and the ones that go beyond AS a second row ("A-level"). */
+ *  and the ones that go beyond AS a second row ("Practice (A2)"). */
 function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: string; planning: boolean }) {
   const shown = (links ?? []).filter(l => planning || l.live);
   if (!shown.length) return null;
@@ -180,16 +180,15 @@ function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: strin
   );
   const row = (name: string | undefined, ls: SpecLink[]) => ls.length > 0 && (
     <div className="flex flex-wrap items-center gap-1.5">
-      {name && <span className="mr-0.5 w-[4.5rem] shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400">{name}</span>}
+      {name && <span className="mr-0.5 shrink-0 text-xs sm:w-[7.5rem] font-semibold uppercase tracking-wide text-slate-400">{name}</span>}
       {ls.map(chip)}
     </div>
   );
-  // two rows when a statement has both: the AS practice, then what goes beyond it
-  const both = asLinks.length > 0 && a2Links.length > 0;
+  // a statement's practice is labelled by course; a row of chips with no label (a group) stays unlabelled
   return (
     <div className="mt-2.5 flex flex-col gap-1.5">
-      {row(label, asLinks)}
-      {row(both ? "A-level" : label, a2Links)}
+      {row(label && "Practice (AS)", asLinks)}
+      {row(label && "Practice (A2)", a2Links)}
     </div>
   );
 }
@@ -343,7 +342,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                   <>
                     {asS.length > 0 && <SectionHead>AS</SectionHead>}
                     {asS.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
-                    {a2S.length > 0 && <SectionHead sub="not in AS">A-level only (A2)</SectionHead>}
+                    {a2S.length > 0 && <SectionHead>A-level only</SectionHead>}
                     {a2S.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
                   </>
                 );

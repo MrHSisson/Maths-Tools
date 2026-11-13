@@ -187,6 +187,18 @@ const categories = CATEGORIES.map((category) => ({
   ...(CATEGORY_THEMES[category.name] ?? DEFAULT_THEME),
 }));
 
+// The A-Level tab shows Decision Maths and Further Mechanics (each is one hub card) side by side under one "Further Maths" heading.
+const FURTHER_MATHS = ['Decision Mathematics', 'Further Mechanics'];
+{
+  const parts = categories.filter(c => FURTHER_MATHS.includes(c.name));
+  if (parts.length > 0) {
+    const first = categories.indexOf(parts[0]);
+    const merged = { ...parts[0], name: 'Further Maths', tools: FURTHER_MATHS.flatMap(n => categories.find(c => c.name === n)?.tools ?? []) };
+    categories.splice(first, 1, merged);
+    for (const c of parts.slice(1)) categories.splice(categories.indexOf(c), 1);
+  }
+}
+
 export default function LandingPage(): JSX.Element {
   // The (i) on a card opens its description; one at a time, closed by tapping anywhere else.
   const [infoId, setInfoId] = useState<string | null>(null);
