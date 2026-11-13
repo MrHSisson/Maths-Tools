@@ -47,7 +47,7 @@ Three sub-tools. Each tile in the chooser carries a mini grid.
   - *Given* (exclusive): the quantity's name · its units · a formula to rearrange.
   - *Ask for* (exclusive): a quantity · an expression · a constant in a formula. (At Level 1 only the first two.)
   - *Answer format* (exclusive): write it · circle one of four. The three wrong options are plausible slips (a sign flipped, the wrong power of one base dimension, a missing factor) so a wrong choice names its misconception.
-- **Pool:** the library gives ~35 quantities; expressions of two or three factors with powers in −2…2 give thousands. Well over 30 distinct questions at both levels.
+- **Pool:** the library gives ~35 quantities; expressions of two or three factors with powers in −2…2 give thousands. As extensive as the topic allows (no minimum).
 - **Working:** the grid, one row per factor, adding exponents column by column.
 
 ### 2. Check consistency (`consistent`) — 2 levels
@@ -55,7 +55,7 @@ Three sub-tools. Each tile in the chooser carries a mini grid.
 - **Level 2:** three or more terms, and formulas with ½, 2π or an angle in them (dimensionless numbers).
 - **QO:** *Ask for* (exclusive): show the formula is consistent · find the odd term out · find the missing power · which of four formulas is consistent (exactly one). *Include dimensionless numbers* (switch, default on at Level 2).
 - **Generator:** start from a true formula built by the equations-first generator (below), then, for the "not consistent" cases, perturb one term by a quantity whose dimensions differ (never by one with the same dimensions, so the perturbation always breaks it). The "which of four" question needs exactly one consistent option.
-- **Pool:** true formulas from the library times ~6 perturbations; > 100 per level.
+- **Pool:** true formulas from the library times ~6 perturbations. As extensive as the topic allows (no minimum).
 
 ### 3. Find the powers (`powers`) — 3 levels (the abstract tool)
 Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
@@ -147,7 +147,7 @@ Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
 - A Depth bank and a Teach deck for MA (separate briefs).
 - Renaming `DecisionShell` and its folder (a separate tidy-up; see `docs/architecture/DECISION_SHELL_PLAN.md`).
 
-## Open questions for Harry
-1. **Quantity "moment of a force"** shares ML²T⁻² with energy: keep both, so a question can ask for each and the student sees they match, or drop one to avoid the confusion?
-2. **Question volume check:** Level 1 of `dims` and `consistent` should each hold at least 30 distinct questions at default QO (`recentQuestions.test.ts` demands a 30-question worksheet). I expect so from the library; the build will prove it and widen the pool if not.
-3. **Circle-your-answer wrong options:** are the slips listed (a flipped sign, a wrong power of one base dimension, a missing factor) the ones you want, or should the wrong options mimic the papers' (e.g. ML²T⁻¹ for power)?
+## Decisions on the open questions (Harry, 2026-11-13)
+1. **Moment of a force and energy:** keep both (they share ML²T⁻², and a question may ask for each).
+2. **Pool size:** no 30-question minimum. A level's pool is as extensive as the topic allows with three base dimensions and what an A-level student knows; if that is fewer than 30 distinct questions, that is fine. (`recentQuestions.test.ts` only checks tools that export the ToolShell `__test`; this is a `DecisionShell` tool and is not in it. Confirm at build time and, if the test does pick it up, say so rather than padding the pool.) Do not add contrived variants to reach a number; the worksheet may repeat a question only when the pool is genuinely smaller than the sheet.
+3. **Circle-your-answer wrong options:** the slips listed (a flipped sign, a wrong power of one base dimension, a missing factor), each wrong option naming its misconception.
