@@ -1,6 +1,6 @@
 # Factors, common factors and HCF
 
-**Status:** draft (revised after Harry's answers; nothing built yet)
+**Status:** implemented (deck `src/decks/data/factors-hcf-systematic-listing.json`, 16 slides, built 2026-11-13; awaiting Harry's visual check)
 **Class:** Set 6, low attainers · **Teaching time:** one lesson · **Calculator:** Casio fx-85
 **Deck:** `factors-hcf-systematic-listing` · **Strand:** Number · **Tool:** none (every question is authored)
 
@@ -27,7 +27,7 @@ One lesson, so the plan is cut for pacing: **book sets are six questions (3 × 2
 | 2 | Definition: factor | Divides exactly; always includes 1 and the number itself; contrast with a multiple (factors are finite, multiples never stop) |
 | 3 | Calculator: is it a factor? | Keys for 24 ÷ 4 = 6 (whole: yes) and 24 ÷ 5 = 24/5 or 4.8 (not whole: no), revealed by click |
 | 4 | Calculator: find all the factors of 24 | Structure-only board: divide by · display · whole? · pair. First row given (1 → 24), class fills the rest. Key point on the slide: stop when the answer is smaller than the number you divided by |
-| 5 | Whiteboard x3 | Factors of 48 (pairs partly completed, partners blank), 60 (two pairs given and "4 more pairs" as `__ × __`) and **30 with no scaffold**. The answer shows the full pairs and the ordered list |
+| 5 | Whiteboard x3 | Factors of 48 (pairs partly completed, partners blank), 60 (three pairs given and "3 more pairs" as `__ × __`) and **30 with no scaffold**. The answer shows the full pairs and the ordered list |
 | 6 | Book work 3 × 2 | List all the factors, scaffold weaning off: questions 1-2 partly completed pairs, 3-4 two pairs given and a count of the rest, 5-6 only a hint of how many pairs |
 | 7 | Definition: common factor | A number that is a factor of both |
 | 8 | Model: 12 and 18 | List both, circle 1, 2, 3, 6; calculator check on the smaller number's factors |
@@ -76,7 +76,7 @@ All answers below were recomputed by script (every factor list, every common set
 | Set | Task | Answer |
 | --- | --- | --- |
 | list-1 | Factors of 48. Given: 1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __ | 3 × 16, 6 × 8; 5 and 7 are not factors (9.6, 6.86); 1, 2, 3, 4, 6, 8, 12, 16, 24, 48 |
-| list-2 | Factors of 60. Given: 1 × 60, 2 × 30, then `__ × __` four more times (4 more pairs) | 3 × 20, 4 × 15, 5 × 12, 6 × 10; 7 (8.57) is not, 8 (7.5 is smaller than 8) stop; 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 |
+| list-2 | Factors of 60. Given: 1 × 60, 2 × 30, 3 × 20, then `__ × __` three more times (3 more pairs) | 4 × 15, 5 × 12, 6 × 10; 7 (8.57) is not, 8 (7.5 is smaller than 8) stop; 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 |
 | list-3 | Factors of 30 (no scaffold) | 1, 2, 3, 5, 6, 10, 15, 30 |
 | book-1 | Factors of 40. Given: 1 × 40, 2 × 20, 4 × __, 5 × __ | 4 × 10, 5 × 8; 3 is not a factor (13.3); 1, 2, 4, 5, 8, 10, 20, 40 |
 | book-2 | Factors of 56. Given: 1 × 56, 2 × __, 4 × 14, 7 × __ | 2 × 28, 7 × 8; 3, 5, 6 are not factors; 1, 2, 4, 7, 8, 14, 28, 56 |
@@ -112,4 +112,4 @@ The 'Given' text is exactly what appears on the slide, and the answer slide fill
 
 Decided by Harry: one lesson, Set 6 low attainers, Casio fx-85, book sets limited to about six for pacing, bigger whiteboard numbers with partly completed working, and scaffolding weaned off through each set and through the deck (a final unscaffolded whiteboard with a friendly number such as 30).
 
-Still to check before building: the exact fx-85 wording on slides 3 and 4. The natural display shows a non-whole answer as a fraction (24/5), so the slide says "a whole number means yes" and shows S⇔D for the decimal. The replay-key instruction depends on whether it is the GT Plus or the ClassWiz fx-85. Also: do the ladder, traps and numbers above look right?
+Calculator confirmed: Casio fx-85GT CW (ClassWiz). Its natural display shows a non-whole answer as a fraction (24/5), so slides 3 and 4 say "a whole number means yes" and show S⇔D for the decimal. The replay-key wording is to be checked on a real calculator. Also: do the ladder, traps and numbers above look right?

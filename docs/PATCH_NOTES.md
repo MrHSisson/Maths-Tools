@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-13 — Factors, common factors and HCF lesson deck
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: new `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `docs/pathways/decks.md`. No shared deck code changed.
+
+- **Deck:** 16 slides, one lesson for Set 6 (low attainers) after the multiples lesson: list the factors of a number, find common factors by listing, then the HCF as the highest common factor. Three whiteboard sets and three six-question book sets (3 × 2, sized for pacing), a discussion on common factors (Kofi: only 6) and one on the HCF (Ruby: 36, which is a common multiple), and an exit ticket. All 36 questions are authored.
+- **Calculator slides (Casio fx-85GT CW):** the key presses shown one click at a time: `24 ÷ 4 =` gives a whole number so 4 is a factor; `24 ÷ 5 =` shows a fraction (S⇔D for 4.8) so it is not. A board then works through 24 and states the stop rule (stop when the answer is smaller than the number you divided by); the common factors model ends with a calculator check on the other number.
+- **Scaffold weaning (Harry's design):** whiteboard numbers are bigger (48, 60, 30; 24 and 36, 40 and 56, 20 and 30; 32 and 48, 36 and 54, 18 and 30) so the factors are not seen at a glance. Within each set the support falls away: partly completed pairs or lists, then a count (`__ × __` for each missing pair, or "N common factors"), then a hint, then none. The last whiteboard in each section has no scaffold.
+- **Checked:** every answer is computed in the build script from a factors function and asserted against the plan (factor lists, common sets, HCFs, pair counts, no repeated pair of numbers, six different HCF book answers); deck content checks and the layout check pass (16 slides, no spill or overlap); `deckBuilder`, `claudeDocs` and `organisation` tests, lint and `npm run facts` pass; the calculator, model, whiteboard, book and exit slides looked at in the browser. The authored sets follow the plan agreed with Harry (ladder, traps and numbers in the spec).
+- **Not done:** no misconception notes on the questions (optional); the fx-85 replay-key tip is in the slide 4 brief only, because it has not been tried on a real calculator; the deck is built and in the repo but Harry has not yet viewed it; not published; the planner Build Log block and dashboard are not written for this deck yet (see Notes).
+
+Agent: Claude Code
+Notes: Build Log block not written yet (still to do at the end of the session).
+
 ## 2026-11-12 — Resource levelling: Write it up removed, list of options is a tab
 
 Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpaSolve.ts`, `cpa.ts`, `cpaSheet.tsx`, `src/tools/Decision/CriticalPath.tsx`, tests.
