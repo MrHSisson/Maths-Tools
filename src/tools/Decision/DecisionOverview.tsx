@@ -1,6 +1,6 @@
 import { SpecLanding, type SpecChapter, type SpecLink } from "../../shared/components/SpecLanding";
 import { ALL_TOOLS } from "../../registry";
-import { DECISION_CHAPTERS, DECISION_GENERAL_RESOURCES, DECISION_OUT_OF_SPEC, DECISION_CHECK_NOTES, DECISION_PAIRINGS, DECISION_GROUPS, type SubToolRef } from "./decisionSpec";
+import { DECISION_CHAPTERS, DECISION_GENERAL_RESOURCES, DECISION_OUT_OF_SPEC, DECISION_CHECK_NOTES, DECISION_PAIRINGS, DECISION_GROUPS, DECISION_EXAM, type SubToolRef } from "./decisionSpec";
 
 // Decision Maths: the hub for the AQA 7367 Discrete option (DA–DG), and where every Decision tool is opened from (the landing page shows this
 // one card for the strand). The look and behaviour are the shared SpecLanding page; the tools listed under each chapter are read from the
@@ -16,7 +16,8 @@ const linkOf = (r: SubToolRef): SpecLink[] => {
 const chapters: SpecChapter[] = DECISION_CHAPTERS.map(({ toolIds, ...c }) => ({
   ...c,
   statements: c.statements.map(s => ({ ...s, links: (DECISION_PAIRINGS[s.ref] ?? []).flatMap(linkOf) })),
-  groups: (DECISION_GROUPS[c.id] ?? []).map(g => ({ heading: g.heading, links: g.links.flatMap(linkOf) })),
+  groups: (DECISION_GROUPS[c.id] ?? []).map(g => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
+  exam: DECISION_EXAM[c.id] ? (l => l[0] ? { text: DECISION_EXAM[c.id].text, link: l[0] } : undefined)(linkOf(DECISION_EXAM[c.id].ref)) : undefined,
   tools: toolIds.flatMap(id => {
     const t = ALL_TOOLS.find(x => x.id === id);
     return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];

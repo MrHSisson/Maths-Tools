@@ -2,13 +2,13 @@
 // The pairing is data written by hand, so these tests keep it honest: every pairing names a sub-tool the tool really has, with the name and
 // the course and practice settings the tool gives it, and every sub-tool of the tool is placed in exactly one place, so a new one cannot be forgotten or listed twice.
 import { describe, it, expect } from "vitest";
-import { DECISION_CHAPTERS, DECISION_PAIRINGS, DECISION_GROUPS, type SubToolRef } from "../tools/Decision/decisionSpec";
+import { DECISION_CHAPTERS, DECISION_PAIRINGS, DECISION_GROUPS, DECISION_EXAM, type SubToolRef } from "../tools/Decision/decisionSpec";
 
 type Sub = { key: string; label: string; when: { key: string; values: string[] }[] };
 const cpaModule: any = await import("../tools/Decision/CriticalPath");
 const SUBS: Sub[] = cpaModule.__seed.subTools;
 
-const all = (): SubToolRef[] => [...Object.values(DECISION_PAIRINGS).flat(), ...Object.values(DECISION_GROUPS).flatMap(gs => gs.flatMap(g => g.links))];
+const all = (): SubToolRef[] => [...Object.values(DECISION_PAIRINGS).flat(), ...Object.values(DECISION_GROUPS).flatMap(gs => gs.flatMap(g => g.links)), ...Object.values(DECISION_EXAM).map(e => e.ref)];
 const whenOf = (s: Sub, key: string) => s.when.find(w => w.key === key)?.values[0];
 
 describe("Decision spec pairings", () => {
@@ -17,6 +17,7 @@ describe("Decision spec pairings", () => {
     const ids = new Set(DECISION_CHAPTERS.map(c => c.id));
     expect(Object.keys(DECISION_PAIRINGS).filter(r => !refs.has(r))).toEqual([]);
     expect(Object.keys(DECISION_GROUPS).filter(i => !ids.has(i))).toEqual([]);
+    expect(Object.keys(DECISION_EXAM).filter(i => !ids.has(i))).toEqual([]);
   });
 
   it("every paired sub-tool exists in Critical Path with the same name, course and practice", () => {

@@ -53,7 +53,9 @@ export interface SpecChapter {
   /** the tools built (or being built) for this chapter */
   tools: SpecTool[];
   /** generators that belong to the chapter but to no one statement (exam-style questions; the older papers only) */
-  groups?: { heading: string; links: SpecLink[] }[];
+  groups?: { heading: string; links: SpecLink[]; /** shown in Developing-tools mode only */ devOnly?: boolean }[];
+  /** the chapter's exam-style practice: one prominent card, with the one generator it opens */
+  exam?: { text: string; link: SpecLink };
 }
 
 interface SpecLandingProps {
@@ -73,12 +75,10 @@ interface SpecLandingProps {
   workspace?: { heading: string; tools: SpecTool[] };
 }
 
-type Year = "a2" | "as";
 type View = { kind: "home" } | { kind: "chapter"; id: string } | { kind: "papers" };
 
 const card = "rounded-2xl border border-slate-300 bg-white shadow-card";
 const tag = "rounded-md px-1.5 py-0.5 text-xs font-semibold";
-const inYear = (s: SpecStatement, y: Year) => y === "a2" || s.as;
 
 /** the tools a visitor sees: everything in Developing-tools mode, only the live ones otherwise */
 const shownTools = (tools: SpecTool[], planning: boolean): SpecTool[] => (planning ? tools : tools.filter(t => t.live));
@@ -136,7 +136,7 @@ function ResourceLink({ r }: { r: SpecResource }) {
   );
 }
 
-function StatementRow({ s, planning, year }: { s: SpecStatement; planning: boolean; year: Year }) {
+function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) {
   const [open, setOpen] = useState(false);
   const note = planning ? [s.was ? `The first map said ${s.was}.` : "", s.note ?? ""].join(" ").trim() : "";
   return (
@@ -148,7 +148,6 @@ function StatementRow({ s, planning, year }: { s: SpecStatement; planning: boole
           {s.formula && <p className="mt-1 font-mono text-sm text-slate-600">{s.formula}</p>}
           {s.asLimit && <p className="mt-1 text-sm text-slate-500">At AS: {s.asLimit}.</p>}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className={`${tag} ${s.as ? "bg-slate-100 text-slate-700" : "bg-blue-50 text-blue-900"}`}>{s.as ? "AS + A2" : "A2 only"}</span>
             {planning && s.legacy.map(m => <span key={m} className={`${tag} bg-slate-100 text-slate-600`}>Legacy {m}</span>)}
             {planning && s.legacy.length === 0 && <span className={`${tag} bg-slate-50 text-slate-400`}>No legacy source</span>}
             {note && (
@@ -159,47 +158,52 @@ function StatementRow({ s, planning, year }: { s: SpecStatement; planning: boole
             )}
           </div>
           {open && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{note}</p>}
-          <LinkRow links={s.links} label="Practise" planning={planning} year={year} />
+          <LinkRow links={s.links} label="Practise" planning={planning} />
         </div>
       </div>
     </li>
   );
 }
 
-/** the generators for a statement or group: the AS ones always, the A-level-only ones on the A-level tab; a visitor sees the live ones */
-function LinkRow({ links, label, planning, year }: { links?: SpecLink[]; label?: string; planning: boolean; year: Year }) {
-  const shown = (links ?? []).filter(l => (planning || l.live) && (year === "a2" || l.as));
+/** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the AS ones come first and a divider
+ *  and "A-level only" label separate the ones that go beyond AS. */
+function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: string; planning: boolean }) {
+  const shown = (links ?? []).filter(l => planning || l.live);
   if (!shown.length) return null;
+  const asLinks = shown.filter(l => l.as);
+  const a2Links = shown.filter(l => !l.as);
+  const chip = (l: SpecLink) => (
+    <a key={l.href} href={l.href}
+      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50">
+      {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+    </a>
+  );
   return (
     <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
       {label && <span className="mr-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</span>}
-      {shown.map(l => (
-        <a key={l.href} href={l.href}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50">
-          {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
-        </a>
-      ))}
+      {asLinks.map(chip)}
+      {asLinks.length > 0 && a2Links.length > 0 && (
+        <span className="mx-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><span className="h-5 w-px bg-slate-300" />A-level only</span>
+      )}
+      {a2Links.map(chip)}
     </div>
   );
 }
 
-function YearTabs({ year, setYear }: { year: Year; setYear: (y: Year) => void }) {
+/** the line that starts a section of statements: what the course covers, with a rule across the card */
+function SectionHead({ children, sub }: { children: string; sub: string }) {
   return (
-    <div className="flex gap-6 border-b border-slate-200" role="tablist" aria-label="Year">
-      {([["as", "AS"], ["a2", "A-level"]] as [Year, string][]).map(([k, label]) => (
-        <button key={k} role="tab" aria-selected={year === k} onClick={() => setYear(k)}
-          className={`-mb-px border-b-2 pb-3 text-base font-semibold transition-colors ${year === k ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
-          {label}
-        </button>
-      ))}
-    </div>
+    <li className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 sm:px-5">
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">{children}</span>
+      <span className="h-px flex-1 bg-slate-300" />
+      <span className="text-xs text-slate-500">{sub}</span>
+    </li>
   );
 }
 
 export function SpecLanding(p: SpecLandingProps): JSX.Element {
   const devMode = useDevMode();
   const { phone } = useLayoutMode();
-  const [year, setYear] = useState<Year>("as");
   // a chapter has an address of its own (#DB), so a link can open straight to it
   const [view, setViewState] = useState<View>(() => {
     const id = typeof window === "undefined" ? "" : window.location.hash.slice(1);
@@ -254,24 +258,22 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
             </div>
             {aboutOpen && <p role="note" className="mt-3 rounded-xl bg-slate-900 p-3 text-sm leading-snug text-white">{p.about}</p>}
 
-            <div className="mt-6"><YearTabs year={year} setYear={setYear} /></div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {p.chapters.map(c => {
-                const n = c.statements.filter(s => inYear(s, year)).length;
-                const none = n === 0;
+                const n = c.statements.length;
+                const nAs = c.statements.filter(s => s.as).length;
                 return (
-                  <button key={c.id} disabled={none} onClick={() => setView({ kind: "chapter", id: c.id })}
-                    className={`${card} group flex min-h-[112px] flex-col justify-between p-4 text-left transition-all ${none ? "opacity-50" : "hover:-translate-y-0.5 hover:shadow-lift"}`}>
+                  <button key={c.id} onClick={() => setView({ kind: "chapter", id: c.id })}
+                    className={`${card} group flex min-h-[112px] flex-col justify-between p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift`}>
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <span className="font-mono text-xs font-semibold text-slate-400">{c.id}</span>
                         <h2 className="text-lg font-semibold leading-tight text-slate-900">{c.name}</h2>
                       </div>
-                      {!none && <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />}
+                      <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
-                      <span>{none ? "A2 only" : `${n} statement${n === 1 ? "" : "s"}`}</span>
+                      <span>{`${n} statement${n === 1 ? "" : "s"}`}{nAs < n && <span className="text-slate-400">{` · ${nAs} in AS`}</span>}</span>
                       <span className={`text-xs ${c.tools.some(t => t.live) ? "font-semibold text-emerald-700" : "text-slate-400"}`}>{toolState(c, planning)}</span>
                     </div>
                   </button>
@@ -305,26 +307,51 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
               <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
             </div>
-            <div className={`${card} mt-5 px-4 py-3`}>
-              <h2 className="font-semibold text-slate-800">Generators</h2>
-              {shownTools(chapter.tools, planning).length > 0 ? (
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  {shownTools(chapter.tools, planning).map(t => <ToolLink key={t.path} t={t} planning={planning} />)}
-                </div>
-              ) : (
-                <p className="mt-1 text-sm text-slate-500">{chapter.tools.length === 0 ? "No generators for this part of the specification yet." : "The generators for this part are on their way."}</p>
-              )}
-            </div>
-            <div className="mt-4"><YearTabs year={year} setYear={setYear} /></div>
-            <ul className={`${card} mt-4 divide-y divide-slate-200`}>
-              {chapter.statements.filter(s => inYear(s, year)).map(s => <StatementRow key={s.ref} s={s} planning={planning} year={year} />)}
+            {shownTools(chapter.tools, planning).length > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {shownTools(chapter.tools, planning).map(t => (
+                  <a key={t.path} href={t.path} className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+                    Open {t.name}
+                    {planning && !t.live && <span className={`${tag} bg-amber-100 text-amber-900`}>Dev</span>}
+                    <ChevronRight size={16} />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">{chapter.tools.length === 0 ? "No generators for this part of the specification yet." : "The generators for this part are on their way."}</p>
+            )}
+
+            {chapter.exam && (planning || chapter.exam.link.live) && (
+              <a href={chapter.exam.link.href} className={`${card} group mt-5 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">Exam style</span>
+                  <span className="block text-lg font-semibold text-slate-900">{chapter.exam.link.label}</span>
+                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
+                </span>
+                <ChevronRight size={22} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
+              </a>
+            )}
+
+            <ul className={`${card} mt-5 divide-y divide-slate-200 overflow-hidden`}>
+              {(() => {
+                const asS = chapter.statements.filter(s => s.as);
+                const a2S = chapter.statements.filter(s => !s.as);
+                return (
+                  <>
+                    {asS.length > 0 && <SectionHead sub={a2S.length > 0 ? "also part of the A-level" : "AS and A-level"}>AS</SectionHead>}
+                    {asS.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
+                    {a2S.length > 0 && <SectionHead sub="not in AS">A-level only (A2)</SectionHead>}
+                    {a2S.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
+                  </>
+                );
+              })()}
             </ul>
-            {(chapter.groups ?? []).map(g => {
-              const any = g.links.some(l => (planning || l.live) && (year === "a2" || l.as));
+            {(chapter.groups ?? []).filter(g => planning || !g.devOnly).map(g => {
+              const any = g.links.some(l => planning || l.live);
               return any ? (
                 <div key={g.heading} className={`${card} mt-4 px-4 py-3`}>
                   <h2 className="font-semibold text-slate-800">{g.heading}</h2>
-                  <LinkRow links={g.links} planning={planning} year={year} />
+                  <LinkRow links={g.links} planning={planning} />
                 </div>
               ) : null;
             })}
