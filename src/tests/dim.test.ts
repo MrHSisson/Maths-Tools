@@ -390,7 +390,21 @@ describe("the maths is LaTeX", () => {
     const e = genDimsNameFor("energy", false, false);
     expect(modelChains(e.data)).toEqual(["E = \\frac{1}{2}mv^{2}", "[E] = \\left[\\frac{1}{2}mv^{2}\\right] = [\\frac{1}{2}][m][v]^{2} = 1 \\times M \\times (LT^{-1})^{2} = 1 \\times M \\times L^{2}T^{-2} = ML^{2}T^{-2}"]);
     const u = genDimsNameFor("dens", true, false);
-    expect(modelChains(u.data).join(" ")).toContain("= M \\times L^{-3} = ML^{-3}");
+    expect(modelChains(u.data).join(" ")).toContain("= \\frac{M}{L^{3}} = ML^{-3}");
+  });
+  it("a division is kept as a fraction, cancelled, and only then written with negative powers", () => {
+    const q = genDimsNameFor("press", false, false);
+    const chains = modelChains(q.data);
+    expect(chains[chains.length - 1]).toBe("[p] = \\left[\\frac{F}{A}\\right] = \\frac{[F]}{[A]} = \\frac{MLT^{-2}}{L^{2}} = \\frac{M}{LT^{2}} = ML^{-1}T^{-2}");
+    // no row of the working writes a bracket to a negative power: that is what the fraction avoids
+    const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
+    for (const st of steps) for (const r of st.dimView!.lines) expect(r, "a negative power on a bracket").not.toMatch(/\][\^]\{-|\)\^\{-/);
+    // the steps go: brackets as a fraction, dimensions in, cancel, then the negative powers
+    const phases = steps.map((x) => x.phase);
+    expect(phases.indexOf("Cancel")).toBeGreaterThan(phases.indexOf("Dimensions"));
+    const last = steps.filter((x) => x.phase === "Answer").pop()!;
+    expect(phases.lastIndexOf("Answer")).toBeGreaterThan(phases.lastIndexOf("Cancel"));
+    expect(last.caption).toMatch(/negative power/);
   });
   it("a quantity that is not given is built before it is used, after its formula is stated, and the page never shows it as a fact first", () => {
     const q = genDimsNameFor("power", false, false);

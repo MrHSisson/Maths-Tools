@@ -1,7 +1,7 @@
 // Dimensional Analysis: building a quantity's dimensions up from a few GIVEN ones, the way a student would write it.
 // The page opens with what may be taken as known (lengths, time, mass, speed and acceleration). Any other quantity is built from them, in its own few lines, after
 // the formula it comes from has been stated: F = ma, so [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻². Nothing appears out of nowhere.
-import { type Fr, type Dim3, QBY, BASE, qDim, unitsDim, fr, fmul, fzero, feq, dimOf, ONE, dimScale } from "./dim";
+import { type Fr, type Dim3, QBY, BASE, qDim, unitsDim, fr, fmul, fadd, fsub, fzero, feq, dimOf, ONE, ZERO, dimScale } from "./dim";
 import { symTex, supTex, frTex, dimTex, dimPowTex, productTex, brTex } from "./dimTex";
 
 // ── rows of the written page ────────────────────────────────────────────────────────────────
@@ -90,39 +90,73 @@ export function buildOrder(keys: string[]): string[] {
 export interface Derivation {
   /** the formula it comes from, stated first ("Formula: F = ma"); empty when the question gave it */
   formula: string[];
-  /** what it is written as, in brackets: "[F] = [ma] = [m][a]" (two rows when the expression differs from the brackets) */
+  /** what it is written as, in brackets: "[F] = [ma] = [m][a]" (two rows when the expression differs from the brackets); a division stays a fraction: "[F]/[A]" */
   def: string[];
-  /** the known dimensions put in: "= M × LT^{-2}" */
+  /** the known dimensions put in: "= M × LT^{-2}", or "= (MLT^{-2}) / (L^{2})" for a division */
   subst: string[];
   /** each bracketed power expanded: "(LT^{-1})^{2} = L^{2}T^{-2}", when there is one */
   expand: string[];
-  /** the powers added, then the result: "= L^{1}T^{-1-1}", "= LT^{-2}" (the result alone when nothing is added) */
+  /** a division only: the fraction cancelled down ("= MT^{-2} / L"), before it is written with negative powers */
+  cancel: string[];
+  /** the powers added, then the result: "= L^{1}T^{-1-1}", "= LT^{-2}"; for a division, the result written with negative powers */
   sum: string[];
+  /** the working divides: it is written as a fraction and cancelled, and the negative powers come last */
+  divides: boolean;
 }
 /** a bracketed dimension to a power is worked out by raising each base dimension in it to that power */
 const multiLetter = (d: Dim3): boolean => d.filter((e) => !fzero(e)).length > 1 || (d.filter((e) => !fzero(e)).length === 1 && !feq(d.find((e) => !fzero(e))!, ONE));
-/** the working of "lhs = [expr] = product of brackets = product of dimensions = (expanded) = sum of powers = result" in aligned rows */
+const frac = (n: string, d: string): string => `\\frac{${n || "1"}}{${d}}`;
+/** the working of "lhs = [expr] = product of brackets = product of dimensions = (expanded) = sum of powers = result" in aligned rows.
+ *  A division is kept as a fraction, which is easier to cancel than a negative power is to get right; the negative powers come only at the very end. */
 export function derive(lhs: string, expr: string | null, pieces: Piece[], result: Dim3, formula?: string): Derivation {
-  const brs = pieces.map((p) => `${p.br}${supTex(p.exp)}`).join("");
+  const divides = pieces.some((p) => p.exp[0] < 0);
+  const top = pieces.filter((p) => p.exp[0] >= 0);
+  const bottom = pieces.filter((p) => p.exp[0] < 0);
+  const absExp = (p: Piece): Fr => (p.exp[0] < 0 ? fr(-p.exp[0], p.exp[1]) : p.exp);
+  const joinT = (xs: string[]): string => xs.join(" \\times ");
+  const brs = divides
+    ? frac(top.map((p) => `${p.br}${supTex(p.exp)}`).join(""), bottom.map((p) => `${p.br}${supTex(absExp(p))}`).join(""))
+    : pieces.map((p) => `${p.br}${supTex(p.exp)}`).join("");
   const def = expr ? [al(lhs, brTex(expr)), ct(brs)] : [al(lhs, brs)];
-  const dims = pieces.map((p) => dimPowTex(p.dim, p.exp)).join(" \\times ");
+  const dims = divides
+    ? frac(joinT(top.map((p) => dimPowTex(p.dim, p.exp))), joinT(bottom.map((p) => dimPowTex(p.dim, absExp(p)))))
+    : joinT(pieces.map((p) => dimPowTex(p.dim, p.exp)));
   const subst = [ct(dims)];
   // a bracket with a power outside it is expanded: (LT^{-1})^{2} becomes L^{2}T^{-2}
   const expand: string[] = [];
-  if (pieces.some((p) => !feq(p.exp, ONE) && multiLetter(p.dim))) {
-    const ex = pieces.map((p) => (feq(p.exp, ONE) ? dimPowTex(p.dim, p.exp) : fzero(p.dim[0]) && fzero(p.dim[1]) && fzero(p.dim[2]) ? "1" : dimTex(dimScale(p.dim, p.exp)))).join(" \\times ");
+  const expanded = (p: Piece, e: Fr): string => (feq(e, ONE) ? dimPowTex(p.dim, e) : fzero(p.dim[0]) && fzero(p.dim[1]) && fzero(p.dim[2]) ? "1" : dimTex(dimScale(p.dim, e)));
+  if (pieces.some((p) => !feq(absExp(p), ONE) && multiLetter(p.dim))) {
+    const ex = divides ? frac(joinT(top.map((p) => expanded(p, p.exp))), joinT(bottom.map((p) => expanded(p, absExp(p))))) : joinT(pieces.map((p) => expanded(p, p.exp)));
     if (`&= ${ex}` !== subst[0]) expand.push(ct(ex));
   }
+  const cancel: string[] = [];
   const sum: string[] = [];
-  // the powers of each base dimension that each piece adds, when some dimension gets two or more
-  const cols = ([0, 1, 2] as const).map((c) => pieces.map((p) => fmul(p.dim[c], p.exp)).filter((e) => !fzero(e)));
-  if (cols.some((l) => l.length >= 2)) {
-    sum.push(ct(cols.map((l, c) => (l.length ? `${BASE[c]}^{${l.map((e, i) => (i === 0 ? frTex(e) : e[0] < 0 ? `(${frTex(e)})` : frTex(e))).join(" + ")}}` : "")).join("")));
-  }
   const final = ct(dimTex(result));
-  const prior = sum.length ? sum[sum.length - 1] : expand.length ? expand[expand.length - 1] : subst[0];
-  if (final !== prior) sum.push(final);
-  return { formula: formula ? [formulaRow(formula)] : [], def, subst, expand, sum };
+  if (divides) {
+    // numerator and denominator as a power of each base letter; a letter on both sides is cancelled
+    const N = [ZERO, ZERO, ZERO], D = [ZERO, ZERO, ZERO];
+    for (const p of top) for (let c = 0; c < 3; c++) N[c] = fadd(N[c], fmul(p.dim[c], p.exp));
+    for (const p of bottom) for (let c = 0; c < 3; c++) D[c] = fadd(D[c], fmul(p.dim[c], absExp(p)));
+    // cancel and combine: each letter ends up on the top (net power above zero) or on the bottom (below zero), with a positive power either way
+    const net = [0, 1, 2].map((c) => fsub(N[c], D[c]));
+    const letters = (v: Fr[]): string => v.map((e, c) => (fzero(e) ? "" : BASE[c] + (feq(e, ONE) ? "" : `^{${frTex(e)}}`))).join("");
+    const n = letters(net.map((e) => (e[0] > 0 ? e : ZERO)));
+    const dn = letters(net.map((e) => (e[0] < 0 ? fr(-e[0], e[1]) : ZERO)));
+    const row = ct(dn ? frac(n, dn) : n || "1");
+    const prior = expand.length ? expand[expand.length - 1] : subst[0];
+    if (row !== prior) cancel.push(row);
+    const before = cancel.length ? cancel[cancel.length - 1] : prior;
+    if (final !== before) sum.push(final);
+  } else {
+    // the powers of each base dimension that each piece adds, when some dimension gets two or more
+    const cols = ([0, 1, 2] as const).map((c) => pieces.map((p) => fmul(p.dim[c], p.exp)).filter((e) => !fzero(e)));
+    if (cols.some((l) => l.length >= 2)) {
+      sum.push(ct(cols.map((l, c) => (l.length ? `${BASE[c]}^{${l.map((e, i) => (i === 0 ? frTex(e) : e[0] < 0 ? `(${frTex(e)})` : frTex(e))).join(" + ")}}` : "")).join("")));
+    }
+    const prior = sum.length ? sum[sum.length - 1] : expand.length ? expand[expand.length - 1] : subst[0];
+    if (final !== prior) sum.push(final);
+  }
+  return { formula: formula ? [formulaRow(formula)] : [], def, subst, expand, cancel, sum, divides };
 }
 /** a derivation as one flat chain "[a] = [v/t] = [v][t]^{-1} = LT^{-1} \times T^{-1} = LT^{-2}", for the model answer */
 export function flatChain(rows: string[]): string {
