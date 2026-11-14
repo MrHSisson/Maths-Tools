@@ -4,7 +4,7 @@
 // All text is prose with maths between $…$; the model answers are the formal chains an examiner expects: [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻².
 import type { DecisionProblem, ExamMark, ExamPart, SolveStep } from "./types";
 import { QBY, qDim, BASE, dimZero } from "./dim";
-import { symTex, dimTex, frTex, andTex, eqLhsTex, M } from "./dimTex";
+import { symTex, dimTex, frTex, andTex, eqLhsTex, numTex, M } from "./dimTex";
 import {
   type DimProblemData, type DimQuestion, type Situation,
   SITUATIONS, CONST_RELATIONS, genDimsNameFor, genDimsConstFor, genConsistent, powersFromSituation, modelTex, joinAnd, pickOne, circleLine, shuffle,
@@ -104,9 +104,12 @@ function exConstant(level: number): DecisionProblem {
   const k = genDimsConstFor(rel, false);
   const kd = dimTex(k.data.answerDim!);
   const ks = symTex(rel.kSym);
+  const numMark = rel.num ? [m("B1", `States that the number is dimensionless: ${M(`[${numTex(rel.num)}] = 1`)}`)] : [];
+  // a "show that" question: the method, then a rigorous argument (current Q14(a): M1 R1); a number in the formula earns a mark of its own (current Q5: B1 for [2π] = 1)
   const a = part("(a)", `Show that ${M(ks)} has dimensions ${M(kd)}.`, [
+    ...numMark,
     m("M1", `Uses dimensional analysis on the formula to find the dimensions of ${M(ks)}`),
-    m("A1", `Obtains ${M(`[${ks}] = ${kd}`)}`),
+    m("R1", `Completes a rigorous argument, using the dimensions of each quantity, to show that ${M(`[${ks}] = ${kd}`)}`),
   ], chainModel(k.data), k.data, { subTool: "dims", options: { dimsAsk: "constant" } }, "showConstant");
   const q = powersFromSituation(sit);
   const b = part("(b)", `${modelIntro(q.data)} Find the values of ${andTex(q.data.unknowns)}.`, powersScheme(q), powersModel(q), q.data, { subTool: "powers", options: { powCtx: "worded" } }, "findPowers");
@@ -119,20 +122,26 @@ function exConsistent(level: number): DecisionProblem {
   const d = q.data;
   const dim = dimTex(d.answerDim!);
   const chain = `${d.rows.map((r) => `[${r.sym}]`).join(" = ")} = ${dim}`;
-  const a = part("(a)", "Show that the formula is dimensionally consistent.", [
-    m("M1", "Substitutes the dimensions of the quantities into the terms"),
-    m("A1", "Obtains the dimensions of every term correctly"),
-    m("R1", `Concludes that every term has dimensions ${M(dim)}, so the formula is consistent`),
+  // current Q12 (4 marks): B1 recalls the dimensions, E1 says a number such as ½ or 2 is dimensionless, M1 substitutes, R1 completes the argument (legacy Q1 ends on E1)
+  const hasNumber = !!d.terms?.some((t) => t.num);
+  const a = part("(a)", "Show that the formula is dimensionally consistent. Fully justify your answer.", [
+    m("B1", "Recalls the dimensions of the quantities in the formula"),
+    ...(hasNumber ? [m("E1", `Explains that a number in the formula (such as ${M("\\frac{1}{2}")} or ${M("2")}) is dimensionless`)] : []),
+    m("M1", "Substitutes the dimensions of the quantities into each term"),
+    m("R1", `Completes a reasoned argument that every term has dimensions ${M(dim)}, so the formula is dimensionally consistent`),
   ], [...chainModel(d), `${M(chain)}, so the formula is dimensionally consistent.`], d, { subTool: "consistent", options: { consAsk: "show" } }, "showConsistent");
   const c = genDimsConstFor(pickOne(CONST_RELATIONS), false);
   const rep = c.data.represents;
   const kd = c.data.answerDim!;
   const cprompt = rep ? `${c.prompt.replace(/\.$/, "")} and state what quantity it could represent.` : c.prompt;
   const ks = c.data.formula!;
-  const b = part("(b)", cprompt, rep
-    ? [m("M1", `Uses dimensional analysis to find the dimensions of ${M(ks)}`), m("E1", `Deduces that ${M(ks)} could represent ${rep}`)]
-    : [m("M1", `Uses dimensional analysis to find the dimensions of ${M(ks)}`), m("A1", `Obtains ${M(`[${ks}] = ${dimZero(kd) ? "1" : dimTex(kd)}`)}`)],
-  [...chainModel(c.data), ...(rep ? [`${M(ks)} could represent ${rep}`] : [])], c.data, { subTool: "dims", options: { dimsAsk: "constant" } }, "constantDims");
+  // finding a constant's dimensions: the number's dimension, the method, the answer; and (legacy Q7, current Q7b) a mark for what it represents
+  const b = part("(b)", cprompt, [
+    ...(c.data.relNum ? [m("B1", `States that the number is dimensionless: ${M(`[${numTex(c.data.relNum)}] = 1`)}`)] : []),
+    m("M1", `Uses dimensional analysis to find the dimensions of ${M(ks)}`),
+    m("A1", `Obtains ${M(`[${ks}] = ${dimZero(kd) ? "1" : dimTex(kd)}`)}`),
+    ...(rep ? [m("E1", `Deduces that ${M(ks)} could represent ${rep}`)] : []),
+  ], [...chainModel(c.data), ...(rep ? [`${M(ks)} could represent ${rep}`] : [])], c.data, { subTool: "dims", options: { dimsAsk: "constant" } }, "constantDims");
   return build("consistent", `${q.prompt.split(" Show that")[0]} A student suggests the formula ${M(d.formula!)}.`, [a, b], d, level);
 }
 
@@ -168,8 +177,8 @@ function exModels(level: number): DecisionProblem {
   const names = sit.factors.map((f) => `${the(QBY[f[0]].name)} ${M(symTex(facSym(f)))}`);
   const intro = `Two students propose models for ${the(tq.name)} ${M(symTex(tsym))}, which is thought to depend on ${joinAnd(names)}. ${s1} thinks that ${M(withModel)}. ${s2} thinks that ${M(symTex(tsym))} does not depend on ${the(zq.name)} ${M(symTex(zsym))} and suggests ${M(withoutModel)}. In each model the powers are constants.`;
   const a = part("(a)", "By considering dimensions, explain which student's model should be rejected.", [
-    m("E1", `Considers the dimensions of ${M(symTex(zsym))}: it is the only quantity with dimension ${M(BASE[col])}`),
-    m("E1", `Concludes that ${s1}'s model, which includes ${M(symTex(zsym))}, should be rejected`),
+    m("M1", `Shows that the power of ${M(symTex(zsym))} is 0 by considering the dimensions: it is the only quantity with dimension ${M(BASE[col])}`),
+    m("A1", `Rejects ${s1}'s model, because ${M(symTex(tsym))} is shown not to depend on ${M(symTex(zsym))}`),
   ], [`${s1}'s model should be rejected. ${the(zq.name)[0].toUpperCase()}${the(zq.name).slice(1)} ${M(symTex(zsym))} is the only quantity with dimension ${M(BASE[col])}, and ${M(symTex(tsym))} has none, so nothing could cancel it: its power would have to be 0.`], full.data, { subTool: "powers", options: { powAsk: "zero" } }, "explainReject");
   const b = part("(b)", `Find the values of ${andTex(kept.data.unknowns)} for the model that you did not reject, so that it is dimensionally consistent.`, [
     m("M1", "Forms equations by comparing the powers of the base dimensions"),
@@ -191,7 +200,7 @@ function exZero(level: number): DecisionProblem {
   const a = part("(a)", `Show that ${M(`${symTex(zs)} = 0`)}.`, [
     m("M1", "Forms equations by comparing the powers of the base dimensions"),
     m("A1", `Obtains ${M(`${symTex(zs)} = 0`)} from the equations`),
-    m("R1", `Concludes that ${the(zq.name)} ${M(symTex(facSym(zf)))} does not appear in the formula`),
+    m("E1", `Explains that ${the(zq.name)} ${M(symTex(facSym(zf)))} does not appear in the formula`),
   ], [...powersModel(q).slice(0, 3), `${M(`${symTex(zs)} = 0`)}, so ${the(zq.name)} ${M(symTex(facSym(zf)))} does not appear.`], d, { subTool: "powers", options: { powAsk: "zero" } }, "showZero");
   const b = part("(b)", `Find the values of ${andTex(others)}.`, [
     m("M1", "Forms equations by comparing the powers of M, L and T on both sides"),

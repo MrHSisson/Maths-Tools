@@ -276,7 +276,8 @@ describe("the working", () => {
 });
 
 describe("exam-style chains", () => {
-  const TOTALS: Record<DimChain, number> = { circle: 1, find: 4, constant: 5, consistent: 5, models: 4, zero: 6 };
+  // marks as the papers' schemes award them: a number in a formula earns its own mark (current Q5: B1 for [2π] = 1, Q12: E1), and what a constant represents one more (Q7(b))
+  const TOTALS: Record<DimChain, [number, number]> = { circle: [1, 1], find: [4, 4], constant: [5, 6], consistent: [5, 8], models: [4, 4], zero: [6, 6] };
   const PARTS: Record<DimChain, number> = { circle: 1, find: 2, constant: 2, consistent: 2, models: 2, zero: 2 };
   it("every chain builds with exactly the parts and marks the brief gives, valid mark codes, and a model answer and working for every part", () => {
     withSeededRandom(51, () => {
@@ -284,7 +285,8 @@ describe("exam-style chains", () => {
         const p = generateDimExam(1, chain);
         const exam = p.exam!;
         expect(exam.parts.length, chain).toBe(PARTS[chain]);
-        expect(exam.totalMarks, chain).toBe(TOTALS[chain]);
+        expect(exam.totalMarks, chain).toBeGreaterThanOrEqual(TOTALS[chain][0]);
+        expect(exam.totalMarks, chain).toBeLessThanOrEqual(TOTALS[chain][1]);
         expect(exam.intro.length).toBeGreaterThan(10);
         for (const part of exam.parts) {
           expect(part.marks).toBe(part.scheme.length);
@@ -293,6 +295,23 @@ describe("exam-style chains", () => {
           for (const mk of part.scheme) expect(mk.code, chain).toMatch(/^[BMAER]1F?$/);
         }
         expect(p.dim).toBeDefined();
+      }
+    });
+  });
+  it("the mark codes follow the papers' schemes", () => {
+    withSeededRandom(53, () => {
+      for (let i = 0; i < 60; i++) {
+        const codes = (chain: DimChain, k: number) => generateDimExam(1, chain).exam!.parts[k].scheme.map((x) => x.code);
+        // "show that G has dimensions…": method, then a rigorous argument (current Q14(a)); the number's own mark first (Q5)
+        expect(codes("constant", 0).filter((c) => c !== "B1")).toEqual(["M1", "R1"]);
+        // reject a model: show the power is 0 by considering a dimension, then reject it (current Q19(a))
+        expect(codes("models", 0)).toEqual(["M1", "A1"]);
+        // show consistent: recall the dimensions, [explain a number is dimensionless], substitute, reasoned argument (current Q12)
+        const c = codes("consistent", 0);
+        expect(c[0]).toBe("B1");
+        expect(c.slice(-2)).toEqual(["M1", "R1"]);
+        // show a power is zero: method, the zero, and the explanation (legacy Q8(a): M1 A1 E1)
+        expect(codes("zero", 0)).toEqual(["M1", "A1", "E1"]);
       }
     });
   });
