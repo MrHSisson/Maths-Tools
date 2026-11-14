@@ -10,7 +10,7 @@ import { generateDimExam, DIM_CHAINS, type DimChain } from "../shared/decision/d
 import type { DecisionProblem } from "../shared/decision/types";
 import katex from "katex";
 import { symTex, frTex, dimTex, M } from "../shared/decision/dimTex";
-import { examSetHtml } from "../shared/decision/printExam";
+import { examSetHtml, skillSheetHtml } from "../shared/decision/printExam";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import DimCanvas, { DimSolution } from "../shared/decision/DimWorking";
@@ -537,6 +537,30 @@ describe("the phone's open solution page", () => {
         expect(html, q.prompt).not.toContain("katex-error");
         expect(html, q.prompt).toContain("katex");
       }
+    });
+  });
+});
+
+describe("the printed worksheets", () => {
+  it("an exam paper with no picture has a blank working box where it was", () => {
+    withSeededRandom(96, () => {
+      const p = generateDimExam(1, "find");
+      const html = examSetHtml([{ title: "Dimensional Analysis", exam: p.exam!, questionFigure: "", workingBox: true, answerFigures: p.exam!.parts.map(() => null) }]);
+      expect(html).toContain('class="workbox"');
+      expect(examSetHtml([{ title: "x", exam: p.exam!, questionFigure: "", answerFigures: p.exam!.parts.map(() => null) }])).not.toContain('class="workbox"');
+    });
+  });
+  it("a skills worksheet is numbered questions with working boxes, then a page of answers, all maths typeset", () => {
+    withSeededRandom(97, () => {
+      const qs = [genDimsName(2, false, false), genConsistent(2, "show", true), genPowers(3, { context: "named", ask: "find", given: "dims" })].map((q) => ({ prompt: q.prompt, answer: q.answerText, space: "m" as const }));
+      const both = skillSheetHtml("Dimensional Analysis", qs);
+      expect((both.match(/class="skillq"/g) ?? []).length).toBe(3);
+      expect(both).toContain('class="answers"');
+      expect(both).toContain("katex.render(");
+      expect(skillSheetHtml("x", qs, { schemes: false })).not.toContain('class="answers"');
+      expect(skillSheetHtml("x", qs, { papers: false })).not.toContain('class="skillq"');
+      const visible = both.replace(/<span class="katex-render"[^>]*><\/span>/g, "").replace(/<script>[\s\S]*?<\/script>/g, "").replace(/<style>[\s\S]*?<\/style>/g, "");
+      expect(visible).not.toContain("$");
     });
   });
 });

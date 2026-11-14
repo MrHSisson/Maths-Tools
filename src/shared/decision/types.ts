@@ -305,6 +305,8 @@ export interface DecisionShellProps {
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    /** a Worksheet mode for the skill questions too (not only the exam-style ones): N questions with working boxes, then the answers. Laptop and tablet; not a phone. */
+    skillSheet?: boolean;
     noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types

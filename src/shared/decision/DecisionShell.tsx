@@ -13,7 +13,7 @@ import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
 import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
-import { printExam } from "./printExam";
+import { printExam, printSkillSheet } from "./printExam";
 import { usePrintBasket, decisionRecipe } from "./usePrintBasket";
 import { itemKey } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
@@ -368,9 +368,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);
   const [sheet, setSheet] = useState<DecisionProblem[]>([]);
+  const isExamProblem = !!problem.exam;
+  useEffect(() => { setSheetN(isExamProblem ? 3 : 8); setSheet([]); }, [isExamProblem]); // a new kind of sheet starts at its usual size, empty
   const [sheetAnswers, setSheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
-  const inSheet = sheetMode && !!problem.exam;
+  // a Worksheet is for exam-style questions, and (when the tool turns it on) for skill questions too, except on a phone
+  const sheetable = !!problem.exam || (!!config.skillSheet && !isPhone);
+  const inSheet = sheetMode && sheetable;
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
   const [sheetNote, setSheetNote] = useState<string | null>(null);
   // one question at a time, giving the page a breath between them (a big exam-sized network can take a second or two each)
@@ -381,7 +385,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam) out.push(q); } catch { /* try again */ }
+      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam || config.skillSheet) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
     setSheetAnswers(false);
@@ -393,6 +397,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
     if (!win) { alert("Please allow popups to use the PDF export."); return; }
     try {
+      if (!sheet[0].exam) {
+        // skill questions: numbered, each with a blank working box, then a page of answers
+        const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
+        printSkillSheet(config.pageTitle, sheet.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })), { papers: mode !== "answers", schemes: mode !== "questions", win });
+        return;
+      }
       const { renderToStaticMarkup } = await import("react-dom/server");
       const inputs = sheet.map((pr) => {
         // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
@@ -400,7 +410,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         const drawStep = (st: SolveStep) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
+          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), workingBox: !!pr.dim, partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
             if (p.blankStep) return drawStep(p.blankStep);
@@ -550,7 +560,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const chooserVariants = chooser ? chooserFilters.reduce<Array<Record<string, string>>>((acc, o) => acc.flatMap((a) => o.choices.map((c) => ({ ...a, [o.key]: c.value }))), [{}]).map((values) => ({ values, tabs: tabsFor(config, settle(config, { ...options, ...values }, level)) })) : undefined;
   const topicChooser = chooser ? (
     <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
-      mode={problem.exam ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
+      mode={sheetable ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
       onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
   ) : null;
@@ -822,7 +832,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // Practice | Worksheet, only for exam-style questions (on a phone, as tabs; on a big screen it lives in the topic chooser)
-  const examTabs = problem.exam ? (
+  const examTabs = sheetable ? (
     <div className="flex justify-center gap-7 border-b border-slate-300">
       {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
         <button key={label} onClick={() => setSheetMode(on)}
@@ -837,7 +847,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
       <div className="flex justify-center items-center gap-3 flex-wrap">
         <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(10, parseInt(e.target.value) || 3)))}
+        <input type="number" min={1} max={isExamProblem ? 10 : 20} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(isExamProblem ? 10 : 20, parseInt(e.target.value) || 3)))}
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
       <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
@@ -853,7 +863,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       {sheetNote && !sheetBusy && <div className="text-center text-amber-700 text-sm font-semibold">{sheetNote}</div>}
       {sheet.length === 0 && !sheetBusy && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
       <div className="grid gap-4" style={{ gridTemplateColumns: isPhone ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
-        {sheet.map((pr, n) => (
+        {sheet.map((pr, n) => !pr.exam ? (
+          // a skill question: its number, the question, and (on request) the answer
+          <div key={n} className="rounded-xl border border-gray-200 bg-white p-4 flex flex-col gap-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1}</div>
+            <div className="text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.prompt} /></div>
+            {sheetAnswers && <div className="rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold"><InlineMath text={pr.answer?.text ?? ""} /></div>}
+          </div>
+        ) : (
           <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
             className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
             <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} mark{pr.exam!.totalMarks === 1 ? "" : "s"}</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>

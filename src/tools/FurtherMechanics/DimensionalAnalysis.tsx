@@ -84,6 +84,7 @@ export default function App() {
         levels: 3, // the most any skill tool has; each tool sets its own `levels` in SUB_TOOLS
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
         noSandbox: true,
         levelLabels: {
           dims: ["One step: a single quantity, or a product or quotient of two", "A constant from a formula, three factors, roots, and units"],
@@ -103,7 +104,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
-            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme, and is the part that has a Worksheet and printing.",
+            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme. Both have a Worksheet (a printable set with working boxes and an answer page) on a laptop or tablet.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },

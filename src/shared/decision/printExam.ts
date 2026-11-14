@@ -9,6 +9,8 @@ import type { ExamData } from "./types";
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface ExamPrintInput {
+  /** where the picture would be, a blank box headed "Working" (a written-working question draws no picture: the student writes their own) */
+  workingBox?: boolean;
   title: string;           // the tool's name
   exam: ExamData;
   questionFigure: string;  // the network as the question gives it
@@ -38,6 +40,15 @@ const CSS = `
   .fig.small { height: 78mm; margin: 2mm 0 1mm; }
   .fig.tiny { height: 52mm; margin: 2mm 0 1mm; }
   .fig > div, .fig svg { width: 100%; height: 100%; }
+  .workbox { position: relative; width: 100%; height: 70mm; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-bottom: 5mm; }
+  .workbox span { position: absolute; top: 2mm; left: 3mm; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280; }
+  .skillq { display: grid; grid-template-columns: 9mm 1fr; break-inside: avoid; margin-bottom: 6mm; }
+  .skillq .n { font-weight: 700; }
+  .skillq .box { grid-column: 2; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-top: 2mm; }
+  .skillq .box.s { height: 26mm; } .skillq .box.m { height: 36mm; } .skillq .box.l { height: 48mm; }
+  .answers { columns: 2; column-gap: 10mm; }
+  .answers .a { break-inside: avoid; margin-bottom: 3mm; display: grid; grid-template-columns: 9mm 1fr; }
+  .answers .a b { color: #1e3a8a; }
   .part { break-inside: avoid; margin-bottom: 6mm; }
   .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
   .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
@@ -58,7 +69,7 @@ const CSS = `
 type PartHtml = { paper: string; scheme: string };
 
 /** one question's paper and mark scheme (n of total numbers them when there are several) */
-function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [], partFigures = [] }: ExamPrintInput, n: number, total: number): PartHtml {
+function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [], partFigures = [], workingBox }: ExamPrintInput, n: number, total: number): PartHtml {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
   // potentials then augmentation: both are worked on the SAME network (the potentials crossed out and updated as the paths are used), so that one
   // copy is given with the potentials part, and the augmentation part only gets a second copy for the maximum flow
@@ -98,7 +109,7 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
     <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
     <div class="intro">${mathHtml(exam.intro)}</div>
-    ${questionFigure ? `${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>` : ""}
+    ${questionFigure ? `${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>` : workingBox ? `<div class="workbox"><span>Working</span></div>` : ""}
     ${parts}
   </div>`;
   const markScheme = `<div class="markscheme">
@@ -108,14 +119,8 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
   return { paper, scheme: markScheme };
 }
 
-/** the HTML of a whole print: every question paper first, then every mark scheme (exported so it can be tested without a window) */
-export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
-  const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
-  const title = inputs[0]?.title ?? "";
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script><style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
-  ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
-  ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
-  <script>
+const KATEX_HEAD = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>`;
+const KATEX_SCRIPT = `<script>
   window.addEventListener('load', function () {
     document.querySelectorAll('.katex-render').forEach(function (el) {
       var tex = el.getAttribute('data-latex');
@@ -123,7 +128,49 @@ export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; 
     });
     if (document.body.getAttribute('data-autoprint')) setTimeout(function () { window.print(); }, 300);
   });
-  <\/script>
+  <\/script>`;
+
+interface SkillPrintQuestion {
+  prompt: string;
+  /** the answer, with maths between $…$ */
+  answer: string;
+  /** how much room to work in: s, m or l */
+  space?: "s" | "m" | "l";
+}
+/** a worksheet of skill questions: numbered questions each with a blank working box, then (on request) a page of answers (exported so it can be tested without a window) */
+export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
+  const paper = `<div class="paper">
+    <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
+    <div class="meta">${questions.length} question${questions.length === 1 ? "" : "s"}</div>
+    ${questions.map((q, i) => `<section class="skillq"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div><div class="box ${q.space ?? "m"}"></div></section>`).join("\n")}
+  </div>`;
+  const answers = `<div class="markscheme">
+    <header><h1>${esc(title)} — answers</h1><div class="who">${questions.length} question${questions.length === 1 ? "" : "s"}</div></header>
+    <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}</div></div>`).join("\n")}</div>
+  </div>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — worksheet</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
+  ${opts.papers === false ? "" : paper}
+  ${opts.schemes === false ? "" : answers}
+  ${KATEX_SCRIPT}
+  </body></html>`;
+}
+/** `win` is a window already opened at the click */
+export function printSkillSheet(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
+  const html = skillSheetHtml(title, questions, { ...opts, autoPrint: true });
+  const win = opts.win ?? window.open("", "_blank");
+  if (!win) { alert("Please allow popups to use the PDF export."); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+/** the HTML of a whole print: every question paper first, then every mark scheme (exported so it can be tested without a window) */
+export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
+  const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
+  const title = inputs[0]?.title ?? "";
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
+  ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
+  ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
+  ${KATEX_SCRIPT}
   </body></html>`;
 }
 
