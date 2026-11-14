@@ -45,26 +45,28 @@ function blockTex(b: Block, base: string): string {
     // two left-aligned columns: what is written on the left, then the "= …" that lines up under the first equals.
     // A follow-on step ("&= …") that is short continues along the same line as the one before it, rather than starting a new line;
     // a long one (or one that would make the line too wide) starts a new line, under the first equals.
-    type Line = { left: string; parts: Array<{ tex: string; fresh: boolean }>; w: number };
+    // A short follow-on step continues along the same line. When a line is full, the next step goes down but stays in line: its "=" sits under the
+    // start of the last step of the line above (the indent is an invisible copy of what comes before it), so the working never jumps back to the left.
+    type Line = { left: string; indent: string; parts: Array<{ tex: string; fresh: boolean }>; w: number };
+    const SEP = "\\;\\;";
     const lines: Line[] = [];
-    // a working either runs across one line or goes straight down under the first equals; never across and then back to the left.
-    // So a group (a row plus its follow-on rows) is merged only when the whole of it fits on one line.
-    const groups: Array<Array<{ row: string; fresh: boolean }>> = [];
-    for (const r of b.rows) {
-      const left = r.row.slice(0, r.row.indexOf("&"));
-      if (left.trim() === "" && groups.length) groups[groups.length - 1].push(r);
-      else groups.push([r]);
-    }
-    for (const g of groups) {
-      const parts = g.map(({ row, fresh }) => ({ left: row.slice(0, row.indexOf("&")), right: row.slice(row.indexOf("&") + 1), fresh }));
-      const total = parts.reduce((n, x) => n + weight(x.right), 0);
-      if (total <= LINE_BUDGET) lines.push({ left: parts[0].left, parts: parts.map((x) => ({ tex: x.right, fresh: x.fresh })), w: total });
-      else parts.forEach((x) => lines.push({ left: x.left, parts: [{ tex: x.right, fresh: x.fresh }], w: weight(x.right) }));
+    for (const { row, fresh } of b.rows) {
+      const at = row.indexOf("&");
+      const left = row.slice(0, at);
+      const right = row.slice(at + 1);
+      const w = weight(right);
+      const last = lines[lines.length - 1];
+      if (left.trim() !== "" || !last) lines.push({ left, indent: "", parts: [{ tex: right, fresh }], w });
+      else if (last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
+      else {
+        const before = last.parts.slice(0, -1).map((x) => x.tex).join(SEP);
+        lines.push({ left: "", indent: last.indent + (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: weight(last.indent ? last.indent.replace(/\\phantom/g, "") : "") + weight(before) + w });
+      }
     }
     const tall = (l: Line): boolean => /\\frac|\\left|\\begin/.test(l.parts.map((x) => x.tex).join("") + l.left);
     const rows = lines.map((l) => {
       const anyFresh = l.parts.some((x) => x.fresh);
-      return `\\displaystyle ${colour(l.left, anyFresh && l.parts.length === 1 ? NEW : base)} & \\displaystyle \\mkern-9mu ${l.parts.map((x) => colour(x.tex, x.fresh ? NEW : base)).join("\\;\\;")}`;
+      return `\\displaystyle ${colour(l.left, anyFresh && l.parts.length === 1 ? NEW : base)} & \\displaystyle \\mkern-9mu ${l.indent}${l.parts.map((x) => colour(x.tex, x.fresh ? NEW : base)).join("\\;\\;")}`;
     });
     return `\\begin{array}{ll}${rows.map((r, i) => r + (i < rows.length - 1 ? ` \\\\[${tall(lines[i]) || tall(lines[i + 1]) ? "1.45em" : "0.85em"}] ` : "")).join("")}\\end{array}`;
   }
