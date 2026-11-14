@@ -29,6 +29,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Factors deck: scaffold restored, nine-question book sets
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.
+
+- **Whiteboards (slides 5, 10, 15):** Harry liked the scaffold, so it is back: question 1 has the pairs partly completed with blanks, question 2 gives the number of pairs in brackets ("60 (6 pairs)", "40 (4 pairs) and 56 (4 pairs)"), question 3 is just the numbers. Questions are short lines (under 170 characters) so the player centres them without any code change; slides 10 and 15 use smaller text.
+- **Book work (slides 6, 11, 16):** nine questions each, 3 × 3. The first six show the number(s) with a smaller line underneath ("Hint: 3 pairs", "Hint: 3 & 4 pairs"); the last three have no hint and begin to stretch (listing 100, 84, 96; common factors 54 and 90, 70 and 105, 48 and 80; HCF 75 and 100, 52 and 78, 96 and 160).
+- **Numbers:** all renumbered under the fresh-numbers rules (no worked number asked again, none repeated inside a section, exit ticket fresh, no pair repeated); the build script asserts them and the deck check reports no warnings.
+- **Checked:** every answer computed in Python and again in the build script; content and layout checks pass for all 17 slides; the new slides looked at in the browser.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
 ## 2026-11-14 — Factors deck: reformatted after Harry's first look
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `src/decks/deckChecks.ts` (one warning), `docs/design/DECK_BUILD_CHECKLIST.md`, `docs/pathways/decks.md`.
