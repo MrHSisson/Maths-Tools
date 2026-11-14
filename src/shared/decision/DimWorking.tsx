@@ -116,15 +116,18 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
       <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{d.title && (v || !p.exam) ? <Prose text={d.title} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
       <div ref={box} style={{ position: "absolute", top: 46, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
         <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "none", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(12px, 4cqh, 30px)", color: base }}>
-          <div style={{ marginBottom: 10, maxWidth: "26em" }}>
-            <div style={{ ...label, marginBottom: 3 }}>Known</div>
+          <div style={{ marginBottom: 14, maxWidth: "46em" }}>
+            <div style={{ ...label, marginBottom: 5 }}>Known</div>
             {/* what is assumed (l, t, m, v, a), a rule, then what has been built up from them */}
             {[known.slice(0, GIVEN_ITEMS.length), known.slice(GIVEN_ITEMS.length)].map((group, g) => group.length > 0 && (
-              <div key={g} style={{ display: "flex", flexWrap: "wrap", gap: "2px 1.1em", fontSize: "0.9em", color: GIVEN, ...(g === 1 ? { marginTop: 4, paddingTop: 4, borderTop: "1px solid #cbd5e1" } : {}) }}>
+              <div key={g} style={{ ...(g === 1 ? { marginTop: "0.7em", paddingTop: "0.5em", borderTop: "1px solid #cbd5e1" } : {}) }}>
+                {g === 1 && <div style={{ ...label, fontSize: 10, marginBottom: 4 }}>Built up</div>}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35em 1.5em", fontSize: "0.9em", color: GIVEN }}>
                 {group.map((k, j) => {
                   const i = g * GIVEN_ITEMS.length + j;
                   return <span key={i} style={{ whiteSpace: "nowrap", color: i >= known.length - knownFresh ? NEW : GIVEN }}><Tex t={k} /></span>;
                 })}
+                </div>
               </div>
             ))}
           </div>
