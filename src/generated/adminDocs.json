@@ -449,6 +449,16 @@
    ]
   },
   {
+   "title": "Dimensional Analysis (Further Mechanics MA, in development)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** practising dimensional analysis, the AQA 7367 / 7366 topic MA1 and MA2, one micro-skill at a time and then as exam questions. **How it works:** three skill tools, each with Question Options so one tool gives many kinds of question: **Find the dimensions** (a quantity from its name or its units, an expression, or a constant in a formula; written or circled), **Check consistency** (show a formula is consistent, find the odd term out, find a missing power, or circle the consistent formula) and **Find the powers** (equate the powers of M, L and T and solve; in letters with no context, with named quantities, or in a worded situation such as a pendulum or an orbit; including \"show one power is zero\" and \"show it cannot work\"). **Exam style** switches to short chains of lettered parts with marks and an AQA-style mark scheme, from the same generators, with a Practice | Worksheet switch and a printed paper then mark scheme. Everything is written as an examiner expects: the powers are α, β, γ, all maths is typeset, and the working is the formal chain with square brackets, for example [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻². The picture is the **exponent grid**: one row per quantity, columns M, L and T; the working reads it a column at a time, writes the equation each column gives, and fills in the powers. Every answer and every step is re-derived by an independent solver in the tests. Developing-tools only; it is opened from the Further Mechanics hub (chapter MA). **Where:** `/dimensional-analysis`, Further Mechanics hub."
+    }
+   ]
+  },
+  {
    "title": "View as (Auto · Mobile · Tablet · Desktop)",
    "level": 3,
    "blocks": [
@@ -1133,7 +1143,8 @@
         "2026-11-06. The specification is in the repo as data: `specs/exam/spec/aqa-mechanics.md` (25 statements quoted from AQA 7367 and, for the AS column, 7366) and the page `src/tools/FurtherMechanics/` at `/further-mechanics` (dev-gated), which shows each chapter's statements, their AS or A2 status, the printed formulae, the legacy module each came from and the question banks found for it.",
         "AS or A2 is settled from the spec (the same codes in both): ME and MD4 to MD6 are A2 only; the rest is in AS. MB1 to MB3 and MC7 are \"resolving not required\" at AS, and MC1 has no Fd cos θ at AS, so those chapters carry an AS and an A2 version of the same statement.",
         "The Gemini legacy map was checked against the AQA M1 to M3 combined papers. M1 to M3 hold up with a few changes (vertical circles, variable-force work and centres of mass by integration are in M2, not M4; impulse is in M3). Nothing assigned to M4 or M5 could be checked.",
-        "No chapter tool exists yet."
+        "2026-11-13. **Dimensional Analysis (MA) is built** as the pilot of the whole route, on `DecisionShell` with an exponent grid as its picture (`DecisionProblem.network` is now optional, so a non-network tool carries its own data field): three skill tools (Find the dimensions, Check consistency, Find the powers; the last runs in letters, with named quantities or in ~19 worded situations) and six exam-style chains plus a mixed one, with tests that re-derive every answer independently. Still Developing-tools only (`enabled: false`). Brief: `specs/dimensional-analysis.md`. The hub page now shows the chapter's tool, its exam card and its practice chips (the same layout as Decision Maths).",
+        "No other chapter tool exists yet."
        ]
       }
      ]

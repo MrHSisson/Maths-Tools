@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-13 — Dimensional Analysis (Further Mechanics MA): skill tools, exam-style chains and the exponent grid
+
+Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/dim.ts`, `dimGen.ts`, `dimSolve.ts`, `dimExam.ts`, `DimGrid.tsx`, `types.ts`; `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`, `FurtherMechanics.tsx`, `mechanicsSpec.ts`; `src/registry.ts`; tests `dim.test.ts`, `mechanicsPairings.test.ts`; `specs/dimensional-analysis.md` (now implemented).
+
+- **Three skill tools** with Question Options doing the variety: Find the dimensions (2 levels), Check consistency (2 levels), Find the powers (3 levels; context: letters, named quantities or a worded situation; ask: find, show one is zero, show it cannot work). **Exam style** (Practice | Exam style, as Critical Path): six chains (circle your answer; state the dimensions then find the powers; dimensions of a constant then predict; show it is consistent; two models, reject one; show a quantity does not matter) and "Any exam question", with B1/M1/A1/E1/R1 mark schemes, stepped working, Worksheet and print.
+- **Written as an examiner expects:** the powers are α, β, γ; every question, option, step and model answer is LaTeX between `$…$` (rendered on screen by the shell's `InlineMath`, in the grid by KaTeX, and on the printed paper by KaTeX spans); and the working is the formal chain with square brackets, `[F] = [ma] = [m][a] = M × LT⁻² = MLT⁻²`, for dimensions, constants and each term of a formula. The Decision shell's question, answer, step and exam text now all render `$…$` (the other Decision tools have none, so they are unchanged).
+- **The exponent grid** is the picture (rows are quantities, columns M, L, T; read a column at a time, the equation each gives, the powers found). Inline styles, so the exam paper prints it.
+- **Built equations-first:** the powers (or the dimensions) are chosen, everything else is computed from them once. The quantity library carries a first-principles definition and units for every entry; ~19 worded situations; true formulas that are broken one term at a time (never in a way that leaves them consistent).
+- **Hub:** the Further Mechanics page now reads each chapter's tools from the registry and shows the Open-tool button, the Exam style card and the practice chips for MA, the same as Decision Maths (`mechanicsSpec.ts` maps tools, pairings, groups and the exam card; `mechanicsPairings.test.ts` places every sub-tool once).
+- **Checked:** the library's dimensions equal their definitions and units; every situation's powers re-solved by Cramer's rule; every generator output re-derived at every level and option; every chain's parts, marks and mark codes; the grid renders server-side for every step. Seen at laptop and phone widths. Build, lint and the full suite pass.
+- **Deliberately not done:** tile art in the chooser, printable skill worksheets (only the exam Worksheet), an `about.ts` (the shell's `purpose`, option `info` and level labels carry the words), the other Mechanics chapters. Marks for exam parts after question 11 of the current paper (and legacy after 9) should be checked against their mark schemes (the brief says so).
+
+Agent: Claude Code
+
 ## 2026-11-13 — Decision shell: a problem no longer needs a network
 
 Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/types.ts`, `DecisionShell.tsx`, `validate.ts`, `tspSolve.ts`, `routeInspectionSolve.ts`, `representations/SandboxBoard.tsx`, `cpaExam.ts`, `src/tools/Decision/CriticalPath.tsx`, `MinimumSpanningTree.tsx`, `tspBounds.test.ts`.

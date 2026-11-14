@@ -151,6 +151,7 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'A-Level',
     tools: [
       { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME) chapter by chapter: AS and A2 content, the link back to the legacy M1–M3 papers and their question banks. Planning space for the Further Mechanics tools.', enabled: false, load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
+      { hub: 'further-mechanics', id: 'dimensional-analysis', path: '/dimensional-analysis', name: 'Dimensional Analysis', description: 'Find the dimensions of quantities and constants, check a formula is dimensionally consistent, and predict a formula by equating the powers of M, L and T (AQA 7367 MA) — skill practice and exam-style questions', enabled: false, load: () => import('./tools/FurtherMechanics/DimensionalAnalysis') },
     ],
   },
   {

@@ -379,7 +379,7 @@ describe("printed text is escaped", () => {
     const p = generateFlowExam(1, "examCut", { course: "as" });
     const exam = { ...p.exam!, intro: "Flow <b>&</b> more", parts: p.exam!.parts.map((x, i) => (i === 0 ? { ...x, prompt: "Find <script>x</script> & y", model: ["a < b & c > d"] } : x)) };
     const html = examSetHtml([{ title: "T <i>", exam, questionFigure: "<svg></svg>", answerFigures: exam.parts.map(() => null) }]);
-    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<script>x</script>"); // the injected tag is escaped (the page has its own script, for rendering maths)
     expect(html).not.toContain("<b>&</b>");
     expect(html).toContain("&lt;script&gt;");
     expect(html).toContain("a &lt; b &amp; c &gt; d");

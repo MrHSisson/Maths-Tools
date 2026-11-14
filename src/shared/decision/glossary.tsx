@@ -6,6 +6,7 @@
 // the shell finds the terms by their pattern — so a caption never has to be reworded to carry one.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { InlineMath } from "../components/MathRenderer";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
@@ -212,7 +213,7 @@ function GlossTerm({ term, children }: { term: GlossaryTerm; children: React.Rea
 export function GlossCaption({ segments }: { segments: CaptionSegment[] }) {
   return (
     <>
-      {segments.map((s, i) => (s.term ? <GlossTerm key={i} term={s.term}>{s.text}</GlossTerm> : <span key={i}>{s.text}</span>))}
+      {segments.map((s, i) => (s.term ? <GlossTerm key={i} term={s.term}>{s.text}</GlossTerm> : <InlineMath key={i} text={s.text} />))}
     </>
   );
 }

@@ -20,6 +20,9 @@ interface ExamPrintInput {
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/** text with maths between $…$ as HTML: the prose escaped, each formula a span that KaTeX renders once the page has loaded it (a plain string has none, so it is just escaped) */
+const mathHtml = (s: string): string =>
+  s.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? `<span class="katex-render" data-latex="${part.slice(1, -1).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"></span>` : esc(part))).join("");
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
 const CSS = `
@@ -78,23 +81,23 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
               : lines(2)}`
         : lines(Math.min(9, 2 + p.marks * 2));
     const fig2 = partFigures[i] ? `<div class="cap">${esc(p.figure?.label ?? "Figure 2")}</div><div class="fig">${partFigures[i]}</div>` : "";
-    return `<section class="part">${fig2}<div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;
+    return `<section class="part">${fig2}<div class="prompt"><b>${esc(p.label)}</b><span>${mathHtml(p.prompt)}</span><em>[${p.marks} mark${p.marks > 1 ? "s" : ""}]</em></div>${space}</section>`;
   }).join("");
 
   const scheme = exam.parts.map((p, i) => {
     const fig = answerFigures[i];
     const answer = p.onDiagram
       ? (fig ? `<div class="fig small">${fig}</div>` : "")
-      : `<div class="model">${p.model.map((l) => `<div>${esc(l)}</div>`).join("")}</div>${fig ? `<div class="fig tiny">${fig}</div>` : ""}`;
-    const marks = p.scheme.map((m) => `<div class="mk"><span class="code" style="background:${CODE_BG[m.code[0]] ?? "#475569"}">${esc(m.code)}</span><span>${esc(m.text)}</span></div>`).join("");
-    return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${esc(p.prompt)}</span><em>[${p.marks}]</em></div>${answer}<div class="marks">${marks}</div></section>`;
+      : `<div class="model">${p.model.map((l) => `<div>${mathHtml(l)}</div>`).join("")}</div>${fig ? `<div class="fig tiny">${fig}</div>` : ""}`;
+    const marks = p.scheme.map((m) => `<div class="mk"><span class="code" style="background:${CODE_BG[m.code[0]] ?? "#475569"}">${esc(m.code)}</span><span>${mathHtml(m.text)}</span></div>`).join("");
+    return `<section class="part"><div class="prompt"><b>${esc(p.label)}</b><span>${mathHtml(p.prompt)}</span><em>[${p.marks}]</em></div>${answer}<div class="marks">${marks}</div></section>`;
   }).join("");
 
   const tag = total > 1 ? `Question ${n} of ${total} · ` : "";
   const paper = `<div class="paper">
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
     <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
-    <div class="intro">${esc(exam.intro)}</div>
+    <div class="intro">${mathHtml(exam.intro)}</div>
     ${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>
     ${parts}
   </div>`;
@@ -106,12 +109,21 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
 }
 
 /** the HTML of a whole print: every question paper first, then every mark scheme (exported so it can be tested without a window) */
-export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean } = {}): string {
+export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
   const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
   const title = inputs[0]?.title ?? "";
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title><style>${CSS}</style></head><body>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script><style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
   ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
   ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
+  <script>
+  window.addEventListener('load', function () {
+    document.querySelectorAll('.katex-render').forEach(function (el) {
+      var tex = el.getAttribute('data-latex');
+      try { if (window.katex) window.katex.render(tex, el, { throwOnError: false, output: 'html' }); else el.textContent = tex; } catch (e) { el.textContent = tex; }
+    });
+    if (document.body.getAttribute('data-autoprint')) setTimeout(function () { window.print(); }, 300);
+  });
+  <\/script>
   </body></html>`;
 }
 
@@ -120,10 +132,9 @@ export function examPrintHtml(input: ExamPrintInput): string { return examSetHtm
 
 /** `win` is a window already opened at the click (so the slow rendering before it cannot make the browser treat the popup as unrequested) */
 export function printExam(input: ExamPrintInput | ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
-  const html = examSetHtml(Array.isArray(input) ? input : [input], opts);
+  const html = examSetHtml(Array.isArray(input) ? input : [input], { ...opts, autoPrint: true });
   const win = opts.win ?? window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
   win.document.write(html);
   win.document.close();
-  setTimeout(() => win.print(), 500);
 }

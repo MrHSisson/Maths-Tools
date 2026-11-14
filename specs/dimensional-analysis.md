@@ -1,6 +1,6 @@
 # Tool Spec: Dimensional Analysis (Further Mechanics MA) — skill tools and exam-style questions
 
-**Status:** draft (for Harry to approve; Claude Code builds only `ready` briefs)
+**Status:** implemented (2026-11-13). Built on `DecisionShell`: `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`; maths `src/shared/decision/dim.ts`, generators `dimGen.ts`, working `dimSolve.ts`, exam chains `dimExam.ts`, picture `DimGrid.tsx`; tests `src/tests/dim.test.ts`, `mechanicsPairings.test.ts`. Differences from the draft: the powers are α, β, γ (not a, b, c) and all maths is LaTeX between `$…$` (`dimTex.ts`), with the working as the formal bracket chain `[F] = [ma] = [m][a] = M × LT⁻² = MLT⁻²`; *Given*, *Ask for* and *Context* are tick-several options (the shell's `multi`), *Answer format*, *Numbers in formulas* and *Dimensions given as* are single choices; the chooser has no tile art yet; no `about.ts` (the shell's purpose, option info and level labels carry the words).
 
 Specification statements: **MA1** (find dimensions of quantities; check for dimensional consistency) and **MA2** (predict formulae; find powers in potential formulae). Both are in AS (7366) and A-level (7367), so the tool has no Course option. Hub entry: Further Mechanics, chapter MA, `/further-mechanics#MA`.
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
+import { InlineMath } from "../components/MathRenderer";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -328,7 +329,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const shown = (st: SolveStep | undefined) => problem.caption && !st ? (
     <div className="absolute inset-0 flex flex-col">
       <div className="relative min-h-0 flex-1">{shownCanvas(st)}</div>
-      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800">{problem.caption}</div>
+      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800"><InlineMath text={problem.caption} /></div>
     </div>
   ) : shownCanvas(st);
   // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
@@ -582,13 +583,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {atQuestion ? (
           <>
             <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
           </>
         ) : (
           <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className="w-full text-left flex items-start gap-2">
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
-              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}>{problem.prompt}</div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
             </div>
             <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
           </button>
@@ -696,7 +697,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {legendItems && <div className="shrink-0"><Legend items={legendItems} /></div>}
       </div>
       <div className="flex flex-col gap-3 min-w-0 min-h-0">
-        <div className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-lg font-semibold text-gray-900 leading-snug overflow-y-auto" style={{ maxHeight: "42%" }}>{problem.prompt}</div>
+        <div className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-lg font-semibold text-gray-900 leading-snug overflow-y-auto" style={{ maxHeight: "42%" }}><InlineMath text={problem.prompt} /></div>
         {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
           <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "16%" }}>{workingExtras}</div>
         )}
@@ -717,9 +718,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     // The table and the graph share the stage (a switch, automatic when a step builds the table).
     <div className={`flex flex-col gap-2.5 p-3 ${atQuestion ? "" : "h-full"}`}>
       {atQuestion
-        ? <div className="text-center font-semibold text-gray-900 leading-snug shrink-0 text-xl py-1">{problem.prompt}</div>
+        ? <div className="text-center font-semibold text-gray-900 leading-snug shrink-0 text-xl py-1"><InlineMath text={problem.prompt} /></div>
         : <button type="button" onClick={() => setPromptOpen((o) => !o)} aria-expanded={promptOpen}
-            className={`text-center font-semibold text-gray-900 leading-snug shrink-0 text-sm ${promptOpen ? "" : "line-clamp-2"}`}>{problem.prompt}</button>}
+            className={`text-center font-semibold text-gray-900 leading-snug shrink-0 text-sm ${promptOpen ? "" : "line-clamp-2"}`}><InlineMath text={problem.prompt} /></button>}
       {showMatrix && (
         <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold shrink-0">
           {(["graph", "table"] as const).map((t) => (
@@ -809,7 +810,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                   <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
                   {sheetAnswers && (
                     <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
-                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}
                     </div>
                   )}
                 </div>

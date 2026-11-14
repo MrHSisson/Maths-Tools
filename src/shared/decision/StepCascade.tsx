@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SolveStep } from "./types";
 import { GlossCaption, glossSegments } from "./glossary";
+import { InlineMath } from "../components/MathRenderer";
 
 // The step-by-step working as a cascade: every step so far, the newest lit, earlier ones dimmed, auto-scrolled to follow the newest. Shared by the
 // stepped worked example and the exam parts' working.
@@ -87,7 +88,7 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
           <FadeIn>
             <div data-newest="1" style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 16 : 15, fontWeight: 700, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 16 : 15, fontWeight: 700, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}><InlineMath text={answer} /></div>
             </div>
           </FadeIn>
         )}
