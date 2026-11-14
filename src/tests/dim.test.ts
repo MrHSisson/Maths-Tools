@@ -209,7 +209,7 @@ describe("find the powers", () => {
         // substituting the powers gives the target's dimensions
         [0, 1, 2].forEach((c) => expect(close(factors.reduce((a, f, k) => a + N(f[c]) * N(d.answerPowers[k]), 0), N(target[c]))).toBe(true));
         if (d.ask === "zero") expect(fstr(d.answerPowers[d.zeroIdx!])).toBe("0");
-        expect(d.answerPowers.length).toBe(level === 1 ? 2 : 3);
+        expect(d.answerPowers.length).toBe(level === 1 && ask === "find" ? 2 : 3); // a zero power needs three (asked at Level 1 too)
       }
     });
   });

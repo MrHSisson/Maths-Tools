@@ -302,7 +302,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     window.history.replaceState(window.history.state, "", window.location.pathname + (s ? `?${s}` : ""));
   }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: config is fixed for a tool, and the tabs follow the options listed here
 
-  // ← / → step through a worked example; Esc leaves fullscreen
+  // ← / → (or Space) step through a worked example, Home and End go to the question and the answer; Esc leaves fullscreen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !sandbox) setFullscreen(false);
@@ -310,6 +310,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       if (e.ctrlKey || e.metaKey || e.altKey || infoOpen || (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))) return; // never step while typing or while a dialog is open
       if (e.key === "ArrowRight") { setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
       if (e.key === "ArrowLeft") { setShowAll(false); setStepIdx((i) => Math.max(-1, i - 1)); }
+      // Space is "next" when nothing that uses Space itself (a button, link, summary) has the focus
+      if (e.key === " " && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { e.preventDefault(); setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
+      if (e.key === "Home" && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { setShowAll(false); setStepIdx(-1); }
+      if (e.key === "End" && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { setShowAll(false); setStepIdx(maxBeat); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -425,7 +429,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const navBar = (
     <div className="bg-blue-900 shadow-lg">
       <div className="max-w-[1500px] mx-auto px-2 sm:px-8 py-1.5 sm:py-3 flex justify-between items-center gap-2">
-        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors">
+        <button onClick={() => { window.location.href = "/"; }} aria-label="Home" className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-2 min-h-[40px] sm:px-4 rounded-lg transition-colors">
           <Home size={narrow ? 20 : 24} />
           {!narrow && <span className="font-semibold text-lg">Home</span>}
         </button>
@@ -442,7 +446,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 ].filter((c) => c.label).map((c, i) => (
                   <span key={c.label + i} className="flex items-center gap-1 min-w-0">
                     {i > 0 && <span className="text-blue-400">›</span>}
-                    <button onClick={c.onClick} className="underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
+                    <button onClick={c.onClick} className="py-3.5 -my-3.5 underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
                   </span>
                 ))}
               </div>
@@ -450,7 +454,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           </div>
         )}
         <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
+          <button onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close the menu" : "Open the menu"} aria-expanded={menuOpen} className="text-white hover:bg-blue-800 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
           {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={isPhone ? undefined : keeper} printables={isPhone ? [] : [
@@ -501,7 +505,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <button
               onClick={() => { if (visibleOptions.length > 0) optionsPop.setOpen(!optionsPop.open); }}
               disabled={visibleOptions.length === 0}
-              title={visibleOptions.length === 0 ? "No options for this question type" : undefined}
+              title={visibleOptions.length === 0 ? (problem.exam ? "Exam-style questions have no options: choose Skills to set options" : "No options for this question type") : undefined}
               className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${visibleOptions.length === 0 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed" : optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Question Options
@@ -567,7 +571,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         <button
           onClick={() => jump(stepIdx - 1)}
           disabled={atQuestion}
-          title="Back"
+          title="Back (←)"
+          aria-label="Previous step"
           className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={26} />
@@ -575,6 +580,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         <button
           onClick={() => jump(stepIdx + 1)}
           disabled={stepIdx >= maxBeat}
+          title="Next (→ or Space)"
           className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-blue-900 text-white font-bold text-base whitespace-nowrap flex items-center justify-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span className="truncate">{atQuestion ? "Show working" : onAnswer ? "Answer shown" : stepIdx + 1 >= maxBeat && answerText ? "Show answer" : "Next step"}</span>
@@ -593,11 +599,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             if (showAll) jump(resumeAt.current);
             else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
           }}
-          className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap shrink-0"
+          className="text-sm font-bold text-blue-900 hover:bg-blue-50 rounded-lg px-2.5 min-h-[40px] flex items-center gap-1 whitespace-nowrap shrink-0"
         >
           <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
         </button>
       </div>
+      {!narrow && <div className="text-[11px] text-gray-500 text-center -mt-1">← → to step · Space for next</div>}
     </div>
   );
   const stepNav = stepNavFor(false);
@@ -633,7 +640,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <button
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
-        className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
+        aria-label="Fullscreen"
+        className="absolute top-3 left-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -733,7 +741,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         <div className="relative flex-1 min-h-[8rem] rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
           <div className="absolute inset-0">
             {atQuestion
-              ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show answer to work it through, one step at a time.</div>
+              ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show working to work it through, one step at a time.</div>
               : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />}
           </div>
         </div>
@@ -818,7 +826,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     <div className="flex justify-center gap-7 border-b border-slate-300">
       {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
         <button key={label} onClick={() => setSheetMode(on)}
-          className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
+          className={`pb-3 pt-2 min-h-[40px] -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
       ))}
     </div>
   ) : null;
@@ -1041,15 +1049,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}</span>
                       <button
                         onClick={() => { if (showAll) jump(resumeAt.current); else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); } }}
-                        className="px-4 py-1.5 rounded-lg font-bold text-sm border-2"
+                        className="px-4 py-2 min-h-[40px] rounded-lg font-bold text-sm border-2"
                         style={{ background: showAll ? "#fff" : "#1e3a8a", color: showAll ? "#6b7280" : "#fff", borderColor: showAll ? "#d1d5db" : "#1e3a8a" }}>
                         {showAll ? "Show All" : "Step-by-Step"}
                       </button>
                     </div>
                     <div className="flex w-full gap-1">
                       {Array.from({ length: steps.length + (answerText ? 1 : 0) }, (_, i) => (
-                        <button key={i} aria-label={i === steps.length ? "Answer" : `Step ${i + 1}`} onClick={() => jump(i)}
-                          className="h-1.5 flex-1 rounded-full" style={{ background: i <= (onAnswer ? steps.length : idx) ? "#1e3a8a" : "#e2e8f0" }} />
+                        <button key={i} aria-label={i === steps.length ? "Answer" : `Step ${i + 1}`} onClick={() => jump(i)} className="flex-1 py-[17px] flex items-center">
+                          <span className="block h-1.5 w-full rounded-full" style={{ background: i <= (onAnswer ? steps.length : idx) ? "#1e3a8a" : "#e2e8f0" }} />
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -1068,7 +1077,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 </>
               ) : (
                 <>
-                  <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
+                  <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show working" : "Hide working"}</button>
                   {!isPhone && <PinButton keeper={savedUi} size="phone" />}
                   <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>

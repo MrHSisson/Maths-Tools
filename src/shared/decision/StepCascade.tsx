@@ -77,7 +77,7 @@ export default function StepCascade({ steps, idx, answer, all, big, onOpen, onCl
                 </div>
                 {canClose && (
                   <button type="button" onClick={() => onClose!(m!.raw)} aria-label="Fold the steps away" title="Fold the steps away"
-                    style={{ position: "absolute", top: 2, right: 2, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                    style={{ position: "absolute", top: 0, right: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "rotate(180deg)" }}><path d="M3 6l5 5 5-5" /></svg>
                   </button>
                 )}
@@ -87,7 +87,7 @@ export default function StepCascade({ steps, idx, answer, all, big, onOpen, onCl
                       {st.phase && !sub && <span style={{ background: sub ? "#eef2ff" : "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
                       {canOpen && (
                         <button type="button" onClick={() => onOpen!(i)} aria-label="Show the steps" title="Show the steps"
-                          style={{ marginLeft: "auto", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                          style={{ marginLeft: "auto", width: 40, height: 40, margin: "-6px 0 -6px auto", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "none" }}><path d="M3 6l5 5 5-5" /></svg>
                         </button>
                       )}
@@ -133,7 +133,11 @@ export function StepDots({ n, cur, hasAnswer, onJump, reach = 5 }: { n: number; 
       : i === n ? { width: 24, height: 10, borderRadius: 5, background: on ? "#16a34a" : "#d1d5db" }
       : { width: 10, height: 10, borderRadius: 5, background: on ? "#1e3a8a" : "#d1d5db" };
     void edge;
-    out.push(<button key={i} onClick={() => onJump(i)} title={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`} style={{ ...style, border: "none", cursor: "pointer", opacity: fade, flexShrink: 0 }} />);
+    out.push(
+      <button key={i} onClick={() => onJump(i)} aria-label={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`} title={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`}
+        style={{ border: "none", background: "transparent", cursor: "pointer", opacity: fade, flexShrink: 0, padding: "16px 3px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ display: "block", ...style }} />
+      </button>);
   }
-  return <div className="flex justify-center items-center gap-1.5 min-w-0 overflow-hidden flex-nowrap">{out}</div>;
+  return <div className="flex justify-center items-center gap-0 min-w-0 overflow-hidden flex-nowrap">{out}</div>;
 }

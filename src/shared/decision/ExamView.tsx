@@ -81,8 +81,8 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 shrink-0">
       <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5 text-sm font-semibold">
-        <button onClick={() => setAll(false)} className={`px-3 py-1 rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show individually</button>
-        <button onClick={() => setAll(true)} className={`px-3 py-1 rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show all parts</button>
+        <button onClick={() => setAll(false)} className={`px-3 py-2 min-h-[40px] rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show individually</button>
+        <button onClick={() => setAll(true)} className={`px-3 py-2 min-h-[40px] rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show all parts</button>
       </div>
       <div className="flex items-center gap-3 text-xs font-semibold">
         {!all && <span className="text-gray-500">Part {active + 1} of {parts.length}</span>}
@@ -114,7 +114,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
             </div>
             {((p.working && p.working.length > 0) || (p.explain && p.explain.length > 0)) && (
               <button onClick={(e) => { e.stopPropagation(); setActive(i); setWhy((w) => ({ ...w, [i]: !w[i] })); }} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
-                className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
+                className={`shrink-0 rounded-full w-10 h-10 flex items-center justify-center ${why[i] ? "text-blue-900" : "text-gray-500 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
             )}
           </div>
           {why[i] && !(p.working && p.working.length > 0) && p.explain && (
@@ -130,7 +130,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
               </div>
             ))}
             {p.practise && onPractise && (
-              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline">Practise this</button>
+              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline px-1 min-h-[40px] flex items-center">Practise this</button>
             )}
           </div>
         </div>

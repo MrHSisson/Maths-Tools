@@ -517,6 +517,7 @@ function cannotFromSituation(sit: Situation, drop: number, unitsGiven: boolean):
 }
 export function genPowers(level: number, o: PowersOpts): DimQuestion {
   const unitsGiven = o.given === "units";
+  if (o.ask === "zero" && level === 1) level = 2; // a power that is zero needs a third quantity to be zero: at Level 1 (two powers) it is asked with three
   // an inconsistent model: two quantities that cannot make the target
   if (o.ask === "cannot") {
     // with a context it is a real situation with an essential quantity missing; with letters, quantities made up

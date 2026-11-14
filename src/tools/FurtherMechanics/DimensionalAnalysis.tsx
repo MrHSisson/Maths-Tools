@@ -103,7 +103,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
-            info: "Skills gives one skill at a time. Exam style gives multi-part questions in the style of the exam paper.",
+            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme, and is the part that has a Worksheet and printing.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },
@@ -205,7 +205,7 @@ export default function App() {
             defaultFor: () => "find",
             choices: [
               { value: "find", label: "Find the powers" },
-              { value: "zero", label: "Show one is zero", sub: "Level 2 and up" },
+              { value: "zero", label: "Show one is zero", sub: "Three powers" },
               { value: "cannot", label: "Show it cannot work" },
             ],
           },

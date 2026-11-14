@@ -58,7 +58,7 @@ export function PinButton({ keeper, size = "bar" }: { keeper?: QuestionKeeperMen
           <Pin size={phone ? 20 : 18} fill={isPinned ? "currentColor" : "none"} />
         </button>
         <button onClick={() => setOpen((o) => !o)} aria-label="Saved questions" aria-expanded={open} title="Saved and recent questions"
-          className="flex w-6 items-center justify-center border-l border-slate-200 bg-white text-blue-900 hover:bg-slate-50">
+          className={`flex items-center justify-center border-l border-slate-200 bg-white text-blue-900 hover:bg-slate-50 ${touch ? "w-10" : "w-6"}`}>
           <ChevronDown size={14} style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
         </button>
       </div>
