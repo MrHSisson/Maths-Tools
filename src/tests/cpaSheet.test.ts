@@ -99,9 +99,10 @@ describe("levelling question sheet: the blank levelled histogram does not give t
     expect(levelAxisT(150, 167)).toBe(175);          // 167 gives 175
   });
   it("on the printed question both histograms share one axis, and changing the answer does not change what is printed", async () => {
-    await withSeededRandom(77, async () => {
-      for (let i = 0; i < 3; i++) {
-        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" });
+    // the questions are drawn inside the seeded stream; the printing awaits outside it (withSeededRandom puts the real Math.random back as soon as an async function first awaits)
+    const drawn = withSeededRandom(77, () => Array.from({ length: 3 }, () => generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" })));
+    {
+      for (const g of drawn) {
         const p = problemOf(g, "cpaLevel", 3) as never;
         const q = await html(p, false);
         const hist = [...q.matchAll(/class="fig hist[\s\S]*?<\/svg>/g)].map((m) => m[0]);
@@ -117,6 +118,6 @@ describe("levelling question sheet: the blank levelled histogram does not give t
           expect(q2).toBe(q);
         }
       }
-    });
+    }
   }, 100_000);
 });

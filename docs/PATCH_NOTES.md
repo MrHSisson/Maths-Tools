@@ -47,7 +47,7 @@ Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/dim*.ts`, `DimW
 - **Not done yet:** trig in the consistency formulas, root expressions through the combine/subtract rows, `about.ts`, wider constant and exam pools, curated wording for "named" powers, keyboard hints and tooltips, smaller touch targets.
 
 Agent: Claude Code
-Notes: planner Build Log block tagged `dimensional-analysis`.
+Notes: planner Build Log block "2026-11-14 — Dimensional Analysis: audit, fixes, phone view (Claude Code)" in `Maths Tools — Build Log`.
 
 ## 2026-11-13 — Dimensional Analysis (Further Mechanics MA): skill tools, exam-style chains and the written working
 
