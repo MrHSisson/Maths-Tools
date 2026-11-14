@@ -288,6 +288,8 @@ export interface DecisionShellProps {
   solve: (p: DecisionProblem) => SolveStep[]; // the algorithm, as ordered beats
   /** Replace the default NetworkView canvas (e.g. FlowView). `step` is undefined in Question mode. */
   renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => ReactNode;
+  /** a phone shows the whole solution as one open, scrolling page instead of the stepped picture and cascade: the tool draws it from the finished list of steps */
+  renderSolution?: (problem: DecisionProblem, steps: SolveStep[]) => ReactNode;
   config: {
     pageTitle: string;
     /** One or two plain sentences: what the whole tool is for. The opening of "About this tool". */

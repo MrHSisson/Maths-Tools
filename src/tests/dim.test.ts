@@ -13,7 +13,7 @@ import { symTex, frTex, dimTex, M } from "../shared/decision/dimTex";
 import { examSetHtml } from "../shared/decision/printExam";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
-import DimCanvas from "../shared/decision/DimWorking";
+import DimCanvas, { DimSolution } from "../shared/decision/DimWorking";
 import { withSeededRandom } from "./seededRandom";
 
 // an independent exact solver: the 3×3 system by Cramer's rule on plain fractions (numerator/denominator pairs)
@@ -505,5 +505,19 @@ describe("the audit rules", () => {
     const rel = CONST_RELATIONS.find((r) => r.arg === "sine")!;
     expect(dimStr(constDim(rel))).toBe("T⁻¹");
     expect(dimStr(constDim(CONST_RELATIONS.find((r) => r.arg === "cosine")!))).toBe("L⁻¹");
+  });
+});
+
+describe("the phone's open solution page", () => {
+  it("draws every kind of question's whole solution with no KaTeX error", () => {
+    withSeededRandom(95, () => {
+      const qs = [genDimsName(2, false, false), genDimsExpr(2, false), genDimsConst(false), genConsistent(2, "show", true), genPowers(3, { context: "named", ask: "find", given: "dims" })];
+      for (const q of qs) {
+        const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
+        const html = renderToStaticMarkup(createElement(DimSolution, { steps }));
+        expect(html, q.prompt).not.toContain("katex-error");
+        expect(html, q.prompt).toContain("katex");
+      }
+    });
   });
 });

@@ -89,7 +89,7 @@ function readUrl(config: DecisionShellProps["config"]) {
 }
 
 let problemCount = 0;
-export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
+export default function DecisionShell({ generate, solve, renderCanvas, renderSolution, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: read from the address bar once, when the page opens
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
@@ -120,6 +120,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const isPhone = layout.phone, isTablet = layout.tablet;
   const tabletLand = isTablet && !layout.portrait;   // a tablet held upright keeps the phone's stacked arrangement
   const narrow = !layout.laptop;
+  // a phone (or an upright tablet) with a tool that can draw its whole solution as one open page shows that, not the stepped picture
+  const phoneSolution = narrow && !tabletLand && !!renderSolution;
   const [drawer, setDrawer] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false); // phone: with the answer showing, the question shrinks to two lines — tap for all of it
   // Phone: click-through start (the big either/or option, then the question type) before the tool; a link naming a setup skips it.
@@ -736,7 +738,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
-  const example = tabletLand ? exampleTablet : narrow ? (
+  // the phone's open page: the question as plain text, then (on request) the whole solution, scrolling: no cards, no stepper
+  const examplePhoneSolution = (
+    <div className="flex flex-col gap-5 px-1 pb-6">
+      <div className="text-lg font-semibold text-gray-900 leading-snug"><InlineMath text={problem.prompt} /></div>
+      {!atQuestion && renderSolution ? renderSolution(problem, rawSteps) : null}
+    </div>
+  );
+  const example = tabletLand ? exampleTablet : phoneSolution ? examplePhoneSolution : narrow ? (
     // phone: laid out like the other tools' phone Worked Example — the whole question, the picture, then (once the answer is
     // asked for) the working in its own closed box that scrolls inside itself; the stepper and buttons are fixed at the bottom.
     // The table and the graph share the stage (a switch, automatic when a step builds the table).
@@ -961,14 +970,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
             {examTabs && <div className="mb-3">{examTabs}</div>}
-            <div className={`${CARD} overflow-clip`} style={
-              tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
+            <div className={phoneSolution && !problem.exam && !inSheet ? "" : `${CARD} overflow-clip`} style={
+              phoneSolution && !problem.exam && !inSheet ? undefined : tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
               : atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
           </div>
         </div>
         {!drawer && !inSheet && (
           <>
-            {!atQuestion && (
+            {!atQuestion && !(phoneSolution && !problem.exam) && (
               // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
               <div className="fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))", ...(isTablet ? BAR_INSET : {}) }}>
                 <div className="flex items-center justify-between">

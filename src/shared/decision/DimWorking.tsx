@@ -39,7 +39,7 @@ const weight = (tex: string): number => tex.replace(/\\(left|right|displaystyle|
 /** the widest a line of working gets before a follow-on step starts a new line */
 const LINE_BUDGET = 40;
 const colour = (tex: string, c: string): string => `{\\color{${c}}${tex}}`;
-function blockTex(b: Block, base: string): string {
+function blockTex(b: Block, base: string, budget: number = LINE_BUDGET): string {
   if (b.kind === "head") return "";
   if (b.kind === "free") return `\\displaystyle ${colour(b.row, b.fresh ? NEW : base)}`;
   if (b.kind === "aligned") {
@@ -59,7 +59,7 @@ function blockTex(b: Block, base: string): string {
       const last = lines[lines.length - 1];
       if (left.trim() !== "" || !last) lines.push({ left, indent: "", broken: false, parts: [{ tex: right, fresh }], w });
       // once a working has broken onto a new line, every step after it goes on its own line too, all under the same "="
-      else if (!last.broken && last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
+      else if (!last.broken && last.w + w <= budget) { last.parts.push({ tex: right, fresh }); last.w += w; }
       else {
         const before = last.parts.slice(0, -1).map((x) => x.tex).join(SEP);
         lines.push({ left: "", broken: true, indent: last.indent || (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: w });
@@ -139,6 +139,61 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
           {!v && !p.exam && lines.length === 0 && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 6 }}>Your working builds up here, one line at a time.</div>}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── the phone: the whole solution as one open page ──────────────────────────────────────────
+/** the rows a step adds to the page */
+const addedRows = (st: SolveStep): string[] => { const v = st.dimView; return v && v.fresh ? v.lines.slice(v.lines.length - v.fresh) : []; };
+/** some rows of working, in the written layout, at a size a phone can read; long lines break earlier than on a laptop */
+function PhoneRows({ rows }: { rows: string[] }) {
+  const bs = blocks(rows, 0);
+  return (
+    <div className="flex flex-col gap-2 items-start" style={{ fontSize: 17, color: INK }}>
+      {bs.map((b, i) => (b.kind === "gap" ? <div key={i} style={{ height: 4 }} /> : b.kind === "head" ? <div key={i} style={{ fontSize: 13, fontWeight: 600, color: "#64748b", paddingTop: 4 }}><Prose text={b.text} /></div> : <div key={i} style={{ maxWidth: "100%", overflowX: "auto" }}><Tex t={blockTex(b, INK, 22)} /></div>))}
+    </div>
+  );
+}
+function PhoneStep({ st }: { st: SolveStep }) {
+  const [open, setOpen] = useState(false);
+  const chevron = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? "rotate(180deg)" : "none" }}><path d="M3 6l5 5 5-5" /></svg>
+  );
+  if (st.more) {
+    // a build: its one line, and the result; the parts behind a chevron
+    const known = st.dimView!.known;
+    return (
+      <div>
+        <div className="flex items-start gap-2">
+          <div style={{ flex: 1, fontSize: 14, color: "#475569", lineHeight: 1.45 }}><Prose text={st.caption} /></div>
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Fold the steps away" : "Show the steps"} className="shrink-0 flex items-center justify-center text-slate-500" style={{ width: 40, height: 32 }}>{chevron}</button>
+        </div>
+        {!open && <div style={{ fontSize: 17, marginTop: 2 }}><Tex t={known[known.length - 1]} /></div>}
+        {open && (
+          <div className="flex flex-col gap-3 mt-2 ml-2 pl-3" style={{ borderLeft: "2px solid #c7d2fe" }}>
+            {st.more.map((m, k) => (<div key={k}><div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{m.caption}</div><PhoneRows rows={addedRows(m)} /></div>))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div style={{ fontSize: 14, color: "#475569", lineHeight: 1.45, marginBottom: 4 }}><Prose text={st.caption} /></div>
+      <PhoneRows rows={addedRows(st)} />
+    </div>
+  );
+}
+/** a Dimensional Analysis solution on a phone: what is known, then each step with its caption and what it adds to the page, on one open scrolling page */
+export function DimSolution({ steps }: { steps: SolveStep[] }) {
+  const first = steps[0]?.dimView;
+  if (!first) return null;
+  const knownGiven = first.known.slice(0, GIVEN_ITEMS.length);
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap gap-x-5 gap-y-1" style={{ fontSize: 15, color: "#475569" }}>{knownGiven.map((k, i) => <span key={i} style={{ whiteSpace: "nowrap" }}><Tex t={k} /></span>)}</div>
+      {steps.map((st, i) => <PhoneStep key={i} st={st} />)}
     </div>
   );
 }

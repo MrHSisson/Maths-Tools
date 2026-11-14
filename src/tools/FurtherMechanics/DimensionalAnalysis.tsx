@@ -4,7 +4,7 @@ import {
   type GenerateContext,
   type SolveStep,
 } from "../../shared/decision";
-import DimCanvas from "../../shared/decision/DimWorking";
+import DimCanvas, { DimSolution } from "../../shared/decision/DimWorking";
 import { solveDim } from "../../shared/decision/dimSolve";
 import { generateDimExam, type DimChain } from "../../shared/decision/dimExam";
 import { genDimsName, genDimsExpr, genDimsConst, genConsistent, genPowers, type DimQuestion } from "../../shared/decision/dimGen";
@@ -67,6 +67,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 
 const solve = (p: DecisionProblem): SolveStep[] => (p.exam ? [] : solveDim(p));
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => <DimCanvas p={p} step={step} />;
+/** a phone shows the whole solution as one open page */
+const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <DimSolution steps={steps} />;
 
 export default function App() {
   return (
@@ -74,6 +76,7 @@ export default function App() {
       generate={generate}
       solve={solve}
       renderCanvas={renderCanvas}
+      renderSolution={renderSolution}
       config={{
         pageTitle: "Dimensional Analysis",
         purpose: "Find the dimensions of quantities and constants, check that a formula is dimensionally consistent, and predict a formula by equating the powers of mass, length and time.",
