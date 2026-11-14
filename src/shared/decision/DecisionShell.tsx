@@ -901,17 +901,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {stepsSheet && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ background: "rgba(15,23,42,0.4)" }} onClick={() => setStepsSheet(false)}>
-            <div className="bg-white rounded-t-2xl flex flex-col" style={{ height: "72dvh" }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-200">
-                <span className="font-bold text-slate-800">All steps</span>
-                <button onClick={() => setStepsSheet(false)} className="px-3 h-9 rounded-lg font-semibold text-blue-900 bg-slate-100">Close</button>
-              </div>
-              <div className="flex-1 min-h-0"><StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} /></div>
-            </div>
-          </div>
-        )}
         {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
@@ -983,6 +972,39 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div>
         {navBar}
         <RotateHint show={isTablet && layout.portrait} />
+        {/* phone: once the working starts it gets a screen of its own: just the picture, the step and back / forward (nothing else) */}
+        {narrow && !tabletLand && !problem.exam && !phoneSolution && !inSheet && !drawer && !atQuestion && (
+          <div className="fixed inset-0 z-[60] flex flex-col bg-white" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+            <div className="flex items-center justify-between px-2 h-12 shrink-0">
+              <button onClick={() => jump(-1)} aria-label="Back to the question" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><X size={22} /></button>
+              <span className="text-sm font-semibold text-slate-500">{onAnswer ? "Answer" : `${idx + 1} of ${steps.length}`}</span>
+              <button onClick={() => setStepsSheet(true)} className="px-3 h-11 rounded-xl text-sm font-semibold text-slate-500 active:bg-slate-100">All steps</button>
+            </div>
+            <div className="flex-1 min-h-0 px-2 pb-2">
+              <div className="relative h-full rounded-xl overflow-hidden border border-slate-200 bg-white">{shown(canvasStep)}</div>
+            </div>
+            <div className="shrink-0 px-4 pb-3 pt-1" style={{ minHeight: "6.5rem" }}>
+              <div className="text-[16px] leading-snug text-slate-900 font-medium" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
+                {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
+              </div>
+            </div>
+            <div className="shrink-0 flex gap-3 px-3 pb-3">
+              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-20 h-14 rounded-2xl flex items-center justify-center border border-slate-300 text-blue-900 disabled:opacity-30 active:bg-slate-100"><ChevronLeft size={26} /></button>
+              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 bg-blue-900 text-white font-semibold text-base disabled:opacity-30 active:bg-blue-800">{stepIdx + 1 >= maxBeat && answerText && !onAnswer ? "Show answer" : "Next"} <ChevronRight size={22} /></button>
+            </div>
+          </div>
+        )}
+        {stepsSheet && (
+          <div className="fixed inset-0 z-[70] flex flex-col justify-end" style={{ background: "rgba(15,23,42,0.4)" }} onClick={() => setStepsSheet(false)}>
+            <div className="bg-white rounded-t-2xl flex flex-col" style={{ height: "72dvh" }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-200">
+                <span className="font-bold text-slate-800">All steps</span>
+                <button onClick={() => setStepsSheet(false)} className="px-3 h-9 rounded-lg font-semibold text-blue-900 bg-slate-100">Close</button>
+              </div>
+              <div className="flex-1 min-h-0"><StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} /></div>
+            </div>
+          </div>
+        )}
         {overlay}
         {previewDialog}
         {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
