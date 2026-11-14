@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
+import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
@@ -147,7 +147,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // a step that is one line of a longer chain (`more`) can be opened into its parts, one at a time: the opened steps replace it in the list
   const rawSteps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
   const [opened, setOpened] = useState<number[]>([]);
-  const [stepsSheet, setStepsSheet] = useState(false); // phone: every step in a bottom sheet
+  const [diagramFull, setDiagramFull] = useState(false); // phone: the picture alone, full screen
+  const [diagramTurn, setDiagramTurn] = useState(false); // …turned on its side
   useEffect(() => setOpened([]), [problem]);
   const { steps, rawOf, meta } = useMemo(() => {
     const out: SolveStep[] = [], map: number[] = [], info: StepMeta[] = [];
@@ -976,37 +977,40 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div>
         {navBar}
         <RotateHint show={isTablet && layout.portrait} />
-        {/* phone: once the working starts it gets a screen of its own: just the picture, the step and back / forward (nothing else) */}
+        {/* phone: once the working starts it gets a screen of its own: the picture, the steps (scrolling) and < Step 4/19 > (nothing else) */}
         {narrow && !tabletLand && !problem.exam && !phoneSolution && !inSheet && !drawer && !atQuestion && (
           <div className="fixed inset-0 z-[60] flex flex-col bg-white" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
             <div className="flex items-center justify-between px-2 h-12 shrink-0">
               <button onClick={() => jump(-1)} aria-label="Back to the question" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><X size={22} /></button>
-              <span />
-              <button onClick={() => setStepsSheet(true)} className="px-3 h-11 rounded-xl text-sm font-semibold text-slate-500 active:bg-slate-100">All steps</button>
+              <button onClick={() => setDiagramFull(true)} aria-label="Full screen picture" title="Full screen picture" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><Maximize2 size={20} /></button>
             </div>
-            <div className="shrink-0 px-2 pb-2" style={{ height: "45dvh" }}>
+            <div className="shrink-0 px-2 pb-1" style={{ height: "45dvh" }}>
               <div className="relative h-full rounded-xl overflow-hidden border border-slate-200 bg-white"><div className="absolute" style={{ inset: 10 }}>{shown(canvasStep)}</div></div>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-3 pt-1">
-              <div className="text-[16px] leading-snug text-slate-900 font-medium" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
-                {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
-              </div>
+            <div className="flex-1 min-h-0">
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
             </div>
-            <div className="shrink-0 flex items-center justify-center gap-5 px-3 pb-4 pt-2">
+            <div className="shrink-0 flex items-center justify-center gap-5 px-3 pb-3 pt-2 border-t border-slate-100">
               <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-12 h-12 rounded-full flex items-center justify-center border border-slate-300 text-blue-900 disabled:opacity-30 active:bg-slate-100"><ChevronLeft size={24} /></button>
               <span className="min-w-[7.5rem] text-center text-base font-semibold text-slate-700">{onAnswer ? "Answer" : `Step ${idx + 1}/${steps.length}`}</span>
               <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-900 text-white disabled:opacity-30 active:bg-blue-800"><ChevronRight size={24} /></button>
             </div>
           </div>
         )}
-        {stepsSheet && (
-          <div className="fixed inset-0 z-[70] flex flex-col justify-end" style={{ background: "rgba(15,23,42,0.4)" }} onClick={() => setStepsSheet(false)}>
-            <div className="bg-white rounded-t-2xl flex flex-col" style={{ height: "72dvh" }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-200">
-                <span className="font-bold text-slate-800">All steps</span>
-                <button onClick={() => setStepsSheet(false)} className="px-3 h-9 rounded-lg font-semibold text-blue-900 bg-slate-100">Close</button>
-              </div>
-              <div className="flex-1 min-h-0"><StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} /></div>
+        {/* the picture alone, full screen; it can be turned on its side for a wide network (flows, critical path) */}
+        {diagramFull && (
+          <div className="fixed inset-0 z-[80] bg-white overflow-hidden">
+            <div style={diagramTurn
+              ? { position: "fixed", top: 0, left: "100vw", width: "100dvh", height: "100vw", transformOrigin: "top left", transform: "rotate(90deg)" }
+              : { position: "absolute", inset: 0 }}>
+              <div className="absolute" style={{ inset: 12 }}>{shown(canvasStep)}</div>
+            </div>
+            <button onClick={() => setDiagramFull(false)} aria-label="Close full screen" className="absolute top-2 left-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><X size={22} /></button>
+            <button onClick={() => setDiagramTurn((t) => !t)} aria-label="Turn the picture on its side" title="Turn on its side" className="absolute top-2 right-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><RotateCw size={20} /></button>
+            <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-4 z-10">
+              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-11 h-11 rounded-full flex items-center justify-center bg-white/95 border border-slate-300 text-blue-900 disabled:opacity-30"><ChevronLeft size={22} /></button>
+              <span className="px-3 py-1 rounded-full bg-white/95 border border-slate-200 text-sm font-semibold text-slate-700">{onAnswer ? "Answer" : atQuestion ? "Question" : `Step ${idx + 1}/${steps.length}`}</span>
+              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="w-11 h-11 rounded-full flex items-center justify-center bg-blue-900 text-white disabled:opacity-30"><ChevronRight size={22} /></button>
             </div>
           </div>
         )}
@@ -1033,7 +1037,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                   <div className="flex flex-1 min-w-0 flex-col items-center gap-1.5 px-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}</span>
-                      <button onClick={() => setStepsSheet(true)} className="px-4 py-1.5 rounded-lg font-bold text-sm border-2 bg-white text-blue-900" style={{ borderColor: "#1e3a8a" }}>All steps</button>
+                      <button
+                        onClick={() => { if (showAll) jump(resumeAt.current); else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); } }}
+                        className="px-4 py-1.5 rounded-lg font-bold text-sm border-2"
+                        style={{ background: showAll ? "#fff" : "#1e3a8a", color: showAll ? "#6b7280" : "#fff", borderColor: showAll ? "#d1d5db" : "#1e3a8a" }}>
+                        {showAll ? "Show All" : "Step-by-Step"}
+                      </button>
                     </div>
                     <div className="flex w-full gap-1">
                       {Array.from({ length: steps.length + (answerText ? 1 : 0) }, (_, i) => (
