@@ -1,184 +1,225 @@
 // Dimensional Analysis: the stepped working for every kind of question (the (?) in the exam view and the Solution of a skill question).
-// Two halves, side by side: the picture is the page a student would WRITE, building up a line at a time (DimViewState.lines, cumulative), and the
-// caption beside it (prose, maths between $…$) says WHY each line is there. The written working is formal, as an examiner expects: square brackets for
-// "the dimensions of", a chain of equals, the dimensions of each factor substituted: [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻².
-import type { DecisionProblem, SolveStep, DimViewState } from "./types";
-import { type Fr, type Dim3, BASE, fmul, fadd, fsub, fdiv, fzero, feq, fr, ZERO, ONE, solveLinear } from "./dim";
+// Two halves, side by side. The picture is the page a student would WRITE: a few GIVEN quantities at the top (length, time, mass, speed), then any other
+// quantity BUILT from them in its own lines before it is used, then the main working. The caption beside it (prose) says WHY each line is there, in words, and
+// does not repeat the maths on the page. Finished builds move into a short "known" strip so the page stays small; the working is formal, as an examiner
+// expects: [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻².
+import type { DecisionProblem, SolveStep } from "./types";
+import { type Fr, type Dim3, BASE, QBY, qDim, fmul, fadd, fsub, fdiv, fzero, feq, fr, ZERO, ONE, solveLinear, parseUnits, unitsDim } from "./dim";
 import { symTex, frTex, supTex, dimTex, dimPowTex, productTex, eqLhsTex, M } from "./dimTex";
+import { al, ct, lab, GAP, boxed, GIVEN_IDS, GIVEN_ITEMS, buildItem, buildOrder, derive, flatChain, type Piece, type Derivation } from "./dimBuild";
 import type { DimProblemData, DimRow } from "./dimGen";
 
-// ── rows of the written page ────────────────────────────────────────────────────────────────
-/** "[F] &= [ma]": the left part, then the aligned equals */
-const al = (l: string, r: string): string => `${l} &= ${r}`;
-/** "&= [m][a]": a continuation, aligned under the first equals */
-const ct = (r: string): string => `&= ${r}`;
-/** "M: & α + γ = 0": a labelled equation of powers (the label is right-aligned, the equation starts where the equals of a chain would) */
-const lab = (label: string, tex: string): string => `\\text{${label}:} & \\ ${tex}`;
-const GAP = "";
-/** a boxed final answer on its own row */
-const boxed = (tex: string): string => `\\boxed{${tex}}`;
-/** rows for pieces [from, to) of a chain "a = b = c = d": the first pair is "a &= b", then one continuation each */
-const chainRows = (pieces: string[], from: number, to: number): string[] => {
-  const out: string[] = [];
-  for (let i = Math.max(1, from); i < to && i < pieces.length; i++) out.push(i === 1 ? al(pieces[0], pieces[1]) : ct(pieces[i]));
-  return out;
-};
-
-const par = (s: string): string => (s.startsWith("-") ? `(${s})` : s);
-/** a row's label in square brackets: a result row already is "[…]" */
 const rowBr = (r: DimRow): string => (r.sym.startsWith("[") ? r.sym : `[${r.sym}]`);
-/** "$[l] = L$, $[t] = T$" */
-const bracketList = (rows: DimRow[]): string => rows.map((r) => M(`${rowBr(r)} = ${dimTex(r.dim)}`)).join(", ");
 const answerTex = (dim: Dim3): string => (dim.every(fzero) ? "1" : dimTex(dim));
-/** a factor as brackets with its power: "[t]^{2}" */
-const brPow = (r: DimRow): string => `${rowBr(r)}${supTex(r.exp ?? ONE)}`;
-/** the factor's dimensions with its power: "(LT^{-2})^{2}" */
-const dimPow = (r: DimRow): string => dimPowTex(r.dim, r.exp ?? ONE);
-/** "M: 1 + (-1) = 0" for the caption: what each factor contributes to the power of one base dimension */
-const sumTex = (c: 0 | 1 | 2, rows: DimRow[], total: Fr): string => `${BASE[c]}: ${rows.map((r) => par(frTex(fmul(r.dim[c], r.exp ?? ONE)))).join(" + ")} = ${frTex(total)}`;
+const piece = (r: DimRow): Piece => ({ br: rowBr(r), dim: r.dim, exp: r.exp ?? ONE });
+const par = (s: string): string => (s.startsWith("-") ? `(${s})` : s);
+const BASE_FOUR = ["len", "time", "mass", "speed"];
 
-/** the formal chain for a "find the dimensions" question, as TeX lines: [F] = [ma] = [m][a] = M \times LT^{-2} = MLT^{-2} */
-export function formalLines(d: DimProblemData): string[] {
+/** what may be taken as known when the page opens: the given set, lengths named otherwise, the base units, and anything the question itself states */
+export function initialKnown(d: DimProblemData): string[] {
+  const items = [...GIVEN_ITEMS];
+  for (const id of d.needs ?? []) if (GIVEN_IDS.includes(id) && !BASE_FOUR.includes(id)) items.push(`[${symTex(QBY[id].sym)}] = ${dimTex(qDim(id))}`);
+  if (d.kind === "dimsUnits" || d.via === "units") items.push("\\mathrm{kg} \\to M", "\\mathrm{m} \\to L", "\\mathrm{s} \\to T");
+  if (d.via === "given") for (const r of d.rows) if (r.given) items.push(`${rowBr(r)} = ${dimTex(r.dim)}`);
+  return [...new Set(items)];
+}
+/** what the page shows before any working: the model or formula */
+export function givenLines(d: DimProblemData): string[] {
+  if (d.kind === "powers") return [`\\text{Model: } ${d.formula}`];
+  if (d.kind === "consShow" || d.kind === "consOdd" || d.kind === "consMissing") return [`\\text{Formula: } ${d.formula}`];
+  return [];
+}
+
+// ── the main derivation of a "find the dimensions" question, in groups of rows (one group per step) ──────────────────────────
+interface Main { lhs: string; groups: string[][]; chains: string[]; final: string }
+function mainOf(d: DimProblemData): Main | null {
+  if (d.kind !== "dimsName" && d.kind !== "dimsUnits" && d.kind !== "dimsExpr" && d.kind !== "dimsConst") return null;
   const rows = d.rows;
-  if (d.kind === "dimsName" || d.kind === "dimsUnits" || d.kind === "dimsExpr") {
+  const ans = answerTex(d.answerDim!);
+  const chain = (der: Derivation) => flatChain([...der.def, ...der.subst, ...der.sum]);
+  if (d.kind === "dimsName") {
     const result = rows[0];
     const factors = rows.slice(1);
-    const ans = dimTex(d.answerDim!);
-    const root = d.defText === "root";
-    const brs = factors.map(brPow).join("");
-    const dims = factors.map(dimPow).join(" \\times ");
-    if (root) {
+    const der = derive(result.sym, productTex(factors.map((r) => ({ sym: r.sym, p: r.exp ?? ONE }))), factors.map(piece), d.answerDim!);
+    return { lhs: result.sym, groups: [der.def, der.subst, der.sum], chains: [chain(der)], final: `${result.sym} = ${ans}` };
+  }
+  if (d.kind === "dimsUnits") {
+    const result = rows[0];
+    const factors = rows.slice(1);
+    const units = factors.map((r) => `${r.sym}${supTex(r.exp ?? ONE)}`).join("\\,");
+    const der = derive(result.sym, units, factors.map(piece), d.answerDim!);
+    const def = [der.def[0]];
+    return { lhs: result.sym, groups: [def, der.subst, der.sum], chains: [flatChain([...def, ...der.subst, ...der.sum])], final: `${result.sym} = ${ans}` };
+  }
+  if (d.kind === "dimsExpr") {
+    const result = rows[0];
+    const factors = rows.slice(1);
+    if (d.defText === "root") {
+      const brs = factors.map((r) => `${rowBr(r)}${supTex(r.exp ?? ONE)}`).join("");
+      const dims = factors.map((r) => dimPowTex(r.dim, r.exp ?? ONE)).join(" \\times ");
       const inner = dimTex(d.answerDim!.map((e) => fmul(e, fr(2))) as unknown as Dim3);
-      return [`${result.sym} = \\left(${brs}\\right)^{\\frac{1}{2}} = \\left(${dims}\\right)^{\\frac{1}{2}} = \\left(${inner}\\right)^{\\frac{1}{2}} = ${ans}`];
+      const g = [[al(result.sym, `\\left(${brs}\\right)^{\\frac{1}{2}}`)], [ct(`\\left(${dims}\\right)^{\\frac{1}{2}}`)], [ct(`\\left(${inner}\\right)^{\\frac{1}{2}}`)], [ct(ans)]];
+      return { lhs: result.sym, groups: g, chains: [flatChain(g.flat())], final: `${result.sym} = ${ans}` };
     }
-    if (d.kind === "dimsName") {
-      const expr = productTex(factors.map((r) => ({ sym: r.sym, p: r.exp ?? ONE })));
-      return [`${result.sym} = [${expr}] = ${brs} = ${dims} = ${ans}`];
-    }
-    if (d.kind === "dimsUnits") {
-      const units = factors.map((r) => `${r.sym}${supTex(r.exp ?? ONE)}`).join("\\,");
-      return [`${result.sym} = \\left[${units}\\right] = ${dims} = ${ans}`];
-    }
-    return [`${result.sym} = ${brs} = ${dims} = ${ans}`];
+    const der = derive(result.sym, null, factors.map(piece), d.answerDim!);
+    return { lhs: result.sym, groups: [der.def, der.subst, der.sum], chains: [chain(der)], final: `${result.sym} = ${ans}` };
   }
   if (d.kind === "dimsConst") {
     const k = rows[0], target = rows[1], others = rows.slice(2);
     const denominator = d.defText === "denominator";
     const kr = rowBr(k);
-    const brsOthers = others.map(brPow).join("");
-    const dimsOthers = others.map(dimPow).join(" \\times ");
-    const tdim = dimTex(target.dim);
-    const flipped = others.map((r): DimRow => ({ ...r, exp: fmul(r.exp ?? ONE, fr(-1)) }));
-    const lines = [`${rowBr(target)} = ${denominator ? `${brsOthers}${kr}^{-1}` : `${kr}${brsOthers}`}`];
-    const rhsBr = denominator ? `${brsOthers}${rowBr(target)}^{-1}` : `${rowBr(target)}${flipped.map(brPow).join("")}`;
-    const rhsDims = denominator ? `${dimsOthers} \\times (${tdim})^{-1}` : `${tdim} \\times ${flipped.map(dimPow).join(" \\times ")}`;
-    lines.push(`${kr} = ${rhsBr} = ${rhsDims} = ${answerTex(d.answerDim!)}`);
-    return lines;
+    const brsOthers = others.map((r) => `${rowBr(r)}${supTex(r.exp ?? ONE)}`).join("");
+    const formulaRow = al(rowBr(target), denominator ? `${brsOthers}${kr}^{-1}` : `${kr}${brsOthers}`);
+    // [k] = [target] times each other factor to the opposite power (or the other factors times [target]^{-1} when k is in the denominator)
+    const flipped = others.map((r): Piece => ({ br: rowBr(r), dim: r.dim, exp: fmul(r.exp ?? ONE, fr(-1)) }));
+    const pieces: Piece[] = denominator ? [...others.map(piece), { br: rowBr(target), dim: target.dim, exp: fr(-1) }] : [{ br: rowBr(target), dim: target.dim, exp: ONE }, ...flipped];
+    const der = derive(kr, null, pieces, d.answerDim!);
+    return { lhs: kr, groups: [[formulaRow], der.def, der.subst, der.sum], chains: [flatChain([formulaRow]), chain(der)], final: `${kr} = ${ans}` };
   }
-  return [];
+  return null;
 }
 
-/** what the page shows before any working: the model or formula, and any dimensions the question gives */
-export function givenLines(d: DimProblemData): string[] {
-  if (d.kind === "powers") {
-    const out = [`\\text{Model: } ${d.formula}`];
-    if (d.rows[0].given) { out.push(GAP); d.rows.forEach((r) => out.push(al(rowBr(r), dimTex(r.dim)))); }
+/** the steps that build each quantity in `keys` that is not given, dependencies first; each finished build joins the known strip */
+interface Ctx { S: (caption: string, phase: string, ...add: string[]) => SolveStep; stage: (...carry: string[]) => void; learn: (item: string) => void }
+function buildSteps(keys: string[], c: Ctx): SolveStep[] {
+  const out: SolveStep[] = [];
+  for (const key of buildOrder(keys)) {
+    const item = buildItem(key)!;
+    const der = derive(item.lhs, item.expr, item.pieces, item.dim);
+    const phase = `Build ${key.startsWith("u:") ? key.slice(2) : QBY[key].name}`;
+    const known = `${item.lhs} = ${dimTex(item.dim)}`;
+    c.stage();
+    out.push(c.S(`${M(item.lhs)} is not given, so build it from the quantities we know: ${item.words}.`, phase, ...der.def));
+    if (der.sum.length) {
+      out.push(c.S("Put in the dimensions we know.", phase, ...der.subst));
+      c.learn(known);
+      out.push(c.S("Add the powers of each base dimension.", phase, ...der.sum));
+    } else {
+      c.learn(known);
+      out.push(c.S("Put in the dimensions we know.", phase, ...der.subst));
+    }
+  }
+  return out;
+}
+
+/** the model answers: the builds and then the main chain, each as one flat line of TeX (no $) */
+export function modelChains(d: DimProblemData): string[] {
+  const out: string[] = [];
+  for (const key of buildOrder(d.needs ?? [])) {
+    const item = buildItem(key)!;
+    const der = derive(item.lhs, item.expr, item.pieces, item.dim);
+    out.push(flatChain([...der.def, ...der.subst, ...der.sum]));
+  }
+  if (d.kind === "consShow" || d.kind === "consOdd" || d.kind === "consMissing" || d.kind === "consPick") {
+    const terms = d.terms ?? [];
+    const skip = d.kind === "consMissing" ? d.oddIdx : -1;
+    terms.forEach((t, i) => {
+      if (i === skip) return;
+      const dim = t.f.reduce<Dim3>((acc, x) => [fadd(acc[0], fmul(qDim(x.q)[0], x.p)), fadd(acc[1], fmul(qDim(x.q)[1], x.p)), fadd(acc[2], fmul(qDim(x.q)[2], x.p))], [ZERO, ZERO, ZERO]);
+      const pieces = t.f.map((x): Piece => ({ br: `[${symTex(x.sym)}]`, dim: qDim(x.q), exp: x.p }));
+      const lhs = `[${t.tex}]`;
+      out.push(pieces.length === 1 && feq(pieces[0].exp, ONE) ? `${lhs} = ${dimTex(dim)}` : (() => { const der = derive(lhs, null, pieces, dim); return flatChain([...der.def, ...der.subst, ...der.sum]); })());
+    });
     return out;
   }
-  if (d.kind === "consShow" || d.kind === "consOdd" || d.kind === "consMissing") return [`\\text{Formula: } ${d.formula}`];
-  return [];
+  const m = mainOf(d);
+  return m ? [...out, ...m.chains] : out;
 }
 
 export function solveDim(p: DecisionProblem): SolveStep[] {
   const d = p.dim;
   if (!d) throw new Error("no dimension data");
   const rows = d.rows;
-  // the page so far: each step adds rows, and its view is a copy of the page with the number of new rows
-  const W: string[] = [];
-  const S = (caption: string, phase: string, ...add: string[]): SolveStep => {
-    W.push(...add);
-    const v: DimViewState = { lines: [...W], fresh: add.length };
-    return { caption, phase, edgeStates: {}, dimView: v };
+  // the page: `W` is the working in the current stage, `known` the strip of facts; every step's view is a copy of both
+  const known = initialKnown(d);
+  let W: string[] = [];
+  let knownFresh = 0;
+  const c: Ctx = {
+    S: (caption, phase, ...add) => {
+      W.push(...add);
+      const step: SolveStep = { caption, phase, edgeStates: {}, dimView: { known: [...known], knownFresh, lines: [...W], fresh: add.length } };
+      knownFresh = 0;
+      return step;
+    },
+    stage: (...carry) => { W = [...carry]; },
+    learn: (item) => { if (!known.includes(item)) { known.push(item); knownFresh = 1; } },
   };
+  const S = c.S;
   const wrongNote = (): SolveStep[] => {
     const wrong = (d.options ?? []).filter((o) => !o.correct);
     return wrong.length ? [S(`The other options are slips: ${wrong.map((o) => `${M(o.text)} (${o.why})`).join("; ")}.`, "The other options")] : [];
   };
 
   // ── Find the dimensions ──
-  if (d.kind === "dimsName" || d.kind === "dimsUnits" || d.kind === "dimsExpr") {
-    const result = rows[0];
-    const factors = rows.slice(1);
-    const root = d.defText === "root";
-    const pieces = formalLines(d)[0].split(" = ");
-    const steps: SolveStep[] = [];
-    const sums = ([0, 1, 2] as const).map((c) => sumTex(c, factors, root ? fmul(result.dim[c], fr(2)) : result.dim[c]));
-    // how many pieces of the chain each step writes
-    let shown = 1;
-    const write = (to: number): string[] => { const r = chainRows(pieces, shown, to); shown = to; return r; };
-    if (d.kind === "dimsName") steps.push(S(`${d.defText}, so ${M(pieces.slice(0, 3).join(" = "))}.`, "Definition", ...write(3)));
-    const intro = d.kind === "dimsUnits"
-      ? `Replace each unit by the dimension it stands for: ${factors.map((r) => M(`${r.sym} \\to ${dimTex(r.dim)}`)).join(", ")}.`
-      : `Write down the dimensions of each quantity: ${bracketList(factors)}.`;
-    steps.push(S(intro, "Dimensions of each part", ...write(d.kind === "dimsName" ? 4 : 3)));
-    steps.push(S(`${root ? "Find the dimensions of what is under the root: m" : "M"}ultiply the dimensions of the parts, adding the powers of each base dimension (taking them away for a quotient): ${sums.map(M).join(", ")}.`, "Combine", ...write(pieces.length - (root ? 1 : 0))));
-    if (root) steps.push(S("The square root halves every power.", "Combine", ...write(pieces.length)));
-    steps.push(S(M(`${result.sym} = ${answerTex(d.answerDim!)}`), "Answer", GAP, boxed(`${result.sym} = ${answerTex(d.answerDim!)}`)));
-    steps.push(...wrongNote());
-    return steps;
-  }
-
-  // ── Find the dimensions of a constant ──
-  if (d.kind === "dimsConst") {
-    const k = rows[0], target = rows[1], others = rows.slice(2);
-    const denominator = d.defText === "denominator";
-    const lines = formalLines(d);
-    const l0 = lines[0].split(" = ");
-    const l1 = lines[1].split(" = ");
-    const steps: SolveStep[] = [];
-    steps.push(S(`Write the formula with brackets for the dimensions: ${M(lines[0])}. The dimensions of what is known: ${bracketList([target, ...others])}.`, "Dimensions of each part", al(l0[0], l0[1])));
-    const subject = lines[1].split(" = ").slice(0, 2).join(" = ");
-    steps.push(S(denominator
-      ? `${M(rowBr(k))} divides the other factors in the formula, so make it the subject: ${M(subject)}. Take the powers of ${M(rowBr(target))} away from those of the other factors.`
-      : `Make ${M(rowBr(k))} the subject: ${M(subject)}. Take the powers of the other factors away from those of ${M(rowBr(target))}.`, "Rearrange for the constant", GAP, al(l1[0], l1[1]), ct(l1[2])));
-    steps.push(S(M(`${k.sym} = ${answerTex(d.answerDim!)}`), "Answer", ct(l1[3]), GAP, boxed(`${k.sym} = ${answerTex(d.answerDim!)}`)));
-    if (d.represents) steps.push(S(`These are the dimensions of ${d.represents}.`, "What it is", `\\text{These are the dimensions of ${d.represents}}`));
-    else if (d.answerDim!.every(fzero)) steps.push(S("The constant has no dimensions: it is dimensionless.", "What it is", "\\text{The constant is dimensionless}"));
+  if (d.kind === "dimsName" || d.kind === "dimsUnits" || d.kind === "dimsExpr" || d.kind === "dimsConst") {
+    const steps = buildSteps(d.needs ?? [], c);
+    const main = mainOf(d)!;
+    c.stage();
+    const captions: Record<string, string[]> = {
+      dimsName: [`Now find ${M(main.lhs)}: ${d.defText}.`, "Put in the dimensions we know.", "Add the powers of each base dimension to finish."],
+      dimsUnits: ["Write the units inside the brackets. Kilograms, metres and seconds stand for the base dimensions.", "Replace each unit by its dimension.", "Add the powers of each base dimension to finish."],
+      dimsExpr: d.defText === "root"
+        ? ["Write each quantity inside its own brackets, all under the root.", "Put in the dimensions we know.", "Add the powers of each base dimension under the root.", "The square root halves every power."]
+        : ["Write each quantity inside its own brackets.", "Put in the dimensions we know.", "Add the powers of each base dimension to finish."],
+      dimsConst: ["Write the formula using brackets for the dimensions of each side.", `Make ${M(main.lhs)} the subject.`, "Put in the dimensions we know.", "Add the powers of each base dimension to finish."],
+    };
+    const phases: Record<string, string[]> = {
+      dimsName: ["Definition", "Dimensions of each part", "Combine"], dimsUnits: ["Units", "Dimensions of each part", "Combine"],
+      dimsExpr: ["Brackets", "Dimensions of each part", "Combine", "Combine"], dimsConst: ["The formula", "Rearrange for the constant", "Dimensions of each part", "Combine"],
+    };
+    const groups = main.groups.filter((g) => g.length);
+    const caps = captions[d.kind];
+    const phs = phases[d.kind];
+    groups.forEach((g, i) => {
+      const last = i === groups.length - 1;
+      steps.push(S(caps[i] ?? "Add the powers of each base dimension to finish.", last ? "Answer" : phs[i] ?? "Working", ...(i > 0 && d.kind === "dimsConst" && i === 1 ? [GAP] : []), ...g, ...(last ? [GAP, boxed(main.final)] : [])));
+    });
     steps.push(...wrongNote());
     return steps;
   }
 
   // ── Consistency ──
   if (d.kind === "consShow" || d.kind === "consOdd" || d.kind === "consMissing" || d.kind === "consPick") {
-    const calcs = d.calcs ?? [];
-    const steps: SolveStep[] = [];
+    const steps = buildSteps(d.needs ?? [], c);
+    const terms = d.terms ?? [];
     if (d.kind === "consPick") {
-      (d.options ?? []).forEach((o, i) => steps.push(S(`${"ABCD"[i]}: ${M(o.text)}. ${d.notes![i][0].toUpperCase()}${d.notes![i].slice(1)}.`, "Check each formula", d.checks![i])));
-      steps.push(S(`Only ${"ABCD"[(d.options ?? []).findIndex((o) => o.correct)]} has the same dimensions in every term: ${M(d.formula!)}.`, "Answer", GAP, boxed(d.formula!)));
+      c.stage();
+      (d.options ?? []).forEach((_o, i) => steps.push(S(`Check formula ${"ABCD"[i]}: do all its terms have the same dimensions?`, "Check each formula", d.checks![i])));
+      steps.push(S("Only one formula has terms that all have the same dimensions.", "Answer", GAP, boxed(d.formula!)));
       return steps;
     }
-    rows.forEach((_, i) => {
-      const pc = calcs[i].split(" = ");
-      steps.push(S(`${M(calcs[i])}.`, "Dimensions of each term", ...(i > 0 ? [GAP] : []), al(pc[0], pc[1]), ...pc.slice(2).map(ct)));
+    const skip = d.kind === "consMissing" ? d.oddIdx! : -1;
+    const dims: Dim3[] = [];
+    terms.forEach((t, i) => {
+      const pieces = t.f.map((x): Piece => ({ br: `[${symTex(x.sym)}]`, dim: qDim(x.q), exp: x.p }));
+      const dim = t.f.reduce<Dim3>((acc, x) => [fadd(acc[0], fmul(qDim(x.q)[0], x.p)), fadd(acc[1], fmul(qDim(x.q)[1], x.p)), fadd(acc[2], fmul(qDim(x.q)[2], x.p))], [ZERO, ZERO, ZERO]);
+      dims.push(dim);
+      if (i === skip) return;
+      c.stage();
+      const lhs = `[${t.tex}]`;
+      const one = pieces.length === 1 && feq(pieces[0].exp, ONE);
+      const rowsT = one ? [al(lhs, dimTex(dim))] : (() => { const der = derive(lhs, null, pieces, dim); return [...der.def, ...der.subst, ...der.sum]; })();
+      c.learn(`${lhs} = ${dimTex(dim)}`);
+      steps.push(S(`Work out the dimensions of this term from its factors.${t.num ? " The number has no dimensions, so it is left out." : ""}`, "Dimensions of each term", ...rowsT));
     });
-    const chain = rows.map((r) => `[${r.sym}]`).join(" = ");
+    c.stage();
+    const done = terms.map((t, i) => (i === skip ? null : `[${t.tex}]`)).filter((x): x is string => !!x);
     if (d.kind === "consShow") {
-      const dim = dimTex(d.answerDim!);
-      steps.push(S(`Every term has dimensions ${M(dim)}: ${M(`${chain} = ${dim}`)}, so the formula is dimensionally consistent.`, "Conclusion", GAP, `\\therefore\\ ${chain} = ${dim}`, boxed("\\text{the formula is dimensionally consistent}")));
+      steps.push(S("Every term has the same dimensions, so the formula is dimensionally consistent.", "Conclusion", `\\therefore\\ ${done.join(" = ")} = ${dimTex(dims[0])}`, GAP, boxed("\\text{the formula is dimensionally consistent}")));
     } else if (d.kind === "consOdd") {
       const odd = d.oddIdx!;
-      const other = rows.find((_, i) => i !== odd)!;
-      steps.push(S(`${M(`[${rows[odd].sym}] = ${dimTex(rows[odd].dim)}`)} but the others have dimensions ${M(dimTex(other.dim))}: ${M(rows[odd].sym)} is the odd one out.`, "Conclusion", GAP, boxed(`\\text{odd one out: } ${rows[odd].sym}`)));
+      steps.push(S("Compare the terms: one has different dimensions from the others. It is the odd one out.", "Conclusion", boxed(`\\text{odd one out: } ${terms[odd].tex}`)));
     } else {
       const m = d.missing!;
-      const eqRows = ([0, 1, 2] as const).map((c) => {
-        if (fzero(m.coef[c])) return null;
-        const rest = m.rest[c];
+      const eqRows = ([0, 1, 2] as const).map((col) => {
+        if (fzero(m.coef[col])) return null;
+        const rest = m.rest[col];
         const tail = fzero(rest) ? "" : ` ${rest[0] < 0 ? "-" : "+"} ${frTex(fr(Math.abs(rest[0]), rest[1]))}`;
-        return lab(BASE[c], `${eqLhsTex([m.coef[c]], ["n"])}${tail} = ${frTex(m.target[c])}`);
+        return lab(BASE[col], `${eqLhsTex([m.coef[col]], ["n"])}${tail} = ${frTex(m.target[col])}`);
       }).filter((x): x is string => !!x);
-      steps.push(S(`The other terms have dimensions ${M(dimTex(m.target))}, so the term with ${M("n")} must too. Write its dimensions with ${M("n")} as the power of ${M(symTex(m.sym))}.`, "Equate the dimensions", GAP, ...eqRows));
-      steps.push(S(M(`n = ${frTex(m.value)}`), "Answer", GAP, boxed(`n = ${frTex(m.value)}`)));
+      const nTerm = terms[skip];
+      steps.push(S(`The term ${M(nTerm.tex.replace(/\^\{[^}]*\}/, "^{n}"))} must have the same dimensions as the others. Compare the powers of each base dimension.`, "Equate the dimensions", ...eqRows));
+      steps.push(S(`Solve for ${M("n")}.`, "Answer", GAP, boxed(`n = ${frTex(m.value)}`)));
     }
     return steps;
   }
@@ -187,71 +228,91 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
   const target = rows[0];
   const facs = rows.slice(1);
   const syms = d.unknowns;
-  const n = syms.length;
   const steps: SolveStep[] = [];
-  const modelDims = `[${target.sym}] = ${facs.map((r, i) => `[${r.sym}]^{${symTex(syms[i])}}`).join("")}`;
-  steps.push(S(`Write down the dimensions: ${bracketList([target, ...facs])}.`, "Dimensions of each quantity", ...rows.map((r) => al(rowBr(r), dimTex(r.dim)))));
-  steps.push(S(`${M("k")} has no dimensions, so ${M(modelDims)}.`, "Equate the powers", GAP, modelDims));
-  // the dimensions substituted, with the powers of each base dimension collected
+  const ids = d.needs ?? [];
+  if (d.via === "units") {
+    // each quantity's dimensions from its units; a derived unit (a newton) is built first
+    const unitKeys = [...new Set((d.rowUnits ?? []).flatMap((u) => parseUnits(u).map(([x]) => `u:${x}`)))];
+    steps.push(...buildSteps(unitKeys, c));
+    rows.forEach((r, i) => {
+      const toks = parseUnits(d.rowUnits![i]);
+      const pieces = toks.map(([x, e]): Piece => ({ br: `\\mathrm{${x}}`, dim: unitsDim(x), exp: fr(e) }));
+      const units = toks.map(([x, e]) => `\\mathrm{${x}}${e === 1 ? "" : `^{${e}}`}`).join("\\,");
+      const der = derive(rowBr(r), units, pieces, r.dim);
+      c.stage();
+      c.learn(`${rowBr(r)} = ${dimTex(r.dim)}`);
+      steps.push(S(`Find the dimensions of ${M(r.sym)} from the units it is measured in.`, "Dimensions from the units", der.def[0], ...der.subst, ...der.sum));
+    });
+  } else if (d.via === "defs") {
+    steps.push(...buildSteps(ids, c));
+    // quantities that are given outright still need to be on the page
+    c.stage();
+  }
+  // the model, with the dimensions put in, expanded and collected
+  const model = `[${target.sym}] = ${facs.map((r, i) => `[${r.sym}]^{${symTex(syms[i])}}`).join("")}`;
+  c.stage();
+  steps.push(S(`${M("k")} has no dimensions, so the dimensions of the two sides must be the same. Write the model using brackets.`, "The model", model));
   const withPower = (r: DimRow, i: number) => {
     const t = dimTex(r.dim);
     const letters = r.dim.filter((e) => !fzero(e)).length;
     const bare = letters === 1 && feq(r.dim.find((e) => !fzero(e))!, ONE);
     return `${bare ? t : `(${t})`}^{${symTex(syms[i])}}`;
   };
-  const sub = facs.map(withPower).join("");
-  const collected = ([0, 1, 2] as const).map((c) => `${BASE[c]}^{${eqLhsTex(d.eqs[c].coef, syms)}}`).join("");
-  steps.push(S(`Substitute the dimensions: ${M(`${dimTex(target.dim)} = ${sub}`)}. Collect the powers of each base dimension: ${M(`= ${collected}`)}.`, "Equate the powers", GAP, al(dimTex(target.dim), sub), ct(collected)));
-  d.eqs.forEach((e, c) => steps.push(S(`Powers of ${BASE[c]}: ${M(`${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`)}.`, "Equate the powers", ...(c === 0 ? [GAP] : []), lab(BASE[c], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`))));
+  const substituted = facs.map(withPower).join("");
+  const expanded = facs.map((r, i) => ([0, 1, 2] as const).filter((col) => !fzero(r.dim[col])).map((col) => `${BASE[col]}^{${feq(r.dim[col], ONE) ? "" : frTex(r.dim[col])}${symTex(syms[i])}}`).join("")).join("\\,");
+  const collected = ([0, 1, 2] as const).map((col) => `${BASE[col]}^{${eqLhsTex(d.eqs[col].coef, syms)}}`).filter((_, col) => d.eqs[col].coef.some((x) => !fzero(x))).join("");
+  steps.push(S("Put in the dimensions of each quantity.", "The model", al(dimTex(target.dim), substituted)));
+  if (expanded !== substituted) steps.push(S("Raise each base dimension in a bracket to the power outside it.", "The model", ct(expanded)));
+  steps.push(S("Collect the powers of each base dimension.", "The model", ct(collected)));
+  // equate the powers
+  c.stage(`${dimTex(target.dim)} = ${collected}`);
+  d.eqs.forEach((e, col) => steps.push(S(`Compare the powers of ${BASE[col]} on the two sides.`, "Equate the powers", ...(col === 0 ? [GAP] : []), lab(BASE[col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`))));
 
   if (d.ask === "cannot") {
     // two independent equations fix both powers; the third then disagrees
     for (let r1 = 0; r1 < 3; r1++) for (let r2 = r1 + 1; r2 < 3; r2++) {
-      const A = [d.eqs[r1].coef, d.eqs[r2].coef];
-      const res = solveLinear(A, [d.eqs[r1].rhs, d.eqs[r2].rhs]);
+      const res = solveLinear([d.eqs[r1].coef, d.eqs[r2].coef], [d.eqs[r1].rhs, d.eqs[r2].rhs]);
       if (res.status !== "unique") continue;
       const r3 = 3 - r1 - r2;
       const [a, b] = res.x;
       const lhs = fadd(fmul(d.eqs[r3].coef[0], a), fmul(d.eqs[r3].coef[1], b));
-      steps.push(S(`The ${BASE[r1]} and ${BASE[r2]} equations give ${M(`${symTex(syms[0])} = ${frTex(a)}`)} and ${M(`${symTex(syms[1])} = ${frTex(b)}`)}.`, "Solve", GAP, al(symTex(syms[0]), frTex(a)), al(symTex(syms[1]), frTex(b))));
-      steps.push(S(`Put these into the ${BASE[r3]} equation: ${M(eqLhsTex(d.eqs[r3].coef, syms))} becomes ${M(frTex(lhs))}, but it should equal ${M(frTex(d.eqs[r3].rhs))}. The equations contradict each other.`, "Contradiction", GAP, lab(BASE[r3], `${frTex(lhs)} \\neq ${frTex(d.eqs[r3].rhs)}`)));
-      steps.push(S(`No values of ${M(symTex(syms[0]))} and ${M(symTex(syms[1]))} make the model dimensionally consistent, so the model cannot be right.`, "Answer", GAP, boxed("\\text{no values work: the model cannot be right}")));
+      c.stage(...d.eqs.map((e) => lab(BASE[e.col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`)));
+      steps.push(S(`Use the ${BASE[r1]} and ${BASE[r2]} equations to find both powers.`, "Solve", GAP, al(symTex(syms[0]), frTex(a)), al(symTex(syms[1]), frTex(b))));
+      steps.push(S(`Put them into the ${BASE[r3]} equation: it does not hold.`, "Contradiction", GAP, lab(BASE[r3], `${frTex(lhs)} \\neq ${frTex(d.eqs[r3].rhs)}`)));
+      steps.push(S("No values of the powers work, so the model cannot be right.", "Answer", GAP, boxed("\\text{no values work: the model cannot be right}")));
       return steps;
     }
     return steps;
   }
 
-  // solve by substitution: an equation with one power left gives it, the next uses it
-  const known: Array<Fr | null> = Array(n).fill(null);
-  let guard = 0;
-  let firstSolve = true;
-  while (known.some((v) => v === null) && guard++ < 6) {
-    let did = false;
-    for (const e of d.eqs) {
-      const left = e.coef.map((c, i) => (known[i] === null && !fzero(c) ? i : -1)).filter((i) => i >= 0);
-      if (left.length !== 1) continue;
-      const i = left[0];
-      const used = e.coef.reduce<Fr>((acc, c, k) => (known[k] ? fadd(acc, fmul(c, known[k]!)) : acc), ZERO);
-      const remaining = fsub(e.rhs, used);
-      const val = fdiv(remaining, e.coef[i]);
-      known[i] = val;
-      const coefStr = feq(e.coef[i], ONE) ? "" : frTex(e.coef[i]);
-      const have = known.map((v, k) => (v && k !== i && !fzero(e.coef[k]) ? `${symTex(syms[k])} = ${frTex(v)}` : null)).filter(Boolean).join(",\\ ");
-      steps.push(S(`${have ? `With ${M(have)}, the` : "The"} ${BASE[e.col]} equation leaves only ${M(symTex(syms[i]))}: ${M(`${coefStr}${symTex(syms[i])} = ${frTex(remaining)}`)}, so ${M(`${symTex(syms[i])} = ${frTex(val)}`)}${fzero(val) ? " (this power is zero: that quantity does not appear)" : ""}.`, "Solve", ...(firstSolve ? [GAP] : []), al(symTex(syms[i]), frTex(val))));
-      firstSolve = false;
-      did = true;
-      break;
-    }
-    if (!did) break;
+  // solve: an equation with one power left gives it, and the next uses it
+  c.stage(...d.eqs.map((e) => lab(BASE[e.col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`)));
+  const val: Array<Fr | null> = Array(syms.length).fill(null);
+  let first = true;
+  for (let guard = 0; val.some((v) => v === null) && guard < 6; guard++) {
+    const e = d.eqs.find((q) => q.coef.filter((x, i) => val[i] === null && !fzero(x)).length === 1);
+    if (!e) break;
+    const i = e.coef.findIndex((x, k) => val[k] === null && !fzero(x));
+    const used = e.coef.reduce<Fr>((acc, x, k) => (val[k] ? fadd(acc, fmul(x, val[k]!)) : acc), ZERO);
+    const v = fdiv(fsub(e.rhs, used), e.coef[i]);
+    const haveKnown = e.coef.some((x, k) => k !== i && val[k] && !fzero(x));
+    val[i] = v;
+    const withValues = e.coef.map((x, k) => (fzero(x) ? null : val[k] && k !== i ? `${feq(x, ONE) ? "" : frTex(x)}\\left(${frTex(val[k]!)}\\right)` : `${feq(x, ONE) ? "" : frTex(x)}${symTex(syms[k])}`)).filter(Boolean).join(" + ").replace(/\+ -/g, "- ");
+    const numer = fzero(used) ? frTex(e.rhs) : `${frTex(e.rhs)} - ${par(frTex(used))}`;
+    const expr = feq(e.coef[i], ONE) ? numer : `\\frac{${numer}}{${frTex(e.coef[i])}}`;
+    const out = [...(first ? [GAP] : []), ...(haveKnown ? [lab(BASE[e.col], `${withValues} = ${frTex(e.rhs)}`)] : []), al(symTex(syms[i]), expr), ...(expr !== frTex(v) ? [ct(frTex(v))] : [])];
+    first = false;
+    steps.push(S(haveKnown
+      ? `Put the powers already found into the ${BASE[e.col]} equation, then solve for ${M(symTex(syms[i]))}.${fzero(v) ? " This power is zero: that quantity does not appear." : ""}`
+      : `The ${BASE[e.col]} equation has only ${M(symTex(syms[i]))} in it: solve it.${fzero(v) ? " This power is zero: that quantity does not appear." : ""}`, "Solve", ...out));
   }
-  if (known.some((v) => v === null)) {
+  if (val.some((v) => v === null)) {
     const res = solveLinear(d.eqs.map((e) => e.coef), d.eqs.map((e) => e.rhs));
-    const pending = known.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
-    if (res.status === "unique") res.x.forEach((v, i) => { if (known[i] === null) known[i] = v; });
-    steps.push(S(`Solve the equations together (eliminate one power from a pair of equations, then another): ${M(pending.map((i) => `${symTex(syms[i])} = ${frTex(known[i]!)}`).join(",\\ "))}.`, "Solve", ...(firstSolve ? [GAP] : []), ...pending.map((i) => al(symTex(syms[i]), frTex(known[i]!)))));
+    const pending = val.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
+    if (res.status === "unique") res.x.forEach((v, i) => { if (val[i] === null) val[i] = v; });
+    steps.push(S("Solve the remaining equations together: eliminate one power from a pair of equations, then another.", "Solve", ...(first ? [GAP] : []), ...pending.map((i) => al(symTex(syms[i]), frTex(val[i]!)))));
   }
-  steps.push(S(`Check by putting the powers back: every column adds up to the dimensions of ${M(target.sym)}.`, "Check", GAP, "\\text{check: every column adds up to the dimensions of } " + target.sym + "\\ \\checkmark"));
-  const answer = syms.map((s, i) => `${symTex(s)} = ${frTex(known[i]!)}`).join(",\\ ");
-  steps.push(S(d.ask === "zero" ? `${M(`${symTex(syms[d.zeroIdx!])} = 0`)}, and ${M(answer)}.` : `${M(answer)}.`, "Answer", GAP, boxed(answer)));
+  const answer = syms.map((s, i) => `${symTex(s)} = ${frTex(val[i]!)}`).join(",\\ ");
+  steps.push(S("Check that every column adds up, then write the answer clearly.", "Answer", GAP, boxed(answer)));
   return steps;
 }

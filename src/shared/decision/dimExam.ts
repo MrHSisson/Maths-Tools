@@ -9,7 +9,7 @@ import {
   type DimProblemData, type DimQuestion, type Situation,
   SITUATIONS, CONST_RELATIONS, genDimsNameFor, genDimsConstFor, genConsistent, powersFromSituation, modelTex, joinAnd, pickOne, circleLine, shuffle,
 } from "./dimGen";
-import { solveDim, formalLines } from "./dimSolve";
+import { solveDim, modelChains } from "./dimSolve";
 
 export type DimChain = "circle" | "find" | "constant" | "consistent" | "models" | "zero";
 export const DIM_CHAINS: DimChain[] = ["circle", "find", "constant", "consistent", "models", "zero"];
@@ -37,7 +37,7 @@ function build(chain: string, intro: string, parts: ExamPart[], main: DimProblem
 }
 
 /** the formal chain for a dimension question, one line of TeX each, as the model answer */
-const chainModel = (d: DimProblemData): string[] => formalLines(d).map(M);
+const chainModel = (d: DimProblemData): string[] => modelChains(d).map(M);
 
 const stateDims = (qid: string, partLabel: string) => {
   const q = genDimsNameFor(qid, false, false);
@@ -122,7 +122,7 @@ function exConsistent(level: number): DecisionProblem {
     m("M1", "Substitutes the dimensions of the quantities into the terms"),
     m("A1", "Obtains the dimensions of every term correctly"),
     m("R1", `Concludes that every term has dimensions ${M(dim)}, so the formula is consistent`),
-  ], [...(d.calcs ?? []).map(M), `${M(chain)}, so the formula is dimensionally consistent.`], d, { subTool: "consistent", options: { consAsk: "show" } }, "showConsistent");
+  ], [...chainModel(d), `${M(chain)}, so the formula is dimensionally consistent.`], d, { subTool: "consistent", options: { consAsk: "show" } }, "showConsistent");
   const c = genDimsConstFor(pickOne(CONST_RELATIONS), false);
   const rep = c.data.represents;
   const kd = c.data.answerDim!;

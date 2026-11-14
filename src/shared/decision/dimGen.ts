@@ -8,7 +8,7 @@ import {
   fr, fadd, fneg, fzero, fint, ZERO, ONE,
   unitsDim, parseUnits, UNIT_BASE, baseUnits, solveLinear, rankOf, equationsFor, termDim, consistentDims, FORMULAS,
 } from "./dim";
-import { symTex, frTex, supTex, dimTex, dimPowTex, productTex, termTex, formulaTex, unitsTex, M, andTex } from "./dimTex";
+import { symTex, frTex, dimTex, productTex, termTex, formulaTex, unitsTex, M, andTex } from "./dimTex";
 
 // ── The question's data (what the picture and the working are drawn from) ───────────────────────────────────────────────────
 type DimKind = "dimsName" | "dimsUnits" | "dimsExpr" | "dimsConst" | "consShow" | "consOdd" | "consMissing" | "consPick" | "powers";
@@ -47,8 +47,14 @@ export interface DimProblemData {
   /** consistency: which row is the odd term out, and the power to find */
   oddIdx?: number;
   missing?: { sym: string; value: Fr; coef: Dim3; rest: Dim3; target: Dim3 };
-  /** consistency: how each term's dimensions are worked out, a TeX line per row */
-  calcs?: string[];
+  /** quantities (ids, or "u:N" for a derived unit) whose dimensions the working must establish before the main working: those not given are built */
+  needs?: string[];
+  /** how the quantities of a model get their dimensions: built from definitions (default), read from their units, or stated in the question */
+  via?: "defs" | "units" | "given";
+  /** via "units": the units of each row (target first), as plain text ("kg m⁻³") */
+  rowUnits?: string[];
+  /** consistency: the formula's terms, left side then right, with their factors */
+  terms?: Array<{ tex: string; num?: string; f: Array<{ q: string; sym: string; p: Fr }> }>;
   /** a circled formula's check, a line per option (prose with maths) */
   notes?: string[];
   /** a circled formula's check as written, a TeX line per option ("A: L, L, LT^{-1}: not consistent") */
@@ -142,7 +148,8 @@ export function genDimsNameFor(id: string, units: boolean, circle: boolean): Dim
   }
   const options = circle ? circleList(ans, distractors(answerDim)) : undefined;
   if (options) prompt += ` ${circleLine(options)}`;
-  return { data: { kind, rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim, options, defText: q.defText, represents: q.name }, prompt, answerText: M(`${resultSym} = ${ans}`) };
+  const needs = units ? parseUnits(q.units!).map(([u]) => `u:${u}`) : q.def!.map(([f]) => f);
+  return { data: { kind, rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim, options, defText: q.defText, represents: q.name, needs }, prompt, answerText: M(`${resultSym} = ${ans}`) };
 }
 
 const INGREDIENTS = ["len", "time", "mass", "speed", "acc", "grav", "area", "vol", "dens", "force", "mom", "energy", "power", "press", "omega", "stiff", "inertia", "linmass", "visc", "G", "hgt", "rad", "dep"];
@@ -165,7 +172,7 @@ export function genDimsExpr(level: number, circle: boolean): DimQuestion {
     const ans = dimTex(dim);
     const options = circle ? circleList(ans, distractors(dim)) : undefined;
     const prompt = `${symLine(ids.map((id) => ({ sym: QBY[id].sym, name: QBY[id].name })))} Find the dimensions of ${M(text)}.${options ? ` ${circleLine(options)}` : ""}`;
-    return { data: { kind: "dimsExpr", rows: [{ sym: `[${text}]`, name: "the expression", dim, given: false, role: "result" }, ...rows], unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: dim, options, formula: text, defText: root ? "root" : undefined }, prompt, answerText: M(`[${text}] = ${ans}`) };
+    return { data: { kind: "dimsExpr", rows: [{ sym: `[${text}]`, name: "the expression", dim, given: false, role: "result" }, ...rows], unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: dim, options, formula: text, defText: root ? "root" : undefined, needs: ids }, prompt, answerText: M(`[${text}] = ${ans}`) };
   }
   throw new Error("no expression");
 }
@@ -208,7 +215,7 @@ export function genDimsConstFor(rel: ConstRel, circle: boolean): DimQuestion {
   const options = circle ? circleList(ans, distractors(kd)) : undefined;
   const prompt = `${rel.text} Find the dimensions of ${M(kSym)}.${options ? ` ${circleLine(options)}` : ""}`;
   return {
-    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: repr && !dimZero(kd) ? repr.name : undefined, formula: kSym, context: rel.text },
+    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: repr && !dimZero(kd) ? repr.name : undefined, formula: kSym, context: rel.text, needs: [rel.lhs, ...rel.others.map((x) => x.q)] },
     prompt,
     answerText: dimZero(kd) ? `${M(`[${kSym}] = 1`)} (dimensionless)` : M(`[${kSym}] = ${ans}`),
   };
@@ -263,13 +270,16 @@ const factorQuantities = (f: Formula): Array<{ sym: string; name: string }> => {
   for (const t of termsOf(f)) for (const x of t.f) if (!seen.has(x.sym)) seen.set(x.sym, QBY[x.q].name);
   return [...seen].map(([sym, name]) => ({ sym, name }));
 };
-/** "[at^{2}] = [a][t]^{2} = LT^{-2} \times T^{2} = L": the term in brackets, then each factor's dimensions, then the product */
-function termCalc(t: Term): string {
-  const br = t.f.map((x) => `[${symTex(x.sym)}]${supTex(x.p)}`).join("");
-  const parts = t.f.map((x) => dimPowTex(qDim(x.q), x.p));
-  return `[${termTex(t)}] = ${br} = ${parts.join(" \\times ")} = ${dimTex(termDim(t))}${t.num ? "\\quad \\text{(the number has no dimensions)}" : ""}`;
+/** the formula's terms as the working needs them */
+const termInfo = (f: Formula): NonNullable<DimProblemData["terms"]> => termsOf(f).map((t) => ({ tex: termTex(t), num: t.num, f: t.f.map((x) => ({ q: x.q, sym: x.sym, p: x.p })) }));
+/** every quantity a set of formulas uses, once each */
+const quantitiesOf = (fs: Formula[]): string[] => [...new Set(fs.flatMap((f) => termsOf(f).flatMap((t) => t.f.map((x) => x.q))))];
+/** how a model's quantities get their dimensions in the working: ids[0] is the target (null for an unnamed X), dims are every row's dimensions */
+function establish(ids: Array<string | null>, dims: Dim3[], mode: "given" | "units" | "defs"): Pick<DimProblemData, "needs" | "via" | "rowUnits"> {
+  if (mode === "given") return { via: "given", needs: [] };
+  if (mode === "units") return { via: "units", needs: [], rowUnits: dims.map((d, i) => (ids[i] && QBY[ids[i]!].units) || baseUnits(d)) };
+  return { via: "defs", needs: ids.filter((x): x is string => !!x) };
 }
-const termCalcs = (f: Formula): string[] => termsOf(f).map(termCalc);
 const termRows = (f: Formula): DimRow[] => termsOf(f).map((t) => ({ sym: termTex(t), name: "", dim: termDim(t), given: false, role: "term" }));
 
 export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "pick", numbers: boolean): DimQuestion {
@@ -278,7 +288,7 @@ export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "
   const base = pickOne(pool.length ? pool : FORMULAS.filter((f) => f.level === 1));
   if (ask === "show") {
     const dims = termsOf(base).map(termDim);
-    return { data: { kind: "consShow", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), answerDim: dims[0], calcs: termCalcs(base) }, prompt: `${symLine(factorQuantities(base))} Show that the formula ${M(formulaTex(base))} is dimensionally consistent.`, answerText: `every term has dimensions ${M(dimTex(dims[0]))}` };
+    return { data: { kind: "consShow", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), answerDim: dims[0], terms: termInfo(base), needs: quantitiesOf([base]) }, prompt: `${symLine(factorQuantities(base))} Show that the formula ${M(formulaTex(base))} is dimensionally consistent.`, answerText: `every term has dimensions ${M(dimTex(dims[0]))}` };
   }
   if (ask === "odd") {
     // "one term differs from the others" needs at least three terms to mean anything
@@ -289,7 +299,7 @@ export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "
       if (!b) continue;
       const ts = termsOf(b.formula);
       const letters = ["A", "B", "C", "D", "E"];
-      return { data: { kind: "consOdd", rows: termRows(b.formula), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(b.formula), oddIdx: b.at, calcs: termCalcs(b.formula) }, prompt: `${symLine(factorQuantities(b.formula))} In the formula ${M(formulaTex(b.formula))} one term does not have the same dimensions as the others. Which term is it? (${ts.map((t, i) => `${letters[i]}: ${M(termTex(t))}`).join(", ")})`, answerText: `${letters[b.at]}: ${M(termTex(ts[b.at]))}` };
+      return { data: { kind: "consOdd", rows: termRows(b.formula), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(b.formula), oddIdx: b.at, terms: termInfo(b.formula), needs: quantitiesOf([b.formula]) }, prompt: `${symLine(factorQuantities(b.formula))} In the formula ${M(formulaTex(b.formula))} one term does not have the same dimensions as the others. Which term is it? (${ts.map((t, i) => `${letters[i]}: ${M(termTex(t))}`).join(", ")})`, answerText: `${letters[b.at]}: ${M(termTex(ts[b.at]))}` };
     }
     return genConsistent(level, "show", numbers);
   }
@@ -309,7 +319,7 @@ export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "
       const coef = qDim(x.q);
       const rest = dimSub(termDim(t), dimScale(coef, x.p));
       const targetDim = termDim(all.find((_, i) => i !== idx)!);
-      return { data: { kind: "consMissing", rows: termRows(f), unknowns: ["n"], answerPowers: [value], eqs: [], ask: "find", formula, oddIdx: idx, missing: { sym: x.sym, value, coef, rest, target: targetDim }, calcs: termCalcs(f) }, prompt: `${symLine(factorQuantities(base))} The formula ${M(formula)} is dimensionally consistent. Find the value of ${M("n")}.`, answerText: M(`n = ${frTex(value)}`) };
+      return { data: { kind: "consMissing", rows: termRows(f), unknowns: ["n"], answerPowers: [value], eqs: [], ask: "find", formula, oddIdx: idx, missing: { sym: x.sym, value, coef, rest, target: targetDim }, terms: termInfo(f), needs: quantitiesOf([f]) }, prompt: `${symLine(factorQuantities(base))} The formula ${M(formula)} is dimensionally consistent. Find the value of ${M("n")}.`, answerText: M(`n = ${frTex(value)}`) };
     }
     return genConsistent(level, "show", numbers);
   }
@@ -333,7 +343,7 @@ export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "
   const notes = opts.map((o) => noteOf(o.correct ? base : wrongFormulas.get(o.text)!));
   const checkOf = (f: Formula, i: number): string => { const c = consistentDims(f); return `\\text{${"ABCD"[i]}: }${c.dims.map(dimTex).join(",\\ ")}\\quad \\text{${c.ok ? "consistent" : "not consistent"}}`; };
   const checks = opts.map((o, i) => checkOf(o.correct ? base : wrongFormulas.get(o.text)!, i));
-  return { data: { kind: "consPick", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), options: opts, answerDim: termDim(termsOf(base)[0]), notes, checks, calcs: termCalcs(base) }, prompt: `${symLine([...all].map(([sym, name]) => ({ sym, name })))} One of these formulas is dimensionally consistent. ${circleLine(opts)}`, answerText: M(formulaTex(base)) };
+  return { data: { kind: "consPick", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), options: opts, answerDim: termDim(termsOf(base)[0]), notes, checks, terms: termInfo(base), needs: quantitiesOf([base, ...wrong]) }, prompt: `${symLine([...all].map(([sym, name]) => ({ sym, name })))} One of these formulas is dimensionally consistent. ${circleLine(opts)}`, answerText: M(formulaTex(base)) };
 }
 
 // ── Find the powers ──────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -425,7 +435,7 @@ export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; 
     ? `Show that ${M(`${symTex(syms[zeroIdx])} = 0`)} and find the values of ${andTex(syms.filter((_, i) => i !== zeroIdx))}.`
     : `Use dimensional analysis to find the values of ${andTex(syms)}.`;
   return {
-    data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask: zeroIdx >= 0 ? "zero" : "find", zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, context: sit.ctx },
+    data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask: zeroIdx >= 0 ? "zero" : "find", zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, context: sit.ctx, ...establish([sit.target, ...facsRaw.map((f) => f[0])], [target, ...facs.map((f) => f.dim)], o.given === "units" ? "units" : "defs") },
     prompt: `${sit.ctx}${unitsLine} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. ${tail}`,
     answerText: eqsAnswer(exps, syms),
   };
@@ -453,7 +463,7 @@ export function genPowers(level: number, o: PowersOpts): DimQuestion {
         ? `${facs.map((f) => M(`[${symTex(f.sym)}] = ${dimTex(f.dim)}`)).join(", ")}. A quantity ${M("X")} has dimensions ${M(dimTex(target))}.`
         : symLine([{ sym: "X", name: nameOf(tid) }, ...facs]);
       return {
-        data: { kind: "powers", rows, unknowns: syms, answerPowers: [], eqs, ask: "cannot", formula: model },
+        data: { kind: "powers", rows, unknowns: syms, answerPowers: [], eqs, ask: "cannot", formula: model, ...establish([tid, ...ids], [target, ...cols], unitsGiven ? "units" : o.context === "none" ? "given" : "defs") },
         prompt: `${lead} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. Show that no values of ${andTex(syms)} make this model dimensionally consistent.`,
         answerText: `no values of ${andTex(syms)} work: the equations contradict each other`,
       };
@@ -520,7 +530,7 @@ export function genPowers(level: number, o: PowersOpts): DimQuestion {
     }
     const ask = zeroIdx >= 0 ? "zero" : "find";
     return {
-      data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask, zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model },
+      data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask, zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, ...establish(o.context === "none" ? [null, ...ids] : [tid!, ...ids], [target, ...cols], unitsGiven ? "units" : o.context === "none" ? "given" : "defs") },
       prompt: `${lead} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. ${tail}`,
       answerText: eqsAnswer(exps, syms),
     };

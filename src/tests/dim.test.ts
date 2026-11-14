@@ -5,7 +5,7 @@ import { LIBRARY, qDim, defDim, dimEq, dimStr, unitsDim, parseUnits, dimOf, FORM
 import {
   genDimsName, genDimsNameFor, genDimsExpr, genDimsConst, genConsistent, genPowers, breakFormula, distractors, SITUATIONS, situationDims, situationsAtLevel, CONST_RELATIONS, constDim, type DimQuestion,
 } from "../shared/decision/dimGen";
-import { solveDim, formalLines } from "../shared/decision/dimSolve";
+import { solveDim, modelChains } from "../shared/decision/dimSolve";
 import { generateDimExam, DIM_CHAINS, type DimChain } from "../shared/decision/dimExam";
 import type { DecisionProblem } from "../shared/decision/types";
 import katex from "katex";
@@ -253,19 +253,22 @@ describe("the working", () => {
         let before: string[] = [];
         for (const s of steps) {
           expect(s.caption.length, q.prompt).toBeGreaterThan(3);
-          // the written page only ever grows: each step's page starts with the page before it, and `fresh` is how many rows it added
-          const lines = s.dimView!.lines;
-          expect(lines.slice(0, before.length), q.prompt).toEqual(before);
-          expect(lines.length - before.length, q.prompt).toBe(s.dimView!.fresh);
-          before = lines;
+          const v = s.dimView!;
+          // what is known only ever grows, a step's new rows are at most all of its rows, and a page stays small enough to fit its panel without scrolling
+          expect(v.known.slice(0, before.length), q.prompt).toEqual(before);
+          expect(v.fresh!, q.prompt).toBeLessThanOrEqual(v.lines.length);
+          expect(v.lines.length, q.prompt).toBeLessThanOrEqual(20);
+          expect(v.known.length, q.prompt).toBeLessThanOrEqual(14);
+          before = v.known;
         }
         // the last page ends on the boxed answer
-        expect(before.some((r) => r.startsWith("\\boxed{")), q.prompt).toBe(true);
+        expect(steps[steps.length - 1].dimView!.lines.concat(steps.flatMap((s) => s.dimView!.lines)).some((r) => r.startsWith("\\boxed{")), q.prompt).toBe(true);
         const last = steps.filter((s) => s.phase === "Answer" || s.phase === "Conclusion").pop();
         expect(last, q.prompt).toBeDefined();
         if (q.data.kind === "powers" && q.data.ask !== "cannot") {
-          // the narrated powers are the intended powers
-          q.data.unknowns.forEach((u, i) => expect(last!.caption, q.prompt).toContain(`${symTex(u)} = ${frTex(q.data.answerPowers[i])}`));
+          // the boxed answer on the last page is the intended powers
+          const boxedRow = last!.dimView!.lines.find((r) => r.startsWith("\\boxed{"))!;
+          q.data.unknowns.forEach((u, i) => expect(boxedRow, q.prompt).toContain(`${symTex(u)} = ${frTex(q.data.answerPowers[i])}`));
         }
       }
     });
@@ -322,7 +325,7 @@ describe("the written working page", () => {
     withSeededRandom(61, () => {
       for (const chain of DIM_CHAINS) for (let i = 0; i < 8; i++) {
         const p = generateDimExam(1, chain);
-        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("Given");
+        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("The question");
         for (const part of p.exam!.parts) {
           for (const st of part.working ?? []) {
             const html = renderToStaticMarkup(createElement(DimCanvas, { p, step: st }));
@@ -358,11 +361,13 @@ describe("the maths is LaTeX", () => {
         prose(q.answerText, "answer");
         if (q.data.formula) renders(q.data.formula, "formula");
         q.data.rows.forEach((r) => renders(r.sym, "row"));
-        (q.data.calcs ?? []).forEach((c) => renders(c, "calc"));
+        (q.data.terms ?? []).forEach((t) => renders(t.tex, "term"));
+        modelChains(q.data).forEach((c) => renders(c, "model chain"));
         (q.data.options ?? []).forEach((o) => renders(o.text, "option"));
         for (const st of solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem)) {
           prose(st.caption, `caption (${q.data.kind})`);
           for (const row of st.dimView!.lines) if (row !== "") renders(row.includes("&") ? `\\begin{aligned}${row}\\end{aligned}` : row, `written row (${q.data.kind})`);
+          for (const k of st.dimView!.known) renders(k, `known item (${q.data.kind})`);
         }
       }
       for (const chain of DIM_CHAINS) for (let i = 0; i < 10; i++) {
@@ -377,11 +382,35 @@ describe("the maths is LaTeX", () => {
       }
     });
   });
-  it("the model answers read as the formal chain, with square brackets", () => {
+  it("the model answers build up from the given quantities and read as the formal chain, with square brackets", () => {
     const q = genDimsNameFor("force", false, false);
-    expect(formalLines(q.data)[0]).toBe("[F] = [ma] = [m][a] = M \\times LT^{-2} = MLT^{-2}");
+    // acceleration is not given, so it is built first; only then is force found from it
+    expect(modelChains(q.data)).toEqual([
+      "[a] = [\\frac{v}{t}] = [v][t]^{-1} = LT^{-1} \\times T^{-1} = L^{1}T^{-1 + (-1)} = LT^{-2}",
+      "[F] = [ma] = [m][a] = M \\times LT^{-2} = MLT^{-2}",
+    ]);
     const u = genDimsNameFor("dens", true, false);
-    expect(formalLines(u.data)[0]).toContain("= M \\times L^{-3} = ML^{-3}");
+    expect(modelChains(u.data)[0]).toContain("= M \\times L^{-3} = ML^{-3}");
+  });
+  it("a quantity that is not given is built before it is used, and the page never shows it as a fact first", () => {
+    const q = genDimsNameFor("force", false, false);
+    const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
+    const firstMain = steps.findIndex((s) => s.phase === "Definition");
+    const builds = steps.filter((s) => (s.phase ?? "").startsWith("Build"));
+    expect(builds.length).toBeGreaterThan(0);
+    expect(steps.findIndex((s) => (s.phase ?? "").startsWith("Build"))).toBeLessThan(firstMain);
+    // acceleration joins the known strip when it is built, and not before
+    expect(steps[0].dimView!.known.some((k) => k.includes("LT^{-2}"))).toBe(false);
+    expect(steps[firstMain].dimView!.known.some((k) => k === "[a] = LT^{-2}")).toBe(true);
+    // the given set is length, time, mass and speed
+    expect(steps[0].dimView!.known.slice(0, 4)).toEqual(["[l] = L", "[t] = T", "[m] = M", "[v] = LT^{-1}"]);
+  });
+  it("a question that states dimensions (letters) builds nothing: they are given", () => {
+    withSeededRandom(5, () => {
+      const q = genPowers(2, { context: "none", ask: "find", given: "dims" });
+      const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
+      expect(steps.some((s) => (s.phase ?? "").startsWith("Build"))).toBe(false);
+    });
   });
 });
 

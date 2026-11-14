@@ -58,9 +58,12 @@ export interface NetworkTemplate {
 /** The network of a problem, or an empty one when the problem has none: for the network tools' own code, which always has one. */
 export const netOf = (p: { network?: Network }): Network => p.network ?? { nodes: [], edges: [] };
 
-/** Dimensional Analysis: the written working so far, as TeX rows (the picture is the page a student would write). A row with "&" is aligned on it
- *  ("[F] &= [ma]", "&= [m][a]"); "" is a gap; any other row stands alone. The last `fresh` rows are the ones this step added. */
-export interface DimViewState {
+/** Dimensional Analysis: the page a student would write. `known` is what may be taken as known (the given quantities, then each one built so far) and stays
+ *  short; `lines` is the working in progress as TeX rows (a row with "&" is aligned on it: "[F] &= [ma]", "&= [m][a]"; "" is a gap; any other row stands alone).
+ *  The last `fresh` rows, and the last `knownFresh` known items, are what this step added. */
+interface DimViewState {
+  known: string[];
+  knownFresh?: number;
   lines: string[];
   fresh?: number;
 }

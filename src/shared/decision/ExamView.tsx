@@ -68,7 +68,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
   const picture = (
     <div className={`flex flex-col gap-2 min-w-0 ${narrow ? "sticky top-0 z-20 bg-[#f8f9fb] pb-2 -mx-3 px-3" : "h-full min-h-0"}`}>
       {!narrow && context}
-      <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: "32dvh", minHeight: 190 } : { minHeight: 300 }}>
+      <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: problem.dim ? "42dvh" : "32dvh", minHeight: problem.dim ? 260 : 190 } : { minHeight: 300 }}>
         {shown(step)}
         {figureName && <span className="absolute top-2 left-2 rounded-md bg-blue-900 text-white text-xs font-bold px-2 py-0.5">{figureName}</span>}
       </div>
