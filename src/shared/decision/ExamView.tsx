@@ -110,7 +110,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
         <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
             <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">
-              {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}
+              {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line", maxWidth: "100%", overflowX: "auto" }}><InlineMath text={l} /></div>)}
             </div>
             {((p.working && p.working.length > 0) || (p.explain && p.explain.length > 0)) && (
               <button onClick={(e) => { e.stopPropagation(); setActive(i); setWhy((w) => ({ ...w, [i]: !w[i] })); }} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"

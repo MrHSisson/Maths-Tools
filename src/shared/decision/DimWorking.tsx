@@ -113,7 +113,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
   const base = v ? INK : GIVEN;
   return (
     <div style={{ position: "absolute", inset: 0, background: "#fff", overflow: "hidden", containerType: "size" } as CSSProperties}>
-      <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{d.title && (v || !p.exam) ? <Prose text={d.title} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
+      <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{(v?.title ?? d.title) && (v || !p.exam) ? <Prose text={v?.title ?? d.title ?? ""} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
       <div ref={box} style={{ position: "absolute", top: 46, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
         <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "none", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(12px, 4cqh, 30px)", color: base }}>
           <div style={{ marginBottom: 14, maxWidth: "46em" }}>
