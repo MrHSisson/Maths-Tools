@@ -27,28 +27,27 @@ One lesson, so the plan is cut for pacing: **book sets are six questions (3 × 2
 | 2 | Definition: factor | Divides exactly; always includes 1 and the number itself |
 | 3 | Calculator: is it a factor? | Plain text: type `24 ÷ 4 =`, it shows 6, whole number so 4 is a factor; type `24 ÷ 5 =`, it shows 24/5 (4.8 with S⇔D), not whole so 5 is not a factor. Revealed by click, no drawn calculator |
 | 4 | Calculator: find all the factors of 24 | Structure-only board: divide by · calculator shows · whole? · pair. Stop rule: stop when the answer is smaller than the number you divided by |
-| 5 | Whiteboard x3 (full-width, centred) | Factors of 48 (pairs partly completed, two to a row), 60 (three pairs given, three `__ × __` to find) and **30 with no scaffold** |
+| 5 | Whiteboard x3 (full-width, centred) | Factors of 48 and 60 with a hint under the question ("Hint: 5 factor pairs.") and **30 with no hint**. The answer shows the pairs and the ordered list |
 | 6 | Book work 3 × 2 | Just the number in each cell (40, 56, 42, 80, 36, 70), large and centred; the instruction is once at the top. No blanks and no counts |
 | 7 | Definition: common factor | A number that is a factor of both |
 | 8 | Model: 12 and 18 | The two numbers as headings with their factor pairs underneath; circle the numbers that appear in both; calculator check on 4 |
 | 9 | Discussion | Kofi says the only common factor of 12 and 18 is 6 |
-| 10 | Whiteboard x3 (full-width, centred) | Common factors of 24 and 36 (pairs table with blanks), 40 and 56 (hint: 4 common factors) and **20 and 30 with no scaffold** |
-| 11 | Book work 3 × 2 | Pairs of numbers (18, 27 ...), large and centred; no scaffold |
+| 10 | Whiteboard x3 (full-width, centred) | Common factors of 30 and 45 (hint: how many factor pairs each has), 40 and 56 (hint: 4 common factors) and **20 and 50 with no hint**. The answer is the pairs table with the common factors in bold green |
+| 11 | Book work 3 × 2 | Pairs of numbers (16, 28 ...), large and centred; no scaffold |
 | 12 | Definition: highest common factor (HCF) | The largest of the common factors |
 | 13 | Model: HCF of 12 and 18 | The same pairs layout, circle the common factors, then the highest: 6 |
 | 14 | Discussion | Ruby says the HCF of 12 and 18 is 36; what has she found? (a common multiple) |
-| 15 | Whiteboard x3 (full-width, centred) | HCF of 32 and 48 (pairs table with blanks), 36 and 54 (hint: 6 common factors) and **18 and 30 with no scaffold** |
+| 15 | Whiteboard x3 (full-width, centred) | HCF of 32 and 48 (hint: how many factor pairs each has), 45 and 60 (hint: 4 common factors) and **20 and 30 with no hint** |
 | 16 | Book work 3 × 2 | Pairs of numbers, large and centred; no scaffold |
 | 17 | Exit ticket | See below |
 
 If time runs short, the first cut is the discussion on slide 9 (keep slide 14), then the whiteboards on slide 10.
 
-**Scaffolding, and weaning it off (decided with Harry).** Whiteboard numbers are bigger than the book numbers so a factor is not seen at a glance (small numbers let pupils skip the process). Early on, most of the working is given so pupils still run the calculator method without spending forever on it; the support is then taken away, in the same order in every section: a whiteboard set goes *partly completed, then a count or hint, then no scaffold* (the last whiteboard uses a friendly number, such as 30), (decided 2026-11-14: the six-question **book sets carry no scaffold at all**, just the numbers). Confidence is built at the start, and by the end of the deck pupils work unaided. Scaffold forms:
+**Help, and weaning it off (decided with Harry, simplified 2026-11-14).** Whiteboard numbers are bigger than the book numbers so a factor is not seen at a glance. Pupils have calculators, so the help is one hint line under the question rather than a table to fill in or a worksheet: in each section the first whiteboard says how many factor pairs there are (each number's, for two numbers), the second says how many common factors there are (or the pairs again for listing), and the last whiteboard has no hint and uses a friendly number (30; 20 and 50; 20 and 30). The six-question book sets carry no help at all, just the numbers. Forms:
 
-- **Partly completed:** pairs shown as `1 × 48, 2 × 24, 3 × __, ...` with the partner left blank; for two numbers, a table with each number as a heading and its factor pairs underneath, some partners blank.
-- **Pairs and a count:** two pairs given, then `__ × __` once for each pair still to find, with the number of missing pairs written on the slide.
-- **Hint:** one line saying how many factor pairs the number has (or how many common factors).
-- **No scaffold:** the number and the instruction only.
+- **Pairs hint:** "Hint: 5 factor pairs." or "Hint: 30 has 4 factor pairs and 45 has 3."
+- **Common-factors hint:** "Hint: 4 common factors."
+- **None:** the number and the instruction only.
 
 The full method is shown on the worked slides (4, 8, 12) and in each whiteboard's answer.
 
@@ -80,8 +79,8 @@ All answers below were recomputed by script (every factor list, every common set
 
 | Set | Task | Answer |
 | --- | --- | --- |
-| list-1 | Factors of 48. Given: 1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __ (two to a row) | 3 × 16, 6 × 8; 5 and 7 are not factors (9.6, 6.86); 1, 2, 3, 4, 6, 8, 12, 16, 24, 48 |
-| list-2 | Factors of 60. Given: 1 × 60, 2 × 30, 3 × 20, then `__ × __` three more times (3 more pairs) | 4 × 15, 5 × 12, 6 × 10; 7 (8.57) is not, 8 (7.5 is smaller than 8) stop; 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 |
+| list-1 | Factors of 48. Hint: 5 factor pairs | 1 × 48, 2 × 24, 3 × 16, 4 × 12, 6 × 8; 5 and 7 are not factors (9.6, 6.86); 1, 2, 3, 4, 6, 8, 12, 16, 24, 48 |
+| list-2 | Factors of 60. Hint: 6 factor pairs | 1 × 60 ... 6 × 10; 7 (8.57) is not, 8 (7.5 is smaller than 8) stop; 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60 |
 | list-3 | Factors of 30 (no scaffold) | 1, 2, 3, 5, 6, 10, 15, 30 |
 | book-1 | 40 (cell shows just the number) | 1, 2, 4, 5, 8, 10, 20, 40 |
 | book-2 | 56 | 1, 2, 4, 7, 8, 14, 28, 56 |
@@ -89,7 +88,7 @@ All answers below were recomputed by script (every factor list, every common set
 | book-4 | 80 | 1, 2, 4, 5, 8, 10, 16, 20, 40, 80 |
 | book-5 | 100 (a square) | 1, 2, 4, 5, 10, 20, 25, 50, 100 |
 | book-6 | 70 | 1, 2, 5, 7, 10, 14, 35, 70 |
-| cf-1 | Common factors of 30 and 45. Table with headings 30 and 45 and their pairs: 30: 1 × 30, 2 × __, 3 × 10, 5 × __; 45: 1 × 45, 3 × __, 5 × 9 | Blanks 15, 6 and 15; common: 1, 3, 5, 15 |
+| cf-1 | Common factors of 30 and 45. Hint: 30 has 4 factor pairs and 45 has 3 | 30: 1 × 30, 2 × 15, 3 × 10, 5 × 6; 45: 1 × 45, 3 × 15, 5 × 9; common: 1, 3, 5, 15 |
 | cf-2 | Common factors of 40 and 56. Hint: 4 common factors | 40: 1, 2, 4, 5, 8, 10, 20, 40; 56: 1, 2, 4, 7, 8, 14, 28, 56; common: 1, 2, 4, 8 |
 | cf-3 | Common factors of 20 and 50 (no scaffold) | 1, 2, 5, 10 |
 | cfb-1 | 16, 28 | 1, 2, 4 |
@@ -98,7 +97,7 @@ All answers below were recomputed by script (every factor list, every common set
 | cfb-4 | 21, 35 | 1, 7 |
 | cfb-5 | 44, 66 | 1, 2, 11, 22 |
 | cfb-6 | 14, 15 | 1 |
-| hcf-1 | HCF of 32 and 48. Table with headings 32 and 48 and their pairs: 32: 1 × 32, 2 × __, 4 × 8; 48: 1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __ | Blanks 16, 16 and 8; common: 1, 2, 4, 8, 16; HCF 16 |
+| hcf-1 | HCF of 32 and 48. Hint: 32 has 3 factor pairs and 48 has 5 | Common: 1, 2, 4, 8, 16; HCF 16 |
 | hcf-2 | HCF of 45 and 60. Hint: 4 common factors | Common: 1, 3, 5, 15; HCF 15 |
 | hcf-3 | HCF of 20 and 30 (no scaffold) | Common: 1, 2, 5, 10; HCF 10 |
 | hcfb-1 | 28, 42 | 14 |
@@ -115,6 +114,6 @@ The 'Given' text is exactly what appears on the slide, and the answer slide fill
 
 ## Decisions and what is still open
 
-Decided by Harry: one lesson, Set 6 low attainers, Casio fx-85, book sets limited to about six for pacing, bigger whiteboard numbers with partly completed working, and scaffolding weaned off through each set and through the deck (a final unscaffolded whiteboard with a friendly number such as 30).
+Decided by Harry: one lesson, Set 6 low attainers, Casio fx-85, book sets limited to about six for pacing, bigger whiteboard numbers with partly completed working, and help weaned off to a hint line and then nothing (a final whiteboard with no hint and a friendly number such as 30). No worksheet: they have calculators, so a hint of how many factor pairs does the job.
 
 Calculator confirmed: Casio fx-85GT CW (ClassWiz). Its natural display shows a non-whole answer as a fraction (24/5), so slides 3 and 4 say "a whole number means yes" and show S⇔D for the decimal. The replay-key wording is to be checked on a real calculator. Also: do the ladder, traps and numbers above look right?

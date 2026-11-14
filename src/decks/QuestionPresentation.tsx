@@ -77,7 +77,7 @@ function ClassroomQuestion({ question: q, live = false, base = 46, stacked = fal
   const controlButton = slideButton;
   const options = q.format === "choice" || q.format === "claims" ? q.options : [];
   const shape = useMemo(() => q.rectilinear ? rectilinearQuestion(q.rectilinear) : undefined, [q.rectilinear]);
-  const questionContent = shape ? <ShapeQuestion drawing={extras(shape)._diagram as Drawing} focuses={extras(shape)._stepFocus as (Focus | undefined)[]} shown={solution.all ? q.explanation.length : solution.shown} answer={answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.filter((l) => !l.includes("\\begin{array}")).join("").length < 170 ? "center" : "left" }}>
+  const questionContent = shape ? <ShapeQuestion drawing={extras(shape)._diagram as Drawing} focuses={extras(shape)._stepFocus as (Focus | undefined)[]} shown={solution.all ? q.explanation.length : solution.shown} answer={answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: "0.55em", textAlign: q.format === "open" && q.question.join("").length < 170 ? "center" : "left" }}>
       {q.missing && <div role="alert" style={{ color: "#b91c1c" }}>Missing source: {q.missing}. Replace this item in Questions.</div>}
         {depth && !answer && q.format === "claims" && <DepthClaims claims={q.claims} />}
         {(!depth || !answer) && <div style={{ fontSize: "1em", fontWeight: 500 }}><QuestionText lines={q.question} /></div>}
