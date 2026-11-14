@@ -29,6 +29,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Factors deck: reformatted after Harry's first look
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `src/decks/QuestionPresentation.tsx` (one line), `docs/pathways/decks.md`.
+
+- **Slide 3:** the drawn calculator keys are gone; the two sums and what the calculator shows are plain text, revealed by click.
+- **Whiteboards (slides 5, 10, 15):** full-width instead of workspace right, larger text, centred. The listing scaffold is set two pairs to a row. For two numbers, each number is a heading with its factor pairs underneath (the pairs layout, not flat lists), with the common factors in bold green in the worked answer.
+- **Models (slides 8, 13):** the same pairs layout, with the common numbers circled. The HCF definition now has its own slide, so the deck is 17 slides.
+- **Book sets (slides 6, 11, 16):** no blanks, no counts, no hints: the instruction once at the top and each cell is just the number (or pair), drawn large and centred.
+- **Shared code:** the open-question text is centred when it is short; the 170-character test now ignores a factor-pairs table (`\begin{array}`), so a table under a short question no longer pushes it left. The question area on these slides is also inset to 48 units: with larger text the hidden working panel's resting position otherwise tripped the layout check by 8 units.
+- **Checked:** every answer still computed and asserted in the build script; content and layout checks pass for all 17 slides; deck, question, docs and organisation tests, lint and `tsc` pass; the new slides looked at in the browser.
+- **Open:** whether the scaffolded questions would be better on a printed worksheet (put to Harry).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
 ## 2026-11-13 — Factors, common factors and HCF lesson deck
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: new `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `docs/pathways/decks.md`. No shared deck code changed.
