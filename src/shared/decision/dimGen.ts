@@ -508,6 +508,7 @@ export function genPowers(level: number, o: PowersOpts): DimQuestion {
     let tid: string | undefined;
     if (o.context === "named") {
       tid = pickOne(TARGETS.filter((t) => !ids.includes(t)));
+      if (facs.some((f) => f.sym === QBY[tid!].sym)) continue; // the target's letter must not be one of the model's
       target = qDim(tid);
       const eqs0 = equationsFor(target, cols);
       const res = solveLinear(eqs0.map((e) => e.coef), eqs0.map((e) => e.rhs));

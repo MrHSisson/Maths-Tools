@@ -98,7 +98,7 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
     <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
     <div class="intro">${mathHtml(exam.intro)}</div>
-    ${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>
+    ${questionFigure ? `${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>` : ""}
     ${parts}
   </div>`;
   const markScheme = `<div class="markscheme">

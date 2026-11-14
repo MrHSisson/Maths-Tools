@@ -47,7 +47,7 @@ function blockTex(b: Block, base: string): string {
     // a long one (or one that would make the line too wide) starts a new line, under the first equals.
     // A short follow-on step continues along the same line. When a line is full, the next step goes down but stays in line: its "=" sits under the
     // start of the last step of the line above (the indent is an invisible copy of what comes before it), so the working never jumps back to the left.
-    type Line = { left: string; indent: string; parts: Array<{ tex: string; fresh: boolean }>; w: number };
+    type Line = { left: string; indent: string; broken: boolean; parts: Array<{ tex: string; fresh: boolean }>; w: number };
     const SEP = "\\;\\;";
     const lines: Line[] = [];
     for (const { row, fresh } of b.rows) {
@@ -56,12 +56,12 @@ function blockTex(b: Block, base: string): string {
       const right = row.slice(at + 1);
       const w = weight(right);
       const last = lines[lines.length - 1];
-      if (left.trim() !== "" || !last) lines.push({ left, indent: "", parts: [{ tex: right, fresh }], w });
+      if (left.trim() !== "" || !last) lines.push({ left, indent: "", broken: false, parts: [{ tex: right, fresh }], w });
       // once a working has broken onto a new line, every step after it goes on its own line too, all under the same "="
-      else if (!last.indent && last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
+      else if (!last.broken && last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
       else {
         const before = last.parts.slice(0, -1).map((x) => x.tex).join(SEP);
-        lines.push({ left: "", indent: last.indent || (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: w });
+        lines.push({ left: "", broken: true, indent: last.indent || (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: w });
       }
     }
     const tall = (l: Line): boolean => /\\frac|\\left|\\begin/.test(l.parts.map((x) => x.tex).join("") + l.left);
@@ -82,7 +82,7 @@ function Tex({ t }: { t: string }) {
   try { html = katex.renderToString(t, { throwOnError: false, output: "html" }); } catch { html = t; }
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
-const label: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#94a3b8" };
+const label: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#64748b" };
 
 export default function DimCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
   const d = p.dim;
@@ -92,7 +92,8 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
   const v = step?.dimView;
   const known = v ? v.known : d ? initialKnown(d) : [];
   const knownFresh = v?.knownFresh ?? 0;
-  const lines = v ? v.lines : d ? givenLines(d) : [];
+  // an exam-style question shows only what is known until a part is worked: its model or formula is part of what the parts ask, so it is not given away
+  const lines = v ? v.lines : d && !p.exam ? givenLines(d) : [];
   const fresh = v?.fresh ?? 0;
   // shrink the page to fit the panel (never scroll): measure the natural size, then scale to the room there is
   useIso(() => {
@@ -111,7 +112,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
   const base = v ? INK : GIVEN;
   return (
     <div style={{ position: "absolute", inset: 0, background: "#fff", overflow: "hidden", containerType: "size" } as CSSProperties}>
-      <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{d.title ? <Prose text={d.title} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
+      <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{d.title && (v || !p.exam) ? <Prose text={d.title} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
       <div ref={box} style={{ position: "absolute", top: 46, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
         <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "none", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(12px, 4cqh, 30px)", color: base }}>
           <div style={{ marginBottom: 10, maxWidth: "26em" }}>
@@ -127,7 +128,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
               {blocks(lines, fresh).map((b, i) => (b.kind === "gap" ? <div key={i} style={{ height: "0.4em" }} /> : b.kind === "head" ? <div key={i} style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: "0.62em", fontWeight: 600, paddingTop: "0.3em" }}><Prose text={b.text} /></div> : <div key={i}><Tex t={blockTex(b, base)} /></div>))}
             </div>
           )}
-          {!v && lines.length === 0 && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 6 }}>Your working builds up here, one line at a time.</div>}
+          {!v && !p.exam && lines.length === 0 && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 6 }}>Your working builds up here, one line at a time.</div>}
         </div>
       </div>
     </div>

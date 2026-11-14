@@ -363,8 +363,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     try {
       const { renderToStaticMarkup } = await import("react-dom/server");
       const inputs = sheet.map((pr) => {
-        const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
-        const drawStep = (st: SolveStep) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
+        // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
+        const draw = (view?: unknown) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+        const drawStep = (st: SolveStep) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
           title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
@@ -730,7 +731,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       )}
       {showMatrix && stageView === "table"
         ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
-        : canvasBox(atQuestion ? (showMatrix ? "34dvh" : "40dvh") : (showMatrix ? "22dvh" : "24dvh"))}
+        : canvasBox(problem.dim ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "34dvh" : "40dvh") : (showMatrix ? "22dvh" : "24dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
       {atQuestion && legendItems && <Legend items={legendItems} />}
       {!atQuestion && (
         <>
@@ -801,13 +802,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {sheet.map((pr, n) => (
           <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
             className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
-            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} marks</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
-            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug">{pr.exam!.intro}</div>
-            <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>
-            <div className="px-4 pb-4 flex flex-col gap-2">
+            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} mark{pr.exam!.totalMarks === 1 ? "" : "s"}</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
+            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.exam!.intro} /></div>
+            {!pr.dim && <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>}
+            <div className="px-4 pb-4 flex flex-col gap-2 pt-2">
               {pr.exam!.parts.map((pt, k) => (
                 <div key={k} className="text-sm leading-snug">
-                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
+                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900"><InlineMath text={pt.prompt} /></span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
                   {sheetAnswers && (
                     <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
                       {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}

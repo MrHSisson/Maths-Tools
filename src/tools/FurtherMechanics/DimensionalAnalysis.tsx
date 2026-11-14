@@ -57,9 +57,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   } else {
     const lv = Math.min(2, Math.max(1, level));
     const circle = o.dimsForm === "circle";
-    // a constant needs a formula to rearrange: Level 1 asks for quantities and expressions only
+    // a constant needs a formula to rearrange: Level 1 asks for quantities and expressions unless a teacher ticks it
     const ask = pickOf(o.dimsAsk, lv === 1 ? "quantity,expression" : "quantity,expression,constant");
-    q = ask === "constant" && lv === 2 ? genDimsConst(circle) : ask === "expression" ? genDimsExpr(lv, circle) : genDimsName(lv, pickOf(o.dimsGiven, "name") === "units", circle);
+    q = ask === "constant" ? genDimsConst(circle) : ask === "expression" ? genDimsExpr(lv, circle) : genDimsName(lv, pickOf(o.dimsGiven, "name") === "units", circle);
   }
   return { kind: q.data.kind, level, dim: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" } as unknown as DecisionProblem;
 }
@@ -84,7 +84,7 @@ export default function App() {
         levelLabels: {
           dims: ["One step: a single quantity, or a product or quotient of two", "A constant from a formula, three factors, roots, and units"],
           consistent: ["Short formulas, with no numbers in them", "Longer formulas, with numbers and roots"],
-          powers: ["Two powers to find", "Three powers, all whole numbers", "Three powers, with fractions"],
+          powers: ["Two powers to find", "Three powers, whole numbers or halves", "Three powers, with fractions"],
           default: ["One exam-style question"],
         },
         subTools: SUB_TOOLS,
@@ -109,19 +109,19 @@ export default function App() {
           {
             key: "dimsAsk",
             label: "Ask for",
-            info: "What to find the dimensions of. A constant in a formula is Level 2 only.",
+            info: "What to find the dimensions of. A constant in a formula is ticked at Level 2 by default.",
             forSubTools: ["dims"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "quantity,expression" : "quantity,expression,constant"),
             choices: [
-              { value: "quantity", label: "A quantity", sub: "Speed, force…" },
+              { value: "quantity", label: "A quantity", sub: "Force, density…" },
               { value: "expression", label: "An expression", sub: "ρv²r" },
               { value: "constant", label: "A constant", sub: "In a formula" },
             ],
           },
           {
             key: "dimsGiven",
-            label: "Quantity given as",
+            label: "Quantity Given As",
             info: "Whether a named quantity is given by its name or by the units it is measured in.",
             forSubTools: ["dims"],
             multi: true,
@@ -133,7 +133,7 @@ export default function App() {
           },
           {
             key: "dimsForm",
-            label: "Answer",
+            label: "Answer Format",
             info: "Whether the student writes the dimensions or circles one of four options.",
             forSubTools: ["dims"],
             defaultFor: () => "write",
@@ -158,7 +158,7 @@ export default function App() {
           },
           {
             key: "consNumbers",
-            label: "Numbers in formulas",
+            label: "Numbers in Formulas",
             info: "Whether formulas can contain numbers such as ½, 2 and 2π, which have no dimensions, and roots.",
             forSubTools: ["consistent"],
             defaultFor: (lv: number) => (lv === 1 ? "no" : "yes"),
@@ -195,7 +195,7 @@ export default function App() {
           },
           {
             key: "powGiven",
-            label: "Dimensions given as",
+            label: "Dimensions Given As",
             info: "Whether the question states the dimensions of the quantities, or only the units they are measured in (so the student first finds the dimensions).",
             forSubTools: ["powers"],
             defaultFor: () => "dims",
