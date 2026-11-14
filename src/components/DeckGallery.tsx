@@ -5,7 +5,7 @@ import type { CategoryOp } from '../../api/_categories';
 import { useCategories } from '../decks/categories';
 import { layoutDecks, menuOptions, pathOf, type Category } from '../decks/categoryTree';
 import { SlideCanvas } from '../decks/SlideCanvas';
-import { CANVAS_W, type Slide } from '../decks/types';
+import { CANVAS_W, PITCH_LABEL, type Pitch, type Slide } from '../decks/types';
 
 
 // The one way decks are laid out: a card per deck (its first slide, its title and an (i) for the details), grouped under a heading per
@@ -15,7 +15,7 @@ import { CANVAS_W, type Slide } from '../decks/types';
 // the editor shows every deck.
 
 export interface GalleryDeck {
-  id: string; title: string; summary: string; strand?: string; slides: number; preview?: Slide;
+  id: string; title: string; summary: string; strand?: string; pitch?: Pitch; slides: number; preview?: Slide;
   /** A small tag beside the title, such as "Not published". */
   badge?: string;
   /** Lines for the (i): "Published 3 Nov 2026", "Your deck" … */
@@ -70,7 +70,7 @@ function DeckCard({ d, admin, filedIn, where, options, onDragStart, onDragEnd, o
       {open && (
         <div className="border-t border-slate-200 pt-2">
           {d.summary && <div className="text-sm text-slate-500">{d.summary}</div>}
-          <div className="mt-1 text-xs text-slate-400">{[where, `${d.slides} slides`, ...d.notes].filter(Boolean).join(' · ')}</div>
+          <div className="mt-1 text-xs text-slate-400">{[where, d.pitch && `Pitched at the ${PITCH_LABEL[d.pitch].toLowerCase()}`, `${d.slides} slides`, ...d.notes].filter(Boolean).join(' · ')}</div>
           {admin && onFile && options && (
             <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-500">Filed under
               <select value={filedIn ?? ''} onChange={(e) => onFile(e.target.value || null)} aria-label={`File ${d.title} under`}

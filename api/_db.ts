@@ -53,6 +53,7 @@ const SCHEMA = [
      preview jsonb,
      data jsonb NOT NULL
    )`,
+  `ALTER TABLE maths.published_decks ADD COLUMN IF NOT EXISTS pitch text`,
   `CREATE TABLE IF NOT EXISTS maths.deck_categories (
      id text PRIMARY KEY,
      name text NOT NULL,

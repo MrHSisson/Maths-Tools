@@ -41,7 +41,7 @@ import { sameDeck } from "../../api/_deckMerge";
 import { auditLayout, type LayoutIssue } from "./layoutAudit";
 import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
-import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Slide } from "./types";
+import { CANVAS_H, CANVAS_W, FAMILY_STYLE, MIN_TEXT, type CuratedQuestion, type DeckDef, type DeckElement, type DeckFamily, type InkStroke, type Pitch, type Slide, PITCHES, PITCH_LABEL } from "./types";
 import { FileUnder } from "./FileUnder";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -953,6 +953,12 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
             <div className="space-y-2 p-2 text-sm">
               <div className="text-xs font-semibold text-slate-500">Filed under (where it appears on the Decks page; manage the categories there)</div>
               <FileUnder deckId={deck.id} strand={deck.strand} />
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">Lesson pitch (shown only in the deck's (i))
+                <select value={deck.pitch ?? ""} onChange={(e) => apply((d) => ({ ...d, pitch: (e.target.value || undefined) as Pitch | undefined }))} aria-label="Lesson pitch"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-normal text-slate-800">
+                  <option value="">Not set</option>{PITCHES.map((p) => <option key={p} value={p}>{PITCH_LABEL[p]}</option>)}
+                </select>
+              </label>
               <textarea value={deck.summary} onChange={(e) => apply((d) => ({ ...d, summary: e.target.value }))} rows={3} className={input} placeholder="One sentence: what this lesson covers." aria-label="Deck summary" />
             </div>
           )}

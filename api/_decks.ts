@@ -19,7 +19,9 @@ export const validId = (id: unknown): id is string => typeof id === "string" && 
 export const deckPath = (id: string) => `decks/${id}.json`;
 
 /** A deck must have a usable id, a title and a list of slides, and fit in one request. */
-export function checkDeck(input: unknown): { deck: { id: string; title: string; summary: string; strand?: string; slides: unknown[]; updatedAt?: string }; body: string } | { error: string; status: number } {
+const PITCHES = ["upper", "middle", "lower"];
+
+export function checkDeck(input: unknown): { deck: { id: string; title: string; summary: string; strand?: string; pitch?: string; slides: unknown[]; updatedAt?: string }; body: string } | { error: string; status: number } {
   if (!input || typeof input !== "object") return { error: "deck is required", status: 400 };
   const d = input as Record<string, unknown>;
   if (!validId(d.id)) return { error: "deck.id must be lower-case letters, digits and hyphens", status: 400 };
@@ -44,7 +46,7 @@ export function checkDeck(input: unknown): { deck: { id: string; title: string; 
       }
     }
   }
-  return { deck: { id: d.id, title: d.title, summary: typeof d.summary === "string" ? d.summary : "", ...(typeof d.strand === "string" && d.strand.length <= 40 ? { strand: d.strand } : {}), slides: d.slides, updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : undefined }, body };
+  return { deck: { id: d.id, title: d.title, summary: typeof d.summary === "string" ? d.summary : "", ...(typeof d.strand === "string" && d.strand.length <= 40 ? { strand: d.strand } : {}), ...(typeof d.pitch === "string" && PITCHES.includes(d.pitch) ? { pitch: d.pitch } : {}), slides: d.slides, updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : undefined }, body };
 }
 
 /** The entry keeps the deck's own `updatedAt` (stamped by the device that saved it), so a device that already has that
@@ -61,7 +63,7 @@ export function indexWithout(index: DeckIndex, id: string): DeckIndex {
 // ── Published decks: a frozen copy anyone may play, separate from the working copy a teacher edits ──
 
 /** `preview` is the deck's first slide, so the listing can show what the deck looks like without loading it. */
-export interface PublishedEntry { title: string; summary: string; strand?: string; slides: number; publishedAt: string; preview?: unknown }
+export interface PublishedEntry { title: string; summary: string; strand?: string; pitch?: string; slides: number; publishedAt: string; preview?: unknown }
 const MAX_PREVIEW_CHARS = 30_000;               // a title slide is a few hundred; a big picture on it is left out of the listing
 export interface PublishedIndex { version: 1; decks: Record<string, PublishedEntry> }
 export const emptyPublished = (): PublishedIndex => ({ version: 1, decks: {} });
@@ -70,10 +72,10 @@ export const publishedPath = (id: string) => `published/${id}.json`;
 /** The frozen copy: the deck as sent, stamped with when it was published. */
 export const publishedBody = (body: string, now: string): string => JSON.stringify({ ...(JSON.parse(body) as Record<string, unknown>), publishedAt: now });
 
-export function publishedWith(index: PublishedIndex, deck: { id: string; title: string; summary: string; strand?: string; slides: unknown[] }, now: string): PublishedIndex {
+export function publishedWith(index: PublishedIndex, deck: { id: string; title: string; summary: string; strand?: string; pitch?: string; slides: unknown[] }, now: string): PublishedIndex {
   const first = deck.slides[0];
   const preview = first && JSON.stringify(first).length <= MAX_PREVIEW_CHARS ? first : undefined;
-  return { version: 1, decks: { ...index.decks, [deck.id]: { title: deck.title.slice(0, 200), summary: deck.summary.slice(0, 500), ...(deck.strand ? { strand: deck.strand } : {}), slides: deck.slides.length, publishedAt: now, ...(preview ? { preview } : {}) } } };
+  return { version: 1, decks: { ...index.decks, [deck.id]: { title: deck.title.slice(0, 200), summary: deck.summary.slice(0, 500), ...(deck.strand ? { strand: deck.strand } : {}), ...(deck.pitch ? { pitch: deck.pitch } : {}), slides: deck.slides.length, publishedAt: now, ...(preview ? { preview } : {}) } } };
 }
 export function publishedWithout(index: PublishedIndex, id: string): PublishedIndex {
   const { [id]: _gone, ...rest } = index.decks;
