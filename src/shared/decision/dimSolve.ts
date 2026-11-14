@@ -232,7 +232,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const k = rows[0];
     const { formulaRow: fr0, der } = constPieces(d);
     c.stage();
-    steps.push(S(`Start from the formula: ${M(d.formula!)} is a constant.`, "The formula", formulaRow(d.relFormula!)));
+    steps.push(S(`Start from the formula, where ${M(d.formula!)} is a constant.`, "The formula", formulaRow(d.relFormula!)));
     steps.push(S(`${d.relArg ? `The argument of a ${d.relArg} has no dimensions: say so. Then bracket it as a product.` : "Put brackets round both sides: they must have the same dimensions."}${d.relNum ? " A plain number, like a half, has dimensions 1." : ""}`, "Brackets", head(`The dimensions of ${M(d.formula!)}`), ...(d.relNum ? [`[${numTex(d.relNum)}] = 1 \\quad \\text{as it is ${NUMBER_WHY}}`] : []), ...(d.relArg ? [`${rowBr(d.rows[1])} = 1 \\quad \\text{as it is the argument of a ${d.relArg}}`] : []), fr0));
     steps.push(S(`Make ${M(rowBr(k))} the subject.${d.relNum ? " The half is only a number, so it drops out." : ""}${der.divides ? ` ${FRACTION}` : ""}`, "Rearrange for the constant", GAP, ...der.def));
     steps.push(S(SWAP, "Dimensions", ...der.subst));

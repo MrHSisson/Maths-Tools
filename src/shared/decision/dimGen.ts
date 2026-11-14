@@ -126,6 +126,15 @@ const symLine = (rows: Array<{ sym: string; name: string }>): string => {
 // ── Find the dimensions ──────────────────────────────────────────────────────────────────────────────────────────────────────
 const NAME_L1 = ["angle", "sin", "cos", "tan", "area", "vol", "dens", "force", "weight", "mom", "imp", "energy", "power", "freq", "linmass"];
 const NAME_L2 = ["press", "omega", "moment", "inertia", "stiff", "surf", "visc", "G"];
+/** a quantity a student has not met by name is introduced by the law that defines it, in words */
+const NAME_CONTEXT: Record<string, string> = {
+  visc: "where the viscous force between two plates of area $A$, a distance $d$ apart and moving at relative speed $v$, is $F = \\frac{\\eta Av}{d}$",
+  surf: "where the force along an edge of length $l$ of a liquid film is $F = \\sigma l$",
+  G: "where two masses $m_1$ and $m_2$ a distance $d$ apart attract with a force $F = \\frac{Gm_1m_2}{d^{2}}$",
+  inertia: "where a mass $m$ at a distance $r$ from an axis has moment of inertia $I = mr^{2}$",
+  stiff: "where the force needed to stretch a spring by $x$ is $F = \\kappa x$",
+  linmass: "where a string of length $l$ and mass $m$ has mass per unit length $q = \\frac{m}{l}$",
+};
 const UNIT_NAMES: Record<string, string> = { N: "newton, N = kg m s⁻²", J: "joule, J = N m", W: "watt, W = J s⁻¹", Pa: "pascal, Pa = N m⁻²", Hz: "hertz, Hz = s⁻¹" };
 
 /** the dimensions of a named quantity, worked out from its definition (or from its units) */
@@ -154,7 +163,7 @@ export function genDimsNameFor(id: string, units: boolean, circle: boolean): Dim
     kind = "dimsName";
     rows = [{ sym: resultSym, name: q.name, dim: answerDim, given: false, role: "result" },
       ...q.def!.map(([f, p]): DimRow => rowFor(f, { exp: fr(p) }))];
-    prompt = `State the dimensions of ${q.name}.`;
+    prompt = `State the dimensions of ${q.name}${NAME_CONTEXT[id] ? `, ${NAME_CONTEXT[id]}` : ""}.`;
   }
   const options = circle ? circleList(ans, distractors(answerDim)) : undefined;
   if (options) prompt += ` ${circleLine(options)}`;

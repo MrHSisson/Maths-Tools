@@ -447,3 +447,44 @@ describe("the printed exam paper", () => {
     });
   });
 });
+
+describe("the audit rules", () => {
+  const asP = (q: DimQuestion) => ({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } }) as DecisionProblem;
+  it("a quantity the student is given (speed, acceleration, g) is never asked for", () => {
+    withSeededRandom(91, () => {
+      for (let i = 0; i < 300; i++) for (const level of [1, 2]) for (const units of [false, true]) {
+        const q = genDimsName(level, units, false);
+        expect(LIBRARY.find((x) => x.id === q.data.askId)!.given, q.prompt).toBeFalsy();
+      }
+      for (let i = 0; i < 150; i++) for (const chain of DIM_CHAINS) {
+        for (const pt of generateDimExam(1, chain).exam!.parts) expect(pt.prompt, pt.prompt).not.toMatch(/dimensions of (speed|acceleration)/i);
+      }
+    });
+  });
+  it("g is always introduced as the acceleration due to gravity", () => {
+    withSeededRandom(92, () => {
+      const texts: string[] = SITUATIONS.map((s) => s.ctx);
+      for (let i = 0; i < 200; i++) {
+        texts.push(genConsistent(1 + (i % 2), (["show", "odd", "missing", "pick"] as const)[i % 4], i % 2 === 0).prompt);
+        texts.push(genPowers(1 + (i % 3), { context: (["none", "named", "worded"] as const)[i % 3], ask: "find", given: "dims" }).prompt);
+        texts.push(...DIM_CHAINS.map((c) => generateDimExam(1, c).exam!.intro));
+      }
+      for (const t of texts) if (/\$g\$/.test(t) || /\bg\b/.test(t.replace(/\$[^$]*\$/g, ""))) expect(t, t).toMatch(/acceleration due to gravity/);
+    });
+  });
+  it("angles and trig functions are dimensionless, and the working says so", () => {
+    for (const id of ["angle", "sin", "cos", "tan"]) {
+      const q = genDimsNameFor(id, false, false);
+      expect(q.data.answerDim!.every((e) => e[0] === 0), id).toBe(true);
+      const steps = solveDim(asP(q));
+      expect(JSON.stringify(steps[steps.length - 1].dimView!.lines), id).toContain("dimensionless");
+    }
+  });
+  it("a number is stated to be dimensionless; the argument of a sine is too, which gives [ω]", () => {
+    const e = solveDim(asP(genDimsNameFor("energy", false, false)));
+    expect(JSON.stringify(e.map((s) => s.dimView?.lines))).toContain("as it is a dimensionless constant");
+    const rel = CONST_RELATIONS.find((r) => r.arg === "sine")!;
+    expect(dimStr(constDim(rel))).toBe("T⁻¹");
+    expect(dimStr(constDim(CONST_RELATIONS.find((r) => r.arg === "cosine")!))).toBe("L⁻¹");
+  });
+});

@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Dimensional Analysis: a four-way audit and its fixes
+
+Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/dim*.ts`, `DimWorking.tsx`, `DecisionShell.tsx`, `printExam.ts`; `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`; `specs/dimensional-analysis.md`.
+
+- **Audit:** four read-only agents (accuracy, structure and design, ease of use, pitch) checked the whole tool. No wrong dimension, answer or mark total was found; the faults were pitch, wording and presentation.
+- **Pitch:** speed and acceleration (given quantities) are never set as "find the dimensions of"; area, volume and weight stay. `g` is always "the acceleration due to gravity" (tested). Unfamiliar quantities (viscosity, surface tension, G, moment of inertia, stiffness, mass per unit length) are introduced by their law.
+- **Dimensionless:** `[½] = 1 as it is a dimensionless constant`; results with no dimensions are boxed "(dimensionless)"; angle, sin, cos and tan are questions (worked as ratios of lengths: L/L = 1); two constants questions use the argument of a sine or cosine (`[ω] = T⁻¹`, `[k] = L⁻¹`).
+- **Working:** a division with a negative power on the bottom shows the combine and subtract rows (`T^{-2-(-1)}`); a powers working with no one-unknown equation shows the elimination and a check of all three equations; once a working breaks onto a new line, every later step has its own line; constants say what they are only where the formula does (surface tension was "stiffness").
+- **Print and screens:** the written-working picture is no longer drawn on the exam paper (it piled onto page 1); the exam picture no longer gives the model away; worksheet preview cards render their maths and say "1 mark"; the phone box for a working is taller; hint text is darker; option labels follow Title Case; a "constant" can be ticked at Level 1; the target's letter never repeats one in the model; the Level 2 label says halves.
+- **Not done yet:** trig in the consistency formulas, root expressions through the combine/subtract rows, "Quantities I know", `about.ts`, wider constant and exam pools, curated wording for "named" powers, keyboard hints and tooltips, smaller touch targets.
+
+Agent: Claude Code
+Notes: planner Build Log block tagged `dimensional-analysis`.
+
 ## 2026-11-13 — Dimensional Analysis (Further Mechanics MA): skill tools, exam-style chains and the written working
 
 Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/dim.ts`, `dimGen.ts`, `dimSolve.ts`, `dimExam.ts`, `DimWorking.tsx`, `types.ts`; `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`, `FurtherMechanics.tsx`, `mechanicsSpec.ts`; `src/registry.ts`; tests `dim.test.ts`, `mechanicsPairings.test.ts`; `specs/dimensional-analysis.md` (now implemented).

@@ -110,7 +110,7 @@ src/shared/decision/
   graphBank.ts (+ Layout, generated Labels)   the shared bank of display-optimised graphs
   mst · tsp · routeInspection · flow · cpa (+ *Solve, *Generate, *Exam)   the maths, solvers and generators per tool
   flowParts.ts · flowExam.ts   Network Flows parts library and exam recipes
-  dim · dimGen · dimSolve · dimExam · DimWorking.tsx   Dimensional Analysis (Further Mechanics MA): the library and exact solver, generators, stepped working, exam chains, and the written-working picture (no network)
+  dim · dimTex · dimBuild · dimGen · dimSolve · dimExam · DimWorking.tsx   Dimensional Analysis (Further Mechanics MA): the library and exact solver, generators, stepped working, exam chains, and the written-working picture (no network)
   printExam.ts · printGrid.ts   print
 ```
 

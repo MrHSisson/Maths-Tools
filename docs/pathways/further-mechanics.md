@@ -1,6 +1,6 @@
 # Further Mechanics (AQA 7367 MA–ME)
 - **Status:** building
-- **Updated:** 2026-11-06
+- **Updated:** 2026-11-14
 
 ## Intention
 A place for every chapter of the AQA Further Maths mechanics option (MA Dimensional analysis, MB Momentum and collisions, MC Work, energy and power, MD Circular motion, ME Centres of mass and moments), built on the specification, so that teachers can practise exactly what the A-level and AS papers examine. The questions are a mix: generators for the skills that vary by numbers (as in the maths tools) and exam-style chains of parts, a picture per part, a mark scheme and stepped working (as in the Decision tools). The current spec only has about eight years of papers, so each statement is linked back to the legacy AQA M1 to M3 papers (and Edexcel M3 and M4 as extra material), which are a much deeper bank to take question shapes from.
