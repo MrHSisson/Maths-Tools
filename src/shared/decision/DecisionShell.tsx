@@ -740,11 +740,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     </div>
   );
 
+  // an honest nudge: these tools are made for a bigger screen
+  const phoneNote = <p className="text-center text-xs text-slate-500 leading-snug px-3 pt-1">Works best on a tablet or laptop. Some features aren't available on a phone.</p>;
   // the phone's open page: the question as plain text, then (on request) the whole solution, scrolling: no cards, no stepper
   const examplePhoneSolution = (
     <div className="flex flex-col gap-5 px-1 pb-6">
       <div className="text-lg font-semibold text-gray-900 leading-snug"><InlineMath text={problem.prompt} /></div>
       {!atQuestion && renderSolution ? renderSolution(problem, rawSteps) : null}
+      {phoneNote}
     </div>
   );
   const example = tabletLand ? exampleTablet : phoneSolution ? examplePhoneSolution : narrow ? (
@@ -767,6 +770,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
         : canvasBox(problem.dim ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "40dvh" : "48dvh") : (showMatrix ? "34dvh" : ((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) ? "38dvh" : "47dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
       {atQuestion && legendItems && <Legend items={legendItems} />}
+      {atQuestion && phoneNote}
       {!atQuestion && (
         <>
           {legendItems && (
@@ -980,10 +984,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
               <span className="text-sm font-semibold text-slate-500">{onAnswer ? "Answer" : `${idx + 1} of ${steps.length}`}</span>
               <button onClick={() => setStepsSheet(true)} className="px-3 h-11 rounded-xl text-sm font-semibold text-slate-500 active:bg-slate-100">All steps</button>
             </div>
-            <div className="flex-1 min-h-0 px-2 pb-2">
-              <div className="relative h-full rounded-xl overflow-hidden border border-slate-200 bg-white">{shown(canvasStep)}</div>
+            <div className="shrink-0 px-2 pb-2" style={{ height: "45dvh" }}>
+              <div className="relative h-full rounded-xl overflow-hidden border border-slate-200 bg-white"><div className="absolute" style={{ inset: 10 }}>{shown(canvasStep)}</div></div>
             </div>
-            <div className="shrink-0 px-4 pb-3 pt-1" style={{ minHeight: "6.5rem" }}>
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-3 pt-1">
               <div className="text-[16px] leading-snug text-slate-900 font-medium" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
                 {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
               </div>

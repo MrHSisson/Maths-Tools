@@ -17,7 +17,7 @@ import { questionView } from "../flowSolve";
 // shows the SAME drawing — through the tool's own renderer, so a flow network keeps its circled flows, potentials and cut
 // line — with vertices that can be dragged (the labels re-lay-out as they move), a pan / zoom frame, and a few display switches.
 // It opens as an overlay over the question at the step the class is on (Back / Next here steps the working too), or stands
-// alone as the Network Sandbox page, where any bank graph can be loaded.
+// alone (the standalone Network Sandbox page was removed).
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const problemFromNetwork = (network: Network, prompt = ""): DecisionProblem => ({ network, prompt, answer: { text: "" }, matrixMode: "working" });

@@ -24,20 +24,10 @@ const chapters: SpecChapter[] = DECISION_CHAPTERS.map(({ toolIds, ...c }) => ({
   }),
 }));
 
-// tools in the strand that belong to no chapter
-const workspace = {
-  heading: "Workspace",
-  tools: ["network-sandbox"].flatMap(id => {
-    const t = ALL_TOOLS.find(x => x.id === id);
-    return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];
-  }),
-};
-
 export default function DecisionOverview() {
   return (
     <SpecLanding
       public
-      workspace={workspace}
       title="Decision Maths"
       subtitle="AQA A-level Further Mathematics (Discrete)"
       about="The Discrete option of AQA 7367, sections DA to DG. Open a part of the specification to find its question generators and the specification statements it covers, with which are in AS and which are A2 only. In Developing-tools mode each statement also shows the older AQA D1 and D2 content it draws on."

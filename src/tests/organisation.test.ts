@@ -55,7 +55,6 @@ const STANDALONE_BY_DESIGN = [
   "Decision/DecisionOverview",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",
-  "Decision/NetworkSandbox",
   "Decision/RouteInspection",
   "Decision/TravellingSalesperson",
   "FurtherMechanics/DimensionalAnalysis",

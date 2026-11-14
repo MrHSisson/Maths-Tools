@@ -239,7 +239,7 @@ badges always sit top-right).
 **Sandbox** button on the picture (and in fullscreen) opens `SandboxOverlay` — the SAME drawing, through the tool's own `renderCanvas` (which now
 receives `extras`: moved vertices, a fixed frame and a drag handler), inside `PanZoom`, at the step the class is on, with its own Back / Next. Vertices
 drag (flow labels re-lay-out live — about 5–25 ms), the table can be shown, weights hidden, the grid toggled, the layout reset. Esc or "Back to the
-question" returns. The standalone `/network-sandbox` page is the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
+question" returns. (The standalone `/network-sandbox` page was removed 2026-11-14; the in-shell Sandbox overlay stays.) It was the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
 weight to edit).
 
 ## Step wording — house style (2026-10-11)
