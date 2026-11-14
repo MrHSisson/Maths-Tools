@@ -58,20 +58,11 @@ export interface NetworkTemplate {
 /** The network of a problem, or an empty one when the problem has none: for the network tools' own code, which always has one. */
 export const netOf = (p: { network?: Network }): Network => p.network ?? { nodes: [], edges: [] };
 
-/** Dimensional Analysis: how the exponent grid is drawn this beat (which rows' dimensions are shown, which column is being read, the equations and the powers found so far) */
+/** Dimensional Analysis: the written working so far, as TeX rows (the picture is the page a student would write). A row with "&" is aligned on it
+ *  ("[F] &= [ma]", "&= [m][a]"); "" is a gap; any other row stands alone. The last `fresh` rows are the ones this step added. */
 export interface DimViewState {
-  /** rows whose dimensions are shown (a row the question gives is always shown); row 0 is the answer's row */
-  reveal?: number[];
-  /** the column (0 M, 1 L, 2 T) being read */
-  cols?: number[];
-  /** the equations written so far, one per line */
-  eqs?: string[];
-  /** a line under the equations (the answer, the check) */
-  note?: string;
-  /** powers found so far: symbol → value */
-  powers?: Record<string, string>;
-  /** rows to draw attention to (the odd term out) */
-  mark?: number[];
+  lines: string[];
+  fresh?: number;
 }
 
 export interface DecisionProblem {
@@ -89,7 +80,7 @@ export interface DecisionProblem {
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
   /** An exam-style question: one picture and a chain of lettered parts with marks, each with a model answer and a mark scheme to self-mark against. */
   exam?: ExamData;
-  /** Dimensional Analysis (Further Mechanics MA): the dimension question's rows and answer, drawn as the exponent grid through `renderCanvas` */
+  /** Dimensional Analysis (Further Mechanics MA): the dimension question's rows and answer, drawn as the written working through `renderCanvas` */
   dim?: DimProblemData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
@@ -191,7 +182,7 @@ export interface SolveStep {
   examChart?: "cascade" | "alloc" | "histogram" | "level" | "choose";
   histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
   ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
-  dimView?: DimViewState; // Dimensional Analysis: how the exponent grid is drawn this beat
+  dimView?: DimViewState; // Dimensional Analysis: the written working so far
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;

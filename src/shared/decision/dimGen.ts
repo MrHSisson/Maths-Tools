@@ -51,6 +51,8 @@ export interface DimProblemData {
   calcs?: string[];
   /** a circled formula's check, a line per option (prose with maths) */
   notes?: string[];
+  /** a circled formula's check as written, a TeX line per option ("A: L, L, LT^{-1}: not consistent") */
+  checks?: string[];
   /** dimsConst: what the constant is (a library quantity with the same dimensions), for "what k represents" */
   represents?: string;
   /** the wording of the situation (worded and named models) */
@@ -329,7 +331,9 @@ export function genConsistent(level: number, ask: "show" | "odd" | "missing" | "
   const noteOf = (f: Formula): string => { const c = consistentDims(f); return `the terms have dimensions ${c.dims.map((d) => M(dimTex(d))).join(", ")}: ${c.ok ? "consistent" : "not consistent"}`; };
   const wrongFormulas = new Map(wrong.map((w) => [formulaTex(w), w]));
   const notes = opts.map((o) => noteOf(o.correct ? base : wrongFormulas.get(o.text)!));
-  return { data: { kind: "consPick", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), options: opts, answerDim: termDim(termsOf(base)[0]), notes, calcs: termCalcs(base) }, prompt: `${symLine([...all].map(([sym, name]) => ({ sym, name })))} One of these formulas is dimensionally consistent. ${circleLine(opts)}`, answerText: M(formulaTex(base)) };
+  const checkOf = (f: Formula, i: number): string => { const c = consistentDims(f); return `\\text{${"ABCD"[i]}: }${c.dims.map(dimTex).join(",\\ ")}\\quad \\text{${c.ok ? "consistent" : "not consistent"}}`; };
+  const checks = opts.map((o, i) => checkOf(o.correct ? base : wrongFormulas.get(o.text)!, i));
+  return { data: { kind: "consPick", rows: termRows(base), unknowns: [], answerPowers: [], eqs: [], ask: "find", formula: formulaTex(base), options: opts, answerDim: termDim(termsOf(base)[0]), notes, checks, calcs: termCalcs(base) }, prompt: `${symLine([...all].map(([sym, name]) => ({ sym, name })))} One of these formulas is dimensionally consistent. ${circleLine(opts)}`, answerText: M(formulaTex(base)) };
 }
 
 // ── Find the powers ──────────────────────────────────────────────────────────────────────────────────────────────────────────

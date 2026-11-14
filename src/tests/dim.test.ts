@@ -13,7 +13,7 @@ import { symTex, frTex, dimTex, M } from "../shared/decision/dimTex";
 import { examSetHtml } from "../shared/decision/printExam";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
-import DimCanvas from "../shared/decision/DimGrid";
+import DimCanvas from "../shared/decision/DimWorking";
 import { withSeededRandom } from "./seededRandom";
 
 // an independent exact solver: the 3×3 system by Cramer's rule on plain fractions (numerator/denominator pairs)
@@ -250,10 +250,17 @@ describe("the working", () => {
       for (const q of qs) {
         const steps = solveDim(asProblem(q));
         expect(steps.length, q.prompt).toBeGreaterThan(1);
+        let before: string[] = [];
         for (const s of steps) {
           expect(s.caption.length, q.prompt).toBeGreaterThan(3);
-          for (const r of s.dimView?.reveal ?? []) expect(r).toBeLessThan(q.data.rows.length);
+          // the written page only ever grows: each step's page starts with the page before it, and `fresh` is how many rows it added
+          const lines = s.dimView!.lines;
+          expect(lines.slice(0, before.length), q.prompt).toEqual(before);
+          expect(lines.length - before.length, q.prompt).toBe(s.dimView!.fresh);
+          before = lines;
         }
+        // the last page ends on the boxed answer
+        expect(before.some((r) => r.startsWith("\\boxed{")), q.prompt).toBe(true);
         const last = steps.filter((s) => s.phase === "Answer" || s.phase === "Conclusion").pop();
         expect(last, q.prompt).toBeDefined();
         if (q.data.kind === "powers" && q.data.ask !== "cannot") {
@@ -310,18 +317,19 @@ describe("exam-style chains", () => {
   });
 });
 
-describe("the exponent grid", () => {
+describe("the written working page", () => {
   it("renders for the question and every step of every part (the exam paper prints it with renderToStaticMarkup)", () => {
     withSeededRandom(61, () => {
       for (const chain of DIM_CHAINS) for (let i = 0; i < 8; i++) {
         const p = generateDimExam(1, chain);
-        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("<table");
+        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("Given");
         for (const part of p.exam!.parts) {
           for (const st of part.working ?? []) {
             const html = renderToStaticMarkup(createElement(DimCanvas, { p, step: st }));
             expect(html.length).toBeGreaterThan(100);
+            expect(html, "a row failed to render in KaTeX").not.toContain("katex-error");
           }
-          if (part.stepView) expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: part.stepView }))).toContain("<table");
+          if (part.stepView) expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: part.stepView }))).toContain("Written working");
         }
       }
     });
@@ -354,9 +362,7 @@ describe("the maths is LaTeX", () => {
         (q.data.options ?? []).forEach((o) => renders(o.text, "option"));
         for (const st of solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem)) {
           prose(st.caption, `caption (${q.data.kind})`);
-          for (const e of st.dimView?.eqs ?? []) renders(e.replace(/^[MLT]: /, ""), `eq (${q.data.kind})`);
-          if (st.dimView?.note) renders(st.dimView.note, "note");
-          for (const v of Object.values(st.dimView?.powers ?? {})) renders(v, "power");
+          for (const row of st.dimView!.lines) if (row !== "") renders(row.includes("&") ? `\\begin{aligned}${row}\\end{aligned}` : row, `written row (${q.data.kind})`);
         }
       }
       for (const chain of DIM_CHAINS) for (let i = 0; i < 10; i++) {

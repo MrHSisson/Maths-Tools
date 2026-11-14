@@ -4,19 +4,19 @@ import {
   type GenerateContext,
   type SolveStep,
 } from "../../shared/decision";
-import DimCanvas from "../../shared/decision/DimGrid";
+import DimCanvas from "../../shared/decision/DimWorking";
 import { solveDim } from "../../shared/decision/dimSolve";
 import { generateDimExam, type DimChain } from "../../shared/decision/dimExam";
 import { genDimsName, genDimsExpr, genDimsConst, genConsistent, genPowers, type DimQuestion } from "../../shared/decision/dimGen";
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════
-// Dimensional Analysis — Further Mechanics MA (AQA 7367 and AS 7366), built on DecisionShell with an exponent grid as its picture
+// Dimensional Analysis — Further Mechanics MA (AQA 7367 and AS 7366), built on DecisionShell with the written working (the page a student would write, building a line at a time) as its picture
 // (specs/dimensional-analysis.md). Three skill tools, each drilled on its own, and exam-style chains that put them back together:
 //   Find the dimensions — a quantity (from its name or its units), an expression, or a constant in a formula;
 //   Check consistency   — show a formula is consistent, find the odd term out, find a missing power, or pick the consistent formula;
 //   Find the powers     — equate the powers of M, L and T and solve: in letters (no context), with named quantities, or in a worded situation.
 // Exam style: a short chain of lettered parts with marks and a mark scheme, from the same generators (src/shared/decision/dimExam.ts).
-// The maths is in shared/decision/dim.ts, the generators in dimGen.ts, the working in dimSolve.ts and the picture in DimGrid.tsx.
+// The maths is in shared/decision/dim.ts, the generators in dimGen.ts, the working in dimSolve.ts and the picture in DimWorking.tsx.
 // ═════════════════════════════════════════════════════════════════════════════════════════════
 
 const SKILLS = { key: "practice", values: ["skills"] };
