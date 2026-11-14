@@ -62,11 +62,15 @@ export interface Quantity {
   units?: string;
   /** what it is defined as, in terms of other quantities (id, power): a test checks this gives `dim`, so the library is checked from first principles */
   def?: ReadonlyArray<readonly [string, number]>;
-  /** the definition in words, for the working */
-  defText?: string;
+  /** the formula the definition comes from, as TeX ("F = ma"), stated before it is used */
+  formula?: string;
+  /** what a teacher says about it ("Newton's second law: force is mass times acceleration") */
+  say?: string;
+  /** a number in the formula, with no dimensions (the ½ of kinetic energy), as TeX */
+  num?: string;
 }
-const Q = (id: string, name: string, sym: string, dim: [number, number, number], units?: string, def?: Array<[string, number]>, defText?: string): Quantity =>
-  ({ id, name, sym, dim, units, def, defText });
+const Q = (id: string, name: string, sym: string, dim: [number, number, number], units?: string, def?: Array<[string, number]>, extra: { formula?: string; say?: string; num?: string } = {}): Quantity =>
+  ({ id, name, sym, dim, units, def, ...extra });
 
 export const LIBRARY: Quantity[] = [
   Q("len", "length", "l", [0, 1, 0], "m"),
@@ -76,28 +80,28 @@ export const LIBRARY: Quantity[] = [
   Q("ext", "extension", "x", [0, 1, 0], "m"),
   Q("time", "time", "t", [0, 0, 1], "s"),
   Q("mass", "mass", "m", [1, 0, 0], "kg"),
-  Q("speed", "speed", "v", [0, 1, -1], "m s⁻¹", [["len", 1], ["time", -1]], "speed = distance ÷ time"),
-  Q("acc", "acceleration", "a", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], "acceleration = change in speed ÷ time"),
-  Q("grav", "acceleration due to gravity", "g", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], "acceleration = change in speed ÷ time"),
-  Q("area", "area", "A", [0, 2, 0], "m²", [["len", 2]], "area = length × length"),
-  Q("vol", "volume", "V", [0, 3, 0], "m³", [["len", 3]], "volume = length × length × length"),
-  Q("dens", "density", "ρ", [1, -3, 0], "kg m⁻³", [["mass", 1], ["vol", -1]], "density = mass ÷ volume"),
-  Q("force", "force", "F", [1, 1, -2], "N", [["mass", 1], ["acc", 1]], "force = mass × acceleration"),
-  Q("weight", "weight", "W", [1, 1, -2], "N", [["mass", 1], ["grav", 1]], "weight = mass × g"),
-  Q("mom", "momentum", "p", [1, 1, -1], "kg m s⁻¹", [["mass", 1], ["speed", 1]], "momentum = mass × velocity"),
-  Q("imp", "impulse", "J", [1, 1, -1], "N s", [["force", 1], ["time", 1]], "impulse = force × time"),
-  Q("energy", "energy", "E", [1, 2, -2], "J", [["force", 1], ["len", 1]], "work done = force × distance"),
-  Q("power", "power", "P", [1, 2, -3], "W", [["energy", 1], ["time", -1]], "power = work done ÷ time"),
-  Q("press", "pressure", "p", [1, -1, -2], "N m⁻²", [["force", 1], ["area", -1]], "pressure = force ÷ area"),
-  Q("omega", "angular speed", "ω", [0, 0, -1], "s⁻¹", [["speed", 1], ["rad", -1]], "$v = r\\omega$, so $\\omega = \\frac{v}{r}$"),
-  Q("freq", "frequency", "f", [0, 0, -1], "s⁻¹", [["time", -1]], "frequency = 1 ÷ time"),
-  Q("moment", "moment of a force", "τ", [1, 2, -2], "N m", [["force", 1], ["len", 1]], "moment = force × distance"),
-  Q("inertia", "moment of inertia", "I", [1, 2, 0], "kg m²", [["mass", 1], ["rad", 2]], "$I = mr^{2}$"),
-  Q("stiff", "stiffness", "κ", [1, 0, -2], "N m⁻¹", [["force", 1], ["ext", -1]], "stiffness = force ÷ extension"),
-  Q("linmass", "mass per unit length", "q", [1, -1, 0], "kg m⁻¹", [["mass", 1], ["len", -1]], "mass per unit length = mass ÷ length"),
-  Q("surf", "surface tension", "σ", [1, 0, -2], "N m⁻¹", [["force", 1], ["len", -1]], "surface tension = force ÷ length"),
-  Q("visc", "viscosity", "η", [1, -1, -1], "kg m⁻¹ s⁻¹", [["force", 1], ["dep", 1], ["area", -1], ["speed", -1]], "$F = \\frac{\\eta Av}{d}$, so $\\eta = \\frac{Fd}{Av}$"),
-  Q("G", "the gravitational constant", "G", [-1, 3, -2], "N m² kg⁻²", [["force", 1], ["dep", 2], ["mass", -2]], "$F = \\frac{Gm^{2}}{d^{2}}$ for two bodies of mass $m$, so $G = \\frac{Fd^{2}}{m^{2}}$"),
+  Q("speed", "speed", "v", [0, 1, -1], "m s⁻¹", [["len", 1], ["time", -1]], { formula: "v = \\frac{s}{t}", say: "speed is distance divided by time" }),
+  Q("acc", "acceleration", "a", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "a = \\frac{v}{t}", say: "acceleration is the change in speed divided by time" }),
+  Q("grav", "acceleration due to gravity", "g", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "g = \\frac{v}{t}", say: "acceleration due to gravity is an acceleration, the change in speed divided by time" }),
+  Q("area", "area", "A", [0, 2, 0], "m²", [["len", 2]], { formula: "A = l^{2}", say: "area is a length times a length" }),
+  Q("vol", "volume", "V", [0, 3, 0], "m³", [["len", 3]], { formula: "V = l^{3}", say: "volume is a length times a length times a length" }),
+  Q("dens", "density", "ρ", [1, -3, 0], "kg m⁻³", [["mass", 1], ["vol", -1]], { formula: "\\rho = \\frac{m}{V}", say: "density is mass divided by volume" }),
+  Q("force", "force", "F", [1, 1, -2], "N", [["mass", 1], ["acc", 1]], { formula: "F = ma", say: "Newton's second law says force is mass times acceleration" }),
+  Q("weight", "weight", "W", [1, 1, -2], "N", [["mass", 1], ["grav", 1]], { formula: "W = mg", say: "weight is mass times the acceleration due to gravity" }),
+  Q("mom", "momentum", "p", [1, 1, -1], "kg m s⁻¹", [["mass", 1], ["speed", 1]], { formula: "p = mv", say: "momentum is mass times velocity" }),
+  Q("imp", "impulse", "J", [1, 1, -1], "N s", [["force", 1], ["time", 1]], { formula: "J = Ft", say: "impulse is force times the time it acts for" }),
+  Q("energy", "energy", "E", [1, 2, -2], "J", [["mass", 1], ["speed", 2]], { formula: "E = \\frac{1}{2}mv^{2}", say: "kinetic energy is a half times mass times speed squared", num: "\\frac{1}{2}" }),
+  Q("power", "power", "P", [1, 2, -3], "W", [["energy", 1], ["time", -1]], { formula: "P = \\frac{E}{t}", say: "power is work done, which is energy, divided by the time taken" }),
+  Q("press", "pressure", "p", [1, -1, -2], "N m⁻²", [["force", 1], ["area", -1]], { formula: "p = \\frac{F}{A}", say: "pressure is force divided by the area it acts on" }),
+  Q("omega", "angular speed", "ω", [0, 0, -1], "s⁻¹", [["speed", 1], ["rad", -1]], { formula: "\\omega = \\frac{v}{r}", say: "speed is radius times angular speed, so angular speed is speed divided by radius" }),
+  Q("freq", "frequency", "f", [0, 0, -1], "s⁻¹", [["time", -1]], { formula: "f = \\frac{1}{t}", say: "frequency is one divided by the time for one cycle" }),
+  Q("moment", "moment of a force", "τ", [1, 2, -2], "N m", [["force", 1], ["len", 1]], { formula: "\\tau = Fl", say: "a moment is force times perpendicular distance" }),
+  Q("inertia", "moment of inertia", "I", [1, 2, 0], "kg m²", [["mass", 1], ["rad", 2]], { formula: "I = mr^{2}", say: "moment of inertia is mass times radius squared" }),
+  Q("stiff", "stiffness", "κ", [1, 0, -2], "N m⁻¹", [["force", 1], ["ext", -1]], { formula: "\\kappa = \\frac{F}{x}", say: "Hooke's law says force is stiffness times extension, so stiffness is force divided by extension" }),
+  Q("linmass", "mass per unit length", "q", [1, -1, 0], "kg m⁻¹", [["mass", 1], ["len", -1]], { formula: "q = \\frac{m}{l}", say: "mass per unit length is mass divided by length" }),
+  Q("surf", "surface tension", "σ", [1, 0, -2], "N m⁻¹", [["force", 1], ["len", -1]], { formula: "\\sigma = \\frac{F}{l}", say: "surface tension is force per unit length" }),
+  Q("visc", "viscosity", "η", [1, -1, -1], "kg m⁻¹ s⁻¹", [["force", 1], ["dep", 1], ["area", -1], ["speed", -1]], { formula: "\\eta = \\frac{Fd}{Av}", say: "the viscous force is viscosity times area times speed, divided by the distance, so viscosity is force times distance divided by area times speed" }),
+  Q("G", "the gravitational constant", "G", [-1, 3, -2], "N m² kg⁻²", [["force", 1], ["dep", 2], ["mass", -2]], { formula: "G = \\frac{Fd^{2}}{m^{2}}", say: "the gravitational force between two masses is G times the masses divided by the distance squared, so G is force times distance squared divided by mass squared" }),
 ];
 export const QBY: Record<string, Quantity> = Object.fromEntries(LIBRARY.map((q) => [q.id, q]));
 export const qDim = (id: string): Dim3 => { const q = QBY[id]; return dimOf(q.dim[0], q.dim[1], q.dim[2]); };
@@ -203,8 +207,6 @@ export const FORMULAS: Formula[] = [
   { id: "a=v2/r", level: 1, lhs: [T([F("a", "acc")])], rhs: [T([F("v", "speed", 2), F("r", "rad", -1)])] },
   { id: "F=mrw2", level: 1, lhs: [T([F("F", "force")])], rhs: [T([F("m", "mass"), F("r", "rad"), F("ω", "omega", 2)])] },
   { id: "E=mgh", level: 1, lhs: [T([F("E", "energy")])], rhs: [T([F("m", "mass"), F("g", "grav"), F("h", "hgt")])] },
-  { id: "p=F/A", level: 1, lhs: [T([F("p", "press")])], rhs: [T([F("F", "force"), F("A", "area", -1)])] },
-  { id: "rho=m/V", level: 1, lhs: [T([F("ρ", "dens")])], rhs: [T([F("m", "mass"), F("V", "vol", -1)])] },
   { id: "v2=u2+2as", level: 2, lhs: [T([F("v", "speed", 2)])], rhs: [T([F("u", "speed", 2)]), T([F("a", "acc"), F("s", "len")], "2")] },
   { id: "s=ut+at2/2", level: 2, lhs: [T([F("s", "len")])], rhs: [T([F("u", "speed"), F("t", "time")]), T([F("a", "acc"), F("t", "time", 2)], "½")] },
   { id: "s=ut-gt2/2", level: 2, lhs: [T([F("s", "len")])], rhs: [T([F("u", "speed"), F("t", "time")]), T([F("g", "grav"), F("t", "time", 2)], "½", "−")] },

@@ -25,8 +25,10 @@ export function dimPowTex(d: Dim3, p: Fr): string {
   const bare = letters === 1 && feq(d.find((e) => !fzero(e))!, ONE);
   return `${letters <= 1 && (bare || letters === 0) ? base : `(${base})`}${supTex(p)}`;
 }
+/** square brackets round some TeX: tall ones (\left[ \right]) when it holds a fraction or a root, so the brackets fit what is inside */
+export const brTex = (x: string): string => (/\\frac|\\sqrt|\\left/.test(x) ? `\\left[${x}\\right]` : `[${x}]`);
 /** "[\rho] = ML^{-3}" */
-export const bracketTex = (symT: string, d: Dim3): string => `[${symT}] = ${dimTex(d)}`;
+export const bracketTex = (symT: string, d: Dim3): string => `${brTex(symT)} = ${dimTex(d)}`;
 /** "\alpha + \gamma", "2\alpha - \beta": the left-hand side of an equation of powers */
 export function eqLhsTex(coef: Fr[], syms: string[]): string {
   let out = "";
@@ -40,6 +42,8 @@ export function eqLhsTex(coef: Fr[], syms: string[]): string {
   return out || "0";
 }
 const NUM_TEX: Record<string, string> = { "½": "\\frac{1}{2}", "2π": "2\\pi ", "2": "2" };
+/** a number written in a formula (½, 2, 2π) as TeX */
+export const numTex = (n: string): string => NUM_TEX[n] ?? n;
 /** a product of factors: numerator over denominator as a fraction, a root over the lot when asked; `override` writes a factor itself (the unknown power n) */
 export function productTex(fs: Array<{ sym: string; p: Fr }>, root = false, override?: (x: { sym: string; p: Fr }) => string | null): string {
   const piece = (x: { sym: string; p: Fr }, p: Fr) => override?.(x) ?? symTex(x.sym) + supTex(p);

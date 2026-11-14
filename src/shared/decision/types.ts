@@ -60,8 +60,10 @@ export const netOf = (p: { network?: Network }): Network => p.network ?? { nodes
 
 /** Dimensional Analysis: the page a student would write. `known` is what may be taken as known (the given quantities, then each one built so far) and stays
  *  short; `lines` is the working in progress as TeX rows (a row with "&" is aligned on it: "[F] &= [ma]", "&= [m][a]"; "" is a gap; any other row stands alone).
- *  The last `fresh` rows, and the last `knownFresh` known items, are what this step added. */
+ *  A row starting with "#" is a small plain-text heading (it may hold $…$). The last `fresh` rows, and the last `knownFresh` known items, are what this step added. */
 interface DimViewState {
+  /** what the question asks, shown at the top of the page ("Find the dimensions of force"); prose with maths between $…$ */
+  title?: string;
   known: string[];
   knownFresh?: number;
   lines: string[];

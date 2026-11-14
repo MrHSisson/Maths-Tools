@@ -14,7 +14,7 @@ const NEW = "#1d4ed8";
 const GIVEN = "#475569";
 const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-type Block = { kind: "gap" } | { kind: "free"; row: string; fresh: boolean } | { kind: "aligned"; rows: Array<{ row: string; fresh: boolean }> };
+type Block = { kind: "gap" } | { kind: "head"; text: string } | { kind: "free"; row: string; fresh: boolean } | { kind: "aligned"; rows: Array<{ row: string; fresh: boolean }> };
 
 /** group the page's rows: consecutive rows with "&" are one aligned block, "" is a gap, anything else stands alone */
 function blocks(lines: string[], fresh: number): Block[] {
@@ -23,6 +23,7 @@ function blocks(lines: string[], fresh: number): Block[] {
   lines.forEach((row, i) => {
     const isNew = i >= firstFresh;
     if (row === "") { out.push({ kind: "gap" }); return; }
+    if (row.startsWith("#")) { out.push({ kind: "head", text: row.slice(1) }); return; }
     if (row.includes("&")) {
       const last = out[out.length - 1];
       if (last && last.kind === "aligned") last.rows.push({ row, fresh: isNew });
@@ -34,6 +35,7 @@ function blocks(lines: string[], fresh: number): Block[] {
 
 const colour = (tex: string, c: string): string => `{\\color{${c}}${tex}}`;
 function blockTex(b: Block, base: string): string {
+  if (b.kind === "head") return "";
   if (b.kind === "free") return `\\displaystyle ${colour(b.row, b.fresh ? NEW : base)}`;
   if (b.kind === "aligned") {
     // two left-aligned columns: what is written on the left, then the "= …" that lines up under the first equals
@@ -45,6 +47,10 @@ function blockTex(b: Block, base: string): string {
     return `\\begin{array}{ll}${rows.join(" \\\\[0.7em] ")}\\end{array}`;
   }
   return "";
+}
+/** plain text with maths between $…$ (the title and the small headings) */
+function Prose({ text }: { text: string }) {
+  return <>{text.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? <Tex key={i} t={part.slice(1, -1)} /> : <span key={i}>{part}</span>))}</>;
 }
 function Tex({ t }: { t: string }) {
   let html: string;
@@ -80,7 +86,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
   const base = v ? INK : GIVEN;
   return (
     <div style={{ position: "absolute", inset: 0, background: "#fff", overflow: "hidden", containerType: "size" } as CSSProperties}>
-      <div style={{ position: "absolute", top: 14, left: 60, right: 12, ...label }}>{v ? "Written working" : "The question"}</div>
+      <div style={{ position: "absolute", top: 12, left: 60, right: 12, fontSize: 16, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{d.title ? <Prose text={d.title} /> : <span style={label}>{v ? "Written working" : "The question"}</span>}</div>
       <div ref={box} style={{ position: "absolute", top: 46, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
         <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "none", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(12px, 4cqh, 30px)", color: base }}>
           <div style={{ marginBottom: 10, maxWidth: "26em" }}>
@@ -93,7 +99,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
           </div>
           {lines.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.3em", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
-              {blocks(lines, fresh).map((b, i) => (b.kind === "gap" ? <div key={i} style={{ height: "0.4em" }} /> : <div key={i}><Tex t={blockTex(b, base)} /></div>))}
+              {blocks(lines, fresh).map((b, i) => (b.kind === "gap" ? <div key={i} style={{ height: "0.4em" }} /> : b.kind === "head" ? <div key={i} style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: "0.62em", fontWeight: 600, paddingTop: "0.3em" }}><Prose text={b.text} /></div> : <div key={i}><Tex t={blockTex(b, base)} /></div>))}
             </div>
           )}
           {!v && lines.length === 0 && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 6 }}>Your working builds up here, one line at a time.</div>}

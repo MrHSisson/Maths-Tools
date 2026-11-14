@@ -325,14 +325,14 @@ describe("the written working page", () => {
     withSeededRandom(61, () => {
       for (const chain of DIM_CHAINS) for (let i = 0; i < 8; i++) {
         const p = generateDimExam(1, chain);
-        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("The question");
+        expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: undefined }))).toContain("Known");
         for (const part of p.exam!.parts) {
           for (const st of part.working ?? []) {
             const html = renderToStaticMarkup(createElement(DimCanvas, { p, step: st }));
             expect(html.length).toBeGreaterThan(100);
             expect(html, "a row failed to render in KaTeX").not.toContain("katex-error");
           }
-          if (part.stepView) expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: part.stepView }))).toContain("Written working");
+          if (part.stepView) expect(renderToStaticMarkup(createElement(DimCanvas, { p, step: part.stepView }))).toContain("Known");
         }
       }
     });
@@ -366,7 +366,7 @@ describe("the maths is LaTeX", () => {
         (q.data.options ?? []).forEach((o) => renders(o.text, "option"));
         for (const st of solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem)) {
           prose(st.caption, `caption (${q.data.kind})`);
-          for (const row of st.dimView!.lines) if (row !== "") renders(row.includes("&") ? `\\begin{aligned}${row}\\end{aligned}` : row, `written row (${q.data.kind})`);
+          for (const row of st.dimView!.lines) if (row.startsWith("#")) prose(row.slice(1), `heading (${q.data.kind})`); else if (row !== "") renders(row.includes("&") ? `\\begin{aligned}${row}\\end{aligned}` : row, `written row (${q.data.kind})`);
           for (const k of st.dimView!.known) renders(k, `known item (${q.data.kind})`);
         }
       }
@@ -382,28 +382,31 @@ describe("the maths is LaTeX", () => {
       }
     });
   });
-  it("the model answers build up from the given quantities and read as the formal chain, with square brackets", () => {
+  it("the model answers state the formula, then read as the formal chain with square brackets", () => {
     const q = genDimsNameFor("force", false, false);
-    // acceleration is not given, so it is built first; only then is force found from it
-    expect(modelChains(q.data)).toEqual([
-      "[a] = [\\frac{v}{t}] = [v][t]^{-1} = LT^{-1} \\times T^{-1} = L^{1}T^{-1 + (-1)} = LT^{-2}",
-      "[F] = [ma] = [m][a] = M \\times LT^{-2} = MLT^{-2}",
-    ]);
+    // acceleration is given, so force is found straight from Newton's second law
+    expect(modelChains(q.data)).toEqual(["F = ma", "[F] = [ma] = [m][a] = M \\times LT^{-2} = MLT^{-2}"]);
+    // a power in a bracket is written as a power of the bracket, then expanded: [v^2] = [v]^2 = (LT^-1)^2 = L^2 T^-2
+    const e = genDimsNameFor("energy", false, false);
+    expect(modelChains(e.data)).toEqual(["E = \\frac{1}{2}mv^{2}", "[E] = \\left[\\frac{1}{2}mv^{2}\\right] = [\\frac{1}{2}][m][v]^{2} = 1 \\times M \\times (LT^{-1})^{2} = 1 \\times M \\times L^{2}T^{-2} = ML^{2}T^{-2}"]);
     const u = genDimsNameFor("dens", true, false);
-    expect(modelChains(u.data)[0]).toContain("= M \\times L^{-3} = ML^{-3}");
+    expect(modelChains(u.data).join(" ")).toContain("= M \\times L^{-3} = ML^{-3}");
   });
-  it("a quantity that is not given is built before it is used, and the page never shows it as a fact first", () => {
-    const q = genDimsNameFor("force", false, false);
+  it("a quantity that is not given is built before it is used, after its formula is stated, and the page never shows it as a fact first", () => {
+    const q = genDimsNameFor("power", false, false);
     const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
-    const firstMain = steps.findIndex((s) => s.phase === "Definition");
-    const builds = steps.filter((s) => (s.phase ?? "").startsWith("Build"));
-    expect(builds.length).toBeGreaterThan(0);
+    const firstMain = steps.findIndex((s) => s.phase === "The formula");
+    expect(steps.some((s) => (s.phase ?? "").startsWith("Build"))).toBe(true);
     expect(steps.findIndex((s) => (s.phase ?? "").startsWith("Build"))).toBeLessThan(firstMain);
-    // acceleration joins the known strip when it is built, and not before
-    expect(steps[0].dimView!.known.some((k) => k.includes("LT^{-2}"))).toBe(false);
-    expect(steps[firstMain].dimView!.known.some((k) => k === "[a] = LT^{-2}")).toBe(true);
-    // the given set is length, time, mass and speed
-    expect(steps[0].dimView!.known.slice(0, 4)).toEqual(["[l] = L", "[t] = T", "[m] = M", "[v] = LT^{-1}"]);
+    // energy is built (from kinetic energy) and joins the known strip when finished, and not before
+    expect(steps[0].dimView!.known.some((k) => k.startsWith("[E]"))).toBe(false);
+    expect(steps[firstMain].dimView!.known).toContain("[E] = ML^{2}T^{-2}");
+    // the formula is stated before the brackets are written
+    expect(steps[0].dimView!.lines.some((r) => r.startsWith("\\text{Formula:}"))).toBe(true);
+    // the given set is length, time, mass, speed and acceleration
+    expect(steps[0].dimView!.known.slice(0, 5)).toEqual(["[l] = L", "[t] = T", "[m] = M", "[v] = LT^{-1}", "[a] = LT^{-2}"]);
+    // the page has a title
+    expect(q.data.title).toBe("Find the dimensions of power");
   });
   it("a question that states dimensions (letters) builds nothing: they are given", () => {
     withSeededRandom(5, () => {
