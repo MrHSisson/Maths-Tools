@@ -125,18 +125,25 @@ function derivationSteps(c: Ctx, o: DOpts): SolveStep[] {
   });
 }
 
+/** a chain of steps as ONE step: it shows the page as it stands at the end of the chain, with the chain's own steps behind a "Show the steps" link */
+function oneStep(parts: SolveStep[], caption: string): SolveStep {
+  const first = parts[0].dimView!, last = parts[parts.length - 1];
+  const base = first.lines.length - (first.fresh ?? 0);
+  return { ...last, caption, more: parts, dimView: { ...last.dimView!, fresh: last.dimView!.lines.length - base } };
+}
 /** the steps that build each quantity in `keys` that is not given, dependencies first; each finished build joins the known strip */
-function buildSteps(keys: string[], c: Ctx): SolveStep[] {
+function buildSteps(keys: string[], c: Ctx, expand: boolean): SolveStep[] {
   const out: SolveStep[] = [];
   for (const key of buildOrder(keys)) {
     const item = buildItem(key)!;
     const name = keyName(key);
     const der = derive(item.lhs, item.expr, item.pieces, item.dim, item.formula);
-    out.push(...derivationSteps(c, {
+    const parts = derivationSteps(c, {
       heading: `First: the dimensions of ${name}`,
       intro: `${cap(name)} isn't given: build it. ${cap(item.say)}.`,
       der, learn: `${item.lhs} = ${dimTex(item.dim)}`, phase: `Build ${name}`, hasNumber: item.pieces.some((p) => p.dim.every(fzero)),
-    }));
+    });
+    out.push(...(expand ? parts : [oneStep(parts, `Build ${name}. ${cap(item.say)}.`)]));
   }
   return out;
 }
@@ -219,7 +226,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
 
   // ── Find the dimensions ──
   if (d.kind === "dimsName" || d.kind === "dimsUnits" || d.kind === "dimsExpr") {
-    const steps = buildSteps(d.needs ?? [], c);
+    const steps = buildSteps(d.needs ?? [], c, !!d.expandBuilds);
     const m = mainOf(d)!;
     const captions = d.kind === "dimsUnits"
       ? { brackets: "Put the units in square brackets. Kilograms, metres and seconds stand for the base dimensions.", subst: "Swap each unit for its dimension: kg is M, m is L, s is T." }
@@ -233,7 +240,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
 
   // ── Find the dimensions of a constant ──
   if (d.kind === "dimsConst") {
-    const steps = buildSteps(d.needs ?? [], c);
+    const steps = buildSteps(d.needs ?? [], c, !!d.expandBuilds);
     const k = rows[0];
     const { formulaRow: fr0, der } = constPieces(d);
     c.stage();
@@ -255,7 +262,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
 
   // ── Consistency ──
   if (d.kind === "consShow" || d.kind === "consOdd" || d.kind === "consMissing" || d.kind === "consPick") {
-    const steps = buildSteps(d.needs ?? [], c);
+    const steps = buildSteps(d.needs ?? [], c, !!d.expandBuilds);
     const terms = d.terms ?? [];
     if (d.kind === "consPick") {
       c.stage();
@@ -302,7 +309,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
   if (d.via === "units") {
     // each quantity's dimensions from its units; a derived unit (a newton) is built first
     const unitKeys = [...new Set((d.rowUnits ?? []).flatMap((u) => parseUnits(u).map(([x]) => `u:${x}`)))];
-    steps.push(...buildSteps(unitKeys, c));
+    steps.push(...buildSteps(unitKeys, c, !!d.expandBuilds));
     rows.forEach((r, i) => {
       const toks = parseUnits(d.rowUnits![i]);
       const pieces = toks.map(([x, e]): Piece => ({ br: `\\mathrm{${x}}`, dim: unitsDim(x), exp: fr(e) }));
@@ -313,7 +320,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       steps.push(S(`Find ${M(r.sym)} from its units: brackets, dimensions, then add the powers.`, "Dimensions from the units", head(`The dimensions of ${M(r.sym)}`), der.def[0], ...der.subst, ...der.expand, ...der.tidy, ...der.subtract, ...der.cancel, ...der.sum));
     });
   } else if (d.via === "defs") {
-    steps.push(...buildSteps(d.needs ?? [], c));
+    steps.push(...buildSteps(d.needs ?? [], c, !!d.expandBuilds));
   }
   // the model, with the dimensions put in, expanded and collected
   const model = `${brTex(target.sym)} = ${facs.map((r, i) => `${rowBr(r)}^{${symTex(syms[i])}}`).join("")}`;

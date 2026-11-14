@@ -188,6 +188,8 @@ export interface SolveStep {
   histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
   ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
   dimView?: DimViewState; // Dimensional Analysis: the written working so far
+  /** a step that is one line of a longer chain: the step shows the finished chain, and these are its parts, opened one at a time on request ("Show the steps") */
+  more?: SolveStep[];
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;

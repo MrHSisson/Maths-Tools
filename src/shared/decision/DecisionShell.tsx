@@ -141,7 +141,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
-  const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
+  // a step that is one line of a longer chain (`more`) can be opened into its parts, one at a time: the opened steps replace it in the list
+  const rawSteps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
+  const [opened, setOpened] = useState<number[]>([]);
+  useEffect(() => setOpened([]), [problem]);
+  const { steps, rawOf } = useMemo(() => {
+    const out: SolveStep[] = [], map: number[] = [];
+    rawSteps.forEach((st, i) => { const parts = st.more && opened.includes(i) ? st.more : [st]; parts.forEach((x) => { out.push(x); map.push(i); }); });
+    return { steps: out, rawOf: map };
+  }, [rawSteps, opened]);
+  const openStep = (flat: number) => {
+    const st = steps[flat];
+    if (!st?.more) return;
+    setOpened((o) => [...o, rawOf[flat]]);
+    if (flat < stepIdx) setStepIdx(stepIdx + st.more.length - 1); // an earlier step opened: stay on the same step; the current one opened: start at its first part
+  };
   const last = steps.length - 1;
   const answerText = problem.answer?.text && problem.answer.text.length <= 160 ? problem.answer.text : null;
   const maxBeat = last + (answerText ? 1 : 0);
@@ -646,7 +660,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           {atQuestion ? (
             <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
           ) : (
-            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />
           )}
         </div>
       </div>
@@ -706,7 +720,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className="absolute inset-0">
             {atQuestion
               ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show answer to work it through, one step at a time.</div>
-              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />}
+              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />}
           </div>
         </div>
       </div>
@@ -746,7 +760,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
             <div className="absolute inset-0">
-              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />
             </div>
           </div>
         </>
@@ -889,7 +903,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {atQuestion ? (
                   <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
                 ) : (
-                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big />
+                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big onOpen={openStep} />
                 )}
               </div>
               {stepNavFor(true)}

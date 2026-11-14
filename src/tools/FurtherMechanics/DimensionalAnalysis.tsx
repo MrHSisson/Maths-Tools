@@ -61,6 +61,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     const ask = pickOf(o.dimsAsk, lv === 1 ? "quantity,expression" : "quantity,expression,constant");
     q = ask === "constant" ? genDimsConst(circle) : ask === "expression" ? genDimsExpr(lv, circle) : genDimsName(lv, pickOf(o.dimsGiven, "name") === "units", circle);
   }
+  q.data.expandBuilds = o.dimsBuilds === "every";
   return { kind: q.data.kind, level, dim: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" } as unknown as DecisionProblem;
 }
 
@@ -104,6 +105,18 @@ export default function App() {
             choices: [
               { value: "skills", label: "Skills" },
               { value: "exam", label: "Exam style" },
+            ],
+          },
+          {
+            key: "dimsBuilds",
+            label: "Builds",
+            info: "A quantity that is not given (force, energy, viscosity…) is built before it is used. One step each keeps the working short, and a student can open any build to see its parts; Every step shows all of them.",
+            forSubTools: ["dims", "consistent", "powers"],
+            displayOnly: true,
+            defaultFor: () => "one",
+            choices: [
+              { value: "one", label: "One step each", sub: "Open for the parts" },
+              { value: "every", label: "Every step" },
             ],
           },
           {

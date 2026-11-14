@@ -102,7 +102,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
     if (!b || !i || typeof ResizeObserver === "undefined") return;
     const fit = () => {
       const w = i.offsetWidth, h = i.offsetHeight; // layout size: a transform does not change it, so there is nothing to reset
-      if (w > 0 && h > 0) setScale(Math.max(0.3, Math.min(1, b.clientWidth / w, b.clientHeight / h)));
+      if (w > 0 && h > 0) setScale(Math.max(0.3, Math.min(1, (b.clientWidth - 20) / w, b.clientHeight / h)));
     };
     fit();
     const ro = new ResizeObserver(fit);

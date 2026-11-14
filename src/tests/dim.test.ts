@@ -408,6 +408,7 @@ describe("the maths is LaTeX", () => {
   });
   it("a quantity that is not given is built before it is used, after its formula is stated, and the page never shows it as a fact first", () => {
     const q = genDimsNameFor("power", false, false);
+    q.data.expandBuilds = true; // every step of each build
     const steps = solveDim({ dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem);
     const firstMain = steps.findIndex((s) => s.phase === "The formula");
     expect(steps.some((s) => (s.phase ?? "").startsWith("Build"))).toBe(true);
@@ -421,6 +422,24 @@ describe("the maths is LaTeX", () => {
     expect(steps[0].dimView!.known.slice(0, 5)).toEqual(["[l] = L", "[t] = T", "[m] = M", "[v] = LT^{-1}", "[a] = LT^{-2}"]);
     // the page has a title
     expect(q.data.title).toBe("Find the dimensions of power");
+  });
+  it("each build is ONE step that opens into its own parts, and the parts end on the same page", () => {
+    const q = genDimsNameFor("power", false, false);
+    const prob = { dim: q.data, prompt: q.prompt, answer: { text: q.answerText } } as DecisionProblem;
+    const folded = solveDim(prob);
+    q.data.expandBuilds = true;
+    const full = solveDim(prob);
+    expect(folded.length).toBeLessThan(full.length);
+    const builds = folded.filter((s) => (s.phase ?? "").startsWith("Build"));
+    expect(builds.length).toBeGreaterThan(0);
+    for (const b of builds) {
+      expect(b.more!.length).toBeGreaterThan(2);
+      // the one step shows the page as it ends, every line of the build fresh
+      expect(b.dimView!.lines).toEqual(b.more![b.more!.length - 1].dimView!.lines);
+      expect(b.dimView!.fresh).toBeGreaterThanOrEqual(b.more![b.more!.length - 1].dimView!.fresh!);
+    }
+    // opening every build gives the full list, step for step
+    expect(folded.flatMap((s) => s.more ?? [s]).map((s) => s.caption)).toEqual(full.map((s) => s.caption));
   });
   it("a question that states dimensions (letters) builds nothing: they are given", () => {
     withSeededRandom(5, () => {

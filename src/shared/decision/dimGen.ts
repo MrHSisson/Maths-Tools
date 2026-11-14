@@ -51,6 +51,8 @@ export interface DimProblemData {
   askId?: string;
   /** what the question asks, as a short line for the top of the page ("Find the dimensions of force"); prose with maths between $…$ */
   title?: string;
+  /** show every step of each build (the teacher's choice); otherwise each build is one step that can be opened */
+  expandBuilds?: boolean;
   /** dimsConst: the formula the constant is in, as TeX, stated at the start of the working */
   relFormula?: string;
   /** dimsConst: a number in that formula (the half in a half k x squared), as TeX */

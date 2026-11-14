@@ -14,7 +14,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
 }
 
-export default function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
+export default function StepCascade({ steps, idx, answer, all, big, onOpen }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean; onOpen?: (i: number) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   // underline each glossary term the first time it appears in the solution; hover or press gives the definition
@@ -79,6 +79,11 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
                     </div>
                   )}
                   <div style={{ fontSize: big ? 16 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
+                  {st.more && onOpen && (
+                    <button type="button" onClick={() => onOpen(i)} style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: "#1e3a8a", background: "#e0e7ff", border: "none", borderRadius: 8, padding: "5px 10px", minHeight: 32, cursor: "pointer" }}>
+                      Show the steps ({st.more.length})
+                    </button>
+                  )}
                 </div>
               </div>
             </FadeIn>
