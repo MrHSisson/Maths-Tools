@@ -999,11 +999,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         )}
         {/* the picture alone, full screen; it can be turned on its side for a wide network (flows, critical path) */}
         {diagramFull && (
-          <div className="fixed inset-0 z-[80] bg-white overflow-hidden">
+          <div className="fit-all fixed inset-0 z-[80] bg-white overflow-hidden">
+            {/* full screen shows the WHOLE picture: a diagram that normally keeps a minimum width (and scrolls sideways) shrinks to fit instead */}
+            <style>{".fit-all svg { min-width: 0 !important; max-width: 100% !important; } .fit-all [style*='overflow: auto'] { overflow: hidden !important; }"}</style>
             <div style={diagramTurn
               ? { position: "fixed", top: 0, left: "100vw", width: "100dvh", height: "100vw", transformOrigin: "top left", transform: "rotate(90deg)" }
               : { position: "absolute", inset: 0 }}>
-              <div className="absolute" style={{ inset: 12 }}>{shown(canvasStep)}</div>
+              <div className="absolute" style={diagramTurn ? { top: 12, left: 12, bottom: 12, right: 72 } : { top: 56, left: 12, right: 12, bottom: 72 }}>{shown(canvasStep)}</div>
             </div>
             <button onClick={() => setDiagramFull(false)} aria-label="Close full screen" className="absolute top-2 left-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><X size={22} /></button>
             <button onClick={() => setDiagramTurn((t) => !t)} aria-label="Turn the picture on its side" title="Turn on its side" className="absolute top-2 right-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><RotateCw size={20} /></button>
