@@ -50,6 +50,8 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
   }
   const questionIds = new Set<string>();
   const used = new Set<string>();             // numbers the deck's own content asks about
+  const worked = new Set<string>();           // numbers a slide shows or works through (text, equations, boards)
+  const asks: { label: string; nums: string[] }[] = []; // the numbers each question is about (its title)
   const depthCards: { where: string; q: CuratedQuestion }[] = [];
 
   let prevAsked: string[] = [];
@@ -69,7 +71,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
     prevAsked = asked;
     for (const el of slide.els) {
       if (el.kind === "text") {
-        checkMaths(where, el.text); numbersIn(el.text.replace(MATHS, " $1 ")).forEach((n) => used.add(n));
+        checkMaths(where, el.text); numbersIn(el.text.replace(MATHS, " $1 ")).forEach((n) => { used.add(n); worked.add(n); });
         if (el.size < MIN_TEXT) problems.push(`${where}: text is ${el.size} units, under the ${MIN_TEXT} minimum for the back of the room`);
         // an auto-sized box shrinks its text to fit: only text that cannot fit even at the minimum size is a problem
         const probe = el.fixed ? el : { ...el, size: MIN_TEXT };
@@ -109,6 +111,8 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.flat()]) { checkMaths(where, cell); }
       if (el.kind === "board") for (const cell of [...el.grid.head, ...el.grid.rows.map((r) => r[0])]) numbersIn(cell).forEach((n) => used.add(n));
+      if (el.kind === "board") for (const cell of el.grid.rows.flat()) numbersIn(cell).forEach((n) => worked.add(n));
+      if (el.kind === "maths") numbersIn(el.latex).forEach((n) => worked.add(n));
       const items = questionsOf(el);
       for (const q of items) {
         const label = `${where}, question ${q.id}`;
@@ -118,6 +122,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         else for (const p of readyProblems(q)) problems.push(`${label}: ${p}`);
         if (isDepthQuestion(q)) { depthCards.push({ where: label, q }); continue; }
         [...q.question, q.title].forEach((s) => numbersIn(s).forEach((n) => used.add(n)));
+        asks.push({ label, nums: numbersIn(q.title) });
         // an authored answer must be where its own working ends
         const last = q.explanation[q.explanation.length - 1]?.match(/= (.+?)\$$/)?.[1];
         const given = q.answer[0]?.replace(/^\$\\approx /, "$");
@@ -149,6 +154,8 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       }
     }
   }
+  // Practice asks fresh numbers: a number a slide already works through is not asked again (the question's title carries the numbers it is about).
+  for (const a of asks) { const again = [...new Set(a.nums)].filter((n) => worked.has(n)); if (again.length) warnings.push(`${a.label}: asks about ${again.join(", ")}, which a slide already shows or works through; use fresh numbers`); }
   for (const { where, q } of depthCards) {
     const asked = [...q.question, ...(q.format === "claims" ? q.claims.map((c) => c.text) : []), ...(q.format === "error" ? q.lines : []), ...(q.format === "choice" || q.format === "claims" ? q.options.map((o) => o.text) : [])];
     const clash = [...new Set(asked.flatMap(numbersIn))].filter((n) => used.has(n));

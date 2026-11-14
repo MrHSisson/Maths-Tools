@@ -625,26 +625,30 @@
       {
        "version": 2,
        "id": "fhl-book-5",
-       "title": "Factors of $36$",
+       "title": "Factors of $100$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$36$"
+        "$100$"
        ],
        "answer": [
-        "$1$, $2$, $3$, $4$, $6$, $9$, $12$, $18$, $36$"
+        "$1$, $2$, $4$, $5$, $10$, $20$, $25$, $50$, $100$"
        ],
        "explanation": [
-        "$36 \\div 1 = 36$, so $1 \\times 36$.",
-        "$36 \\div 2 = 18$, so $2 \\times 18$.",
-        "$36 \\div 3 = 12$, so $3 \\times 12$.",
-        "$36 \\div 4 = 9$, so $4 \\times 9$.",
-        "$36 \\div 5 = 7.2$ is not a whole number, so $5$ is not a factor.",
-        "$36 \\div 6 = 6$, so $6 \\times 6$ ($6$ is written once).",
-        "$36 \\div 7 \\approx 5.1$ is smaller than $7$, so stop.",
-        "Factors of $36$: $1$, $2$, $3$, $4$, $6$, $9$, $12$, $18$, $36$"
+        "$100 \\div 1 = 100$, so $1 \\times 100$.",
+        "$100 \\div 2 = 50$, so $2 \\times 50$.",
+        "$100 \\div 3 \\approx 33.3$ is not a whole number, so $3$ is not a factor.",
+        "$100 \\div 4 = 25$, so $4 \\times 25$.",
+        "$100 \\div 5 = 20$, so $5 \\times 20$.",
+        "$100 \\div 6 \\approx 16.7$ is not a whole number, so $6$ is not a factor.",
+        "$100 \\div 7 \\approx 14.3$ is not a whole number, so $7$ is not a factor.",
+        "$100 \\div 8 = 12.5$ is not a whole number, so $8$ is not a factor.",
+        "$100 \\div 9 \\approx 11.1$ is not a whole number, so $9$ is not a factor.",
+        "$100 \\div 10 = 10$, so $10 \\times 10$ ($10$ is written once).",
+        "$100 \\div 11 \\approx 9.1$ is smaller than $11$, so stop.",
+        "Factors of $100$: $1$, $2$, $4$, $5$, $10$, $20$, $25$, $50$, $100$"
        ],
        "rationale": "Divide by 1, 2, 3, ... in order, keep each exact pair and stop when the answer is smaller than the divisor.",
        "expectedErrors": [],
@@ -690,7 +694,7 @@
      "size": 130
     }
    ],
-   "built": "1uks8gd"
+   "built": "1n3pmhx"
   },
   {
    "id": "fhl-common-definition",
@@ -1339,21 +1343,21 @@
       {
        "version": 2,
        "id": "fhl-cf-1",
-       "title": "Common factors of $24$ and $36$",
+       "title": "Common factors of $30$ and $45$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find all the common factors of $24$ and $36$.",
-        "$\\begin{array}{c|c} \\; \\mathbf{24} \\; & \\; \\mathbf{36} \\; \\\\ \\hline \\; 1 \\times 24 \\; & \\; 1 \\times 36 \\; \\\\ \\; 2 \\times \\square \\; & \\; 2 \\times 18 \\; \\\\ \\; 3 \\times 8 \\; & \\; 3 \\times \\square \\; \\\\ \\; 4 \\times \\square \\; & \\; 4 \\times \\square \\; \\\\ \\;  \\; & \\; 6 \\times 6 \\; \\end{array}$"
+        "Find all the common factors of $30$ and $45$.",
+        "$\\begin{array}{c|c} \\; \\mathbf{30} \\; & \\; \\mathbf{45} \\; \\\\ \\hline \\; 1 \\times 30 \\; & \\; 1 \\times 45 \\; \\\\ \\; 2 \\times \\square \\; & \\; 3 \\times \\square \\; \\\\ \\; 3 \\times 10 \\; & \\; 5 \\times 9 \\; \\\\ \\; 5 \\times \\square \\; & \\;  \\; \\end{array}$"
        ],
        "answer": [
-        "$1$, $2$, $3$, $4$, $6$, $12$"
+        "$1$, $3$, $5$, $15$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{24} \\; & \\; \\mathbf{36} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 24 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 36 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{12}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 18 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 8 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{12}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 9 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; \\end{array}$",
-        "Common factors: $1$, $2$, $3$, $4$, $6$, $12$"
+        "$\\begin{array}{c|c} \\; \\mathbf{30} \\; & \\; \\mathbf{45} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{15}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\; & \\;  \\; \\end{array}$",
+        "Common factors: $1$, $3$, $5$, $15$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
        "expectedErrors": [],
@@ -1387,19 +1391,19 @@
       {
        "version": 2,
        "id": "fhl-cf-3",
-       "title": "Common factors of $20$ and $30$",
+       "title": "Common factors of $20$ and $50$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find all the common factors of $20$ and $30$."
+        "Find all the common factors of $20$ and $50$."
        ],
        "answer": [
         "$1$, $2$, $5$, $10$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{30} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\; \\end{array}$",
+        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{50} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 50 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 25 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\end{array}$",
         "Common factors: $1$, $2$, $5$, $10$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1413,7 +1417,7 @@
     }
    ],
    "brief": "Three whiteboard questions: factor pairs partly given, then a count of common factors, then 20 and 30 with no help.",
-   "built": "12c47nj"
+   "built": "ueiq4d"
   },
   {
    "id": "fhl-cf-book",
@@ -1442,20 +1446,20 @@
       {
        "version": 2,
        "id": "fhl-cfb-1",
-       "title": "Common factors of $18$ and $27$",
+       "title": "Common factors of $16$ and $28$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$18,\\;27$"
+        "$16,\\;28$"
        ],
        "answer": [
-        "$1$, $3$, $9$"
+        "$1$, $2$, $4$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{18} \\; & \\; \\mathbf{27} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 18 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 27 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 6 \\; & \\;  \\; \\end{array}$",
-        "Common factors: $1$, $3$, $9$"
+        "$\\begin{array}{c|c} \\; \\mathbf{16} \\; & \\; \\mathbf{28} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 8 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 14 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{4}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 7 \\; \\end{array}$",
+        "Common factors: $1$, $2$, $4$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
        "expectedErrors": [],
@@ -1465,20 +1469,20 @@
       {
        "version": 2,
        "id": "fhl-cfb-2",
-       "title": "Common factors of $28$ and $42$",
+       "title": "Common factors of $27$ and $63$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$28,\\;42$"
+        "$27,\\;63$"
        ],
        "answer": [
-        "$1$, $2$, $7$, $14$"
+        "$1$, $3$, $9$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{28} \\; & \\; \\mathbf{42} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 42 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{14}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 21 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{14}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; \\end{array}$",
-        "Common factors: $1$, $2$, $7$, $14$"
+        "$\\begin{array}{c|c} \\; \\mathbf{27} \\; & \\; \\mathbf{63} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 27 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 21 \\; \\\\ \\;  \\; & \\; 7 \\times \\textcolor{#15803d}{\\mathbf{9}} \\; \\end{array}$",
+        "Common factors: $1$, $3$, $9$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
        "expectedErrors": [],
@@ -1488,19 +1492,19 @@
       {
        "version": 2,
        "id": "fhl-cfb-3",
-       "title": "Common factors of $16$ and $40$",
+       "title": "Common factors of $32$ and $72$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$16,\\;40$"
+        "$32,\\;72$"
        ],
        "answer": [
         "$1$, $2$, $4$, $8$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{16} \\; & \\; \\mathbf{40} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{4}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\; \\\\ \\;  \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; \\end{array}$",
+        "$\\begin{array}{c|c} \\; \\mathbf{32} \\; & \\; \\mathbf{72} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 32 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 72 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 36 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; 3 \\times 24 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 18 \\; \\\\ \\;  \\; & \\; 6 \\times 12 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times 9 \\; \\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1534,20 +1538,20 @@
       {
        "version": 2,
        "id": "fhl-cfb-5",
-       "title": "Common factors of $12$ and $30$",
+       "title": "Common factors of $44$ and $66$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$12,\\;30$"
+        "$44,\\;66$"
        ],
        "answer": [
-        "$1$, $2$, $3$, $6$"
+        "$1$, $2$, $11$, $22$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{12} \\; & \\; \\mathbf{30} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 12 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 4 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 10 \\; \\\\ \\;  \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{6}} \\; \\end{array}$",
-        "Common factors: $1$, $2$, $3$, $6$"
+        "$\\begin{array}{c|c} \\; \\mathbf{44} \\; & \\; \\mathbf{66} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 44 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{22}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{22}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; \\end{array}$",
+        "Common factors: $1$, $2$, $11$, $22$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
        "expectedErrors": [],
@@ -1585,7 +1589,7 @@
      "size": 130
     }
    ],
-   "built": "1vnq9a1"
+   "built": "5m8p5u"
   },
   {
    "id": "fhl-hcf-definition",
@@ -2259,22 +2263,22 @@
       {
        "version": 2,
        "id": "fhl-hcf-2",
-       "title": "HCF of $36$ and $54$",
+       "title": "HCF of $45$ and $60$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the HCF of $36$ and $54$.",
-        "Hint: 6 common factors."
+        "Find the HCF of $45$ and $60$.",
+        "Hint: 4 common factors."
        ],
        "answer": [
-        "$18$"
+        "$15$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{36} \\; & \\; \\mathbf{54} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 36 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 54 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{18}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 27 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 12 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{18}} \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{6}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; & \\;  \\; \\end{array}$",
-        "Common factors: $1$, $2$, $3$, $6$, $9$, $18$",
-        "The highest common factor is $18$."
+        "$\\begin{array}{c|c} \\; \\mathbf{45} \\; & \\; \\mathbf{60} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 60 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; & \\; 2 \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 20 \\; \\\\ \\;  \\; & \\; 4 \\times \\textcolor{#15803d}{\\mathbf{15}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 12 \\; \\\\ \\;  \\; & \\; 6 \\times 10 \\; \\end{array}$",
+        "Common factors: $1$, $3$, $5$, $15$",
+        "The highest common factor is $15$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2284,21 +2288,21 @@
       {
        "version": 2,
        "id": "fhl-hcf-3",
-       "title": "HCF of $18$ and $30$",
+       "title": "HCF of $20$ and $30$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the HCF of $18$ and $30$."
+        "Find the HCF of $20$ and $30$."
        ],
        "answer": [
-        "$6$"
+        "$10$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{18} \\; & \\; \\mathbf{30} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 18 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 9 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 10 \\; \\\\ \\;  \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{6}} \\; \\end{array}$",
-        "Common factors: $1$, $2$, $3$, $6$",
-        "The highest common factor is $6$."
+        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{30} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\; \\end{array}$",
+        "Common factors: $1$, $2$, $5$, $10$",
+        "The highest common factor is $10$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2311,7 +2315,7 @@
     }
    ],
    "brief": "Three whiteboard questions: factor pairs partly given, then a count of common factors, then 18 and 30 with no help.",
-   "built": "vjivys"
+   "built": "m6e2eu"
   },
   {
    "id": "fhl-hcf-book",
@@ -2340,21 +2344,21 @@
       {
        "version": 2,
        "id": "fhl-hcfb-1",
-       "title": "HCF of $20$ and $50$",
+       "title": "HCF of $28$ and $42$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$20,\\;50$"
+        "$28,\\;42$"
        ],
        "answer": [
-        "$10$"
+        "$14$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{50} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 50 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 25 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\end{array}$",
-        "Common factors: $1$, $2$, $5$, $10$",
-        "The highest common factor is $10$."
+        "$\\begin{array}{c|c} \\; \\mathbf{28} \\; & \\; \\mathbf{42} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 42 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{14}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 21 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{14}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; \\end{array}$",
+        "Common factors: $1$, $2$, $7$, $14$",
+        "The highest common factor is $14$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2364,21 +2368,21 @@
       {
        "version": 2,
        "id": "fhl-hcfb-2",
-       "title": "HCF of $27$ and $36$",
+       "title": "HCF of $49$ and $63$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$27,\\;36$"
+        "$49,\\;63$"
        ],
        "answer": [
-        "$9$"
+        "$7$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{27} \\; & \\; \\mathbf{36} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 27 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 36 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; 2 \\times 18 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 12 \\; \\\\ \\;  \\; & \\; 4 \\times \\textcolor{#15803d}{\\mathbf{9}} \\; \\\\ \\;  \\; & \\; 6 \\times 6 \\; \\end{array}$",
-        "Common factors: $1$, $3$, $9$",
-        "The highest common factor is $9$."
+        "$\\begin{array}{c|c} \\; \\mathbf{49} \\; & \\; \\mathbf{63} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 49 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{7}} \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 3 \\times 21 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{7}} \\times 9 \\; \\end{array}$",
+        "Common factors: $1$, $7$",
+        "The highest common factor is $7$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2388,21 +2392,21 @@
       {
        "version": 2,
        "id": "fhl-hcfb-3",
-       "title": "HCF of $24$ and $60$",
+       "title": "HCF of $40$ and $64$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$24,\\;60$"
+        "$40,\\;64$"
        ],
        "answer": [
-        "$12$"
+        "$8$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{24} \\; & \\; \\mathbf{60} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 24 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 60 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{12}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 8 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 20 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{6}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 15 \\; \\\\ \\;  \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{12}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 10 \\; \\end{array}$",
-        "Common factors: $1$, $2$, $3$, $4$, $6$, $12$",
-        "The highest common factor is $12$."
+        "$\\begin{array}{c|c} \\; \\mathbf{40} \\; & \\; \\mathbf{64} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 64 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 32 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 16 \\; \\\\ \\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; \\end{array}$",
+        "Common factors: $1$, $2$, $4$, $8$",
+        "The highest common factor is $8$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2412,19 +2416,19 @@
       {
        "version": 2,
        "id": "fhl-hcfb-4",
-       "title": "HCF of $15$ and $40$",
+       "title": "HCF of $35$ and $55$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$15,\\;40$"
+        "$35,\\;55$"
        ],
        "answer": [
         "$5$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{15} \\; & \\; \\mathbf{40} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 15 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\; \\\\ \\; 3 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; 2 \\times 20 \\; \\\\ \\;  \\; & \\; 4 \\times 10 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 8 \\; \\end{array}$",
+        "$\\begin{array}{c|c} \\; \\mathbf{35} \\; & \\; \\mathbf{55} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 55 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 7 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 11 \\; \\end{array}$",
         "Common factors: $1$, $5$",
         "The highest common factor is $5$."
        ],
@@ -2460,21 +2464,21 @@
       {
        "version": 2,
        "id": "fhl-hcfb-6",
-       "title": "HCF of $45$ and $75$",
+       "title": "HCF of $66$ and $90$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$45,\\;75$"
+        "$66,\\;90$"
        ],
        "answer": [
-        "$15$"
+        "$6$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{45} \\; & \\; \\mathbf{75} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 75 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 25 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; \\end{array}$",
-        "Common factors: $1$, $3$, $5$, $15$",
-        "The highest common factor is $15$."
+        "$\\begin{array}{c|c} \\; \\mathbf{66} \\; & \\; \\mathbf{90} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 90 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 45 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 22 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 11 \\; & \\; 5 \\times 18 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 15 \\; \\\\ \\;  \\; & \\; 9 \\times 10 \\; \\end{array}$",
+        "Common factors: $1$, $2$, $3$, $6$",
+        "The highest common factor is $6$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2489,7 +2493,7 @@
      "size": 130
     }
    ],
-   "built": "1kuizf2"
+   "built": "l3jvwv"
   },
   {
    "id": "fhl-exit",
@@ -2532,25 +2536,27 @@
       {
        "version": 2,
        "id": "fhl-exit-1",
-       "title": "Factors of $27$",
+       "title": "Factors of $54$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "List all the factors of $27$."
+        "List all the factors of $54$."
        ],
        "answer": [
-        "$1$, $3$, $9$, $27$"
+        "$1$, $2$, $3$, $6$, $9$, $18$, $27$, $54$"
        ],
        "explanation": [
-        "$27 \\div 1 = 27$, so $1 \\times 27$.",
-        "$27 \\div 2 = 13.5$ is not a whole number, so $2$ is not a factor.",
-        "$27 \\div 3 = 9$, so $3 \\times 9$.",
-        "$27 \\div 4 \\approx 6.8$ is not a whole number, so $4$ is not a factor.",
-        "$27 \\div 5 = 5.4$ is not a whole number, so $5$ is not a factor.",
-        "$27 \\div 6 = 4.5$ is smaller than $6$, so stop.",
-        "Factors of $27$: $1$, $3$, $9$, $27$"
+        "$54 \\div 1 = 54$, so $1 \\times 54$.",
+        "$54 \\div 2 = 27$, so $2 \\times 27$.",
+        "$54 \\div 3 = 18$, so $3 \\times 18$.",
+        "$54 \\div 4 = 13.5$ is not a whole number, so $4$ is not a factor.",
+        "$54 \\div 5 = 10.8$ is not a whole number, so $5$ is not a factor.",
+        "$54 \\div 6 = 9$, so $6 \\times 9$.",
+        "$54 \\div 7 \\approx 7.7$ is not a whole number, so $7$ is not a factor.",
+        "$54 \\div 8 \\approx 6.8$ is smaller than $8$, so stop.",
+        "Factors of $54$: $1$, $2$, $3$, $6$, $9$, $18$, $27$, $54$"
        ],
        "rationale": "Divide by 1, 2, 3, ... in order, keep each exact pair and stop when the answer is smaller than the divisor.",
        "expectedErrors": [],
@@ -2560,20 +2566,20 @@
       {
        "version": 2,
        "id": "fhl-exit-2",
-       "title": "Common factors of $10$ and $35$",
+       "title": "Common factors of $26$ and $39$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find all the common factors of $10$ and $35$."
+        "Find all the common factors of $26$ and $39$."
        ],
        "answer": [
-        "$1$, $5$"
+        "$1$, $13$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{10} \\; & \\; \\mathbf{35} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 7 \\; \\end{array}$",
-        "Common factors: $1$, $5$"
+        "$\\begin{array}{c|c} \\; \\mathbf{26} \\; & \\; \\mathbf{39} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 26 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 39 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; \\end{array}$",
+        "Common factors: $1$, $13$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
        "expectedErrors": [],
@@ -2583,21 +2589,21 @@
       {
        "version": 2,
        "id": "fhl-exit-3",
-       "title": "HCF of $16$ and $36$",
+       "title": "HCF of $22$ and $33$",
        "tool": "factors-hcf-systematic-listing",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the HCF of $16$ and $36$."
+        "Find the HCF of $22$ and $33$."
        ],
        "answer": [
-        "$4$"
+        "$11$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{16} \\; & \\; \\mathbf{36} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 36 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 8 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 18 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{4}} \\; & \\; 3 \\times 12 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 9 \\; \\\\ \\;  \\; & \\; 6 \\times 6 \\; \\end{array}$",
-        "Common factors: $1$, $2$, $4$",
-        "The highest common factor is $4$."
+        "$\\begin{array}{c|c} \\; \\mathbf{22} \\; & \\; \\mathbf{33} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 22 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 33 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; \\end{array}$",
+        "Common factors: $1$, $11$",
+        "The highest common factor is $11$."
        ],
        "rationale": "Find all the common factors, then take the highest.",
        "expectedErrors": [],
@@ -2607,7 +2613,7 @@
      ]
     }
    ],
-   "built": "1c6w1uf"
+   "built": "jcxrki"
   }
  ]
 }

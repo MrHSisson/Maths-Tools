@@ -56,7 +56,7 @@ If time runs short, the first cut is the discussion on slide 9 (keep slide 13), 
 
 ## Question ladder and checks
 
-**Ladder:** two things climb together: the numbers (whiteboards use 30 to 72, book sets 36 to 80 for listing and 12 to 75 for common factors and HCF) and the support falling away (see "Scaffolding, and weaning it off"). Listing book set: 40, 56, 42, 80, 36 (square) and 70, plain numbers only. Common factors: the common set size varies from 1 to 6, with a coprime pair (14 and 15, no scaffold) last. HCF: every book answer is different, ending with a coprime pair (answer 1) and 45 and 75 (answer 15).
+**Ladder:** two things climb together: the numbers (whiteboards use 30 to 72, book sets 40 to 100 for listing and 14 to 90 for common factors and HCF) and the support falling away (see "Scaffolding, and weaning it off"). Listing book set: 40, 56, 42, 80, 100 (a square) and 70, plain numbers only. Common factors: the common set size varies from 1 to 4, with a coprime pair (14 and 15) last. HCF: every book answer is different, ending with a coprime pair (answer 1) and 66 and 90 (answer 6).
 
 **Traps** (each has a question where the wrong method gives a different, tempting answer):
 
@@ -66,15 +66,17 @@ If time runs short, the first cut is the discussion on slide 9 (keep slide 13), 
 | Stopping too early (not reaching the pair partner) | list-2 (60), book-4 (80) | 80 listed as 1, 2, 4, 5, 8, 10 |
 | Assuming a factor in a gap without testing it (or skipping a divisor) | list-1 (5 and 7 for 48), book-1 (3 for 40) | 5 added to the factors of 48 |
 | Listing a multiple instead of a factor | list-3 (30), exit-1 | 30 listed as 30, 60, 90 |
-| A square's middle factor written twice or missed | book-5 (36) | 1, 2, 3, 4, 6, 6, 9, ... |
-| Giving only one common factor (the biggest, or the first) | cf-1 to 3, cfb-1 to 6 | 20 and 30: 10 only |
+| A square's middle factor written twice or missed | book-5 (100) | 1, 2, 4, 5, 10, 10, 20, ... |
+| Giving only one common factor (the biggest, or the first) | cf-1 to 3, cfb-1 to 6 | 20 and 50: 10 only |
 | Forgetting 1 is always a common factor | cfb-6 (14 and 15) | "no common factors" |
-| HCF read as a common factor (not the highest) | hcf-1 to 3, hcfb-1 to 6 | 18 and 30: 3 or 2 |
-| HCF confused with the common multiple from last lesson | slide 13 (12 and 18) | 36 instead of 6 |
+| HCF read as a common factor (not the highest) | hcf-1 to 3, hcfb-1 to 6 | 20 and 30: 5 or 2 |
+| HCF confused with the common multiple from last lesson | slide 14 (12 and 18) | 36 instead of 6 |
+
+**Fresh numbers (decided 2026-11-14, after worked examples crept into questions).** The worked numbers are 24 (slides 3 and 4), 12 and 18 (the models and discussions) and 36 (Ruby's answer). None of them is asked about in any question. Inside a section no number is asked about twice, the exit ticket uses numbers that appear nowhere else, and no pair repeats. The build script asserts all four, so the deck cannot be built if one is broken, and `npm run deck -- check` warns for any deck whose questions ask about a number a slide already works through.
 
 **Conventions:** factors written in ascending order, separated by commas, starting 1; the two lists labelled; common factors circled; the HCF written as one number. Working lines match the multiples deck (two labelled lists, circle the match).
 
-All answers below were recomputed by script (every factor list, every common set, every HCF; no pair repeated across the deck; the six HCF book answers are all different (10, 9, 12, 5, 1, 15), and the stated counts of pairs and common factors).
+All answers below were recomputed by script (every factor list, every common set, every HCF; no pair repeated across the deck; the six HCF book answers are all different (14, 7, 8, 5, 1, 6), and the stated counts of pairs and common factors).
 
 | Set | Task | Answer |
 | --- | --- | --- |
@@ -85,31 +87,31 @@ All answers below were recomputed by script (every factor list, every common set
 | book-2 | 56 | 1, 2, 4, 7, 8, 14, 28, 56 |
 | book-3 | 42 | 1, 2, 3, 6, 7, 14, 21, 42 |
 | book-4 | 80 | 1, 2, 4, 5, 8, 10, 16, 20, 40, 80 |
-| book-5 | 36 | 1, 2, 3, 4, 6, 9, 12, 18, 36 |
+| book-5 | 100 (a square) | 1, 2, 4, 5, 10, 20, 25, 50, 100 |
 | book-6 | 70 | 1, 2, 5, 7, 10, 14, 35, 70 |
-| cf-1 | Common factors of 24 and 36. Table with headings 24 and 36 and their pairs: 24: 1 × 24, 2 × __, 3 × 8, 4 × __; 36: 1 × 36, 2 × 18, 3 × __, 4 × __, 6 × 6 | Blanks 12, 6 and 12, 9; common: 1, 2, 3, 4, 6, 12 |
+| cf-1 | Common factors of 30 and 45. Table with headings 30 and 45 and their pairs: 30: 1 × 30, 2 × __, 3 × 10, 5 × __; 45: 1 × 45, 3 × __, 5 × 9 | Blanks 15, 6 and 15; common: 1, 3, 5, 15 |
 | cf-2 | Common factors of 40 and 56. Hint: 4 common factors | 40: 1, 2, 4, 5, 8, 10, 20, 40; 56: 1, 2, 4, 7, 8, 14, 28, 56; common: 1, 2, 4, 8 |
-| cf-3 | Common factors of 20 and 30 (no scaffold) | 1, 2, 5, 10 |
-| cfb-1 | 18, 27 | 1, 3, 9 |
-| cfb-2 | 28, 42 | 1, 2, 7, 14 |
-| cfb-3 | 16, 40 | 1, 2, 4, 8 |
+| cf-3 | Common factors of 20 and 50 (no scaffold) | 1, 2, 5, 10 |
+| cfb-1 | 16, 28 | 1, 2, 4 |
+| cfb-2 | 27, 63 | 1, 3, 9 |
+| cfb-3 | 32, 72 | 1, 2, 4, 8 |
 | cfb-4 | 21, 35 | 1, 7 |
-| cfb-5 | 12, 30 | 1, 2, 3, 6 |
+| cfb-5 | 44, 66 | 1, 2, 11, 22 |
 | cfb-6 | 14, 15 | 1 |
 | hcf-1 | HCF of 32 and 48. Table with headings 32 and 48 and their pairs: 32: 1 × 32, 2 × __, 4 × 8; 48: 1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __ | Blanks 16, 16 and 8; common: 1, 2, 4, 8, 16; HCF 16 |
-| hcf-2 | HCF of 36 and 54. Hint: 6 common factors | Common: 1, 2, 3, 6, 9, 18; HCF 18 |
-| hcf-3 | HCF of 18 and 30 (no scaffold) | Common: 1, 2, 3, 6; HCF 6 |
-| hcfb-1 | 20, 50 | 10 |
-| hcfb-2 | 27, 36 | 9 |
-| hcfb-3 | 24, 60 | 12 |
-| hcfb-4 | 15, 40 | 5 |
+| hcf-2 | HCF of 45 and 60. Hint: 4 common factors | Common: 1, 3, 5, 15; HCF 15 |
+| hcf-3 | HCF of 20 and 30 (no scaffold) | Common: 1, 2, 5, 10; HCF 10 |
+| hcfb-1 | 28, 42 | 14 |
+| hcfb-2 | 49, 63 | 7 |
+| hcfb-3 | 40, 64 | 8 |
+| hcfb-4 | 35, 55 | 5 |
 | hcfb-5 | 14, 25 | 1 |
-| hcfb-6 | 45, 75 | 15 |
-| exit-1 | List the factors of 27 | 1, 3, 9, 27 |
-| exit-2 | Common factors of 10 and 35 | 1, 5 |
-| exit-3 | HCF of 16 and 36 | 4 |
+| hcfb-6 | 66, 90 | 6 |
+| exit-1 | List the factors of 54 | 1, 2, 3, 6, 9, 18, 27, 54 |
+| exit-2 | Common factors of 26 and 39 | 1, 13 |
+| exit-3 | HCF of 22 and 33 | 11 |
 
-The 'Given' text is exactly what appears on the slide, and the answer slide fills every blank. Worked numbers: 24 (slide 4), 12 and 18 (slides 8 to 13, kept on purpose as one running example). 36 and 12 appear as numbers in other questions but never as a repeated pair.
+The 'Given' text is exactly what appears on the slide, and the answer slide fills every blank. Worked numbers (never asked again): 24, 12, 18 and 36.
 
 ## Decisions and what is still open
 

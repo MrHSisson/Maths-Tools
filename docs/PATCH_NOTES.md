@@ -31,7 +31,7 @@ Keep the split even when a session only touches one.
 
 ## 2026-11-14 — Factors deck: reformatted after Harry's first look
 
-Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `src/decks/QuestionPresentation.tsx` (one line), `docs/pathways/decks.md`.
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `src/decks/QuestionPresentation.tsx` (one line), `src/decks/deckChecks.ts` (one warning), `docs/design/DECK_BUILD_CHECKLIST.md`, `docs/pathways/decks.md`.
 
 - **Slide 3:** the drawn calculator keys are gone; the two sums and what the calculator shows are plain text, revealed by click.
 - **Whiteboards (slides 5, 10, 15):** full-width instead of workspace right, larger text, centred. The listing scaffold is set two pairs to a row. For two numbers, each number is a heading with its factor pairs underneath (the pairs layout, not flat lists), with the common factors in bold green in the worked answer.
@@ -39,6 +39,8 @@ Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-syst
 - **Book sets (slides 6, 11, 16):** no blanks, no counts, no hints: the instruction once at the top and each cell is just the number (or pair), drawn large and centred.
 - **Shared code:** the open-question text is centred when it is short; the 170-character test now ignores a factor-pairs table (`\begin{array}`), so a table under a short question no longer pushes it left. The question area on these slides is also inset to 48 units: with larger text the hidden working panel's resting position otherwise tripped the layout check by 8 units.
 - **Checked:** every answer still computed and asserted in the build script; content and layout checks pass for all 17 slides; deck, question, docs and organisation tests, lint and `tsc` pass; the new slides looked at in the browser.
+- **Fresh numbers (a running problem, now guarded):** nine questions asked about a number a worked example or discussion already used (24, 12, 18, 36), and 30, 40, 36 and 27 each came back in three or more questions. All the questions were renumbered. Two guards: the build script asserts that no worked number is asked about, no number repeats inside a section, the exit ticket is fresh and no pair repeats; and `deckChecks.ts` now warns when a question asks about a number a slide already shows or works through (a warning, not a failure: older decks, Estimation most of all, trigger it and were not changed). Rule recorded in `docs/design/DECK_BUILD_CHECKLIST.md`.
+- **Centring depends on this branch:** the one-line `QuestionPresentation.tsx` change is not on `main`, so a deployment of `main` still left-aligns the whiteboard questions that carry a factor-pairs table (the short ones already centre).
 - **Open:** whether the scaffolded questions would be better on a printed worksheet (put to Harry).
 
 Agent: Claude Code
