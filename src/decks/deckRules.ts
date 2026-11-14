@@ -7,7 +7,7 @@ import type { CuratedQuestion } from "./types";
 /** The numbers a question is about: the ones in its title (`Factors of $48$`, `HCF of $32$ and $48$`). */
 export const headlineNumbers = (q: CuratedQuestion): number[] => (q.title.match(/\d+(?:\.\d+)?/g) ?? []).map(Number);
 
-export interface FreshNumbers {
+interface FreshNumbers {
   /** Numbers a slide works through (the worked examples and discussions): no question may be about them. */
   worked: number[];
   /** Each section's questions (listing, common factors, HCF ...): inside a section no number is asked about twice. */

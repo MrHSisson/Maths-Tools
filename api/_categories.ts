@@ -17,8 +17,14 @@ export type OpResult = { ok: true; data: CategoryData } | { ok: false; error: st
 
 type Row = Record<string, unknown>;
 export const MAX_NAME = 60;
-/** The strands decks could be filed under before categories were Harry's to control (the GCSE categories on the landing page). */
-export const DEFAULT_STRANDS = ["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics"];
+/** The tree a fresh start gets (Harry's choice, 2026-11-14): the five GCSE maths strands, A-Level with two topics, and Starters. He changes it from the Decks page. */
+export const DEFAULT_TREE: { name: string; topics?: string[] }[] = [
+  { name: "Number" }, { name: "Algebra" }, { name: "Ratio & Proportion" }, { name: "Geometry" }, { name: "Probability & Statistics" },
+  { name: "A-Level", topics: ["Maths", "Further Maths"] }, { name: "Starters" },
+];
+/** A strand name a deck carried before categories were Harry's to control, and where it now belongs (a strand and a topic inside it). */
+const ALIASES: Record<string, [string, string]> = { "decision mathematics": ["A-Level", "Further Maths"] };
+const STAMP = "v2:";                                    // the seeded marker's value starts with this once the current tree has been applied
 
 const clean = (s: unknown) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim() : "");
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
@@ -40,17 +46,60 @@ export function parseOp(raw: unknown): CategoryOp | null {
   }
 }
 
-/** Seeds the tree once (a marker row says it has been done, so deleting every category later is respected). Deterministic ids and DO NOTHING make a race between two cold starts harmless. */
-async function ensureSeed(db: Db) {
-  if ((await db.query(`SELECT value FROM maths.deck_meta WHERE key = 'categories_seeded'`)).length) return;
+const idFor = (name: string, parent?: string) => `seed-${slug(parent ? `${parent} ${name}` : name)}`;
+const FURTHER = idFor("Further Maths", "A-Level");
+const raw = (db: Db) => db.query<Row>(`SELECT id, name, parent, position FROM maths.deck_categories ORDER BY position, id`);
+const mark = (db: Db) => db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ('categories_seeded', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, [`${STAMP}${new Date().toISOString()}`]);
+const put = (db: Db, id: string, name: string, parent: string | null, position: number) =>
+  db.query(`INSERT INTO maths.deck_categories (id, name, parent, position) VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [id, name, parent, position]);
+
+/** The first time: the default tree, plus any other strand a deck already carries, and those decks filed. */
+async function freshSeed(db: Db) {
   const strands = new Map<string, string>();                       // deck id → the strand it holds
   for (const r of await db.query<Row>(`SELECT id, data->>'strand' AS strand FROM maths.decks`)) if (clean(r.strand)) strands.set(r.id as string, clean(r.strand));
   for (const r of await db.query<Row>(`SELECT id, strand FROM maths.published_decks`)) if (clean(r.strand) && !strands.has(r.id as string)) strands.set(r.id as string, clean(r.strand));
-  const names = [...DEFAULT_STRANDS];
-  for (const s of strands.values()) if (!names.some((n) => same(n, s))) names.push(s);
-  for (const [i, n] of names.entries()) await db.query(`INSERT INTO maths.deck_categories (id, name, parent, position) VALUES ($1,$2,NULL,$3) ON CONFLICT (id) DO NOTHING`, [`seed-${slug(n)}`, n, i]);
-  for (const [deck, s] of strands) await db.query(`INSERT INTO maths.deck_filing (deck_id, category_id) VALUES ($1,$2) ON CONFLICT (deck_id) DO NOTHING`, [deck, `seed-${slug(names.find((n) => same(n, s)) ?? s)}`]);
-  await db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ('categories_seeded', $1) ON CONFLICT (key) DO NOTHING`, [new Date().toISOString()]);
+  const names = DEFAULT_TREE.map((t) => t.name);
+  const extra: string[] = [];
+  for (const s of strands.values()) if (!ALIASES[s.toLowerCase()] && !names.some((n) => same(n, s)) && !extra.some((n) => same(n, s))) extra.push(s);
+  let position = 0;
+  for (const t of DEFAULT_TREE) {
+    await put(db, idFor(t.name), t.name, null, position++);
+    for (const [i, topic] of (t.topics ?? []).entries()) await put(db, idFor(topic, t.name), topic, idFor(t.name), i);
+  }
+  for (const n of extra) await put(db, idFor(n), n, null, position++);
+  for (const [deck, s] of strands) {
+    const alias = ALIASES[s.toLowerCase()];
+    const target = alias ? idFor(alias[1], alias[0]) : idFor(DEFAULT_TREE.find((t) => same(t.name, s))?.name ?? extra.find((n) => same(n, s)) ?? s);
+    await db.query(`INSERT INTO maths.deck_filing (deck_id, category_id) VALUES ($1,$2) ON CONFLICT (deck_id) DO NOTHING`, [deck, target]);
+  }
+  await mark(db);
+}
+
+/** An earlier start had the five GCSE strands plus Decision Mathematics as a strand of its own. If Harry has not changed that tree yet, give it the
+ *  current shape (A-Level with Maths and Further Maths, then Starters; Decision Mathematics decks move into Further Maths); if he has, leave his tree alone. */
+async function upgradeEarlierSeed(db: Db) {
+  const cats = await raw(db);
+  const untouched = cats.every((c) => (c.id as string).startsWith("seed-") && c.parent === null);
+  if (untouched) {
+    const old = cats.find((c) => c.id === idFor("Decision Mathematics"));
+    const at = old ? (old.position as number) : cats.reduce((m, c) => Math.max(m, (c.position as number) + 1), 0);
+    const aLevel = DEFAULT_TREE.find((t) => t.name === "A-Level")!;
+    await put(db, idFor("A-Level"), "A-Level", null, at);
+    for (const [i, topic] of (aLevel.topics ?? []).entries()) await put(db, idFor(topic, "A-Level"), topic, idFor("A-Level"), i);
+    await put(db, idFor("Starters"), "Starters", null, at + 1);
+    if (old) {
+      await db.query(`UPDATE maths.deck_filing SET category_id = $1 WHERE category_id = $2`, [FURTHER, old.id]);
+      await db.query(`DELETE FROM maths.deck_categories WHERE id = $1`, [old.id]);
+    }
+  }
+  await mark(db);
+}
+
+/** Seeds the tree once (a marker row says it has been done, so deleting every category later is respected). Deterministic ids and DO NOTHING make a race between two cold starts harmless. */
+async function ensureSeed(db: Db) {
+  const marker = await db.query<Row>(`SELECT value FROM maths.deck_meta WHERE key = 'categories_seeded'`);
+  if (marker.length === 0) return freshSeed(db);
+  if (!String(marker[0].value).startsWith(STAMP)) return upgradeEarlierSeed(db);
 }
 
 /** The tree and the filing. `publishedOnly` (the public read) lists only decks that are published, so an unpublished deck's id is not given away. */

@@ -98,7 +98,7 @@ export const exitRowsSlide = (id: string, items: CuratedQuestion[], subtitle = "
 export interface PairColumn { head: string | number; pairs: [number | string, number | string][] }
 const ROW = 95;
 /** The two columns, side by side, as ordinary elements. Click `stepBase` shows the left column, `stepBase + 1` the right, `stepBase + 2` rings every value in `ring`. */
-export const pairColumnEls = (cols: [PairColumn, PairColumn], y0: number, stepBase: number, ring: (number | string)[]): Els => {
+const pairColumnEls = (cols: [PairColumn, PairColumn], y0: number, stepBase: number, ring: (number | string)[]): Els => {
   const els: Els = [];
   cols.forEach((col, k) => {
     const cx = k === 0 ? 440 : 1160, step = stepBase + k;

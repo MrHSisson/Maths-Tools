@@ -1,8 +1,7 @@
 // What the Decks page shows from the category tree (src/decks/categoryTree.ts).
 import { describe, expect, it } from "vitest";
-import { DEFAULT_STRANDS } from "../../api/_categories";
-import { LEGACY_DATA, layoutDecks, menuOptions, pathOf, placeOf, type CategoryData } from "../decks/categoryTree";
-import { DECK_STRANDS } from "../decks/types";
+import { DEFAULT_TREE as API_TREE } from "../../api/_categories";
+import { DEFAULT_TREE, LEGACY_DATA, layoutDecks, menuOptions, pathOf, placeOf, type CategoryData } from "../decks/categoryTree";
 
 const data: CategoryData = {
   categories: [
@@ -65,8 +64,12 @@ describe("names for menus", () => {
   it("a menu lists each strand followed by its topics", () => {
     expect(menuOptions(data).map((o) => `${o.depth}:${o.label}`)).toEqual(["0:Number", "1:Factors & multiples", "1:Indices", "0:Decision Mathematics", "0:Starters"]);
   });
-  it("the page's fallback strands and the service's starting strands are the same five", () => {
-    expect([...DECK_STRANDS]).toEqual(DEFAULT_STRANDS);
-    expect(LEGACY_DATA.categories.map((c) => c.name)).toEqual(DEFAULT_STRANDS);
+  it("the page's fallback tree and the service's starting tree are the same", () => {
+    expect(DEFAULT_TREE).toEqual(API_TREE);
+    expect(LEGACY_DATA.categories.filter((c) => c.parent === null).map((c) => c.name)).toEqual(DEFAULT_TREE.map((t) => t.name));
+  });
+  it("a deck still carrying Decision Mathematics sits in A-Level > Further Maths", () => {
+    const id = placeOf({ id: "x", strand: "Decision Mathematics" }, { categories: LEGACY_DATA.categories, filing: {} });
+    expect(pathOf(id, LEGACY_DATA)).toBe("A-Level › Further Maths");
   });
 });

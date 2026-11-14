@@ -20,13 +20,35 @@ const idOf = (data: { categories: { id: string; name: string; parent: string | n
 describe("deck categories", () => {
   beforeEach(async () => { await db.reset(); });
 
-  it("seeds the five old strands, plus any other strand a deck holds, and files those decks", async () => {
+  it("seeds the five maths strands, A-Level (Maths, Further Maths) and Starters, and files decks by the strand they carry", async () => {
     await post({ deck: deck("est", { strand: "Number" }) });
     await post({ deck: deck("res", { strand: "Decision Mathematics" }) });
+    await post({ deck: deck("odd", { strand: "Weird" }) });
     await post({ deck: deck("loose") });
     const d = await all();
-    expect(d.categories.filter((c) => c.parent === null).map((c) => c.name)).toEqual(["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "Decision Mathematics"]);
-    expect(d.filing).toEqual({ est: idOf(d, "Number"), res: idOf(d, "Decision Mathematics") });     // 'loose' has no strand: not filed
+    expect(d.categories.filter((c) => c.parent === null).map((c) => c.name)).toEqual(["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "A-Level", "Starters", "Weird"]);
+    expect(d.categories.filter((c) => c.parent === idOf(d, "A-Level")).map((c) => c.name)).toEqual(["Maths", "Further Maths"]);
+    expect(d.filing).toEqual({ est: idOf(d, "Number"), res: idOf(d, "Further Maths", idOf(d, "A-Level")), odd: idOf(d, "Weird") });
+  });
+  const oldSeed = async (extra: () => Promise<void> = async () => {}) => {
+    await post({ deck: deck("res") });                                   // creates the tables without reading the categories
+    const names = ["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "Decision Mathematics"];
+    for (const [i, n] of names.entries()) await db.query(`INSERT INTO maths.deck_categories (id, name, parent, position) VALUES ($1,$2,NULL,$3)`, [`seed-${n.toLowerCase().replace(/[^a-z]+/g, "-")}`, n, i]);
+    await db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ('categories_seeded', '2026-11-14T10:00:00.000Z')`);
+    await db.query(`INSERT INTO maths.deck_filing (deck_id, category_id) VALUES ('res', 'seed-decision-mathematics')`);
+    await extra();
+  };
+  it("upgrades an untouched earlier tree: Decision Mathematics becomes A-Level > Further Maths, Starters is added", async () => {
+    await oldSeed();
+    const d = await all();
+    expect(d.categories.filter((c) => c.parent === null).map((c) => c.name)).toEqual(["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "A-Level", "Starters"]);
+    expect(d.filing).toEqual({ res: idOf(d, "Further Maths", idOf(d, "A-Level")) });
+    expect(JSON.stringify(await all())).toBe(JSON.stringify(d));        // and only once
+  });
+  it("leaves a tree Harry has already changed alone", async () => {
+    await oldSeed(() => db.query(`INSERT INTO maths.deck_categories (id, name, parent, position) VALUES ('mine','Mine',NULL,9)`).then(() => {}));
+    const d = await all();
+    expect(d.categories.map((c) => c.name)).toEqual(["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "Decision Mathematics", "Mine"]);
   });
   it("seeds once: deleting every category is respected", async () => {
     let d = await all();
@@ -46,7 +68,7 @@ describe("deck categories", () => {
     expect((await op({ op: "add", name: "   " })).status).toBe(400);
     expect((await op({ op: "add", name: "x".repeat(61) })).status).toBe(400);
     expect((await op({ op: "add", name: "Nope", parent: "missing" })).status).toBe(404);
-    expect((await op({ op: "add", name: "Starters" })).body.categories.find((c) => c.name === "Starters")).toMatchObject({ parent: null });
+    expect((await op({ op: "add", name: "Plans" })).body.categories.find((c) => c.name === "Plans")).toMatchObject({ parent: null });
   });
   it("renames, and refuses a name already used beside it", async () => {
     const d = await all();
