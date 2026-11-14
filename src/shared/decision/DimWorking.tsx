@@ -33,18 +33,35 @@ function blocks(lines: string[], fresh: number): Block[] {
   return out;
 }
 
+/** how wide a piece of TeX will be, roughly: its characters once the commands and braces are taken away */
+const weight = (tex: string): number => tex.replace(/\\(left|right|displaystyle|mathrm|text|times|quad|,)/g, (m) => (m === "\\times" ? "x" : "")).replace(/\\[a-zA-Z]+/g, "x").replace(/[{}^_&\s]/g, "").length;
+/** the widest a line of working gets before a follow-on step starts a new line */
+const LINE_BUDGET = 40;
 const colour = (tex: string, c: string): string => `{\\color{${c}}${tex}}`;
 function blockTex(b: Block, base: string): string {
   if (b.kind === "head") return "";
   if (b.kind === "free") return `\\displaystyle ${colour(b.row, b.fresh ? NEW : base)}`;
   if (b.kind === "aligned") {
-    // two left-aligned columns: what is written on the left, then the "= …" that lines up under the first equals
-    const rows = b.rows.map(({ row, fresh }) => {
+    // two left-aligned columns: what is written on the left, then the "= …" that lines up under the first equals.
+    // A follow-on step ("&= …") that is short continues along the same line as the one before it, rather than starting a new line;
+    // a long one (or one that would make the line too wide) starts a new line, under the first equals.
+    type Line = { left: string; parts: Array<{ tex: string; fresh: boolean }>; w: number };
+    const lines: Line[] = [];
+    for (const { row, fresh } of b.rows) {
       const at = row.indexOf("&");
-      const c = fresh ? NEW : base;
-      return `\\displaystyle ${colour(row.slice(0, at), c)} & \\displaystyle \\mkern-9mu ${colour(row.slice(at + 1), c)}`;
+      const left = row.slice(0, at);
+      const right = row.slice(at + 1);
+      const w = weight(right);
+      const last = lines[lines.length - 1];
+      if (left.trim() === "" && last && last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
+      else lines.push({ left, parts: [{ tex: right, fresh }], w });
+    }
+    const tall = (l: Line): boolean => /\\frac|\\left|\\begin/.test(l.parts.map((x) => x.tex).join("") + l.left);
+    const rows = lines.map((l) => {
+      const anyFresh = l.parts.some((x) => x.fresh);
+      return `\\displaystyle ${colour(l.left, anyFresh && l.parts.length === 1 ? NEW : base)} & \\displaystyle \\mkern-9mu ${l.parts.map((x) => colour(x.tex, x.fresh ? NEW : base)).join("\\;\\;")}`;
     });
-    return `\\begin{array}{ll}${rows.join(" \\\\[0.7em] ")}\\end{array}`;
+    return `\\begin{array}{ll}${rows.map((r, i) => r + (i < rows.length - 1 ? ` \\\\[${tall(lines[i]) || tall(lines[i + 1]) ? "1.45em" : "0.85em"}] ` : "")).join("")}\\end{array}`;
   }
   return "";
 }
@@ -98,7 +115,7 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
             </div>
           </div>
           {lines.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.3em", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.55em", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
               {blocks(lines, fresh).map((b, i) => (b.kind === "gap" ? <div key={i} style={{ height: "0.4em" }} /> : b.kind === "head" ? <div key={i} style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: "0.62em", fontWeight: 600, paddingTop: "0.3em" }}><Prose text={b.text} /></div> : <div key={i}><Tex t={blockTex(b, base)} /></div>))}
             </div>
           )}
