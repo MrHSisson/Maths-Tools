@@ -137,16 +137,19 @@ export interface Slide {
   built?: string;
 }
 
-/** The strands a deck can be filed under: the GCSE Maths categories on the landing page. */
-export const DECK_STRANDS = ["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics"] as const;
+export const PITCHES = ["upper", "middle", "lower"] as const;
+export type Pitch = (typeof PITCHES)[number];
+export const PITCH_LABEL: Record<Pitch, string> = { upper: "Upper band", middle: "Middle band", lower: "Lower band" };
 
 export interface DeckDef {
   /** URL-safe; the page is /decks/<id>. */
   id: string;
   title: string;
   summary: string;
-  /** Which strand of the course the deck belongs to (one of `DECK_STRANDS`); the Decks tab groups published decks by it. Optional. */
+  /** Which strand of the course the deck belongs to (a name from the category tree); kept as a fallback for where a deck shows until Harry files it. Optional. */
   strand?: string;
+  /** Who the lesson is pitched at: the upper, middle or lower band. Shown only in the deck's (i) on the Decks page. Optional. */
+  pitch?: Pitch;
   /** Registry id and path of the tool this deck belongs to (its burger menu lists the deck). Optional for a teacher's own deck. */
   tool?: string;
   toolPath?: string;

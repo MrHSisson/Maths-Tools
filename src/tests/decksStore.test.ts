@@ -60,6 +60,16 @@ describe("decks in Postgres", () => {
     expect((await post({ remove: "../x" })).status).toBe(400);
   });
 
+  it("a lesson pitch (upper, middle or lower band) is kept with the published listing; anything else is dropped", async () => {
+    await post({ deck: deck("p1", "Pitched", { pitch: "upper" }), by: "Harry" });
+    await post({ publish: deck("p1", "Pitched", { pitch: "upper" }) });
+    await post({ deck: deck("p2", "Odd", { pitch: "top set" }), by: "Harry" });
+    await post({ publish: deck("p2", "Odd", { pitch: "top set" }) });
+    const decks = (await (await get("?published", null)).json()).decks;
+    expect(decks.p1.pitch).toBe("upper");
+    expect(decks.p2.pitch).toBeUndefined();
+  });
+
   it("publishing is public, cached for a minute, and unpublishing takes it down", async () => {
     await post({ deck: deck("pub", "Public one", { strand: "Number" }), by: "Harry" });
     expect((await (await post({ publish: deck("pub", "Public one", { strand: "Number" }) })).json()).entry).toMatchObject({ title: "Public one", strand: "Number", slides: 2, preview: { id: "a" } });

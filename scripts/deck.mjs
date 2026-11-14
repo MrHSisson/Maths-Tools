@@ -10,12 +10,17 @@
 //   npm run deck -- preflight <tool-id>   BEFORE building on a tool: is it ready for a deck (draws everywhere, mixes fairly, has Depth, has a fixed-question builder)?
 //   npm run deck -- diff <id>             which slides were edited in the editor since the last build, and which were added there (pull first)
 //   npm run deck -- builders              the Q builders there are, and the tools they cover
+//   npm run deck -- categories            the category tree Harry controls on the Decks page (strands with topics) and the decks filed in each; `categories add "<name>" [--under "<strand>"]` adds one
+//   npm run deck -- file <deck-id> "<Strand>" | "<Strand> > <Topic>" | none    file a deck (Harry can also drag its card on the Decks page). Needs the deployment that has categories: DECKS_URL=<it>/api/decks until the branch is merged
 //   npm run deck -- sheet <id> 7,13,20     one picture of those slides (written to /tmp/deck-<id>-sheet.png)
+//   npm run deck -- looks <script>        THE LOOK CARD, before the deck is built: builds the script to a temp file (the repo is untouched) and writes contact sheets of ONE slide of each kind, every state (each question, the working open, answers shown). Harry approves this first
+//   npm run deck -- review <id> [--file f] [--kinds]   contact sheets of every slide of a built deck with all its clicks revealed (--kinds: one of each kind). Look at them before showing the deck
 //   npm run deck -- new <id> <tool-id>    preflight the tool and write a build-script skeleton (scratchpad path as a third argument)
 //   npm run deck -- verify <id>           BEFORE showing a deck: content, layout, printed worksheets (one page each) and its Depth cards, in one go
 //   npm run deck -- check <id|all> [--layout]    the content checks (src/decks/deckChecks.ts); --layout also starts the app and measures every slide
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
-import { spawn } from "node:child_process";
+import { execSync, spawn, spawnSync } from "node:child_process";
+import { serveDeck } from "./deckPage.mjs";
 import path from "node:path";
 
 const args = process.argv.slice(2);
@@ -26,6 +31,16 @@ const file = (i) => `src/decks/data/${i}.json`;
 // slide and element (api/_deckMerge.ts), so a push can no longer overwrite what Harry changed since. Local only (git ignores .deck-base/).
 const baseFile = (i) => `.deck-base/${i}.json`;
 const fail = (m) => { console.error(m); process.exit(1); };
+
+/** The live site runs main. A deck that relies on code this branch has changed (the player, the shared components) looks different there until it is merged and deployed. */
+function skewWarning() {
+  try {
+    const changed = execSync("git diff --name-only origin/main -- src api", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).split("\n")
+      .filter((f) => /\.(tsx|css)$/.test(f) || /^src\/shared\/[^/]+\.ts$/.test(f) || f.startsWith("api/"))
+      .filter((f) => !f.startsWith("src/tests/") && !f.startsWith("src/decks/data/") && !f.startsWith("src/generated/"));
+    if (changed.length) console.warn(`\nWARNING: this branch changes code that is not on main (${changed.slice(0, 8).join(", ")}${changed.length > 8 ? `, and ${changed.length - 8} more` : ""}).\nThe live site runs main, so a deck that relies on any of it will not look there as it does here until the branch is merged and deployed. Merge first, or send Harry the branch preview link with the deck.`);
+  } catch { /* no origin/main to compare with */ }
+}
 
 const remote = () => {
   const key = readFileSync("src/devAccess.ts", "utf8").match(/DEV_PASSWORD = "([^"]*)"/)?.[1];
@@ -83,7 +98,7 @@ async function withServer(fn) {
   } finally { try { process.kill(-dev.pid); } catch { dev.kill(); } }
 }
 const runScript = (script, scriptArgs, url, extraEnv = {}) => new Promise((resolve) => spawn("node", [script, ...scriptArgs], { stdio: "inherit", env: { ...process.env, SMOKE_URL: url, ...extraEnv } }).on("exit", (code) => resolve(code ?? 1)));
-const layoutCheck = (deckId, deckFile) => withServer((url) => runScript("scripts/deckLayoutSmoke.mjs", [deckId], url, deckFile ? { DECK_FILE: deckFile } : {}));
+const layoutCheck = (deckId, deckFile) => withServer((url) => runScript("scripts/deckLayoutSmoke.mjs", [deckId], url, { DECK_FILE: deckFile ?? file(deckId) }));   // the app does not bundle decks: the page is served this file
 
 if (cmd === "list") {
   const { base, headers } = remote();
@@ -120,6 +135,7 @@ if (cmd === "list") {
     writeFileSync(file(id), JSON.stringify(snapshot, null, 1) + "\n");
   }
   console.log(`pushed ${id}: ${final.slides.length} slides${out.merged ? ` (merged with changes saved since the pull; ${out.conflicts?.length ? `${out.conflicts.length} clash${out.conflicts.length > 1 ? "es" : ""} resolved in Harry's favour: ${out.conflicts.slice(0, 8).join(", ")}` : "no clashes"})` : ""}`);
+  skewWarning();
 } else if ((cmd === "publish" || cmd === "unpublish") && id) {
   const { base, headers } = remote();
   let live = null;
@@ -149,8 +165,20 @@ if (cmd === "list") {
     const { buildDeck } = await load("/src/decks/builder.ts");
     const { checkDeckContent } = await load("/src/decks/deckChecks.ts");
     const deck = await buildDeck(input);
-    const count = print(`${deck.id} (${deck.slides.length} slides)`, await checkDeckContent(deck));
+    const report = await checkDeckContent(deck);
+    // a question that asks about a number a slide already works through is a failure when BUILDING a deck (it is only a warning for an older one); --allow-repeats overrides
+    const AGAIN = "already shows or works through";
+    if (!flags.has("--allow-repeats")) { const again = report.warnings.filter((w) => w.includes(AGAIN)); report.warnings = report.warnings.filter((w) => !again.includes(w)); report.problems.push(...again.map((w) => `${w} (fresh numbers: a worked example is not asked again; --allow-repeats to build anyway)`)); }
+    const count = print(`${deck.id} (${deck.slides.length} slides)`, report);
     if (count) return count;
+    const outArg = args.indexOf("--out") >= 0 ? args[args.indexOf("--out") + 1] : null;
+    if (outArg) {                                                       // a look card or a trial: write the deck there and leave the repo alone
+      const { stampBuilt } = await load("/src/decks/merge.ts");
+      mkdirSync(path.dirname(path.resolve(outArg)), { recursive: true });
+      writeFileSync(outArg, JSON.stringify(stampBuilt(deck), null, 1) + "\n");
+      console.log(`wrote ${outArg} (not the repo)`);
+      return 0;
+    }
     if (existsSync(file(deck.id)) && !flags.has("--replace") && !flags.has("--force")) fail(`${file(deck.id)} exists: it may hold edits made in the editor. Pull first, then build again with --replace (your edits to slides are kept) or --force (overwrites everything).`);
     const { stampBuilt, mergeRebuild } = await load("/src/decks/merge.ts");
     let out = stampBuilt(deck);
@@ -212,8 +240,18 @@ if (cmd === "list") {
     const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));
+    await serveDeck(page, id, JSON.parse(readFileSync(process.env.DECK_FILE ?? file(id), "utf8")));
     const shots = [];
-    for (const n of slides) { await page.goto(`${url}/decks/${id}?s=${n}`); await page.waitForTimeout(1800); shots.push((await page.screenshot()).toString("base64")); }
+    const slideData = JSON.parse(readFileSync(process.env.DECK_FILE ?? file(id), "utf8")).slides;
+    for (const n of slides) {
+      await page.goto(`${url}/decks/${id}?s=${n}`);
+      await page.waitForFunction(() => [...document.querySelectorAll("div")].some((d) => d.style.width === "1600px" && d.style.height === "900px"), null, { timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(900);
+      const steps = Math.max(0, ...(slideData[n - 1]?.els ?? []).map((e) => e.step ?? 0));       // every click revealed, as the class sees it at the end of the slide
+      for (let i = 0; i < steps; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
+      await page.waitForTimeout(300);
+      shots.push((await page.screenshot()).toString("base64"));
+    }
     const cols = Math.min(2, shots.length), rows = Math.ceil(shots.length / cols);
     const sheet = await browser.newPage({ viewport: { width: 640 * cols, height: 360 * rows } });
     await sheet.setContent(`<body style="margin:0;display:grid;grid-template-columns:repeat(${cols},640px)">${shots.map((b) => `<img style="width:640px;height:360px" src="data:image/png;base64,${b}">`).join("")}</body>`);
@@ -279,11 +317,73 @@ export default () => ({
   const hasDepth = deck.slides.some((sl) => sl.els.some((e) => e.kind === "depth" || (e.kind === "questions" && e.items?.some((q) => q.source?.kind === "depth"))));
   bad += await withServer(async (url) => {
     let n = 0;
-    console.log("-- layout"); n += (await runScript("scripts/deckLayoutSmoke.mjs", [id], url)) ? 1 : 0;
-    if (pinned) { console.log("-- printed worksheets (one page each)"); n += (await runScript("scripts/deckPrintSmoke.mjs", [id], url)) ? 1 : 0; }
+    console.log("-- layout"); n += (await runScript("scripts/deckLayoutSmoke.mjs", [id], url, { DECK_FILE: file(id) })) ? 1 : 0;
+    if (pinned) { console.log("-- printed worksheets (one page each)"); n += (await runScript("scripts/deckPrintSmoke.mjs", [id], url, { DECK_FILE: file(id) })) ? 1 : 0; }
     if (hasDepth) { console.log("-- Depth cards"); n += (await runScript("scripts/depthSlideAudit.mjs", [], url, { DEPTH_DECK: id })) ? 1 : 0; }
     return n;
   });
   console.log(bad ? `verify ${id}: ${bad} part${bad > 1 ? "s" : ""} need attention` : `verify ${id}: everything passes`);
+  console.log(`Now LOOK at it: npm run deck -- review ${id}   (checks cannot tell you whether it looks right)`);
+  skewWarning();
   process.exit(bad ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | backup [<id>|all] | build <script> [--replace] | check <id|all> [--live] [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | new <id> <tool-id>");
+} else if (cmd === "categories" || (cmd === "file" && id)) {
+  const { base, headers } = remote();
+  const asJson = async (res, what) => { if (!res.ok || !(res.headers.get("content-type") ?? "").includes("json")) fail(`${what}: ${res.status}. Categories are on the deployment that has this branch's api/decks.ts: use DECKS_URL=<that deployment>/api/decks until it is merged`); return res.json(); };
+  const read = async () => asJson(await fetch(`${base}?categories=all`, { headers }), "categories");
+  const send = async (op) => asJson(await fetch(base, { method: "POST", headers, body: JSON.stringify({ categories: op, by: "Claude" }) }), "categories");
+  const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  /** "Number" or "Number > Factors & multiples" to a category id. */
+  const find = (data, text) => {
+    const [a, b] = text.split(">").map((x) => x.trim());
+    const strand = data.categories.find((c) => c.parent === null && same(c.name, a));
+    const hit = b === undefined ? strand : data.categories.find((c) => strand && c.parent === strand.id && same(c.name, b));
+    if (!hit) fail(`no category called "${text}". Categories: ${data.categories.filter((c) => c.parent === null).map((c) => c.name).join(", ")}`);
+    return hit.id;
+  };
+  const pos = args.filter((a) => !a.startsWith("--"));
+  if (cmd === "file") {
+    const where = pos[2];
+    if (!where) fail('usage: npm run deck -- file <deck-id> "<Strand>" | "<Strand> > <Topic>" | none');
+    const data = await read();
+    const result = await send({ op: "file", deckId: id, categoryId: where === "none" ? null : find(data, where) });
+    console.log(`${id}: ${where === "none" ? "not filed" : `filed under ${where}`} (${Object.keys(result.filing).length} decks filed)`);
+  } else if (id === "add") {
+    const name = pos[2];
+    if (!name) fail('usage: npm run deck -- categories add "<name>" [--under "<strand>"]');
+    const data = await read();
+    const under = args.indexOf("--under") >= 0 ? args[args.indexOf("--under") + 1] : null;
+    await send({ op: "add", name, parent: under ? find(data, under) : null });
+    console.log(`added ${under ? `${under} > ` : ""}${name}`);
+  } else {
+    const data = await read();
+    const index = await asJson(await fetch(base, { headers }), "decks");
+    const ids = Object.keys(index.index?.decks ?? {});
+    const kids = (id2) => data.categories.filter((c) => c.parent === id2).sort((a, b) => a.position - b.position);
+    const decksIn = (cid) => ids.filter((d) => data.filing[d] === cid);
+    for (const st of kids(null)) {
+      console.log(`${st.name}${decksIn(st.id).length ? `: ${decksIn(st.id).join(", ")}` : ""}`);
+      for (const t of kids(st.id)) console.log(`  ${t.name}${decksIn(t.id).length ? `: ${decksIn(t.id).join(", ")}` : ""}`);
+    }
+    const loose = ids.filter((d) => !data.filing[d]);
+    console.log(`Not filed: ${loose.length ? loose.join(", ") : "(none)"}`);
+  }
+} else if (cmd === "review" && id) {
+  const deckFile = args.indexOf("--file") >= 0 ? args[args.indexOf("--file") + 1] : file(id);
+  if (!existsSync(deckFile)) fail(`review: ${deckFile} not found`);
+  const outDir = args.indexOf("--out") >= 0 ? args[args.indexOf("--out") + 1] : undefined;
+  const code = await withServer((url) => runScript("scripts/deckReview.mjs", [id], url, { DECK_FILE: deckFile, REVIEW_KINDS: flags.has("--kinds") ? "1" : "", ...(outDir ? { REVIEW_OUT: outDir } : {}) }));
+  skewWarning();
+  process.exit(code ? 1 : 0);
+} else if (cmd === "looks" && id) {
+  // the look card: build the script into a temp file (so the repo is untouched), then one slide of each kind in every state
+  const tmp = `.deck-work/looks-${path.basename(id).replace(/\W+/g, "-")}.json`;
+  mkdirSync(".deck-work", { recursive: true });
+  const built = spawnSync("node", ["scripts/deck.mjs", "build", id, "--out", tmp, ...(flags.has("--allow-repeats") ? ["--allow-repeats"] : [])], { stdio: "inherit" });
+  if (built.status) fail("looks: the script did not build, fix that first");
+  const deckId = JSON.parse(readFileSync(tmp, "utf8")).id;
+  const outDir = args.indexOf("--out") >= 0 ? args[args.indexOf("--out") + 1] : undefined;
+  const code = await withServer((url) => runScript("scripts/deckReview.mjs", [deckId], url, { DECK_FILE: tmp, REVIEW_KINDS: "1", ...(outDir ? { REVIEW_OUT: outDir } : {}) }));
+  console.log("Show Harry these sheets and get a yes on them BEFORE building the rest of the deck.");
+  skewWarning();
+  process.exit(code ? 1 : 0);
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | backup [<id>|all] | build <script> [--replace] | check <id|all> [--live] [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | categories | file <id> <category> | looks <script> | review <id> [--kinds] | new <id> <tool-id>");

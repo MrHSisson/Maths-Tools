@@ -29,6 +29,99 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Deck strands and topics: Harry controls the Decks page headings
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `api/_categories.ts` (new), `api/_db.ts`, `api/decks.ts`, `src/decks/{categoryTree,categories,FileUnder}.ts(x)`, `src/components/{DeckGallery,DecksTab}.tsx`, `src/decks/{DeckPage,Editor}.tsx`, `src/admin/DecksSection.tsx`, `scripts/deck.mjs`, two test files, docs.
+
+Harry found the Decks page grouped decks under five hard-coded strands, so only Number had any decks (5 of the 10 live decks) and the other five sat under Other decks, one of them filed as "Decision Mathematics" which was not on the list. He asked to control the categories and put decks into them himself, as two levels (a strand with topics inside it), one place per deck, filed by dragging a card onto a heading.
+
+- **A two-level tree he controls:** add, rename, reorder, move (a topic to another strand, or a strand into one) and delete strands and topics from **Manage categories** on the Decks page (Developing tools on). Deleting a strand takes its topics; decks filed in them become not filed.
+- **Filing:** drag a card onto a strand or topic heading (the innermost wins; **Not filed** takes it back out). A touch screen cannot drag, so a card's (i) has **Filed under**, the same menu as the editor's About the deck (which replaces the five fixed buttons).
+- **Stored apart from the decks** (`maths.deck_categories`, `deck_filing`, `deck_meta`): filing changes no deck, so no new version, no merge, no clash with an edit. The first read seeds the tree Harry asked for (five maths strands, A-Level with Maths and Further Maths, Starters; Decision Mathematics decks go to Further Maths) and files the decks that already carried a strand; an earlier untouched seed is upgraded once.
+- **Public view:** `GET /api/decks?categories` lists only published decks' filing; empty headings show only to Harry. A deck with no filing still lands under the strand it carries.
+- **Lesson pitch:** a deck can be labelled Upper, Middle or Lower band (editor's About the deck); it shows only in the card's (i).
+- **Claude:** `npm run deck -- categories`, `categories add`, `file <deck> "<Strand> > <Topic>"`.
+- **Checked:** 21 new tests (the API on an in-memory Postgres, and where a deck shows); the page in a browser with the service mocked (adding a topic, dragging three decks onto headings, the Filed under menu, the public view; no errors); the CLI against a mock service; tsc, lint.
+- **Not done:** nothing is filed on the live data yet beyond the seeding (the API only exists on a deployment of this branch until it is merged); no drag on touch (the menu is the touch way); decks cannot be in more than one place (Harry's choice).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
+## 2026-11-14 — Deck quality system: look card, review, shared pieces, build rules
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/{pieces,deckRules,builder,deckChecks}.ts`, `scripts/{deck.mjs,deckLayoutSmoke.mjs,deckPrintSmoke.mjs,deckReview.mjs,deckPage.mjs}`, `src/tests/deckPieces.test.ts`, `specs/decks/factors-hcf-systematic-listing.build.ts`, the factors deck, `docs/design/{LESSON_STYLE,DECK_BUILD_CHECKLIST}.md`, the lesson plan template, `docs/reference/decks.md`, `docs/pathways/decks.md`, `AGENTS.md`.
+
+Harry asked for an audit of the problems that keep coming back when decks are built (this conversation plus the repo's record of the other deck sessions) and for all the fixes. The recurring problems: numbers reused between worked examples and questions, layout and font sizing found by eye after the build, first drafts too long, too easy or too jargony, designs that give the answer away, checks that pass without anyone looking, and rework from layouts described in words.
+
+- **Look card before building** (`npm run deck -- looks <script>`): builds a script to a temp file (the repo is untouched) and writes contact sheets of one slide of each kind in every state (each question, the working open, answers shown). Harry says yes before the rest is built.
+- **Review after building** (`npm run deck -- review <id> [--kinds]`): contact sheets of every slide with all clicks revealed. `sheet` now waits for the page and reveals the clicks.
+- **Shared pieces** (`src/decks/pieces.ts`, exported from `builder.ts`): `S.whiteboard`, `S.plainBook`, `S.exitRows`, `S.pairModel`, `titleEls`, `quiet` / `hintLine` (small grey hints), `mathsStack` / `mathsGrid` (one pair to a line), `assertCentred`, and the `LOOK` tokens (sizes, colours, title place). The factors build script moved into the repo as the worked example and was rebuilt on them (only title positions and answer-table spacing changed).
+- **Build rules** (`src/decks/deckRules.ts`): `assertFreshNumbers`; `npm run deck -- build` now fails when a question asks about a number a slide works through (`--allow-repeats` overrides; the deck check still only warns for older decks).
+- **Checks that look at the drawn slide:** the layout check now measures every question of a set, the working-open view and the answers-shown view (a later question or the narrower working view used to be invisible to it), and warns when a short word or number is left alone on a wrapped line. A deck check warns when a title sits somewhere other than where its slide family usually has it.
+- **Fixed:** `verify`, `sheet`, `check --layout` and the print check drew a blank page for a deck that exists only as a file, because the app stopped bundling decks on 2026-11-11 (`scripts/deckPage.mjs` now serves the deck file to the page). `push`, `verify` and `review` warn when the branch changes player or shared code that is not on main.
+- **Recorded:** the plan template (class profile, question forms, numbers already used, look card), the lesson style ("Looking right on a projector", the workflow with the look card and the feedback protocol), the checklist (new process steps and pitfalls) and the decks reference.
+- **Checked:** new tests (`deckPieces.test.ts`); the layout check run on the factors, multiples and primes decks (no false alarms) and on deliberately broken copies (it flagged the working-open overflow and a later question, and the orphaned "48."); `verify` passes on the factors deck.
+- **Not done:** the older decks' build scripts were not moved onto the shared pieces; the dashboard Review is not set.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
+## 2026-11-14 — Factors deck: a design pass for readability
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.
+
+- **Hints are quiet:** the book-work hint lines ("Hint: 3 pairs") and the bracketed counts on the whiteboards ("60 (6 pairs)") are small and grey instead of black.
+- **Two numbers, one line:** a question about two numbers keeps them on one line: in the sentence, as the column headings of a table, or in one expression with their pair counts. The blank-pairs scaffold for common factors and the HCF is now a table with the two numbers side by side and each number's pairs one to a line.
+- **One pair to a line:** the listing whiteboard's blank pairs are a lined-up column (`1 × 48`, `2 × 24`, `3 × □` ...) instead of two or three pairs to a line.
+- **Exit ticket:** one question to a row (it wrapped awkwardly in three narrow columns).
+- **Sizes:** the common-factors and HCF whiteboards are slightly larger, the listing whiteboard slightly smaller so a number does not drop onto its own line when the working opens.
+- **Guard:** the build script refuses a whiteboard question over 170 characters, the limit the player uses to centre it; compact characters (`×`, `\Box`) keep the tables under it, so no shared-code change is needed.
+- **Checked:** every slide looked at with all its clicks revealed (four contact sheets plus the working view of the three whiteboards); content and layout checks pass for all 17 slides; tests, lint and `tsc` pass.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
+## 2026-11-14 — Factors deck: scaffold restored, nine-question book sets
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.
+
+- **Whiteboards (slides 5, 10, 15):** Harry liked the scaffold, so it is back: question 1 has the pairs partly completed with blanks, question 2 gives the number of pairs in brackets ("60 (6 pairs)", "40 (4 pairs) and 56 (4 pairs)"), question 3 is just the numbers. Questions are short lines (under 170 characters) so the player centres them without any code change; slides 10 and 15 use smaller text.
+- **Book work (slides 6, 11, 16):** nine questions each, 3 × 3. The first six show the number(s) with a smaller line underneath ("Hint: 3 pairs", "Hint: 3 & 4 pairs"); the last three have no hint and begin to stretch (listing 100, 84, 96; common factors 54 and 90, 70 and 105, 48 and 80; HCF 75 and 100, 52 and 78, 96 and 160).
+- **Numbers:** all renumbered under the fresh-numbers rules (no worked number asked again, none repeated inside a section, exit ticket fresh, no pair repeated); the build script asserts them and the deck check reports no warnings.
+- **Checked:** every answer computed in Python and again in the build script; content and layout checks pass for all 17 slides; the new slides looked at in the browser.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
+## 2026-11-14 — Factors deck: reformatted after Harry's first look
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `src/decks/deckChecks.ts` (one warning), `docs/design/DECK_BUILD_CHECKLIST.md`, `docs/pathways/decks.md`.
+
+- **Slide 3:** the drawn calculator keys are gone; the two sums and what the calculator shows are plain text, revealed by click.
+- **Whiteboards (slides 5, 10, 15):** full-width instead of workspace right, larger text, centred. Help is one hint line under the question, since pupils have calculators (Harry's decision, rather than a worksheet): how many factor pairs the number has (or each number has), then how many common factors, then nothing on the last whiteboard of each section. The factor-pairs table appears only in the worked answer, with the common factors in bold green.
+- **Models (slides 8, 13):** the same pairs layout, with the common numbers circled. The HCF definition now has its own slide, so the deck is 17 slides.
+- **Book sets (slides 6, 11, 16):** no blanks, no counts, no hints: the instruction once at the top and each cell is just the number (or pair), drawn large and centred.
+- **Checked:** every answer still computed and asserted in the build script; content and layout checks pass for all 17 slides; deck, question, docs and organisation tests, lint and `tsc` pass; the new slides looked at in the browser.
+- **Fresh numbers (a running problem, now guarded):** nine questions asked about a number a worked example or discussion already used (24, 12, 18, 36), and 30, 40, 36 and 27 each came back in three or more questions. All the questions were renumbered. Two guards: the build script asserts that no worked number is asked about, no number repeats inside a section, the exit ticket is fresh and no pair repeats; and `deckChecks.ts` now warns when a question asks about a number a slide already shows or works through (a warning, not a failure: older decks, Estimation most of all, trigger it and were not changed). Rule recorded in `docs/design/DECK_BUILD_CHECKLIST.md`.
+- **Centring:** the questions are short, so the existing rule (centre an open question under 170 characters) centres them on a deployment of `main` too. An earlier one-line change to that rule was reverted; nothing shared in `src/decks` is touched except the new deck-check warning.
+- **Decided:** no worksheet; a hint line under the question instead.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
+## 2026-11-13 — Factors, common factors and HCF lesson deck
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: new `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`, `docs/pathways/decks.md`. No shared deck code changed.
+
+- **Deck:** 16 slides, one lesson for Set 6 (low attainers) after the multiples lesson: list the factors of a number, find common factors by listing, then the HCF as the highest common factor. Three whiteboard sets and three six-question book sets (3 × 2, sized for pacing), a discussion on common factors (Kofi: only 6) and one on the HCF (Ruby: 36, which is a common multiple), and an exit ticket. All 36 questions are authored.
+- **Calculator slides (Casio fx-85GT CW):** the key presses shown one click at a time: `24 ÷ 4 =` gives a whole number so 4 is a factor; `24 ÷ 5 =` shows a fraction (S⇔D for 4.8) so it is not. A board then works through 24 and states the stop rule (stop when the answer is smaller than the number you divided by); the common factors model ends with a calculator check on the other number.
+- **Scaffold weaning (Harry's design):** whiteboard numbers are bigger (48, 60, 30; 24 and 36, 40 and 56, 20 and 30; 32 and 48, 36 and 54, 18 and 30) so the factors are not seen at a glance. Within each set the support falls away: partly completed pairs or lists, then a count (`__ × __` for each missing pair, or "N common factors"), then a hint, then none. The last whiteboard in each section has no scaffold.
+- **Checked:** every answer is computed in the build script from a factors function and asserted against the plan (factor lists, common sets, HCFs, pair counts, no repeated pair of numbers, six different HCF book answers); deck content checks and the layout check pass (16 slides, no spill or overlap); `deckBuilder`, `claudeDocs` and `organisation` tests, lint and `npm run facts` pass; the calculator, model, whiteboard, book and exit slides looked at in the browser. The authored sets follow the plan agreed with Harry (ladder, traps and numbers in the spec).
+- **Not done:** no misconception notes on the questions (optional); the fx-85 replay-key tip is in the slide 4 brief only, because it has not been tried on a real calculator; the deck is built, in the repo and pushed to the shared copy, but Harry has not yet viewed it; not published; the dashboard Review is not set for this deck.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)".
+
 ## 2026-11-12 — Resource levelling: Write it up removed, list of options is a tab
 
 Branch `claude/levelling-question-size`. Areas: `src/shared/decision/cpaSolve.ts`, `cpa.ts`, `cpaSheet.tsx`, `src/tools/Decision/CriticalPath.tsx`, tests.

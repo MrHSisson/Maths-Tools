@@ -19,9 +19,9 @@ export default function DecksTab() {
   const phone = usePhoneDevice();   // a phone only previews a deck: no editor
   const pub = published ?? {};
   const fromPublished: GalleryDeck[] = Object.entries(pub).sort((a, b) => b[1].publishedAt.localeCompare(a[1].publishedAt))
-    .map(([id, d]) => ({ id, title: d.title, summary: d.summary, strand: d.strand, slides: d.slides, preview: d.preview, notes: [`published ${dateOf(d.publishedAt)}`] }));
+    .map(([id, d]) => ({ id, title: d.title, summary: d.summary, strand: d.strand, pitch: d.pitch, slides: d.slides, preview: d.preview, notes: [`published ${dateOf(d.publishedAt)}`] }));
   const unpublished: GalleryDeck[] = unlocked
-    ? allDecks().filter(({ deck }) => !pub[deck.id]).map(({ deck, mine }) => ({ id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0], badge: 'Not published', notes: ['not published', ...(mine ? ['your deck'] : [])] }))
+    ? allDecks().filter(({ deck }) => !pub[deck.id]).map(({ deck, mine }) => ({ id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, pitch: deck.pitch, slides: deck.slides.length, preview: deck.slides[0], badge: 'Not published', notes: ['not published', ...(mine ? ['your deck'] : [])] }))
     : [];
   const decks = [...fromPublished, ...unpublished];
   return (
@@ -38,7 +38,7 @@ export default function DecksTab() {
       {published === undefined && <p className="text-slate-500">Loading…</p>}
       {published === null && !unlocked && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}
       {published && decks.length === 0 && <p className="text-slate-500">Nothing is published yet.</p>}
-      {decks.length > 0 && <DeckSections decks={decks} />}
+      {decks.length > 0 && <DeckSections decks={decks} admin={unlocked} />}
     </div>
   );
 }

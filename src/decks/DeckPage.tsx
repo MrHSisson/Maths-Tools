@@ -96,7 +96,7 @@ function DeckIndex() {
           <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
         </div>
         <div className="mt-6">
-          {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
+          {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections admin decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
             id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
             badge: published?.[deck.id] ? undefined : "Not published",
             notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],

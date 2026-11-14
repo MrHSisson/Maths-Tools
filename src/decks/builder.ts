@@ -12,6 +12,10 @@ import { THREE, TWO, fractionQuestion, type Kind } from "../tools/Proportion/rat
 import { fractionOfPartToRatio, fractionOfTotalToRatio, formTwoPartRatio } from "../tools/Proportion/ratioFromFraction";
 import { gcd } from "../shared";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
+import { exitRowsSlide, pairModelSlide, plainBookSlide, whiteboardQuestionsSlide } from "./pieces";
+// Shared look and rules for build scripts (see pieces.ts and deckRules.ts): sizes and colours that work, hint lines, factor-pair tables, fresh-number assertions.
+export { LOOK, assertCentred, fitsCentred, green, hintLine, lineEl, makeSlide, mathsGrid, mathsStack, quiet, textEl, titleEls, type Els, type Footer, type PairColumn } from "./pieces";
+export { assertFreshNumbers, freshNumberProblems, headlineNumbers } from "./deckRules";
 
 type Level = CuratedQuestion["level"];
 type Op = "+" | "-" | "\\times" | "\\div";
@@ -128,6 +132,14 @@ export const S = {
     return { ...slide, els: slide.els.map((e) => (e.kind === "grid" ? { ...e, items } : e)) as Slide["els"] };
   },
   depth: depthSlide,
+  /** Whiteboard questions: full-width, inset, at the standard size, centred (`{ table: true }` for a table under the question). */
+  whiteboard: whiteboardQuestionsSlide,
+  /** Book work as plain numbers, big and centred, with an optional small grey hint under each (`hintLine`). */
+  plainBook: plainBookSlide,
+  /** An exit ticket, one question to a row. */
+  exitRows: exitRowsSlide,
+  /** A two-number model: each number as a heading with its pairs underneath, common values ringed, footer lines revealed by click. */
+  pairModel: pairModelSlide,
 };
 
 /** The deck the player opens: embedded questions (nothing left to look up) and the tool's page filled in. */

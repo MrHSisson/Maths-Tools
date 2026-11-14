@@ -67,12 +67,12 @@ export async function getSnapshot(db: Db, id: string, key: string): Promise<unkn
 // ── Published copies (what anyone may play) ──
 
 const publishedEntry = (r: Row): PublishedEntry => ({
-  title: r.title as string, summary: r.summary as string, ...(r.strand ? { strand: r.strand as string } : {}),
+  title: r.title as string, summary: r.summary as string, ...(r.strand ? { strand: r.strand as string } : {}), ...(r.pitch ? { pitch: r.pitch as string } : {}),
   slides: r.slides as number, publishedAt: r.published_at as string, ...(r.preview ? { preview: r.preview } : {}),
 });
 
 export async function listPublished(db: Db): Promise<PublishedIndex> {
-  const rows = await db.query<Row>(`SELECT id, title, summary, strand, slides, published_at, preview FROM maths.published_decks`);
+  const rows = await db.query<Row>(`SELECT id, title, summary, strand, pitch, slides, published_at, preview FROM maths.published_decks`);
   const decks: Record<string, PublishedEntry> = {};
   for (const r of rows) decks[r.id as string] = publishedEntry(r);
   return { version: 1, decks };
@@ -84,12 +84,12 @@ export async function getPublished(db: Db, id: string): Promise<unknown | null> 
 }
 
 /** Stores the frozen copy and its listing entry (title, summary, strand, first-slide preview) together; returns the entry. */
-export async function putPublished(db: Db, deck: { id: string; title: string; summary: string; strand?: string; slides: unknown[] }, frozenBody: string, now: string): Promise<PublishedEntry> {
+export async function putPublished(db: Db, deck: { id: string; title: string; summary: string; strand?: string; pitch?: string; slides: unknown[] }, frozenBody: string, now: string): Promise<PublishedEntry> {
   const entry = publishedWith(emptyPublished(), deck, now).decks[deck.id];
   await db.query(
-    `INSERT INTO maths.published_decks (id, title, summary, strand, slides, published_at, preview, data) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb)
-     ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, summary=EXCLUDED.summary, strand=EXCLUDED.strand, slides=EXCLUDED.slides, published_at=EXCLUDED.published_at, preview=EXCLUDED.preview, data=EXCLUDED.data`,
-    [deck.id, entry.title, entry.summary, entry.strand ?? null, entry.slides, entry.publishedAt, entry.preview === undefined ? null : j(entry.preview), frozenBody]);
+    `INSERT INTO maths.published_decks (id, title, summary, strand, pitch, slides, published_at, preview, data) VALUES ($1,$2,$3,$4,$9,$5,$6,$7::jsonb,$8::jsonb)
+     ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, summary=EXCLUDED.summary, strand=EXCLUDED.strand, pitch=EXCLUDED.pitch, slides=EXCLUDED.slides, published_at=EXCLUDED.published_at, preview=EXCLUDED.preview, data=EXCLUDED.data`,
+    [deck.id, entry.title, entry.summary, entry.strand ?? null, entry.slides, entry.publishedAt, entry.preview === undefined ? null : j(entry.preview), frozenBody, entry.pitch ?? null]);
   return entry;
 }
 
