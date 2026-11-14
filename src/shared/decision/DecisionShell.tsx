@@ -27,6 +27,7 @@ import { InfoModal } from "../components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
 import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
+import { GlossCaption, glossSegments } from "./glossary";
 import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
 import PrintTemplates from "./PrintTemplates";
 import { LevelInfoDialog, LevelInfoButton } from "../components/LevelInfoDialog";
@@ -146,6 +147,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // a step that is one line of a longer chain (`more`) can be opened into its parts, one at a time: the opened steps replace it in the list
   const rawSteps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
   const [opened, setOpened] = useState<number[]>([]);
+  const [stepsSheet, setStepsSheet] = useState(false); // phone: every step in a bottom sheet
   useEffect(() => setOpened([]), [problem]);
   const { steps, rawOf, meta } = useMemo(() => {
     const out: SolveStep[] = [], map: number[] = [], info: StepMeta[] = [];
@@ -763,7 +765,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       )}
       {showMatrix && stageView === "table"
         ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
-        : canvasBox(problem.dim ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "34dvh" : "40dvh") : (showMatrix ? "22dvh" : "24dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
+        : canvasBox(problem.dim ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "40dvh" : "48dvh") : (showMatrix ? "34dvh" : ((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) ? "38dvh" : "47dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
       {atQuestion && legendItems && <Legend items={legendItems} />}
       {!atQuestion && (
         <>
@@ -774,11 +776,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             </details>
           )}
           {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
-            <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "12dvh" }}>{workingExtras}</div>
+            <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "17dvh" }}>{workingExtras}</div>
           )}
-          <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
-            <div className="absolute inset-0">
-              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
+          {/* only the current step, in a compact card under the picture: the picture is what changes, so it leads. All the steps are one tap away. */}
+          <div className="flex-1 min-h-[5.5rem] rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 overflow-y-auto">
+            <div className="flex items-start gap-2.5">
+              <span className="shrink-0 w-6 h-6 rounded-full text-xs font-extrabold flex items-center justify-center" style={{ background: onAnswer ? "#16a34a" : "#1e3a8a", color: "#fff" }}>{onAnswer ? "✓" : (meta[idx]?.raw ?? idx) + 1}</span>
+              <div className="min-w-0 flex-1">
+                {!onAnswer && steps[idx]?.phase && <span className="inline-block mb-1 rounded-full bg-indigo-100 text-blue-900 font-extrabold text-[11px] px-2 py-0.5">{steps[idx].phase}</span>}
+                <div className="text-[15px] leading-snug text-slate-900 font-medium" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
+                  {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
+                </div>
+              </div>
             </div>
           </div>
         </>
@@ -892,6 +901,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
+        {stepsSheet && (
+          <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ background: "rgba(15,23,42,0.4)" }} onClick={() => setStepsSheet(false)}>
+            <div className="bg-white rounded-t-2xl flex flex-col" style={{ height: "72dvh" }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-200">
+                <span className="font-bold text-slate-800">All steps</span>
+                <button onClick={() => setStepsSheet(false)} className="px-3 h-9 rounded-lg font-semibold text-blue-900 bg-slate-100">Close</button>
+              </div>
+              <div className="flex-1 min-h-0"><StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} /></div>
+            </div>
+          </div>
+        )}
         {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
@@ -986,12 +1006,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                   <div className="flex flex-1 min-w-0 flex-col items-center gap-1.5 px-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}</span>
-                      <button
-                        onClick={() => { if (showAll) jump(resumeAt.current); else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); } }}
-                        className="px-4 py-1.5 rounded-lg font-bold text-sm border-2"
-                        style={{ background: showAll ? "#fff" : "#1e3a8a", color: showAll ? "#6b7280" : "#fff", borderColor: showAll ? "#d1d5db" : "#1e3a8a" }}>
-                        {showAll ? "Show All" : "Step-by-Step"}
-                      </button>
+                      <button onClick={() => setStepsSheet(true)} className="px-4 py-1.5 rounded-lg font-bold text-sm border-2 bg-white text-blue-900" style={{ borderColor: "#1e3a8a" }}>All steps</button>
                     </div>
                     <div className="flex w-full gap-1">
                       {Array.from({ length: steps.length + (answerText ? 1 : 0) }, (_, i) => (

@@ -1693,7 +1693,7 @@
    "kind": "tool",
    "shell": "DecisionShell",
    "subTools": null,
-   "lines": 227,
+   "lines": 230,
    "depth": false,
    "teach": false,
    "lessons": false,
