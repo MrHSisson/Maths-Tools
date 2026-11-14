@@ -70,7 +70,7 @@ function exCircle(level: number): DecisionProblem {
       opts.filter((o) => !o.correct).map((o) => `${M(o.text)}: ${o.why}`));
     return build("circle", intro, [p], q.data, level);
   }
-  const q = genDimsNameFor(pickOne(["speed", "acc", "dens", "force", "mom", "imp", "energy", "power", "press", "omega", "stiff", "inertia"]), false, true);
+  const q = genDimsNameFor(pickOne(["dens", "force", "mom", "imp", "energy", "power", "press", "omega", "stiff", "inertia"]), false, true);
   const opts = q.data.options!;
   const intro = q.prompt.split(" Circle your answer:")[0];
   const p = part("(a)", circleLine(opts), [m("B1", `Circles the correct dimensions: ${M(dimTex(q.data.answerDim!))}`)], chainModel(q.data), q.data, { subTool: "dims", options: { dimsForm: "circle" } }, "circleDims",
@@ -80,10 +80,11 @@ function exCircle(level: number): DecisionProblem {
 
 /** state the dimensions of a quantity, then find the powers in a model */
 function exFind(level: number): DecisionProblem {
-  const sit = pickOne(SITUATIONS);
+  // a quantity of the model whose dimensions are worked out from a definition (length, time and mass are base quantities, and speed and acceleration are given: nothing to work out)
+  const askable = (sit: (typeof SITUATIONS)[number]) => [sit.target, ...sit.factors.map(([id]) => id)].filter((id) => QBY[id].def && !QBY[id].given);
+  const sit = pickOne(SITUATIONS.filter((x) => askable(x).length > 0));
   const q = powersFromSituation(sit);
-  // a quantity of the model whose dimensions are worked out from a definition (time, length and mass are base quantities, with nothing to work out)
-  const derived = [sit.target, ...sit.factors.map(([id]) => id)].filter((id) => QBY[id].def);
+  const derived = askable(sit);
   const a = stateDims(pickOne(derived), "(a)");
   const b = part("(b)", `Use dimensional analysis to find the values of ${andTex(q.data.unknowns)}.`, powersScheme(q), powersModel(q), q.data, { subTool: "powers", options: { powCtx: "worded" } }, "findPowers");
   return build("find", modelIntro(q.data), [a, b], q.data, level);

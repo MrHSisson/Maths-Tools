@@ -68,8 +68,10 @@ export interface Quantity {
   say?: string;
   /** a number in the formula, with no dimensions (the ½ of kinetic energy), as TeX */
   num?: string;
+  /** one of the quantities the student is GIVEN (speed, acceleration): it is never set as "find the dimensions of …", only used */
+  given?: boolean;
 }
-const Q = (id: string, name: string, sym: string, dim: [number, number, number], units?: string, def?: Array<[string, number]>, extra: { formula?: string; say?: string; num?: string } = {}): Quantity =>
+const Q = (id: string, name: string, sym: string, dim: [number, number, number], units?: string, def?: Array<[string, number]>, extra: { formula?: string; say?: string; num?: string; given?: boolean } = {}): Quantity =>
   ({ id, name, sym, dim, units, def, ...extra });
 
 export const LIBRARY: Quantity[] = [
@@ -78,17 +80,25 @@ export const LIBRARY: Quantity[] = [
   Q("rad", "radius", "r", [0, 1, 0], "m"),
   Q("dep", "depth", "d", [0, 1, 0], "m"),
   Q("ext", "extension", "x", [0, 1, 0], "m"),
+  Q("opp", "opposite side", "\\mathrm{opp}", [0, 1, 0], "m"),
+  Q("adj", "adjacent side", "\\mathrm{adj}", [0, 1, 0], "m"),
+  Q("hyp", "hypotenuse", "\\mathrm{hyp}", [0, 1, 0], "m"),
+  Q("arg", "the argument of the trig function", "\\theta", [0, 0, 0], ""),
   Q("time", "time", "t", [0, 0, 1], "s"),
   Q("mass", "mass", "m", [1, 0, 0], "kg"),
-  Q("speed", "speed", "v", [0, 1, -1], "m s⁻¹", [["len", 1], ["time", -1]], { formula: "v = \\frac{s}{t}", say: "speed is distance divided by time" }),
-  Q("acc", "acceleration", "a", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "a = \\frac{v}{t}", say: "acceleration is the change in speed divided by time" }),
-  Q("grav", "acceleration due to gravity", "g", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "g = \\frac{v}{t}", say: "acceleration due to gravity is an acceleration, the change in speed divided by time" }),
+  Q("speed", "speed", "v", [0, 1, -1], "m s⁻¹", [["len", 1], ["time", -1]], { formula: "v = \\frac{s}{t}", say: "speed is distance divided by time" , given: true}),
+  Q("acc", "acceleration", "a", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "a = \\frac{v}{t}", say: "acceleration is the change in speed divided by time" , given: true}),
+  Q("grav", "acceleration due to gravity", "g", [0, 1, -2], "m s⁻²", [["speed", 1], ["time", -1]], { formula: "g = \\frac{v}{t}", say: "acceleration due to gravity is an acceleration, the change in speed divided by time" , given: true}),
   Q("area", "area", "A", [0, 2, 0], "m²", [["len", 2]], { formula: "A = l^{2}", say: "area is a length times a length" }),
   Q("vol", "volume", "V", [0, 3, 0], "m³", [["len", 3]], { formula: "V = l^{3}", say: "volume is a length times a length times a length" }),
+  Q("angle", "an angle in radians", "\\theta", [0, 0, 0], "", [["len", 1], ["rad", -1]], { formula: "\\theta = \\frac{s}{r}", say: "an angle in radians is the arc length divided by the radius" }),
+  Q("sin", "sin θ", "\\sin\\theta", [0, 0, 0], "", [["opp", 1], ["hyp", -1]], { formula: "\\sin\\theta = \\frac{\\mathrm{opp}}{\\mathrm{hyp}}", say: "sine is the opposite side divided by the hypotenuse" }),
+  Q("cos", "cos θ", "\\cos\\theta", [0, 0, 0], "", [["adj", 1], ["hyp", -1]], { formula: "\\cos\\theta = \\frac{\\mathrm{adj}}{\\mathrm{hyp}}", say: "cosine is the adjacent side divided by the hypotenuse" }),
+  Q("tan", "tan θ", "\\tan\\theta", [0, 0, 0], "", [["opp", 1], ["adj", -1]], { formula: "\\tan\\theta = \\frac{\\mathrm{opp}}{\\mathrm{adj}}", say: "tangent is the opposite side divided by the adjacent side" }),
   Q("dens", "density", "ρ", [1, -3, 0], "kg m⁻³", [["mass", 1], ["vol", -1]], { formula: "\\rho = \\frac{m}{V}", say: "density is mass divided by volume" }),
   Q("force", "force", "F", [1, 1, -2], "N", [["mass", 1], ["acc", 1]], { formula: "F = ma", say: "Newton's second law: force is mass times acceleration" }),
   Q("weight", "weight", "W", [1, 1, -2], "N", [["mass", 1], ["grav", 1]], { formula: "W = mg", say: "weight is mass times the acceleration due to gravity" }),
-  Q("mom", "momentum", "p", [1, 1, -1], "kg m s⁻¹", [["mass", 1], ["speed", 1]], { formula: "p = mv", say: "momentum is mass times velocity" }),
+  Q("mom", "momentum", "p", [1, 1, -1], "kg m s⁻¹", [["mass", 1], ["speed", 1]], { formula: "p = mv", say: "momentum is mass times speed" }),
   Q("imp", "impulse", "J", [1, 1, -1], "N s", [["force", 1], ["time", 1]], { formula: "J = Ft", say: "impulse is force times the time it acts for" }),
   Q("energy", "energy", "E", [1, 2, -2], "J", [["mass", 1], ["speed", 2]], { formula: "E = \\frac{1}{2}mv^{2}", say: "kinetic energy is a half times mass times speed squared", num: "\\frac{1}{2}" }),
   Q("power", "power", "P", [1, 2, -3], "W", [["energy", 1], ["time", -1]], { formula: "P = \\frac{E}{t}", say: "power is work done, which is energy, divided by the time taken" }),

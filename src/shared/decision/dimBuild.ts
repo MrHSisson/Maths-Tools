@@ -2,7 +2,9 @@
 // The page opens with what may be taken as known (lengths, time, mass, speed and acceleration). Any other quantity is built from them, in its own few lines, after
 // the formula it comes from has been stated: F = ma, so [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻². Nothing appears out of nowhere.
 import { type Fr, type Dim3, QBY, BASE, qDim, unitsDim, fr, fmul, fadd, fsub, fzero, feq, dimOf, ONE, ZERO, dimScale } from "./dim";
-import { symTex, supTex, frTex, dimTex, dimPowTex, productTex, brTex } from "./dimTex";
+import { symTex, supTex, frTex, dimTex, dimPowTex, productTex, brTex, numTex } from "./dimTex";
+/** why a plain number has no dimensions */
+export const NUMBER_WHY = "a dimensionless constant";
 
 // ── rows of the written page ────────────────────────────────────────────────────────────────
 /** "[F] &= [ma]": the left part, then the aligned equals */
@@ -20,7 +22,7 @@ export const boxed = (tex: string): string => `\\boxed{${tex}}`;
 
 // ── what is given ───────────────────────────────────────────────────────────────────────────
 /** lengths (however named), time, mass, speed and acceleration: the quantities whose dimensions may be taken as known */
-export const GIVEN_IDS = ["len", "hgt", "rad", "dep", "ext", "time", "mass", "speed", "acc", "grav"];
+export const GIVEN_IDS = ["len", "hgt", "rad", "dep", "ext", "opp", "adj", "hyp", "time", "mass", "speed", "acc", "grav"];
 /** the given set the page opens with, as "[l] = L" items */
 export const BASE_GIVEN = ["len", "time", "mass", "speed", "acc"];
 export const GIVEN_ITEMS: string[] = BASE_GIVEN.map((id) => `[${symTex(QBY[id].sym)}] = ${dimTex(qDim(id))}`);
@@ -47,7 +49,7 @@ const keyBr = (key: string): string => (key.startsWith("u:") ? `[${unitTex(key.s
 /** what a key is called in words */
 export const keyName = (key: string): string => (key.startsWith("u:") ? `the ${key.slice(2) === "N" ? "newton" : key.slice(2) === "J" ? "joule" : key.slice(2) === "W" ? "watt" : key.slice(2) === "Pa" ? "pascal" : "hertz"}` : QBY[key].name);
 
-export interface Piece { br: string; dim: Dim3; exp: Fr }
+export interface Piece { br: string; dim: Dim3; exp: Fr; /** why it has no dimensions ("a dimensionless constant"): stated in the working as "[2] = 1" */ dimless?: string }
 interface BuildItem { key: string; lhs: string; expr: string; pieces: Piece[]; dim: Dim3; formula: string; say: string }
 const NO_DIM: Dim3 = dimOf(0, 0, 0);
 /** what a non-given quantity (or derived unit) is built from, with the formula it comes from; null for a given one */
@@ -64,7 +66,7 @@ export function buildItem(key: string): BuildItem | null {
   if (!q.def) return null;
   const pieces = q.def.map(([f, p]): Piece => ({ br: keyBr(f), dim: qDim(f), exp: fr(p) }));
   // a number in the formula (the half of kinetic energy) has no dimensions, and is written as such
-  if (q.num) pieces.unshift({ br: `[${q.num}]`, dim: NO_DIM, exp: ONE });
+  if (q.num) pieces.unshift({ br: `[${numTex(q.num)}]`, dim: NO_DIM, exp: ONE, dimless: NUMBER_WHY });
   const expr = (q.num ?? "") + productTex(q.def.map(([f, p]) => ({ sym: QBY[f].sym, p: fr(p) })));
   return { key, lhs: keyBr(key), expr, pieces, dim: qDim(key), formula: q.formula ?? "", say: q.say ?? q.name };
 }
@@ -88,6 +90,8 @@ export function buildOrder(keys: string[]): string[] {
 
 // ── a derivation, in the rows a student writes ──────────────────────────────────────────────
 export interface Derivation {
+  /** a number or argument with no dimensions, stated before it is used: "[2] = 1 as it is a dimensionless constant" */
+  note: string[];
   /** the formula it comes from, stated first ("Formula: F = ma"); empty when the question gave it */
   formula: string[];
   /** what it is written as, in brackets: "[F] = [ma] = [m][a]" (two rows when the expression differs from the brackets); a division stays a fraction: "[F]/[A]" */
@@ -121,6 +125,7 @@ export function derive(lhs: string, expr: string | null, pieces: Piece[], result
   const brs = divides
     ? frac(top.map((p) => `${p.br}${supTex(p.exp)}`).join(""), bottom.map((p) => `${p.br}${supTex(absExp(p))}`).join(""))
     : pieces.map((p) => `${p.br}${supTex(p.exp)}`).join("");
+  const note = [...new Map(pieces.filter((p) => p.dimless).map((p) => [p.br, `${p.br} = 1 \\quad \\text{as it is ${p.dimless}}`])).values()];
   const def = expr ? [al(lhs, brTex(expr)), ct(brs)] : [al(lhs, brs)];
   const dims = divides
     ? frac(joinT(top.map((p) => dimPowTex(p.dim, p.exp))), joinT(bottom.map((p) => dimPowTex(p.dim, absExp(p)))))
@@ -176,7 +181,7 @@ export function derive(lhs: string, expr: string | null, pieces: Piece[], result
     const prior = sum.length ? sum[sum.length - 1] : expand.length ? expand[expand.length - 1] : subst[0];
     if (final !== prior) sum.push(final);
   }
-  return { formula: formula ? [formulaRow(formula)] : [], def, subst, expand, tidy, subtract, cancel, sum, divides };
+  return { note, formula: formula ? [formulaRow(formula)] : [], def, subst, expand, tidy, subtract, cancel, sum, divides };
 }
 /** a derivation as one flat chain "[a] = [v/t] = [v][t]^{-1} = LT^{-1} \times T^{-1} = LT^{-2}", for the model answer */
 export function flatChain(rows: string[]): string {

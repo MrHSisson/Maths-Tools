@@ -6,13 +6,15 @@
 import type { DecisionProblem, SolveStep } from "./types";
 import { type Fr, type Dim3, BASE, QBY, qDim, fmul, fadd, fsub, fdiv, fzero, feq, fr, ZERO, ONE, solveLinear, parseUnits, unitsDim, dimOf } from "./dim";
 import { symTex, frTex, supTex, dimTex, dimPowTex, productTex, eqLhsTex, brTex, numTex, M } from "./dimTex";
-import { al, ct, lab, head, formulaRow, GAP, boxed, GIVEN_IDS, GIVEN_ITEMS, BASE_GIVEN, buildItem, buildOrder, keyName, derive, flatChain, type Piece, type Derivation } from "./dimBuild";
+import { al, ct, lab, head, formulaRow, GAP, boxed, GIVEN_IDS, GIVEN_ITEMS, BASE_GIVEN, buildItem, buildOrder, keyName, derive, flatChain, NUMBER_WHY, type Piece, type Derivation } from "./dimBuild";
 import type { DimProblemData, DimRow } from "./dimGen";
 
 const rowBr = (r: DimRow): string => (/^(\[|\\left\[)/.test(r.sym) ? r.sym : brTex(r.sym));
 const answerTex = (dim: Dim3): string => (dim.every(fzero) ? "1" : dimTex(dim));
+/** a result with no dimensions says so */
+const boxTex = (dim: Dim3): string => (dim.every(fzero) ? "1\\ \\text{(dimensionless)}" : dimTex(dim));
 const piece = (r: DimRow): Piece => ({ br: rowBr(r), dim: r.dim, exp: r.exp ?? ONE });
-const numPiece = (num: string): Piece => ({ br: `[${numTex(num)}]`, dim: dimOf(0, 0, 0), exp: ONE });
+const numPiece = (num: string): Piece => ({ br: `[${numTex(num)}]`, dim: dimOf(0, 0, 0), exp: ONE, dimless: NUMBER_WHY });
 const par = (s: string): string => (s.startsWith("-") ? `(${s})` : s);
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -45,23 +47,23 @@ function mainOf(d: DimProblemData): Main | null {
     const q = QBY[d.askId!];
     const pieces = [...(q.num ? [numPiece(q.num)] : []), ...factors.map(piece)];
     const expr = (q.num ? numTex(q.num) : "") + productTex(factors.map((r) => ({ sym: r.sym, p: r.exp ?? ONE })));
-    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: `Find the dimensions of ${name}. ${cap(q.say ?? name)}.`, der: derive(result.sym, expr, pieces, d.answerDim!, q.formula), final: `${result.sym} = ${ans}` };
+    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: `Find the dimensions of ${name}. ${cap(q.say ?? name)}.`, der: derive(result.sym, expr, pieces, d.answerDim!, q.formula), final: `${result.sym} = ${boxTex(d.answerDim!)}` };
   }
   if (d.kind === "dimsUnits") {
     const units = factors.map((r) => `${r.sym}${supTex(r.exp ?? ONE)}`).join("\\,");
     const der = derive(result.sym, units, factors.map(piece), d.answerDim!);
     der.def = [der.def[0]];
-    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: "", der, final: `${result.sym} = ${ans}` };
+    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: "", der, final: `${result.sym} = ${boxTex(d.answerDim!)}` };
   }
   // an expression
   if (d.defText === "root") {
     const brs = factors.map((r) => `${rowBr(r)}${supTex(r.exp ?? ONE)}`).join("");
     const dims = factors.map((r) => dimPowTex(r.dim, r.exp ?? ONE)).join(" \\times ");
     const inner = dimTex(d.answerDim!.map((e) => fmul(e, fr(2))) as unknown as Dim3);
-    const der: Derivation = { formula: [], def: [al(result.sym, `\\left(${brs}\\right)^{\\frac{1}{2}}`)], subst: [ct(`\\left(${dims}\\right)^{\\frac{1}{2}}`)], expand: [ct(`\\left(${inner}\\right)^{\\frac{1}{2}}`)], tidy: [], subtract: [], cancel: [], sum: [ct(ans)], divides: false };
-    return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der, final: `${result.sym} = ${ans}`, root: true };
+    const der: Derivation = { note: [], formula: [], def: [al(result.sym, `\\left(${brs}\\right)^{\\frac{1}{2}}`)], subst: [ct(`\\left(${dims}\\right)^{\\frac{1}{2}}`)], expand: [ct(`\\left(${inner}\\right)^{\\frac{1}{2}}`)], tidy: [], subtract: [], cancel: [], sum: [ct(ans)], divides: false };
+    return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der, final: `${result.sym} = ${boxTex(d.answerDim!)}`, root: true };
   }
-  return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der: derive(result.sym, null, factors.map(piece), d.answerDim!), final: `${result.sym} = ${ans}` };
+  return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der: derive(result.sym, null, factors.map(piece), d.answerDim!), final: `${result.sym} = ${boxTex(d.answerDim!)}` };
 }
 
 // ── the stage a derivation takes on the page ─────────────────────────────────────────────────────────────────────────────
@@ -104,7 +106,7 @@ function derivationSteps(c: Ctx, o: DOpts): SolveStep[] {
   const hasFormula = der.formula.length > 0;
   const groups: Array<{ rows: string[]; caption: string; phase: string }> = [];
   if (hasFormula) groups.push({ rows: [head(o.heading), ...der.formula], caption: o.intro, phase: "The formula" });
-  groups.push({ rows: [...(hasFormula ? [] : [head(o.heading)]), ...der.def], caption: o.captions?.brackets ?? `${hasFormula ? "" : o.intro ? `${o.intro} ` : ""}${again ? BRACKETS2 : BRACKETS}${o.hasNumber ? " A plain number, like a half, has dimensions 1." : ""}${der.divides ? ` ${again ? "Keep the division as a fraction." : FRACTION}` : ""}`, phase: "Brackets" });
+  groups.push({ rows: [...(hasFormula ? [] : [head(o.heading)]), ...der.note, ...der.def], caption: o.captions?.brackets ?? `${hasFormula ? "" : o.intro ? `${o.intro} ` : ""}${again ? BRACKETS2 : BRACKETS}${o.hasNumber ? " A plain number, like a half, has dimensions 1." : ""}${der.divides ? ` ${again ? "Keep the division as a fraction." : FRACTION}` : ""}`, phase: "Brackets" });
   groups.push({ rows: der.subst, caption: o.captions?.subst ?? (again ? SWAP2 : SWAP), phase: "Dimensions" });
   if (der.expand.length) groups.push({ rows: der.expand, caption: o.captions?.expand ?? (again ? EXPAND2 : EXPAND), phase: "Powers" });
   if (der.tidy.length) groups.push({ rows: der.tidy, caption: TIDY, phase: "Combine" });
@@ -231,14 +233,14 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const { formulaRow: fr0, der } = constPieces(d);
     c.stage();
     steps.push(S(`Start from the formula: ${M(d.formula!)} is a constant.`, "The formula", formulaRow(d.relFormula!)));
-    steps.push(S(`Put brackets round both sides: they must have the same dimensions.${d.relNum ? " A plain number, like a half, has dimensions 1." : ""}`, "Brackets", head(`The dimensions of ${M(d.formula!)}`), fr0));
+    steps.push(S(`${d.relArg ? `The argument of a ${d.relArg} has no dimensions: say so. Then bracket it as a product.` : "Put brackets round both sides: they must have the same dimensions."}${d.relNum ? " A plain number, like a half, has dimensions 1." : ""}`, "Brackets", head(`The dimensions of ${M(d.formula!)}`), ...(d.relNum ? [`[${numTex(d.relNum)}] = 1 \\quad \\text{as it is ${NUMBER_WHY}}`] : []), ...(d.relArg ? [`${rowBr(d.rows[1])} = 1 \\quad \\text{as it is the argument of a ${d.relArg}}`] : []), fr0));
     steps.push(S(`Make ${M(rowBr(k))} the subject.${d.relNum ? " The half is only a number, so it drops out." : ""}${der.divides ? ` ${FRACTION}` : ""}`, "Rearrange for the constant", GAP, ...der.def));
     steps.push(S(SWAP, "Dimensions", ...der.subst));
     if (der.expand.length) steps.push(S(EXPAND, "Powers", ...der.expand));
     if (der.tidy.length) steps.push(S(TIDY, "Combine", ...der.tidy));
     if (der.subtract.length) steps.push(S(SUBTRACT, "Subtract", ...der.subtract));
     if (der.cancel.length) steps.push(S(CANCEL, "Cancel", ...der.cancel));
-    const finalTex = `${rowBr(k)} = ${answerTex(d.answerDim!)}`;
+    const finalTex = `${rowBr(k)} = ${boxTex(d.answerDim!)}`;
     steps.push(S(der.sum.length ? (der.subtract.length ? SIMPLIFY : der.divides ? NEGATIVE : ADD) : "That is the answer; box it.", "Answer", ...der.sum, GAP, boxed(finalTex)));
     if (d.represents) steps.push(S(`These are the dimensions of ${d.represents}: that is what ${M(d.formula!)} is.`, "What it is", head(`These are the dimensions of ${d.represents}.`)));
     else if (d.answerDim!.every(fzero)) steps.push(S("No dimensions left: the constant is dimensionless.", "What it is", head("The constant has no dimensions: it is dimensionless.")));
@@ -264,7 +266,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       if (i === skip) return;
       c.stage();
       const one = pieces.length === 1 && feq(pieces[0].exp, ONE);
-      const rowsT = one ? [al(lhs, dimTex(dim))] : (() => { const der = derive(lhs, null, pieces, dim); return [...der.def, ...der.subst, ...der.expand, ...der.tidy, ...der.subtract, ...der.cancel, ...der.sum]; })();
+      const rowsT = one ? [al(lhs, dimTex(dim))] : (() => { const der = derive(lhs, null, pieces, dim); return [...der.note, ...der.def, ...der.subst, ...der.expand, ...der.tidy, ...der.subtract, ...der.cancel, ...der.sum]; })();
       steps.push(S(`${i === 0 ? "First term" : "Next term"}: brackets, dimensions, then add the powers.${t.num ? " A number like a half has dimensions 1." : ""}`, "Dimensions of each term", head(`The dimensions of $${t.tex}$`), ...rowsT));
     });
     c.stage();

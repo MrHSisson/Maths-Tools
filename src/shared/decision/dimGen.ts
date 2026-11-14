@@ -55,6 +55,8 @@ export interface DimProblemData {
   relFormula?: string;
   /** dimsConst: a number in that formula (the half in a half k x squared), as TeX */
   relNum?: string;
+  /** the constant sits in the argument of a trig function ("sine"): the argument has no dimensions, which the working states */
+  relArg?: string;
   /** quantities (ids, or "u:N" for a derived unit) whose dimensions the working must establish before the main working: those not given are built */
   needs?: string[];
   /** how the quantities of a model get their dimensions: built from definitions (default), read from their units, or stated in the question */
@@ -122,7 +124,7 @@ const symLine = (rows: Array<{ sym: string; name: string }>): string => {
 };
 
 // ── Find the dimensions ──────────────────────────────────────────────────────────────────────────────────────────────────────
-const NAME_L1 = ["speed", "acc", "area", "vol", "dens", "force", "weight", "mom", "imp", "energy", "power", "freq", "linmass"];
+const NAME_L1 = ["angle", "sin", "cos", "tan", "area", "vol", "dens", "force", "weight", "mom", "imp", "energy", "power", "freq", "linmass"];
 const NAME_L2 = ["press", "omega", "moment", "inertia", "stiff", "surf", "visc", "G"];
 const UNIT_NAMES: Record<string, string> = { N: "newton, N = kg m s⁻²", J: "joule, J = N m", W: "watt, W = J s⁻¹", Pa: "pascal, Pa = N m⁻²", Hz: "hertz, Hz = s⁻¹" };
 
@@ -186,11 +188,11 @@ export function genDimsExpr(level: number, circle: boolean): DimQuestion {
 }
 
 // the relations the constant questions are drawn from: a formula in words (maths between $…$), the quantity on the left, the other factors, and the power of the constant
-interface ConstRel { text: string; lhs: string; lhsSym: string; others: Factor[]; kSym: string; kName: string; kexp: number; formula: string; num?: string }
-const CR = (text: string, lhs: string, lhsSym: string, others: Array<[string, string, number]>, kSym: string, kName: string, kexp = 1, num?: string): ConstRel => {
+interface ConstRel { text: string; lhs: string; lhsSym: string; others: Factor[]; kSym: string; kName: string; kexp: number; formula: string; num?: string; arg?: string }
+const CR = (text: string, lhs: string, lhsSym: string, others: Array<[string, string, number]>, kSym: string, kName: string, kexp = 1, num?: string, arg?: string): ConstRel => {
   // the formula is the first $…$ in the wording that has an equals sign
   const formula = (text.match(/\$([^$]*=[^$]*)\$/) ?? [])[1] ?? "";
-  return { text, lhs, lhsSym, others: others.map(([sym, q, p]) => ({ sym, q, p: fr(p) })), kSym, kName, kexp, formula, num };
+  return { text, lhs, lhsSym, others: others.map(([sym, q, p]) => ({ sym, q, p: fr(p) })), kSym, kName, kexp, formula, num, arg };
 };
 export const CONST_RELATIONS: ConstRel[] = [
   CR("The elastic energy $E$ stored in a stretched spring is given by $E = \\frac{1}{2}kx^{2}$, where $x$ is the extension of the spring.", "energy", "E", [["x", "ext", 2]], "k", "the stiffness of the spring", 1, "\\frac{1}{2}"),
@@ -203,6 +205,8 @@ export const CONST_RELATIONS: ConstRel[] = [
   CR("The friction force $F$ between two surfaces is $F = \\mu R$, where $R$ is the normal reaction and $\\mu$ is the coefficient of friction.", "force", "F", [["R", "force", 1]], "μ", "the coefficient of friction"),
   CR("A formula for the wavelength $w$ of a deep water wave is $w = \\frac{gt^{2}}{k}$, where $g$ is the acceleration due to gravity and $t$ is the time between waves.", "len", "w", [["g", "grav", 1], ["t", "time", 2]], "k", "a constant", -1),
   CR("The height $y$ of a ball above its point of projection is $y = x - \\frac{kx^{2}}{u^{2}}$, where $x$ is the horizontal distance and $u$ is the speed of projection.", "len", "y", [["x", "len", 2], ["u", "speed", -2]], "k", "a constant"),
+  CR("The displacement $x$ of a particle in simple harmonic motion is $x = A\\sin(\\omega t)$, where $A$ is the amplitude and $t$ is the time.", "arg", "ωt", [["t", "time", 1]], "ω", "angular speed", 1, undefined, "sine"),
+  CR("The height $y$ of a point on a wave at a horizontal distance $x$ is $y = A\\cos(kx)$, where $A$ is the amplitude and $k$ is a constant called the wave number.", "arg", "kx", [["x", "ext", 1]], "k", "the wave number", 1, undefined, "cosine"),
   CR("The surface tension $\\sigma$ of a liquid film is defined by $F = \\sigma l$, where $F$ is the force along an edge of length $l$.", "force", "F", [["l", "len", 1]], "σ", "the surface tension", 1),
 ];
 /** [k] from  lhs = k^kexp · Π others */
@@ -226,7 +230,7 @@ export function genDimsConstFor(rel: ConstRel, circle: boolean): DimQuestion {
   const options = circle ? circleList(ans, distractors(kd)) : undefined;
   const prompt = `${rel.text} Find the dimensions of ${M(kSym)}.${options ? ` ${circleLine(options)}` : ""}`;
   return {
-    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: repr && !dimZero(kd) ? repr.name : undefined, formula: kSym, context: rel.text, relFormula: rel.formula, relNum: rel.num, needs: [rel.lhs, ...rel.others.map((x) => x.q)], title: `Find the dimensions of ${M(kSym)}` },
+    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: repr && !dimZero(kd) ? repr.name : undefined, formula: kSym, context: rel.text, relFormula: rel.formula, relNum: rel.num, relArg: rel.arg, needs: [rel.lhs, ...rel.others.map((x) => x.q)], title: `Find the dimensions of ${M(kSym)}` },
     prompt,
     answerText: dimZero(kd) ? `${M(`[${kSym}] = 1`)} (dimensionless)` : M(`[${kSym}] = ${ans}`),
   };
@@ -366,10 +370,10 @@ export const SITUATIONS: Situation[] = [
   S("pendulum", "The time $t$ for one swing of a simple pendulum is thought to depend on its mass $m$, its length $l$ and the acceleration due to gravity $g$.", "time", [["mass", 0, 1], ["len", 1, 2], ["grav", -1, 2]]),
   S("pendulum2", "The time $t$ for one swing of a simple pendulum is thought to depend only on its length $l$ and the acceleration due to gravity $g$.", "time", [["len", 1, 2], ["grav", -1, 2]]),
   S("spring2", "The time $t$ for one oscillation of a mass $m$ on a spring of stiffness $\\kappa$ is thought to depend only on $m$ and $\\kappa$.", "time", [["mass", 1, 2], ["stiff", -1, 2]]),
-  S("spring3", "A particle of mass $m$ hangs from a spring of stiffness $\\kappa$ and oscillates vertically. The time $t$ for one oscillation is thought to depend on $m$, $g$ and $\\kappa$.", "time", [["mass", 1, 2], ["grav", 0, 1], ["stiff", -1, 2]]),
+  S("spring3", "A particle of mass $m$ hangs from a spring of stiffness $\\kappa$ and oscillates vertically. The time $t$ for one oscillation is thought to depend on $m$, $\\kappa$ and the acceleration due to gravity $g$.", "time", [["mass", 1, 2], ["grav", 0, 1], ["stiff", -1, 2]]),
   S("orbit", "A satellite orbits the Earth, of mass $m$, at radius $r$. The time $t$ for one orbit is thought to depend on $r$, on $G$ and on $m$.", "time", [["rad", 3, 2], ["G", -1, 2], ["mass", -1, 2]]),
   S("fall", "A ball is dropped from rest from a height $h$. Its speed $v$ on reaching the ground is thought to depend only on $h$ and the acceleration due to gravity $g$.", "speed", [["grav", 1, 2], ["hgt", 1, 2]]),
-  S("tank", "A tank is full of liquid of density $\\rho$ to a height $h$, with a small hole in its base. The speed $v$ at which the liquid escapes is thought to depend on $g$, $h$ and $\\rho$.", "speed", [["grav", 1, 2], ["hgt", 1, 2], ["dens", 0, 1]]),
+  S("tank", "A tank is full of liquid of density $\\rho$ to a height $h$, with a small hole in its base. The speed $v$ at which the liquid escapes is thought to depend on $h$, $\\rho$ and the acceleration due to gravity $g$.", "speed", [["grav", 1, 2], ["hgt", 1, 2], ["dens", 0, 1]]),
   S("sea", "The speed $v$ of a wave on the surface of the sea is thought to depend on the depth $d$ of the sea, the density $\\rho$ of the water and the acceleration due to gravity $g$.", "speed", [["dep", 1, 2], ["dens", 0, 1], ["grav", 1, 2]]),
   S("circ", "A satellite of the Earth, of mass $m$, moves in a circle of radius $r$. Its speed $v$ is thought to depend on $G$, $m$ and $r$.", "speed", [["G", 1, 2], ["mass", 1, 2], ["rad", -1, 2]]),
   S("drag", "A sphere of radius $r$ falls through a fluid of density $\\rho$ at speed $v$. The resistance force $F$ is thought to depend on $\\rho$, $r$ and $v$.", "force", [["dens", 1, 1], ["rad", 2, 1], ["speed", 2, 1]]),
@@ -378,9 +382,9 @@ export const SITUATIONS: Situation[] = [
   S("compound", "The time $t$ for one swing of a compound pendulum is thought to depend on its moment of inertia $I$, its weight $W$ and the distance $h$ of its centre of mass from the pivot.", "time", [["inertia", 1, 2], ["weight", -1, 2], ["hgt", -1, 2]]),
   S("string", "The time $t$ for a single vibration of a taut string is thought to depend on its length $l$, the tension $F$ in it and its mass per unit length $q$.", "time", [["len", 1, 1], ["force", -1, 2], ["linmass", 1, 2]]),
   S("lifetime", "The lifetime $t$ of a planet is thought to depend on its mass $m$, its radius $r$ and the gravitational constant $G$.", "time", [["mass", -1, 2], ["rad", 3, 2], ["G", -1, 2]]),
-  S("bounce", "A ball of mass $m$ hits the floor at speed $u$ and bounces to a height $h$. The height $h$ is thought to depend on $m$, $u$ and $g$.", "hgt", [["mass", 0, 1], ["speed", 2, 1, "u"], ["grav", -1, 1]]),
-  S("fallm", "A bead of mass $m$ is released from rest at a height $h$. Its speed $v$ on reaching the ground is thought to depend on $m$, $g$ and $h$.", "speed", [["mass", 0, 1], ["grav", 1, 2], ["hgt", 1, 2]]),
-  S("tube", "Liquid of density $\\rho$ oscillates in a U-tube. The time $t$ for one oscillation is thought to depend on $\\rho$, the length $l$ of the liquid column and $g$.", "time", [["dens", 0, 1], ["len", 1, 2], ["grav", -1, 2]]),
+  S("bounce", "A ball of mass $m$ hits the floor at speed $u$ and bounces to a height $h$. The height $h$ is thought to depend on $m$, $u$ and the acceleration due to gravity $g$.", "hgt", [["mass", 0, 1], ["speed", 2, 1, "u"], ["grav", -1, 1]]),
+  S("fallm", "A bead of mass $m$ is released from rest at a height $h$. Its speed $v$ on reaching the ground is thought to depend on $m$, $h$ and the acceleration due to gravity $g$.", "speed", [["mass", 0, 1], ["grav", 1, 2], ["hgt", 1, 2]]),
+  S("tube", "Liquid of density $\\rho$ oscillates in a U-tube. The time $t$ for one oscillation is thought to depend on $\\rho$, the length $l$ of the liquid column and the acceleration due to gravity $g$.", "time", [["dens", 0, 1], ["len", 1, 2], ["grav", -1, 2]]),
   S("discw", "A disc of mass $m$ and radius $r$ has kinetic energy $E$. Its angular speed $\\omega$ is thought to depend on $E$, $m$ and $r$.", "omega", [["energy", 1, 2], ["mass", -1, 2], ["rad", -1, 1]]),
 ];
 interface SituationDims { target: Dim3; factors: Dim3[] }
