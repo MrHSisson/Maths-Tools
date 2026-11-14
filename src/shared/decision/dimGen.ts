@@ -90,6 +90,7 @@ const LETTERS = ["α", "β", "γ"];
 const nameOf = (id: string): string => QBY[id].name;
 const joinAnd = (xs: string[]): string => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 const the = (name: string): string => `${/^the /.test(name) ? "" : "the "}${name}`;
+const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 const rowFor = (id: string, over: Partial<DimRow> = {}): DimRow => ({ sym: symTex(QBY[id].sym), name: QBY[id].name, dim: qDim(id), given: false, role: "factor", ...over });
 
 // ── Wrong answers to a circled dimension, each naming its slip ──────────────────────────────────────────────────────────────
@@ -206,7 +207,7 @@ const CR = (text: string, lhs: string, lhsSym: string, others: Array<[string, st
   return { text, lhs, lhsSym, others: others.map(([sym, q, p]) => ({ sym, q, p: fr(p) })), kSym, kName, kexp, formula, num, arg };
 };
 export const CONST_RELATIONS: ConstRel[] = [
-  CR("The elastic energy $E$ stored in a stretched spring is given by $E = \\frac{1}{2}kx^{2}$, where $x$ is the extension of the spring.", "energy", "E", [["x", "ext", 2]], "k", "the stiffness of the spring", 1, "\\frac{1}{2}"),
+  CR("The elastic energy $E$ stored in a stretched spring is given by $E = \\frac{1}{2}\\kappa x^{2}$, where $x$ is the extension of the spring.", "energy", "E", [["x", "ext", 2]], "κ", "the stiffness of the spring", 1, "\\frac{1}{2}"),
   CR("The magnitude of the gravitational force $F$ between two bodies of masses $m_1$ and $m_2$ a distance $d$ apart is $F = \\frac{Gm_1m_2}{d^{2}}$, where $G$ is a constant.", "force", "F", [["m₁", "mass", 1], ["m₂", "mass", 1], ["d", "dep", -2]], "G", "the gravitational constant"),
   CR("The kinetic energy $E$ of a rotating body is $E = \\frac{1}{2}I\\omega^{2}$, where $\\omega$ is its angular speed and $I$ is a quantity called the moment of inertia.", "energy", "E", [["ω", "omega", 2]], "I", "the moment of inertia", 1, "\\frac{1}{2}"),
   CR("A body moving slowly through a fluid at speed $v$ experiences a resistance $F = kv$, where $k$ is a constant.", "force", "F", [["v", "speed", 1]], "k", "a resistance constant"),
@@ -223,7 +224,7 @@ export const CONST_RELATIONS: ConstRel[] = [
   CR("The surface tension $\\sigma$ of a liquid film is defined by $F = \\sigma l$, where $F$ is the force along an edge of length $l$.", "force", "F", [["l", "len", 1]], "σ", "the surface tension", 1),
 ];
 /** the constants that stand for a named quantity, by "left-hand symbol|constant" */
-const CONST_REPRESENTS: Record<string, string> = { "E|k": "stiffness", "E|I": "moment of inertia", "F|η": "viscosity", "v|ω": "angular speed", "ωt|ω": "angular speed", "F|σ": "surface tension" };
+const CONST_REPRESENTS: Record<string, string> = { "E|κ": "stiffness", "E|I": "moment of inertia", "F|η": "viscosity", "v|ω": "angular speed", "ωt|ω": "angular speed", "F|σ": "surface tension" };
 /** [k] from  lhs = k^kexp · Π others */
 export const constDim = (r: ConstRel): Dim3 => {
   const rest = r.others.reduce<Dim3>((acc, x) => dimAdd(acc, dimScale(qDim(x.q), x.p)), dimOf(0, 0, 0));
@@ -266,6 +267,7 @@ export function breakFormula(f: Formula): { formula: Formula; at: number; how: s
     const t = all[at];
     const fi = rint(0, t.f.length - 1);
     const x = t.f[fi];
+    if (x.q === "trigf") continue; // a power of, or a swap for, a trig function would change nothing: the argument is what matters
     let how: string;
     const mode = rint(0, 2);
     if (mode === 0 && fint(x.p)) {
@@ -296,9 +298,14 @@ export function breakFormula(f: Formula): { formula: Formula; at: number; how: s
 }
 
 const termsOf = (f: Formula): Term[] => [...f.lhs, ...f.rhs];
+/** what a letter stands for where the library's name would be ambiguous (two different speeds, two different pressures) */
+const SYM_NAMES: Record<string, string> = { "u|speed": "initial speed", "P|press": "total pressure", "y|hgt": "height", "R|len": "range", "s|len": "displacement", "θ|angle": "angle (in radians)" };
 const factorQuantities = (f: Formula): Array<{ sym: string; name: string }> => {
   const seen = new Map<string, string>();
-  for (const t of termsOf(f)) for (const x of t.f) if (!seen.has(x.sym)) seen.set(x.sym, QBY[x.q].name);
+  for (const t of termsOf(f)) for (const x of t.f) {
+    const named: Array<[string, string]> = x.q === "trigf" ? x.args ?? [] : [[x.sym, x.q]];
+    for (const [sym, q] of named) if (!seen.has(sym)) seen.set(sym, SYM_NAMES[`${sym}|${q}`] ?? QBY[q].name);
+  }
   return [...seen].map(([sym, name]) => ({ sym, name }));
 };
 /** the formula's terms as the working needs them */
@@ -401,6 +408,16 @@ export const SITUATIONS: Situation[] = [
   S("bounce", "A ball of mass $m$ hits the floor at speed $u$ and bounces to a height $h$. The height $h$ is thought to depend on $m$, $u$ and the acceleration due to gravity $g$.", "hgt", [["mass", 0, 1], ["speed", 2, 1, "u"], ["grav", -1, 1]]),
   S("fallm", "A bead of mass $m$ is released from rest at a height $h$. Its speed $v$ on reaching the ground is thought to depend on $m$, $h$ and the acceleration due to gravity $g$.", "speed", [["mass", 0, 1], ["grav", 1, 2], ["hgt", 1, 2]]),
   S("tube", "Liquid of density $\\rho$ oscillates in a U-tube. The time $t$ for one oscillation is thought to depend on $\\rho$, the length $l$ of the liquid column and the acceleration due to gravity $g$.", "time", [["dens", 0, 1], ["len", 1, 2], ["grav", -1, 2]]),
+  S("sound", "The speed $v$ of sound in a gas is thought to depend on the pressure $p$ and the density $\\rho$ of the gas.", "speed", [["press", 1, 2], ["dens", -1, 2]]),
+  S("stringwave", "The speed $v$ of a wave along a taut string is thought to depend on the tension $F$ in the string and its mass per unit length $q$.", "speed", [["force", 1, 2], ["linmass", -1, 2]]),
+  S("springe", "The elastic energy $E$ stored in a stretched spring is thought to depend on the stiffness $\\kappa$ of the spring and its extension $x$.", "energy", [["stiff", 1, 1], ["ext", 2, 1]]),
+  S("springw", "A mass $m$ oscillates on a spring of stiffness $\\kappa$. Its angular speed $\\omega$ is thought to depend only on $m$ and $\\kappa$.", "omega", [["mass", -1, 2], ["stiff", 1, 2]]),
+  S("centripetal", "A particle of mass $m$ moves in a circle of radius $r$ at speed $v$. The force $F$ needed to keep it moving in the circle is thought to depend on $m$, $v$ and $r$.", "force", [["mass", 1, 1], ["speed", 2, 1], ["rad", -1, 1]]),
+  S("hydro", "The pressure $p$ at a depth $d$ in a liquid of density $\\rho$ is thought to depend on $\\rho$, $d$ and the acceleration due to gravity $g$.", "press", [["dens", 1, 1], ["dep", 1, 1], ["grav", 1, 1]]),
+  S("turbine", "The power $P$ delivered by a wind turbine is thought to depend on the density $\\rho$ of the air, the area $A$ that its blades sweep out and the wind speed $v$.", "power", [["dens", 1, 1], ["area", 1, 1], ["speed", 3, 1]]),
+  S("stokes", "A small sphere of radius $r$ moves slowly at speed $v$ through a fluid of viscosity $\\eta$. The resistance force $F$ is thought to depend on $r$, $v$ and $\\eta$.", "force", [["rad", 1, 1], ["speed", 1, 1], ["visc", 1, 1]]),
+  S("ripple", "Small ripples on the surface of a liquid have a time period $t$ thought to depend on the density $\\rho$ of the liquid, its surface tension $\\sigma$ and the distance $l$ between crests.", "time", [["dens", 1, 2], ["surf", -1, 2], ["len", 3, 2]]),
+  S("fallt", "A stone of mass $m$ is dropped from rest from a height $h$. The time $t$ it takes to fall is thought to depend on $m$, $h$ and the acceleration due to gravity $g$.", "time", [["mass", 0, 1], ["hgt", 1, 2], ["grav", -1, 2]]),
   S("discw", "A disc of mass $m$ and radius $r$ has kinetic energy $E$. Its angular speed $\\omega$ is thought to depend on $E$, $m$ and $r$.", "omega", [["energy", 1, 2], ["mass", -1, 2], ["rad", -1, 1]]),
 ];
 interface SituationDims { target: Dim3; factors: Dim3[] }
@@ -445,7 +462,13 @@ const eqsAnswer = (v: Fr[], syms: string[]): string => M(v.map((x, i) => `${symT
 interface PowersOpts { context: "none" | "named" | "worded"; ask: "find" | "zero" | "cannot"; given: "dims" | "units" }
 
 /** a question about one of the worked situations; `drop` leaves one quantity out of the model (the student who thinks it does not matter) */
-export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; given?: "dims" | "units"; drop?: number } = {}): DimQuestion {
+/** a situation with no story: "The time $t$ is thought to depend on the length $l$ and the acceleration due to gravity $g$." */
+const bareContext = (sit: Situation, keep: number[]): string => {
+  const tq = QBY[sit.target];
+  const names = keep.map((i) => { const [id, , , s] = sit.factors[i]; return `${the(QBY[id].name)} ${M(symTex(s ?? QBY[id].sym))}`; });
+  return `${cap(the(tq.name))} ${M(symTex(sit.sym ?? tq.sym))} is thought to depend on ${joinAnd(names)}.`;
+};
+export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; given?: "dims" | "units"; drop?: number; bare?: boolean } = {}): DimQuestion {
   const keep = sit.factors.map((_, i) => i).filter((i) => i !== o.drop);
   const facsRaw = keep.map((i) => sit.factors[i]);
   const n = facsRaw.length;
@@ -454,6 +477,7 @@ export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; 
   const tq = QBY[sit.target];
   const tsym = sit.sym ?? tq.sym;
   const facs = facsRaw.map(([id, , , s]) => ({ sym: s ?? QBY[id].sym, name: QBY[id].name, dim: qDim(id) }));
+  const ctx = o.bare ? bareContext(sit, keep) : sit.ctx;
   const target = qDim(sit.target);
   const model = modelTex(tsym, facs, syms);
   const zeroIdx = o.ask === "zero" ? exps.findIndex(fzero) : -1;
@@ -466,16 +490,44 @@ export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; 
     ? `Show that ${M(`${symTex(syms[zeroIdx])} = 0`)} and find the values of ${andTex(syms.filter((_, i) => i !== zeroIdx))}.`
     : `Use dimensional analysis to find the values of ${andTex(syms)}.`;
   return {
-    data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask: zeroIdx >= 0 ? "zero" : "find", zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, context: sit.ctx, title: `Find ${andTex(syms)}`, ...establish([sit.target, ...facsRaw.map((f) => f[0])], [target, ...facs.map((f) => f.dim)], o.given === "units" ? "units" : "defs") },
-    prompt: `${sit.ctx}${unitsLine} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. ${tail}`,
+    data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask: zeroIdx >= 0 ? "zero" : "find", zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, context: ctx, title: `Find ${andTex(syms)}`, ...establish([sit.target, ...facsRaw.map((f) => f[0])], [target, ...facs.map((f) => f.dim)], o.given === "units" ? "units" : "defs") },
+    prompt: `${ctx}${unitsLine} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. ${tail}`,
     answerText: eqsAnswer(exps, syms),
   };
 }
 
+/** a model that cannot work: a real situation with a quantity it needs left out (the pendulum's time from its mass and length alone) */
+function cannotFromSituation(sit: Situation, drop: number, unitsGiven: boolean): DimQuestion {
+  const keep = sit.factors.map((_, i) => i).filter((i) => i !== drop);
+  const kept = keep.map((i) => sit.factors[i]);
+  const facs = kept.map(([id, , , s]) => ({ sym: s ?? QBY[id].sym, name: QBY[id].name, dim: qDim(id) }));
+  const tq = QBY[sit.target];
+  const tsym = sit.sym ?? tq.sym;
+  const cols = facs.map((f) => f.dim);
+  const target = qDim(sit.target);
+  const eqs = equationsFor(target, cols);
+  const syms = LETTERS.slice(0, facs.length);
+  const model = modelTex(tsym, facs, syms);
+  const rows = modelRows({ sym: tsym, name: tq.name, dim: target }, facs, false, syms);
+  return {
+    data: { kind: "powers", rows, unknowns: syms, answerPowers: [], eqs, ask: "cannot", formula: model, context: bareContext(sit, keep), title: `Find ${andTex(syms)}`, ...establish([sit.target, ...kept.map(([id]) => id)], [target, ...cols], unitsGiven ? "units" : "defs") },
+    prompt: `${bareContext(sit, keep)} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. Show that no values of ${andTex(syms)} make this model dimensionally consistent.`,
+    answerText: `no values of ${andTex(syms)} work: the equations contradict each other`,
+  };
+}
 export function genPowers(level: number, o: PowersOpts): DimQuestion {
   const unitsGiven = o.given === "units";
   // an inconsistent model: two quantities that cannot make the target
   if (o.ask === "cannot") {
+    // with a context it is a real situation with an essential quantity missing; with letters, quantities made up
+    if (o.context !== "none") {
+      const cands = SITUATIONS.filter((s) => s.factors.length === 3).flatMap((s) => s.factors.map((_, i) => ({ s, i })).filter(({ s: sit, i }) => {
+        const cs = sit.factors.filter((_, k) => k !== i).map(([id]) => qDim(id));
+        const e = equationsFor(qDim(sit.target), cs);
+        return solveLinear(e.map((x) => x.coef), e.map((x) => x.rhs)).status === "none";
+      }));
+      if (cands.length) { const c = pickOne(cands); return cannotFromSituation(c.s, c.i, unitsGiven); }
+    }
     for (let g = 0; g < 300; g++) {
       const ids = sample(ING_POW, 2);
       const facs = ids.map((i) => ({ sym: QBY[i].sym, name: QBY[i].name, dim: qDim(i) }));
@@ -509,60 +561,43 @@ export function genPowers(level: number, o: PowersOpts): DimQuestion {
     const sit = pool.length ? pickOne(pool) : pickOne(situationsAtLevel(level));
     return powersFromSituation(sit, { ask: o.ask === "zero" ? "zero" : "find", given: o.given });
   }
-  // context-free (letters) or named quantities, built equations-first
+  // named quantities: the same real situations, with no story (so the relation is always physical)
+  if (o.context === "named") {
+    const pool = situationsAtLevel(level, o.ask === "zero");
+    const sit = pool.length ? pickOne(pool) : pickOne(situationsAtLevel(level));
+    return powersFromSituation(sit, { ask: o.ask === "zero" ? "zero" : "find", given: o.given, bare: true });
+  }
+  // context-free (letters), built equations-first
   for (let guard = 0; guard < 1500; guard++) {
     const ids = sample(ING_POW, n);
     const facs = ids.map((i) => ({ sym: QBY[i].sym, name: QBY[i].name, dim: qDim(i) }));
     if (new Set(facs.map((f) => f.sym)).size < n) continue;
     const cols = ids.map(qDim);
     if (rankOf(cols) !== n) continue;
-    let exps: Fr[];
-    let target: Dim3;
-    let tid: string | undefined;
-    if (o.context === "named") {
-      tid = pickOne(TARGETS.filter((t) => !ids.includes(t)));
-      if (facs.some((f) => f.sym === QBY[tid!].sym)) continue; // the target's letter must not be one of the model's
-      target = qDim(tid);
-      const eqs0 = equationsFor(target, cols);
-      const res = solveLinear(eqs0.map((e) => e.coef), eqs0.map((e) => e.rhs));
-      if (res.status !== "unique") continue;
-      exps = res.x;
-    } else {
-      const choices = level === 3 ? [-3, -2, -1, 0, 1, 2, 3].flatMap((k) => [fr(k), fr(k, 2), fr(k, 3)]) : [-3, -2, -1, 0, 1, 2, 3].map((k) => fr(k));
-      exps = ids.map(() => pickOne(choices));
-      target = cols.reduce<Dim3>((acc, c, i) => dimAdd(acc, dimScale(c, exps[i])), dimOf(0, 0, 0));
-      if (!target.every(fint) || target.some((e) => Math.abs(e[0]) > 6)) continue;
-    }
+    const choices = level === 3 ? [-3, -2, -1, 0, 1, 2, 3].flatMap((k) => [fr(k), fr(k, 2), fr(k, 3)]) : [-3, -2, -1, 0, 1, 2, 3].map((k) => fr(k));
+    const exps: Fr[] = ids.map(() => pickOne(choices));
+    const target = cols.reduce<Dim3>((acc, c, i) => dimAdd(acc, dimScale(c, exps[i])), dimOf(0, 0, 0));
+    if (!target.every(fint) || target.some((e) => Math.abs(e[0]) > 6)) continue;
     if (!goodExps(exps, level, o.ask)) continue;
     if (dimZero(target)) continue;
     if (level === 2 && !hasDirectEq(cols)) continue;
     const eqs = equationsFor(target, cols);
-    const letters = o.context === "none" ? ["p", "q", "r"] : null;
     // in letters the grid says nothing of what they are (no name under the symbol)
-    const shown = letters ? facs.map((f, i) => ({ ...f, sym: letters[i], name: "" })) : facs;
-    const tsym = o.context === "none" ? "X" : QBY[tid!].sym;
-    const tname = o.context === "none" ? "a quantity" : QBY[tid!].name;
-    const rows = modelRows({ sym: tsym, name: tname, dim: target }, shown, o.context === "none" && !unitsGiven, syms);
-    const model = modelTex(tsym, shown, syms);
+    const letters = ["p", "q", "r"];
+    const shown = facs.map((f, i) => ({ ...f, sym: letters[i], name: "" }));
+    const rows = modelRows({ sym: "X", name: "a quantity", dim: target }, shown, !unitsGiven, syms);
+    const model = modelTex("X", shown, syms);
     const zeroIdx = o.ask === "zero" ? exps.findIndex(fzero) : -1;
     const tail = zeroIdx >= 0
       ? `Show that ${M(`${symTex(syms[zeroIdx])} = 0`)} and find the values of ${andTex(syms.filter((_, i) => i !== zeroIdx))}.`
       : `Use dimensional analysis to find the values of ${andTex(syms)}.`;
-    let lead: string;
-    if (o.context === "none") {
-      const given = unitsGiven
-        ? `${shown.map((f, i) => `${M(symTex(f.sym))} is measured in ${M(unitsTex(QBY[ids[i]].units!))}`).join(", ")}, and ${M("X")} in ${M(unitsTexFromDim(target))}.`
-        : `${shown.map((f) => M(`[${symTex(f.sym)}] = ${dimTex(f.dim)}`)).join(", ")}, and ${M("X")} has dimensions ${M(dimTex(target))}.`;
-      lead = `The quantities ${andTex(shown.map((f) => f.sym))} are related to a quantity ${M("X")}. ${given}`;
-    } else {
-      const units = unitsGiven
-        ? ` ${[{ s: tsym, id: tid! }, ...ids.map((id, i) => ({ s: shown[i].sym, id }))].filter((x) => QBY[x.id].units).map((x) => `${M(symTex(x.s))} is measured in ${M(unitsTex(QBY[x.id].units!))}`).join(", ")}.`
-        : "";
-      lead = `${the(tname)[0].toUpperCase()}${the(tname).slice(1)} ${M(symTex(tsym))} is thought to depend on ${joinAnd(shown.map((f) => `${the(f.name)} ${M(symTex(f.sym))}`))}.${units}`;
-    }
+    const given = unitsGiven
+      ? `${shown.map((f, i) => `${M(symTex(f.sym))} is measured in ${M(unitsTex(QBY[ids[i]].units!))}`).join(", ")}, and ${M("X")} in ${M(unitsTexFromDim(target))}.`
+      : `${shown.map((f) => M(`[${symTex(f.sym)}] = ${dimTex(f.dim)}`)).join(", ")}, and ${M("X")} has dimensions ${M(dimTex(target))}.`;
+    const lead = `The quantities ${andTex(shown.map((f) => f.sym))} are related to a quantity ${M("X")}. ${given}`;
     const ask = zeroIdx >= 0 ? "zero" : "find";
     return {
-      data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask, zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, title: `Find ${andTex(syms)}`, ...establish(o.context === "none" ? [null, ...ids] : [tid!, ...ids], [target, ...cols], unitsGiven ? "units" : o.context === "none" ? "given" : "defs") },
+      data: { kind: "powers", rows, unknowns: syms, answerPowers: exps, eqs, ask, zeroIdx: zeroIdx >= 0 ? zeroIdx : undefined, formula: model, title: `Find ${andTex(syms)}`, ...establish([null, ...ids], [target, ...cols], unitsGiven ? "units" : o.context === "none" ? "given" : "defs") },
       prompt: `${lead} It is suggested that ${M(model)}, where ${M("k")} is a dimensionless constant and ${andTex(syms)} are constants. ${tail}`,
       answerText: eqsAnswer(exps, syms),
     };

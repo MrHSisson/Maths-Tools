@@ -169,7 +169,7 @@ function PhoneStep({ st }: { st: SolveStep }) {
           <div style={{ flex: 1, fontSize: 14, color: "#475569", lineHeight: 1.45 }}><Prose text={st.caption} /></div>
           <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Fold the steps away" : "Show the steps"} className="shrink-0 flex items-center justify-center text-slate-500" style={{ width: 40, height: 32 }}>{chevron}</button>
         </div>
-        {!open && <div style={{ fontSize: 17, marginTop: 2 }}><Tex t={known[known.length - 1]} /></div>}
+        {!open && (st.dimView!.knownFresh ? <div style={{ fontSize: 17, marginTop: 2 }}><Tex t={known[known.length - 1]} /></div> : <PhoneRows rows={addedRows(st.more[st.more.length - 1])} />)}
         {open && (
           <div className="flex flex-col gap-3 mt-2 ml-2 pl-3" style={{ borderLeft: "2px solid #c7d2fe" }}>
             {st.more.map((m, k) => (<div key={k}><div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{m.caption}</div><PhoneRows rows={addedRows(m)} /></div>))}

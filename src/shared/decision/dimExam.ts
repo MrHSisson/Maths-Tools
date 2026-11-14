@@ -91,14 +91,17 @@ function exFind(level: number): DecisionProblem {
 }
 
 // the constants that feed a model, with the situations that use them
-const CONSTANT_PAIRS: Array<{ rel: number; sits: string[] }> = [
-  { rel: 1, sits: ["orbit", "circ", "lifetime"] },
-  { rel: 2, sits: ["compound"] },
+const CONSTANT_PAIRS: Array<{ k: string; lhs: string; sits: string[] }> = [
+  { k: "G", lhs: "F", sits: ["orbit", "circ", "lifetime"] },
+  { k: "I", lhs: "E", sits: ["compound"] },
+  { k: "κ", lhs: "E", sits: ["spring2", "spring3", "springw"] },
+  { k: "η", lhs: "F", sits: ["stokes"] },
+  { k: "σ", lhs: "F", sits: ["ripple"] },
 ];
 /** show a constant's dimensions from a formula, then use them in a model */
 function exConstant(level: number): DecisionProblem {
   const pair = pickOne(CONSTANT_PAIRS);
-  const rel = CONST_RELATIONS[pair.rel];
+  const rel = pickOne(CONST_RELATIONS.filter((r) => r.kSym === pair.k && r.lhsSym === pair.lhs));
   const sitId = pickOne(pair.sits);
   const sit = SITUATIONS.find((s) => s.id === sitId)!;
   const k = genDimsConstFor(rel, false);

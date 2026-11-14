@@ -83,6 +83,7 @@ export const LIBRARY: Quantity[] = [
   Q("opp", "opposite side", "\\mathrm{opp}", [0, 1, 0], "m"),
   Q("adj", "adjacent side", "\\mathrm{adj}", [0, 1, 0], "m"),
   Q("hyp", "hypotenuse", "\\mathrm{hyp}", [0, 1, 0], "m"),
+  Q("trigf", "a trigonometric function", "\\sin", [0, 0, 0], ""),
   Q("arg", "the argument of the trig function", "\\theta", [0, 0, 0], ""),
   Q("time", "time", "t", [0, 0, 1], "s"),
   Q("mass", "mass", "m", [1, 0, 0], "kg"),
@@ -202,11 +203,13 @@ export function equationsFor(target: Dim3, factors: Dim3[]): DimEq[] {
 }
 
 // ── Formulas for the consistency questions ───────────────────────────────────
-export interface Factor { sym: string; q: string; p: Fr }
+export interface Factor { sym: string; q: string; p: Fr; /** a trig function's argument is made of these (ω and t in sin(ωt)): the question names them */ args?: Array<[string, string]> }
 export interface Term { sign: "+" | "−"; num?: string; f: Factor[] }
 export interface Formula { id: string; lhs: Term[]; rhs: Term[]; level: 1 | 2 }
 const F = (sym: string, q: string, p = 1): Factor => ({ sym, q, p: fr(p) });
 const Fh = (sym: string, q: string, n: number, d: number): Factor => ({ sym, q, p: fr(n, d) });
+/** a trigonometric function: dimensionless, and its argument (built from `args`) is dimensionless too */
+const Ft = (sym: string, args: Array<[string, string]>): Factor => ({ sym, q: "trigf", p: fr(1), args });
 const T = (f: Factor[], num?: string, sign: "+" | "−" = "+"): Term => ({ sign, num, f });
 
 /** formulas that are dimensionally consistent as written, with the quantities each symbol stands for */
@@ -226,6 +229,12 @@ export const FORMULAS: Formula[] = [
   { id: "F=ma+mg", level: 2, lhs: [T([F("F", "force")])], rhs: [T([F("m", "mass"), F("a", "acc")]), T([F("m", "mass"), F("g", "grav")])] },
   { id: "t=2pi sqrt(l/g)", level: 2, lhs: [T([F("t", "time")])], rhs: [T([Fh("l", "len", 1, 2), Fh("g", "grav", -1, 2)], "2π")] },
   { id: "t=2pi sqrt(m/k)", level: 2, lhs: [T([F("t", "time")])], rhs: [T([Fh("m", "mass", 1, 2), Fh("k", "stiff", -1, 2)], "2π")] },
+  // trig functions have no dimensions, and their argument must have none: ωt, θ, 2θ
+  { id: "x=r sin wt", level: 2, lhs: [T([F("x", "ext")])], rhs: [T([F("r", "rad"), Ft("\\sin(ωt)", [["ω", "omega"], ["t", "time"]])])] },
+  { id: "v=wr cos wt", level: 2, lhs: [T([F("v", "speed")])], rhs: [T([F("ω", "omega"), F("r", "rad"), Ft("\\cos(ωt)", [["ω", "omega"], ["t", "time"]])])] },
+  { id: "y=ut sin th - gt2/2", level: 2, lhs: [T([F("y", "hgt")])], rhs: [T([F("u", "speed"), F("t", "time"), Ft("\\sin\\theta", [["θ", "angle"]])]), T([F("g", "grav"), F("t", "time", 2)], "½", "−")] },
+  { id: "R=u2 sin 2th/g", level: 2, lhs: [T([F("R", "len")])], rhs: [T([F("u", "speed", 2), F("g", "grav", -1), Ft("\\sin 2\\theta", [["θ", "angle"]])])] },
+  { id: "P=Fv cos th", level: 2, lhs: [T([F("P", "power")])], rhs: [T([F("F", "force"), F("v", "speed"), Ft("\\cos\\theta", [["θ", "angle"]])])] },
   { id: "mgh=mv2/2", level: 2, lhs: [T([F("m", "mass"), F("g", "grav"), F("h", "hgt")])], rhs: [T([F("m", "mass"), F("v", "speed", 2)], "½")] },
 ];
 export const termDim = (t: Term): Dim3 => t.f.reduce<Dim3>((acc, x) => dimAdd(acc, dimScale(qDim(x.q), x.p)), dimOf(0, 0, 0));

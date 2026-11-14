@@ -22,7 +22,7 @@ export const boxed = (tex: string): string => `\\boxed{${tex}}`;
 
 // ── what is given ───────────────────────────────────────────────────────────────────────────
 /** lengths (however named), time, mass, speed and acceleration: the quantities whose dimensions may be taken as known */
-export const GIVEN_IDS = ["len", "hgt", "rad", "dep", "ext", "opp", "adj", "hyp", "time", "mass", "speed", "acc", "grav"];
+export const GIVEN_IDS = ["len", "hgt", "rad", "dep", "ext", "opp", "adj", "hyp", "trigf", "time", "mass", "speed", "acc", "grav"];
 /** the given set the page opens with, as "[l] = L" items */
 export const BASE_GIVEN = ["len", "time", "mass", "speed", "acc"];
 export const GIVEN_ITEMS: string[] = BASE_GIVEN.map((id) => `[${symTex(QBY[id].sym)}] = ${dimTex(qDim(id))}`);

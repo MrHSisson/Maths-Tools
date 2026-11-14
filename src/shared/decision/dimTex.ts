@@ -2,9 +2,9 @@
 // Prose carries maths between $…$ (rendered on screen by the shell's InlineMath, on paper by KaTeX); these build what goes between the dollars.
 import { type Fr, type Dim3, type Term, type Factor, BASE, fr, fmul, fneg, feq, fzero, ONE, parseUnits } from "./dim";
 
-const GREEK: Record<string, string> = { ρ: "\\rho ", κ: "\\kappa ", ω: "\\omega ", η: "\\eta ", σ: "\\sigma ", τ: "\\tau ", π: "\\pi ", μ: "\\mu ", α: "\\alpha ", β: "\\beta ", γ: "\\gamma ", "₁": "_1", "₂": "_2" };
+const GREEK: Record<string, string> = { θ: "\\theta ", ρ: "\\rho ", κ: "\\kappa ", ω: "\\omega ", η: "\\eta ", σ: "\\sigma ", τ: "\\tau ", π: "\\pi ", μ: "\\mu ", α: "\\alpha ", β: "\\beta ", γ: "\\gamma ", "₁": "_1", "₂": "_2" };
 /** a quantity's or power's symbol as TeX ("ρ" → "\rho", "m₁" → "m_1") */
-export const symTex = (s: string): string => s.replace(/[ρκωησταβγμπ₁₂]/g, (c) => GREEK[c]); // a Greek command keeps its trailing space, so "\\rho g" never runs together
+export const symTex = (s: string): string => s.replace(/[θρκωησταβγμπ₁₂]/g, (c) => GREEK[c]); // a Greek command keeps its trailing space, so "\\rho g" never runs together
 /** a fraction as TeX: "2", "-1", "\frac{1}{2}", "-\frac{1}{3}" */
 export function frTex(a: Fr): string {
   const neg = a[0] < 0 ? "-" : "";

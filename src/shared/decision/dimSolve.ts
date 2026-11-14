@@ -129,7 +129,9 @@ function derivationSteps(c: Ctx, o: DOpts): SolveStep[] {
 function oneStep(parts: SolveStep[], caption: string): SolveStep {
   const first = parts[0].dimView!, last = parts[parts.length - 1];
   const base = first.lines.length - (first.fresh ?? 0);
-  return { ...last, caption, more: parts, dimView: { ...last.dimView!, fresh: last.dimView!.lines.length - base } };
+  // a part that starts a fresh page (the smaller system) breaks the run: only that last page's own lines are new
+  const reset = parts.some((p, i) => i > 0 && p.dimView!.lines.length < parts[i - 1].dimView!.lines.length);
+  return { ...last, caption, more: parts, dimView: { ...last.dimView!, fresh: reset ? last.dimView!.fresh : last.dimView!.lines.length - base } };
 }
 /** the steps that build each quantity in `keys` that is not given, dependencies first; each finished build joins the known strip */
 function buildSteps(keys: string[], c: Ctx, expand: boolean): SolveStep[] {
@@ -182,7 +184,7 @@ export function modelChains(d: DimProblemData): string[] {
 
 /** a formula's term as the pieces of a derivation: its factors, and a number with dimensions 1 */
 function termPieces(t: NonNullable<DimProblemData["terms"]>[number]): { pieces: Piece[]; dim: Dim3; lhs: string } {
-  const pieces: Piece[] = [...(t.num ? [numPiece(t.num)] : []), ...t.f.map((x): Piece => ({ br: `[${symTex(x.sym)}]`, dim: qDim(x.q), exp: x.p }))];
+  const pieces: Piece[] = [...(t.num ? [numPiece(t.num)] : []), ...t.f.map((x): Piece => ({ br: `[${symTex(x.sym)}]`, dim: qDim(x.q), exp: x.p, ...(x.q === "trigf" ? { dimless: "a trigonometric function of a dimensionless angle" } : {}) }))];
   const dim = t.f.reduce<Dim3>((acc, x) => [fadd(acc[0], fmul(qDim(x.q)[0], x.p)), fadd(acc[1], fmul(qDim(x.q)[1], x.p)), fadd(acc[2], fmul(qDim(x.q)[2], x.p))], [ZERO, ZERO, ZERO]);
   return { pieces, dim, lhs: brTex(t.tex) };
 }
@@ -441,8 +443,11 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       const own = `${feq(p.coef[v], ONE) ? "" : frTex(p.coef[v])}${symTex(syms[v])}`;
       steps.push(S(`Put the values into the ${M(`\\text{${p.label}}`)} equation to find ${M(symTex(syms[v]))}.`, "Solve", lab(p.label, `${[own, ...known].join(" + ").replace(/\+ -/g, "- ")} = ${frTex(p.rhs)}`), al(symTex(syms[v]), frTex(x))));
     };
+    const startAt = steps.length;
     solveSystem(system, pending);
     first = false;
+    // folded into one step (opened on request) unless every step was asked for
+    if (!d.expandBuilds && steps.length - startAt >= 3) steps.push(oneStep(steps.splice(startAt), "No equation has a power on its own: eliminate one, solve, then put the values back."));
   }
   const checkRows = d.eqs.map((e) => lab(BASE[e.col], `${e.coef.map((x, k) => (fzero(x) ? null : `${feq(x, ONE) ? "" : frTex(x)}\\left(${frTex(val[k]!)}\\right)`)).filter(Boolean).join(" + ").replace(/\+ -/g, "- ")} = ${frTex(e.rhs)}`));
   const answer = syms.map((s, i) => `${symTex(s)} = ${frTex(val[i]!)}`).join(",\\ ");
