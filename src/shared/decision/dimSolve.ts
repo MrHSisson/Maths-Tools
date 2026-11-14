@@ -5,7 +5,7 @@
 // examiner expects: F = ma, so [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻².
 import type { DecisionProblem, SolveStep } from "./types";
 import { type Fr, type Dim3, BASE, QBY, qDim, fmul, fadd, fsub, fdiv, fzero, feq, fr, ZERO, ONE, solveLinear, parseUnits, unitsDim, dimOf } from "./dim";
-import { symTex, frTex, supTex, dimTex, dimPowTex, productTex, eqLhsTex, brTex, numTex, M } from "./dimTex";
+import { symTex, frTex, supTex, dimTex, productTex, eqLhsTex, brTex, numTex, M } from "./dimTex";
 import { al, ct, lab, head, formulaRow, GAP, boxed, GIVEN_IDS, GIVEN_ITEMS, BASE_GIVEN, buildItem, buildOrder, keyName, derive, flatChain, NUMBER_WHY, type Piece, type Derivation } from "./dimBuild";
 import type { DimProblemData, DimRow } from "./dimGen";
 
@@ -57,10 +57,15 @@ function mainOf(d: DimProblemData): Main | null {
   }
   // an expression
   if (d.defText === "root") {
-    const brs = factors.map((r) => `${rowBr(r)}${supTex(r.exp ?? ONE)}`).join("");
-    const dims = factors.map((r) => dimPowTex(r.dim, r.exp ?? ONE)).join(" \\times ");
-    const inner = dimTex(d.answerDim!.map((e) => fmul(e, fr(2))) as unknown as Dim3);
-    const der: Derivation = { note: [], formula: [], def: [al(result.sym, `\\left(${brs}\\right)^{\\frac{1}{2}}`)], subst: [ct(`\\left(${dims}\\right)^{\\frac{1}{2}}`)], expand: [ct(`\\left(${inner}\\right)^{\\frac{1}{2}}`)], tidy: [], subtract: [], cancel: [], sum: [ct(ans)], divides: false };
+    // the root of a product or quotient: work the inside exactly as any other (fraction, combine, subtract), each row under the root, then halve
+    const innerDim = d.answerDim!.map((e) => fmul(e, fr(2))) as unknown as Dim3;
+    const inner = derive("", null, factors.map(piece), innerDim);
+    const under = (r: string): string => r.replace(/^&= (.*)$/, (_m, x: string) => `&= \\left(${x}\\right)^{\\frac{1}{2}}`);
+    const brs = inner.def[0].replace(/^ ?&= /, "");
+    const der: Derivation = {
+      note: [], formula: [], def: [al(result.sym, `\\left(${brs}\\right)^{\\frac{1}{2}}`)], subst: inner.subst.map(under), expand: inner.expand.map(under), tidy: inner.tidy.map(under),
+      subtract: inner.subtract.map(under), cancel: inner.cancel.map(under), sum: [...inner.sum.map(under), ct(ans)], divides: false,
+    };
     return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der, final: `${result.sym} = ${boxTex(d.answerDim!)}`, root: true };
   }
   return { lhs: result.sym, heading: "Now: the dimensions of the expression", intro: "", der: derive(result.sym, null, factors.map(piece), d.answerDim!), final: `${result.sym} = ${boxTex(d.answerDim!)}` };

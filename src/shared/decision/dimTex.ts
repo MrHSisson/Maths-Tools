@@ -41,7 +41,7 @@ export function eqLhsTex(coef: Fr[], syms: string[]): string {
   });
   return out || "0";
 }
-const NUM_TEX: Record<string, string> = { "½": "\\frac{1}{2}", "2π": "2\\pi ", "2": "2" };
+const NUM_TEX: Record<string, string> = { "½": "\\frac{1}{2}", "2π": "2\\pi ", "6π": "6\\pi ", "2": "2" };
 /** a number written in a formula (½, 2, 2π) as TeX */
 export const numTex = (n: string): string => NUM_TEX[n] ?? n;
 /** a product of factors: numerator over denominator as a fraction, a root over the lot when asked; `override` writes a factor itself (the unknown power n) */
