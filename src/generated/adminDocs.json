@@ -484,7 +484,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page, not the landing page."
+     "s": "**For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page on a tablet, laptop or whiteboard, not the landing page and not on a phone (the real device, or View as: Mobile)."
     }
    ]
   },

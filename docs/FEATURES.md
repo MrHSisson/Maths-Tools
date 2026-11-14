@@ -77,7 +77,7 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 **For:** putting the question on whichever side suits the room, or the teacher's reach. **How it works:** mirrors every two-sided layout at once: the Whiteboard's question and working box (embedded and fullscreen, including the draggable divider) and the Worked Example's steps and picture. Kept per device. **Where:** the landing-page burger menu ("Two-sided layouts"), each tool's burger menu ("Swap Sides"), and a button on the fullscreen bars. The Decision tools are not yet included.
 
 ### Ink pen (draw anywhere)
-**For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page, not the landing page.
+**For:** writing on top of any tool page, on a touch screen or interactive whiteboard. **How it works:** a pencil button opens a movable bar with Freeze, Pen, Eraser, Undo, Clear and colours. Ink stays until you change page. **Where:** every tool page on a tablet, laptop or whiteboard, not the landing page and not on a phone (the real device, or View as: Mobile).
 
 ### Fullscreen and the collapsible working panel
 **For:** filling the screen for a whole-class view. **How it works:** Fullscreen enlarges the question; the working or visualiser panel on the right can be collapsed so a large diagram fills the width, and re-opened from a button in the question box. **Where:** Whiteboard.
