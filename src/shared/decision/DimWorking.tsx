@@ -47,14 +47,19 @@ function blockTex(b: Block, base: string): string {
     // a long one (or one that would make the line too wide) starts a new line, under the first equals.
     type Line = { left: string; parts: Array<{ tex: string; fresh: boolean }>; w: number };
     const lines: Line[] = [];
-    for (const { row, fresh } of b.rows) {
-      const at = row.indexOf("&");
-      const left = row.slice(0, at);
-      const right = row.slice(at + 1);
-      const w = weight(right);
-      const last = lines[lines.length - 1];
-      if (left.trim() === "" && last && last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
-      else lines.push({ left, parts: [{ tex: right, fresh }], w });
+    // a working either runs across one line or goes straight down under the first equals; never across and then back to the left.
+    // So a group (a row plus its follow-on rows) is merged only when the whole of it fits on one line.
+    const groups: Array<Array<{ row: string; fresh: boolean }>> = [];
+    for (const r of b.rows) {
+      const left = r.row.slice(0, r.row.indexOf("&"));
+      if (left.trim() === "" && groups.length) groups[groups.length - 1].push(r);
+      else groups.push([r]);
+    }
+    for (const g of groups) {
+      const parts = g.map(({ row, fresh }) => ({ left: row.slice(0, row.indexOf("&")), right: row.slice(row.indexOf("&") + 1), fresh }));
+      const total = parts.reduce((n, x) => n + weight(x.right), 0);
+      if (total <= LINE_BUDGET) lines.push({ left: parts[0].left, parts: parts.map((x) => ({ tex: x.right, fresh: x.fresh })), w: total });
+      else parts.forEach((x) => lines.push({ left: x.left, parts: [{ tex: x.right, fresh: x.fresh }], w: weight(x.right) }));
     }
     const tall = (l: Line): boolean => /\\frac|\\left|\\begin/.test(l.parts.map((x) => x.tex).join("") + l.left);
     const rows = lines.map((l) => {
