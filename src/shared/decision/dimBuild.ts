@@ -96,6 +96,10 @@ export interface Derivation {
   subst: string[];
   /** each bracketed power expanded: "(LT^{-1})^{2} = L^{2}T^{-2}", when there is one */
   expand: string[];
+  /** a division with a negative power on the bottom: top and bottom each combined to one power per letter ("= ML^{2}T^{-2} / L^{3}T^{-1}") */
+  tidy: string[];
+  /** …then the bottom powers taken from the top, written out ("= ML^{2-3}T^{-2-(-1)}"), so a minus-a-minus is never done in the head */
+  subtract: string[];
   /** a division only: the fraction cancelled down ("= MT^{-2} / L"), before it is written with negative powers */
   cancel: string[];
   /** the powers added, then the result: "= L^{1}T^{-1-1}", "= LT^{-2}"; for a division, the result written with negative powers */
@@ -130,6 +134,8 @@ export function derive(lhs: string, expr: string | null, pieces: Piece[], result
     if (`&= ${ex}` !== subst[0]) expand.push(ct(ex));
   }
   const cancel: string[] = [];
+  const tidy: string[] = [];
+  const subtract: string[] = [];
   const sum: string[] = [];
   const final = ct(dimTex(result));
   if (divides) {
@@ -144,9 +150,23 @@ export function derive(lhs: string, expr: string | null, pieces: Piece[], result
     const dn = letters(net.map((e) => (e[0] < 0 ? fr(-e[0], e[1]) : ZERO)));
     const row = ct(dn ? frac(n, dn) : n || "1");
     const prior = expand.length ? expand[expand.length - 1] : subst[0];
-    if (row !== prior) cancel.push(row);
-    const before = cancel.length ? cancel[cancel.length - 1] : prior;
-    if (final !== before) sum.push(final);
+    if (D.some((e) => e[0] < 0)) {
+      // dividing by a negative power is the hard part to see: write the top and bottom as one power per letter, then the subtraction in full
+      const tidyRow = ct(frac(letters(N) || "1", letters(D)));
+      if (tidyRow !== prior) tidy.push(tidyRow);
+      const sub = [0, 1, 2].map((c) => {
+        if (fzero(N[c]) && fzero(D[c])) return "";
+        if (fzero(D[c])) return BASE[c] + (feq(N[c], ONE) ? "" : `^{${frTex(N[c])}}`);
+        const d = D[c][0] < 0 ? `(${frTex(D[c])})` : frTex(D[c]);
+        return `${BASE[c]}^{${fzero(N[c]) ? "" : frTex(N[c])}-${d}}`;
+      }).join("\\,");
+      subtract.push(ct(sub));
+      if (final !== subtract[0]) sum.push(final);
+    } else {
+      if (row !== prior) cancel.push(row);
+      const before = cancel.length ? cancel[cancel.length - 1] : prior;
+      if (final !== before) sum.push(final);
+    }
   } else {
     // the powers of each base dimension that each piece adds, when some dimension gets two or more
     const cols = ([0, 1, 2] as const).map((c) => pieces.map((p) => fmul(p.dim[c], p.exp)).filter((e) => !fzero(e)));
@@ -156,7 +176,7 @@ export function derive(lhs: string, expr: string | null, pieces: Piece[], result
     const prior = sum.length ? sum[sum.length - 1] : expand.length ? expand[expand.length - 1] : subst[0];
     if (final !== prior) sum.push(final);
   }
-  return { formula: formula ? [formulaRow(formula)] : [], def, subst, expand, cancel, sum, divides };
+  return { formula: formula ? [formulaRow(formula)] : [], def, subst, expand, tidy, subtract, cancel, sum, divides };
 }
 /** a derivation as one flat chain "[a] = [v/t] = [v][t]^{-1} = LT^{-1} \times T^{-1} = LT^{-2}", for the model answer */
 export function flatChain(rows: string[]): string {

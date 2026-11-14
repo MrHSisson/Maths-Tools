@@ -57,7 +57,8 @@ function blockTex(b: Block, base: string): string {
       const w = weight(right);
       const last = lines[lines.length - 1];
       if (left.trim() !== "" || !last) lines.push({ left, indent: "", parts: [{ tex: right, fresh }], w });
-      else if (last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
+      // once a working has broken a line, the rest of it stays on that line: it never breaks again
+      else if (last.indent || last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
       else {
         const before = last.parts.slice(0, -1).map((x) => x.tex).join(SEP);
         lines.push({ left: "", indent: last.indent || (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: weight(last.indent || before) + w });
