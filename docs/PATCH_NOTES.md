@@ -29,6 +29,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Factors deck: a design pass for readability
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.
+
+- **Hints are quiet:** the book-work hint lines ("Hint: 3 pairs") and the bracketed counts on the whiteboards ("60 (6 pairs)") are small and grey instead of black.
+- **Two numbers, one line:** a question about two numbers keeps them on one line: in the sentence, as the column headings of a table, or in one expression with their pair counts. The blank-pairs scaffold for common factors and the HCF is now a table with the two numbers side by side and each number's pairs one to a line.
+- **One pair to a line:** the listing whiteboard's blank pairs are a lined-up column (`1 × 48`, `2 × 24`, `3 × □` ...) instead of two or three pairs to a line.
+- **Exit ticket:** one question to a row (it wrapped awkwardly in three narrow columns).
+- **Sizes:** the common-factors and HCF whiteboards are slightly larger, the listing whiteboard slightly smaller so a number does not drop onto its own line when the working opens.
+- **Guard:** the build script refuses a whiteboard question over 170 characters, the limit the player uses to centre it; compact characters (`×`, `\Box`) keep the tables under it, so no shared-code change is needed.
+- **Checked:** every slide looked at with all its clicks revealed (four contact sheets plus the working view of the three whiteboards); content and layout checks pass for all 17 slides; tests, lint and `tsc` pass.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
 ## 2026-11-14 — Factors deck: scaffold restored, nine-question book sets
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.

@@ -27,28 +27,30 @@ One lesson, so the plan is cut for pacing (book sets were six, then Harry asked 
 | 2 | Definition: factor | Divides exactly; always includes 1 and the number itself |
 | 3 | Calculator: is it a factor? | Plain text: type `24 ÷ 4 =`, it shows 6, whole number so 4 is a factor; type `24 ÷ 5 =`, it shows 24/5 (4.8 with S⇔D), not whole so 5 is not a factor. Revealed by click, no drawn calculator |
 | 4 | Calculator: find all the factors of 24 | Structure-only board: divide by · calculator shows · whole? · pair. Stop rule: stop when the answer is smaller than the number you divided by |
-| 5 | Whiteboard x3 (full-width, centred) | Factors of **48 with blanks** (`1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __`), **60 with the number of pairs in brackets** (6 pairs) and **30 with no help** |
+| 5 | Whiteboard x3 (full-width, centred) | Factors of **48 with blanks** (one pair to a line: `1 × 48`, `2 × 24`, `3 × □` ...), **60 with the number of pairs in brackets, in grey** and **30 with no help** |
 | 6 | Book work 3 × 3 | Nine numbers, large and centred. The first six carry a smaller line underneath ("Hint: 3 pairs"), the last three have none and are the stretch (100, 84, 96) |
 | 7 | Definition: common factor | A number that is a factor of both |
 | 8 | Model: 12 and 18 | The two numbers as headings with their factor pairs underneath; circle the numbers that appear in both; calculator check on 4 |
 | 9 | Discussion | Kofi says the only common factor of 12 and 18 is 6 |
-| 10 | Whiteboard x3 (full-width, centred, smaller text) | Common factors of **30 and 45 with each number's pairs partly given**, **40 (4 pairs) and 56 (4 pairs)** and **20 and 50 with no help** |
+| 10 | Whiteboard x3 (full-width, centred) | Common factors of **30 and 45 as a table**: the two numbers side by side as headings, each number's pairs one to a line underneath with blanks; **40 (4 pairs) and 56 (4 pairs)** on one line, the counts small and grey; **20 and 50 with no help** |
 | 11 | Book work 3 × 3 | Nine pairs of numbers; the first six with "Hint: 3 & 4 pairs" underneath (smaller), the last three with none and bigger common sets (54 and 90, 70 and 105, 48 and 80) |
 | 12 | Definition: highest common factor (HCF) | The largest of the common factors |
 | 13 | Model: HCF of 12 and 18 | The same pairs layout, circle the common factors, then the highest: 6 |
 | 14 | Discussion | Ruby says the HCF of 12 and 18 is 36; what has she found? (a common multiple) |
-| 15 | Whiteboard x3 (full-width, centred, smaller text) | HCF of **32 and 48 with pairs partly given**, **45 (3 pairs) and 60 (6 pairs)** and **20 and 30 with no help** |
+| 15 | Whiteboard x3 (full-width, centred) | HCF of **32 and 48 as the same table with blanks**, **45 (3 pairs) and 60 (6 pairs)**, **20 and 30 with no help** |
 | 16 | Book work 3 × 3 | Nine pairs; the first six with a hint line, the last three with none and bigger numbers (75 and 100, 52 and 78, 96 and 160) |
-| 17 | Exit ticket | See below |
+| 17 | Exit ticket | Three questions, one to a row so each reads on a single line: factors of 99, common factors of 22 and 33, HCF of 26 and 39 |
 
 If time runs short, the first cut is the discussion on slide 9 (keep slide 14), then the whiteboards on slide 10.
 
-**Help, and weaning it off (Harry, 2026-11-14, second version: he liked the scaffold).** Whiteboard numbers are bigger than the book numbers so a factor is not seen at a glance. In each section the three whiteboards climb: **1. blanks** (the pairs partly completed, a partner left as a box), **2. the number of pairs in brackets** ("60 (6 pairs)", "40 (4 pairs) and 56 (4 pairs)"), **3. just the numbers** (a friendly number: 30; 20 and 50; 20 and 30). The nine-question book sets show just the number(s) large, with a smaller line underneath for the first six ("Hint: 3 pairs", or "Hint: 3 & 4 pairs" for two numbers) and nothing for the last three, which begin to stretch. Whiteboard questions are kept short (under 170 characters, split into short lines) so the player centres them without any shared-code change, and the common-factors and HCF whiteboards use a smaller text size. Forms:
+**Help, and weaning it off (Harry, 2026-11-14, second version: he liked the scaffold; look rules below).** Whiteboard numbers are bigger than the book numbers so a factor is not seen at a glance. In each section the three whiteboards climb: **1. blanks** (the pairs partly completed, a partner left as a box), **2. the number of pairs in brackets** ("60 (6 pairs)", "40 (4 pairs) and 56 (4 pairs)"), **3. just the numbers** (a friendly number: 30; 20 and 50; 20 and 30). The nine-question book sets show just the number(s) large, with a smaller line underneath for the first six ("Hint: 3 pairs", or "Hint: 3 & 4 pairs" for two numbers) and nothing for the last three, which begin to stretch. Whiteboard questions are kept short (under 170 characters, split into short lines) so the player centres them without any shared-code change, and the common-factors and HCF whiteboards use a smaller text size. Forms:
 
-- **Blanks:** `1 × 48, 2 × 24, 3 × __, 4 × 12, 6 × __`, at most three pairs to a line; for two numbers a labelled line for each (`30: 1 × 30, 2 × __ ...`).
-- **Brackets:** the number of factor pairs after each number.
-- **Hint line (book work):** a small line under the number(s).
+- **Blanks:** one factor pair to a line, lined up (`1 × 48`, `2 × 24`, `3 × □` ...). For two numbers, a table: the two numbers side by side as headings on one line, each number's pairs underneath one to a line, blanks as boxes. Never two pairs of the same number on one line.
+- **Brackets:** the number of factor pairs after each number, small and grey ("60 (6 pairs)"); for two numbers both sit in one line: `40 (4 pairs) and 56 (4 pairs)`.
+- **Hint line (book work):** a tiny grey line under the number(s) ("Hint: 3 pairs", "Hint: 3 & 4 pairs"), subtle by design.
 - **None:** the number and the instruction only.
+
+Look rules (Harry, 2026-11-14): hints are quiet (small, grey); the two numbers of a question are always on one line; one factor pair to a line; everything lined up and centred; one exit-ticket question per row.
 
 The full method is shown on the worked slides (4, 8, 12) and in each whiteboard's answer.
 

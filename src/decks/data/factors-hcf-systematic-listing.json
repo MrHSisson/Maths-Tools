@@ -380,7 +380,7 @@
      "y": 24,
      "w": 1504,
      "h": 852,
-     "size": 64,
+     "size": 56,
      "items": [
       {
        "version": 2,
@@ -392,8 +392,7 @@
        "format": "open",
        "question": [
         "List all the factors of $48$.",
-        "$1\\times48,\\;2\\times24,\\;3\\times\\square$",
-        "$4\\times12,\\;6\\times\\square$"
+        "$\\begin{array}{rcl}1&×&48\\\\2&×&24\\\\3&×&\\Box\\\\4&×&12\\\\6&×&\\Box\\end{array}$"
        ],
        "answer": [
         "$1$, $2$, $3$, $4$, $6$, $8$, $12$, $16$, $24$, $48$"
@@ -422,7 +421,7 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "List all the factors of $60$ (6 pairs)."
+        "List all the factors of $60\\;\\textcolor{#64748b}{\\small\\text{(6 pairs)}}$."
        ],
        "answer": [
         "$1$, $2$, $3$, $4$, $5$, $6$, $10$, $12$, $15$, $20$, $30$, $60$"
@@ -477,7 +476,7 @@
     }
    ],
    "brief": "Three whiteboard questions on bigger numbers, using the calculator: 48 with some partners missing, 60 with the number of pairs given, then 30 with no help.",
-   "built": "1yasjw7"
+   "built": "6psp2i"
   },
   {
    "id": "fhl-list-book",
@@ -513,7 +512,7 @@
        "format": "open",
        "question": [
         "$28$",
-        "$\\scriptsize\\text{Hint: 3 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $7$, $14$, $28$"
@@ -542,7 +541,7 @@
        "format": "open",
        "question": [
         "$40$",
-        "$\\scriptsize\\text{Hint: 4 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $5$, $8$, $10$, $20$, $40$"
@@ -572,7 +571,7 @@
        "format": "open",
        "question": [
         "$45$",
-        "$\\scriptsize\\text{Hint: 3 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 pairs}}$"
        ],
        "answer": [
         "$1$, $3$, $5$, $9$, $15$, $45$"
@@ -602,7 +601,7 @@
        "format": "open",
        "question": [
         "$56$",
-        "$\\scriptsize\\text{Hint: 4 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $7$, $8$, $14$, $28$, $56$"
@@ -633,7 +632,7 @@
        "format": "open",
        "question": [
         "$72$",
-        "$\\scriptsize\\text{Hint: 6 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 6 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $3$, $4$, $6$, $8$, $9$, $12$, $18$, $24$, $36$, $72$"
@@ -665,7 +664,7 @@
        "format": "open",
        "question": [
         "$80$",
-        "$\\scriptsize\\text{Hint: 5 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 5 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $5$, $8$, $10$, $16$, $20$, $40$, $80$"
@@ -792,7 +791,7 @@
      "size": 100
     }
    ],
-   "built": "7cweye"
+   "built": "1fwh1oi"
   },
   {
    "id": "fhl-common-definition",
@@ -1436,7 +1435,7 @@
      "y": 24,
      "w": 1504,
      "h": 852,
-     "size": 52,
+     "size": 60,
      "items": [
       {
        "version": 2,
@@ -1448,9 +1447,7 @@
        "format": "open",
        "question": [
         "Find all the common factors of $30$ and $45$.",
-        "$30:\\;1\\times30,\\;2\\times\\square$",
-        "$3\\times10,\\;5\\times\\square$",
-        "$45:\\;1\\times45,\\;3\\times\\square,\\;5\\times9$"
+        "$\\begin{array}{c|c}\\mathbf{30}&\\mathbf{45}\\\\\\hline 1×30\\;&\\;1×45\\\\2×\\Box\\;&\\;3×\\Box\\\\3×10\\;&\\;5×9\\\\5×\\Box\\;&\\end{array}$"
        ],
        "answer": [
         "$1$, $3$, $5$, $15$"
@@ -1473,7 +1470,8 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find all the common factors of $40$ (4 pairs) and $56$ (4 pairs)."
+        "Find all the common factors of:",
+        "$40\\;\\textcolor{#64748b}{\\small\\text{(4 pairs)}}\\ \\text{ and }\\ 56\\;\\textcolor{#64748b}{\\small\\text{(4 pairs)}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $8$"
@@ -1516,7 +1514,7 @@
     }
    ],
    "brief": "Three whiteboard questions: both numbers' pairs partly given, then the number of pairs in brackets, then 20 and 30 with no help.",
-   "built": "5gx4vj"
+   "built": "pppekl"
   },
   {
    "id": "fhl-cf-book",
@@ -1552,7 +1550,7 @@
        "format": "open",
        "question": [
         "$16,\\;28$",
-        "$\\scriptsize\\text{Hint: 3 \\& 3 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 \\& 3 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$"
@@ -1576,7 +1574,7 @@
        "format": "open",
        "question": [
         "$27,\\;63$",
-        "$\\scriptsize\\text{Hint: 2 \\& 3 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 3 pairs}}$"
        ],
        "answer": [
         "$1$, $3$, $9$"
@@ -1600,7 +1598,7 @@
        "format": "open",
        "question": [
         "$32,\\;72$",
-        "$\\scriptsize\\text{Hint: 3 \\& 6 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 \\& 6 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $4$, $8$"
@@ -1624,7 +1622,7 @@
        "format": "open",
        "question": [
         "$21,\\;35$",
-        "$\\scriptsize\\text{Hint: 2 \\& 2 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 2 pairs}}$"
        ],
        "answer": [
         "$1$, $7$"
@@ -1648,7 +1646,7 @@
        "format": "open",
        "question": [
         "$44,\\;66$",
-        "$\\scriptsize\\text{Hint: 3 \\& 4 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 \\& 4 pairs}}$"
        ],
        "answer": [
         "$1$, $2$, $11$, $22$"
@@ -1672,7 +1670,7 @@
        "format": "open",
        "question": [
         "$14,\\;15$",
-        "$\\scriptsize\\text{Hint: 2 \\& 2 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 2 pairs}}$"
        ],
        "answer": [
         "$1$"
@@ -1763,7 +1761,7 @@
      "size": 100
     }
    ],
-   "built": "w5d10c"
+   "built": "44yh7s"
   },
   {
    "id": "fhl-hcf-definition",
@@ -2407,7 +2405,7 @@
      "y": 24,
      "w": 1504,
      "h": 852,
-     "size": 52,
+     "size": 60,
      "items": [
       {
        "version": 2,
@@ -2419,9 +2417,7 @@
        "format": "open",
        "question": [
         "Find the HCF of $32$ and $48$.",
-        "$32:\\;1\\times32,\\;2\\times\\square,\\;4\\times8$",
-        "$48:\\;1\\times48,\\;2\\times24,\\;3\\times\\square$",
-        "$4\\times12,\\;6\\times\\square$"
+        "$\\begin{array}{c|c}\\mathbf{32}&\\mathbf{48}\\\\\\hline 1×32\\;&\\;1×48\\\\2×\\Box\\;&\\;2×24\\\\4×8\\;&\\;3×\\Box\\\\&\\;4×12\\\\&\\;6×\\Box\\end{array}$"
        ],
        "answer": [
         "$16$"
@@ -2445,7 +2441,8 @@
        "purpose": "practice",
        "format": "open",
        "question": [
-        "Find the HCF of $45$ (3 pairs) and $60$ (6 pairs)."
+        "Find the HCF of:",
+        "$45\\;\\textcolor{#64748b}{\\small\\text{(3 pairs)}}\\ \\text{ and }\\ 60\\;\\textcolor{#64748b}{\\small\\text{(6 pairs)}}$"
        ],
        "answer": [
         "$15$"
@@ -2490,7 +2487,7 @@
     }
    ],
    "brief": "Three whiteboard questions: both numbers' pairs partly given, then the number of pairs in brackets, then 20 and 30 with no help.",
-   "built": "snlx3z"
+   "built": "ug67j0"
   },
   {
    "id": "fhl-hcf-book",
@@ -2526,7 +2523,7 @@
        "format": "open",
        "question": [
         "$28,\\;42$",
-        "$\\scriptsize\\text{Hint: 3 \\& 4 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 \\& 4 pairs}}$"
        ],
        "answer": [
         "$14$"
@@ -2551,7 +2548,7 @@
        "format": "open",
        "question": [
         "$49,\\;63$",
-        "$\\scriptsize\\text{Hint: 2 \\& 3 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 3 pairs}}$"
        ],
        "answer": [
         "$7$"
@@ -2576,7 +2573,7 @@
        "format": "open",
        "question": [
         "$40,\\;64$",
-        "$\\scriptsize\\text{Hint: 4 \\& 4 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 \\& 4 pairs}}$"
        ],
        "answer": [
         "$8$"
@@ -2601,7 +2598,7 @@
        "format": "open",
        "question": [
         "$35,\\;55$",
-        "$\\scriptsize\\text{Hint: 2 \\& 2 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 2 pairs}}$"
        ],
        "answer": [
         "$5$"
@@ -2626,7 +2623,7 @@
        "format": "open",
        "question": [
         "$66,\\;90$",
-        "$\\scriptsize\\text{Hint: 4 \\& 6 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 \\& 6 pairs}}$"
        ],
        "answer": [
         "$6$"
@@ -2651,7 +2648,7 @@
        "format": "open",
        "question": [
         "$14,\\;25$",
-        "$\\scriptsize\\text{Hint: 2 \\& 2 pairs}$"
+        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 \\& 2 pairs}}$"
        ],
        "answer": [
         "$1$"
@@ -2746,7 +2743,7 @@
      "size": 100
     }
    ],
-   "built": "qwllm0"
+   "built": "8nc8wk"
   },
   {
    "id": "fhl-exit",
@@ -2783,7 +2780,7 @@
      "w": 1400,
      "h": 620,
      "bank": [],
-     "cols": 3,
+     "cols": 1,
      "id": "fhl-exit-3",
      "items": [
       {
@@ -2868,7 +2865,7 @@
      ]
     }
    ],
-   "built": "ij6iym"
+   "built": "1bw8t6k"
   }
  ]
 }
