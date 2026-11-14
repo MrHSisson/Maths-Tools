@@ -60,7 +60,7 @@ function blockTex(b: Block, base: string): string {
       else if (last.w + w <= LINE_BUDGET) { last.parts.push({ tex: right, fresh }); last.w += w; }
       else {
         const before = last.parts.slice(0, -1).map((x) => x.tex).join(SEP);
-        lines.push({ left: "", indent: last.indent + (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: weight(last.indent ? last.indent.replace(/\\phantom/g, "") : "") + weight(before) + w });
+        lines.push({ left: "", indent: last.indent || (before ? `\\phantom{${before}}${SEP}` : ""), parts: [{ tex: right, fresh }], w: weight(last.indent || before) + w });
       }
     }
     const tall = (l: Line): boolean => /\\frac|\\left|\\begin/.test(l.parts.map((x) => x.tex).join("") + l.left);
