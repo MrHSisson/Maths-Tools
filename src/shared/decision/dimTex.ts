@@ -58,7 +58,7 @@ export function termTex(t: Term, override?: (x: Factor) => string | null): strin
   const body = half ? productTex(t.f.map((x) => ({ sym: x.sym, p: fmul(x.p, fr(2)) })), true) : productTex(t.f, false, override as never);
   return (t.num ? NUM_TEX[t.num] ?? t.num : "") + body;
 }
-export const sideTex = (ts: Term[], override?: (x: Factor) => string | null): string =>
+const sideTex = (ts: Term[], override?: (x: Factor) => string | null): string =>
   ts.map((t, i) => (i === 0 ? (t.sign === "−" ? "-" : "") : ` ${t.sign === "−" ? "-" : "+"} `) + termTex(t, override)).join("");
 export const formulaTex = (f: { lhs: Term[]; rhs: Term[] }, override?: (x: Factor) => string | null): string => `${sideTex(f.lhs, override)} = ${sideTex(f.rhs, override)}`;
 /** units as TeX: "kg m⁻³" → "\mathrm{kg}\,\mathrm{m}^{-3}" */

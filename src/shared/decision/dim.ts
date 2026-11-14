@@ -21,7 +21,6 @@ export const fneg = (a: Fr): Fr => fr(-a[0], a[1]);
 export const feq = (a: Fr, b: Fr): boolean => a[0] === b[0] && a[1] === b[1];
 export const fzero = (a: Fr): boolean => a[0] === 0;
 export const fint = (a: Fr): boolean => a[1] === 1;
-export const fnum = (a: Fr): number => a[0] / a[1];
 
 const VULGAR: Record<string, string> = { "1/2": "½", "1/3": "⅓", "2/3": "⅔", "1/4": "¼", "3/4": "¾" };
 /** "2", "−1", "½", "−⅓", "3⁄2" */
@@ -34,8 +33,6 @@ export function fstr(a: Fr): string {
 const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
 /** an exponent as a superscript: integers as ², ⁻¹; a fraction as ^½ */
 export const sup = (a: Fr): string => (fint(a) ? String(a[0]).split("").map((c) => SUP[c] ?? c).join("") : `^${fstr(a)}`);
-/** the superscript letter a power symbol takes in a formula ("a" → ᵃ) */
-export const supLetter = (s: string): string => ({ a: "ᵃ", b: "ᵇ", c: "ᶜ", n: "ⁿ" } as Record<string, string>)[s] ?? `^${s}`;
 
 // ── Dimensions ───────────────────────────────────────────────────────────────
 export type Dim3 = readonly [Fr, Fr, Fr];
@@ -138,7 +135,7 @@ export function baseUnits(d: Dim3): string {
 export const UNIT_BASE: Record<string, string> = { kg: "mass", m: "length", s: "time" };
 
 // ── Exact linear solving (a rational Gaussian elimination, written independently of every generator) ─────────────────────
-export type SolveResult = { status: "unique"; x: Fr[] } | { status: "none" } | { status: "many" };
+type SolveResult = { status: "unique"; x: Fr[] } | { status: "none" } | { status: "many" };
 /** A x = b for an m×n system of fractions */
 export function solveLinear(A: Fr[][], b: Fr[]): SolveResult {
   const m = A.length, n = A[0]?.length ?? 0;
@@ -189,19 +186,6 @@ export interface DimEq { col: 0 | 1 | 2; coef: Fr[]; rhs: Fr }
 export function equationsFor(target: Dim3, factors: Dim3[]): DimEq[] {
   return ([0, 1, 2] as const).map((col) => ({ col, coef: factors.map((d) => d[col]), rhs: target[col] }));
 }
-/** "a + c", "2a − b", "−a"; "0" when no power appears */
-export function eqLhs(coef: Fr[], syms: string[]): string {
-  let out = "";
-  coef.forEach((c, i) => {
-    if (fzero(c)) return;
-    const neg = c[0] < 0;
-    const mag = fr(Math.abs(c[0]), c[1]);
-    const body = (feq(mag, ONE) ? "" : fstr(mag)) + syms[i];
-    out += out === "" ? (neg ? "−" : "") + body : ` ${neg ? "−" : "+"} ${body}`;
-  });
-  return out || "0";
-}
-export const eqText = (e: DimEq, syms: string[]): string => `${BASE[e.col]}: ${eqLhs(e.coef, syms)} = ${fstr(e.rhs)}`;
 
 // ── Formulas for the consistency questions ───────────────────────────────────
 export interface Factor { sym: string; q: string; p: Fr }
@@ -233,23 +217,6 @@ export const FORMULAS: Formula[] = [
   { id: "mgh=mv2/2", level: 2, lhs: [T([F("m", "mass"), F("g", "grav"), F("h", "hgt")])], rhs: [T([F("m", "mass"), F("v", "speed", 2)], "½")] },
 ];
 export const termDim = (t: Term): Dim3 => t.f.reduce<Dim3>((acc, x) => dimAdd(acc, dimScale(qDim(x.q), x.p)), dimOf(0, 0, 0));
-/** a product of factors as it is written: numerator over denominator, "√(…)" when every power is ±½, or round the whole when `root` */
-export function productStr(fs: Array<{ sym: string; p: Fr }>, root = false): string {
-  const piece = (x: { sym: string; p: Fr }, p: Fr) => x.sym + (feq(p, ONE) ? "" : sup(p));
-  const num = fs.filter((x) => x.p[0] > 0).map((x) => piece(x, x.p)).join("");
-  const dens = fs.filter((x) => x.p[0] < 0);
-  const den = dens.map((x) => piece(x, fneg(x.p))).join("");
-  const body = den ? `${num || "1"}/${dens.length > 1 ? `(${den})` : den}` : num;
-  return root ? `√(${body})` : body;
-}
-/** one term as written: "½at²", "mv²/r", "2π√(l/g)" */
-export function termStr(t: Term): string {
-  const half = t.f.length > 0 && t.f.every((x) => x.p[1] === 2 && Math.abs(x.p[0]) === 1);
-  const body = half ? productStr(t.f.map((x) => ({ sym: x.sym, p: fmul(x.p, fr(2)) })), true) : productStr(t.f);
-  return (t.num ?? "") + body;
-}
-export const sideStr = (ts: Term[]): string => ts.map((t, i) => (i === 0 ? (t.sign === "−" ? "−" : "") : ` ${t.sign} `) + termStr(t)).join("");
-export const formulaStr = (f: { lhs: Term[]; rhs: Term[] }): string => `${sideStr(f.lhs)} = ${sideStr(f.rhs)}`;
 /** a formula is consistent when every term, on both sides, has the same dimensions */
 export function consistentDims(f: { lhs: Term[]; rhs: Term[] }): { ok: boolean; dims: Dim3[] } {
   const dims = [...f.lhs, ...f.rhs].map(termDim);

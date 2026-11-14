@@ -11,7 +11,7 @@ import {
 import { symTex, frTex, supTex, dimTex, dimPowTex, productTex, termTex, formulaTex, unitsTex, M, andTex } from "./dimTex";
 
 // ── The question's data (what the picture and the working are drawn from) ───────────────────────────────────────────────────
-export type DimKind = "dimsName" | "dimsUnits" | "dimsExpr" | "dimsConst" | "consShow" | "consOdd" | "consMissing" | "consPick" | "powers";
+type DimKind = "dimsName" | "dimsUnits" | "dimsExpr" | "dimsConst" | "consShow" | "consOdd" | "consMissing" | "consPick" | "powers";
 export interface DimRow {
   /** the row's label as TeX ("[\rho]", "\mathrm{kg}", "at^{2}") */
   sym: string;
@@ -26,7 +26,7 @@ export interface DimRow {
   role: "target" | "factor" | "result" | "term";
 }
 /** a circled answer: dimensions or a formula as TeX; `why` names the slip a wrong one makes */
-export interface DimOption { text: string; correct: boolean; why: string }
+interface DimOption { text: string; correct: boolean; why: string }
 export interface DimProblemData {
   kind: DimKind;
   rows: DimRow[];
@@ -169,7 +169,7 @@ export function genDimsExpr(level: number, circle: boolean): DimQuestion {
 }
 
 // the relations the constant questions are drawn from: a formula in words (maths between $…$), the quantity on the left, the other factors, and the power of the constant
-export interface ConstRel { text: string; lhs: string; lhsSym: string; others: Factor[]; kSym: string; kName: string; kexp: number }
+interface ConstRel { text: string; lhs: string; lhsSym: string; others: Factor[]; kSym: string; kName: string; kexp: number }
 const CR = (text: string, lhs: string, lhsSym: string, others: Array<[string, string, number]>, kSym: string, kName: string, kexp = 1): ConstRel =>
   ({ text, lhs, lhsSym, others: others.map(([sym, q, p]) => ({ sym, q, p: fr(p) })), kSym, kName, kexp });
 export const CONST_RELATIONS: ConstRel[] = [
@@ -262,7 +262,7 @@ const factorQuantities = (f: Formula): Array<{ sym: string; name: string }> => {
   return [...seen].map(([sym, name]) => ({ sym, name }));
 };
 /** "[at^{2}] = [a][t]^{2} = LT^{-2} \times T^{2} = L": the term in brackets, then each factor's dimensions, then the product */
-export function termCalc(t: Term): string {
+function termCalc(t: Term): string {
   const br = t.f.map((x) => `[${symTex(x.sym)}]${supTex(x.p)}`).join("");
   const parts = t.f.map((x) => dimPowTex(qDim(x.q), x.p));
   return `[${termTex(t)}] = ${br} = ${parts.join(" \\times ")} = ${dimTex(termDim(t))}${t.num ? "\\quad \\text{(the number has no dimensions)}" : ""}`;
@@ -358,7 +358,7 @@ export const SITUATIONS: Situation[] = [
   S("tube", "Liquid of density $\\rho$ oscillates in a U-tube. The time $t$ for one oscillation is thought to depend on $\\rho$, the length $l$ of the liquid column and $g$.", "time", [["dens", 0, 1], ["len", 1, 2], ["grav", -1, 2]]),
   S("discw", "A disc of mass $m$ and radius $r$ has kinetic energy $E$. Its angular speed $\\omega$ is thought to depend on $E$, $m$ and $r$.", "omega", [["energy", 1, 2], ["mass", -1, 2], ["rad", -1, 1]]),
 ];
-export interface SituationDims { target: Dim3; factors: Dim3[] }
+interface SituationDims { target: Dim3; factors: Dim3[] }
 export const situationDims = (s: Situation): SituationDims => ({ target: qDim(s.target), factors: s.factors.map(([id]) => qDim(id)) });
 const fmulNum = (e: Fr): number => e[0] / e[1];
 const sitLevel = (s: Situation): 1 | 2 | 3 => {
@@ -385,7 +385,7 @@ const goodExps = (xs: Fr[], level: number, ask: string): boolean => {
 /** a column of the dimension matrix with one power in it: the system has an equation that gives a power directly */
 const hasDirectEq = (factors: Dim3[]): boolean => [0, 1, 2].some((c) => factors.filter((d) => !fzero(d[c])).length === 1);
 
-export function modelRows(target: { sym: string; name: string; dim: Dim3 }, facs: Array<{ sym: string; name: string; dim: Dim3 }>, given: boolean, syms: string[]): DimRow[] {
+function modelRows(target: { sym: string; name: string; dim: Dim3 }, facs: Array<{ sym: string; name: string; dim: Dim3 }>, given: boolean, syms: string[]): DimRow[] {
   return [
     { sym: symTex(target.sym), name: target.name, dim: target.dim, given, role: "target" },
     ...facs.map((f, i): DimRow => ({ sym: symTex(f.sym), name: f.name, dim: f.dim, given, power: syms[i], role: "factor" })),
@@ -395,9 +395,9 @@ export function modelRows(target: { sym: string; name: string; dim: Dim3 }, facs
 export const modelTex = (target: string, facs: Array<{ sym: string }>, syms: string[], prop = false): string =>
   `${symTex(target)} ${prop ? "\\propto" : "="} ${prop ? "" : "k\\,"}${facs.map((f, i) => `${symTex(f.sym)}^{${symTex(syms[i])}}`).join("\\,")}`;
 /** "$\alpha = \frac{1}{2},\ \beta = -\frac{1}{2}$" */
-export const eqsAnswer = (v: Fr[], syms: string[]): string => M(v.map((x, i) => `${symTex(syms[i])} = ${frTex(x)}`).join(",\\ "));
+const eqsAnswer = (v: Fr[], syms: string[]): string => M(v.map((x, i) => `${symTex(syms[i])} = ${frTex(x)}`).join(",\\ "));
 
-export interface PowersOpts { context: "none" | "named" | "worded"; ask: "find" | "zero" | "cannot"; given: "dims" | "units" }
+interface PowersOpts { context: "none" | "named" | "worded"; ask: "find" | "zero" | "cannot"; given: "dims" | "units" }
 
 /** a question about one of the worked situations; `drop` leaves one quantity out of the model (the student who thinks it does not matter) */
 export function powersFromSituation(sit: Situation, o: { ask?: "find" | "zero"; given?: "dims" | "units"; drop?: number } = {}): DimQuestion {
@@ -528,4 +528,4 @@ export function genPowers(level: number, o: PowersOpts): DimQuestion {
 /** a quantity's base units as TeX, for a dimension with whole powers ("\mathrm{kg}\,\mathrm{m}\,\mathrm{s}^{-2}") */
 const unitsTexFromDim = (d: Dim3): string => unitsTex(baseUnits(d));
 
-export { joinAnd, sample, pickOne, shuffle, rint, circleLine, circleList, symLine };
+export { joinAnd, pickOne, shuffle, circleLine };
