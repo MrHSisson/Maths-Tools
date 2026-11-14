@@ -86,7 +86,7 @@ export const LIBRARY: Quantity[] = [
   Q("area", "area", "A", [0, 2, 0], "m²", [["len", 2]], { formula: "A = l^{2}", say: "area is a length times a length" }),
   Q("vol", "volume", "V", [0, 3, 0], "m³", [["len", 3]], { formula: "V = l^{3}", say: "volume is a length times a length times a length" }),
   Q("dens", "density", "ρ", [1, -3, 0], "kg m⁻³", [["mass", 1], ["vol", -1]], { formula: "\\rho = \\frac{m}{V}", say: "density is mass divided by volume" }),
-  Q("force", "force", "F", [1, 1, -2], "N", [["mass", 1], ["acc", 1]], { formula: "F = ma", say: "Newton's second law says force is mass times acceleration" }),
+  Q("force", "force", "F", [1, 1, -2], "N", [["mass", 1], ["acc", 1]], { formula: "F = ma", say: "Newton's second law: force is mass times acceleration" }),
   Q("weight", "weight", "W", [1, 1, -2], "N", [["mass", 1], ["grav", 1]], { formula: "W = mg", say: "weight is mass times the acceleration due to gravity" }),
   Q("mom", "momentum", "p", [1, 1, -1], "kg m s⁻¹", [["mass", 1], ["speed", 1]], { formula: "p = mv", say: "momentum is mass times velocity" }),
   Q("imp", "impulse", "J", [1, 1, -1], "N s", [["force", 1], ["time", 1]], { formula: "J = Ft", say: "impulse is force times the time it acts for" }),
@@ -97,11 +97,11 @@ export const LIBRARY: Quantity[] = [
   Q("freq", "frequency", "f", [0, 0, -1], "s⁻¹", [["time", -1]], { formula: "f = \\frac{1}{t}", say: "frequency is one divided by the time for one cycle" }),
   Q("moment", "moment of a force", "τ", [1, 2, -2], "N m", [["force", 1], ["len", 1]], { formula: "\\tau = Fl", say: "a moment is force times perpendicular distance" }),
   Q("inertia", "moment of inertia", "I", [1, 2, 0], "kg m²", [["mass", 1], ["rad", 2]], { formula: "I = mr^{2}", say: "moment of inertia is mass times radius squared" }),
-  Q("stiff", "stiffness", "κ", [1, 0, -2], "N m⁻¹", [["force", 1], ["ext", -1]], { formula: "\\kappa = \\frac{F}{x}", say: "Hooke's law says force is stiffness times extension, so stiffness is force divided by extension" }),
+  Q("stiff", "stiffness", "κ", [1, 0, -2], "N m⁻¹", [["force", 1], ["ext", -1]], { formula: "\\kappa = \\frac{F}{x}", say: "Hooke's law: force is stiffness times extension, so stiffness is force divided by extension" }),
   Q("linmass", "mass per unit length", "q", [1, -1, 0], "kg m⁻¹", [["mass", 1], ["len", -1]], { formula: "q = \\frac{m}{l}", say: "mass per unit length is mass divided by length" }),
   Q("surf", "surface tension", "σ", [1, 0, -2], "N m⁻¹", [["force", 1], ["len", -1]], { formula: "\\sigma = \\frac{F}{l}", say: "surface tension is force per unit length" }),
-  Q("visc", "viscosity", "η", [1, -1, -1], "kg m⁻¹ s⁻¹", [["force", 1], ["dep", 1], ["area", -1], ["speed", -1]], { formula: "\\eta = \\frac{Fd}{Av}", say: "the viscous force is viscosity times area times speed, divided by the distance, so viscosity is force times distance divided by area times speed" }),
-  Q("G", "the gravitational constant", "G", [-1, 3, -2], "N m² kg⁻²", [["force", 1], ["dep", 2], ["mass", -2]], { formula: "G = \\frac{Fd^{2}}{m^{2}}", say: "the gravitational force between two masses is G times the masses divided by the distance squared, so G is force times distance squared divided by mass squared" }),
+  Q("visc", "viscosity", "η", [1, -1, -1], "kg m⁻¹ s⁻¹", [["force", 1], ["dep", 1], ["area", -1], ["speed", -1]], { formula: "\\eta = \\frac{Fd}{Av}", say: "viscous force is viscosity times area times speed, over the distance; rearrange for viscosity" }),
+  Q("G", "the gravitational constant", "G", [-1, 3, -2], "N m² kg⁻²", [["force", 1], ["dep", 2], ["mass", -2]], { formula: "G = \\frac{Fd^{2}}{m^{2}}", say: "gravitational force is G times the two masses over the distance squared; rearrange for G" }),
 ];
 export const QBY: Record<string, Quantity> = Object.fromEntries(LIBRARY.map((q) => [q.id, q]));
 export const qDim = (id: string): Dim3 => { const q = QBY[id]; return dimOf(q.dim[0], q.dim[1], q.dim[2]); };

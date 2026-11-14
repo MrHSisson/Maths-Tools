@@ -45,7 +45,7 @@ function mainOf(d: DimProblemData): Main | null {
     const q = QBY[d.askId!];
     const pieces = [...(q.num ? [numPiece(q.num)] : []), ...factors.map(piece)];
     const expr = (q.num ? numTex(q.num) : "") + productTex(factors.map((r) => ({ sym: r.sym, p: r.exp ?? ONE })));
-    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: `Now we can find the dimensions of ${name}. ${cap(q.say ?? name)}.`, der: derive(result.sym, expr, pieces, d.answerDim!, q.formula), final: `${result.sym} = ${ans}` };
+    return { lhs: result.sym, heading: `Now: the dimensions of ${name}`, intro: `Find the dimensions of ${name}. ${cap(q.say ?? name)}.`, der: derive(result.sym, expr, pieces, d.answerDim!, q.formula), final: `${result.sym} = ${ans}` };
   }
   if (d.kind === "dimsUnits") {
     const units = factors.map((r) => `${r.sym}${supTex(r.exp ?? ONE)}`).join("\\,");
@@ -80,20 +80,20 @@ interface DOpts {
   hasNumber?: boolean;
   captions?: Partial<{ brackets: string; subst: string; expand: string; sum: string }>;
 }
-const BRACKETS = "Now put square brackets round both sides. They mean 'the dimensions of', and a product splits into a separate bracket for each factor.";
-const SWAP = "Now swap each bracket for its dimensions. We already know all of these.";
-const EXPAND = "A power outside a bracket goes onto every letter inside it, so multiply each power in the bracket by it.";
-const ADD = "Finally, add up the powers of each letter.";
-const CANCEL = "Now cancel: any letter that is on the top and the bottom can be crossed off, one power at a time.";
-const NEGATIVE = "To finish, write it without a fraction: a letter on the bottom becomes a negative power.";
-const FRACTION = "A division stays a fraction for now: it is easier to cancel a fraction than to keep track of negative powers.";
+const BRACKETS = "Put square brackets round both sides (they mean 'the dimensions of'), with a separate bracket for each factor.";
+const SWAP = "Swap each bracket for its dimensions.";
+const EXPAND = "Multiply every power inside the bracket by the power outside.";
+const ADD = "Add the powers of each letter.";
+const CANCEL = "Cancel the letters that are on both the top and the bottom.";
+const NEGATIVE = "Write without the fraction: a letter on the bottom becomes a negative power.";
+const FRACTION = "Keep the division as a fraction: it is easier to cancel.";
 // after the first derivation the teacher is brisker
-const BRACKETS2 = "Brackets round both sides again, one for each factor.";
+const BRACKETS2 = "Brackets again, one for each factor.";
 const SWAP2 = "Swap in the dimensions.";
-const EXPAND2 = "Multiply the powers inside each bracket by the power outside.";
-const ADD2 = "Add up the powers of each letter.";
-const CANCEL2 = "Cancel what is on the top and the bottom.";
-const NEGATIVE2 = "Now write it without the fraction, using negative powers.";
+const EXPAND2 = "Expand the powers.";
+const ADD2 = "Add the powers.";
+const CANCEL2 = "Cancel.";
+const NEGATIVE2 = "Write with negative powers.";
 function derivationSteps(c: Ctx, o: DOpts): SolveStep[] {
   const { der } = o;
   const again = c.derivations++ > 0;
@@ -122,7 +122,7 @@ function buildSteps(keys: string[], c: Ctx): SolveStep[] {
     const der = derive(item.lhs, item.expr, item.pieces, item.dim, item.formula);
     out.push(...derivationSteps(c, {
       heading: `First: the dimensions of ${name}`,
-      intro: `We'll need the dimensions of ${name}, and it isn't one of our givens, so we build it. ${cap(item.say)}.`,
+      intro: `${cap(name)} isn't given: build it. ${cap(item.say)}.`,
       der, learn: `${item.lhs} = ${dimTex(item.dim)}`, phase: `Build ${name}`, hasNumber: item.pieces.some((p) => p.dim.every(fzero)),
     }));
   }
@@ -202,7 +202,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
   const S = c.S;
   const wrongNote = (): SolveStep[] => {
     const wrong = (d.options ?? []).filter((o) => !o.correct);
-    return wrong.length ? [S(`Notice what the other options do wrong: ${wrong.map((o) => `${M(o.text)} (${o.why})`).join("; ")}.`, "The other options")] : [];
+    return wrong.length ? [S(`The other options: ${wrong.map((o) => `${M(o.text)} (${o.why})`).join("; ")}.`, "The other options")] : [];
   };
 
   // ── Find the dimensions ──
@@ -210,9 +210,9 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const steps = buildSteps(d.needs ?? [], c);
     const m = mainOf(d)!;
     const captions = d.kind === "dimsUnits"
-      ? { brackets: "The units tell us what it is made of. Put square brackets round them: kilograms, metres and seconds stand for the base dimensions, M, L and T.", subst: "Now swap each unit for its dimension: kilograms are M, metres are L and seconds are T." }
+      ? { brackets: "Put the units in square brackets. Kilograms, metres and seconds stand for the base dimensions.", subst: "Swap each unit for its dimension: kg is M, m is L, s is T." }
       : d.kind === "dimsExpr"
-        ? { brackets: `We want the dimensions of this expression. Put brackets round each quantity, and a power on a quantity goes on its bracket.${m.root ? " A square root means a power of a half on everything under it." : ""}`, ...(m.root ? { expand: "Work out what is under the root first: add the powers inside.", sum: "The square root halves every power." } : {}) }
+        ? { brackets: `Put brackets round each quantity; a power goes on its bracket.${m.root ? " A square root is a power of a half on everything under it." : ""}`, ...(m.root ? { expand: "Work out what is under the root first.", sum: "Halve every power." } : {}) }
         : {};
     steps.push(...derivationSteps(c, { heading: m.heading, intro: m.intro, der: m.der, box: m.final, captions, hasNumber: d.kind === "dimsName" && !!QBY[d.askId!].num }));
     steps.push(...wrongNote());
@@ -225,16 +225,16 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const k = rows[0];
     const { formulaRow: fr0, der } = constPieces(d);
     c.stage();
-    steps.push(S(`Here is the formula we are given. ${M(d.formula!)} is a constant, and we want its dimensions.`, "The formula", formulaRow(d.relFormula!)));
-    steps.push(S(`Put square brackets round both sides. The dimensions of the two sides must be the same.${d.relNum ? " A plain number, like a half, has dimensions 1." : ""}`, "Brackets", head(`The dimensions of ${M(d.formula!)}`), fr0));
-    steps.push(S(`Now make ${M(rowBr(k))} the subject: divide by everything else.${d.relNum ? " The half is only a number, so it drops out." : ""}${der.divides ? ` ${FRACTION}` : ""}`, "Rearrange for the constant", GAP, ...der.def));
+    steps.push(S(`Start from the formula: ${M(d.formula!)} is a constant.`, "The formula", formulaRow(d.relFormula!)));
+    steps.push(S(`Put brackets round both sides: they must have the same dimensions.${d.relNum ? " A plain number, like a half, has dimensions 1." : ""}`, "Brackets", head(`The dimensions of ${M(d.formula!)}`), fr0));
+    steps.push(S(`Make ${M(rowBr(k))} the subject.${d.relNum ? " The half is only a number, so it drops out." : ""}${der.divides ? ` ${FRACTION}` : ""}`, "Rearrange for the constant", GAP, ...der.def));
     steps.push(S(SWAP, "Dimensions", ...der.subst));
     if (der.expand.length) steps.push(S(EXPAND, "Powers", ...der.expand));
     if (der.cancel.length) steps.push(S(CANCEL, "Cancel", ...der.cancel));
     const finalTex = `${rowBr(k)} = ${answerTex(d.answerDim!)}`;
     steps.push(S(der.sum.length ? (der.divides ? NEGATIVE : ADD) : "That is the answer; box it.", "Answer", ...der.sum, GAP, boxed(finalTex)));
-    if (d.represents) steps.push(S(`Those are the dimensions of ${d.represents}, so that is what ${M(d.formula!)} stands for.`, "What it is", head(`These are the dimensions of ${d.represents}.`)));
-    else if (d.answerDim!.every(fzero)) steps.push(S("It has no dimensions at all: the constant is dimensionless.", "What it is", head("The constant has no dimensions: it is dimensionless.")));
+    if (d.represents) steps.push(S(`These are the dimensions of ${d.represents}: that is what ${M(d.formula!)} is.`, "What it is", head(`These are the dimensions of ${d.represents}.`)));
+    else if (d.answerDim!.every(fzero)) steps.push(S("No dimensions left: the constant is dimensionless.", "What it is", head("The constant has no dimensions: it is dimensionless.")));
     steps.push(...wrongNote());
     return steps;
   }
@@ -245,8 +245,8 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const terms = d.terms ?? [];
     if (d.kind === "consPick") {
       c.stage();
-      (d.options ?? []).forEach((_o, i) => steps.push(S(`Take formula ${"ABCD"[i]}. Work out the dimensions of each of its terms: are they all the same?`, "Check each formula", ...(i === 0 ? [head("Check each formula")] : []), d.checks![i])));
-      steps.push(S("Only one formula has terms that all have the same dimensions: that is the one to circle.", "Answer", GAP, boxed(d.formula!)));
+      (d.options ?? []).forEach((_o, i) => steps.push(S(`Formula ${"ABCD"[i]}: are all its terms the same dimensions?`, "Check each formula", ...(i === 0 ? [head("Check each formula")] : []), d.checks![i])));
+      steps.push(S("Only one formula has matching terms: circle it.", "Answer", GAP, boxed(d.formula!)));
       return steps;
     }
     const skip = d.kind === "consMissing" ? d.oddIdx! : -1;
@@ -258,14 +258,14 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       c.stage();
       const one = pieces.length === 1 && feq(pieces[0].exp, ONE);
       const rowsT = one ? [al(lhs, dimTex(dim))] : (() => { const der = derive(lhs, null, pieces, dim); return [...der.def, ...der.subst, ...der.expand, ...der.cancel, ...der.sum]; })();
-      steps.push(S(`${i === 0 ? "Start with the first term" : "Now the next term"}: split it into brackets, swap in the dimensions and add up the powers.${t.num ? " A number like a half has dimensions 1." : ""}`, "Dimensions of each term", head(`The dimensions of $${t.tex}$`), ...rowsT));
+      steps.push(S(`${i === 0 ? "First term" : "Next term"}: brackets, dimensions, then add the powers.${t.num ? " A number like a half has dimensions 1." : ""}`, "Dimensions of each term", head(`The dimensions of $${t.tex}$`), ...rowsT));
     });
     c.stage();
     const done = terms.map((t, i) => (i === skip ? null : brTex(t.tex))).filter((x): x is string => !!x);
     if (d.kind === "consShow") {
-      steps.push(S("Every term has the same dimensions, so the formula is dimensionally consistent.", "Conclusion", head("Compare the terms"), `${done.join(" = ")} = ${dimTex(dims[0])}`, GAP, boxed("\\text{the formula is dimensionally consistent}")));
+      steps.push(S("Every term has the same dimensions: the formula is consistent.", "Conclusion", head("Compare the terms"), `${done.join(" = ")} = ${dimTex(dims[0])}`, GAP, boxed("\\text{the formula is dimensionally consistent}")));
     } else if (d.kind === "consOdd") {
-      steps.push(S("Compare the terms. One of them has different dimensions from the others: that is the odd one out.", "Conclusion", head("Compare the terms"), boxed(`\\text{odd one out: } ${terms[d.oddIdx!].tex}`)));
+      steps.push(S("Compare the terms: the odd one out has different dimensions.", "Conclusion", head("Compare the terms"), boxed(`\\text{odd one out: } ${terms[d.oddIdx!].tex}`)));
     } else {
       const m = d.missing!;
       const eqRows = ([0, 1, 2] as const).map((col) => {
@@ -274,7 +274,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
         const tail = fzero(rest) ? "" : ` ${rest[0] < 0 ? "-" : "+"} ${frTex(fr(Math.abs(rest[0]), rest[1]))}`;
         return lab(BASE[col], `${eqLhsTex([m.coef[col]], ["n"])}${tail} = ${frTex(m.target[col])}`);
       }).filter((x): x is string => !!x);
-      steps.push(S(`The term with ${M("n")} in it must have the same dimensions as the others. Compare the powers of each base dimension.`, "Equate the dimensions", head("Equate the powers"), ...eqRows));
+      steps.push(S(`Match the powers of each base dimension to the other terms.`, "Equate the dimensions", head("Equate the powers"), ...eqRows));
       steps.push(S(`Solve for ${M("n")}.`, "Answer", GAP, boxed(`n = ${frTex(m.value)}`)));
     }
     return steps;
@@ -296,7 +296,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       const der = derive(rowBr(r), units, pieces, r.dim);
       c.stage();
       c.learn(`${rowBr(r)} = ${dimTex(r.dim)}`);
-      steps.push(S(`Now ${M(r.sym)}: its units tell us its dimensions. Put the units in brackets, swap each for its dimension and add the powers.`, "Dimensions from the units", head(`The dimensions of ${M(r.sym)}`), der.def[0], ...der.subst, ...der.expand, ...der.cancel, ...der.sum));
+      steps.push(S(`Find ${M(r.sym)} from its units: brackets, dimensions, then add the powers.`, "Dimensions from the units", head(`The dimensions of ${M(r.sym)}`), der.def[0], ...der.subst, ...der.expand, ...der.cancel, ...der.sum));
     });
   } else if (d.via === "defs") {
     steps.push(...buildSteps(d.needs ?? [], c));
@@ -304,7 +304,7 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
   // the model, with the dimensions put in, expanded and collected
   const model = `${brTex(target.sym)} = ${facs.map((r, i) => `${rowBr(r)}^{${symTex(syms[i])}}`).join("")}`;
   c.stage();
-  steps.push(S(`${M("k")} has no dimensions, so the dimensions of the two sides of the model must be the same. Put square brackets round everything.`, "The model", head("The model"), model));
+  steps.push(S(`${M("k")} has no dimensions: put square brackets round both sides.`, "The model", head("The model"), model));
   const withPower = (r: DimRow, i: number) => {
     const t = dimTex(r.dim);
     const letters = r.dim.filter((e) => !fzero(e)).length;
@@ -314,12 +314,12 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
   const substituted = facs.map(withPower).join("");
   const expanded = facs.map((r, i) => ([0, 1, 2] as const).filter((col) => !fzero(r.dim[col])).map((col) => `${BASE[col]}^{${feq(r.dim[col], ONE) ? "" : frTex(r.dim[col])}${symTex(syms[i])}}`).join("")).join("\\,");
   const collected = ([0, 1, 2] as const).map((col) => `${BASE[col]}^{${eqLhsTex(d.eqs[col].coef, syms)}}`).filter((_, col) => d.eqs[col].coef.some((x) => !fzero(x))).join("");
-  steps.push(S("Now swap each bracket for its dimensions.", "The model", al(dimTex(target.dim), substituted)));
-  if (expanded !== substituted) steps.push(S("A power outside a bracket goes onto every letter inside it, so each letter picks up the unknown power.", "The model", ct(expanded)));
-  steps.push(S(`Collect the powers of ${M("M")}, ${M("L")} and ${M("T")} separately.`, "The model", ct(collected)));
+  steps.push(S("Swap each bracket for its dimensions.", "The model", al(dimTex(target.dim), substituted)));
+  if (expanded !== substituted) steps.push(S("Put each unknown power on every letter in its bracket.", "The model", ct(expanded)));
+  steps.push(S(`Collect the powers of ${M("M")}, ${M("L")} and ${M("T")}.`, "The model", ct(collected)));
   // equate the powers
   c.stage(head("The model"), `${dimTex(target.dim)} = ${collected}`);
-  d.eqs.forEach((e, col) => steps.push(S(`Compare the powers of ${M(BASE[col])} on the two sides: the left side has ${M(frTex(e.rhs))}, so the right side must add up to the same.`, "Equate the powers", ...(col === 0 ? [GAP, head("Equate the powers")] : []), lab(BASE[col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`))));
+  d.eqs.forEach((e, col) => steps.push(S(`Powers of ${M(BASE[col])}: the right side must add up to ${M(frTex(e.rhs))}.`, "Equate the powers", ...(col === 0 ? [GAP, head("Equate the powers")] : []), lab(BASE[col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`))));
 
   if (d.ask === "cannot") {
     // two independent equations fix both powers; the third then disagrees
@@ -330,9 +330,9 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       const [a, b] = res.x;
       const lhs = fadd(fmul(d.eqs[r3].coef[0], a), fmul(d.eqs[r3].coef[1], b));
       c.stage(head("Equate the powers"), ...d.eqs.map((e) => lab(BASE[e.col], `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`)));
-      steps.push(S(`Use the ${BASE[r1]} and ${BASE[r2]} equations to find both powers.`, "Solve", GAP, head("Solve"), al(symTex(syms[0]), frTex(a)), al(symTex(syms[1]), frTex(b))));
-      steps.push(S(`Put them into the ${BASE[r3]} equation. It does not hold, so the equations contradict each other.`, "Contradiction", GAP, lab(BASE[r3], `${frTex(lhs)} \\neq ${frTex(d.eqs[r3].rhs)}`)));
-      steps.push(S("So no values of the powers work: the model cannot be right.", "Answer", GAP, boxed("\\text{no values work: the model cannot be right}")));
+      steps.push(S(`Solve the ${BASE[r1]} and ${BASE[r2]} equations.`, "Solve", GAP, head("Solve"), al(symTex(syms[0]), frTex(a)), al(symTex(syms[1]), frTex(b))));
+      steps.push(S(`Put them in the ${BASE[r3]} equation: it fails.`, "Contradiction", GAP, lab(BASE[r3], `${frTex(lhs)} \\neq ${frTex(d.eqs[r3].rhs)}`)));
+      steps.push(S("No values work: the model cannot be right.", "Answer", GAP, boxed("\\text{no values work: the model cannot be right}")));
       return steps;
     }
     return steps;
@@ -355,18 +355,18 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
     const expr = feq(e.coef[i], ONE) ? numer : `\\frac{${numer}}{${frTex(e.coef[i])}}`;
     const out = [...(first ? [GAP, head("Solve")] : []), ...(haveKnown ? [lab(BASE[e.col], `${withValues} = ${frTex(e.rhs)}`)] : []), al(symTex(syms[i]), expr), ...(expr !== frTex(v) ? [ct(frTex(v))] : [])];
     first = false;
-    const zeroNote = fzero(v) ? " That power is zero: that quantity does not appear in the formula." : "";
+    const zeroNote = fzero(v) ? " Zero: that quantity does not appear." : "";
     steps.push(S(haveKnown
-      ? `Now put the powers we have already found into the ${BASE[e.col]} equation, and solve for ${M(symTex(syms[i]))}.${zeroNote}`
-      : `The ${BASE[e.col]} equation has only ${M(symTex(syms[i]))} in it, so we can solve it straight away${feq(e.coef[i], ONE) ? "" : `: divide both sides by ${M(frTex(e.coef[i]))}`}.${zeroNote}`, "Solve", ...out));
+      ? `Substitute the powers found into the ${BASE[e.col]} equation and solve for ${M(symTex(syms[i]))}.${zeroNote}`
+      : `The ${BASE[e.col]} equation has only ${M(symTex(syms[i]))}${feq(e.coef[i], ONE) ? ": solve it" : `: divide both sides by ${M(frTex(e.coef[i]))}`}.${zeroNote}`, "Solve", ...out));
   }
   if (val.some((v) => v === null)) {
     const res = solveLinear(d.eqs.map((e) => e.coef), d.eqs.map((e) => e.rhs));
     const pending = val.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
     if (res.status === "unique") res.x.forEach((v, i) => { if (val[i] === null) val[i] = v; });
-    steps.push(S("The rest need the equations used together: eliminate one power from a pair of equations, then another.", "Solve", ...(first ? [GAP, head("Solve")] : []), ...pending.map((i) => al(symTex(syms[i]), frTex(val[i]!)))));
+    steps.push(S("Eliminate one power from a pair of equations, then another.", "Solve", ...(first ? [GAP, head("Solve")] : []), ...pending.map((i) => al(symTex(syms[i]), frTex(val[i]!)))));
   }
   const answer = syms.map((s, i) => `${symTex(s)} = ${frTex(val[i]!)}`).join(",\\ ");
-  steps.push(S("Check that all three equations still work with these values, then write the answer clearly.", "Answer", GAP, boxed(answer)));
+  steps.push(S("Check all three equations, then write the answer.", "Answer", GAP, boxed(answer)));
   return steps;
 }
