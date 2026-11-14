@@ -39,8 +39,6 @@ export function eqLhsTex(coef: Fr[], syms: string[]): string {
   });
   return out || "0";
 }
-/** "M: \alpha + \gamma = 0": the column label as plain text, then the equation as TeX (the grid colours the label) */
-export const eqTexLine = (e: DimEq, syms: string[]): string => `${BASE[e.col]}: ${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`;
 const NUM_TEX: Record<string, string> = { "½": "\\frac{1}{2}", "2π": "2\\pi ", "2": "2" };
 /** a product of factors: numerator over denominator as a fraction, a root over the lot when asked; `override` writes a factor itself (the unknown power n) */
 export function productTex(fs: Array<{ sym: string; p: Fr }>, root = false, override?: (x: { sym: string; p: Fr }) => string | null): string {
