@@ -38,7 +38,7 @@ type BankKind = "planar" | "crossing" | "complete";
 /** The tools that draw from the bank. (Network Flows does not: its networks are directed, acyclic, source → sink, ≤ 8 vertices — flowTemplates.ts.) */
 export type BankUse = "mst" | "tspComplete" | "tspPractical" | "routeInspection" | "sandbox";
 
-export interface BankGraph {
+interface BankGraph {
   /** the tools this drawing suits (see GRAPH_POLICY) */
   uses: BankUse[];
   id: string;
@@ -199,11 +199,6 @@ export const GRAPH_BANK: BankGraph[] = [...FLOW_TEMPLATES.map(fromFlow), ...NEW]
   return { ...base, uses: (Object.keys(GRAPH_POLICY) as BankUse[]).filter((u) => GRAPH_POLICY[u].allows(base)) };
 });
 
-export const bankGraph = (id: string): BankGraph => {
-  const g = GRAPH_BANK.find((x) => x.id === id);
-  if (!g) throw new Error(`graph bank: no graph "${id}"`);
-  return g;
-};
 
 // ── sampling ──────────────────────────────────────────────────────────────────
 interface SampleOptions {
