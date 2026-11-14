@@ -1,6 +1,6 @@
 // LaTeX for every piece of maths in a Dimensional Analysis question, its working and its model answers.
 // Prose carries maths between $…$ (rendered on screen by the shell's InlineMath, on paper by KaTeX); these build what goes between the dollars.
-import { type Fr, type Dim3, type DimEq, type Term, type Factor, BASE, fr, fmul, fneg, feq, fzero, ONE, parseUnits } from "./dim";
+import { type Fr, type Dim3, type Term, type Factor, BASE, fr, fmul, fneg, feq, fzero, ONE, parseUnits } from "./dim";
 
 const GREEK: Record<string, string> = { ρ: "\\rho ", κ: "\\kappa ", ω: "\\omega ", η: "\\eta ", σ: "\\sigma ", τ: "\\tau ", π: "\\pi ", μ: "\\mu ", α: "\\alpha ", β: "\\beta ", γ: "\\gamma ", "₁": "_1", "₂": "_2" };
 /** a quantity's or power's symbol as TeX ("ρ" → "\rho", "m₁" → "m_1") */
