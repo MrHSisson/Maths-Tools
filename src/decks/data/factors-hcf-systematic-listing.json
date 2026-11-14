@@ -91,7 +91,7 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 50,
+     "y": 60,
      "w": 1400,
      "h": 100,
      "text": "Testing a factor with the calculator",
@@ -103,11 +103,11 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 150,
+     "y": 165,
      "w": 1400,
-     "h": 70,
+     "h": 60,
      "text": "Is $4$ a factor of $24$? Is $5$?",
-     "size": 46,
+     "size": 40,
      "colour": "#64748b",
      "id": "fhl-calc-test-2"
     },
@@ -271,7 +271,7 @@
      "id": "fhl-calc-test-14"
     }
    ],
-   "built": "ral29i"
+   "built": "psl6vq"
   },
   {
    "id": "fhl-calc-all",
@@ -845,7 +845,7 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 40,
+     "y": 60,
      "w": 1400,
      "h": 100,
      "text": "Find the common factors",
@@ -857,18 +857,18 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 135,
+     "y": 165,
      "w": 1400,
-     "h": 70,
+     "h": 60,
      "text": "Write the factor pairs of both numbers. Which numbers are in both?",
-     "size": 42,
+     "size": 40,
      "colour": "#64748b",
      "id": "fhl-common-model-2"
     },
     {
      "kind": "text",
      "x": 180,
-     "y": 235,
+     "y": 250,
      "w": 520,
      "h": 90,
      "text": "12",
@@ -883,7 +883,7 @@
     {
      "kind": "line",
      "x": 190,
-     "y": 330,
+     "y": 345,
      "w": 500,
      "h": 0,
      "colour": "#cbd5e1",
@@ -894,7 +894,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "1",
@@ -909,7 +909,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 354,
+     "y": 369,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -920,7 +920,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "12",
@@ -934,7 +934,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 350,
+     "y": 365,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -948,7 +948,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "2",
@@ -963,7 +963,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -974,7 +974,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "6",
@@ -989,7 +989,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 478,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1000,7 +1000,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 445,
+     "y": 460,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1014,7 +1014,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "3",
@@ -1029,7 +1029,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1040,7 +1040,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "4",
@@ -1054,7 +1054,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 540,
+     "y": 555,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1068,7 +1068,7 @@
     {
      "kind": "text",
      "x": 900,
-     "y": 235,
+     "y": 250,
      "w": 520,
      "h": 90,
      "text": "18",
@@ -1083,7 +1083,7 @@
     {
      "kind": "line",
      "x": 910,
-     "y": 330,
+     "y": 345,
      "w": 500,
      "h": 0,
      "colour": "#cbd5e1",
@@ -1094,7 +1094,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "1",
@@ -1109,7 +1109,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 354,
+     "y": 369,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1120,7 +1120,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "18",
@@ -1134,7 +1134,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 350,
+     "y": 365,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1148,7 +1148,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "2",
@@ -1163,7 +1163,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1174,7 +1174,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "9",
@@ -1188,7 +1188,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 445,
+     "y": 460,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1202,7 +1202,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "3",
@@ -1217,7 +1217,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1228,7 +1228,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "6",
@@ -1243,7 +1243,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1198,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1254,7 +1254,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 540,
+     "y": 555,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1268,7 +1268,7 @@
     {
      "kind": "line",
      "x": 800,
-     "y": 235,
+     "y": 250,
      "w": 0,
      "h": 390,
      "colour": "#cbd5e1",
@@ -1278,24 +1278,24 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 660,
+     "y": 675,
      "w": 1400,
      "h": 90,
      "text": "Common factors: $1$, $2$, $3$, $6$",
      "size": 54,
      "colour": "#15803d",
-     "bold": true,
      "align": "center",
      "middle": true,
+     "bold": true,
      "step": 3,
      "id": "fhl-common-model-34"
     },
     {
      "kind": "text",
      "x": 100,
-     "y": 765,
+     "y": 780,
      "w": 1400,
-     "h": 100,
+     "h": 90,
      "text": "Calculator check: $18 \\div 4 = 4.5$, so $4$ is not a factor of $18$.",
      "size": 42,
      "colour": "#0f172a",
@@ -1305,7 +1305,7 @@
      "id": "fhl-common-model-35"
     }
    ],
-   "built": "1eikyu3"
+   "built": "1x3hoxy"
   },
   {
    "id": "fhl-disc-common",
@@ -1453,7 +1453,7 @@
         "$1$, $3$, $5$, $15$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{30} \\; & \\; \\mathbf{45} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{15}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\; & \\;  \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{30} \\;&\\; \\mathbf{45} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\;\\\\\\; 2 \\times \\textcolor{#15803d}{\\mathbf{15}} \\;&\\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 10 \\;&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\;&\\end{array}$",
         "Common factors: $1$, $3$, $5$, $15$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1477,7 +1477,7 @@
         "$1$, $2$, $4$, $8$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{40} \\; & \\; \\mathbf{56} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 56 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 28 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 14 \\; \\\\ \\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; 7 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{40} \\;&\\; \\mathbf{56} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 56 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 28 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\;&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 14 \\;\\\\\\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\;&\\; 7 \\times \\textcolor{#15803d}{\\mathbf{8}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1500,7 +1500,7 @@
         "$1$, $2$, $5$, $10$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{50} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 50 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 25 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{20} \\;&\\; \\mathbf{50} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 50 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 25 \\;\\\\\\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\;&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $5$, $10$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1513,8 +1513,8 @@
      "visualiser": false
     }
    ],
-   "brief": "Three whiteboard questions: both numbers' pairs partly given, then the number of pairs in brackets, then 20 and 30 with no help.",
-   "built": "pppekl"
+   "brief": "Three whiteboard questions: both numbers' pairs partly given, then the number of pairs in brackets, then 20 and 50 with no help.",
+   "built": "mztf6p"
   },
   {
    "id": "fhl-cf-book",
@@ -1556,7 +1556,7 @@
         "$1$, $2$, $4$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{16} \\; & \\; \\mathbf{28} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 8 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 14 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{4}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 7 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{16} \\;&\\; \\mathbf{28} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 16 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 8 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 14 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{4}} \\;&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 7 \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1580,7 +1580,7 @@
         "$1$, $3$, $9$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{27} \\; & \\; \\mathbf{63} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 27 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 21 \\; \\\\ \\;  \\; & \\; 7 \\times \\textcolor{#15803d}{\\mathbf{9}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{27} \\;&\\; \\mathbf{63} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 27 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\;&\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 21 \\;\\\\&\\; 7 \\times \\textcolor{#15803d}{\\mathbf{9}} \\;\\end{array}$",
         "Common factors: $1$, $3$, $9$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1604,7 +1604,7 @@
         "$1$, $2$, $4$, $8$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{32} \\; & \\; \\mathbf{72} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 32 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 72 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 16 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 36 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; 3 \\times 24 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 18 \\; \\\\ \\;  \\; & \\; 6 \\times 12 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times 9 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{32} \\;&\\; \\mathbf{72} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 32 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 72 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 16 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 36 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\;&\\; 3 \\times 24 \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 18 \\;\\\\&\\; 6 \\times 12 \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{8}} \\times 9 \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1628,7 +1628,7 @@
         "$1$, $7$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{21} \\; & \\; \\mathbf{35} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 21 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\; \\\\ \\; 3 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{21} \\;&\\; \\mathbf{35} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 21 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\;\\\\\\; 3 \\times \\textcolor{#15803d}{\\mathbf{7}} \\;&\\; 5 \\times \\textcolor{#15803d}{\\mathbf{7}} \\;\\end{array}$",
         "Common factors: $1$, $7$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1652,7 +1652,7 @@
         "$1$, $2$, $11$, $22$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{44} \\; & \\; \\mathbf{66} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 44 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{22}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{22}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{44} \\;&\\; \\mathbf{66} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 44 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{22}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\;\\\\\\; 4 \\times \\textcolor{#15803d}{\\mathbf{11}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{22}} \\;\\\\&\\; 6 \\times \\textcolor{#15803d}{\\mathbf{11}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $11$, $22$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1676,7 +1676,7 @@
         "$1$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{14} \\; & \\; \\mathbf{15} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 14 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 15 \\; \\\\ \\; 2 \\times 7 \\; & \\; 3 \\times 5 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{14} \\;&\\; \\mathbf{15} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 14 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 15 \\;\\\\\\; 2 \\times 7 \\;&\\; 3 \\times 5 \\;\\end{array}$",
         "Common factors: $1$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1699,7 +1699,7 @@
         "$1$, $2$, $3$, $6$, $9$, $18$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{54} \\; & \\; \\mathbf{90} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 54 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 90 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 27 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 45 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{18}} \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{6}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{18}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 15 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{9}} \\times 10 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{54} \\;&\\; \\mathbf{90} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 54 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 90 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 27 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 45 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{18}} \\;&\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 30 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{6}} \\times \\textcolor{#15803d}{\\mathbf{9}} \\;&\\; 5 \\times \\textcolor{#15803d}{\\mathbf{18}} \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{6}} \\times 15 \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{9}} \\times 10 \\;\\end{array}$",
         "Common factors: $1$, $2$, $3$, $6$, $9$, $18$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1722,7 +1722,7 @@
         "$1$, $5$, $7$, $35$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{70} \\; & \\; \\mathbf{105} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 70 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 105 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{35}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{35}} \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 14 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 21 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{7}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{7}} \\times 15 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{70} \\;&\\; \\mathbf{105} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 70 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 105 \\;\\\\\\; 2 \\times \\textcolor{#15803d}{\\mathbf{35}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{35}} \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 14 \\;&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 21 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{7}} \\times 10 \\;&\\; \\textcolor{#15803d}{\\mathbf{7}} \\times 15 \\;\\end{array}$",
         "Common factors: $1$, $5$, $7$, $35$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1745,7 +1745,7 @@
         "$1$, $2$, $4$, $8$, $16$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{48} \\; & \\; \\mathbf{80} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 48 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 80 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 24 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 40 \\; \\\\ \\; 3 \\times \\textcolor{#15803d}{\\mathbf{16}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 20 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 12 \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{16}} \\; \\\\ \\; 6 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times 10 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{48} \\;&\\; \\mathbf{80} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 48 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 80 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 24 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 40 \\;\\\\\\; 3 \\times \\textcolor{#15803d}{\\mathbf{16}} \\;&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 20 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 12 \\;&\\; 5 \\times \\textcolor{#15803d}{\\mathbf{16}} \\;\\\\\\; 6 \\times \\textcolor{#15803d}{\\mathbf{8}} \\;&\\; \\textcolor{#15803d}{\\mathbf{8}} \\times 10 \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$, $16$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -1761,7 +1761,7 @@
      "size": 100
     }
    ],
-   "built": "44yh7s"
+   "built": "od3pi6"
   },
   {
    "id": "fhl-hcf-definition",
@@ -1815,10 +1815,10 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 40,
+     "y": 60,
      "w": 1400,
      "h": 100,
-     "text": "Find the HCF of $12$ and $18$",
+     "text": "Find the HCF",
      "size": 64,
      "colour": "#0f172a",
      "bold": true,
@@ -1827,18 +1827,18 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 135,
+     "y": 165,
      "w": 1400,
-     "h": 70,
-     "text": "Find the common factors, then take the highest.",
-     "size": 42,
+     "h": 60,
+     "text": "Find the common factors, then take the highest. Here: $12$ and $18$.",
+     "size": 40,
      "colour": "#64748b",
      "id": "fhl-hcf-model-2"
     },
     {
      "kind": "text",
      "x": 180,
-     "y": 235,
+     "y": 250,
      "w": 520,
      "h": 90,
      "text": "12",
@@ -1853,7 +1853,7 @@
     {
      "kind": "line",
      "x": 190,
-     "y": 330,
+     "y": 345,
      "w": 500,
      "h": 0,
      "colour": "#cbd5e1",
@@ -1864,7 +1864,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "1",
@@ -1879,7 +1879,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 354,
+     "y": 369,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1890,7 +1890,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "12",
@@ -1904,7 +1904,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 350,
+     "y": 365,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1918,7 +1918,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "2",
@@ -1933,7 +1933,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1944,7 +1944,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "6",
@@ -1959,7 +1959,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 478,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -1970,7 +1970,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 445,
+     "y": 460,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -1984,7 +1984,7 @@
     {
      "kind": "text",
      "x": 280,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "3",
@@ -1999,7 +1999,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 288,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -2010,7 +2010,7 @@
     {
      "kind": "text",
      "x": 470,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "4",
@@ -2024,7 +2024,7 @@
     {
      "kind": "text",
      "x": 415,
-     "y": 540,
+     "y": 555,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -2038,7 +2038,7 @@
     {
      "kind": "text",
      "x": 900,
-     "y": 235,
+     "y": 250,
      "w": 520,
      "h": 90,
      "text": "18",
@@ -2053,7 +2053,7 @@
     {
      "kind": "line",
      "x": 910,
-     "y": 330,
+     "y": 345,
      "w": 500,
      "h": 0,
      "colour": "#cbd5e1",
@@ -2064,7 +2064,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "1",
@@ -2079,7 +2079,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 354,
+     "y": 369,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -2090,7 +2090,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 350,
+     "y": 365,
      "w": 130,
      "h": 80,
      "text": "18",
@@ -2104,7 +2104,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 350,
+     "y": 365,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -2118,7 +2118,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "2",
@@ -2133,7 +2133,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 449,
+     "y": 464,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -2144,7 +2144,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 445,
+     "y": 460,
      "w": 130,
      "h": 80,
      "text": "9",
@@ -2158,7 +2158,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 445,
+     "y": 460,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -2172,7 +2172,7 @@
     {
      "kind": "text",
      "x": 1000,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "3",
@@ -2187,7 +2187,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1008,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -2198,7 +2198,7 @@
     {
      "kind": "text",
      "x": 1190,
-     "y": 540,
+     "y": 555,
      "w": 130,
      "h": 80,
      "text": "6",
@@ -2213,7 +2213,7 @@
      "kind": "shape",
      "shape": "ellipse",
      "x": 1198,
-     "y": 544,
+     "y": 559,
      "w": 114,
      "h": 72,
      "stroke": "#15803d",
@@ -2224,7 +2224,7 @@
     {
      "kind": "text",
      "x": 1135,
-     "y": 540,
+     "y": 555,
      "w": 50,
      "h": 80,
      "text": "×",
@@ -2238,7 +2238,7 @@
     {
      "kind": "line",
      "x": 800,
-     "y": 235,
+     "y": 250,
      "w": 0,
      "h": 390,
      "colour": "#cbd5e1",
@@ -2248,7 +2248,7 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 660,
+     "y": 675,
      "w": 1400,
      "h": 90,
      "text": "Common factors: $1$, $2$, $3$, $6$",
@@ -2262,20 +2262,20 @@
     {
      "kind": "text",
      "x": 100,
-     "y": 765,
+     "y": 780,
      "w": 1400,
-     "h": 100,
+     "h": 90,
      "text": "The highest is $6$, so the HCF of $12$ and $18$ is $6$.",
      "size": 54,
      "colour": "#15803d",
-     "bold": true,
      "align": "center",
      "middle": true,
+     "bold": true,
      "step": 4,
      "id": "fhl-hcf-model-35"
     }
    ],
-   "built": "1d07dzr"
+   "built": "cnn2m1"
   },
   {
    "id": "fhl-disc-hcf",
@@ -2423,7 +2423,7 @@
         "$16$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{32} \\; & \\; \\mathbf{48} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 32 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 48 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{16}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 24 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{16}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 12 \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{32} \\;&\\; \\mathbf{48} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 32 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 48 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{16}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 24 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{16}} \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 12 \\;\\\\&\\; 6 \\times \\textcolor{#15803d}{\\mathbf{8}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$, $16$",
         "The highest common factor is $16$."
        ],
@@ -2448,7 +2448,7 @@
         "$15$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{45} \\; & \\; \\mathbf{60} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 60 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\; & \\; 2 \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 20 \\; \\\\ \\;  \\; & \\; 4 \\times \\textcolor{#15803d}{\\mathbf{15}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 12 \\; \\\\ \\;  \\; & \\; 6 \\times 10 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{45} \\;&\\; \\mathbf{60} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 45 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 60 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{3}} \\times \\textcolor{#15803d}{\\mathbf{15}} \\;&\\; 2 \\times 30 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 9 \\;&\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 20 \\;\\\\&\\; 4 \\times \\textcolor{#15803d}{\\mathbf{15}} \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 12 \\;\\\\&\\; 6 \\times 10 \\;\\end{array}$",
         "Common factors: $1$, $3$, $5$, $15$",
         "The highest common factor is $15$."
        ],
@@ -2472,7 +2472,7 @@
         "$10$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{20} \\; & \\; \\mathbf{30} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{10}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{20} \\;&\\; \\mathbf{30} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 20 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 30 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{10}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 15 \\;\\\\\\; 4 \\times \\textcolor{#15803d}{\\mathbf{5}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{10}} \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 6 \\;\\end{array}$",
         "Common factors: $1$, $2$, $5$, $10$",
         "The highest common factor is $10$."
        ],
@@ -2487,7 +2487,7 @@
     }
    ],
    "brief": "Three whiteboard questions: both numbers' pairs partly given, then the number of pairs in brackets, then 20 and 30 with no help.",
-   "built": "ug67j0"
+   "built": "175rzfc"
   },
   {
    "id": "fhl-hcf-book",
@@ -2529,7 +2529,7 @@
         "$14$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{28} \\; & \\; \\mathbf{42} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 42 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{14}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 21 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{14}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{7}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{28} \\;&\\; \\mathbf{42} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 28 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 42 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{14}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 21 \\;\\\\\\; 4 \\times \\textcolor{#15803d}{\\mathbf{7}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{14}} \\;\\\\&\\; 6 \\times \\textcolor{#15803d}{\\mathbf{7}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $7$, $14$",
         "The highest common factor is $14$."
        ],
@@ -2554,7 +2554,7 @@
         "$7$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{49} \\; & \\; \\mathbf{63} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 49 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{7}} \\times \\textcolor{#15803d}{\\mathbf{7}} \\; & \\; 3 \\times 21 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{7}} \\times 9 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{49} \\;&\\; \\mathbf{63} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 49 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 63 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{7}} \\times \\textcolor{#15803d}{\\mathbf{7}} \\;&\\; 3 \\times 21 \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{7}} \\times 9 \\;\\end{array}$",
         "Common factors: $1$, $7$",
         "The highest common factor is $7$."
        ],
@@ -2579,7 +2579,7 @@
         "$8$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{40} \\; & \\; \\mathbf{64} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 64 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 32 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 16 \\; \\\\ \\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{40} \\;&\\; \\mathbf{64} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 40 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 64 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 20 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 32 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 10 \\;&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 16 \\;\\\\\\; 5 \\times \\textcolor{#15803d}{\\mathbf{8}} \\;&\\; \\textcolor{#15803d}{\\mathbf{8}} \\times \\textcolor{#15803d}{\\mathbf{8}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$",
         "The highest common factor is $8$."
        ],
@@ -2604,7 +2604,7 @@
         "$5$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{35} \\; & \\; \\mathbf{55} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 55 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 7 \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 11 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{35} \\;&\\; \\mathbf{55} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 35 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 55 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 7 \\;&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 11 \\;\\end{array}$",
         "Common factors: $1$, $5$",
         "The highest common factor is $5$."
        ],
@@ -2629,7 +2629,7 @@
         "$6$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{66} \\; & \\; \\mathbf{90} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 90 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 45 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 22 \\; & \\; \\textcolor{#15803d}{\\mathbf{3}} \\times 30 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 11 \\; & \\; 5 \\times 18 \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{6}} \\times 15 \\; \\\\ \\;  \\; & \\; 9 \\times 10 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{66} \\;&\\; \\mathbf{90} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 66 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 90 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 33 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 45 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 22 \\;&\\; \\textcolor{#15803d}{\\mathbf{3}} \\times 30 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{6}} \\times 11 \\;&\\; 5 \\times 18 \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{6}} \\times 15 \\;\\\\&\\; 9 \\times 10 \\;\\end{array}$",
         "Common factors: $1$, $2$, $3$, $6$",
         "The highest common factor is $6$."
        ],
@@ -2654,7 +2654,7 @@
         "$1$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{14} \\; & \\; \\mathbf{25} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 14 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 25 \\; \\\\ \\; 2 \\times 7 \\; & \\; 5 \\times 5 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{14} \\;&\\; \\mathbf{25} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 14 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 25 \\;\\\\\\; 2 \\times 7 \\;&\\; 5 \\times 5 \\;\\end{array}$",
         "Common factors: $1$",
         "The highest common factor is $1$."
        ],
@@ -2678,7 +2678,7 @@
         "$25$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{75} \\; & \\; \\mathbf{100} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 75 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 100 \\; \\\\ \\; 3 \\times \\textcolor{#15803d}{\\mathbf{25}} \\; & \\; 2 \\times 50 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 15 \\; & \\; 4 \\times \\textcolor{#15803d}{\\mathbf{25}} \\; \\\\ \\;  \\; & \\; \\textcolor{#15803d}{\\mathbf{5}} \\times 20 \\; \\\\ \\;  \\; & \\; 10 \\times 10 \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{75} \\;&\\; \\mathbf{100} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 75 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 100 \\;\\\\\\; 3 \\times \\textcolor{#15803d}{\\mathbf{25}} \\;&\\; 2 \\times 50 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 15 \\;&\\; 4 \\times \\textcolor{#15803d}{\\mathbf{25}} \\;\\\\&\\; \\textcolor{#15803d}{\\mathbf{5}} \\times 20 \\;\\\\&\\; 10 \\times 10 \\;\\end{array}$",
         "Common factors: $1$, $5$, $25$",
         "The highest common factor is $25$."
        ],
@@ -2702,7 +2702,7 @@
         "$26$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{52} \\; & \\; \\mathbf{78} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 52 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 78 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{26}} \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 39 \\; \\\\ \\; 4 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{26}} \\; \\\\ \\;  \\; & \\; 6 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{52} \\;&\\; \\mathbf{78} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 52 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 78 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times \\textcolor{#15803d}{\\mathbf{26}} \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 39 \\;\\\\\\; 4 \\times \\textcolor{#15803d}{\\mathbf{13}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{26}} \\;\\\\&\\; 6 \\times \\textcolor{#15803d}{\\mathbf{13}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $13$, $26$",
         "The highest common factor is $26$."
        ],
@@ -2726,7 +2726,7 @@
         "$32$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{96} \\; & \\; \\mathbf{160} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 96 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 160 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 48 \\; & \\; \\textcolor{#15803d}{\\mathbf{2}} \\times 80 \\; \\\\ \\; 3 \\times \\textcolor{#15803d}{\\mathbf{32}} \\; & \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 40 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{4}} \\times 24 \\; & \\; 5 \\times \\textcolor{#15803d}{\\mathbf{32}} \\; \\\\ \\; 6 \\times \\textcolor{#15803d}{\\mathbf{16}} \\; & \\; \\textcolor{#15803d}{\\mathbf{8}} \\times 20 \\; \\\\ \\; \\textcolor{#15803d}{\\mathbf{8}} \\times 12 \\; & \\; 10 \\times \\textcolor{#15803d}{\\mathbf{16}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{96} \\;&\\; \\mathbf{160} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 96 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 160 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 48 \\;&\\; \\textcolor{#15803d}{\\mathbf{2}} \\times 80 \\;\\\\\\; 3 \\times \\textcolor{#15803d}{\\mathbf{32}} \\;&\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 40 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{4}} \\times 24 \\;&\\; 5 \\times \\textcolor{#15803d}{\\mathbf{32}} \\;\\\\\\; 6 \\times \\textcolor{#15803d}{\\mathbf{16}} \\;&\\; \\textcolor{#15803d}{\\mathbf{8}} \\times 20 \\;\\\\\\; \\textcolor{#15803d}{\\mathbf{8}} \\times 12 \\;&\\; 10 \\times \\textcolor{#15803d}{\\mathbf{16}} \\;\\end{array}$",
         "Common factors: $1$, $2$, $4$, $8$, $16$, $32$",
         "The highest common factor is $32$."
        ],
@@ -2743,7 +2743,7 @@
      "size": 100
     }
    ],
-   "built": "8nc8wk"
+   "built": "7pfnnu"
   },
   {
    "id": "fhl-exit",
@@ -2830,7 +2830,7 @@
         "$1$, $11$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{22} \\; & \\; \\mathbf{33} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 22 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 33 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{11}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{22} \\;&\\; \\mathbf{33} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 22 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 33 \\;\\\\\\; 2 \\times \\textcolor{#15803d}{\\mathbf{11}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{11}} \\;\\end{array}$",
         "Common factors: $1$, $11$"
        ],
        "rationale": "Write the factor pairs of both numbers and find every number that is in both.",
@@ -2853,7 +2853,7 @@
         "$13$"
        ],
        "explanation": [
-        "$\\begin{array}{c|c} \\; \\mathbf{26} \\; & \\; \\mathbf{39} \\; \\\\ \\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 26 \\; & \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 39 \\; \\\\ \\; 2 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; & \\; 3 \\times \\textcolor{#15803d}{\\mathbf{13}} \\; \\end{array}$",
+        "$\\begin{array}{c|c}\\; \\mathbf{26} \\;&\\; \\mathbf{39} \\;\\\\\\hline \\; \\textcolor{#15803d}{\\mathbf{1}} \\times 26 \\;&\\; \\textcolor{#15803d}{\\mathbf{1}} \\times 39 \\;\\\\\\; 2 \\times \\textcolor{#15803d}{\\mathbf{13}} \\;&\\; 3 \\times \\textcolor{#15803d}{\\mathbf{13}} \\;\\end{array}$",
         "Common factors: $1$, $13$",
         "The highest common factor is $13$."
        ],
@@ -2865,7 +2865,7 @@
      ]
     }
    ],
-   "built": "1bw8t6k"
+   "built": "16zr0"
   }
  ]
 }

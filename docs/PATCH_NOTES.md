@@ -29,6 +29,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Deck quality system: look card, review, shared pieces, build rules
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/{pieces,deckRules,builder,deckChecks}.ts`, `scripts/{deck.mjs,deckLayoutSmoke.mjs,deckPrintSmoke.mjs,deckReview.mjs,deckPage.mjs}`, `src/tests/deckPieces.test.ts`, `specs/decks/factors-hcf-systematic-listing.build.ts`, the factors deck, `docs/design/{LESSON_STYLE,DECK_BUILD_CHECKLIST}.md`, the lesson plan template, `docs/reference/decks.md`, `docs/pathways/decks.md`, `AGENTS.md`.
+
+Harry asked for an audit of the problems that keep coming back when decks are built (this conversation plus the repo's record of the other deck sessions) and for all the fixes. The recurring problems: numbers reused between worked examples and questions, layout and font sizing found by eye after the build, first drafts too long, too easy or too jargony, designs that give the answer away, checks that pass without anyone looking, and rework from layouts described in words.
+
+- **Look card before building** (`npm run deck -- looks <script>`): builds a script to a temp file (the repo is untouched) and writes contact sheets of one slide of each kind in every state (each question, the working open, answers shown). Harry says yes before the rest is built.
+- **Review after building** (`npm run deck -- review <id> [--kinds]`): contact sheets of every slide with all clicks revealed. `sheet` now waits for the page and reveals the clicks.
+- **Shared pieces** (`src/decks/pieces.ts`, exported from `builder.ts`): `S.whiteboard`, `S.plainBook`, `S.exitRows`, `S.pairModel`, `titleEls`, `quiet` / `hintLine` (small grey hints), `mathsStack` / `mathsGrid` (one pair to a line), `assertCentred`, and the `LOOK` tokens (sizes, colours, title place). The factors build script moved into the repo as the worked example and was rebuilt on them (only title positions and answer-table spacing changed).
+- **Build rules** (`src/decks/deckRules.ts`): `assertFreshNumbers`; `npm run deck -- build` now fails when a question asks about a number a slide works through (`--allow-repeats` overrides; the deck check still only warns for older decks).
+- **Checks that look at the drawn slide:** the layout check now measures every question of a set, the working-open view and the answers-shown view (a later question or the narrower working view used to be invisible to it), and warns when a short word or number is left alone on a wrapped line. A deck check warns when a title sits somewhere other than where its slide family usually has it.
+- **Fixed:** `verify`, `sheet`, `check --layout` and the print check drew a blank page for a deck that exists only as a file, because the app stopped bundling decks on 2026-11-11 (`scripts/deckPage.mjs` now serves the deck file to the page). `push`, `verify` and `review` warn when the branch changes player or shared code that is not on main.
+- **Recorded:** the plan template (class profile, question forms, numbers already used, look card), the lesson style ("Looking right on a projector", the workflow with the look card and the feedback protocol), the checklist (new process steps and pitfalls) and the decks reference.
+- **Checked:** new tests (`deckPieces.test.ts`); the layout check run on the factors, multiples and primes decks (no false alarms) and on deliberately broken copies (it flagged the working-open overflow and a later question, and the orphaned "48."); `verify` passes on the factors deck.
+- **Not done:** the older decks' build scripts were not moved onto the shared pieces; the dashboard Review is not set.
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
 ## 2026-11-14 — Factors deck: a design pass for readability
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/data/factors-hcf-systematic-listing.json`, `specs/decks/factors-hcf-systematic-listing.md`. No shared code.

@@ -41,9 +41,27 @@ A living page, one screen long. Read it before planning or building a deck; chan
 - **A deck Harry edits can still be changed by Claude**: saves are merged by slide and element (his version wins a clash); pull before changing anything.
 - Run `npm run deck -- check <deck id> --layout` before handing a deck over.
 
+## Looking right on a projector (decided with Harry, 2026-11-14)
+
+These are built into `src/decks/pieces.ts` (`LOOK`, `S.whiteboard`, `S.plainBook`, `S.exitRows`, `S.pairModel`, `quiet`, `hintLine`, `mathsStack`, `mathsGrid`): use the pieces, do not hand-place and hand-size a slide that one of them draws.
+
+- **Hints are quiet.** Small and grey, never as big as the question: a tiny grey line under a number in book work (`Hint: 3 pairs`), the count in small grey brackets after a number on a whiteboard (`60 (6 pairs)`).
+- **Two numbers, one line.** A question about two numbers keeps them on one line (in the sentence, as the headings of a table, or in one expression with their counts). Each factor pair, or step, has its own line, lined up; never two pairs of one number side by side.
+- **Whiteboards are full-width and centred**, with the question kept short (under 170 characters, which is what the player centres), at size 56 (60 with a table), inset 48. Help climbs: partly completed, then a count, then nothing; the last whiteboard in a section has no help and a friendly number.
+- **Whiteboard numbers are bigger than book numbers**, so a factor or answer is not seen at a glance and pupils have to use the method.
+- **Book work is plain big numbers** (size 100, centred) with the instruction once at the top: nine questions, 3 × 3, six with a hint and the last three with none, beginning to stretch. The exit ticket is one question to a row.
+- **Titles sit in the same place** on the same kind of slide (`titleEls`); the deck check warns when one does not.
+- **No drawn imitation of a calculator or other device.** Say what to type and what it shows, in plain text, one step per click; draw a device only if it can be a real, working piece.
+- **Fresh numbers.** The numbers of a worked example or discussion are not asked about in any question, no number is asked about twice inside a section, the exit ticket uses numbers used nowhere else and no pair repeats (`assertFreshNumbers`; `build` fails on a repeat).
+- **Pitch and plain words.** Check the class profile in the plan before choosing numbers. Prefer plain words to jargon and acronyms, and keep each slide self-contained: a slide does not rely on something shown three slides earlier.
+
 ## Workflow
 
-- Harry sends a lesson plan (`docs/design/templates/LESSON_PLAN_TEMPLATE.md`) or just a request. Claude replies with a plan as tables in `specs/decks/<id>.md` for review, then builds it with `npm run deck -- build` (see `docs/reference/decks.md`).
+- Harry sends a lesson plan (`docs/design/templates/LESSON_PLAN_TEMPLATE.md`) or just a request. Claude replies with a plan as tables in `specs/decks/<id>.md` for review.
+- **The look card comes next, before the whole deck is built:** `npm run deck -- looks <script>` writes contact sheets of one slide of each kind in every state (each question, the working open, the answers shown). Harry says yes, or what to change, on those pictures; then the rest is built with `npm run deck -- build` (see `docs/reference/decks.md`).
+- **After building, look.** `npm run deck -- review <id>` writes a contact sheet of every slide with all its clicks revealed; the checks cannot tell whether a deck looks right, so look at every sheet before showing it.
+- **When feedback reverses an earlier decision, show a before and after** (a look-card picture) and confirm it, instead of rebuilding on a reading of the words.
+- **A deck does not rely on code that is not on main.** The live site runs main, so a deck that needs a changed player or shared component looks different there until it is merged. Merge first, or send Harry the branch preview link with the deck (`push`, `verify` and `review` warn when the branch changes such code).
 - Harry edits wording in the player. Claude pulls the shared copy before changing anything (`npm run deck -- pull <id>`).
 - One plan file per deck, no per-slide essays.
 

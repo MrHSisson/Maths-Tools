@@ -154,6 +154,21 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       }
     }
   }
+  // The same kind of slide has its title in the same place. A title that sits somewhere else on one slide is a layout slip, not a design.
+  const titleOf = (slide: Slide) => slide.els.find((e): e is Extract<DeckElement, { kind: "text" }> => e.kind === "text" && !!e.bold && e.size >= 56 && e.y <= 140);
+  const titles = new Map<string, { where: string; key: string }[]>();
+  for (const [i, slide] of deck.slides.entries()) {
+    const t = titleOf(slide);
+    if (t) titles.set(slide.family, [...(titles.get(slide.family) ?? []), { where: at(slide, i), key: `${t.x},${t.y},${t.size}` }]);
+  }
+  for (const [family, list] of titles) {
+    if (list.length < 3) continue;
+    const counts = new Map<string, number>();
+    for (const l of list) counts.set(l.key, (counts.get(l.key) ?? 0) + 1);
+    const [usual, n] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (n < 2) continue;
+    for (const l of list) if (l.key !== usual) warnings.push(`${l.where}: the title sits at (x, y, size) ${l.key}, but the other ${family} slides use ${usual}`);
+  }
   // Practice asks fresh numbers: a number a slide already works through is not asked again (the question's title carries the numbers it is about).
   for (const a of asks) { const again = [...new Set(a.nums)].filter((n) => worked.has(n)); if (again.length) warnings.push(`${a.label}: asks about ${again.join(", ")}, which a slide already shows or works through; use fresh numbers`); }
   for (const { where, q } of depthCards) {
