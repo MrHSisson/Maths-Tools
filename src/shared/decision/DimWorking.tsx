@@ -3,6 +3,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { DecisionProblem, SolveStep } from "./types";
 import { givenLines, initialKnown } from "./dimSolve";
+import { GIVEN_ITEMS } from "./dimBuild";
 
 // The picture of a Dimensional Analysis question is the page a student would WRITE. At the top, a short strip of what is KNOWN (the given quantities, then each one
 // built so far); below it the working in progress, aligned on its equals signs, the newest lines in blue. The step beside it says why each line is there.
@@ -117,11 +118,15 @@ export default function DimCanvas({ p, step }: { p: DecisionProblem; step: Solve
         <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "none", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(12px, 4cqh, 30px)", color: base }}>
           <div style={{ marginBottom: 10, maxWidth: "26em" }}>
             <div style={{ ...label, marginBottom: 3 }}>Known</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 1.1em", fontSize: "0.9em", color: GIVEN }}>
-              {known.map((k, i) => (
-                <span key={i} style={{ whiteSpace: "nowrap", color: i >= known.length - knownFresh ? NEW : GIVEN }}><Tex t={k} /></span>
-              ))}
-            </div>
+            {/* what is assumed (l, t, m, v, a), a rule, then what has been built up from them */}
+            {[known.slice(0, GIVEN_ITEMS.length), known.slice(GIVEN_ITEMS.length)].map((group, g) => group.length > 0 && (
+              <div key={g} style={{ display: "flex", flexWrap: "wrap", gap: "2px 1.1em", fontSize: "0.9em", color: GIVEN, ...(g === 1 ? { marginTop: 4, paddingTop: 4, borderTop: "1px solid #cbd5e1" } : {}) }}>
+                {group.map((k, j) => {
+                  const i = g * GIVEN_ITEMS.length + j;
+                  return <span key={i} style={{ whiteSpace: "nowrap", color: i >= known.length - knownFresh ? NEW : GIVEN }}><Tex t={k} /></span>;
+                })}
+              </div>
+            ))}
           </div>
           {lines.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.55em", borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
