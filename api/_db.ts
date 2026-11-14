@@ -53,6 +53,20 @@ const SCHEMA = [
      preview jsonb,
      data jsonb NOT NULL
    )`,
+  `CREATE TABLE IF NOT EXISTS maths.deck_categories (
+     id text PRIMARY KEY,
+     name text NOT NULL,
+     parent text,
+     position integer NOT NULL DEFAULT 0
+   )`,
+  `CREATE TABLE IF NOT EXISTS maths.deck_filing (
+     deck_id text PRIMARY KEY,
+     category_id text NOT NULL
+   )`,
+  `CREATE TABLE IF NOT EXISTS maths.deck_meta (
+     key text PRIMARY KEY,
+     value text NOT NULL
+   )`,
   `CREATE TABLE IF NOT EXISTS maths.questions (
      id text PRIMARY KEY,
      data jsonb NOT NULL

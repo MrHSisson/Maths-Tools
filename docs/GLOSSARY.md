@@ -129,6 +129,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 | Term | Means |
 |---|---|
 | **Teach deck** | The whole Teach-mode slide sequence for a tool (Developing-tools only; being replaced by the whole-lesson **Deck** in §6a). |
+| **Deck strand and topic** | How decks are filed on the Decks page: a **strand** (Number, Decision Mathematics ...) with optional **topics** inside it, both Harry's to control (Manage categories, drag a card onto a heading); a deck sits in exactly one. *Not* a Depth deck category (below). | `api/_categories.ts`, `src/decks/categoryTree.ts` |
 | **Deck category** | A group of slides within a deck: **Concepts**, **True or False**, **Spot the Mistake** (`concept` / `trueFalse` / `spotMistake`). |
 | **Phase** | Legacy field (`iDo` / `weDo` / `youDo`); no longer drawn on slides. |
 | **Slide** | One card in a deck. Either **static** (body blocks + one reveal) or **anim** (a scene choreographed across beats). |

@@ -38,7 +38,7 @@ export default function DecksTab() {
       {published === undefined && <p className="text-slate-500">Loading…</p>}
       {published === null && !unlocked && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}
       {published && decks.length === 0 && <p className="text-slate-500">Nothing is published yet.</p>}
-      {decks.length > 0 && <DeckSections decks={decks} />}
+      {decks.length > 0 && <DeckSections decks={decks} admin={unlocked} />}
     </div>
   );
 }

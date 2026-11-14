@@ -10,6 +10,8 @@
 //   npm run deck -- preflight <tool-id>   BEFORE building on a tool: is it ready for a deck (draws everywhere, mixes fairly, has Depth, has a fixed-question builder)?
 //   npm run deck -- diff <id>             which slides were edited in the editor since the last build, and which were added there (pull first)
 //   npm run deck -- builders              the Q builders there are, and the tools they cover
+//   npm run deck -- categories            the category tree Harry controls on the Decks page (strands with topics) and the decks filed in each; `categories add "<name>" [--under "<strand>"]` adds one
+//   npm run deck -- file <deck-id> "<Strand>" | "<Strand> > <Topic>" | none    file a deck (Harry can also drag its card on the Decks page). Needs the deployment that has categories: DECKS_URL=<it>/api/decks until the branch is merged
 //   npm run deck -- sheet <id> 7,13,20     one picture of those slides (written to /tmp/deck-<id>-sheet.png)
 //   npm run deck -- looks <script>        THE LOOK CARD, before the deck is built: builds the script to a temp file (the repo is untouched) and writes contact sheets of ONE slide of each kind, every state (each question, the working open, answers shown). Harry approves this first
 //   npm run deck -- review <id> [--file f] [--kinds]   contact sheets of every slide of a built deck with all its clicks revealed (--kinds: one of each kind). Look at them before showing the deck
@@ -324,6 +326,47 @@ export default () => ({
   console.log(`Now LOOK at it: npm run deck -- review ${id}   (checks cannot tell you whether it looks right)`);
   skewWarning();
   process.exit(bad ? 1 : 0);
+} else if (cmd === "categories" || (cmd === "file" && id)) {
+  const { base, headers } = remote();
+  const asJson = async (res, what) => { if (!res.ok || !(res.headers.get("content-type") ?? "").includes("json")) fail(`${what}: ${res.status}. Categories are on the deployment that has this branch's api/decks.ts: use DECKS_URL=<that deployment>/api/decks until it is merged`); return res.json(); };
+  const read = async () => asJson(await fetch(`${base}?categories=all`, { headers }), "categories");
+  const send = async (op) => asJson(await fetch(base, { method: "POST", headers, body: JSON.stringify({ categories: op, by: "Claude" }) }), "categories");
+  const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  /** "Number" or "Number > Factors & multiples" to a category id. */
+  const find = (data, text) => {
+    const [a, b] = text.split(">").map((x) => x.trim());
+    const strand = data.categories.find((c) => c.parent === null && same(c.name, a));
+    const hit = b === undefined ? strand : data.categories.find((c) => strand && c.parent === strand.id && same(c.name, b));
+    if (!hit) fail(`no category called "${text}". Categories: ${data.categories.filter((c) => c.parent === null).map((c) => c.name).join(", ")}`);
+    return hit.id;
+  };
+  const pos = args.filter((a) => !a.startsWith("--"));
+  if (cmd === "file") {
+    const where = pos[2];
+    if (!where) fail('usage: npm run deck -- file <deck-id> "<Strand>" | "<Strand> > <Topic>" | none');
+    const data = await read();
+    const result = await send({ op: "file", deckId: id, categoryId: where === "none" ? null : find(data, where) });
+    console.log(`${id}: ${where === "none" ? "not filed" : `filed under ${where}`} (${Object.keys(result.filing).length} decks filed)`);
+  } else if (id === "add") {
+    const name = pos[2];
+    if (!name) fail('usage: npm run deck -- categories add "<name>" [--under "<strand>"]');
+    const data = await read();
+    const under = args.indexOf("--under") >= 0 ? args[args.indexOf("--under") + 1] : null;
+    await send({ op: "add", name, parent: under ? find(data, under) : null });
+    console.log(`added ${under ? `${under} > ` : ""}${name}`);
+  } else {
+    const data = await read();
+    const index = await asJson(await fetch(base, { headers }), "decks");
+    const ids = Object.keys(index.index?.decks ?? {});
+    const kids = (id2) => data.categories.filter((c) => c.parent === id2).sort((a, b) => a.position - b.position);
+    const decksIn = (cid) => ids.filter((d) => data.filing[d] === cid);
+    for (const st of kids(null)) {
+      console.log(`${st.name}${decksIn(st.id).length ? `: ${decksIn(st.id).join(", ")}` : ""}`);
+      for (const t of kids(st.id)) console.log(`  ${t.name}${decksIn(t.id).length ? `: ${decksIn(t.id).join(", ")}` : ""}`);
+    }
+    const loose = ids.filter((d) => !data.filing[d]);
+    console.log(`Not filed: ${loose.length ? loose.join(", ") : "(none)"}`);
+  }
 } else if (cmd === "review" && id) {
   const deckFile = args.indexOf("--file") >= 0 ? args[args.indexOf("--file") + 1] : file(id);
   if (!existsSync(deckFile)) fail(`review: ${deckFile} not found`);
@@ -343,4 +386,4 @@ export default () => ({
   console.log("Show Harry these sheets and get a yes on them BEFORE building the rest of the deck.");
   skewWarning();
   process.exit(code ? 1 : 0);
-} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | backup [<id>|all] | build <script> [--replace] | check <id|all> [--live] [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | looks <script> | review <id> [--kinds] | new <id> <tool-id>");
+} else fail("usage: npm run deck -- list | pull <id> | push <id> | publish <id> | unpublish <id> | backup [<id>|all] | build <script> [--replace] | check <id|all> [--live] [--layout] | preflight <tool-id> | verify <id> | diff <id> | builders | sheet <id> <slides> | categories | file <id> <category> | looks <script> | review <id> [--kinds] | new <id> <tool-id>");

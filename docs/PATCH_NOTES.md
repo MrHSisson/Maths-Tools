@@ -29,6 +29,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-14 — Deck strands and topics: Harry controls the Decks page headings
+
+Branch `claude/inspiring-pascal-jvm7q2`. Areas: `api/_categories.ts` (new), `api/_db.ts`, `api/decks.ts`, `src/decks/{categoryTree,categories,FileUnder}.ts(x)`, `src/components/{DeckGallery,DecksTab}.tsx`, `src/decks/{DeckPage,Editor}.tsx`, `src/admin/DecksSection.tsx`, `scripts/deck.mjs`, two test files, docs.
+
+Harry found the Decks page grouped decks under five hard-coded strands, so only Number had any decks (5 of the 10 live decks) and the other five sat under Other decks, one of them filed as "Decision Mathematics" which was not on the list. He asked to control the categories and put decks into them himself, as two levels (a strand with topics inside it), one place per deck, filed by dragging a card onto a heading.
+
+- **A two-level tree he controls:** add, rename, reorder, move (a topic to another strand, or a strand into one) and delete strands and topics from **Manage categories** on the Decks page (Developing tools on). Deleting a strand takes its topics; decks filed in them become not filed.
+- **Filing:** drag a card onto a strand or topic heading (the innermost wins; **Not filed** takes it back out). A touch screen cannot drag, so a card's (i) has **Filed under**, the same menu as the editor's About the deck (which replaces the five fixed buttons).
+- **Stored apart from the decks** (`maths.deck_categories`, `deck_filing`, `deck_meta`): filing changes no deck, so no new version, no merge, no clash with an edit. The first read seeds the tree from the old five strands plus "Decision Mathematics" and files the decks that already carried a strand.
+- **Public view:** `GET /api/decks?categories` lists only published decks' filing; empty headings show only to Harry. A deck with no filing still lands under the strand it carries.
+- **Claude:** `npm run deck -- categories`, `categories add`, `file <deck> "<Strand> > <Topic>"`.
+- **Checked:** 21 new tests (the API on an in-memory Postgres, and where a deck shows); the page in a browser with the service mocked (adding a topic, dragging three decks onto headings, the Filed under menu, the public view; no errors); the CLI against a mock service; tsc, lint.
+- **Not done:** nothing is filed on the live data yet beyond the seeding (the API only exists on a deployment of this branch until it is merged); no drag on touch (the menu is the touch way); decks cannot be in more than one place (Harry's choice).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-13 — Factors, common factors and HCF lesson deck (Claude Code)" (updated).
+
 ## 2026-11-14 — Deck quality system: look card, review, shared pieces, build rules
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: `src/decks/{pieces,deckRules,builder,deckChecks}.ts`, `scripts/{deck.mjs,deckLayoutSmoke.mjs,deckPrintSmoke.mjs,deckReview.mjs,deckPage.mjs}`, `src/tests/deckPieces.test.ts`, `specs/decks/factors-hcf-systematic-listing.build.ts`, the factors deck, `docs/design/{LESSON_STYLE,DECK_BUILD_CHECKLIST}.md`, the lesson plan template, `docs/reference/decks.md`, `docs/pathways/decks.md`, `AGENTS.md`.
