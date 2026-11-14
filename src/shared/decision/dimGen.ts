@@ -4,7 +4,7 @@
 // ("ρ", "α") and turned into TeX where they are written.
 import {
   type Dim3, type DimEq, type Fr, type Formula, type Term, type Factor,
-  LIBRARY, QBY, qDim, dimOf, dimAdd, dimSub, dimScale, dimEq, dimZero, BASE,
+  QBY, qDim, dimOf, dimAdd, dimSub, dimScale, dimEq, dimZero, BASE,
   fr, fadd, fneg, fzero, fint, ZERO, ONE,
   unitsDim, parseUnits, UNIT_BASE, baseUnits, solveLinear, rankOf, equationsFor, termDim, consistentDims, FORMULAS,
 } from "./dim";
@@ -209,6 +209,8 @@ export const CONST_RELATIONS: ConstRel[] = [
   CR("The height $y$ of a point on a wave at a horizontal distance $x$ is $y = A\\cos(kx)$, where $A$ is the amplitude and $k$ is a constant called the wave number.", "arg", "kx", [["x", "ext", 1]], "k", "the wave number", 1, undefined, "cosine"),
   CR("The surface tension $\\sigma$ of a liquid film is defined by $F = \\sigma l$, where $F$ is the force along an edge of length $l$.", "force", "F", [["l", "len", 1]], "σ", "the surface tension", 1),
 ];
+/** the constants that stand for a named quantity, by "left-hand symbol|constant" */
+const CONST_REPRESENTS: Record<string, string> = { "E|k": "stiffness", "E|I": "moment of inertia", "F|η": "viscosity", "v|ω": "angular speed", "ωt|ω": "angular speed", "F|σ": "surface tension" };
 /** [k] from  lhs = k^kexp · Π others */
 export const constDim = (r: ConstRel): Dim3 => {
   const rest = r.others.reduce<Dim3>((acc, x) => dimAdd(acc, dimScale(qDim(x.q), x.p)), dimOf(0, 0, 0));
@@ -226,11 +228,12 @@ export function genDimsConstFor(rel: ConstRel, circle: boolean): DimQuestion {
     { sym: symTex(rel.lhsSym), name: nameOf(rel.lhs), dim: qDim(rel.lhs), given: false, role: "target" },
     ...rel.others.map((x): DimRow => ({ sym: symTex(x.sym), name: nameOf(x.q), dim: qDim(x.q), given: false, exp: x.p, role: "factor" })),
   ];
-  const repr = LIBRARY.find((q) => dimEq(qDim(q.id), kd) && q.id !== "hgt");
+  // what the constant IS, only where the formula says so (the first quantity with the same dimensions would give surface tension as "stiffness")
+  const represents = CONST_REPRESENTS[`${rel.lhsSym}|${rel.kSym}`];
   const options = circle ? circleList(ans, distractors(kd)) : undefined;
   const prompt = `${rel.text} Find the dimensions of ${M(kSym)}.${options ? ` ${circleLine(options)}` : ""}`;
   return {
-    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: repr && !dimZero(kd) ? repr.name : undefined, formula: kSym, context: rel.text, relFormula: rel.formula, relNum: rel.num, relArg: rel.arg, needs: [rel.lhs, ...rel.others.map((x) => x.q)], title: `Find the dimensions of ${M(kSym)}` },
+    data: { kind: "dimsConst", rows, unknowns: [], answerPowers: [], eqs: [], ask: "find", answerDim: kd, options, defText: rel.kexp < 0 ? "denominator" : undefined, represents: represents && !dimZero(kd) ? represents : undefined, formula: kSym, context: rel.text, relFormula: rel.formula, relNum: rel.num, relArg: rel.arg, needs: [rel.lhs, ...rel.others.map((x) => x.q)], title: `Find the dimensions of ${M(kSym)}` },
     prompt,
     answerText: dimZero(kd) ? `${M(`[${kSym}] = 1`)} (dimensionless)` : M(`[${kSym}] = ${ans}`),
   };

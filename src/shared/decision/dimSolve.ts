@@ -370,12 +370,71 @@ export function solveDim(p: DecisionProblem): SolveStep[] {
       : `The ${BASE[e.col]} equation has only ${M(symTex(syms[i]))}${feq(e.coef[i], ONE) ? ": solve it" : `: divide both sides by ${M(frTex(e.coef[i]))}`}.${zeroNote}`, "Solve", ...out));
   }
   if (val.some((v) => v === null)) {
-    const res = solveLinear(d.eqs.map((e) => e.coef), d.eqs.map((e) => e.rhs));
+    // no equation has a single power left: eliminate one power between a pair of equations, then solve, then put back
+    type Eq = { coef: Fr[]; rhs: Fr; label: string };
     const pending = val.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0);
-    if (res.status === "unique") res.x.forEach((v, i) => { if (val[i] === null) val[i] = v; });
-    steps.push(S("Eliminate one power from a pair of equations, then another.", "Solve", ...(first ? [GAP, head("Solve")] : []), ...pending.map((i) => al(symTex(syms[i]), frTex(val[i]!)))));
+    const reduced: Eq[] = d.eqs.map((e) => {
+      let rhs = e.rhs;
+      const coef = e.coef.map((x, k) => { if (val[k]) { rhs = fsub(rhs, fmul(x, val[k]!)); return ZERO; } return x; });
+      return { coef, rhs, label: BASE[e.col] };
+    });
+    // the equations to work with: all three, or the pair that fixes two unknowns
+    let system: Eq[] = reduced;
+    if (pending.length === 2) {
+      outer: for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
+        const r = solveLinear([reduced[i].coef, reduced[j].coef].map((cf) => pending.map((k) => cf[k])), [reduced[i].rhs, reduced[j].rhs]);
+        if (r.status === "unique") { system = [reduced[i], reduced[j]]; break outer; }
+      }
+    }
+    const show = (e: Eq): string => lab(e.label, `${eqLhsTex(e.coef, syms)} = ${frTex(e.rhs)}`);
+    const gcd = (x: number, y: number): number => (y === 0 ? Math.abs(x) : gcd(y, x % y));
+    const term = (k: number, label: string): string => `${k === 1 ? "" : k}${label}`;
+    let opened = first;
+    const open = (): string[] => { const o = opened ? [GAP, head("Solve")] : []; opened = false; return o; };
+    const solveSystem = (eqs: Eq[], vars: number[]): void => {
+      if (vars.length === 1) {
+        const v = vars[0];
+        const e = eqs.find((q) => !fzero(q.coef[v]))!;
+        const x = fdiv(e.rhs, e.coef[v]);
+        val[v] = x;
+        steps.push(S(`${feq(e.coef[v], ONE) ? `${M(symTex(syms[v]))} is on its own: write it down.` : `Divide by ${M(frTex(e.coef[v]))}.`}`, "Solve", ...open(), ...(eqs.length ? [show(e)] : []), al(symTex(syms[v]), frTex(x))));
+        return;
+      }
+      // eliminate the unknown that is already missing from most equations, using the equation with the smallest coefficient of it
+      const score = (v: number) => eqs.filter((e) => fzero(e.coef[v])).length;
+      const v = [...vars].sort((p, q) => score(q) - score(p) || p - q)[0];
+      const withV = eqs.filter((e) => !fzero(e.coef[v]));
+      const p = [...withV].sort((x, y) => Math.abs(x.coef[v][0]) - Math.abs(y.coef[v][0]))[0];
+      const rest = vars.filter((x) => x !== v);
+      const next: Eq[] = [];
+      const lines: string[] = [];
+      for (const e of eqs) {
+        if (e === p) continue;
+        if (fzero(e.coef[v])) { next.push(e); continue; }
+        const a = e.coef[v][0], b = p.coef[v][0];
+        const g = gcd(a, b);
+        const ma = Math.abs(b) / g, mb = Math.abs(a) / g; // e is multiplied by the pivot's coefficient and the pivot by e's, so the unknown cancels
+        const same = Math.sign(a) === Math.sign(b);
+        const f = (k: Fr, m1: number, k2: Fr, m2: number): Fr => (same ? fsub(fmul(k, fr(m1)), fmul(k2, fr(m2))) : fadd(fmul(k, fr(m1)), fmul(k2, fr(m2))));
+        const ne: Eq = { coef: e.coef.map((x, i) => f(x, ma, p.coef[i], mb)), rhs: f(e.rhs, ma, p.rhs, mb), label: `${term(ma, e.label)} ${same ? "−" : "+"} ${term(mb, p.label)}` };
+        next.push(ne);
+        lines.push(show(ne));
+      }
+      steps.push(S(`Eliminate ${M(symTex(syms[v]))}: use ${M(`\\text{${p.label}}`)} with each of the others.`, "Solve", ...open(), ...eqs.map(show), GAP, ...lines));
+      if (vars.length >= 3) c.stage(head(`Now two equations in two unknowns`), ...next.map(show)); // a fresh page for the smaller system, so the page stays small
+      solveSystem(next, rest);
+      const x = fdiv(fsub(p.rhs, p.coef.reduce<Fr>((acc, c0, k) => (k !== v && val[k] ? fadd(acc, fmul(c0, val[k]!)) : acc), ZERO)), p.coef[v]);
+      val[v] = x;
+      const known = p.coef.map((c0, k) => (fzero(c0) || k === v ? null : `${feq(c0, ONE) ? "" : frTex(c0)}\\left(${frTex(val[k]!)}\\right)`)).filter(Boolean);
+      const own = `${feq(p.coef[v], ONE) ? "" : frTex(p.coef[v])}${symTex(syms[v])}`;
+      steps.push(S(`Put the values into the ${M(`\\text{${p.label}}`)} equation to find ${M(symTex(syms[v]))}.`, "Solve", lab(p.label, `${[own, ...known].join(" + ").replace(/\+ -/g, "- ")} = ${frTex(p.rhs)}`), al(symTex(syms[v]), frTex(x))));
+    };
+    solveSystem(system, pending);
+    first = false;
   }
+  const checkRows = d.eqs.map((e) => lab(BASE[e.col], `${e.coef.map((x, k) => (fzero(x) ? null : `${feq(x, ONE) ? "" : frTex(x)}\\left(${frTex(val[k]!)}\\right)`)).filter(Boolean).join(" + ").replace(/\+ -/g, "- ")} = ${frTex(e.rhs)}`));
   const answer = syms.map((s, i) => `${symTex(s)} = ${frTex(val[i]!)}`).join(",\\ ");
-  steps.push(S("Check all three equations, then write the answer.", "Answer", GAP, boxed(answer)));
+  c.stage(head("Check the powers in all three equations"), ...checkRows);
+  steps.push(S("Check them in all three equations, then write the answer.", "Answer", GAP, boxed(answer)));
   return steps;
 }
