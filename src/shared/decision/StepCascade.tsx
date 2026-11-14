@@ -75,14 +75,20 @@ export default function StepCascade({ steps, idx, answer, all, big, onOpen, onCl
                 >
                   {chip}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {((st.phase && !(sub && m!.part > 0)) || canOpen || canClose || (now && st.runningTotal !== undefined)) && (
+                {canClose && (
+                  <button type="button" onClick={() => onClose!(m!.raw)} aria-label="Fold the steps away" title="Fold the steps away"
+                    style={{ position: "absolute", top: 2, right: 2, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "rotate(180deg)" }}><path d="M3 6l5 5 5-5" /></svg>
+                  </button>
+                )}
+                <div style={{ flex: 1, minWidth: 0, paddingRight: canClose ? 26 : 0 }}>
+                  {((st.phase && !sub) || canOpen || (now && st.runningTotal !== undefined)) && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      {st.phase && !(sub && m!.part > 0) && <span style={{ background: sub ? "#eef2ff" : "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
-                      {(canOpen || canClose) && (
-                        <button type="button" onClick={() => (canOpen ? onOpen!(i) : onClose!(m!.raw))} aria-label={canOpen ? "Show the steps" : "Fold the steps away"} title={canOpen ? "Show the steps" : "Fold the steps away"}
+                      {st.phase && !sub && <span style={{ background: sub ? "#eef2ff" : "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {canOpen && (
+                        <button type="button" onClick={() => onOpen!(i)} aria-label="Show the steps" title="Show the steps"
                           style={{ marginLeft: "auto", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: canOpen ? "none" : "rotate(180deg)" }}><path d="M3 6l5 5 5-5" /></svg>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "none" }}><path d="M3 6l5 5 5-5" /></svg>
                         </button>
                       )}
                       {now && st.runningTotal !== undefined && (
