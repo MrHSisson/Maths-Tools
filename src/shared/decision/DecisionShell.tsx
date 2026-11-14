@@ -452,7 +452,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={[
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={isPhone ? undefined : keeper} printables={isPhone ? [] : [
             ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : []),
             ...basket.menuItems,
           ]}  />}
@@ -981,7 +981,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           <div className="fixed inset-0 z-[60] flex flex-col bg-white" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
             <div className="flex items-center justify-between px-2 h-12 shrink-0">
               <button onClick={() => jump(-1)} aria-label="Back to the question" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><X size={22} /></button>
-              <span className="text-sm font-semibold text-slate-500">{onAnswer ? "Answer" : `${idx + 1} of ${steps.length}`}</span>
+              <span />
               <button onClick={() => setStepsSheet(true)} className="px-3 h-11 rounded-xl text-sm font-semibold text-slate-500 active:bg-slate-100">All steps</button>
             </div>
             <div className="shrink-0 px-2 pb-2" style={{ height: "45dvh" }}>
@@ -992,9 +992,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
               </div>
             </div>
-            <div className="shrink-0 flex gap-3 px-3 pb-3">
-              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-20 h-14 rounded-2xl flex items-center justify-center border border-slate-300 text-blue-900 disabled:opacity-30 active:bg-slate-100"><ChevronLeft size={26} /></button>
-              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 bg-blue-900 text-white font-semibold text-base disabled:opacity-30 active:bg-blue-800">{stepIdx + 1 >= maxBeat && answerText && !onAnswer ? "Show answer" : "Next"} <ChevronRight size={22} /></button>
+            <div className="shrink-0 flex items-center justify-center gap-5 px-3 pb-4 pt-2">
+              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-12 h-12 rounded-full flex items-center justify-center border border-slate-300 text-blue-900 disabled:opacity-30 active:bg-slate-100"><ChevronLeft size={24} /></button>
+              <span className="min-w-[7.5rem] text-center text-base font-semibold text-slate-700">{onAnswer ? "Answer" : `Step ${idx + 1}/${steps.length}`}</span>
+              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-900 text-white disabled:opacity-30 active:bg-blue-800"><ChevronRight size={24} /></button>
             </div>
           </div>
         )}
@@ -1051,13 +1052,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
               {problem.exam ? (
                 // an exam-style question reveals its answers part by part inside the question, so the bar just offers the next question
                 <>
-                  <PinButton keeper={savedUi} size="phone" />
+                  {!isPhone && <PinButton keeper={savedUi} size="phone" />}
                   <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
                 </>
               ) : (
                 <>
                   <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
-                  <PinButton keeper={savedUi} size="phone" />
+                  {!isPhone && <PinButton keeper={savedUi} size="phone" />}
                   <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>
               )}
