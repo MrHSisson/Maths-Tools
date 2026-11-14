@@ -27,7 +27,7 @@ import { InfoModal } from "../components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
 import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
-import StepCascade, { StepDots } from "./StepCascade";
+import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
 import PrintTemplates from "./PrintTemplates";
 import { LevelInfoDialog, LevelInfoButton } from "../components/LevelInfoDialog";
 
@@ -145,11 +145,20 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const rawSteps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
   const [opened, setOpened] = useState<number[]>([]);
   useEffect(() => setOpened([]), [problem]);
-  const { steps, rawOf } = useMemo(() => {
-    const out: SolveStep[] = [], map: number[] = [];
-    rawSteps.forEach((st, i) => { const parts = st.more && opened.includes(i) ? st.more : [st]; parts.forEach((x) => { out.push(x); map.push(i); }); });
-    return { steps: out, rawOf: map };
+  const { steps, rawOf, meta } = useMemo(() => {
+    const out: SolveStep[] = [], map: number[] = [], info: StepMeta[] = [];
+    rawSteps.forEach((st, i) => {
+      const open = !!st.more && opened.includes(i);
+      (open ? st.more! : [st]).forEach((x, k, all) => { out.push(x); map.push(i); info.push({ raw: i, part: open ? k : -1, of: all.length }); });
+    });
+    return { steps: out, rawOf: map, meta: info };
   }, [rawSteps, opened]);
+  const closeStep = (raw: number) => {   // fold an opened chain back into its one step
+    const first = rawOf.indexOf(raw), n = rawSteps[raw].more?.length ?? 1;
+    setOpened((o) => o.filter((x) => x !== raw));
+    if (stepIdx >= first + n) setStepIdx(stepIdx - (n - 1));
+    else if (stepIdx > first) setStepIdx(first);
+  };
   const openStep = (flat: number) => {
     const st = steps[flat];
     if (!st?.more) return;
@@ -660,7 +669,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           {atQuestion ? (
             <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
           ) : (
-            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />
+            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
           )}
         </div>
       </div>
@@ -720,7 +729,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className="absolute inset-0">
             {atQuestion
               ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show answer to work it through, one step at a time.</div>
-              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />}
+              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />}
           </div>
         </div>
       </div>
@@ -760,7 +769,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
             <div className="absolute inset-0">
-              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} />
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
             </div>
           </div>
         </>
@@ -903,7 +912,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {atQuestion ? (
                   <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
                 ) : (
-                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big onOpen={openStep} />
+                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big onOpen={openStep} onClose={closeStep} meta={meta} />
                 )}
               </div>
               {stepNavFor(true)}

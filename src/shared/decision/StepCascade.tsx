@@ -14,7 +14,9 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
 }
 
-export default function StepCascade({ steps, idx, answer, all, big, onOpen }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean; onOpen?: (i: number) => void }) {
+/** where each listed step sits in the working: `part` is its place inside an opened chain (-1 when it is an ordinary step), `raw` the number it carries in the list */
+export interface StepMeta { raw: number; part: number; of: number }
+export default function StepCascade({ steps, idx, answer, all, big, onOpen, onClose, meta }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean; onOpen?: (i: number) => void; onClose?: (i: number) => void; meta?: StepMeta[] }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   // underline each glossary term the first time it appears in the solution; hover or press gives the definition
@@ -48,29 +50,41 @@ export default function StepCascade({ steps, idx, answer, all, big, onOpen }: { 
         <div style={{ position: "absolute", left: 22, top: 16, bottom: 16, width: 2, background: "#e2e8f0" }} />
         {steps.slice(0, idx + 1).map((st, i) => {
           const now = i === idx && !answer;
+          const m = meta?.[i];
+          const sub = !!m && m.part >= 0;          // one part of an opened chain: indented under its step, lettered
+          const chip = sub ? String.fromCharCode(97 + m!.part) : String(m ? m.raw + 1 : i + 1);
+          const canOpen = !!(st.more && onOpen);
+          const canClose = sub && m!.part === 0 && !!onClose;
           return (
             <FadeIn key={i}>
               <div
                 {...(i === idx && !answer ? { "data-newest": "1" } : {})}
                 style={{
-                  position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12,
+                  position: "relative", display: "flex", gap: 12, padding: sub ? "6px 10px" : "10px 10px", borderRadius: 12, marginLeft: sub ? 30 : 0,
+                  ...(sub ? { borderLeft: "2px solid #c7d2fe", borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : null),
                   opacity: dim(now), transition: "opacity 0.3s ease",
                   background: now ? "#eff6ff" : "transparent", boxShadow: now ? "0 0 0 2px rgba(30,58,138,0.25)" : "none",
                 }}
               >
                 <div
                   style={{
-                    flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1,
+                    flexShrink: 0, width: sub ? 20 : 26, height: sub ? 20 : 26, borderRadius: sub ? 10 : 13, fontSize: sub ? 11 : 13, fontWeight: 800, zIndex: 1, marginTop: sub ? 2 : 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     background: now ? "#1e3a8a" : "#e2e8f0", color: now ? "#ffffff" : "#334155", border: "2px solid #ffffff",
                   }}
                 >
-                  {i + 1}
+                  {chip}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {(st.phase || (now && st.runningTotal !== undefined)) && (
+                  {((st.phase && !(sub && m!.part > 0)) || canOpen || canClose || (now && st.runningTotal !== undefined)) && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      {st.phase && <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {st.phase && !(sub && m!.part > 0) && <span style={{ background: sub ? "#eef2ff" : "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {(canOpen || canClose) && (
+                        <button type="button" onClick={() => (canOpen ? onOpen!(i) : onClose!(m!.raw))} aria-label={canOpen ? "Show the steps" : "Fold the steps away"} title={canOpen ? "Show the steps" : "Fold the steps away"}
+                          style={{ marginLeft: "auto", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: canOpen ? "none" : "rotate(180deg)" }}><path d="M3 6l5 5 5-5" /></svg>
+                        </button>
+                      )}
                       {now && st.runningTotal !== undefined && (
                         <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 14 }}>
                           {st.totalLabel ?? "Total"} {st.runningTotal}
@@ -78,12 +92,7 @@ export default function StepCascade({ steps, idx, answer, all, big, onOpen }: { 
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 16 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
-                  {st.more && onOpen && (
-                    <button type="button" onClick={() => onOpen(i)} style={{ marginTop: 6, fontSize: 13, fontWeight: 700, color: "#1e3a8a", background: "#e0e7ff", border: "none", borderRadius: 8, padding: "5px 10px", minHeight: 32, cursor: "pointer" }}>
-                      Show the steps ({st.more.length})
-                    </button>
-                  )}
+                  <div style={{ fontSize: sub ? (big ? 15 : 14) : big ? 16 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
                 </div>
               </div>
             </FadeIn>
