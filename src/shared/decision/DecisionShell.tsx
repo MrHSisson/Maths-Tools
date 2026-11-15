@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
+import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
+import { netOf } from "./types";
+import { InlineMath } from "../components/MathRenderer";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -11,9 +13,11 @@ import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
 import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
-import { printExam } from "./printExam";
-import { usePrintBasket, decisionRecipe } from "./usePrintBasket";
-import { itemKey } from "./printBasket";
+import { printSheets, type SkillLayout } from "./printExam";
+import { printCpaSheets, type CpaSheetInput } from "./printCpa";
+import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
+import { type BasketItem } from "./printBasket";
+import { savedId } from "../savedLists";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -25,7 +29,8 @@ import { InfoModal } from "../components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
 import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
-import StepCascade, { StepDots } from "./StepCascade";
+import { GlossCaption, glossSegments } from "./glossary";
+import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
 import PrintTemplates from "./PrintTemplates";
 import { LevelInfoDialog, LevelInfoButton } from "../components/LevelInfoDialog";
 
@@ -87,7 +92,7 @@ function readUrl(config: DecisionShellProps["config"]) {
 }
 
 let problemCount = 0;
-export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
+export default function DecisionShell({ generate, solve, renderCanvas, renderSolution, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: read from the address bar once, when the page opens
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
@@ -118,6 +123,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const isPhone = layout.phone, isTablet = layout.tablet;
   const tabletLand = isTablet && !layout.portrait;   // a tablet held upright keeps the phone's stacked arrangement
   const narrow = !layout.laptop;
+  // a phone (or an upright tablet) with a tool that can draw its whole solution as one open page shows that, not the stepped picture
+  const phoneSolution = narrow && !tabletLand && !!renderSolution;
   const [drawer, setDrawer] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false); // phone: with the answer showing, the question shrinks to two lines — tap for all of it
   // Phone: click-through start (the big either/or option, then the question type) before the tool; a link naming a setup skips it.
@@ -139,7 +146,32 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const colorScheme = "default";   // the colour picker was removed (a future accessibility update)
   const optionsPop = usePopover();
 
-  const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
+  // a step that is one line of a longer chain (`more`) can be opened into its parts, one at a time: the opened steps replace it in the list
+  const rawSteps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
+  const [opened, setOpened] = useState<number[]>([]);
+  const [diagramFull, setDiagramFull] = useState(false); // phone: the picture alone, full screen
+  const [diagramTurn, setDiagramTurn] = useState(false); // …turned on its side
+  useEffect(() => setOpened([]), [problem]);
+  const { steps, rawOf, meta } = useMemo(() => {
+    const out: SolveStep[] = [], map: number[] = [], info: StepMeta[] = [];
+    rawSteps.forEach((st, i) => {
+      const open = !!st.more && opened.includes(i);
+      (open ? st.more! : [st]).forEach((x, k, all) => { out.push(x); map.push(i); info.push({ raw: i, part: open ? k : -1, of: all.length }); });
+    });
+    return { steps: out, rawOf: map, meta: info };
+  }, [rawSteps, opened]);
+  const closeStep = (raw: number) => {   // fold an opened chain back into its one step
+    const first = rawOf.indexOf(raw), n = rawSteps[raw].more?.length ?? 1;
+    setOpened((o) => o.filter((x) => x !== raw));
+    if (stepIdx >= first + n) setStepIdx(stepIdx - (n - 1));
+    else if (stepIdx > first) setStepIdx(first);
+  };
+  const openStep = (flat: number) => {
+    const st = steps[flat];
+    if (!st?.more) return;
+    setOpened((o) => [...o, rawOf[flat]]);
+    if (flat < stepIdx) setStepIdx(stepIdx + st.more.length - 1); // an earlier step opened: stay on the same step; the current one opened: start at its first part
+  };
   const last = steps.length - 1;
   const answerText = problem.answer?.text && problem.answer.text.length <= 160 ? problem.answer.text : null;
   const maxBeat = last + (answerText ? 1 : 0);
@@ -256,9 +288,22 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)) });
+  const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>>(async () => {});   // set where the printers are (below)
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
-  const savedUi = config.questionSheet ? { ...keeper, basket: basket.basket } : keeper;
+  const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
+  // stepping through the saved list in a lesson: this tool's saved questions, and where the question on screen is among them
+  const hereItems = (keeper.saved?.items ?? []).filter((i) => i.page === window.location.pathname);
+  const hereRecipe = decisionRecipe(problem, subTool, level, ctxOf(subTool, options, level).options);
+  const hereIdx = hereRecipe ? hereItems.findIndex((i) => savedId(i) === savedId({ ...hereRecipe, page: window.location.pathname, pageTitle: config.pageTitle })) : -1;
+  const canStepBack = hereItems.length > 0 && (hereIdx < 0 || hereIdx > 0);
+  const canStepOn = hereItems.length > 0 && hereIdx < hereItems.length - 1;
+  const stepSaved = (dir: 1 | -1) => {
+    // not on a saved question yet: forward goes to the first, back to the last
+    const to = hereIdx < 0 ? (dir === 1 ? 0 : hereItems.length - 1) : hereIdx + dir;
+    const it = hereItems[to];
+    if (it) keeper.onPick(savedId(it));
+  };
 
   // keep the address bar bookmarkable
   useEffect(() => {
@@ -272,7 +317,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     window.history.replaceState(window.history.state, "", window.location.pathname + (s ? `?${s}` : ""));
   }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: config is fixed for a tool, and the tabs follow the options listed here
 
-  // ← / → step through a worked example; Esc leaves fullscreen
+  // ← / → (or Space) step through a worked example, Home and End go to the question and the answer; Esc leaves fullscreen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !sandbox) setFullscreen(false);
@@ -280,6 +325,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       if (e.ctrlKey || e.metaKey || e.altKey || infoOpen || (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))) return; // never step while typing or while a dialog is open
       if (e.key === "ArrowRight") { setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
       if (e.key === "ArrowLeft") { setShowAll(false); setStepIdx((i) => Math.max(-1, i - 1)); }
+      // Space is "next" when nothing that uses Space itself (a button, link, summary) has the focus
+      if (e.key === " " && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { e.preventDefault(); setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
+      if (e.key === "Home" && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { setShowAll(false); setStepIdx(-1); }
+      if (e.key === "End" && t && !/^(BUTTON|A|SUMMARY)$/.test(t.tagName)) { setShowAll(false); setStepIdx(maxBeat); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -319,23 +368,35 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     };
   })();
 
-  const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
+  const questionNet = problem.vertexOnlyQuestion ? { ...netOf(problem), edges: [] } : netOf(problem); // a table-only question draws just the vertices
+  // a problem with no network draws only through its tool's own `renderCanvas`
   const shownCanvas = (st: SolveStep | undefined) =>
-    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
+    renderCanvas ? renderCanvas(problem, st) : problem.network || st?.network ? <NetworkView network={st?.network ?? (!st ? questionNet : netOf(problem))} step={st} background="#ffffff" /> : null;
   // `problem.caption` sits under the picture as the question is first shown (the working carries its own running figures)
   const shown = (st: SolveStep | undefined) => problem.caption && !st ? (
     <div className="absolute inset-0 flex flex-col">
       <div className="relative min-h-0 flex-1">{shownCanvas(st)}</div>
-      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800">{problem.caption}</div>
+      <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800"><InlineMath text={problem.caption} /></div>
     </div>
   ) : shownCanvas(st);
   // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);
+  const [sheetPerPage, setSheetPerPage] = useState(false);                 // skill worksheet: one question to a page
+  const [sheetSpace, setSheetSpace] = useState<SkillLayout["space"]>("auto");   // skill worksheet: what each question has to work in
   const [sheet, setSheet] = useState<DecisionProblem[]>([]);
+  const [sheetCtx, setSheetCtx] = useState<{ tab: string; level: number; options: Record<string, string> } | null>(null);   // what the sheet was generated from
+  const isExamProblem = !!problem.exam;
+  // a Critical-Path-style skill tab has its own A4 sheet per question (the picture and the drawing space), always one to a page
+  const cpaSkillTab = (tab: string): boolean => !!config.questionSheet?.tabs.includes(tab);
+  const onCpaSheet = !isExamProblem && cpaSkillTab(subTool);
+  const sheetKind = isExamProblem ? "exam" : onCpaSheet ? "cpa" : "skill";
+  useEffect(() => { setSheetN(sheetKind === "exam" ? 3 : sheetKind === "cpa" ? 4 : 8); setSheet([]); }, [sheetKind]); // a new kind of sheet starts at its usual size, empty
   const [sheetAnswers, setSheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
-  const inSheet = sheetMode && !!problem.exam;
+  // a Worksheet is for exam-style questions, and (when the tool turns it on) for skill questions too, except on a phone
+  const sheetable = !!problem.exam || ((!!config.skillSheet || onCpaSheet) && !isPhone);
+  const inSheet = sheetMode && sheetable;
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
   const [sheetNote, setSheetNote] = useState<string | null>(null);
   // one question at a time, giving the page a breath between them (a big exam-sized network can take a second or two each)
@@ -346,25 +407,49 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam) out.push(q); } catch { /* try again */ }
+      try { const q = generateSeeded(() => generate(level, ctxOf(subTool, options, level))); if (q.exam || config.skillSheet || onCpaSheet) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
+    setSheetCtx({ tab: subTool, level, options: ctxOf(subTool, options, level).options });
     setSheetAnswers(false);
     setSheetBusy(null);
     if (out.length < sheetN) setSheetNote(`Only ${out.length} of ${sheetN} questions could be made with these options. Try Generate again, or change the options.`);
   };
-  const printSheet = async (mode: PrintMode) => {
-    if (!sheet.length) return;
-    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
-    if (!win) { alert("Please allow popups to use the PDF export."); return; }
-    try {
+  // autopopulate the saved list before a lesson: every question of the sheet goes in as its recipe, to be loaded one by one in the lesson or printed from the basket
+  const addSheetToSaved = () => {
+    if (!sheetCtx || !keeper.saved) return;
+    const items = sheet.map((pr) => decisionRecipe(pr, sheetCtx.tab, sheetCtx.level, sheetCtx.options)).filter((x): x is BasketItem => !!x);
+    const added = keeper.saved.merge(items);
+    setSheetNote(items.length === 0 ? "These questions cannot be saved." : `${added} question${added === 1 ? "" : "s"} added to the saved list${added < items.length ? ` (${items.length - added} could not be added: already there, or the list is full)` : ""}. Open it from the pin control (on the Practice page) or the menu: Print saved questions.`);
+  };
+  // choose the questions by hand: swap one for a fresh one drawn with the same settings, take one out, or add another
+  const sheetMax = sheetKind === "skill" ? 20 : 10;
+  const drawOne = (): DecisionProblem | null => {
+    if (!sheetCtx) return null;
+    for (let g = 0; g < 8; g++) {
+      try { const q = generateSeeded(() => generate(sheetCtx.level, { subTool: sheetCtx.tab, options: sheetCtx.options })); if (q.exam || config.skillSheet || cpaSkillTab(sheetCtx.tab)) return q; } catch { /* try again */ }
+    }
+    return null;
+  };
+  const replaceSheetQuestion = (i: number) => { const q = drawOne(); if (q) { setSheet((s) => s.map((x, k) => (k === i ? q : x))); setSheetNote(null); } else setSheetNote("Could not make another question with these options."); };
+  const removeSheetQuestion = (i: number) => setSheet((s) => s.filter((_, k) => k !== i));
+  /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
+  const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => {
+    const examProblems = problems.filter((pr) => pr.exam);
+    const skillProblems = problems.filter((pr) => !pr.exam);
+    // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
+    const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: sheetPerPage, space: sheetSpace }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    let inputs: Parameters<typeof printSheets>[0] = [];
+    if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");
-      const inputs = sheet.map((pr) => {
-        const draw = (view?: unknown) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
-        const drawStep = (st: SolveStep) => renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
+      inputs = examProblems.map((pr) => {
+        // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
+        const draw = (view?: unknown) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
+        const drawStep = (st: SolveStep) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
+          title: config.pageTitle, subtitle, exam: pr.exam!, questionFigure: draw(), workingBox: !!pr.dim, partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
             if (p.blankStep) return drawStep(p.blankStep);
@@ -377,7 +462,28 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           }),
         };
       });
-      printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions", win });
+    }
+    printSheets(inputs, skill, { papers: mode !== "answers", schemes: mode !== "questions", win });
+  };
+  printProblemsRef.current = printProblemList;
+  const printSheet = async (mode: PrintMode) => {
+    if (!sheet.length) return;
+    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
+    if (!win) { alert("Please allow popups to use the PDF export."); return; }
+    try {
+      if (sheetCtx && !sheet[0].exam && cpaSkillTab(sheetCtx.tab) && config.questionSheet) {
+        // Critical-Path-style sheets: every question first, then every answer sheet
+        const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
+        for (const pr of sheet) {
+          if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
+          if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
+        }
+        if (!questions.length && !answers.length) { win.close(); alert("Sorry, these questions have no print sheet."); return; }
+        printCpaSheets([...questions, ...answers], win);
+        return;
+      }
+      const tabLabel = sheetCtx ? tabs.find((t) => t.key === sheetCtx.tab)?.label : undefined;
+      await printProblemList(sheet, mode, win, tabLabel ? `${tabLabel}${levelCount > 1 && sheetCtx ? ` · Level ${sheetCtx.level}` : ""}` : undefined);
     } catch {
       win.close();
       alert("Sorry, the print sheet could not be prepared. Please try again.");
@@ -393,7 +499,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const navBar = (
     <div className="bg-blue-900 shadow-lg">
       <div className="max-w-[1500px] mx-auto px-2 sm:px-8 py-1.5 sm:py-3 flex justify-between items-center gap-2">
-        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors">
+        <button onClick={() => { window.location.href = "/"; }} aria-label="Home" className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-2 min-h-[40px] sm:px-4 rounded-lg transition-colors">
           <Home size={narrow ? 20 : 24} />
           {!narrow && <span className="font-semibold text-lg">Home</span>}
         </button>
@@ -410,7 +516,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 ].filter((c) => c.label).map((c, i) => (
                   <span key={c.label + i} className="flex items-center gap-1 min-w-0">
                     {i > 0 && <span className="text-blue-400">›</span>}
-                    <button onClick={c.onClick} className="underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
+                    <button onClick={c.onClick} className="py-3.5 -my-3.5 underline decoration-blue-400/60 underline-offset-2 truncate active:text-white">{c.label}</button>
                   </span>
                 ))}
               </div>
@@ -418,10 +524,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
         )}
         <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
+          <button onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close the menu" : "Open the menu"} aria-expanded={menuOpen} className="text-white hover:bg-blue-800 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg transition-colors">
             {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
-          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={keeper} printables={[
+          {menuOpen && <MenuDropdown onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} keeper={isPhone ? undefined : keeper} printables={isPhone ? [] : [
             ...(config.printTemplates ? [{ label: "Print templates…", hint: "Blank grids and boxes to plot histograms and Gantt charts", onClick: () => setPrintOpen(true) }] : []),
             ...basket.menuItems,
           ]}  />}
@@ -469,7 +575,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             <button
               onClick={() => { if (visibleOptions.length > 0) optionsPop.setOpen(!optionsPop.open); }}
               disabled={visibleOptions.length === 0}
-              title={visibleOptions.length === 0 ? "No options for this question type" : undefined}
+              title={visibleOptions.length === 0 ? (problem.exam ? "Exam-style questions have no options: choose Skills to set options" : "No options for this question type") : undefined}
               className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${visibleOptions.length === 0 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed" : optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Question Options
@@ -502,6 +608,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
         )}
         {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
+          {hereItems.length > 0 && !isPhone && (
+            <div className="flex items-center rounded-xl border border-slate-200 bg-white h-10" role="group" aria-label="Move through the saved questions">
+              <button onClick={() => stepSaved(-1)} disabled={!canStepBack} aria-label="Previous saved question" title="Previous saved question" className="w-10 h-10 flex items-center justify-center text-blue-900 hover:bg-slate-50 rounded-l-xl disabled:opacity-30"><ChevronLeft size={18} /></button>
+              <span className="px-1 text-sm font-semibold text-slate-600 tabular-nums whitespace-nowrap" title={hereIdx >= 0 ? `Saved question ${hereIdx + 1} of ${hereItems.length}` : `${hereItems.length} saved question${hereItems.length === 1 ? "" : "s"}`}>{hereIdx >= 0 ? hereIdx + 1 : "–"} / {hereItems.length}</span>
+              <button onClick={() => stepSaved(1)} disabled={!canStepOn} aria-label="Next saved question" title="Next saved question" className="w-10 h-10 flex items-center justify-center text-blue-900 hover:bg-slate-50 rounded-r-xl disabled:opacity-30"><ChevronRight size={18} /></button>
+            </div>
+          )}
           <PinButton keeper={savedUi} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
@@ -514,7 +627,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const chooserVariants = chooser ? chooserFilters.reduce<Array<Record<string, string>>>((acc, o) => acc.flatMap((a) => o.choices.map((c) => ({ ...a, [o.key]: c.value }))), [{}]).map((values) => ({ values, tabs: tabsFor(config, settle(config, { ...options, ...values }, level)) })) : undefined;
   const topicChooser = chooser ? (
     <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
-      mode={problem.exam ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
+      mode={sheetable ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
       onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
   ) : null;
@@ -535,7 +648,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <button
           onClick={() => jump(stepIdx - 1)}
           disabled={atQuestion}
-          title="Back"
+          title="Back (←)"
+          aria-label="Previous step"
           className="w-12 h-12 shrink-0 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={26} />
@@ -543,6 +657,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <button
           onClick={() => jump(stepIdx + 1)}
           disabled={stepIdx >= maxBeat}
+          title="Next (→ or Space)"
           className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-blue-900 text-white font-bold text-base whitespace-nowrap flex items-center justify-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span className="truncate">{atQuestion ? "Show working" : onAnswer ? "Answer shown" : stepIdx + 1 >= maxBeat && answerText ? "Show answer" : "Next step"}</span>
@@ -561,11 +676,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             if (showAll) jump(resumeAt.current);
             else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
           }}
-          className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1 whitespace-nowrap shrink-0"
+          className="text-sm font-bold text-blue-900 hover:bg-blue-50 rounded-lg px-2.5 min-h-[40px] flex items-center gap-1 whitespace-nowrap shrink-0"
         >
           <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
         </button>
       </div>
+      {!narrow && <div className="text-[11px] text-gray-500 text-center -mt-1">← → to step · Space for next</div>}
     </div>
   );
   const stepNav = stepNavFor(false);
@@ -580,13 +696,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {atQuestion ? (
           <>
             <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
           </>
         ) : (
           <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className="w-full text-left flex items-start gap-2">
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
-              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}>{problem.prompt}</div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
             </div>
             <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
           </button>
@@ -601,7 +717,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <button
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
-        className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
+        aria-label="Fullscreen"
+        className="absolute top-3 left-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -642,7 +759,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           {atQuestion ? (
             <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
           ) : (
-            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
           )}
         </div>
       </div>
@@ -652,7 +769,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // The table is the working's main object, so it sits right under the question — above the step text, always in view with it
   const matrixInner = (
     <div className="mx-auto w-fit">
-      <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
+      <MatrixView network={netOf(problem)} step={canvasStep} bare missing={config.matrixMissing} />
     </div>
   );
   const matrixCard = showMatrix ? (
@@ -694,30 +811,40 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {legendItems && <div className="shrink-0"><Legend items={legendItems} /></div>}
       </div>
       <div className="flex flex-col gap-3 min-w-0 min-h-0">
-        <div className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-lg font-semibold text-gray-900 leading-snug overflow-y-auto" style={{ maxHeight: "42%" }}>{problem.prompt}</div>
+        <div className="shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-lg font-semibold text-gray-900 leading-snug overflow-y-auto" style={{ maxHeight: "42%" }}><InlineMath text={problem.prompt} /></div>
         {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
           <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "16%" }}>{workingExtras}</div>
         )}
         <div className="relative flex-1 min-h-[8rem] rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
           <div className="absolute inset-0">
             {atQuestion
-              ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show answer to work it through, one step at a time.</div>
-              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />}
+              ? <div className="p-5 text-base text-gray-500 leading-snug">Press Show working to work it through, one step at a time.</div>
+              : <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />}
           </div>
         </div>
       </div>
     </div>
   );
 
-  const example = tabletLand ? exampleTablet : narrow ? (
+  // an honest nudge: these tools are made for a bigger screen
+  const phoneNote = <p className="text-center text-xs text-slate-500 leading-snug px-3 pt-1">Works best on a tablet or laptop. Some features aren't available on a phone.</p>;
+  // the phone's open page: the question as plain text, then (on request) the whole solution, scrolling: no cards, no stepper
+  const examplePhoneSolution = (
+    <div className="flex flex-col gap-5 px-1 pb-6">
+      <div className="text-lg font-semibold text-gray-900 leading-snug"><InlineMath text={problem.prompt} /></div>
+      {!atQuestion && renderSolution ? renderSolution(problem, rawSteps) : null}
+      {phoneNote}
+    </div>
+  );
+  const example = tabletLand ? exampleTablet : phoneSolution ? examplePhoneSolution : narrow ? (
     // phone: laid out like the other tools' phone Worked Example — the whole question, the picture, then (once the answer is
     // asked for) the working in its own closed box that scrolls inside itself; the stepper and buttons are fixed at the bottom.
     // The table and the graph share the stage (a switch, automatic when a step builds the table).
     <div className={`flex flex-col gap-2.5 p-3 ${atQuestion ? "" : "h-full"}`}>
       {atQuestion
-        ? <div className="text-center font-semibold text-gray-900 leading-snug shrink-0 text-xl py-1">{problem.prompt}</div>
+        ? <div className="text-center font-semibold text-gray-900 leading-snug shrink-0 text-xl py-1"><InlineMath text={problem.prompt} /></div>
         : <button type="button" onClick={() => setPromptOpen((o) => !o)} aria-expanded={promptOpen}
-            className={`text-center font-semibold text-gray-900 leading-snug shrink-0 text-sm ${promptOpen ? "" : "line-clamp-2"}`}>{problem.prompt}</button>}
+            className={`text-center font-semibold text-gray-900 leading-snug shrink-0 text-sm ${promptOpen ? "" : "line-clamp-2"}`}><InlineMath text={problem.prompt} /></button>}
       {showMatrix && (
         <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold shrink-0">
           {(["graph", "table"] as const).map((t) => (
@@ -727,8 +854,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       )}
       {showMatrix && stageView === "table"
         ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
-        : canvasBox(atQuestion ? (showMatrix ? "34dvh" : "40dvh") : (showMatrix ? "22dvh" : "24dvh"))}
+        : canvasBox(problem.dim ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "40dvh" : "48dvh") : (showMatrix ? "34dvh" : ((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) ? "38dvh" : "47dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
       {atQuestion && legendItems && <Legend items={legendItems} />}
+      {atQuestion && phoneNote}
       {!atQuestion && (
         <>
           {legendItems && (
@@ -738,11 +866,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </details>
           )}
           {((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) && (
-            <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "12dvh" }}>{workingExtras}</div>
+            <div className="flex flex-col gap-2 shrink-0 overflow-y-auto" style={{ maxHeight: "17dvh" }}>{workingExtras}</div>
           )}
-          <div className="relative min-h-[8rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 overflow-hidden">
-            <div className="absolute inset-0">
-              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+          {/* only the current step, in a compact card under the picture: the picture is what changes, so it leads. All the steps are one tap away. */}
+          <div className="flex-1 min-h-[5.5rem] rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 overflow-y-auto">
+            <div className="flex items-start gap-2.5">
+              <span className="shrink-0 w-6 h-6 rounded-full text-xs font-extrabold flex items-center justify-center" style={{ background: onAnswer ? "#16a34a" : "#1e3a8a", color: "#fff" }}>{onAnswer ? "✓" : (meta[idx]?.raw ?? idx) + 1}</span>
+              <div className="min-w-0 flex-1">
+                {!onAnswer && steps[idx]?.phase && <span className="inline-block mb-1 rounded-full bg-indigo-100 text-blue-900 font-extrabold text-[11px] px-2 py-0.5">{steps[idx].phase}</span>}
+                <div className="text-[15px] leading-snug text-slate-900 font-medium" style={{ whiteSpace: "pre-line", overflowWrap: "anywhere" }}>
+                  {onAnswer ? <span className="font-bold text-green-800"><InlineMath text={answerText!} /></span> : <GlossCaption segments={glossSegments(steps[idx]?.caption ?? "", new Set())} />}
+                </div>
+              </div>
             </div>
           </div>
         </>
@@ -764,29 +899,47 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   // Practice | Worksheet, only for exam-style questions (on a phone, as tabs; on a big screen it lives in the topic chooser)
-  const examTabs = problem.exam ? (
+  const examTabs = sheetable ? (
     <div className="flex justify-center gap-7 border-b border-slate-300">
       {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
         <button key={label} onClick={() => setSheetMode(on)}
-          className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
+          className={`pb-3 pt-2 min-h-[40px] -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
       ))}
     </div>
   ) : null;
   const [sheetPreview, setSheetPreview] = useState<number | null>(null);
   // like the other tools' Worksheet mode: its own settings (level, options, how many), then Generate; it does not use the question on screen
+  const cardTools = (n: number) => (
+    <div className="flex gap-1 justify-end px-3 pb-2 pt-0 mt-auto" onClick={(e) => e.stopPropagation()}>
+      <button type="button" onClick={() => replaceSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-blue-900 hover:bg-blue-50 flex items-center gap-1.5"><RefreshCw size={14} /> Replace</button>
+      <button type="button" onClick={() => removeSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"><X size={14} /> Remove</button>
+    </div>
+  );
   const sheetPanel = (
     <div className="p-4 sm:p-6 flex flex-col gap-5">
       <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
       <div className="flex justify-center items-center gap-3 flex-wrap">
         <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(10, parseInt(e.target.value) || 3)))}
+        <input type="number" min={1} max={sheetMax} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(sheetMax, parseInt(e.target.value) || 3)))}
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
+      {sheetKind === "cpa" && <div className="text-center text-sm text-gray-500">Each question prints on its own A4 sheet, with the pictures and the room to draw it needs.</div>}
+      {sheetKind === "skill" && (
+        <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-base font-semibold text-gray-700">
+          <label className="flex items-center gap-2 min-h-[40px] cursor-pointer"><input type="checkbox" checked={sheetPerPage} onChange={(e) => setSheetPerPage(e.target.checked)} className="w-5 h-5" /> One question per page</label>
+          <label className="flex items-center gap-2">Working space:
+            <select value={sheetSpace} onChange={(e) => setSheetSpace(e.target.value as SkillLayout["space"])} className="px-3 py-2 min-h-[40px] border border-slate-200 rounded-lg text-base font-semibold bg-white">
+              <option value="auto">Automatic</option><option value="s">Small box</option><option value="m">Medium box</option><option value="l">Large box</option><option value="lines">Ruled lines</option><option value="grid">Squared grid</option><option value="none">None</option>
+            </select>
+          </label>
+        </div>
+      )}
       <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
         <button onClick={generateSheet} disabled={!!sheetBusy} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"><RefreshCw size={18} className={sheetBusy ? "animate-spin" : ""} /> {sheetBusy ? "Generating…" : "Generate"}</button>
         {sheet.length > 0 && (
           <>
             <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            {hasBasketPrint(config) && !isPhone && <button onClick={addSheetToSaved} title="Save these questions to the saved list, to load in a lesson or print later" className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50 flex items-center gap-2">Add to saved list</button>}
             <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
           </>
         )}
@@ -795,25 +948,34 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {sheetNote && !sheetBusy && <div className="text-center text-amber-700 text-sm font-semibold">{sheetNote}</div>}
       {sheet.length === 0 && !sheetBusy && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
       <div className="grid gap-4" style={{ gridTemplateColumns: isPhone ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
-        {sheet.map((pr, n) => (
-          <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
-            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
-            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} marks</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
-            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug">{pr.exam!.intro}</div>
-            <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>
-            <div className="px-4 pb-4 flex flex-col gap-2">
+        {sheet.map((pr, n) => !pr.exam ? (
+          // a skill question: its number, the question, and (on request) the answer
+          <div key={n} className="rounded-xl border border-gray-200 bg-white p-4 flex flex-col gap-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1}</div>
+            <div className="text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.prompt} /></div>
+            {sheetAnswers && <div className="rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold"><InlineMath text={pr.answer?.text ?? ""} /></div>}
+            {cardTools(n)}
+          </div>
+        ) : (
+          <div key={n} role="button" tabIndex={0} onClick={() => setSheetPreview(n)} onKeyDown={(e) => { if (e.key === "Enter") setSheetPreview(n); }} title="Click to preview this question and its parts"
+            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow cursor-pointer">
+            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} mark{pr.exam!.totalMarks === 1 ? "" : "s"}</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
+            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.exam!.intro} /></div>
+            {!pr.dim && <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>}
+            <div className="px-4 pb-4 flex flex-col gap-2 pt-2">
               {pr.exam!.parts.map((pt, k) => (
                 <div key={k} className="text-sm leading-snug">
-                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900">{pt.prompt}</span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
+                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900"><InlineMath text={pt.prompt} /></span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
                   {sheetAnswers && (
                     <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
-                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          </button>
+            {cardTools(n)}
+          </div>
         ))}
       </div>
     </div>
@@ -885,7 +1047,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                 {atQuestion ? (
                   <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
                 ) : (
-                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big />
+                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big onOpen={openStep} onClose={closeStep} meta={meta} />
                 )}
               </div>
               {stepNavFor(true)}
@@ -927,6 +1089,45 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div>
         {navBar}
         <RotateHint show={isTablet && layout.portrait} />
+        {/* phone: once the working starts it gets a screen of its own: the picture, the steps (scrolling) and < Step 4/19 > (nothing else) */}
+        {narrow && !tabletLand && !problem.exam && !phoneSolution && !inSheet && !drawer && !atQuestion && (
+          <div className="fixed inset-0 z-[60] flex flex-col bg-white" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+            <div className="flex items-center justify-between px-2 h-12 shrink-0">
+              <button onClick={() => jump(-1)} aria-label="Back to the question" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><X size={22} /></button>
+              <button onClick={() => setDiagramFull(true)} aria-label="Full screen picture" title="Full screen picture" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><Maximize2 size={20} /></button>
+            </div>
+            <div className="shrink-0 px-2 pb-1" style={{ height: "45dvh" }}>
+              <div className="relative h-full rounded-xl overflow-hidden border border-slate-200 bg-white"><div className="absolute" style={{ inset: 10 }}>{shown(canvasStep)}</div></div>
+            </div>
+            <div className="flex-1 min-h-0">
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} onOpen={openStep} onClose={closeStep} meta={meta} />
+            </div>
+            <div className="shrink-0 flex items-center justify-center gap-5 px-3 pb-3 pt-2 border-t border-slate-100">
+              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-12 h-12 rounded-full flex items-center justify-center border border-slate-300 text-blue-900 disabled:opacity-30 active:bg-slate-100"><ChevronLeft size={24} /></button>
+              <span className="min-w-[7.5rem] text-center text-base font-semibold text-slate-700">{onAnswer ? "Answer" : `Step ${idx + 1}/${steps.length}`}</span>
+              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-900 text-white disabled:opacity-30 active:bg-blue-800"><ChevronRight size={24} /></button>
+            </div>
+          </div>
+        )}
+        {/* the picture alone, full screen; it can be turned on its side for a wide network (flows, critical path) */}
+        {diagramFull && (
+          <div className="fit-all fixed inset-0 z-[80] bg-white overflow-hidden">
+            {/* full screen shows the WHOLE picture: a diagram that normally keeps a minimum width (and scrolls sideways) shrinks to fit instead */}
+            <style>{".fit-all svg { min-width: 0 !important; max-width: 100% !important; } .fit-all [style*='overflow: auto'] { overflow: hidden !important; }"}</style>
+            <div style={diagramTurn
+              ? { position: "fixed", top: 0, left: "100vw", width: "100dvh", height: "100vw", transformOrigin: "top left", transform: "rotate(90deg)" }
+              : { position: "absolute", inset: 0 }}>
+              <div className="absolute" style={diagramTurn ? { top: 12, left: 12, bottom: 12, right: 72 } : { top: 56, left: 12, right: 12, bottom: 72 }}>{shown(canvasStep)}</div>
+            </div>
+            <button onClick={() => setDiagramFull(false)} aria-label="Close full screen" className="absolute top-2 left-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><X size={22} /></button>
+            <button onClick={() => setDiagramTurn((t) => !t)} aria-label="Turn the picture on its side" title="Turn on its side" className="absolute top-2 right-2 w-11 h-11 rounded-xl flex items-center justify-center bg-white/90 border border-slate-200 text-slate-600 z-10"><RotateCw size={20} /></button>
+            <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-4 z-10">
+              <button onClick={() => jump(stepIdx - 1)} aria-label="Previous step" disabled={stepIdx <= 0} className="w-11 h-11 rounded-full flex items-center justify-center bg-white/95 border border-slate-300 text-blue-900 disabled:opacity-30"><ChevronLeft size={22} /></button>
+              <span className="px-3 py-1 rounded-full bg-white/95 border border-slate-200 text-sm font-semibold text-slate-700">{onAnswer ? "Answer" : atQuestion ? "Question" : `Step ${idx + 1}/${steps.length}`}</span>
+              <button onClick={() => jump(stepIdx + 1)} aria-label="Next step" disabled={stepIdx >= maxBeat} className="w-11 h-11 rounded-full flex items-center justify-center bg-blue-900 text-white disabled:opacity-30"><ChevronRight size={22} /></button>
+            </div>
+          </div>
+        )}
         {overlay}
         {previewDialog}
         {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
@@ -934,14 +1135,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
             {examTabs && <div className="mb-3">{examTabs}</div>}
-            <div className={`${CARD} overflow-clip`} style={
-              tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
+            <div className={phoneSolution && !problem.exam && !inSheet ? "" : `${CARD} overflow-clip`} style={
+              phoneSolution && !problem.exam && !inSheet ? undefined : tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
               : atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
           </div>
         </div>
         {!drawer && !inSheet && (
           <>
-            {!atQuestion && (
+            {!atQuestion && !(phoneSolution && !problem.exam) && (
               // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
               <div className="fixed inset-x-0 z-30 px-3 pt-2 pb-1 bg-white border-t border-slate-200" style={{ bottom: "calc(3.75rem + env(safe-area-inset-bottom))", ...(isTablet ? BAR_INSET : {}) }}>
                 <div className="flex items-center justify-between">
@@ -952,15 +1153,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                       <span className="text-sm font-semibold text-slate-600 whitespace-nowrap">{onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}</span>
                       <button
                         onClick={() => { if (showAll) jump(resumeAt.current); else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); } }}
-                        className="px-4 py-1.5 rounded-lg font-bold text-sm border-2"
+                        className="px-4 py-2 min-h-[40px] rounded-lg font-bold text-sm border-2"
                         style={{ background: showAll ? "#fff" : "#1e3a8a", color: showAll ? "#6b7280" : "#fff", borderColor: showAll ? "#d1d5db" : "#1e3a8a" }}>
                         {showAll ? "Show All" : "Step-by-Step"}
                       </button>
                     </div>
                     <div className="flex w-full gap-1">
                       {Array.from({ length: steps.length + (answerText ? 1 : 0) }, (_, i) => (
-                        <button key={i} aria-label={i === steps.length ? "Answer" : `Step ${i + 1}`} onClick={() => jump(i)}
-                          className="h-1.5 flex-1 rounded-full" style={{ background: i <= (onAnswer ? steps.length : idx) ? "#1e3a8a" : "#e2e8f0" }} />
+                        <button key={i} aria-label={i === steps.length ? "Answer" : `Step ${i + 1}`} onClick={() => jump(i)} className="flex-1 py-[17px] flex items-center">
+                          <span className="block h-1.5 w-full rounded-full" style={{ background: i <= (onAnswer ? steps.length : idx) ? "#1e3a8a" : "#e2e8f0" }} />
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -974,13 +1176,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               {problem.exam ? (
                 // an exam-style question reveals its answers part by part inside the question, so the bar just offers the next question
                 <>
-                  <PinButton keeper={savedUi} size="phone" />
+                  {!isPhone && <PinButton keeper={savedUi} size="phone" />}
                   <button onClick={() => newQuestion()} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> New question</button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show answer" : "Hide answer"}</button>
-                  <PinButton keeper={savedUi} size="phone" />
+                  <button onClick={() => jump(atQuestion ? 0 : -1)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-semibold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {atQuestion ? "Show working" : "Hide working"}</button>
+                  {!isPhone && <PinButton keeper={savedUi} size="phone" />}
                   <button onClick={() => newQuestion()} aria-label="New question" title="New question" className={`${isTablet ? "px-5 gap-2 font-semibold" : "w-14"} h-12 shrink-0 bg-white border border-slate-200 text-blue-900 rounded-xl flex items-center justify-center active:bg-slate-50`}><RefreshCw size={20} />{isTablet && "New"}</button>
                 </>
               )}
@@ -1061,7 +1263,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {overlay}
       {previewDialog}
       {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
-      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: PAGE_BG }}>
+      <div className="min-h-screen p-3 sm:px-8 sm:pt-5 sm:pb-3" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}

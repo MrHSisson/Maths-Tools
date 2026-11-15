@@ -70,7 +70,7 @@ export const SET_C: SetQuestion[] = [
   { id: "C9", rung: "three parts, not money, find the total (the stretch)", ratio: [3, 4, 6], names: ["Xia", "Yan", "Zed"], ctx: "marbles", diff: { a: 1, b: 2, amount: 28, style: 3 }, ask: "total", answer: "Total: 182 marbles", trap: "T10 compares the wrong parts", wrong: "wrongPair" },
 ];
 
-/** Worksheet D: mixed, fifteen, textbook layout. The kinds are never labelled; five of each, interleaved, climbing. */
+/** Worksheet D: mixed, fifteen, cells layout. The kinds are never labelled; five of each, interleaved, climbing. */
 export const SET_D: SetQuestion[] = [
   { id: "D1", rung: "sharing, two parts, one share asked", ratio: [2, 3], names: ["Kim", "Raj"], total: 85, ask: 1, answer: "Raj: £51", trap: "T8 answers a different question", wrong: "onePart" },
   { id: "D2", rung: "known share, find the total", ratio: [3, 4], names: ["Ola", "Pat"], known: { who: 0, amount: 39 }, ask: "total", answer: "Total: £91", trap: "T5 treats the known share as the total", wrong: "knownAsTotal" },

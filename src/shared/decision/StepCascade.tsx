@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SolveStep } from "./types";
 import { GlossCaption, glossSegments } from "./glossary";
+import { InlineMath } from "../components/MathRenderer";
 
 // The step-by-step working as a cascade: every step so far, the newest lit, earlier ones dimmed, auto-scrolled to follow the newest. Shared by the
 // stepped worked example and the exam parts' working.
@@ -13,7 +14,9 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
 }
 
-export default function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
+/** where each listed step sits in the working: `part` is its place inside an opened chain (-1 when it is an ordinary step), `raw` the number it carries in the list */
+export interface StepMeta { raw: number; part: number; of: number }
+export default function StepCascade({ steps, idx, answer, all, big, onOpen, onClose, meta }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean; onOpen?: (i: number) => void; onClose?: (i: number) => void; meta?: StepMeta[] }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   // underline each glossary term the first time it appears in the solution; hover or press gives the definition
@@ -47,29 +50,47 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
         <div style={{ position: "absolute", left: 22, top: 16, bottom: 16, width: 2, background: "#e2e8f0" }} />
         {steps.slice(0, idx + 1).map((st, i) => {
           const now = i === idx && !answer;
+          const m = meta?.[i];
+          const sub = !!m && m.part >= 0;          // one part of an opened chain: indented under its step, lettered
+          const chip = sub ? String.fromCharCode(97 + m!.part) : String(m ? m.raw + 1 : i + 1);
+          const canOpen = !!(st.more && onOpen);
+          const canClose = sub && m!.part === 0 && !!onClose;
           return (
             <FadeIn key={i}>
               <div
                 {...(i === idx && !answer ? { "data-newest": "1" } : {})}
                 style={{
-                  position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12,
+                  position: "relative", display: "flex", gap: 12, padding: sub ? "6px 10px" : "10px 10px", borderRadius: 12, marginLeft: sub ? 30 : 0,
+                  ...(sub ? { borderLeft: "2px solid #c7d2fe", borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : null),
                   opacity: dim(now), transition: "opacity 0.3s ease",
                   background: now ? "#eff6ff" : "transparent", boxShadow: now ? "0 0 0 2px rgba(30,58,138,0.25)" : "none",
                 }}
               >
                 <div
                   style={{
-                    flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1,
+                    flexShrink: 0, width: sub ? 20 : 26, height: sub ? 20 : 26, borderRadius: sub ? 10 : 13, fontSize: sub ? 11 : 13, fontWeight: 800, zIndex: 1, marginTop: sub ? 2 : 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     background: now ? "#1e3a8a" : "#e2e8f0", color: now ? "#ffffff" : "#334155", border: "2px solid #ffffff",
                   }}
                 >
-                  {i + 1}
+                  {chip}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {(st.phase || (now && st.runningTotal !== undefined)) && (
+                {canClose && (
+                  <button type="button" onClick={() => onClose!(m!.raw)} aria-label="Fold the steps away" title="Fold the steps away"
+                    style={{ position: "absolute", top: 0, right: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "rotate(180deg)" }}><path d="M3 6l5 5 5-5" /></svg>
+                  </button>
+                )}
+                <div style={{ flex: 1, minWidth: 0, paddingRight: canClose ? 26 : 0 }}>
+                  {((st.phase && !sub) || canOpen || (now && st.runningTotal !== undefined)) && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      {st.phase && <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {st.phase && !sub && <span style={{ background: sub ? "#eef2ff" : "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {canOpen && (
+                        <button type="button" onClick={() => onOpen!(i)} aria-label="Show the steps" title="Show the steps"
+                          style={{ marginLeft: "auto", width: 40, height: 40, margin: "-6px 0 -6px auto", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "#64748b" }}>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "none" }}><path d="M3 6l5 5 5-5" /></svg>
+                        </button>
+                      )}
                       {now && st.runningTotal !== undefined && (
                         <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 14 }}>
                           {st.totalLabel ?? "Total"} {st.runningTotal}
@@ -77,7 +98,7 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 16 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
+                  <div style={{ fontSize: sub ? (big ? 15 : 14) : big ? 16 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}><GlossCaption segments={gloss[i]} /></div>
                 </div>
               </div>
             </FadeIn>
@@ -87,7 +108,7 @@ export default function StepCascade({ steps, idx, answer, all, big }: { steps: S
           <FadeIn>
             <div data-newest="1" style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 16 : 15, fontWeight: 700, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 16 : 15, fontWeight: 700, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}><InlineMath text={answer} /></div>
             </div>
           </FadeIn>
         )}
@@ -112,7 +133,11 @@ export function StepDots({ n, cur, hasAnswer, onJump, reach = 5 }: { n: number; 
       : i === n ? { width: 24, height: 10, borderRadius: 5, background: on ? "#16a34a" : "#d1d5db" }
       : { width: 10, height: 10, borderRadius: 5, background: on ? "#1e3a8a" : "#d1d5db" };
     void edge;
-    out.push(<button key={i} onClick={() => onJump(i)} title={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`} style={{ ...style, border: "none", cursor: "pointer", opacity: fade, flexShrink: 0 }} />);
+    out.push(
+      <button key={i} onClick={() => onJump(i)} aria-label={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`} title={i === -1 ? "Question" : i === n ? "Answer" : `Step ${i + 1}`}
+        style={{ border: "none", background: "transparent", cursor: "pointer", opacity: fade, flexShrink: 0, padding: "16px 3px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ display: "block", ...style }} />
+      </button>);
   }
-  return <div className="flex justify-center items-center gap-1.5 min-w-0 overflow-hidden flex-nowrap">{out}</div>;
+  return <div className="flex justify-center items-center gap-0 min-w-0 overflow-hidden flex-nowrap">{out}</div>;
 }

@@ -5,7 +5,11 @@ import { decodeBasket, encodeBasket, previewOf, type BasketItem } from "./printB
 import type { SavedItem } from "../savedLists";
 import type { BasketAction, SavedApi } from "../questionKeeper";
 import { generateFromSeed } from "../seededGenerate";
+import type { PrintMode } from "../types";
 import type { DecisionProblem, DecisionShellProps, GenerateContext } from "./types";
+
+/** a tool can print saved questions when it has Critical-Path-style sheets, a skill worksheet or exam-style papers */
+export const hasBasketPrint = (config: DecisionShellProps["config"]): boolean => !!(config.questionSheet || config.skillSheet || config.examSheet);
 
 // The print basket as the shell uses it: the page that prints the saved questions, the action the toolbar control offers and the menu item.
 // The saved questions themselves live in the question keeper (the current named list, kept on the device and able to mix tools); a saved
@@ -30,6 +34,8 @@ interface Args {
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem;
   /** a saved question brought back onto the page (the shell takes on its sub-tool, level and options and shows the rebuilt problem) */
   onLoad: (item: SavedItem) => void;
+  /** print rebuilt exam-style and skill questions (the Worksheet's printer), into a window opened at the click */
+  printProblems: (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>;
 }
 
 interface PrintBasketState {
@@ -41,22 +47,28 @@ interface PrintBasketState {
   ui: ReactNode;
 }
 
-export function usePrintBasket({ config, saved, generate, onLoad }: Args): PrintBasketState {
+export function usePrintBasket({ config, saved, generate, onLoad, printProblems }: Args): PrintBasketState {
   const tabs = config.questionSheet?.tabs;
   const basket = saved.items;
   const here = (i: SavedItem) => i.page === window.location.pathname;
-  const printable = (i: SavedItem) => here(i) && !!tabs?.includes(i.tab);
+  const sheetTab = (i: SavedItem) => !!tabs?.includes(i.tab);   // a question with a Critical-Path-style A4 sheet
+  // printable: this tool's, and either that sheet or a paper / worksheet (exam-style and skill questions print through the Worksheet's printer)
+  const printable = (i: SavedItem) => here(i) && (sheetTab(i) || !!config.skillSheet || !!config.examSheet);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const print = async (mode: "questions" | "answers" | "both") => {
     const toPrint = basket.filter(printable);
-    if (!toPrint.length || busy || !config.questionSheet) { if (basket.length && !toPrint.length) setNote("None of the saved questions can be printed here: they are from other tools, or have no print sheet."); return; }
-    const win = window.open("", "_blank");   // opened here, at the click, before the rebuilding below
-    if (!win) { alert("Please allow popups to use the PDF export."); return; }
-    const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
-    let skipped = basket.length - toPrint.length;   // saved questions with no print sheet, or from another tool
+    if (!toPrint.length || busy || !hasBasketPrint(config)) { if (basket.length && !toPrint.length) setNote("None of the saved questions can be printed here: they are from other tools, or have no print sheet."); return; }
+    // two kinds of page (a sheet, or a paper / worksheet) need two windows, and a window can only be opened here, at the click
+    const withSheet = toPrint.some(sheetTab), withPaper = toPrint.some((i) => !sheetTab(i));
+    const winSheet = withSheet ? window.open("", "_blank") : null;
+    const winPaper = withPaper ? window.open("", "_blank") : null;
+    if ((withSheet && !winSheet) || (withPaper && !winPaper)) { winSheet?.close(); winPaper?.close(); alert("Please allow popups to use the PDF export."); return; }
+    const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [], problems: DecisionProblem[] = [];
+    const paperItems: SavedItem[] = [];   // the saved questions that print as papers or a worksheet
+    let skipped = basket.length - toPrint.length;   // saved questions from another tool, or with no print route
     try {
       for (let k = 0; k < toPrint.length; k++) {
         setBusy(`Preparing question ${k + 1} of ${toPrint.length}…`);
@@ -64,16 +76,23 @@ export function usePrintBasket({ config, saved, generate, onLoad }: Args): Print
         const it = toPrint[k];
         try {
           const pr = generateFromSeed(it.seed, () => generate(it.level, { subTool: it.tab, options: it.options }));
-          if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
-          if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
+          if (sheetTab(it) && config.questionSheet) {
+            if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
+            if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
+          } else { problems.push(pr); paperItems.push(it); }
         } catch { skipped++; }
       }
       const sheets = [...questions, ...answers];
-      if (!sheets.length) { win.close(); setNote("None of the saved questions could be rebuilt."); return; }
-      printCpaSheets(sheets, win);
-      setNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be printed (from another tool, no print sheet, or could not be rebuilt) and ${skipped > 1 ? "were" : "was"} left out.` : null);
+      if (winSheet) { if (sheets.length) printCpaSheets(sheets, winSheet); else winSheet.close(); }
+      // one kind of question in the set: say what it is in the header (a mixed set just carries the tool's name)
+      const kinds = new Set(paperItems.map((i) => `${i.tab}|${i.level}`));
+      const only = paperItems[0];
+      const subtitle = kinds.size === 1 && only ? `${config.subTools?.find((x) => x.key === only.tab)?.label ?? only.tab}${(config.subTools?.find((x) => x.key === only.tab)?.levels ?? config.levels ?? 1) > 1 ? ` · Level ${only.level}` : ""}` : undefined;
+      if (winPaper) { if (problems.length) await printProblems(problems, mode, winPaper, subtitle); else winPaper.close(); }
+      if (!sheets.length && !problems.length) { setNote("None of the saved questions could be rebuilt."); return; }
+      setNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be printed (from another tool, no print route, or could not be rebuilt) and ${skipped > 1 ? "were" : "was"} left out.` : null);
     } catch {
-      win.close();
+      winSheet?.close(); winPaper?.close();
       setNote("Sorry, that could not be printed.");
     } finally { setBusy(null); }
   };
@@ -100,12 +119,12 @@ export function usePrintBasket({ config, saved, generate, onLoad }: Args): Print
     setOpen(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: runs once, when the page opens with a basket link
 
-  const menuItems: PrintBasketState["menuItems"] = config.questionSheet ? [
+  const menuItems: PrintBasketState["menuItems"] = hasBasketPrint(config) ? [
     { label: `Print saved questions (${basket.length})…`, hint: "Print the saved questions, or take them to another device", onClick: () => setOpen(true) },
   ] : [];
 
   const ui = (
-    open && config.questionSheet ? (
+    open && hasBasketPrint(config) ? (
       <PrintBasket items={basket} label={(i) => (here(i) ? config.subTools?.find((x) => x.key === i.tab)?.label ?? i.tab : i.pageTitle)} printable={printable} here={here} busy={busy} note={note}
         onLoad={reload} onRemove={(i) => { saved.remove(i); setNote(null); }} onClear={() => { saved.clear(); setNote(null); }}
         onPrint={(m) => void print(m)} onCopyLink={() => void copyLink()} onClose={() => setOpen(false)} />

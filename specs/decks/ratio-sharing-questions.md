@@ -2,6 +2,46 @@
 
 Written by `src/tests/ratioSharingSets.test.ts` from `specs/decks/ratio-sharing-sets.ts` (run with `WRITE_TABLE=1`). Every answer was recomputed from the numbers shown by arithmetic that does not use the tool's builders; the tool's own builder agrees with each; the wrong method was run on each and differs from the right answer. The trap ids are in `specs/decks/ratio-sharing.md`. For a grid, the wrong result is the first share.
 
+## Whiteboards for set A: sharing a total (five, on the board, with the bar-model working)
+
+| # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
+|---|---|---|---|---|---|
+| WA1 | whiteboard | Amy and Bo share £88 in the ratio 3:5 / Find both shares. | Amy: £33, Bo: £55 |  | £44 |
+| WA2 | whiteboard | Cara and Dan share £90 in the ratio 4:5 / How much does Dan receive? | Dan: £50 |  | £10 |
+| WA3 | whiteboard | Eve and Fred share £70 in the ratio 7:3 / How much does Eve receive? | Eve: £49 |  | £7 |
+| WA4 | whiteboard | Gia and Hal share £96 in the ratio 6:10 / How much does Hal receive? | Hal: £60 |  | £120 |
+| WA5 | whiteboard | Una, Vic and Wes share £49 in the ratio 1:2:4 / How much does Wes receive? | Wes: £28 |  | £65.33 |
+
+## Whiteboards for set B: a known share
+
+| # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
+|---|---|---|---|---|---|
+| WB1 | whiteboard | Kim and Lou share money in the ratio 3:4 / Kim receives £33 / What is the total amount shared? | Total: £77 |  | £33 |
+| WB2 | whiteboard | Max and Nell share money in the ratio 2:5 / Nell receives £40 / How much does Max receive? | Max: £16 |  | £80 |
+| WB3 | whiteboard | Orla and Pip share money in the ratio 5:6 / Pip receives £42 / How much does Orla receive? | Orla: £35 |  | £210 |
+| WB4 | whiteboard | Quin and Rhea share money in the ratio 4:6 / Quin receives £26 / How much does Rhea receive? | Rhea: £39 |  | £78 |
+| WB5 | whiteboard | Xan, Yui and Zoe share money in the ratio 2:3:4 / Yui receives £39 / What is the total amount shared? | Total: £117 |  | £39 |
+
+## Whiteboards for set C: a difference
+
+| # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
+|---|---|---|---|---|---|
+| WC1 | whiteboard | Amy and Bo share money in the ratio 3:5 / Bo receives £14 more than Amy / How much does Amy receive? | Amy: £21 |  | £5.25 |
+| WC2 | whiteboard | Cara and Dan share money in the ratio 2:5 / The difference in their amounts is £36 / What is the total amount shared? | Total: £84 |  | £36 |
+| WC3 | whiteboard | Eve and Fred share money in the ratio 7:3 / Fred receives £32 less than Eve / How much does Eve receive? | Eve: £56 |  | £22.40 |
+| WC4 | whiteboard | Gia and Hal share money in the ratio 4:10 / Hal receives £51 more than Gia / What is the total amount shared? | Total: £119 |  | £238 |
+| WC5 | whiteboard | Abi, Bea and Cyd share money in the ratio 2:4:7 / The difference between Abi's and Cyd's shares is £55 / What is the total amount shared? | Total: £143 |  | £357.50 |
+
+## Whiteboards for the mixed section (the kinds are not labelled)
+
+| # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
+|---|---|---|---|---|---|
+| WD1 | whiteboard | Kim and Lou share £132 in the ratio 5:7 / How much does Lou receive? | Lou: £77 |  | £11 |
+| WD2 | whiteboard | Max and Nell share money in the ratio 3:8 / Nell receives £72 / What is the total amount shared? | Total: £99 |  | £72 |
+| WD3 | whiteboard | Orla and Pip share money in the ratio 3:7 / Pip receives £28 more than Orla / How much does Orla receive? | Orla: £21 |  | £8.40 |
+| WD4 | whiteboard | Del, Eli and Fay share £110 in the ratio 2:3:5 / How much does Del receive? | Del: £22 |  | £44 |
+| WD5 | whiteboard | Gus, Hui and Isa share money in the ratio 3:4:5 / Isa receives £45 / How much does Hui receive? | Hui: £36 |  | £180 |
+
 ## Set A: sharing from a total (the 3 × 3 grid on the board)
 
 Instruction above the grid: **Share each amount in the ratio given.** Each cell is the amount over the ratio; every cell asks for every share.
@@ -18,7 +58,7 @@ Instruction above the grid: **Share each amount in the ratio given.** Each cell 
 | A8 | three parts | £72 · 1 : 3 : 4 | £9, £27 and £36 | T10 misses a part | £18 |
 | A9 | three parts, pounds and pence | £22.50 · 2 : 3 : 4 | £5, £7.50 and £10 | T10 misses a part | £9 |
 
-## Set B: a known share (printed sheet of nine, textbook layout)
+## Set B: a known share (printed sheet of nine, cells layout)
 
 | # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
 |---|---|---|---|---|---|
@@ -32,7 +72,7 @@ Instruction above the grid: **Share each amount in the ratio given.** Each cell 
 | B8 | three parts, find a different share | Eli, Zoe and Max share money in the ratio 2:5:6 / Eli receives £14 / How much does Max receive? | Max: £42 | T4 treats the known share as one part | £84 |
 | B9 | three parts, not money, find the total | Tess, Uri and Wen share stickers in the ratio 2:3:5 / Wen receives 55 stickers / What is the total amount shared? | Total: 110 stickers | T4 treats the known share as one part | 550 stickers |
 
-## Set C: a difference (printed sheet of nine, textbook layout)
+## Set C: a difference (printed sheet of nine, cells layout)
 
 | # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
 |---|---|---|---|---|---|
@@ -46,7 +86,7 @@ Instruction above the grid: **Share each amount in the ratio given.** Each cell 
 | C8 | three parts, the difference, find the total | Dana, Eric and Fay share money in the ratio 3:5:7 / Fay receives £52 more than Dana / What is the total amount shared? | Total: £195 | T10 compares the wrong parts | £390 |
 | C9 | three parts, not money, find the total (the stretch) | Xia, Yan and Zed share marbles in the ratio 3:4:6 / The difference between Yan's and Zed's shares is 28 marbles / What is the total amount shared? | Total: 182 marbles | T10 compares the wrong parts | 364 marbles |
 
-## Worksheet D: mixed, fifteen (printed, textbook layout)
+## Worksheet D: mixed, fifteen (printed, cells layout)
 
 The kinds are not labelled. Five sharing, five known share, five difference, interleaved and climbing.
 

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Eye, EyeOff, HelpCircle } from "lucide-react
 import type { DecisionProblem, ExamPart, SolveStep } from "./types";
 import { STAGE_H, STAGE_H_TABLET } from "./layout";
 import StepCascade from "./StepCascade";
+import { InlineMath } from "../components/MathRenderer";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ExamView — an exam-style question: the picture, the context, then lettered parts each with its marks.
@@ -60,14 +61,14 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
   const context = (
     <div className="shrink-0 flex flex-col gap-1">
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Exam question · {exam.totalMarks} mark{exam.totalMarks === 1 ? "" : "s"} · about {exam.minutes} min</div>
-      <p className="text-sm font-semibold text-gray-900 leading-snug">{exam.intro}</p>
+      <p className="text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={exam.intro} /></p>
     </div>
   );
   // the picture stays in view whatever the parts below do (sticky), so a long answer or a long list never leaves it behind
   const picture = (
     <div className={`flex flex-col gap-2 min-w-0 ${narrow ? "sticky top-0 z-20 bg-[#f8f9fb] pb-2 -mx-3 px-3" : "h-full min-h-0"}`}>
       {!narrow && context}
-      <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: "32dvh", minHeight: 190 } : { minHeight: 300 }}>
+      <div className={`relative rounded-xl border border-gray-200 bg-white overflow-hidden ${narrow ? "" : "flex-1 min-h-0"}`} style={narrow ? { height: problem.dim ? "42dvh" : "32dvh", minHeight: problem.dim ? 260 : 190 } : { minHeight: 300 }}>
         {shown(step)}
         {figureName && <span className="absolute top-2 left-2 rounded-md bg-blue-900 text-white text-xs font-bold px-2 py-0.5">{figureName}</span>}
       </div>
@@ -80,8 +81,8 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 shrink-0">
       <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5 text-sm font-semibold">
-        <button onClick={() => setAll(false)} className={`px-3 py-1 rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show individually</button>
-        <button onClick={() => setAll(true)} className={`px-3 py-1 rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show all parts</button>
+        <button onClick={() => setAll(false)} className={`px-3 py-2 min-h-[40px] rounded-md ${!all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show individually</button>
+        <button onClick={() => setAll(true)} className={`px-3 py-2 min-h-[40px] rounded-md ${all ? "bg-white text-blue-900 shadow-sm" : "text-slate-600"}`}>Show all parts</button>
       </div>
       <div className="flex items-center gap-3 text-xs font-semibold">
         {!all && <span className="text-gray-500">Part {active + 1} of {parts.length}</span>}
@@ -96,7 +97,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
       <div className="px-5 py-4">
         <div className="flex items-start gap-3">
           <div className="font-bold text-gray-900 text-base shrink-0 w-8">{p.label}</div>
-          <div className="flex-1 text-base text-gray-900 leading-snug">{p.prompt}</div>
+          <div className="flex-1 text-base text-gray-900 leading-snug"><InlineMath text={p.prompt} /></div>
           <div className="text-sm font-bold text-gray-500 shrink-0 whitespace-nowrap">[{p.marks} mark{p.marks > 1 ? "s" : ""}]</div>
         </div>
         {all && (
@@ -109,27 +110,27 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
         <div className="border-t border-gray-200 bg-slate-50 px-5 py-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
             <div className="flex-1 flex flex-col gap-1 text-base text-gray-900 leading-snug">
-              {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+              {p.onDiagram ? <div className="text-sm font-semibold text-blue-900">Shown on the diagram{narrow ? " above" : ""}</div> : p.model.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line", maxWidth: "100%", overflowX: "auto" }}><InlineMath text={l} /></div>)}
             </div>
             {((p.working && p.working.length > 0) || (p.explain && p.explain.length > 0)) && (
               <button onClick={(e) => { e.stopPropagation(); setActive(i); setWhy((w) => ({ ...w, [i]: !w[i] })); }} aria-label="Explain this answer" aria-pressed={!!why[i]} title="Show the step by step"
-                className={`shrink-0 rounded-full ${why[i] ? "text-blue-900" : "text-gray-400 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
+                className={`shrink-0 rounded-full w-10 h-10 flex items-center justify-center ${why[i] ? "text-blue-900" : "text-gray-500 hover:text-blue-900"}`}><HelpCircle size={22} /></button>
             )}
           </div>
           {why[i] && !(p.working && p.working.length > 0) && p.explain && (
             <div className="rounded-lg border border-blue-200 bg-white px-4 py-3 flex flex-col gap-1 text-sm text-gray-800 leading-snug">
-              {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}>{l}</div>)}
+              {p.explain.map((l, k) => <div key={k} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}
             </div>
           )}
           <div className="flex flex-col gap-1 border-t border-gray-200 pt-2">
             {p.scheme.map((m, j) => (
               <div key={j} className="flex items-start gap-2">
                 <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ background: CODE_TONE[m.code[0]] ?? "#475569" }}>{m.code}</span>
-                <span className="text-xs text-gray-600 leading-snug">{m.text}</span>
+                <span className="text-xs text-gray-600 leading-snug"><InlineMath text={m.text} /></span>
               </div>
             ))}
             {p.practise && onPractise && (
-              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline">Practise this</button>
+              <button onClick={(e) => { e.stopPropagation(); onPractise(p.practise!); }} className="mt-1 self-start text-sm font-semibold text-blue-900 hover:underline px-1 min-h-[40px] flex items-center">Practise this</button>
             )}
           </div>
         </div>
@@ -162,7 +163,7 @@ export default function ExamView({ problem, shown, footer, narrow, tablet, onPra
     <div className={`flex flex-col gap-3 min-w-0 ${narrow ? "" : "min-h-0 flex-1"}`} style={narrow ? { height: "62dvh", minHeight: 360 } : undefined}>
       <div className="shrink-0 flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5">
         <button onClick={closeWorking} className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:bg-slate-50"><ChevronLeft size={16} /> Question</button>
-        <div className="min-w-0 text-sm text-gray-900 leading-snug"><b className="mr-2">{wp.label}</b><span className="line-clamp-2">{wp.prompt}</span></div>
+        <div className="min-w-0 text-sm text-gray-900 leading-snug"><b className="mr-2">{wp.label}</b><span className="line-clamp-2"><InlineMath text={wp.prompt} /></span></div>
       </div>
       <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden">
         <div className="shrink-0 px-5 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Working</div>

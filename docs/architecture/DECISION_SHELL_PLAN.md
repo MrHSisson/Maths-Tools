@@ -45,6 +45,9 @@ See the increment ladder near the end of this doc for what has shipped, and `doc
 5. **MST thin slice first** — prove Layers 1+2+one tool end-to-end (one question type, Kruskal, one
    level) before breadth. Prim / more question types / levels / sandbox-expand / print all follow.
 
+> **Not only networks (2026-11-13).** `DecisionProblem.network` is optional. A tool whose picture is not a vertex-and-edge network (Critical Path, and the Further Mechanics chapters) leaves it out, carries its own data field (`cpa`, `flow`, …) and draws it through `config.renderCanvas`; the shell, chooser, exam view and print do not care what the picture is. Network-only code reads it with `netOf(problem)` (an empty network when there is none). Names still say "Decision"; renaming the shell and its folder is a separate tidy-up.
+
+
 ---
 
 ## Why a separate shell (not the maths ToolShell)
@@ -107,6 +110,7 @@ src/shared/decision/
   graphBank.ts (+ Layout, generated Labels)   the shared bank of display-optimised graphs
   mst · tsp · routeInspection · flow · cpa (+ *Solve, *Generate, *Exam)   the maths, solvers and generators per tool
   flowParts.ts · flowExam.ts   Network Flows parts library and exam recipes
+  dim · dimTex · dimBuild · dimGen · dimSolve · dimExam · DimWorking.tsx   Dimensional Analysis (Further Mechanics MA): the library and exact solver, generators, stepped working, exam chains, and the written-working picture (no network)
   printExam.ts · printGrid.ts   print
 ```
 
@@ -235,7 +239,7 @@ badges always sit top-right).
 **Sandbox** button on the picture (and in fullscreen) opens `SandboxOverlay` — the SAME drawing, through the tool's own `renderCanvas` (which now
 receives `extras`: moved vertices, a fixed frame and a drag handler), inside `PanZoom`, at the step the class is on, with its own Back / Next. Vertices
 drag (flow labels re-lay-out live — about 5–25 ms), the table can be shown, weights hidden, the grid toggled, the layout reset. Esc or "Back to the
-question" returns. The standalone `/network-sandbox` page is the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
+question" returns. (The standalone `/network-sandbox` page was removed 2026-11-14; the in-shell Sandbox overlay stays.) It was the same `SandboxBoard` with a graph picker (any bank graph, new weights, mirror, click a
 weight to edit).
 
 ## Step wording — house style (2026-10-11)

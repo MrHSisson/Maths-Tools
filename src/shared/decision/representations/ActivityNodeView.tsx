@@ -41,7 +41,7 @@ export default function ActivityNodeView({ acts, layout, view, qIndex, backgroun
   return (
     <svg
       viewBox={`0 0 ${layout.width} ${layout.height}`}
-      style={{ display: "block", width: "100%", minWidth: 560, height: "auto", maxHeight: "100%", margin: "auto", background }}
+      style={{ display: "block", width: "100%", minWidth: "min(560px, 125vw)", height: "auto", maxHeight: "100%", margin: "auto", background }}
       preserveAspectRatio="xMidYMid meet"
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >

@@ -119,12 +119,16 @@ describe("Sharing in a ratio: the authored sets", () => {
   it.runIf(!!process.env.WRITE_TABLE)("writes the table for Harry", () => {
     const heads: Record<string, string> = {
       A: "## Set A: sharing from a total (the 3 × 3 grid on the board)\n\nInstruction above the grid: **Share each amount in the ratio given.** Each cell is the amount over the ratio; every cell asks for every share.\n",
-      B: "## Set B: a known share (printed sheet of nine, textbook layout)\n",
-      C: "## Set C: a difference (printed sheet of nine, textbook layout)\n",
-      D: "## Worksheet D: mixed, fifteen (printed, textbook layout)\n\nThe kinds are not labelled. Five sharing, five known share, five difference, interleaved and climbing.\n",
+      B: "## Set B: a known share (printed sheet of nine, cells layout)\n",
+      C: "## Set C: a difference (printed sheet of nine, cells layout)\n",
+      D: "## Worksheet D: mixed, fifteen (printed, cells layout)\n\nThe kinds are not labelled. Five sharing, five known share, five difference, interleaved and climbing.\n",
+      WA: "## Whiteboards for set A: sharing a total (five, on the board, with the bar-model working)\n",
+      WB: "## Whiteboards for set B: a known share\n",
+      WC: "## Whiteboards for set C: a difference\n",
+      WD: "## Whiteboards for the mixed section (the kinds are not labelled)\n",
     };
     let md = "# Sharing in a ratio: the authored questions\n\nWritten by `src/tests/ratioSharingSets.test.ts` from `specs/decks/ratio-sharing-sets.ts` (run with `WRITE_TABLE=1`). Every answer was recomputed from the numbers shown by arithmetic that does not use the tool's builders; the tool's own builder agrees with each; the wrong method was run on each and differs from the right answer. The trap ids are in `specs/decks/ratio-sharing.md`. For a grid, the wrong result is the first share.\n\n";
-    for (const [set, qs] of Object.entries(ALL_SETS)) {
+    for (const [set, qs] of [...Object.entries(WHITEBOARDS), ...Object.entries(ALL_SETS)]) {
       md += `${heads[set]}\n| # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |\n|---|---|---|---|---|---|\n`;
       for (const q of qs) md += `| ${q.id} | ${q.rung} | ${questionText(q)} | ${q.answer} | ${q.trap} | ${format(q, wrongValue(q))} |\n`;
       md += "\n";

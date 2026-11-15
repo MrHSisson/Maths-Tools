@@ -64,3 +64,4 @@ export type {
   ShellWhen,
   DecisionProblemExport,
 } from "./types";
+export { netOf } from "./types";

@@ -18,6 +18,7 @@
 
 import { sampleTemplate } from "./templating";
 import type { DecisionProblemExport, Network, NetworkTemplate } from "./types";
+import { netOf } from "./types";
 
 // ── Independent reference: Prim's MST (nothing shared with the tools' Kruskal) ──
 export function primMST(network: Network): { total: number; connected: boolean } {
@@ -266,10 +267,10 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
         const opts = ctx && Object.keys(ctx.options).length ? ` ${JSON.stringify(ctx.options)}` : "";
         const where = `generate(${level}${sub ? `, ${sub}${opts}` : ""})`;
         const p = exp.generate(level, ctx);
-        const nodeIds = new Set(p.network.nodes.map((n) => n.id));
-        const edgeIds = new Set(p.network.edges.map((e) => e.id));
+        const nodeIds = new Set(netOf(p).nodes.map((n) => n.id));
+        const edgeIds = new Set(netOf(p).edges.map((e) => e.id));
 
-        const mst = primMST(p.network);
+        const mst = primMST(netOf(p));
         if (!mst.connected) {
           errors.push(`${where} produced a disconnected network`);
           continue;
@@ -278,16 +279,16 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
         const kind = p.kind;
         if (kind === "kruskal" || kind === "primNetwork" || kind === "primMatrix") {
           ref = { total: mst.total, name: "MST weight" };
-          if (new Set(p.network.edges.map((e) => e.weight)).size !== p.network.edges.length) errors.push(`${where} has two edges of equal weight — the tree would not be unique`);
-          if (crossingEdges(p.network)) errors.push(`${where} drew edges that cross`);
-          const want = kind === "kruskal" ? referenceKruskalOrder(p.network) : referencePrimOrder(p.network, p.start ?? "");
+          if (new Set(netOf(p).edges.map((e) => e.weight)).size !== netOf(p).edges.length) errors.push(`${where} has two edges of equal weight — the tree would not be unique`);
+          if (crossingEdges(netOf(p))) errors.push(`${where} drew edges that cross`);
+          const want = kind === "kruskal" ? referenceKruskalOrder(netOf(p)) : referencePrimOrder(netOf(p), p.start ?? "");
           if (kind !== "kruskal" && (!p.start || !nodeIds.has(p.start))) errors.push(`${where} has no valid start vertex (${p.start})`);
           if ((p.answer.edges ?? []).join() !== want.join()) errors.push(`${where} answer.edges ${p.answer.edges?.join()} ≠ independent ${kind} order ${want.join()}`);
-          if (want.length !== p.network.nodes.length - 1) errors.push(`${where}: a spanning tree should have n−1 edges`);
+          if (want.length !== netOf(p).nodes.length - 1) errors.push(`${where}: a spanning tree should have n−1 edges`);
         } else if (kind === "routeClassify" || kind === "routeClosed" || kind === "routeOpen") {
-          if (crossingEdges(p.network)) errors.push(`${where} drew edges that cross`);
+          if (crossingEdges(netOf(p))) errors.push(`${where} drew edges that cross`);
           const ends = kind === "routeOpen" && p.route?.end ? { start: p.route.start, end: p.route.end } : undefined;
-          const r = referenceRoute(p.network, ends);
+          const r = referenceRoute(netOf(p), ends);
           if (kind !== "routeClassify" && r.tied) errors.push(`${where} has two equally cheap pairings — ambiguous question`);
           if (kind === "routeClosed" && r.odd === 0) errors.push(`${where} has no odd vertices — nothing to pair`);
           if (kind !== "routeClassify" && r.odd !== 2 && r.odd !== 4) errors.push(`${where} has ${r.odd} odd vertices (a route question has 2 or 4)`);
@@ -296,31 +297,31 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
         } else if (kind === "tspLower" || kind === "tspBounds" || kind === "tspTable") {
           if (kind === "tspTable") {
             // the pairs whose table entry is not simply the drawn edge, by an independent Dijkstra
-            const all = leastTable(p.network);
+            const all = leastTable(netOf(p));
             let count = 0;
-            for (const a of p.network.nodes) for (const b of p.network.nodes) {
+            for (const a of netOf(p).nodes) for (const b of netOf(p).nodes) {
               if (a.id >= b.id) continue;
-              const direct = p.network.edges.find((e) => (e.from === a.id && e.to === b.id) || (e.from === b.id && e.to === a.id));
+              const direct = netOf(p).edges.find((e) => (e.from === a.id && e.to === b.id) || (e.from === b.id && e.to === a.id));
               if (!direct || all[a.id][b.id] < direct.weight) count++;
             }
             ref = { total: count, name: "entries to complete" };
             const lastT = exp.solve(p).slice(-1)[0];
-            for (const a of p.network.nodes) for (const b of p.network.nodes)
+            for (const a of netOf(p).nodes) for (const b of netOf(p).nodes)
               if (a.id !== b.id && lastT.matrix?.values[a.id][b.id] !== all[a.id][b.id]) errors.push(`${where}: final table entry ${a.id}${b.id} is ${lastT.matrix?.values[a.id][b.id]}, Dijkstra says ${all[a.id][b.id]}`);
           } else {
-            const lowerRef = referenceLowerBound(p.network, p.deleted ?? "");
+            const lowerRef = referenceLowerBound(netOf(p), p.deleted ?? "");
             if (!p.deleted || !nodeIds.has(p.deleted)) errors.push(`${where} has no valid deleted vertex (${p.deleted})`);
             if (lowerRef.tied) errors.push(`${where} has a tie in the lower-bound working — ambiguous question`);
             const lower = p.bounds?.lower;
             if (lower !== lowerRef.total) errors.push(`${where} lower bound ${lower} ≠ independent ${lowerRef.total}`);
             if (kind === "tspBounds") {
               if (!p.start || !nodeIds.has(p.start)) errors.push(`${where} has no valid start vertex (${p.start})`);
-              const nn = referenceNearestNeighbour(p.network, p.start ?? "");
+              const nn = referenceNearestNeighbour(netOf(p), p.start ?? "");
               if ((p.answer.tour ?? []).join("") !== nn.tour.join("")) errors.push(`${where} answer.tour ${p.answer.tour?.join("")} ≠ brute-force NN tour ${nn.tour.join("")}`);
               if (nn.tied) errors.push(`${where} has a tied nearest-neighbour choice from ${p.start}`);
               if (p.bounds?.upper !== nn.total) errors.push(`${where} upper bound ${p.bounds?.upper} ≠ independent ${nn.total}`);
-              if (p.network.nodes.length <= 7) {
-                const opt = referenceOptimalTour(p.network);
+              if (netOf(p).nodes.length <= 7) {
+                const opt = referenceOptimalTour(netOf(p));
                 if (!(lowerRef.total <= opt && opt <= nn.total)) errors.push(`${where}: lower ${lowerRef.total} ≤ optimal ${opt} ≤ upper ${nn.total} does not hold`);
               }
               ref = { total: nn.total, name: "upper bound" };
@@ -334,7 +335,7 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
             errors.push(`${where} has no valid start vertex (${starts.join()})`);
             continue;
           }
-          const runs = starts.map((s) => referenceNearestNeighbour(p.network, s));
+          const runs = starts.map((s) => referenceNearestNeighbour(netOf(p), s));
           const best = runs.reduce((a, b) => (b.total < a.total ? b : a));
           ref = { total: best.total, name: "nearest-neighbour tour length" };
           if (runs.some((r) => r.tied)) errors.push(`${where} has a tied nearest-neighbour choice from ${starts.join(" / ")} — ambiguous question`);
