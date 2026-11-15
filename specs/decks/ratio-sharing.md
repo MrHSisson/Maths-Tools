@@ -1,96 +1,133 @@
 # Deck plan: Sharing in a ratio
 
-**Status:** plan for Harry's review (2026-11-15). Nothing built. No question has been written yet: the checklist's first step is to agree the ladder and the traps below.
-**Deck id:** `ratio-sharing` · **Tool:** `ratio-sharing` (`/ratio-sharing`) · **Representation:** the bar model (stacked ratio look) · **Pitch:** middle band · **Length:** 1 to 2 lessons, with a divider at the pick-up point
+**Status:** plan for Harry's review (revised 2026-11-15 after his first reply). Nothing built; no question written. The checklist's first step is to agree the tool changes, the traps and the ladders below.
+**Deck id:** `ratio-sharing` · **Tool:** `ratio-sharing` (`/ratio-sharing`) · **Representation:** the bar model (stacked ratio look) · **Pitch:** middle band · **Length:** 1 to 2 lessons
 
-**Shape of the lesson.** The class has met this before, so it is built around *finding and fixing mistakes*, not first teaching. Each of the three kinds of problem opens with a "who is right?" discussion where a tempting wrong method gives a believable answer, then a short worked bar model, then practice. The bar model is the scaffold; it fades to the numerical method, as the tool does.
+**Shape (Harry, 2026-11-15).** A recap for a class that has met this before, built around finding and fixing mistakes. Questions are **all authored, in difficulty ladders, none generated**: nine projected board questions for each kind (sharing a total, a known share, a difference), then one mixed worksheet of fifteen at the end. The "who is right?" moments are the tool's new Depth cards, used as deck slides.
 
 ## What the tool has (Ratio Sharing, four tabs)
 
 | Tab | Asks | Levels | Method shown |
 |---|---|---|---|
-| Sharing in a Ratio | Share a total: person A, person B, or both | L1 times-table totals up to 64 (ratios 1:2 to 3:4, either way round) · L2 coprime ratios, shares up to 144 · L3 totals up to 500, can be a half-pound | Bar model (L1, L2) or the numerical method (L3, or the Numerical method switch) |
-| Known Amounts | One share is given: find the total, or the other share | L1 · L2 · L3 (totals up to 600) | same |
-| Given Difference | "£x more than", "£x less than" or "the difference is £x": find the total, or either share | L1 · L2 · L3 | same |
+| Sharing in a Ratio | Share a total: person A, person B, or both | L1 times-table totals up to 64 · L2 coprime ratios, shares up to 144 · L3 totals up to 500, can be a half-pound | Bar model (L1, L2) or the numerical method (L3, or the Numerical method switch) |
+| Known Amounts | One share given: find the total or the other share | L1 · L2 · L3 (totals up to 600) | same |
+| Given Difference | "£x more than", "£x less than", "the difference is £x": find the total or either share | L1 · L2 · L3 | same |
 | Mixed | A mix of the three | L1 · L2 · L3 | same |
 
-The bar model has a row per person, one box per part, "= share" at the end, a coloured known share, and purple extra boxes for the difference. It is the same look the deck bar piece already draws (`bar` element, ratio look).
+## What I would change in the tool (its own step, with its own tests, before the deck)
 
-## What the tool does not do (and what the deck does about it)
+Ranked by how much the lesson and the tool gain.
 
-| Gap | Matters for this lesson? | Plan |
-|---|---|---|
-| Two-part ratios only, always in lowest terms (no 4 : 6, no three parts) | Three parts is the usual next step, not part of a recap. A ratio given unsimplified is a real exam trap | Deck authors a few fixed questions with an unsimplified ratio and one three-part question as stretch. Tool unchanged |
-| Money in pounds only; names are random | Fine for the generator. Fixed questions can use other contexts (sweets, litres, time) to avoid "it's always money" | Author the variety in the fixed sets |
-| No "which kind is it?" question, and no "spot the mistake" | **This is the core of a misconceptions lesson** | Built in the deck as discussion slides and fixed question sets (no tool change) |
-| No Depth bank for the tool | Depth cards would suit the "who is right?" moments | Optional later (`specs/depth/ratio-sharing.md`); the deck uses its own discussion slides first |
-| No fixed-question builder (`Q.ratioSharing`) | Authored sets should carry the tool's own working and bar | **Needed:** extract the three generators' inner steps into a pure helper (as `ratioFromFraction.ts` did) so `Q.share`, `Q.known`, `Q.diff` can take fixed numbers. A small, separate, tested change |
-| `RatioSharingTool.about.ts` says Level 3 "always uses the algebra method"; the code uses the **numerical** method at Level 3 (`useBar` false) | Wording only, but the deck brief must match what the tool does | Fix the about line when the builders are added |
+| # | Change | Why | Notes |
+|---|---|---|---|
+| 1 | **Three-part ratios** (a pool "Parts in the ratio": Two / Three; they are exclusive, so a pool not a toggle, rule R19) | The tool is two-part only. Three parts is the natural stretch and the deck's last rungs need it | Each generator hardcodes two people (`parts[0]`, `parts[1]`, `twoNames()`, a two-entry `shares`). Known: "the other person" must name a person; difference: name the two people compared (`diff_bar` and `partDiff` assume bars 0 and 1). The bar drawing already loops over any number of rows. Ask-for options gain Person C |
+| 2 | **A Depth bank** (`RatioSharingDepth.ts`, spec `specs/depth/ratio-sharing.md`) | The tool has none. Diagnose, explain, extend at three levels, every wrong option naming its misconception; `startHere` per level. About 15 items | New misconceptions go in `src/shared/misconceptions.ts` (see the traps). The deck's "who is right?" slides are these cards, so nothing is written twice |
+| 3 | **Unsimplified ratios** (a toggle "Ratio not in simplest form") | Today every ratio is coprime, so the exam trap "4 : 6 is really 2 : 3" never appears | Independent of the part count, so a toggle |
+| 4 | **A check line in the working** ("Check: the shares add to the total") | The habit the lesson ends on (trap T9). It is the one step the working never shows | An extra last step in the numerical and bar methods, on every tab |
+| 5 | **Other contexts than money** (a pool: Money / Quantities such as sweets, kg, litres, minutes) | Every question is "£" and two named people; pupils then think sharing means money | Wording and units only; the maths is unchanged. Units are plain text outside KaTeX (R4) |
+| 6 | **Tidy: stop appending a random id to the question key** | Rule R2 says never; the three generators end their keys with `-${id}` | Content fingerprints already decide repeats |
+| 7 | **Tidy: the About line** says Level 3 "always uses the algebra method"; the code uses the numerical method | Wording only | Fixed with the About text for the new options |
+| 8 | **Fixed-question builders** `Q.share`, `Q.known`, `Q.diff` (the deck needs them) | Authored questions must carry the tool's own working and bar (checklist: extract the generator's inner function, as `ratioFromFraction.ts` did) | A pure helper taking fixed numbers, tested for the same output as the generator |
 
-## The traps (to agree with Harry)
+Not proposed: calibration and a Smart Progressor (the tool has neither; a separate decision), algebraic method for Level 3 (middle band).
 
-Each gets a discussion slide, and at least one fixed question where the wrong method gives a different, believable answer. Example numbers are indicative only and recomputed at build.
+## The traps (to agree)
+
+Each gets a Depth card (so a "who is right?" slide) and at least one authored question where the wrong method gives a different, believable answer. Example numbers are indicative; all are recomputed at build.
 
 | # | Trap | Wrong method on an example | Right |
 |---|---|---|---|
-| T1 | Divides the total by one of the ratio numbers (or by 2, "two people") | £60 shared 2 : 3: $60 \div 2 = 30$, or $60 \div 3 = 20$ | Parts $2 + 3 = 5$, one part £12: £24 and £36 |
-| T2 | Finds one part but forgets to multiply it back | £60, 2 : 3, gives "£12 each" | £24 and £36 |
-| T3 | Shares go to the wrong person (order of the ratio against the order of the names) | "Mia : Jack = 2 : 3", gives Mia the £36 | Mia £24, Jack £36 |
-| T4 | **Known share:** treats the given amount as one part | 3 : 5, the first gets £24: $24 \times 5 = 120$ for the other | £24 is 3 parts, one part £8, other £40, total £64 |
-| T5 | **Known share:** treats the given amount as the total | the same question answered "£24" | Total £64 |
-| T6 | **Difference:** treats the difference as a share or the total | 3 : 7, difference £48, "the total is £48" | Difference is $7 - 3 = 4$ parts, one part £12: shares £36 and £84, total £120 |
-| T7 | **Difference:** divides by the total number of parts, not the difference in parts | £48 $\div 10 = 4.80$ | $48 \div 4 = 12$ |
-| T8 | Answers a different question (gives the part value, or the other person's share) | finds £12 and stops | Read what is asked ("the total", "Jack's share") |
-| T9 | Does not check: shares that do not add up to the total | | A one-line check: do the shares add to the total? |
+| T1 | Divides the total by one ratio number (or by 2, "two people") | £60 in 2 : 3: $60 \div 2 = 30$ | Parts $2 + 3 = 5$, one part £12: £24 and £36 |
+| T2 | Finds one part but forgets to multiply it back | gives "£12 each" | £24 and £36 |
+| T3 | Shares go to the wrong person (ratio order against name order) | "Mia : Jack = 2 : 3", gives Mia the larger share | Mia £24, Jack £36 |
+| T4 | **Known share:** treats the given amount as one part | 3 : 5, first gets £24: $24 \times 5 = 120$ for the other | £24 is 3 parts, one part £8, other £40, total £64 |
+| T5 | **Known share:** treats the given amount as the total | answers "£24" | £64 |
+| T6 | **Difference:** treats the difference as a share or the total | 3 : 7, difference £48: "the total is £48" | $7 - 3 = 4$ parts, one part £12: £36 and £84, total £120 |
+| T7 | **Difference:** divides by all the parts, not the difference in parts | $48 \div 10 = 4.80$ | $48 \div 4 = 12$ |
+| T8 | Answers a different question (stops at one part, or gives the other person) | £12 | Read what is asked |
+| T9 | Does not check | shares that do not add to the total | One-line check |
+| T10 | Three parts: adds only two of the parts, or compares the wrong two | 2 : 3 : 5 shared as if 2 : 3 | Add all three parts: 10 |
+| T11 | Ratio not simplified, then mixes forms | 6 : 9 treated as 6 + 9 parts, then split again | Either use 15 parts or simplify to 2 : 3 first: same answer |
 
-The "which kind is it?" skill (given the total, a known share, or a difference) is the lesson's second thread: it is what pupils get wrong most when the three are mixed.
+Early rungs of the difference set avoid ratios that differ by exactly one part: then "divide the difference by 1" happens to be right and the wrong method cannot be seen to fail. One such question comes late, on purpose, as a discussion point.
 
-## The ladder (to agree with Harry)
+## The ladders (nine each, to agree)
 
-One thing changes between consecutive questions. No levels on authored questions (the ladder carries difficulty).
+No levels on authored questions; the order carries difficulty. One thing changes between neighbours. The first two of each set are partly completed on the board (the bar drawn, then the parts counted), the next three show the bar, the rest none, as the house style fades help. A non-money context appears at least once in each set.
 
-| Rung | Kind | Change from the one before |
+**Set A: Sharing from a total**
+
+| Rung | What it is | Trap |
 |---|---|---|
-| 1 | Total, one share asked | Times-table total, first person (the easy case) |
-| 2 | Total, both shares | Both, with a check that they add to the total |
-| 3 | Total, second person has the bigger share | Order trap (T3) |
-| 4 | Total, ratio given unsimplified (4 : 6) | Simplify first, or divide by 10 parts |
-| 5 | Known share, find the other | The known share is the *smaller* part; the first trap (T4) |
-| 6 | Known share, find the total | T5 |
-| 7 | Difference, find a share | T6, T7 |
-| 8 | Difference, find the total | |
-| 9 | Mixed: which kind? | Same story told three ways; pupils name the kind first |
-| 10 | Stretch (one only) | Three-part ratio, or a non-money context with a decimal part value |
+| A1 | 1 : n, small total, one share asked | |
+| A2 | Same shape, both shares, with the check | T9 |
+| A3 | a : b (2 : 3, 3 : 4), times-table total, one share | T1, T2 |
+| A4 | Second named person has the larger share, both | T3 |
+| A5 | Non-money context (sweets, kg), a : b | |
+| A6 | Larger total, parts sum to 10 to 12, no bar | T8 |
+| A7 | Ratio given unsimplified (6 : 9) | T11 |
+| A8 | Three parts, times-table total | T10 |
+| A9 | Three parts, the part value is not whole (pounds and pence) | |
 
-## Slide plan (about 28 slides; each divider is a pick-up point)
+**Set B: A known share**
 
-The first lesson covers sections A and B, the second C and D. If the class is quick the deck can be played straight through.
+| Rung | What it is | Trap |
+|---|---|---|
+| B1 | 1 : n, the known share is the 1 part; find the other | T4 |
+| B2 | 1 : n, the known share is the larger; find the other | T4 |
+| B3 | a : b, find the total | T5 |
+| B4 | a : b, the known is the second person; find the other | T3 |
+| B5 | Non-money context, find the total | |
+| B6 | Larger numbers, no bar | T8 |
+| B7 | Unsimplified ratio, find the other | T11 |
+| B8 | Three parts, one share known, find the total | T10 |
+| B9 | Three parts, one known, find a different named share | T10 |
+
+**Set C: A difference**
+
+| Rung | What it is | Trap |
+|---|---|---|
+| C1 | 1 : 3, "£x more than", find the larger share | T6 |
+| C2 | Same ratio, "£x less than", find the total | T6 |
+| C3 | 2 : 5 (three parts apart), find both | T7 |
+| C4 | "The difference between their shares is", find the total | T6, T7 |
+| C5 | The first named has less; find the first's share | T3 |
+| C6 | Non-money context | |
+| C7 | Larger numbers, no bar, find the total | T8 |
+| C8 | Three parts, difference between two named people, find the third's share | T10 |
+| C9 | Three parts, difference, find the total (stretch) | T10 |
+
+**Worksheet D: Mixed, fifteen**
+
+Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a spread of the three kinds); 6 to 10 unsimplified ratio, a non-money context, larger numbers, an order trap; 11 to 15 three-part, with the last two the hardest. About five of each kind. Questions use numbers used nowhere else in the deck. Fitting fifteen worded questions on one A4 page needs a look card (list layout, probably two columns, answers on a second sheet); the plan is one pinned A4 worksheet, hand-written (`frozen`), with its answer sheet.
+
+## Slide plan (about 22 slides; each divider is a pick-up point)
 
 | Section | Slides |
 |---|---|
-| Opening | Title · Objective · Retrieval starter (four quick questions: write 3 : 2 as shares of 10, simplify 6 : 9, "£20 in 1 : 3", one part-value division). Numbers used nowhere else |
-| A. Sharing a total (lesson 1) | Divider · **"Who is right?"** discussion: £60 in 2 : 3, three pupils' methods (T1, T2) · bar model built a click at a time, with total parts and 1 part · two whiteboard questions, then the third without the bar (fading) · **spot the mistake** (find the first error, T3, using the Questions "find the first error" format) · generator (Sharing, Level 1 to 2) · book work (nine, 3 × 3, with the check) |
-| B. Which share is it? (lesson 1) | Divider · order of names against order of the ratio (T3) · unsimplified ratio (T4) · fixed set of six (rungs 1 to 4) · exit check for the section |
-| C. Known share (lesson 2) | Divider · recap: three quick questions from A · **"Who is right?"**: £24 is one share of 3 : 5 (T4, T5) · bar model with the known box coloured · whiteboards (find the other, then the total) · generator (Known Amounts) · book work (nine) |
-| D. Difference, and choosing the method (lesson 2) | Divider · **"Who is right?"**: 3 : 7, difference £48 (T6, T7) · bar with purple extra boxes · whiteboards · **Which kind is it?** a sort-and-solve fixed set (rung 9): name the kind first, then solve · generator (Mixed, Level 2) · book work (twelve, 3 × 4, mixed, a decimal or non-money last) |
-| End | Exit ticket (three questions, one of each kind, numbers used nowhere else) · Summary: "What I check every time" (do the shares add to the total? did I answer what was asked?) |
+| Opening | Title · Objective · Starter (four quick retrieval questions, numbers used nowhere else) |
+| A. Sharing from a total | Divider · Depth card ("who is right?", T1, T2) · bar model built a click at a time (worked example) · **Board set A (nine questions, one at a time, working on reveal)** |
+| B. A known share | Divider · Depth card (T4, T5) · bar with the known box coloured · **Board set B** |
+| *Lesson break after B* | The second lesson starts at the next divider with a recap of three quick questions from A and B |
+| C. A difference | Divider · Depth card (T6, T7) · bar with purple extra boxes · **Board set C** |
+| D. Mixed | Divider · "What do I check every time?" (read what is asked, add the shares, check) · **Worksheet D** (cue slide, answers on a click) |
+| End | Exit ticket (three questions, one of each kind, new numbers) · Summary |
 
-Book work is plain big numbers with the instruction once at the top (house style); the worksheet slide is optional (one pinned A5 mixed sheet) if Harry wants paper.
+**Time.** Twenty-seven board questions at about two minutes each is a whole lesson on its own. The sets are ladders, so a class that is secure can start at rung 4 or stop at rung 6; the plan says so in each set's brief. Please say if you would rather the sets were shorter or the mixed worksheet is for homework.
 
 ## Decisions for Harry
 
-1. **One deck or two?** Plan is one deck with a divider at the lesson break (A, B | C, D), as the other decks do. Say if you would rather have two decks.
-2. **Are the nine traps the right ones?** Add, drop or reorder before any question is written.
-3. **Is Level 3's algebraic method wanted here?** The tool's Level 3 is numerical only. This class sits in the middle band, so the plan stays with the bar model and numerical method.
-4. **Three-part ratios:** one stretch question only, or leave out?
-5. **Depth cards:** worth authoring 4 to 5 cards for the tool afterwards, or do the discussion slides cover it?
-6. **Paper:** one pinned A5 mixed worksheet, or none?
-7. **The calculator and pace:** assumed calculators are allowed and pupils write a nine-question book set in about ten minutes. Correct me if not.
+1. **The tool changes above**: all, or leave out 5 (other contexts) and 3 (unsimplified)? Both are small, and both are used by the ladders (A5, B5, C6; A7, B7).
+2. **Board = the questions layout, one question at a time with the working revealed, nine to a slide** (not a 3 × 3 grid, which cannot hold a three-line worded question). Workspace right (writing space beside the question) or full-width?
+3. **Lesson break** after the known share (B), so the difference and the mixed work are lesson 2. Right?
+4. **Depth cards as the discussion slides**: fine, or do you want to see the discussion as ordinary slides?
+5. **Worksheet D**: pinned and printable (A4 with an answer sheet), or only on the board?
+6. Which of the eleven traps to drop or add.
 
 ## Build steps once agreed
 
-1. Extract the three generators' inner steps into a pure helper and add `Q.share`, `Q.known`, `Q.diff` (with tests; the tool's own output unchanged). Fix the about line.
-2. Write the question tables (rung, answer, trap, wrong-method result) for Harry to check; recompute every answer by a separate route.
-3. Build script (outside the repo), then `npm run deck -- looks <script>` for the look card; Harry says yes.
-4. Build, `npm run deck -- check ratio-sharing --layout`, `deck review`, then look at every sheet.
-5. Update the pathway, patch notes, planner Build Log and the tool's dashboard note.
+1. Tool change (own commit, tests, About words, `npm run facts`): items 1, 3 to 8 above.
+2. Depth spec (`specs/depth/ratio-sharing.md`) for Harry to read, then the bank.
+3. Question tables for sets A to C and worksheet D (rung, answer, trap, wrong-method result), every answer recomputed by a separate route, shown to Harry before the deck is built.
+4. Build script (outside the repo), look card (`npm run deck -- looks`), Harry says yes; build; `npm run deck -- check ratio-sharing --layout`; `deck review`; look at every sheet.
+5. Pathway, patch notes, planner Build Log and the tool's dashboard note.
