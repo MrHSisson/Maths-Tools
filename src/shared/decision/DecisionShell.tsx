@@ -16,7 +16,8 @@ import { STAGE_H } from "./layout";
 import { printSheets, type SkillLayout } from "./printExam";
 import { printCpaSheets, type CpaSheetInput } from "./printCpa";
 import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
-import { itemKey, type BasketItem } from "./printBasket";
+import { type BasketItem } from "./printBasket";
+import { savedId } from "../savedLists";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -288,9 +289,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
   const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>>(async () => {});   // set where the printers are (below)
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
   const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
+  // stepping through the saved list in a lesson: this tool's saved questions, and where the question on screen is among them
+  const hereItems = (keeper.saved?.items ?? []).filter((i) => i.page === window.location.pathname);
+  const hereRecipe = decisionRecipe(problem, subTool, level, ctxOf(subTool, options, level).options);
+  const hereIdx = hereRecipe ? hereItems.findIndex((i) => savedId(i) === savedId({ ...hereRecipe, page: window.location.pathname, pageTitle: config.pageTitle })) : -1;
+  const canStepBack = hereItems.length > 0 && (hereIdx < 0 || hereIdx > 0);
+  const canStepOn = hereItems.length > 0 && hereIdx < hereItems.length - 1;
+  const stepSaved = (dir: 1 | -1) => {
+    // not on a saved question yet: forward goes to the first, back to the last
+    const to = hereIdx < 0 ? (dir === 1 ? 0 : hereItems.length - 1) : hereIdx + dir;
+    const it = hereItems[to];
+    if (it) keeper.onPick(savedId(it));
+  };
 
   // keep the address bar bookmarkable
   useEffect(() => {
@@ -595,6 +608,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           </div>
         )}
         {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
+          {hereItems.length > 0 && !isPhone && (
+            <div className="flex items-center rounded-xl border border-slate-200 bg-white h-10" role="group" aria-label="Move through the saved questions">
+              <button onClick={() => stepSaved(-1)} disabled={!canStepBack} aria-label="Previous saved question" title="Previous saved question" className="w-10 h-10 flex items-center justify-center text-blue-900 hover:bg-slate-50 rounded-l-xl disabled:opacity-30"><ChevronLeft size={18} /></button>
+              <span className="px-1 text-sm font-semibold text-slate-600 tabular-nums whitespace-nowrap" title={hereIdx >= 0 ? `Saved question ${hereIdx + 1} of ${hereItems.length}` : `${hereItems.length} saved question${hereItems.length === 1 ? "" : "s"}`}>{hereIdx >= 0 ? hereIdx + 1 : "–"} / {hereItems.length}</span>
+              <button onClick={() => stepSaved(1)} disabled={!canStepOn} aria-label="Next saved question" title="Next saved question" className="w-10 h-10 flex items-center justify-center text-blue-900 hover:bg-slate-50 rounded-r-xl disabled:opacity-30"><ChevronRight size={18} /></button>
+            </div>
+          )}
           <PinButton keeper={savedUi} />
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
