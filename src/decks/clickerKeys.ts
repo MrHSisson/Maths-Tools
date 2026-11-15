@@ -2,7 +2,7 @@
 // Clickers are just keyboards: most send Page Down / Page Up, some send the arrow keys, Enter, or the media keys, and the
 // "black screen" button sends "." (or "b"); "start" sends F5 and "end" sends Escape. Several send the key with a
 // non-standard `key` value (or none), so `code` and the legacy `keyCode` are read too.
-export type ClickerAction = "next" | "back" | "first" | "last" | "blank" | "full" | null;
+type ClickerAction = "next" | "back" | "first" | "last" | "blank" | "full" | null;
 
 const NEXT_KEYS = new Set(["ArrowRight", "ArrowDown", "PageDown", "Enter", "MediaTrackNext", "MediaNextTrack", "n", "N"]);
 const BACK_KEYS = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace", "MediaTrackPrevious", "MediaPreviousTrack", "p", "P"]);
@@ -10,7 +10,7 @@ const BACK_KEYS = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace", "Media
 const NEXT_CODES = new Set([34, 39, 40, 13, 176]);
 const BACK_CODES = new Set([33, 37, 38, 177]);
 
-export type KeyLike = { key: string; code?: string; keyCode?: number; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean };
+type KeyLike = { key: string; code?: string; keyCode?: number; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean };
 
 export function clickerAction(e: KeyLike): ClickerAction {
   if (e.ctrlKey || e.metaKey || e.altKey) return null;
