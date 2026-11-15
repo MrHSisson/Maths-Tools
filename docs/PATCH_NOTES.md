@@ -29,6 +29,32 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-15 — Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a Ratio deck
+
+Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSharingTool.tsx,RatioSharingTool.about.ts,ratioSharing.ts,RatioSharingDepth.ts}`, `src/decks/{sharingQuestions,builder,SlideCanvas}`, `src/shared/{barModel,misconceptions}.ts`, `specs/decks/ratio-sharing*`, `specs/depth/ratio-sharing.md`, `src/tests/{ratioSharing,ratioSharingSets,ratioSharingDepth,barModel}.test.ts`, docs.
+
+**The tool (Ratio Sharing, all four tabs)**
+- **Three-part ratios** (a "Parts in the Ratio" pool, off by default; Person C is asked only of a three-part ratio), **unsimplified ratios** (a switch: the working starts with "Simplify the ratio first"), **contexts** (a pool: money, or whole quantities: sweets, stickers, marbles, litres of paint, kg of flour; units stay out of KaTeX) and **Check answer** (a display-only switch: a last step tying the answer back to the question). Defaults are the old tool: two parts, money, simplest form.
+- The working's diagram fills in: the part-value step now draws the bar with the value of one part in every box, then the shares follow.
+- The three generators now call pure builders (`buildSharing`, `buildKnown`, `buildDifference`), which the deck's `Q.share`, `Q.known` and `Q.diff` also use, so an authored question carries the tool's own wording and bar model. Question keys no longer end in a random number (rule R2); the About line now says Level 3 uses the numerical method.
+- **A Depth bank** (15 items, four at Level 1, six at Level 2, five at Level 3; spec `specs/depth/ratio-sharing.md`; ten new `sharing-…` misconception tags). Every wrong option names its misconception.
+
+**The deck** `ratio-sharing` (30 slides, middle band; plan `specs/decks/ratio-sharing.md`, build script `specs/decks/ratio-sharing.build.ts`)
+- A recap lesson built round the mistakes. Every section runs: Depth card (who is right?), a worked bar model that fills in click by click (boxes, brace, the value of one part in every box, each share), **five authored whiteboard questions**, **the tool's live generator** at Level 2, then the independent set: a 3 × 3 board grid for sharing a total, and printed sheets for a known share (9), a difference (9) and a mixed set (15), in the normal cells layout, one A4 page each, with their answers on a click.
+- Pitched for the middle band: no 1 : n rungs (every set starts at a : b with bigger totals), no hints, the Depth cards run Level 2 before Level 3.
+- **All 62 questions are authored, none generated** (42 in the sets, 20 whiteboards), in difficulty ladders, in `specs/decks/ratio-sharing-sets.ts`. `src/tests/ratioSharingSets.test.ts` recomputes every answer from the numbers shown, checks the tool's builder agrees, runs the named wrong method on each (it must differ) and checks no number repeats (the table Harry read: `specs/decks/ratio-sharing-questions.md`).
+
+**Shared pieces changed**
+- **Bar model slide piece** (`src/shared/barModel.ts`): a labelled bar now stages its value-in-every-box and its shares as separate clicks, and a row's total can be `given` (a known share shows from the first click). Other decks' bars have no labels and are unaffected.
+- **Generator slides always centre their question text** (`SlideCanvas.tsx`; a worded question over 100 characters used to left-align). Recorded in `docs/reference/decks.md`.
+
+**Checks.** Build, full tests, lint and the tool's shell smoke test pass; the deck passes `check --layout` and `smoke:deck-print` (every sheet and answer sheet on one A4 page); every slide was looked at on contact sheets. One test in the Decision Maths area (`cpaSheet.test.ts`) fails now and then under full-suite load and passes on its own: not touched.
+
+**Not done.** Calibration of Ratio Sharing; a phone and tablet check of the three-part bar and of the deck; the dashboard Review of Ratio Sharing. The deck is a working copy in the shared deck store (not published).
+
+Agent: Claude Code
+Notes: planner Build Log block "2026-11-15 — Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a ratio deck (Claude Code)".
+
 ## 2026-11-14 — Dimensional Analysis: a four-way audit and its fixes
 
 Branch `claude/quirky-volta-h5mli8`. Areas: `src/shared/decision/dim*.ts`, `DimWorking.tsx`, `DecisionShell.tsx`, `printExam.ts`; `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`; `specs/dimensional-analysis.md`.

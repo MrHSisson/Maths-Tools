@@ -39,15 +39,25 @@ describe("bar model, the stacked rows look", () => {
     parts: [], rows: [{ name: "Red", units: 3, unitLabel: "£6", total: "£18" }, { name: "Blue", units: 2, unitLabel: "£6", total: "£12" }], sideBrace: { label: "total" },
   };
   it("is as wide as its longest row", () => expect(barUnits(rows)).toBe(3));
-  it("builds row by row, then the brace, then every value together", () => {
-    expect(barStages(rows)).toBe(3);
+  it("builds row by row, then the brace, then the value in every box, then each total", () => {
+    expect(barStages(rows)).toBe(4);
     expect(barAtStage(rows, 0).rows).toHaveLength(1);
     expect(barAtStage(rows, 0).rows![0].unitLabel).toBeUndefined();
     expect(barAtStage(rows, 1).rows).toHaveLength(2);
     expect(barAtStage(rows, 1).sideBrace).toBeUndefined();
     expect(barAtStage(rows, 2).sideBrace).toBeDefined();
     expect(barAtStage(rows, 2).rows![1].total).toBeUndefined();
-    expect(barAtStage(rows, 3)).toEqual(rows);
+    expect(barAtStage(rows, 2).rows![1].unitLabel).toBeUndefined();
+    expect(barAtStage(rows, 3).rows![1].unitLabel).toBe("£6");   // the value of one part is in every box ...
+    expect(barAtStage(rows, 3).rows![1].total).toBeUndefined();  // ... before the shares
+    expect(barAtStage(rows, 4)).toEqual(rows);
+  });
+  it("shows a total the question gives (the known share) from the first click", () => {
+    const known: BarModelData = { parts: [], rows: [{ name: "Ana", units: 2, known: true, given: true, total: "£20", unitLabel: "£10" }, { name: "Ben", units: 3, unitLabel: "£10", total: "£30" }], sideBrace: { label: "total" } };
+    expect(barStages(known)).toBe(4);
+    expect(barAtStage(known, 0).rows![0].total).toBe("£20");
+    expect(barAtStage(known, 1).rows![1].total).toBeUndefined();
+    expect(barAtStage(known, 4).rows![1].total).toBe("£30");
   });
   it("names rows it cannot draw", () => {
     expect(barProblems(rows)).toEqual([]);

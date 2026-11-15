@@ -982,7 +982,7 @@
    "title": "Decks",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-14",
+   "updated": "2026-11-15",
    "sections": [
     {
      "title": "Intention",
@@ -1001,6 +1001,7 @@
       {
        "t": "ul",
        "items": [
+        "Sharing in a ratio (2026-11-15, rebuilt after Harry's first look): 30-slide recap lesson for the middle band, built round the mistakes. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions, the tool's live generator at Level 2, then an independent set (a 3 × 3 board grid, then printed sheets of nine, nine and fifteen in the cells layout). All 62 questions authored in difficulty ladders (a : b from the start, no hints) and recomputed by test. Ratio Sharing gained three-part ratios, unsimplified ratios, quantity contexts, a check step and its first Depth bank (15 items). The bar-model slide piece now stages values and shares as separate clicks and a row's total can be `given`; generator slides always centre their question. A working copy in the shared deck store, not published. Plan: `specs/decks/ratio-sharing.md`.",
         "Lesson pitch (2026-11-14): a deck can be labelled Upper, Middle or Lower band (editor's About the deck); shown only in the card's (i); kept in the published listing.",
         "Deck strands and topics Harry controls (2026-11-14): replaces the five fixed strands. A two-level tree (strand, then topic) and the filing of each deck live in their own tables (so filing never touches a deck); Manage categories on the Decks page, drag a card onto a heading (or Filed under in its (i) for touch), the same menu in the editor's About the deck, the dashboard filtered by it; the public sees only strands and topics with published decks. Seeded as five maths strands, A-Level (Maths, Further Maths) and Starters. `deck categories` / `deck file` for Claude. Before this the page showed Number as the only strand with decks and put the rest under Other decks.",
         "Deck quality system (2026-11-14, after an audit of the repeated deck problems: repeated numbers, layout and sizing, pitch and length, answer give-aways, checks that pass without anyone looking, rework from ambiguous feedback): the look card (`deck looks`) and a visual review (`deck review`, `sheet` revealing clicks); shared pieces and `LOOK` tokens (`src/decks/pieces.ts`); build rules (`deckRules.ts`) with `build` failing on a repeated number; layout checks that measure every question, the working-open and answers-shown views and warn on an orphaned number; a title-consistency warning; an unmerged-code warning; `verify`, `sheet` and `check --layout` fixed for decks that exist only as a file; the plan template, lesson style, checklist and reference updated. Worked example: `specs/decks/factors-hcf-systematic-listing.build.ts`.",
@@ -1073,7 +1074,7 @@
    "title": "Depth",
    "status": "rolling out",
    "measure": "depth",
-   "updated": "2026-11-01",
+   "updated": "2026-11-15",
    "sections": [
     {
      "title": "Intention",
@@ -1094,7 +1095,7 @@
        "items": [
         "A shared ToolShell mode (`depthItems`, the Depth tab) that follows the Question Options: two slides per question (question, then answer), named misconceptions on every wrong option, adaptive \"class secure / not secure\" links, a cross-level Start here check, deep links, a phone layout and a Present mode.",
         "A cast of eight named speakers, and Feathers the owl as a mascot only (no speech bubbles, no teacher notes, since 2026-11-01). One shared `DepthSlide` draws a card the same on the tool page and on a deck slide: the question never moves when the answer is shown, the level label stays top-left, speakers alternate left and right, one type scale. A card can be opened and tweaked in a deck (**Edit card**, or **Edit in a deck** from the tool's Depth section); the retired `teacherNote` / `prompt` / `takeaway` fields are gone from every bank.",
-        "Banks live: Order of Operations, Rounding (with a number-line scaffold), Identify Sig. Figs, Speed Distance & Time (all four tabs), Indices. Estimation has a bank used by its deck."
+        "Banks live: Order of Operations, Rounding (with a number-line scaffold), Identify Sig. Figs, Speed Distance & Time (all four tabs), Indices. Estimation has a bank used by its deck. Ratio Sharing (2026-11-15): 15 items in three levels on the ideas (sharing a total, a known share or a difference, choosing and three parts), ten `sharing-…` misconception tags, the cards used as the discussion slides of the Sharing in a Ratio deck."
        ]
       }
      ]
@@ -2716,24 +2717,24 @@
    ]
   },
   "ratio-sharing": {
-   "purpose": "Share amounts in a given ratio.",
+   "purpose": "Share an amount in a ratio of two or three parts: from the total, from one known share, or from a difference.",
    "subTools": [
     {
-     "name": "Sharing in a Ratio",
+     "name": "Sharing",
      "purpose": "Share a total in a ratio.",
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
-     "name": "Known Amounts",
+     "name": "Known",
      "purpose": "One person's share is given: find the total or the other share.",
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
@@ -2742,7 +2743,7 @@
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
@@ -2751,7 +2752,7 @@
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     }
    ],

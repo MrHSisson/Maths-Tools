@@ -20,6 +20,8 @@ export interface BarRow {
   extraFrom?: number;
   /** Fill the row as a known amount (the lighter blue). */
   known?: boolean;
+  /** `total` is information the question gives (the known share, the difference): it shows from the first click, not with the shares. */
+  given?: boolean;
   /** What the row is in a fraction: the numerator (lighter blue), the denominator (purple), or not used (faded). */
   role?: "numerator" | "denominator" | "dim";
 }
@@ -48,19 +50,23 @@ export const BAR_TONES: { fill: string; stroke: string }[] = [
 export const MAX_BAR_UNITS = 24;
 
 export const barUnits = (d: BarModelData) => (d.rows ? Math.max(0, ...d.rows.map((r) => Math.floor(r.units))) : d.parts.reduce((n, p) => n + Math.max(0, Math.floor(p.units)), 0));
-const rowsHaveLabels = (d: BarModelData) => !!d.rows?.some((r) => r.unitLabel || r.total);
+const rowsHaveValues = (d: BarModelData) => !!d.rows?.some((r) => r.unitLabel);
+const rowsHaveTotals = (d: BarModelData) => !!d.rows?.some((r) => r.total && !r.given);
 
 /** Clicks a staged bar takes after its first part: one per further part, then one per brace. */
 export const barStages = (d: BarModelData) =>
-  d.rows ? Math.max(0, d.rows.length - 1) + (d.sideBrace ? 1 : 0) + (rowsHaveLabels(d) ? 1 : 0) : Math.max(0, d.parts.length - 1) + (d.braces?.length ?? 0);
+  d.rows ? Math.max(0, d.rows.length - 1) + (d.sideBrace ? 1 : 0) + (rowsHaveValues(d) ? 1 : 0) + (rowsHaveTotals(d) ? 1 : 0) : Math.max(0, d.parts.length - 1) + (d.braces?.length ?? 0);
 
 /** The bar as it stands after `stage` clicks: the first part, then each further part, then each brace in order. */
 export function barAtStage(d: BarModelData, stage: number): BarModelData {
   if (d.rows) {
-    // the rows one by one, then the side brace, then every value and total together
+    // the rows one by one, then the side brace, then the value of one part in every box, then each row's total ("= share");
+    // a total the question gives (`given`) is there from the first click
     const shown = Math.min(d.rows.length, 1 + Math.max(0, stage)), after = Math.max(0, stage - (d.rows.length - 1));
-    const labels = rowsHaveLabels(d) && after >= (d.sideBrace ? 2 : 1);
-    return { ...d, rows: d.rows.slice(0, shown).map((r) => (labels ? r : { ...r, unitLabel: undefined, total: undefined })), sideBrace: d.sideBrace && after >= 1 ? d.sideBrace : undefined };
+    const brace = d.sideBrace ? 1 : 0;
+    const values = rowsHaveValues(d) && after >= brace + 1;
+    const totals = rowsHaveTotals(d) && after >= brace + (rowsHaveValues(d) ? 1 : 0) + 1;
+    return { ...d, rows: d.rows.slice(0, shown).map((r) => ({ ...r, unitLabel: values ? r.unitLabel : undefined, total: totals || r.given ? r.total : undefined })), sideBrace: d.sideBrace && after >= 1 ? d.sideBrace : undefined };
   }
   const partsShown = Math.min(d.parts.length, 1 + Math.max(0, stage));
   const bracesShown = Math.max(0, stage - (d.parts.length - 1));
