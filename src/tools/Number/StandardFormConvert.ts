@@ -54,10 +54,10 @@ const drawDigits = (len: number, zero: boolean): string => {
   return `${randInt(1, 9)}${randInt(1, 9)}${randInt(1, 9)}`;
 };
 
-// The grid has the standard place value columns, millions (10⁶) down to millionths (10⁻⁶): a large number stops at 10⁶, and a small
+// The grid has the standard place value columns, billions (10⁹) down to millionths (10⁻⁶): a large number can go as far as 10⁹, and a small
 // number's last digit has to land at 10⁻⁶ or above, so the more digits it has the smaller its power can be.
 const drawPower = (level: DifficultyLevel, digitCount: number): number =>
-  level === "level1" ? randInt(3, 6) : -randInt(3, Math.min(6, 7 - digitCount));
+  level === "level1" ? randInt(3, 9) : -randInt(3, Math.min(6, 7 - digitCount));
 
 /** Level 3: a coefficient that is not between 1 and 10, written with a power, to be put into standard form. */
 const genHalfway = (msv: Record<string, boolean>): AnyQuestion => {

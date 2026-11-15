@@ -200,21 +200,16 @@ describe("adding and subtracting", () => {
   });
 });
 
-describe("converting: the place value grid (digits move a column at a time, the power changes by 1)", () => {
-  const SUPMAP: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
-  const exponentOf = (heading: string): number => Number([...heading.slice(2)].map((c) => SUPMAP[c]).join(""));
-  const PLACES = ["M", "HTh", "TTh", "Th", "H", "T", "O", "t", "h", "th", "tth", "hth", "mth"];
-  /** The exponent of a place value heading: O is 10⁰, T is 10¹, t is 10⁻¹ … */
-  const placeExp = (heading: string): number => { const i = PLACES.indexOf(heading); if (i < 0) throw new Error(`not a place value heading: ${heading}`); return 6 - i; };
-  const table = (step: any) => step.extra.table;
-  /** The rows a step has written (a blank row has no power). */
-  const written = (t: any) => t.rows.map((r: any) => r.cells.map((c: any) => (typeof c === "string" ? { v: c } : c))).filter((cells: any[]) => cells[cells.length - 1].v !== "");
+describe("converting: the place value grid (one row of digits slides a column at a time, the power rolls by 1)", () => {
+  const PLACES = ["B", "HM", "TM", "M", "HTh", "TTh", "Th", "H", "T", "O", "t", "h", "th", "tth", "hth", "mth"];
+  /** The exponent of a place value heading: O is 10⁰, T is 10¹, B is 10⁹, t is 10⁻¹ … */
+  const placeExp = (heading: string): number => { const i = PLACES.indexOf(heading); if (i < 0) throw new Error(`not a place value heading: ${heading}`); return 9 - i; };
   const OFFSET = 40;
-  /** The exact value of a row: its digits at their column exponents, times the power beside it (scaled by 10^OFFSET so it is an integer). */
-  const valueOf = (t: any, cells: any[]): bigint => {
-    const power = exponentOf(cells[cells.length - 1].v);
+  const frameOf = (step: any) => step.extra.frame;
+  /** The exact value of a frame: its digits at their column exponents, times the power beside them (scaled by 10^OFFSET so it is an integer). */
+  const valueOf = (f: any): bigint => {
     let v = 0n;
-    cells.slice(0, -1).forEach((c: any, i: number) => { if (c.v !== "") v += BigInt(c.v) * 10n ** BigInt(placeExp(t.columns[i]) + power + OFFSET); });
+    f.digits.forEach((d: any) => { v += BigInt(d.ch) * 10n ** BigInt(placeExp(f.headings[d.col]) + f.power + OFFSET); });
     return v;
   };
   const truth = (q: any): bigint => {
@@ -225,68 +220,73 @@ describe("converting: the place value grid (digits move a column at a time, the 
   };
 
   for (const level of ["level1", "level2", "level3"]) {
-    it(`${level}: every row is the same value, the power changes by 1 a row, and it ends in the right place`, () => {
+    it(`${level}: every step is the same value, the digits slide one column and the power moves by 1`, () => {
       for (let i = 0; i < 150; i++) {
         const q = gen("converting", level, everything("converting", level));
         const toOrd = q.lines[0].startsWith("Write as");
         const spec = q._grid;
         expect(q.working.length).toBe(Math.abs(spec.fEnd - spec.fStart) + 1);
         const want = truth(q);
-        let previous: number | null = null;
-        q.working.forEach((step: any, k: number) => {
-          const t = table(step);
-          const rows = written(t);
-          expect(rows.length).toBe(k + 1);                                       // one more row written each step
-          expect(t.columns[t.columns.length - 1]).toBe("Power");
-          rows.forEach((cells: any[]) => expect(valueOf(t, cells)).toBe(want));  // the digits and the power always make the same number
-          const power = exponentOf(rows[rows.length - 1][rows[rows.length - 1].length - 1].v);
-          if (previous !== null) expect(Math.abs(power - previous)).toBe(1);
-          previous = power;
-          expect(t.rows.length).toBe(q.working.length);                          // the table never changes size
+        let previous: any = null;
+        q.working.forEach((step: any) => {
+          const f = frameOf(step);
+          expect(valueOf(f)).toBe(want);                                         // the digits and the power always make the same number
+          if (previous) {
+            expect(f.headings).toEqual(previous.headings);                      // the grid never changes size
+            expect(Math.abs(f.power - previous.power)).toBe(1);
+            f.digits.forEach((d: any, k: number) => expect(Math.abs(d.col - previous.digits[k].col)).toBe(1));   // every digit slid exactly one column
+            // digits one column to the right: the power goes up; one column to the left: it goes down
+            expect(Math.sign(f.power - previous.power)).toBe(Math.sign(f.digits[0].col - previous.digits[0].col));
+          }
+          previous = f;
         });
-        // the last row: standard form has its first digit in the ones column; an ordinary number has the power 10⁰
-        const t = table(q.working[q.working.length - 1]);
-        const cells = written(t)[q.working.length - 1];
-        const onesCol = t.onesIndex;
-        const finalPower = exponentOf(cells[cells.length - 1].v);
-        if (toOrd) expect(finalPower).toBe(0);
+        // the last step: standard form has its first digit in the ones column; an ordinary number has the power 10⁰
+        const last = frameOf(q.working[q.working.length - 1]);
+        expect(last.finish).toBe(true);
+        if (toOrd) expect(last.power).toBe(0);
         else {
-          expect(cells[onesCol].v).not.toBe("");
-          expect(cells[onesCol].v).not.toBe("0");
-          expect(cells.slice(0, onesCol).every((c: any) => c.v === "")).toBe(true);
-          expect(finalPower).toBe(Number(q.answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
+          expect(last.digits[0].col).toBe(last.onesIndex);
+          expect(last.power).toBe(Number(q.answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
         }
+        // no digit is ever drawn on a zero that only holds a place
+        q.working.forEach((step: any) => { const f = frameOf(step); f.digits.forEach((d: any) => expect(f.zeroCols).not.toContain(d.col)); });
       }
     });
   }
   it("the headings are the standard place value letters, consecutive, with the ones column where the point is drawn", () => {
     for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 100; i++) {
       const q = gen("converting", level, everything("converting", level));
-      const t = table(q.working[0]);
-      const places = t.columns.slice(0, -1);
-      places.forEach((h: string, k: number) => { if (k > 0) expect(placeExp(h)).toBe(placeExp(places[k - 1]) - 1); });
-      expect(places[t.onesIndex]).toBe("O");
-      expect(t.columnNames[t.onesIndex]).toBe("Ones");
+      const f = frameOf(q.working[0]);
+      f.headings.forEach((h: string, k: number) => { if (k > 0) expect(placeExp(h)).toBe(placeExp(f.headings[k - 1]) - 1); });
+      expect(f.headings[f.onesIndex]).toBe("O");
+      expect(f.names[f.onesIndex]).toBe("Ones");
     }
   });
-  it("the digits move right and the power goes up for large numbers, left and down for small ones", () => {
+  it("large numbers go as far as 10⁹ (billions)", () => {
+    let max = 0;
+    for (let i = 0; i < 400; i++) max = Math.max(max, Number(gen("converting", "level1", { toStd: true, toOrd: false, d1: true, d2: true, d3: false, noZero: true, withZero: false }).answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
+    expect(max).toBe(9);
+  });
+  it("the digits slide right and the power goes up for large numbers, left and down for small ones", () => {
     const up = gen("converting", "level1", { toStd: true, toOrd: false, d2: true, noZero: true });
-    const rows = written(table(up.working[up.working.length - 1]));
-    const powers = rows.map((c: any[]) => exponentOf(c[c.length - 1].v));
+    const powers = up.working.map((s: any) => frameOf(s).power);
     expect(powers).toEqual(powers.map((_: number, i: number) => i));            // 10⁰, 10¹, 10², …
+    const cols = up.working.map((s: any) => frameOf(s).digits[0].col);
+    expect(cols).toEqual(cols.map((_: number, i: number) => cols[0] + i));      // one column to the right each step
     const down = gen("converting", "level2", { toStd: true, toOrd: false, d2: true, noZero: true });
-    const powers2 = written(table(down.working[down.working.length - 1])).map((c: any[]) => exponentOf(c[c.length - 1].v));
-    expect(powers2).toEqual(powers2.map((_: number, i: number) => (i === 0 ? 0 : -i)));         // 10⁰, 10⁻¹, 10⁻², …
+    const powers2 = down.working.map((s: any) => frameOf(s).power);
+    expect(powers2).toEqual(powers2.map((_: number, i: number) => (i === 0 ? 0 : -i)));   // 10⁰, 10⁻¹, 10⁻², …
   });
   it("the whiteboard scaffold: an empty grid, and the same size once the answer is shown", async () => {
     const { gridBlank, gridFinal } = await import("../tools/Number/StandardFormGrid");
     for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 40; i++) {
       const q = gen("converting", level, everything("converting", level));
       const blank = gridBlank(q._grid), filled = gridFinal(q._grid);
-      expect(blank.columns).toEqual(filled.columns);
-      expect(blank.rows.length).toBe(filled.rows.length);
-      expect(blank.rows.every((r: any) => r.cells.every((c: any) => c === ""))).toBe(true);
-      expect(filled.rows.every((r: any) => r.cells[r.cells.length - 1] !== "")).toBe(true);
+      expect(blank.headings).toEqual(filled.headings);
+      expect(blank.digits).toEqual([]);
+      expect(blank.power).toBeNull();
+      expect(filled.power).not.toBeNull();
+      expect(filled.finish).toBe(true);
     }
   });
 });
