@@ -1,5 +1,6 @@
-import { randInt, pickActive, mStep, type AnyQuestion, type DifficultyLevel, type ToolMultiSelect } from "../../shared";
+import { randInt, pickActive, type AnyQuestion, type DifficultyLevel, type ToolMultiSelect } from "../../shared";
 import { ordinary, texOrdinary } from "./StandardFormCore";
+import { gridSteps, type GridSpec } from "./StandardFormGrid";
 
 // Standard Form: converting between ordinary numbers and standard form.
 // L1 large numbers (positive powers); L2 small numbers (negative powers), each either way round.
@@ -77,18 +78,15 @@ const genHalfway = (msv: Record<string, boolean>): AnyQuestion => {
     const e = tooBig ? n + places : n - places;
     if (e === 0) continue;                                  // 10⁰ would hide the idea
     const coef = ordinary(digits, 0);
-    const times = String(10 ** places);
-    const working = [
-      mStep(`The coefficient must be between 1 and 10. Move the decimal point ${places === 1 ? "1 place" : `${places} places`} to the ${tooBig ? "left" : "right"}:`, [shown, `\\rightarrow ${coef}`]),
-      mStep(tooBig ? `That made the coefficient ${times} times smaller, so the power goes up by ${places}:` : `That made the coefficient ${times} times bigger, so the power goes down by ${places}:`, `${n} ${tooBig ? "+" : "-"} ${places} = ${e}`),
-      mStep("Answer:", `${coef} \\times 10^{${e}}`),
-    ];
+    // the coefficient goes in the grid with its ones digit in the column of the power it is multiplied by
+    const grid: GridSpec = { mode: "half", shown, shownUnits: n, coef, power: e };
     return {
       kind: "worded",
       lines: ["Write in standard form:", `$${shown} \\times 10^{${n}}$`],
       answer: `${coef} × 10^${e}`,
       answerLatex: `${coef} \\times 10^{${e}}`,
-      working,
+      working: gridSteps(grid),
+      _grid: grid,
       key: `sf-conv-half-${shown}e${n}`,
       difficulty: "level3",
     } as unknown as AnyQuestion;
@@ -106,25 +104,16 @@ export const genConvert = (level: DifficultyLevel, msv: Record<string, boolean>)
   const ord = ordinary(digits, n);
   const coef = ordinary(digits, 0);
   const std = `${coef} \\times 10^{${n}}`;
-  const plural = `${Math.abs(n)} places`, big = n > 0;
-
-  const working = toStd
-    ? [
-        mStep(`Put the decimal point after the first non-zero digit. It moves ${plural} to the ${big ? "left" : "right"}:`, [texOrdinary(ord), `\\rightarrow ${coef}`]),
-        mStep(big ? "The number is bigger than 1, so the power is positive:" : "The number is smaller than 1, so the power is negative:", `10^{${n}}`),
-        mStep("Answer:", std),
-      ]
-    : [
-        mStep(`The power is ${n}, so move the decimal point ${plural} to the ${big ? "right" : "left"}, filling any gaps with zeros:`, [coef, `\\rightarrow ${texOrdinary(ord)}`]),
-        mStep("Answer:", texOrdinary(ord)),
-      ];
+  // the developing picture: a place value grid headed with powers of ten, the power read from the first non-zero digit's column
+  const grid: GridSpec = { mode: toStd ? "toStd" : "toOrd", shown: toStd ? ord : coef, shownUnits: 0, coef, power: n };
 
   return {
     kind: "worded",
     lines: toStd ? ["Write in standard form:", `$${texOrdinary(ord)}$`] : ["Write as an ordinary number:", `$${std}$`],
     answer: toStd ? `${coef} × 10^${n}` : ord,
     answerLatex: toStd ? std : texOrdinary(ord),
-    working,
+    working: gridSteps(grid),
+    _grid: grid,
     key: `sf-conv-${toStd ? "std" : "ord"}-${digits}e${n}`,
     difficulty: level,
   } as unknown as AnyQuestion;

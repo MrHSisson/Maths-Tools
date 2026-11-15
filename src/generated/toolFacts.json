@@ -185,20 +185,22 @@
    "kind": "tool",
    "shell": "ToolShell",
    "subTools": 4,
-   "lines": 307,
+   "lines": 323,
    "depth": false,
    "teach": false,
    "lessons": false,
-   "workedSplit": false,
+   "workedSplit": true,
    "calibrated": false,
-   "scaffold": false,
+   "scaffold": true,
    "reformat": false,
    "customPrint": false,
    "printables": false,
    "printBasket": false,
    "tests": true,
    "skillLinks": false,
-   "representations": [],
+   "representations": [
+    "Place value table"
+   ],
    "spec": false
   },
   {

@@ -199,3 +199,53 @@ describe("adding and subtracting", () => {
     }
   });
 });
+
+describe("converting: the place value grid", () => {
+  const SUPMAP: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+  const powerOf = (heading: string): number => Number([...heading.slice(2)].map((c) => SUPMAP[c]).join(""));
+  const tableOf = (step: any) => step.extra.table;
+  const row = (t: any) => t.rows[1].cells.map((c: any) => (typeof c === "string" ? { v: c } : c));
+
+  for (const level of ["level1", "level2", "level3"]) {
+    it(`${level}: every step is a grid headed with consecutive powers of ten, with the digits in the right columns`, () => {
+      for (let i = 0; i < 150; i++) {
+        const q = gen("converting", level, everything("converting", level));
+        expect(q.working.length).toBe(3);
+        const [, answerPower] = parseSF(q.lines[0].startsWith("Write as") ? q.lines[1].replace(/^\$|\$$/g, "") : q.answerLatex);
+        for (const step of q.working) {
+          const t = tableOf(step);
+          const powers = t.columns.map(powerOf);
+          // columns run down one power at a time, and the number of rows never changes between steps
+          powers.forEach((p: number, k: number) => k > 0 && expect(p).toBe(powers[k - 1] - 1));
+          expect(t.rows.length).toBe(2);
+          expect(t.columns.length).toBe(tableOf(q.working[0]).columns.length);
+        }
+        // step 2: the circled digit is the first non-zero digit, and its column heading is the answer's power
+        const t2 = tableOf(q.working[1]);
+        const cells = row(t2);
+        const circled = cells.findIndex((c: any) => c.circle === "on");
+        if (!q.lines[0].startsWith("Write as")) {
+          const firstNonZero = cells.findIndex((c: any) => c.v !== "" && c.v !== "0");
+          expect(circled).toBe(firstNonZero);
+          expect(powerOf(t2.columns[circled])).toBe(Number(q.answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
+        }
+        // the last step shows the answer's digits, and the ordinary number's digits for "to ordinary"
+        const last = row(tableOf(q.working[2])).map((c: any) => c.v).join("");
+        if (q.lines[0].startsWith("Write as")) {
+          expect(last.replace(/^0+(?=\d)/, "")).toContain(q.answerLatex.replace(/\{,\}/g, "").replace(".", "").replace(/^0+/, "").slice(0, 1));
+        }
+        void answerPower;
+      }
+    });
+  }
+  it("the whiteboard scaffold: an empty grid, and the same grid size once the answer is shown", async () => {
+    const { gridBlank, gridFinal } = await import("../tools/Number/StandardFormGrid");
+    for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 40; i++) {
+      const q = gen("converting", level, everything("converting", level));
+      const blank = gridBlank(q._grid), filled = gridFinal(q._grid);
+      expect(blank.columns).toEqual(filled.columns);
+      expect(blank.rows.length).toBe(filled.rows.length);
+      expect((blank.rows[1] as any).cells.every((c: any) => c === "")).toBe(true);
+    }
+  });
+});

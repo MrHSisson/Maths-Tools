@@ -1,11 +1,13 @@
 import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  randInt, shuffle, pickActive, mStep,
+  randInt, shuffle, pickActive, mStep, extras,
+  PlaceValueTable, placeValueStepRenderer, placeValueStepVisual,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./StandardForm.about";
 import { CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS, CONV_COEF_MS, CONV_START_MS, genConvert } from "./StandardFormConvert";
+import { gridBlank, gridFinal, type GridSpec } from "./StandardFormGrid";
 import { MD_OPS_MS, MD_COEF_MS, genMulDiv } from "./StandardFormMulDiv";
 import { AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS, AS_MATCH_MS, genAddSub } from "./StandardFormAddSub";
 
@@ -295,11 +297,25 @@ applyAbout(TOOL_CONFIG, ABOUT);
 
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// The Converting tab's developing picture: a place value grid headed with powers of ten. On the whiteboard it starts empty in the
+// working box and fills when the answer is shown; in the worked example each step is a snapshot of it (`pvStep`). Questions from the
+// other tabs carry no `_grid`, so the scaffold and the step renderers leave them alone.
+const workingScaffold = {
+  label: "place value grid",
+  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+    const spec = extras(q)._grid as GridSpec | undefined;
+    return spec ? <PlaceValueTable data={showAnswer ? gridFinal(spec) : gridBlank(spec)} /> : null;
+  },
+};
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       generateQuestion={generateQuestion}
+      stepRenderer={placeValueStepRenderer}
+      stepVisualRenderer={placeValueStepVisual}
+      workingScaffold={workingScaffold}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />
   );
