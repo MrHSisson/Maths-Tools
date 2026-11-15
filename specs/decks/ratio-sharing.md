@@ -3,7 +3,7 @@
 **Status:** plan for Harry's review (revised 2026-11-15 after his first reply). Nothing built; no question written. The checklist's first step is to agree the tool changes, the traps and the ladders below.
 **Deck id:** `ratio-sharing` · **Tool:** `ratio-sharing` (`/ratio-sharing`) · **Representation:** the bar model (stacked ratio look) · **Pitch:** middle band · **Length:** 1 to 2 lessons
 
-**Shape (Harry, 2026-11-15).** A recap for a class that has met this before, built around finding and fixing mistakes. Questions are **all authored, in difficulty ladders, none generated**: nine projected board questions for each kind (sharing a total, a known share, a difference), then one mixed worksheet of fifteen at the end. The "who is right?" moments are the tool's new Depth cards, used as deck slides.
+**Shape (Harry, 2026-11-15).** A recap for a class that has met this before, built around finding and fixing mistakes. Questions are **all authored, in difficulty ladders, none generated**: nine projected questions for each kind (sharing a total, a known share, a difference) as a **3 × 3 grid with the instruction once above it and just the numbers in each cell**, then one mixed worksheet of fifteen at the end in the **textbook layout**. More is written than any one pupil is expected to finish: the sets are there to give stretch, not to be completed. The "who is right?" moments are the tool's new Depth cards, used as deck slides.
 
 ## What the tool has (Ratio Sharing, four tabs)
 
@@ -53,7 +53,17 @@ Early rungs of the difference set avoid ratios that differ by exactly one part: 
 
 ## The ladders (nine each, to agree)
 
-No levels on authored questions; the order carries difficulty. One thing changes between neighbours. The first two of each set are partly completed on the board (the bar drawn, then the parts counted), the next three show the bar, the rest none, as the house style fades help. A non-money context appears at least once in each set.
+No levels on authored questions; the order carries difficulty. One thing changes between neighbours. A non-money context appears at least once in each set. Help fades the house-style way: the first six cells carry a tiny grey hint ("Hint: 10 parts"), the last three none. The bar model is taught on the worked-example slide before each set, not in the cells.
+
+**How a set is drawn (3 × 3, `S.plainBook`).** One instruction above the grid, then each cell is bare numbers, big and centred. Because one instruction covers all nine, *what is asked is the same for the whole grid*; that is a gain (it isolates the method, and "read what is asked" is tested later by the mixed worksheet) and a cost (a rung that asks for one share, or the other person's share, cannot be a separate rung). Where a rung needs a different ask, the cell carries a short last line ("Find the total"). The look card will show whether three lines fit a cell; if not, that rung moves to a sheet.
+
+| Set | Instruction above the grid | A cell is |
+|---|---|---|
+| A: from a total | Share each amount in the ratio given. | `£50` over `3 : 7` (three parts: `£90` over `2 : 3 : 4`; a quantity: `40 kg` over `3 : 5`) |
+| B: a known share | Find the total. (Rungs asking for the other share carry "Find the other share") | `3 : 5` over `first gets £24` |
+| C: a difference | Find both shares. (Rungs asking for the total carry "Find the total") | `3 : 7` over `difference £48` |
+
+Sets B and C are on the board as grids too. If a grid does not fit, or a class wants paper, a set can be a pinned printed sheet instead (up to three per deck, and the mixed worksheet takes one).
 
 **Set A: Sharing from a total**
 
@@ -97,31 +107,31 @@ No levels on authored questions; the order carries difficulty. One thing changes
 | C8 | Three parts, difference between two named people, find the third's share | T10 |
 | C9 | Three parts, difference, find the total (stretch) | T10 |
 
-**Worksheet D: Mixed, fifteen**
+**Worksheet D: Mixed, fifteen (textbook layout)**
 
-Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a spread of the three kinds); 6 to 10 unsimplified ratio, a non-money context, larger numbers, an order trap; 11 to 15 three-part, with the last two the hardest. About five of each kind. Questions use numbers used nowhere else in the deck. Fitting fifteen worded questions on one A4 page needs a look card (list layout, probably two columns, answers on a second sheet); the plan is one pinned A4 worksheet, hand-written (`frozen`), with its answer sheet.
+Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a spread of the three kinds); 6 to 10 unsimplified ratio, a non-money context, larger numbers, an order trap; 11 to 15 three-part, with the last two the hardest. About five of each kind. Questions use numbers used nowhere else in the deck. The tool Worksheet's **Textbook** layout (the pinned worksheet's `layout: "list"`, which the deck already supports): numbered `1)` lines, the instruction once, no boxes, the answer inline on the answer sheet. It suits worded questions of mixed length better than equal boxes, and fifteen fit one A4 page comfortably. The plan is one pinned A4 worksheet, hand-written (`frozen`), in this layout, with its answer sheet; the look card puts it beside the boxed layout so Harry can choose.
 
 ## Slide plan (about 22 slides; each divider is a pick-up point)
 
 | Section | Slides |
 |---|---|
 | Opening | Title · Objective · Starter (four quick retrieval questions, numbers used nowhere else) |
-| A. Sharing from a total | Divider · Depth card ("who is right?", T1, T2) · bar model built a click at a time (worked example) · **Board set A (nine questions, one at a time, working on reveal)** |
-| B. A known share | Divider · Depth card (T4, T5) · bar with the known box coloured · **Board set B** |
+| A. Sharing from a total | Divider · Depth card ("who is right?", T1, T2) · bar model built a click at a time (worked example) · **Grid A (nine, 3 × 3, instruction above, answers on a click)** |
+| B. A known share | Divider · Depth card (T4, T5) · bar with the known box coloured · **Grid B** |
 | *Lesson break after B* | The second lesson starts at the next divider with a recap of three quick questions from A and B |
-| C. A difference | Divider · Depth card (T6, T7) · bar with purple extra boxes · **Board set C** |
-| D. Mixed | Divider · "What do I check every time?" (read what is asked, add the shares, check) · **Worksheet D** (cue slide, answers on a click) |
+| C. A difference | Divider · Depth card (T6, T7) · bar with purple extra boxes · **Grid C** |
+| D. Mixed | Divider · "What do I check every time?" (read what is asked, add the shares, check) · **Worksheet D** (cue slide, answers on a click; printed in the textbook layout) |
 | End | Exit ticket (three questions, one of each kind, new numbers) · Summary |
 
-**Time.** Twenty-seven board questions at about two minutes each is a whole lesson on its own. The sets are ladders, so a class that is secure can start at rung 4 or stop at rung 6; the plan says so in each set's brief. Please say if you would rather the sets were shorter or the mixed worksheet is for homework.
+**Time.** Not everyone will finish a set (agreed). Each set is a ladder, so the brief says where a secure class can start or a class can stop. A grid has no stepped working on the board: the worked-example slide and Depth card come first, and the answers show on a click.
 
 ## Decisions for Harry
 
-1. **The tool changes above**: all, or leave out 5 (other contexts) and 3 (unsimplified)? Both are small, and both are used by the ladders (A5, B5, C6; A7, B7).
-2. **Board = the questions layout, one question at a time with the working revealed, nine to a slide** (not a 3 × 3 grid, which cannot hold a three-line worded question). Workspace right (writing space beside the question) or full-width?
-3. **Lesson break** after the known share (B), so the difference and the mixed work are lesson 2. Right?
-4. **Depth cards as the discussion slides**: fine, or do you want to see the discussion as ordinary slides?
-5. **Worksheet D**: pinned and printable (A4 with an answer sheet), or only on the board?
+1. **The tool changes above**: all, or leave out 5 (other contexts) and 3 (unsimplified)? Both feed the ladders (A5, B5, C6; A7, B7).
+2. **One instruction per grid, so one kind of ask per grid** (above). Fine, or do you want a different ask in some cells?
+3. **Textbook layout for Worksheet D**: the look card shows it beside the boxed layout.
+4. **Lesson break** after the known share (B), so the difference and the mixed work are lesson 2.
+5. **Depth cards as the discussion slides.**
 6. Which of the eleven traps to drop or add.
 
 ## Build steps once agreed
