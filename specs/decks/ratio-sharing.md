@@ -128,6 +128,7 @@ Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a sp
 
 ## Progress
 
+- **2026-11-15: the Depth spec** is written (`specs/depth/ratio-sharing.md`, 15 items) and **all 42 authored questions** are written and checked (`specs/decks/ratio-sharing-sets.ts`, the table Harry reads: `specs/decks/ratio-sharing-questions.md`, tests in `src/tests/ratioSharingSets.test.ts`). Waiting for Harry on both before the Depth bank and the deck are built.
 - **2026-11-15: tool change 1, 3 to 8 done** (three parts, unsimplified, contexts, check step, key and About tidy, `Q.share` / `Q.known` / `Q.diff`), tested. Remaining: the Depth spec and bank, the question tables, the look card, the build.
 
 ## Build steps once agreed
