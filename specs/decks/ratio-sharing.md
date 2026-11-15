@@ -59,47 +59,47 @@ No levels on authored questions; the order carries difficulty. One thing changes
 
 **Sets B and C are printed**, one pinned sheet each, nine questions in the textbook layout with the full wording ("Mia and Jack share money in the ratio 3 : 5. Mia receives £24. Work out the total."). Written out in full, each question can ask what its rung needs, so the grid's one-ask limit does not apply to them.
 
-**Set A: Sharing from a total**
+**Set A: Sharing from a total** (moved up 2026-11-15: no 1 : n rungs; it starts at a : b)
 
 | Rung | What it is | Trap |
 |---|---|---|
-| A1 | 1 : n, small total, one share asked | |
-| A2 | Same shape, both shares, with the check | T9 |
-| A3 | a : b (2 : 3, 3 : 4), times-table total, one share | T1, T2 |
-| A4 | Second named person has the larger share, both | T3 |
-| A5 | Non-money context (sweets, kg), a : b | |
-| A6 | Larger total, parts sum to 10 to 12, no bar | T8 |
-| A7 | Ratio given unsimplified (6 : 9) | T11 |
-| A8 | Three parts, times-table total | T10 |
-| A9 | Three parts, the part value is not whole (pounds and pence) | |
+| A1 | a : b, two different parts | T1 |
+| A2 | a : b, bigger parts | T1 |
+| A3 | the larger number first | T2 |
+| A4 | not money | T1 |
+| A5 | larger total and parts | T1 |
+| A6 | ratio not in simplest form | T11 |
+| A7 | parts that add to 13 | T1 |
+| A8 | three parts | T10 |
+| A9 | three parts, pounds and pence | T10 |
 
 **Set B: A known share**
 
 | Rung | What it is | Trap |
 |---|---|---|
-| B1 | 1 : n, the known share is the 1 part; find the other | T4 |
-| B2 | 1 : n, the known share is the larger; find the other | T4 |
-| B3 | a : b, find the total | T5 |
-| B4 | a : b, the known is the second person; find the other | T3 |
-| B5 | Non-money context, find the total | |
-| B6 | Larger numbers, no bar | T8 |
-| B7 | Unsimplified ratio, find the other | T11 |
-| B8 | Three parts, one share known, find the total | T10 |
-| B9 | Three parts, one known, find a different named share | T10 |
+| B1 | a : b, find the total | T5 |
+| B2 | the known share is the second person's | T3 |
+| B3 | a : b, find the other share | T4 |
+| B4 | not money, find the total | T4 |
+| B5 | larger numbers, find the other | T4 |
+| B6 | ratio not in simplest form | T11 |
+| B7 | three parts, find the total | T10 |
+| B8 | three parts, a different share | T4 |
+| B9 | three parts, not money, find the total | T4 |
 
 **Set C: A difference**
 
 | Rung | What it is | Trap |
 |---|---|---|
-| C1 | 1 : 3, "£x more than", find the larger share | T6 |
-| C2 | Same ratio, "£x less than", find the total | T6 |
-| C3 | 2 : 5 (three parts apart), find both | T7 |
-| C4 | "The difference between their shares is", find the total | T6, T7 |
-| C5 | The first named has less; find the first's share | T3 |
-| C6 | Non-money context | |
-| C7 | Larger numbers, no bar, find the total | T8 |
-| C8 | Three parts, difference between two named people, find the third's share | T10 |
-| C9 | Three parts, difference, find the total (stretch) | T10 |
+| C1 | 2 : 5, three parts apart, the smaller share | T7 |
+| C2 | "the difference between their shares", find the total | T6/T7 |
+| C3 | "less than", find the larger share | T6 |
+| C4 | the first named has less | T3 |
+| C5 | not money, find the total | T6/T7 |
+| C6 | larger numbers, find the total | T6 |
+| C7 | three parts, the third person's share | T10 |
+| C8 | three parts, find the total | T10 |
+| C9 | three parts, not money, find the total (stretch) | T10 |
 
 **Worksheet D: Mixed, fifteen (textbook layout)**
 
@@ -124,6 +124,7 @@ Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a sp
 - All the tool changes (1 to 8), including unsimplified ratios and other contexts.
 - No hints. Board grid for set A only; sets B and C and the mixed worksheet are printed (textbook layout). One ask per grid is fine.
 - All eleven traps stay for now.
+- **Moved up (2026-11-15, Harry):** the class is middle band, so the 1 : n rungs and the Level 1 numbers are redundant. Every set starts at a : b with bigger totals, and the Depth cards run Level 2 before Level 3: section A opens with the Level 2 card on sharing a total (£108 in 4 : 5), then the known-share and difference cards, and the two Level 3 cards (which first step, three parts) come last, before the mixed sheet. The Level 1 cards stay in the tool's bank for other classes.
 - Still to confirm: the lesson break after set B, and Depth cards as the discussion slides (assumed yes).
 
 ## Progress

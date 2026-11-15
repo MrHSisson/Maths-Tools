@@ -1,7 +1,7 @@
 // Depth bank for Ratio Sharing — fixed, hand-written questions (see src/shared/depth.ts and specs/depth/ratio-sharing.md).
 // Levels follow the IDEAS, not the tool's own levels:
-//   1  Sharing a total       the parts add to the total; one part, then multiply back; whose share; checking
-//   2  Known share, difference   which parts the given amount stands for
+//   1  Sharing a total       one part, then multiply back; whose share; checking
+//   2  Sharing, known share, difference   the parts add to the total (a:b with bigger totals); which parts a given amount stands for
 //   3  Choosing and stretching   the first step, three parts, simplifying first, checking
 // Items with no `tool` show on every tab and link only to other general items; the four that name their tab link to general items.
 // Every numeric claim below is asserted in src/tests/ratioSharingDepth.test.ts.
@@ -13,27 +13,7 @@ const SHARING = ["sharing", "mixed"];
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Sharing a total ─────────────────────────
   {
-    id: "rs-who-is-right", level: "level1", purpose: "diagnose", startHere: true,
-    title: "Who is right?",
-    speakers: [
-      { name: "Kofi", says: ["£60 is shared in the ratio $2 : 3$.", "$60 \\div 2 = 30$ and $60 \\div 3 = 20$."] },
-      { name: "Mei", says: ["£60 is shared in the ratio $2 : 3$.", "$2 + 3 = 5$ parts. $60 \\div 5 = 12$, so £24 and £36."] },
-    ],
-    question: ["Who is right?"],
-    options: [
-      { text: "Kofi", misconception: "Divides the total by one of the ratio numbers, not by the total number of parts", tag: "sharing-divide-by-part" },
-      { text: "Mei", correct: true },
-      { text: "They are both right", misconception: "Divides the total by one of the ratio numbers, not by the total number of parts", tag: "sharing-divide-by-part" },
-    ],
-    answer: [
-      "Mei is right. The parts add to $2 + 3 = 5$, so the £60 is split into $5$ equal parts of £12.",
-      "The shares are $2 \\times 12 = 24$ and $3 \\times 12 = 36$, and £24 + £36 = £60.",
-      "Kofi's £30 and £20 add to £50, not £60: they cannot be the shares.",
-    ],
-    ifNotSecure: "rs-which-name", ifSecure: "rs-whole-pounds",
-  },
-  {
-    id: "rs-what-is-12", level: "level1", tool: SHARING, purpose: "diagnose",
+    id: "rs-what-is-12", level: "level1", purpose: "diagnose", startHere: true,
     title: "What does the £12 show?",
     speakers: [{ name: "Leo", says: ["£60 is shared in the ratio $2 : 3$.", "$60 \\div 5 = 12$."] }],
     question: ["What does Leo's £12 show?"],
@@ -47,7 +27,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The smaller share is $2$ parts, $2 \\times 12 = 24$, and the larger is $3$ parts, $3 \\times 12 = 36$.",
       "Finding one part is the middle of the method, not the end.",
     ],
-    ifNotSecure: "rs-who-is-right", ifSecure: "rs-which-name",
+    ifNotSecure: "rs-which-name", ifSecure: "rs-who-is-right",
   },
   {
     id: "rs-which-name", level: "level1", purpose: "explain",
@@ -59,7 +39,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Jack has the larger share: $3 \\times 12 = 36$. Mia gets $2 \\times 12 = 24$.",
       "The number in the ratio goes with the name in the same place, not with the size of the amount.",
     ],
-    ifNotSecure: "rs-who-is-right", ifSecure: "rs-whole-pounds",
+    ifNotSecure: "rs-what-is-12", ifSecure: "rs-whole-pounds",
   },
   {
     id: "rs-check-first", level: "level1", tool: SHARING, purpose: "explain",
@@ -86,10 +66,30 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "£50 in the ratio $3 : 4$ has $7$ parts, and $50 \\div 7$ is not a whole number, so the shares are not whole pounds.",
       "It works when the total is a multiple of the total number of parts.",
     ],
-    ifNotSecure: "rs-which-name", ifSecure: "rs-known-share",
+    ifNotSecure: "rs-which-name", ifSecure: "rs-who-is-right",
   },
 
   // ───────────────────────── Level 2 — Known share, difference ─────────────────────────
+  {
+    id: "rs-who-is-right", level: "level2", purpose: "diagnose",
+    title: "Who is right?",
+    speakers: [
+      { name: "Kofi", says: ["£108 is shared in the ratio $4 : 5$.", "$108 \\div 4 = 27$ and $108 \\div 5 = 21.60$."] },
+      { name: "Mei", says: ["£108 is shared in the ratio $4 : 5$.", "$4 + 5 = 9$ parts. $108 \\div 9 = 12$, so £48 and £60."] },
+    ],
+    question: ["Who is right?"],
+    options: [
+      { text: "Kofi", misconception: "Divides the total by one of the ratio numbers, not by the total number of parts", tag: "sharing-divide-by-part" },
+      { text: "Mei", correct: true },
+      { text: "They are both right", misconception: "Divides the total by one of the ratio numbers, not by the total number of parts", tag: "sharing-divide-by-part" },
+    ],
+    answer: [
+      "Mei is right. The parts add to $4 + 5 = 9$, so the £108 is split into $9$ equal parts of £12.",
+      "The shares are $4 \\times 12 = 48$ and $5 \\times 12 = 60$, and £48 + £60 = £108.",
+      "Kofi's £27 and £21.60 add to £48.60, not £108: they cannot be the shares.",
+    ],
+    ifNotSecure: "rs-what-is-12", ifSecure: "rs-known-share",
+  },
   {
     id: "rs-known-share", level: "level2", purpose: "diagnose", startHere: true,
     title: "Who is right?",
@@ -108,7 +108,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Ruby treated £24 as one part. The first person's £24 is already $3$ parts.",
       "Check: £24 and £40 are in the ratio $3 : 5$, because both are multiples of £8.",
     ],
-    ifNotSecure: "rs-which-name", ifSecure: "rs-diff-divisor",
+    ifNotSecure: "rs-who-is-right", ifSecure: "rs-diff-divisor",
   },
   {
     id: "rs-known-total", level: "level2", tool: ["known", "mixed"], purpose: "diagnose",

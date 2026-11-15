@@ -4,7 +4,7 @@
 
 Bank for the **Ratio Sharing** tool (`/ratio-sharing`; sub-tools Sharing in a Ratio, Known Amounts, Given Difference, Mixed), exposed as `__test.depthItems`, with `RatioSharingDepth.ts` beside the tool (reference bank: `RatioManipulationDepth.ts`). It pairs with the *Sharing in a ratio* deck (`specs/decks/ratio-sharing.md`), where its "who is right?" cards are the discussion slides, so they are written once.
 
-**Structure.** Fifteen items, five a level. Levels follow the ideas, not the tool's own levels. Items with no `tool` show on every tab; four name their tab. Every level has diagnose, explain and extend items on every tab, one **Start here** per level (all three general: items 1, 6, 11). Speakers are the cast (Ruby, Kofi, Mei, Leo, Priya, Jamal, Amara, Ben); the people being shared among are other names, so a speaker is never also a sharer. No pronouns are assumed anywhere.
+**Structure.** Fifteen items: four at Level 1, six at Level 2, five at Level 3. Changed 2026-11-15 after Harry's note that Level 1 numbers are redundant for a middle-band class: the "who is right?" card on sharing a total moved up to Level 2 with bigger numbers (£108 in $4 : 5$, one part £12, shares £48 and £60; Kofi's £27 and £21.60 add to £48.60), and the Level 1 start-here card is now "What does the £12 show?" (general, so every tab has a Level 1 start). Levels follow the ideas, not the tool's own levels. Items with no `tool` show on every tab; four name their tab. Every level has diagnose, explain and extend items on every tab, one **Start here** per level (all three general: items 2, 6, 11). Speakers are the cast (Ruby, Kofi, Mei, Leo, Priya, Jamal, Amara, Ben); the people being shared among are other names, so a speaker is never also a sharer. No pronouns are assumed anywhere.
 
 | Level | Idea | What goes wrong |
 |---|---|---|
@@ -35,8 +35,8 @@ New tags in `src/shared/misconceptions.ts` (the trap ids T1 to T11 are in the de
 
 | id | Lvl | Purpose | Tab | Title (no answer in it) |
 |---|---|---|---|---|
-| `rs-who-is-right` | 1 | diagnose, **start here** | all | Who is right? |
-| `rs-what-is-12` | 1 | diagnose | sharing, mixed | What does the £12 show? |
+| `rs-who-is-right` | 2 | diagnose | all | Who is right? |
+| `rs-what-is-12` | 1 | diagnose, **start here** | all | What does the £12 show? |
 | `rs-which-name` | 1 | explain | all | Whose share is it? |
 | `rs-check-first` | 1 | explain (spot the error) | sharing, mixed | The first mistake |
 | `rs-whole-pounds` | 1 | extend | all | Always, sometimes or never? |
@@ -53,7 +53,7 @@ New tags in `src/shared/misconceptions.ts` (the trap ids T1 to T11 are in the de
 
 Items in full (a speaker's lines are the first-person claim; options list the misconception of each wrong one; the answer lines show one at a time):
 
-1. **`rs-who-is-right`** (L1, diagnose). Kofi: "£60 shared in the ratio $2 : 3$. $60 \div 2 = 30$ and $60 \div 3 = 20$." Mei: "$2 + 3 = 5$ parts. $60 \div 5 = 12$, so £24 and £36." Options: Kofi (`sharing-divide-by-part`) · **Mei** · Both (`sharing-divide-by-part`). Answer: the parts add to $2 + 3 = 5$ and the £60 is split into 5 equal parts, £12 each. Kofi's two amounts add to £50, not £60. Mei's £24 and £36 add to £60. Links: not secure `rs-which-name`, secure `rs-whole-pounds`.
+1. **`rs-who-is-right`** (L2, diagnose; was Level 1 with £60 in $2 : 3$). Kofi: "£108 is shared in the ratio $4 : 5$. $108 \div 4 = 27$ and $108 \div 5 = 21.60$." Mei: "$4 + 5 = 9$ parts. $108 \div 9 = 12$, so £48 and £60." Options: Kofi (`sharing-divide-by-part`) · **Mei** · Both (`sharing-divide-by-part`). Answer: the parts add to $4 + 5 = 9$ and the £108 is split into 9 equal parts of £12; £48 + £60 = £108. Kofi's £27 and £21.60 add to £48.60, not £108. Links: not secure `rs-what-is-12`, secure `rs-known-share`.
 2. **`rs-what-is-12`** (L1, diagnose). Leo shares £60 in the ratio $2 : 3$ and works out £60 $\div$ 5 $=$ £12. What is the £12? Options: the smaller share (`sharing-no-multiply`) · **the value of one part** · the larger share (`sharing-no-multiply`). Answer: £12 is one part. The smaller share is 2 parts, £24; the larger is 3 parts, £36. Links: not `rs-who-is-right`, secure `rs-which-name`.
 3. **`rs-which-name`** (L1, explain). Mia and Jack share £60 in the ratio Mia : Jack $= 2 : 3$. Priya says Jack gets £24 "because £24 is the smaller amount and Jack's name comes second". Explain the mistake. Answer: the ratio is written in the order Mia, Jack, so Mia has 2 parts and Jack 3. Jack has the larger share, £36 (`sharing-wrong-person`). Links: not `rs-who-is-right`, secure `rs-whole-pounds`.
 4. **`rs-check-first`** (L1, explain, spot the error). £75 shared $2 : 3$. Lines: $2 + 3 = 5$ parts · £75 $\div$ 5 $=$ £15 · first: $2 \times$ £15 $=$ £30 · second: $3 \times$ £15 $=$ £35. First wrong line: the last ($3 \times 15 = 45$). Answer: the second share is £45. A check finds it: £30 + £35 = £65, not £75; £30 + £45 = £75. Links: not `rs-what-is-12`, secure `rs-whole-pounds`.

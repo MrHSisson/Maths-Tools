@@ -8,13 +8,13 @@ Instruction above the grid: **Share each amount in the ratio given.** Each cell 
 
 | # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
 |---|---|---|---|---|---|
-| A1 | 1 : n, small total | £40 · 1 : 4 | £8 and £32 | T1 divides by 2 | £20 |
-| A2 | 1 : n, other multiple | £28 · 1 : 6 | £4 and £24 | T1 divides by 2 | £14 |
-| A3 | a : b, two different parts | £65 · 2 : 3 | £26 and £39 | T1 divides by 2 | £32.50 |
-| A4 | the larger number comes first | £42 · 5 : 2 | £30 and £12 | T2 stops at one part | £6 |
-| A5 | not money | 64 kg · 3 : 5 | 24 kg and 40 kg | T1 divides by 2 | 32 kg |
-| A6 | larger total and parts | £132 · 5 : 7 | £55 and £77 | T1 divides by 2 | £66 |
-| A7 | ratio not in simplest form | £112 · 6 : 8 | £48 and £64 | T11 mixes the forms | £96 |
+| A1 | a : b, two different parts | £65 · 2 : 3 | £26 and £39 | T1 divides by 2 | £32.50 |
+| A2 | a : b, bigger parts | £98 · 3 : 4 | £42 and £56 | T1 divides by 2 | £49 |
+| A3 | the larger number comes first | £42 · 5 : 2 | £30 and £12 | T2 stops at one part | £6 |
+| A4 | not money | 64 kg · 3 : 5 | 24 kg and 40 kg | T1 divides by 2 | 32 kg |
+| A5 | larger total and parts | £132 · 5 : 7 | £55 and £77 | T1 divides by 2 | £66 |
+| A6 | ratio not in simplest form | £112 · 6 : 8 | £48 and £64 | T11 mixes the forms | £96 |
+| A7 | parts that add to 13 | £156 · 4 : 9 | £48 and £108 | T1 divides by 2 | £78 |
 | A8 | three parts | £72 · 1 : 3 : 4 | £9, £27 and £36 | T10 misses a part | £18 |
 | A9 | three parts, pounds and pence | £22.50 · 2 : 3 : 4 | £5, £7.50 and £10 | T10 misses a part | £9 |
 
@@ -22,29 +22,29 @@ Instruction above the grid: **Share each amount in the ratio given.** Each cell 
 
 | # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
 |---|---|---|---|---|---|
-| B1 | 1 : n, the known share is the one part; find the other | Mia and Jack share money in the ratio 1:4 / Mia receives £15 / How much does Jack receive? | Jack: £60 | none: the known share is one part, where the T4 method happens to agree (the easy start) | n/a (the method agrees here, on purpose) |
-| B2 | 1 : n, the known share is the larger; find the other | Priya and Leo share money in the ratio 1:5 / Leo receives £55 / How much does Priya receive? | Priya: £11 | T4 treats the known share as one part | £55 |
-| B3 | a : b, find the total | Zane and Isla share money in the ratio 2:3 / Zane receives £16 / What is the total amount shared? | Total: £40 | T5 treats the known share as the total | £16 |
-| B4 | the known share is the second person's | Noah and Grace share money in the ratio 3:4 / Grace receives £32 / How much does Noah receive? | Noah: £24 | T3 gives the shares to the wrong people | £32 |
-| B5 | not money, find the total | Ruth and Sam share marbles in the ratio 4:3 / Ruth receives 36 marbles / What is the total amount shared? | Total: 63 marbles | T4 treats the known share as one part | 252 marbles |
-| B6 | larger numbers, find the other | Finn and Olivia share money in the ratio 5:8 / Finn receives £70 / How much does Olivia receive? | Olivia: £112 | T4 treats the known share as one part | £560 |
-| B7 | ratio not in simplest form, find the other | Hugo and Ella share money in the ratio 6:9 / Hugo receives £54 / How much does Ella receive? | Ella: £81 | T11 mixes the forms | £243 |
-| B8 | three parts, find the total | Dev, Maya and Tom share money in the ratio 3:4:5 / Maya receives £68 / What is the total amount shared? | Total: £204 | T10 misses a part | £119 |
-| B9 | three parts, find a different share | Eli, Zoe and Max share money in the ratio 2:5:6 / Eli receives £14 / How much does Max receive? | Max: £42 | T4 treats the known share as one part | £84 |
+| B1 | a : b, find the total | Zane and Isla share money in the ratio 2:3 / Zane receives £16 / What is the total amount shared? | Total: £40 | T5 treats the known share as the total | £16 |
+| B2 | the known share is the second person's | Noah and Grace share money in the ratio 3:4 / Grace receives £32 / How much does Noah receive? | Noah: £24 | T3 gives the shares to the wrong people | £32 |
+| B3 | a : b, find the other share | Lena and Omar share money in the ratio 3:5 / Lena receives £66 / How much does Omar receive? | Omar: £110 | T4 treats the known share as one part | £330 |
+| B4 | not money, find the total | Ruth and Sam share marbles in the ratio 4:3 / Ruth receives 36 marbles / What is the total amount shared? | Total: 63 marbles | T4 treats the known share as one part | 252 marbles |
+| B5 | larger numbers, find the other | Finn and Olivia share money in the ratio 5:8 / Finn receives £70 / How much does Olivia receive? | Olivia: £112 | T4 treats the known share as one part | £560 |
+| B6 | ratio not in simplest form, find the other | Hugo and Ella share money in the ratio 6:9 / Hugo receives £54 / How much does Ella receive? | Ella: £81 | T11 mixes the forms | £243 |
+| B7 | three parts, find the total | Dev, Maya and Tom share money in the ratio 3:4:5 / Maya receives £68 / What is the total amount shared? | Total: £204 | T10 misses a part | £119 |
+| B8 | three parts, find a different share | Eli, Zoe and Max share money in the ratio 2:5:6 / Eli receives £14 / How much does Max receive? | Max: £42 | T4 treats the known share as one part | £84 |
+| B9 | three parts, not money, find the total | Tess, Uri and Wen share stickers in the ratio 2:3:5 / Wen receives 55 stickers / What is the total amount shared? | Total: 110 stickers | T4 treats the known share as one part | 550 stickers |
 
 ## Set C: a difference (printed sheet of nine, textbook layout)
 
 | # | Rung | As shown | Answer | Trap it is built for | The wrong method gives |
 |---|---|---|---|---|---|
-| C1 | 1 : 3, "more than", find the larger share | Rosa and Carl share money in the ratio 1:3 / Carl receives £22 more than Rosa / How much does Carl receive? | Carl: £33 | T6 treats the difference as a share | £22 |
-| C2 | 1 : 3, "less than", find the total | Ivy and Sid share money in the ratio 1:3 / Ivy receives £26 less than Sid / What is the total amount shared? | Total: £52 | T6 treats the difference as the total | £26 |
-| C3 | 2 : 5, three parts apart, find the smaller share | Nia and Pete share money in the ratio 2:5 / Pete receives £45 more than Nia / How much does Nia receive? | Nia: £30 | T7 divides by all the parts | £12.86 |
-| C4 | "the difference between their shares", find the total | Joy and Alan share money in the ratio 4:7 / The difference in their amounts is £33 / What is the total amount shared? | Total: £121 | T6/T7 the difference comes out as the total | £33 |
-| C5 | the first named has less; find the first's share | Lena and Omar share money in the ratio 2:7 / Omar receives £30 more than Lena / How much does Lena receive? | Lena: £12 | T3 gives the shares to the wrong people | £42 |
-| C6 | not money, the first has more; find the total | Tara and Will share sweets in the ratio 5:3 / Tara receives 34 more sweets than Will / What is the total amount shared? | Total: 136 sweets | T6/T7 the difference comes out as the total | 34 sweets |
-| C7 | larger numbers, find the total | Rhys and Cleo share money in the ratio 7:4 / The difference in their amounts is £96 / What is the total amount shared? | Total: £352 | T6 treats the difference as the total | £96 |
-| C8 | three parts, the difference between two people, find the third | Abe, Beth and Cole share money in the ratio 3:4:8 / The difference between Abe's and Cole's shares is £25 / How much does Beth receive? | Beth: £20 | T10 compares the wrong parts | £100 |
-| C9 | three parts, the difference, find the total | Dana, Eric and Fay share money in the ratio 3:5:7 / Fay receives £52 more than Dana / What is the total amount shared? | Total: £195 | T10 compares the wrong parts | £390 |
+| C1 | 2 : 5, three parts apart, find the smaller share | Nia and Pete share money in the ratio 2:5 / Pete receives £45 more than Nia / How much does Nia receive? | Nia: £30 | T7 divides by all the parts | £12.86 |
+| C2 | "the difference between their shares", find the total | Joy and Alan share money in the ratio 4:7 / The difference in their amounts is £33 / What is the total amount shared? | Total: £121 | T6/T7 the difference comes out as the total | £33 |
+| C3 | "less than", find the larger share | Ivy and Sid share money in the ratio 3:5 / Ivy receives £26 less than Sid / How much does Sid receive? | Sid: £65 | T6 treats the difference as a share | £26 |
+| C4 | the first named has less; find the first's share | Lena and Omar share money in the ratio 2:7 / Omar receives £30 more than Lena / How much does Lena receive? | Lena: £12 | T3 gives the shares to the wrong people | £42 |
+| C5 | not money, the first has more; find the total | Tara and Will share sweets in the ratio 5:3 / Tara receives 34 more sweets than Will / What is the total amount shared? | Total: 136 sweets | T6/T7 the difference comes out as the total | 34 sweets |
+| C6 | larger numbers, find the total | Rhys and Cleo share money in the ratio 7:4 / The difference in their amounts is £96 / What is the total amount shared? | Total: £352 | T6 treats the difference as the total | £96 |
+| C7 | three parts, the difference between two people, find the third | Abe, Beth and Cole share money in the ratio 3:4:8 / The difference between Abe's and Cole's shares is £25 / How much does Beth receive? | Beth: £20 | T10 compares the wrong parts | £100 |
+| C8 | three parts, the difference, find the total | Dana, Eric and Fay share money in the ratio 3:5:7 / Fay receives £52 more than Dana / What is the total amount shared? | Total: £195 | T10 compares the wrong parts | £390 |
+| C9 | three parts, not money, find the total (the stretch) | Xia, Yan and Zed share marbles in the ratio 3:4:6 / The difference between Yan's and Zed's shares is 28 marbles / What is the total amount shared? | Total: 182 marbles | T10 compares the wrong parts | 364 marbles |
 
 ## Worksheet D: mixed, fifteen (printed, textbook layout)
 
@@ -54,7 +54,7 @@ The kinds are not labelled. Five sharing, five known share, five difference, int
 |---|---|---|---|---|---|
 | D1 | sharing, two parts, one share asked | Kim and Raj share £85 in the ratio 2:3 / How much does Raj receive? | Raj: £51 | T8 answers a different question | £17 |
 | D2 | known share, find the total | Ola and Pat share money in the ratio 3:4 / Ola receives £39 / What is the total amount shared? | Total: £91 | T5 treats the known share as the total | £39 |
-| D3 | difference, "less than", find the total | Quin and Rae share money in the ratio 1:4 / Quin receives £57 less than Rae / What is the total amount shared? | Total: £95 | T6 treats the difference as the total | £57 |
+| D3 | difference, "less than", find the total | Quin and Rae share money in the ratio 2:5 / Quin receives £57 less than Rae / What is the total amount shared? | Total: £133 | T6 treats the difference as the total | £57 |
 | D4 | sharing, the larger number first | Sia and Tim share £104 in the ratio 5:3 / How much does Sia receive? | Sia: £65 | T3 gives the shares to the wrong people | £39 |
 | D5 | known share, the larger part is known | Uma and Vik share money in the ratio 2:7 / Vik receives £49 / How much does Uma receive? | Uma: £14 | T4 treats the known share as one part | £98 |
 | D6 | sharing, ratio not in simplest form | Walt and Xena share £130 in the ratio 8:12 / How much does Walt receive? | Walt: £52 | T11 mixes the forms | £208 |

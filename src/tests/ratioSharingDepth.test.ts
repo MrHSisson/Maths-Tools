@@ -10,24 +10,26 @@ const text = (id: string) => JSON.stringify(item(id));
 const has = (id: string, ...bits: string[]) => bits.forEach((b) => expect(text(id), `${id}: ${b}`).toContain(b));
 
 describe("Ratio Sharing Depth: the numbers", () => {
-  it("has the fifteen items, five a level, with one Start here a level", () => {
+  it("has the fifteen items (four, six and five), with one Start here a level", () => {
     expect(DEPTH_ITEMS.length).toBe(15);
-    for (const l of ["level1", "level2", "level3"]) expect(DEPTH_ITEMS.filter((i) => i.level === l).length).toBe(5);
+    expect(["level1", "level2", "level3"].map((l) => DEPTH_ITEMS.filter((i) => i.level === l).length)).toEqual([4, 6, 5]);
     expect(DEPTH_ITEMS.filter((i) => i.startHere).map((i) => i.level)).toEqual(["level1", "level2", "level3"]);
   });
 
-  it("level 1: £60 in 2 : 3, the wrong divisions, the check, whole pounds", () => {
+  it("level 1: £60 in 2 : 3, the one part, the check, whole pounds", () => {
     const part = 60 / (2 + 3);
     expect([2 * part, 3 * part, part]).toEqual([24, 36, 12]);
-    expect(60 / 2 + 60 / 3).not.toBe(60);
-    has("rs-who-is-right", "$60 \\\\div 2 = 30$", "$60 \\\\div 3 = 20$", "£24 + £36 = £60", "£50");
     has("rs-what-is-12", "$2 \\\\times 12 = 24$", "$3 \\\\times 12 = 36$");
     expect(75 / 5).toBe(15); expect(3 * 15).toBe(45); expect(30 + 35).toBe(65); expect(30 + 45).toBe(75);
     has("rs-check-first", "$3 \\\\times 15 = 45$", "£30 + £35 = £65");
     expect(60 % 5).toBe(0); expect(50 % 7).not.toBe(0);
   });
 
-  it("level 2: known share 3 : 5 with £24; difference 3 : 7 with £48; the shortcut", () => {
+  it("level 2: £108 in 4 : 5 and the wrong divisions; known share 3 : 5 with £24; difference 3 : 7 with £48; the shortcut", () => {
+    const share = 108 / (4 + 5);
+    expect([share, 4 * share, 5 * share]).toEqual([12, 48, 60]);
+    expect(108 / 4).toBe(27); expect(108 / 5).toBeCloseTo(21.6, 9); expect(27 + 21.6).not.toBe(108);
+    has("rs-who-is-right", "$108 \\\\div 4 = 27$", "$108 \\\\div 5 = 21.60$", "$4 \\\\times 12 = 48$", "£48 + £60 = £108", "£48.60");
     const part = 24 / 3;
     expect([part, 5 * part, 8 * part, 24 * 5, 24 * 8]).toEqual([8, 40, 64, 120, 192]);
     expect(new Set([24, 40, 192, 64]).size).toBe(4);

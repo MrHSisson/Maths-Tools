@@ -103,8 +103,8 @@ const starter = S.quick(`${P}-starter`, "Starter", [
 ], 2, "From earlier lessons");
 const recapSpec: SetQuestion[] = [
   { id: "R1", rung: "recap", ratio: [3, 4], names: ["Kit", "Lou"], total: 77, ask: 0, answer: "Kit: £33", trap: "", wrong: "none" },
-  { id: "R2", rung: "recap", ratio: [1, 4], names: ["Meg", "Nat"], known: { who: 0, amount: 17 }, ask: 1, answer: "Nat: £68", trap: "", wrong: "none" },
-  { id: "R3", rung: "recap", ratio: [1, 4], names: ["Oli", "Pam"], diff: { a: 0, b: 1, amount: 63, style: 1 }, ask: "total", answer: "Total: £105", trap: "", wrong: "none" },
+  { id: "R2", rung: "recap", ratio: [2, 5], names: ["Meg", "Nat"], known: { who: 0, amount: 22 }, ask: 1, answer: "Nat: £55", trap: "", wrong: "none" },
+  { id: "R3", rung: "recap", ratio: [2, 5], names: ["Oli", "Pam"], diff: { a: 0, b: 1, amount: 63, style: 1 }, ask: "total", answer: "Total: £147", trap: "", wrong: "none" },
 ];
 /** A worded question on one line: its sentences joined with full stops. */
 const oneLine = (q: SetQuestion): CuratedQuestion => { const w = worded(q); return { ...headline(q), question: [w.lines.map((l, i) => (i < w.lines.length - 1 && !/[.?]$/.test(l) ? `${l}.` : l)).join(" ")], answer: [w.answer ?? ""] }; };
@@ -126,10 +126,10 @@ assertFreshNumbers({
 });
 
 const sheetB = sheetSlide(`${P}-sheet-b`, "Worksheet: a known share", ALL_SETS.B, 1,
-  "Printed sheet of nine, easiest first. Not everyone will finish: a secure class can start at question 4. Question 1 starts with the known share as one part, where treating it as one part happens to work.",
+  "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish: a secure class can start at question 3. Questions 7 to 9 have three parts.",
   "Work out each answer. Show your working in your book.", 44);
 const sheetC = sheetSlide(`${P}-sheet-c`, "Worksheet: a difference", ALL_SETS.C, 2,
-  "Printed sheet of nine, easiest first. Not everyone will finish. Questions 4, 6 and 7 ask for the total, where dividing the difference by all the parts and multiplying back gives the difference itself.",
+  "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish. Questions 2, 5, 6, 8 and 9 ask for the total: dividing the difference by all the parts and multiplying back gives the difference itself. Questions 7 to 9 have three parts.",
   "Work out each answer. Show your working in your book.", 44);
 const sheetD = sheetSlide(`${P}-sheet-d`, "Worksheet: mixed", ALL_SETS.D, 3,
   "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
@@ -137,7 +137,7 @@ const sheetD = sheetSlide(`${P}-sheet-d`, "Worksheet: mixed", ALL_SETS.D, 3,
 
 export default () => ({
   id: ID, title: "Sharing in a Ratio", strand: "Ratio & Proportion", tool: T, pitch: "middle", questionVersion: 2,
-  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Each section starts with a Depth card (who is right?), then a worked bar model. Nine questions on the board for sharing a total; printed sheets for the known share, the difference and a mixed set of fifteen.",
+  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Each section starts with a Depth card (who is right?), then a worked bar model. Nine questions on the board for sharing a total (a : b from the start); printed sheets for the known share, the difference and a mixed set of fifteen.",
   slides: [
     S.title(`${P}-title`, "Sharing in a Ratio", "Find the parts. Find one part. Check."),
     S.objective(`${P}-objective`, "Share an amount in a ratio of two or three parts, and use a known share or a difference to find the shares and the total.",
@@ -146,7 +146,6 @@ export default () => ({
     S.divider(`${P}-div-a`, "Sharing a total", "Add the parts. Find one part. Multiply."),
     S.depth(`${P}-depth-who`, T, "rs-who-is-right", "Who is right?"),
     workedA,
-    S.depth(`${P}-depth-three`, T, "rs-three-parts", "Three parts"),
     S.plainBook(`${P}-grid-a`, setA, 3, "Share each amount in the ratio given.", "Sharing a total"),
     S.divider(`${P}-div-b`, "A known share", "One person's share is given. How many parts is it?"),
     S.depth(`${P}-depth-known`, T, "rs-known-share", "Who is right?"),
@@ -159,6 +158,7 @@ export default () => ({
     sheetC,
     S.divider(`${P}-div-d`, "Mixed", "Which kind of question is it? Decide, then solve."),
     S.depth(`${P}-depth-first`, T, "rs-first-step", "Which first step?"),
+    S.depth(`${P}-depth-three`, T, "rs-three-parts", "Three parts"),
     sheetD,
     S.exitRows(`${P}-exit`, exitItems, "Work on your own."),
     S.summary(`${P}-summary`, "What I check every time", ["What am I given: the total, a known share or a difference?", "How many parts is it?", "Do the shares add to the total?", "Did I answer what was asked?"]),
