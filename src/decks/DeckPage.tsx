@@ -14,6 +14,7 @@ import { TIMER_MINUTES } from "./timerMath";
 import { useVisibleHeight } from "../shared/visibleHeight";
 import { usePhoneDevice } from "../shared/layoutMode";
 import { swipeOf } from "./swipe";
+import { clickerAction } from "./clickerKeys";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
@@ -265,22 +266,34 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
   const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);
   const cycleFill = useCallback(() => { const order = FILL_LABELS.map(([m]) => m); setFill(order[(order.indexOf(fillNow) + 1) % order.length]); }, [fillNow, setFill]);
 
+  // A clicker is a keyboard, so it is read in the capture phase (nothing on the slide can swallow it) and through `clickerKeys`.
+  // Press K to see what the last key sent (to find out what a clicker's buttons do).
+  const [lastKey, setLastKey] = useState<string | null>(null);
+  const [showKeys, setShowKeys] = useState(false);
+  const [blank, setBlank] = useState(false);
+  const fullRef = useRef(full), toggleFullRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (t.closest("input,textarea,select")) return;
-      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); forward(); }
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); backward(); }
-      else if (e.key === " " && !t.closest("button,a,summary")) { e.preventDefault(); forward(); }
-      else if (e.key === "Home") go(0);
-      else if (e.key === "End") go(total - 1);
+      if (t.closest("input,textarea,select,[contenteditable],dialog")) return;
+      if (showKeys) setLastKey(`key "${e.key}"  code "${e.code}"  keyCode ${e.keyCode}`);
+      if (e.key === "k" && !e.ctrlKey && !e.metaKey && !e.altKey) { setShowKeys((v) => !v); setLastKey(null); return; }
+      const a = clickerAction(e);
+      // a focused button or link keeps Space and Enter for itself
+      if ((e.key === " " || e.key === "Enter") && t.closest("button,a,summary")) return;
+      if (a === "next") { e.preventDefault(); setBlank(false); forward(); }
+      else if (a === "back") { e.preventDefault(); setBlank(false); backward(); }
+      else if (a === "first") go(0);
+      else if (a === "last") go(total - 1);
+      else if (a === "blank") { e.preventDefault(); setBlank((v) => !v); }
+      else if (a === "full") { e.preventDefault(); if (!fullRef.current) toggleFullRef.current(); }
       else if (e.key === "j") setJump((v) => !v);
       else if (e.key === "b" && boards.length) cycleFill();
       else if (e.key === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) { if (timerCountdown) toggleTimer(); else setTimerOpen(true); }
     };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [go, forward, backward, total, boards, cycleFill, timerCountdown, toggleTimer]);
+    window.addEventListener("keydown", h, true);
+    return () => window.removeEventListener("keydown", h, true);
+  }, [go, forward, backward, total, boards, cycleFill, timerCountdown, toggleTimer, showKeys]);
 
   // Full screen: the slide alone, scaled to fill the screen. The browser's fullscreen is requested where it is allowed; the layout
   // (all chrome hidden) is ours, so it also works where the browser refuses. Esc leaves either way.
@@ -297,6 +310,7 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
     setFull(on);
     try { if (on) void document.documentElement.requestFullscreen?.().catch(() => undefined); else if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* the layout alone still fills the window */ }
   };
+  fullRef.current = full; toggleFullRef.current = toggleFull;
   // in full screen the few controls are out of sight until the mouse moves, then fade away again
   const [nudge, setNudge] = useState(true);
   useEffect(() => {
@@ -395,6 +409,8 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
           </div>
         )}
       </div>
+      {blank && <div className="fixed inset-0 z-50 bg-black" onClick={() => setBlank(false)} aria-label="Screen blanked: press the clicker's blank button or any next key to return" />}
+      {showKeys && <div className="fixed bottom-4 left-4 z-50 rounded-xl bg-slate-900/90 px-4 py-3 font-mono text-sm text-white shadow-lift">Key test: press a clicker button. {lastKey ?? "waiting…"} <span className="text-slate-400">(K to close)</span></div>}
       {/* the timer takes its own strip under the slide, and the slide scales down to make room, so it never covers anything */}
       {timer.countdown && <div className="mx-auto shrink-0 pt-2" style={{ width: Math.round(CANVAS_W * scale * (full ? 1 : 0.995)) }}><TimerLine countdown={timer.countdown} now={timer.now} onToggle={timer.toggle} onClear={timer.clear} /></div>}
       </div>

@@ -29,6 +29,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-15 — Decks: a USB presentation clicker moves the deck
+
+- The deck player now reads keys through `src/decks/clickerKeys.ts` in the capture phase, so nothing on a slide can swallow a clicker press. Next: Page Down, Right, Down, Enter, Space, media-next. Back: Page Up, Left, Up, media-previous. A clicker that reports no key name is read by `code` or `keyCode`. Home / End as before.
+- `.` blanks the screen to black (press it, or a next key, to come back); `F5` starts full screen; `B` still cycles board fill.
+- **K** shows a "Key test" readout of exactly what the last key sent, so an unknown clicker's buttons can be identified.
+- Test: `src/tests/deckClickerKeys.test.ts`. Checked in headless Chromium against the primes deck (Page Down / Arrow Down / Page Up / Enter move, `.` blanks).
+- Not done: Harry's clicker not yet tried; if it still does nothing, press K in a deck and note what appears.
+- Agent: Claude Code
+- Notes: no Build Log block yet (planner not updated this session).
+
 ## 2026-11-15 — Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a Ratio deck
 
 Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSharingTool.tsx,RatioSharingTool.about.ts,ratioSharing.ts,RatioSharingDepth.ts}`, `src/decks/{sharingQuestions,builder,SlideCanvas}`, `src/shared/{barModel,misconceptions}.ts`, `specs/decks/ratio-sharing*`, `specs/depth/ratio-sharing.md`, `src/tests/{ratioSharing,ratioSharingSets,ratioSharingDepth,barModel}.test.ts`, docs.
