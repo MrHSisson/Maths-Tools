@@ -5,6 +5,7 @@ import {
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RatioSharingTool.about";
+import { DEPTH_ITEMS } from "./RatioSharingDepth";
 import {
   buildSharing, buildKnown, buildDifference, fa, QUANTITY_CONTEXTS,
   type ContextId,
@@ -529,7 +530,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
 
 applyAbout(TOOL_CONFIG, ABOUT);
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
 export default function App() {
   return (
@@ -538,6 +539,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       stepRenderer={ratioStepRenderer}
       stepVisualRenderer={ratioStepVisual}
+      depthItems={DEPTH_ITEMS}
       defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}
     />
   );

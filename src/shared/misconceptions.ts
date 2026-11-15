@@ -35,6 +35,16 @@ export const MISCONCEPTIONS: Record<string, Misconception> = {
   "ratio-one-part": { label: "Divides or multiplies only one part of a ratio", example: "$12 : 8 = 3 : 8$" },
   "ratio-add-not-multiply": { label: "Adds the same amount to both parts to make an equivalent ratio", example: "$2 : 5 = 4 : 7$" },
   "ratio-factor-of-two": { label: "Simplifies a three-part ratio using a factor of only two of the parts", example: "$12 : 18 : 8 = 2 : 3 : 1\\frac13$" },
+  "sharing-divide-by-part": { label: "Divides the total by one ratio number, or by the number of people, not by the total number of parts", example: "$\\pounds 60$ in $2 : 3$: $60 \\div 2 = 30$" },
+  "sharing-no-multiply": { label: "Finds the value of one part and stops, or gives it as a share", example: "$\\pounds 60$ in $2 : 3$: $\\pounds 12$ each" },
+  "sharing-wrong-person": { label: "Gives a share to the wrong person: the order of the ratio is not matched to the order of the names", example: "Mia : Jack $= 2 : 3$, gives Mia the larger share" },
+  "sharing-known-as-part": { label: "Treats the known share as the value of one part", example: "$3 : 5$, the first has $\\pounds 24$: the other has $24 \\times 5 = 120$" },
+  "sharing-known-as-total": { label: "Treats the known share as the total", example: "$3 : 5$, the first has $\\pounds 24$: the total is $\\pounds 24$" },
+  "sharing-diff-as-total": { label: "Takes the difference as a share or as the total", example: "$3 : 7$, difference $\\pounds 48$: the total is $\\pounds 48$" },
+  "sharing-diff-over-total": { label: "Divides the difference by all the parts, not by the difference in parts", example: "$48 \\div 10 = 4.80$" },
+  "sharing-wrong-question": { label: "Answers a different question: the other share, or the value of one part", example: "gives one share when the total is asked" },
+  "sharing-missed-part": { label: "In a three-part ratio, uses only two of the parts", example: "$\\pounds 90$ in $2 : 3 : 5$: $90 \\div 5 = 18$" },
+  "sharing-unsimplified": { label: "Thinks a ratio must be simplified before it can be shared, or that simplifying changes the shares", example: "$6 : 9$ cannot be shared as it is" },
 };
 
 export const misconceptionLabel = (id: string): string => MISCONCEPTIONS[id]?.label ?? id;
