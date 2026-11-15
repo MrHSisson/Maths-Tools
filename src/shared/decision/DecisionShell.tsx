@@ -13,7 +13,7 @@ import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
 import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
-import { printSheets } from "./printExam";
+import { printSheets, type SkillLayout } from "./printExam";
 import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
 import { itemKey, type BasketItem } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
@@ -368,6 +368,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);
+  const [sheetPerPage, setSheetPerPage] = useState(false);                 // skill worksheet: one question to a page
+  const [sheetSpace, setSheetSpace] = useState<SkillLayout["space"]>("auto");   // skill worksheet: what each question has to work in
   const [sheet, setSheet] = useState<DecisionProblem[]>([]);
   const [sheetCtx, setSheetCtx] = useState<{ tab: string; level: number; options: Record<string, string> } | null>(null);   // what the sheet was generated from
   const isExamProblem = !!problem.exam;
@@ -402,13 +404,25 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const added = keeper.saved.merge(items);
     setSheetNote(items.length === 0 ? "These questions cannot be saved." : `${added} question${added === 1 ? "" : "s"} added to the saved list${added < items.length ? ` (${items.length - added} could not be added: already there, or the list is full)` : ""}. Open it from the pin control (on the Practice page) or the menu: Print saved questions.`);
   };
+  // choose the questions by hand: swap one for a fresh one drawn with the same settings, take one out, or add another
+  const sheetMax = isExamProblem ? 10 : 20;
+  const drawOne = (): DecisionProblem | null => {
+    if (!sheetCtx) return null;
+    for (let g = 0; g < 8; g++) {
+      try { const q = generateSeeded(() => generate(sheetCtx.level, { subTool: sheetCtx.tab, options: sheetCtx.options })); if (q.exam || config.skillSheet) return q; } catch { /* try again */ }
+    }
+    return null;
+  };
+  const replaceSheetQuestion = (i: number) => { const q = drawOne(); if (q) { setSheet((s) => s.map((x, k) => (k === i ? q : x))); setSheetNote(null); } else setSheetNote("Could not make another question with these options."); };
+  const removeSheetQuestion = (i: number) => setSheet((s) => s.filter((_, k) => k !== i));
+  const addSheetQuestion = () => { const q = sheet.length < sheetMax ? drawOne() : null; if (q) { setSheet((s) => [...s, q]); setSheetNote(null); } else setSheetNote(sheet.length >= sheetMax ? `A sheet holds up to ${sheetMax} questions.` : "Could not make another question with these options."); };
   /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
   const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window) => {
     const examProblems = problems.filter((pr) => pr.exam);
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    const skill = skillProblems.length ? { title: config.pageTitle, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    const skill = skillProblems.length ? { title: config.pageTitle, layout: { perPage: sheetPerPage, space: sheetSpace }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");
@@ -859,6 +873,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   ) : null;
   const [sheetPreview, setSheetPreview] = useState<number | null>(null);
   // like the other tools' Worksheet mode: its own settings (level, options, how many), then Generate; it does not use the question on screen
+  const cardTools = (n: number) => (
+    <div className="flex gap-1 justify-end px-3 pb-2 pt-0 mt-auto" onClick={(e) => e.stopPropagation()}>
+      <button type="button" onClick={() => replaceSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-blue-900 hover:bg-blue-50 flex items-center gap-1.5"><RefreshCw size={14} /> Replace</button>
+      <button type="button" onClick={() => removeSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"><X size={14} /> Remove</button>
+    </div>
+  );
   const sheetPanel = (
     <div className="p-4 sm:p-6 flex flex-col gap-5">
       <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
@@ -867,10 +887,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         <input type="number" min={1} max={isExamProblem ? 10 : 20} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(isExamProblem ? 10 : 20, parseInt(e.target.value) || 3)))}
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
+      {!isExamProblem && (
+        <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-base font-semibold text-gray-700">
+          <label className="flex items-center gap-2 min-h-[40px] cursor-pointer"><input type="checkbox" checked={sheetPerPage} onChange={(e) => setSheetPerPage(e.target.checked)} className="w-5 h-5" /> One question per page</label>
+          <label className="flex items-center gap-2">Working space:
+            <select value={sheetSpace} onChange={(e) => setSheetSpace(e.target.value as SkillLayout["space"])} className="px-3 py-2 min-h-[40px] border border-slate-200 rounded-lg text-base font-semibold bg-white">
+              <option value="auto">Automatic</option><option value="s">Small box</option><option value="m">Medium box</option><option value="l">Large box</option><option value="lines">Ruled lines</option><option value="grid">Squared grid</option><option value="none">None</option>
+            </select>
+          </label>
+        </div>
+      )}
       <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
         <button onClick={generateSheet} disabled={!!sheetBusy} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"><RefreshCw size={18} className={sheetBusy ? "animate-spin" : ""} /> {sheetBusy ? "Generating…" : "Generate"}</button>
         {sheet.length > 0 && (
           <>
+            {sheet.length < sheetMax && <button onClick={addSheetQuestion} className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50">Add one more</button>}
             <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
             {hasBasketPrint(config) && !isPhone && <button onClick={addSheetToSaved} title="Save these questions to the saved list, to load in a lesson or print later" className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50 flex items-center gap-2">Add to saved list</button>}
             <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
@@ -887,10 +918,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1}</div>
             <div className="text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.prompt} /></div>
             {sheetAnswers && <div className="rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold"><InlineMath text={pr.answer?.text ?? ""} /></div>}
+            {cardTools(n)}
           </div>
         ) : (
-          <button key={n} type="button" onClick={() => setSheetPreview(n)} title="Click to preview this question and its parts"
-            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow">
+          <div key={n} role="button" tabIndex={0} onClick={() => setSheetPreview(n)} onKeyDown={(e) => { if (e.key === "Enter") setSheetPreview(n); }} title="Click to preview this question and its parts"
+            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow cursor-pointer">
             <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} mark{pr.exam!.totalMarks === 1 ? "" : "s"}</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
             <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.exam!.intro} /></div>
             {!pr.dim && <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>}
@@ -906,7 +938,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 </div>
               ))}
             </div>
-          </button>
+            {cardTools(n)}
+          </div>
         ))}
       </div>
     </div>

@@ -49,6 +49,10 @@ const CSS = `
   .skillq .n { font-weight: 700; }
   .skillq .box { grid-column: 2; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-top: 2mm; }
   .skillq .box.s { height: 26mm; } .skillq .box.m { height: 36mm; } .skillq .box.l { height: 48mm; }
+  .skillq .box.lines { background: repeating-linear-gradient(to bottom, #fff 0, #fff 7.6mm, #9ca3af 7.6mm, #9ca3af 7.85mm); border-color: #cbd5e1; }
+  .skillq .box.grid { background-color: #fff; background-image: linear-gradient(#e5e7eb 0.2mm, transparent 0.2mm), linear-gradient(90deg, #e5e7eb 0.2mm, transparent 0.2mm); background-size: 5mm 5mm; }
+  .skillq.single { break-after: page; align-content: start; }
+  .skillq.single .box.s { height: 90mm; } .skillq.single .box.m { height: 130mm; } .skillq.single .box.l { height: 170mm; }
   .answers { columns: 2; column-gap: 10mm; }
   .answers .a { break-inside: avoid; margin-bottom: 3mm; display: grid; grid-template-columns: 9mm 1fr; }
   .answers .a b { color: #1e3a8a; }
@@ -132,6 +136,12 @@ const PRINT_SCRIPT = `<script>
   });
   <\/script>`;
 
+/** how a skill worksheet is laid out: several questions to a page or one, and what each has to work in */
+export interface SkillLayout {
+  perPage: boolean;
+  /** "auto" gives each kind of question the room it needs; the others make every working area that kind */
+  space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "none";
+}
 interface SkillPrintQuestion {
   prompt: string;
   /** the answer, with maths between $…$ */
@@ -140,13 +150,18 @@ interface SkillPrintQuestion {
   space?: "s" | "m" | "l";
 }
 /** the paper and the answers page of a set of skill questions */
-function skillParts(title: string, questions: SkillPrintQuestion[]): { paper: string; answers: string } {
+function skillParts(title: string, questions: SkillPrintQuestion[], layout: SkillLayout = { perPage: false, space: "auto" }): { paper: string; answers: string } {
+  const area = (q: SkillPrintQuestion): string => {
+    if (layout.space === "none") return "";
+    const size = layout.space === "s" || layout.space === "m" || layout.space === "l" ? layout.space : q.space ?? "m";
+    return `<div class="box ${size}${layout.space === "lines" ? " lines" : layout.space === "grid" ? " grid" : ""}"></div>`;
+  };
   const count = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
   return {
     paper: `<div class="paper">
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
     <div class="meta">${count}</div>
-    ${questions.map((q, i) => `<section class="skillq"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div><div class="box ${q.space ?? "m"}"></div></section>`).join("\n")}
+    ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div>${area(q)}</section>`).join("\n")}
   </div>`,
     answers: `<div class="markscheme">
     <header><h1>${esc(title)} — answers</h1><div class="who">${count}</div></header>
@@ -160,20 +175,20 @@ const documentHtml = (title: string, papers: string[], schemes: string[], autoPr
   ${PRINT_SCRIPT}
   </body></html>`;
 /** a worksheet of skill questions: numbered questions each with a blank working box, then (on request) a page of answers (exported so it can be tested without a window) */
-export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
-  const s = skillParts(title, questions);
+export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean; layout?: SkillLayout } = {}): string {
+  const s = skillParts(title, questions, opts.layout);
   return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [s.paper], opts.schemes === false ? [] : [s.answers], opts.autoPrint);
 }
 
 /** exam papers and skill questions together in one document: every paper first (exam papers, then the skill sheet), then every mark scheme and the answers page */
-function sheetsHtml(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[] } | null, opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean }): string {
+function sheetsHtml(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean }): string {
   const items = exams.map((inp, i) => questionHtml(inp, i + 1, exams.length));
-  const s = skill && skill.questions.length ? skillParts(skill.title, skill.questions) : null;
+  const s = skill && skill.questions.length ? skillParts(skill.title, skill.questions, skill.layout) : null;
   const title = exams[0]?.title ?? skill?.title ?? "";
   return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [...items.map((x) => x.paper), ...(s ? [s.paper] : [])], opts.schemes === false ? [] : [...items.map((x) => x.scheme), ...(s ? [s.answers] : [])], opts.autoPrint);
 }
 /** `win` is a window already opened at the click (so slow rendering before it cannot make the browser treat the popup as unrequested) */
-export function printSheets(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[] } | null, opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
+export function printSheets(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
   const html = sheetsHtml(exams, skill, { ...opts, autoPrint: true });
   const win = opts.win ?? window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }

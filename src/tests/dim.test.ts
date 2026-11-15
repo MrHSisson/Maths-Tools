@@ -565,4 +565,17 @@ describe("the printed worksheets", () => {
       expect(visible).not.toContain("$");
     });
   });
+  it("a skill worksheet can put one question on a page and choose its working space", () => {
+    const qs = [{ prompt: "A $x$", answer: "$1$", space: "l" as const }, { prompt: "B $y$", answer: "$2$", space: "s" as const }];
+    expect((skillSheetHtml("T", qs, { layout: { perPage: true, space: "auto" } }).match(/class="skillq single"/g) ?? []).length).toBe(2);
+    expect(skillSheetHtml("T", qs)).not.toContain('class="skillq single"');
+    // automatic: each question gets the room its kind needs; the others make every working area that kind
+    expect(skillSheetHtml("T", qs)).toContain('class="box l"');
+    expect(skillSheetHtml("T", qs)).toContain('class="box s"');
+    const medium = skillSheetHtml("T", qs, { layout: { perPage: false, space: "m" } });
+    expect((medium.match(/class="box m"/g) ?? []).length).toBe(2);
+    expect(skillSheetHtml("T", qs, { layout: { perPage: false, space: "lines" } })).toContain('class="box l lines"');
+    expect(skillSheetHtml("T", qs, { layout: { perPage: false, space: "grid" } })).toContain('class="box s grid"');
+    expect(skillSheetHtml("T", qs, { layout: { perPage: false, space: "none" } })).not.toContain('class="box');
+  });
 });
