@@ -133,9 +133,11 @@ const shared = (s: Base) => {
   const ratio = mStr((display ?? s.parts).join(":"));
   const bars = (extra: (i: number) => object = () => ({})) => s.parts.map((p, i) => ({ person: s.names[i], boxes: p, ...extra(i) }));
   const filled = () => bStep("bar_filled", { ctx, bars: s.parts.map((p, i) => ({ person: s.names[i], boxes: p, value: s.partValue, total: shares[i] })) });
+  /** the value of one part in every box, before the shares: `extra` carries what the bar already shows (the known share, the difference) */
+  const valued = (extra: (i: number) => object = () => ({})) => s.parts.map((p, i) => ({ person: s.names[i], boxes: p, value: s.partValue, ...extra(i) }));
   const simplifyBar = display ? [bStep("simplify", { ctx, display, parts: s.parts })] : [];
   const simplifyNum = display ? [mStep("Simplify the ratio:", `${display.join(" : ")} = ${s.parts.join(" : ")}`)] : [];
-  return { ctx, C, total, shares, ratio, bars, filled, simplifyBar, simplifyNum };
+  return { ctx, C, total, shares, ratio, bars, filled, valued, simplifyBar, simplifyNum };
 };
 
 const name = (s: Base, i: number) => s.names[i];
@@ -157,7 +159,7 @@ export const buildSharing = (s: SharingSpec): WordedQuestion => {
         ...k.simplifyBar,
         bStep("bar_empty", { ctx, bars: k.bars() }),
         bStep("bar_total", { ctx, sum: sum(s.parts) }),
-        bStep("bar_part", { ctx, total, sum: sum(s.parts), value: s.partValue }),
+        bStep("bar_part", { ctx, total, sum: sum(s.parts), value: s.partValue, bars: k.valued() }),
         k.filled(),
         ...(s.check ? [bStep("check_sum", { ctx, shares, total })] : []),
       ]
@@ -195,7 +197,7 @@ export const buildKnown = (s: KnownSpec): WordedQuestion => {
         ...k.simplifyBar,
         bStep("ka_bar_known", { ctx, bars: k.bars((i) => ({ isKnown: i === kp, knownAmount: i === kp ? knownAmount : null })) }),
         bStep("ka_identify", { ctx, knownPerson: name(s, kp), ratioPart: s.parts[kp] }),
-        bStep("ka_part_val", { ctx, knownAmount, ratioPart: s.parts[kp], partValue: s.partValue }),
+        bStep("ka_part_val", { ctx, knownAmount, ratioPart: s.parts[kp], partValue: s.partValue, bars: k.valued((i) => ({ isKnown: i === kp, knownAmount: i === kp ? knownAmount : null })) }),
         k.filled(),
         ...(s.ask === "total"
           ? [bStep("ka_total_bar", { ctx, shares, total })]
@@ -245,7 +247,7 @@ export const buildDifference = (s: DiffSpec): WordedQuestion => {
         ...k.simplifyBar,
         bStep("diff_bar", { ctx, bars: k.bars(), difference, largerPerson: hi, smallerPerson: lo }),
         bStep("diff_identify", { ctx, difference, partDiff }),
-        bStep("diff_part_val", { ctx, difference, partDiff, partValue: s.partValue }),
+        bStep("diff_part_val", { ctx, difference, partDiff, partValue: s.partValue, bars: k.valued(), largerPerson: hi, smallerPerson: lo }),
         k.filled(),
         ...(s.ask === "total"
           ? [bStep("ka_total_bar", { ctx, shares, total })]

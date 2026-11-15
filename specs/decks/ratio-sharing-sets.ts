@@ -89,4 +89,41 @@ export const SET_D: SetQuestion[] = [
   { id: "D15", rung: "difference, three parts, not money (the stretch)", ratio: [2, 3, 6], names: ["Una", "Vic", "Wes"], ctx: "flour", diff: { a: 1, b: 2, amount: 27, style: 3 }, ask: "total", answer: "Total: 99 kg", trap: "T10 compares the wrong parts", wrong: "wrongPair" },
 ];
 
+/** Whiteboards for set A: sharing a total, climbing. Authored for the board, five each, with the tool's own bar-model working. */
+export const SET_WA: SetQuestion[] = [
+  { id: "WA1", rung: "whiteboard", ratio: [3, 5], names: ["Amy", "Bo"], total: 88, ask: "both", answer: "Amy: £33, Bo: £55", trap: "", wrong: "divPeople" },
+  { id: "WA2", rung: "whiteboard", ratio: [4, 5], names: ["Cara", "Dan"], total: 90, ask: 1, answer: "Dan: £50", trap: "", wrong: "onePart" },
+  { id: "WA3", rung: "whiteboard", ratio: [7, 3], names: ["Eve", "Fred"], total: 70, ask: 0, answer: "Eve: £49", trap: "", wrong: "onePart" },
+  { id: "WA4", rung: "whiteboard", ratio: [6, 10], names: ["Gia", "Hal"], total: 96, ask: 1, answer: "Hal: £60", trap: "", wrong: "unsimplified" },
+  { id: "WA5", rung: "whiteboard", ratio: [1, 2, 4], names: ["Una", "Vic", "Wes"], total: 49, ask: 2, answer: "Wes: £28", trap: "", wrong: "dropPart" },
+];
+
+/** Whiteboards for set B: a known share. Authored for the board, five each, with the tool's own bar-model working. */
+export const SET_WB: SetQuestion[] = [
+  { id: "WB1", rung: "whiteboard", ratio: [3, 4], names: ["Kim", "Lou"], known: { who: 0, amount: 33 }, ask: "total", answer: "Total: £77", trap: "", wrong: "knownAsTotal" },
+  { id: "WB2", rung: "whiteboard", ratio: [2, 5], names: ["Max", "Nell"], known: { who: 1, amount: 40 }, ask: 0, answer: "Max: £16", trap: "", wrong: "knownAsPart" },
+  { id: "WB3", rung: "whiteboard", ratio: [5, 6], names: ["Orla", "Pip"], known: { who: 1, amount: 42 }, ask: 0, answer: "Orla: £35", trap: "", wrong: "knownAsPart" },
+  { id: "WB4", rung: "whiteboard", ratio: [4, 6], names: ["Quin", "Rhea"], known: { who: 0, amount: 26 }, ask: 1, answer: "Rhea: £39", trap: "", wrong: "unsimplified" },
+  { id: "WB5", rung: "whiteboard", ratio: [2, 3, 4], names: ["Xan", "Yui", "Zoe"], known: { who: 1, amount: 39 }, ask: "total", answer: "Total: £117", trap: "", wrong: "knownAsTotal" },
+];
+
+/** Whiteboards for set C: a difference. Authored for the board, five each, with the tool's own bar-model working. */
+export const SET_WC: SetQuestion[] = [
+  { id: "WC1", rung: "whiteboard", ratio: [3, 5], names: ["Amy", "Bo"], diff: { a: 0, b: 1, amount: 14, style: 1 }, ask: 0, answer: "Amy: £21", trap: "", wrong: "diffOverSum" },
+  { id: "WC2", rung: "whiteboard", ratio: [2, 5], names: ["Cara", "Dan"], diff: { a: 0, b: 1, amount: 36, style: 3 }, ask: "total", answer: "Total: £84", trap: "", wrong: "diffAsTotal" },
+  { id: "WC3", rung: "whiteboard", ratio: [7, 3], names: ["Eve", "Fred"], diff: { a: 0, b: 1, amount: 32, style: 2 }, ask: 0, answer: "Eve: £56", trap: "", wrong: "diffOverSum" },
+  { id: "WC4", rung: "whiteboard", ratio: [4, 10], names: ["Gia", "Hal"], diff: { a: 0, b: 1, amount: 51, style: 1 }, ask: "total", answer: "Total: £119", trap: "", wrong: "unsimplified" },
+  { id: "WC5", rung: "whiteboard", ratio: [2, 4, 7], names: ["Abi", "Bea", "Cyd"], diff: { a: 0, b: 2, amount: 55, style: 3 }, ask: "total", answer: "Total: £143", trap: "", wrong: "wrongPair" },
+];
+
+/** Whiteboards for the mixed section. Authored for the board, five each, with the tool's own bar-model working. */
+export const SET_WD: SetQuestion[] = [
+  { id: "WD1", rung: "whiteboard", ratio: [5, 7], names: ["Kim", "Lou"], total: 132, ask: 1, answer: "Lou: £77", trap: "", wrong: "onePart" },
+  { id: "WD2", rung: "whiteboard", ratio: [3, 8], names: ["Max", "Nell"], known: { who: 1, amount: 72 }, ask: "total", answer: "Total: £99", trap: "", wrong: "knownAsTotal" },
+  { id: "WD3", rung: "whiteboard", ratio: [3, 7], names: ["Orla", "Pip"], diff: { a: 0, b: 1, amount: 28, style: 1 }, ask: 0, answer: "Orla: £21", trap: "", wrong: "diffOverSum" },
+  { id: "WD4", rung: "whiteboard", ratio: [2, 3, 5], names: ["Del", "Eli", "Fay"], total: 110, ask: 0, answer: "Del: £22", trap: "", wrong: "dropPart" },
+  { id: "WD5", rung: "whiteboard", ratio: [3, 4, 5], names: ["Gus", "Hui", "Isa"], known: { who: 2, amount: 45 }, ask: 1, answer: "Hui: £36", trap: "", wrong: "knownAsPart" },
+];
+
 export const ALL_SETS = { A: SET_A, B: SET_B, C: SET_C, D: SET_D };
+export const WHITEBOARDS = { WA: SET_WA, WB: SET_WB, WC: SET_WC, WD: SET_WD };

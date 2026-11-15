@@ -345,7 +345,8 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
       {bars.map((bar, i) => <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg("default")} borderColor="#1e3a8a" />)}
     </div>
   );
-  if (T === "bar_filled") return (
+  // the value of one part goes into every box first (bar_part and its two cousins), the shares follow (bar_filled)
+  if (T === "bar_filled" || T === "bar_part") return (
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
       {bars.map((bar, i) => (
         <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg("default")} borderColor="#1e3a8a"
@@ -354,16 +355,17 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
       ))}
     </div>
   );
-  if (T === "ka_bar_known") return (
+  if (T === "ka_bar_known" || T === "ka_part_val") return (
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
       {bars.map((bar, i) => (
         <BarRow key={i} person={bar.person} boxes={bar.boxes}
+          cellLabel={bar.value !== undefined ? box(bar.value) : undefined}
           fillBg={bar.isKnown ? getBarKnownBg("default") : getBarEmptyBg("default")} borderColor="#1e3a8a"
           totalLabel={bar.isKnown && bar.knownAmount != null ? f(bar.knownAmount) : undefined} />
       ))}
     </div>
   );
-  if (T === "diff_bar") {
+  if (T === "diff_bar" || T === "diff_part_val") {
     const smallerCount = typeof d.smallerPerson === "number" ? bars[d.smallerPerson].boxes : Math.min(bars[0].boxes, bars[1].boxes);
     return (
       <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
@@ -376,8 +378,10 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
                 {Array.from({ length: bar.boxes }, (_, bi) => {
                   const isDiff = isLarger && bi >= smallerCount;
                   return (
-                    <div key={bi} className="rounded flex-shrink-0"
-                      style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg("default") : getBarEmptyBg("default") }} />
+                    <div key={bi} className="rounded flex-shrink-0 flex items-center justify-center"
+                      style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg("default") : getBarEmptyBg("default") }}>
+                      {bar.value !== undefined && <span className="font-bold text-center leading-tight" style={{ color: "#000", fontSize: "0.7rem" }}>{box(bar.value)}</span>}
+                    </div>
                   );
                 })}
               </div>
@@ -394,7 +398,7 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
   return null;
 };
 
-const BAR_STEP_TYPES = new Set(["bar_empty", "bar_filled", "ka_bar_known", "diff_bar"]);
+const BAR_STEP_TYPES = new Set(["bar_empty", "bar_filled", "ka_bar_known", "diff_bar", "bar_part", "ka_part_val", "diff_part_val"]);
 
 /** `stepVisualRenderer`: the bar model for a bar step; `false` for the other steps of this tool (they are
  *  caption-only — the bar stays on screen); `null` for anything else. */

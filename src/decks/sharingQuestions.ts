@@ -18,8 +18,14 @@ const rowsOf = (step: WorkingStep): BarRow[] | null => {
   const ctx = d.ctx as string | undefined;
   const label = (n: number) => (ctx && ctx !== "money" ? String(n) : fa(ctx, n));   // a box is small: a quantity shows its number only
   if (step.type === "bar_empty") return bars.map((b) => ({ name: b.person, units: b.boxes }));
+  if (step.type === "bar_part") return bars.map((b) => ({ name: b.person, units: b.boxes, unitLabel: label(b.value!) }));   // the value of one part in every box
+  if (step.type === "ka_part_val") return bars.map((b) => ({ name: b.person, units: b.boxes, unitLabel: label(b.value!), ...(b.isKnown ? { known: true, given: true, total: fa(ctx, b.knownAmount!) } : {}) }));
+  if (step.type === "diff_part_val") {
+    const hi = d.largerPerson as number, lo = d.smallerPerson as number;
+    return bars.map((b, i) => ({ name: b.person, units: b.boxes, unitLabel: label(b.value!), ...(i === hi ? { extraFrom: bars[lo].boxes } : {}) }));
+  }
   if (step.type === "bar_filled") return bars.map((b) => ({ name: b.person, units: b.boxes, unitLabel: label(b.value!), total: fa(ctx, b.total!) }));
-  if (step.type === "ka_bar_known") return bars.map((b) => ({ name: b.person, units: b.boxes, ...(b.isKnown ? { known: true, total: fa(ctx, b.knownAmount!) } : {}) }));
+  if (step.type === "ka_bar_known") return bars.map((b) => ({ name: b.person, units: b.boxes, ...(b.isKnown ? { known: true, given: true, total: fa(ctx, b.knownAmount!) } : {}) }));
   if (step.type === "diff_bar") {
     const hi = d.largerPerson as number, lo = d.smallerPerson as number;
     return bars.map((b, i) => ({ name: b.person, units: b.boxes, ...(i === hi ? { extraFrom: bars[lo].boxes } : {}) }));

@@ -113,9 +113,11 @@ describe("Ratio Sharing in a deck (Q.share, Q.known, Q.diff)", () => {
     expect(q.question).toEqual(["Ana and Ben share money in the ratio $3:5$", "Ana receives £24", "What is the total amount shared?"]);
     expect(q.answer).toEqual(["Total: £64"]);
     const pics = q.explanation.map(parsePictureLine).filter(Boolean) as any[];
-    expect(pics.length).toBe(2);
-    expect(pics[0].data.rows[0]).toMatchObject({ name: "Ana", units: 3, known: true, total: "£24" });
-    expect(pics[1].data.rows.map((r: any) => r.total)).toEqual(["£24", "£40"]);
+    expect(pics.length).toBe(3);   // the known share marked, the value of one part in every box, then the shares
+    expect(pics[0].data.rows[0]).toMatchObject({ name: "Ana", units: 3, known: true, given: true, total: "£24" });
+    expect(pics[1].data.rows.map((r: any) => r.unitLabel)).toEqual(["£8", "£8"]);
+    expect(pics[1].data.rows.map((r: any) => r.total)).toEqual(["£24", undefined]);
+    expect(pics[2].data.rows.map((r: any) => r.total)).toEqual(["£24", "£40"]);
     expect(q.explanation[q.explanation.length - 1]).toContain("Check: £24 : £40 ÷ £8 = 3 : 5");
   });
   it("marks the difference boxes on the larger person's row, three parts included", () => {

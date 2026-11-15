@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { writeFileSync } from "node:fs";
 import { gcdAll } from "../shared";
 import { buildSharing, buildKnown, buildDifference, CONTEXTS } from "../tools/Proportion/ratioSharing";
-import { ALL_SETS, type SetQuestion } from "../../specs/decks/ratio-sharing-sets";
+import { ALL_SETS, WHITEBOARDS, type SetQuestion } from "../../specs/decks/ratio-sharing-sets";
 
 // The authored Sharing in a ratio sets (specs/decks/ratio-sharing-sets.ts). Every answer is recomputed here from the numbers a
 // pupil sees, by arithmetic that does not use the builders; then the tool's own builder must agree with it and with the hand-typed
@@ -62,6 +62,7 @@ const answerOf = (q: SetQuestion) => {
   if (q.ask === "both") {
     const C = CONTEXTS[q.ctx ?? "money"];
     const a = work(q).shares.map((s) => C.short(s));
+    if (q.names) return q.names.map((n, i) => `${n}: ${a[i]}`).join(", ");   // a named question: "Amy: £33, Bo: £55"
     return a.length === 2 ? a.join(" and ") : `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}`;
   }
   return built(q).answer!;
@@ -72,16 +73,16 @@ const questionText = (q: SetQuestion) => q.total !== undefined && !q.names
   : built(q).lines.join(" / ").replace(/\$([^$]*)\$/g, "$1");
 
 describe("Sharing in a ratio: the authored sets", () => {
-  for (const [set, qs] of Object.entries(ALL_SETS)) {
+  for (const [set, qs] of [...Object.entries(ALL_SETS), ...Object.entries(WHITEBOARDS)]) {
     it(`Set ${set}: ${qs.length} questions, every answer recomputed, the builder agrees, the wrong method differs`, () => {
-      expect(qs.length).toBe(set === "D" ? 15 : 9);
+      expect(qs.length).toBe(set === "D" ? 15 : set.startsWith("W") ? 5 : 9);
       for (const q of qs) {
         const w = work(q);
         expect(Number.isInteger(w.g), q.id).toBe(true);
         // the part value is a whole number, or a half where the total is a decimal (set A9 only)
         expect(rnd(w.pv * 2) % 1, `${q.id} part value ${w.pv}`).toBe(0);
         expect(answerOf(q), q.id).toBe(q.answer);
-        if (q.ask !== "both") expect(built(q).answer, q.id).toBe(q.answer);
+        if (q.ask !== "both" || q.names) expect(built(q).answer, q.id).toBe(q.answer);
         const wv = wrongValue(q);
         const right = q.ask === "total" ? w.total : q.ask === "both" ? w.shares[0] : w.shares[q.ask];
         if (q.wrong === "none") expect(wv).toBeNull();
@@ -99,6 +100,15 @@ describe("Sharing in a ratio: the authored sets", () => {
     const dupes = given.filter((g, i) => given.findIndex((h) => h.n === g.n) !== i).map((g) => `${g.id} repeats ${g.n}`);
     expect(dupes).toEqual([]);
     expect(given.filter((g) => reserved.has(g.n)).map((g) => `${g.id}: ${g.n} is reserved`)).toEqual([]);
+  });
+
+  it("the whiteboard questions repeat no amount inside a section, and none of the sheet's own amounts (set WA with A, and so on)", () => {
+    for (const [wb, qs] of Object.entries(WHITEBOARDS)) {
+      const amounts = qs.map((q) => q.total ?? q.known?.amount ?? q.diff!.amount);
+      expect(new Set(amounts).size, wb).toBe(amounts.length);
+      const own = new Set(ALL_SETS[wb[1] as "A" | "B" | "C" | "D"].map((q) => q.total ?? q.known?.amount ?? q.diff!.amount));
+      expect(amounts.filter((n) => own.has(n)), wb).toEqual([]);
+    }
   });
 
   it("each of the three kinds is spread evenly across the mixed worksheet", () => {

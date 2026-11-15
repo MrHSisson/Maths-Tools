@@ -105,7 +105,7 @@ No levels on authored questions; the order carries difficulty. One thing changes
 
 Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a spread of the three kinds); 6 to 10 unsimplified ratio, a non-money context, larger numbers, an order trap; 11 to 15 three-part, with the last two the hardest. About five of each kind. Questions use numbers used nowhere else in the deck. The tool Worksheet's **Textbook** layout (the pinned worksheet's `layout: "list"`, which the deck already supports): numbered `1)` lines, the instruction once, no boxes, the answer inline on the answer sheet. It suits worded questions of mixed length better than equal boxes, and fifteen fit one A4 page comfortably. The plan is one pinned A4 worksheet, hand-written (`frozen`), in this layout, with its answer sheet; the look card puts it beside the boxed layout so Harry can choose.
 
-## Slide plan (about 22 slides; each divider is a pick-up point)
+## Slide plan (superseded 2026-11-15: 30 slides, see "As built" at the end; each divider is a pick-up point)
 
 | Section | Slides |
 |---|---|
@@ -139,3 +139,18 @@ Kinds are interleaved, never labelled, in a climb: 1 to 5 two-part, simple (a sp
 3. Question tables for sets A to C and worksheet D (rung, answer, trap, wrong-method result), every answer recomputed by a separate route, shown to Harry before the deck is built.
 4. Build script (outside the repo), look card (`npm run deck -- looks`), Harry says yes; build; `npm run deck -- check ratio-sharing --layout`; `deck review`; look at every sheet.
 5. Pathway, patch notes, planner Build Log and the tool's dashboard note.
+
+## As built (2026-11-15, after Harry's first look: "no authored whiteboards, no generators, fill in the boxes")
+
+Every section is the same shape: divider · Depth card · worked bar model (click by click: rows, brace, the value of one part in every box, each share) · **five authored whiteboard questions** (the tool's own bar-model working, the boxes filling in) · **the tool's live generator at Level 2** · the independent set.
+
+| Section | Slides |
+|---|---|
+| Opening | Title · Objective · Starter (simplify, equal sharing, scaling, a fraction of an amount) |
+| A. Sharing a total | Divider · Depth (Level 2) · worked · whiteboards (WA1 to WA5) · generator (Sharing) · 3 × 3 board grid (A1 to A9) |
+| B. A known share | Divider · Depth · worked · whiteboards (WB) · generator (Known Amounts) · printed sheet of nine |
+| C. A difference | Divider · recap of lesson 1 · Depth · worked · whiteboards (WC) · generator (Given Difference) · printed sheet of nine |
+| D. Mixed | Divider · two Level 3 Depth cards · whiteboards (WD, unlabelled kinds) · generator (Mixed, three parts on) · printed sheet of fifteen |
+| End | Exit ticket · Summary |
+
+The twenty whiteboard questions are in `specs/decks/ratio-sharing-sets.ts` (`WHITEBOARDS`) and checked by `src/tests/ratioSharingSets.test.ts` like the sets.
