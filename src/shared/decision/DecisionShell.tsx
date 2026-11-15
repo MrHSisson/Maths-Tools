@@ -420,7 +420,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   };
   const replaceSheetQuestion = (i: number) => { const q = drawOne(); if (q) { setSheet((s) => s.map((x, k) => (k === i ? q : x))); setSheetNote(null); } else setSheetNote("Could not make another question with these options."); };
   const removeSheetQuestion = (i: number) => setSheet((s) => s.filter((_, k) => k !== i));
-  const addSheetQuestion = () => { const q = sheet.length < sheetMax ? drawOne() : null; if (q) { setSheet((s) => [...s, q]); setSheetNote(null); } else setSheetNote(sheet.length >= sheetMax ? `A sheet holds up to ${sheetMax} questions.` : "Could not make another question with these options."); };
   /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
   const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window) => {
     const examProblems = problems.filter((pr) => pr.exam);
@@ -900,7 +899,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
       <div className="flex justify-center items-center gap-3 flex-wrap">
         <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={sheetKind === "skill" ? 20 : 10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(sheetKind === "skill" ? 20 : 10, parseInt(e.target.value) || 3)))}
+        <input type="number" min={1} max={sheetMax} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(sheetMax, parseInt(e.target.value) || 3)))}
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
       {sheetKind === "cpa" && <div className="text-center text-sm text-gray-500">Each question prints on its own A4 sheet, with the pictures and the room to draw it needs.</div>}
@@ -918,7 +917,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         <button onClick={generateSheet} disabled={!!sheetBusy} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"><RefreshCw size={18} className={sheetBusy ? "animate-spin" : ""} /> {sheetBusy ? "Generating…" : "Generate"}</button>
         {sheet.length > 0 && (
           <>
-            {sheet.length < sheetMax && <button onClick={addSheetQuestion} className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50">Add one more</button>}
             <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
             {hasBasketPrint(config) && !isPhone && <button onClick={addSheetToSaved} title="Save these questions to the saved list, to load in a lesson or print later" className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50 flex items-center gap-2">Add to saved list</button>}
             <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
