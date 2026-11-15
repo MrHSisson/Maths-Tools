@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, shuffle, pickActive, mStep, extras,
-  PlaceValueTable, placeValueStepRenderer, placeValueStepVisual,
+  PlaceValueTable, placeValueStepRenderer, placeValueStepVisual, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type QOSnapshot,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./StandardForm.about";
@@ -85,9 +85,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
-        level2: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
-        level3: { variables: [], dropdown: null, multiSelect: [CONV_COEF_MS, CONV_START_MS] },
+        level1: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level2: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level3: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_COEF_MS, CONV_START_MS] },
       },
     },
     multiplyDivide: {
@@ -302,9 +302,11 @@ export const __test = { TOOL_CONFIG, generateQuestion };
 // other tabs carry no `_grid`, so the scaffold and the step renderers leave them alone.
 const workingScaffold = {
   label: "place value grid",
-  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     const spec = extras(q)._grid as GridSpec | undefined;
-    return spec ? <PlaceValueTable data={showAnswer ? gridFinal(spec) : gridBlank(spec)} /> : null;
+    if (!spec) return null;
+    const data = showAnswer ? gridFinal(spec) : gridBlank(spec);
+    return <PlaceValueTable data={{ ...data, headerStyle: qo?.variables?.[PV_WORD_HEADERS_KEY] ? "words" : "letters" }} />;
   },
 };
 

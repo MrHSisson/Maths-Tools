@@ -1,7 +1,7 @@
-import { pvStep, type PlaceValueTableData, type PVCell, type WorkingStep } from "../../shared";
+import { pvStep, pvColumnSet, type PlaceValueTableData, type PVCell, type WorkingStep } from "../../shared";
 import { ordinary } from "./StandardFormCore";
 
-// The developing picture for Converting: a place value grid headed with powers of ten (10⁵ … 10⁻⁵) with a Power column beside it.
+// The developing picture for Converting: the standard place value grid (M HTh TTh Th H T O · t h th tth hth mth, letters or words) with a Power column beside it.
 // The decimal point stays where it is. Row by row, every digit moves one column and the power beside it changes by 1:
 //   digits one column to the right  (each worth 10 times less)  →  the power goes UP by 1, to make up for it;
 //   digits one column to the left   (each worth 10 times more)  →  the power goes DOWN by 1.
@@ -75,8 +75,15 @@ const tableOf = (spec: GridSpec, shown: number, finish: boolean): PlaceValueTabl
   const rows = rowsOf(spec);
   const exps = Array.from({ length: hi - lo + 1 }, (_, i) => hi - i);
   const blank = [...exps.map(() => ""), ""];
+  // the standard place value headings (M … H T O · t h th …), one for each exponent, with the Power column set apart at the end
+  const places = pvColumnSet(7, 6);
+  const at = (e: number): number => {
+    if (e > 6 || e < -6) throw new Error(`Standard Form grid: no place value column for 10^${e}`);
+    return 6 - e;
+  };
   return {
-    columns: [...exps.map(power10), "Power"],
+    columns: [...exps.map((e) => places.columns[at(e)]), "Power"],
+    columnNames: [...exps.map((e) => places.columnNames[at(e)]), "Power"],
     onesIndex: hi,
     showPoint: true,
     detachLast: true,

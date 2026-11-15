@@ -54,7 +54,10 @@ const drawDigits = (len: number, zero: boolean): string => {
   return `${randInt(1, 9)}${randInt(1, 9)}${randInt(1, 9)}`;
 };
 
-const drawPower = (level: DifficultyLevel): number => (level === "level1" ? randInt(3, 8) : -randInt(3, 8));
+// The grid has the standard place value columns, millions (10⁶) down to millionths (10⁻⁶): a large number stops at 10⁶, and a small
+// number's last digit has to land at 10⁻⁶ or above, so the more digits it has the smaller its power can be.
+const drawPower = (level: DifficultyLevel, digitCount: number): number =>
+  level === "level1" ? randInt(3, 6) : -randInt(3, Math.min(6, 7 - digitCount));
 
 /** Level 3: a coefficient that is not between 1 and 10, written with a power, to be put into standard form. */
 const genHalfway = (msv: Record<string, boolean>): AnyQuestion => {
@@ -100,7 +103,7 @@ export const genConvert = (level: DifficultyLevel, msv: Record<string, boolean>)
   const zero = pickActive(msv, CONV_ZEROS_MS.options) === "withZero" && msv["d3"] === true;
   const len = zero ? 3 : parseInt(pickActive(msv, CONV_DIGITS_MS.options).slice(1), 10);
   const digits = drawDigits(len, zero);
-  const n = drawPower(level);
+  const n = drawPower(level, len);
   const ord = ordinary(digits, n);
   const coef = ordinary(digits, 0);
   const std = `${coef} \\times 10^{${n}}`;

@@ -203,6 +203,9 @@ describe("adding and subtracting", () => {
 describe("converting: the place value grid (digits move a column at a time, the power changes by 1)", () => {
   const SUPMAP: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
   const exponentOf = (heading: string): number => Number([...heading.slice(2)].map((c) => SUPMAP[c]).join(""));
+  const PLACES = ["M", "HTh", "TTh", "Th", "H", "T", "O", "t", "h", "th", "tth", "hth", "mth"];
+  /** The exponent of a place value heading: O is 10⁰, T is 10¹, t is 10⁻¹ … */
+  const placeExp = (heading: string): number => { const i = PLACES.indexOf(heading); if (i < 0) throw new Error(`not a place value heading: ${heading}`); return 6 - i; };
   const table = (step: any) => step.extra.table;
   /** The rows a step has written (a blank row has no power). */
   const written = (t: any) => t.rows.map((r: any) => r.cells.map((c: any) => (typeof c === "string" ? { v: c } : c))).filter((cells: any[]) => cells[cells.length - 1].v !== "");
@@ -211,7 +214,7 @@ describe("converting: the place value grid (digits move a column at a time, the 
   const valueOf = (t: any, cells: any[]): bigint => {
     const power = exponentOf(cells[cells.length - 1].v);
     let v = 0n;
-    cells.slice(0, -1).forEach((c: any, i: number) => { if (c.v !== "") v += BigInt(c.v) * 10n ** BigInt(exponentOf(t.columns[i]) + power + OFFSET); });
+    cells.slice(0, -1).forEach((c: any, i: number) => { if (c.v !== "") v += BigInt(c.v) * 10n ** BigInt(placeExp(t.columns[i]) + power + OFFSET); });
     return v;
   };
   const truth = (q: any): bigint => {
@@ -256,6 +259,16 @@ describe("converting: the place value grid (digits move a column at a time, the 
       }
     });
   }
+  it("the headings are the standard place value letters, consecutive, with the ones column where the point is drawn", () => {
+    for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 100; i++) {
+      const q = gen("converting", level, everything("converting", level));
+      const t = table(q.working[0]);
+      const places = t.columns.slice(0, -1);
+      places.forEach((h: string, k: number) => { if (k > 0) expect(placeExp(h)).toBe(placeExp(places[k - 1]) - 1); });
+      expect(places[t.onesIndex]).toBe("O");
+      expect(t.columnNames[t.onesIndex]).toBe("Ones");
+    }
+  });
   it("the digits move right and the power goes up for large numbers, left and down for small ones", () => {
     const up = gen("converting", "level1", { toStd: true, toOrd: false, d2: true, noZero: true });
     const rows = written(table(up.working[up.working.length - 1]));

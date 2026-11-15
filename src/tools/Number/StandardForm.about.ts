@@ -3,7 +3,9 @@ import type { ToolAbout } from "../../shared";
 // Plain-language copy for "About this tool", the level (i) and the Question Option notes. One place to edit what this tool says about itself.
 export const ABOUT: ToolAbout = {
   purpose: "Work with numbers written in standard form: convert them, calculate with them, compare them and put them in order.",
-  options: {},
+  options: {
+    "pvWordHeaders": "Switch on to use words (Tens, Ones, tenths…) instead of letters in the grid headings.",
+  },
   tools: {
     converting: {
       purpose: "Change between ordinary numbers and standard form.",
