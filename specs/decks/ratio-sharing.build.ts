@@ -50,18 +50,18 @@ const gridCell = (q: SetQuestion): CuratedQuestion => {
 };
 const setA = ALL_SETS.A.map(gridCell);
 
-// ---------- the printed sheets: hand-written, kept with the deck, in the textbook layout ----------
+// ---------- the printed sheets: hand-written, kept with the deck, in the cells layout ----------
 /** "Jack: £60" as "Jack = £60" (the printer puts "= " in front of an answer with no "=" in it) and as maths with the words kept as text, so the cue slide and the answer sheet set it the same way. */
 const answerForSheet = (answer: string) => {
   const text = answer.replace(/: /g, " = ");
   const latex = text.split(/(£?\d+(?:\.\d+)?)/).filter(Boolean).map((part) => (/^£?\d/.test(part) ? (part.startsWith("£") ? `\\pounds ${part.slice(1)}` : part) : `\\text{${part}}`)).join(" ");
   return { answer: text, answerLatex: latex };
 };
-function sheetSlide(id: string, title: string, qs: SetQuestion[], seed: number, brief: string, instruction: string, size?: number, fontPx = 17, cols = 2): Slide {
-  const s = pinnedSheetSlide(id, T, { sub: "mixed", level: "level1" }, qs.length, cols, title, seed);
+function sheetSlide(id: string, title: string, qs: SetQuestion[], seed: number, brief: string, size?: number, fontPx = 20, cols = 3): Slide {
+  const s = pinnedSheetSlide(id, T, { sub: "mixed", level: "level2" }, qs.length, cols, title, seed);
   const sheet = s.els.find((e) => e.kind === "worksheet") as Extract<DeckElement, { kind: "worksheet" }>;
-  sheet.pin = { title, paper: "A4", layout: "list", borders: false, fontPx };
-  sheet.prompt = instruction;
+  sheet.pin = { title, paper: "A4", layout: "grid", borders: true, fontPx };   // the normal cells view (the textbook list did not look right)
+  sheet.prompt = "";   // every question is a full sentence that says what to do: no instruction repeated in each cell
   if (size) sheet.size = size;   // the answers on the cue slide: smaller when there are fifteen
   if (qs.length > 9) { sheet.x = 40; sheet.w = 1520; }   // four columns of answers need the width
   const sig = JSON.stringify([sheet.tool, sheet.preset, sheet.count, sheet.seed ?? 1]);
@@ -160,13 +160,13 @@ assertFreshNumbers({
 
 const sheetB = sheetSlide(`${P}-sheet-b`, "Worksheet: a known share", ALL_SETS.B, 1,
   "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish: a secure class can start at question 3. Questions 7 to 9 have three parts.",
-  "Work out each answer. Show your working in your book.", 44);
+  44);
 const sheetC = sheetSlide(`${P}-sheet-c`, "Worksheet: a difference", ALL_SETS.C, 2,
   "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish. Questions 2, 5, 6, 8 and 9 ask for the total: dividing the difference by all the parts and multiplying back gives the difference itself. Questions 7 to 9 have three parts.",
-  "Work out each answer. Show your working in your book.", 44);
+  44);
 const sheetD = sheetSlide(`${P}-sheet-d`, "Worksheet: mixed", ALL_SETS.D, 3,
   "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
-  "Work out each answer. Show your working in your book.", 40, 13, 2);
+  40, 15, 3);
 
 export default () => ({
   id: ID, title: "Sharing in a Ratio", strand: "Ratio & Proportion", tool: T, pitch: "middle", questionVersion: 2,
