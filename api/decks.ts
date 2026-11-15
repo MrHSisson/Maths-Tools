@@ -9,13 +9,17 @@
 // GET  /api/decks?history=<id>&key=<key>  → one snapshot (a deck), to restore from; the client restores it as an ordinary save
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next; cached for a minute)
 // GET  /api/decks?published=<id>          → one published deck, a frozen copy
+// GET  /api/decks?categories              → { categories, filing }: the two-level category tree and which published deck is filed where (anyone may read; cached a minute)
+// GET  /api/decks?categories=all          → the same with every deck's filing (admin)
+// POST /api/decks {categories: <op>}      → change the tree or the filing: add / rename / move / setParent / delete a category, or file a deck (api/_categories.ts); answers with the whole tree and filing
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
-// Everything except the two published GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
+// Everything except the published and categories GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // Storage is Neon Postgres (api/_db.ts, api/_deckStore.ts), schema `maths`. A save reads the deck with its version, merges, and writes only if the
 // version has not moved (retried if another save got in first), so two devices never overwrite each other.
 import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
 import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, listQuestions, newestSnapshotAt, putPublished, putQuestion, readDeck, removeDeck, removePublished, removeQuestion, writeDeck } from "./_deckStore.js";
+import { applyOp, listCategories, parseOp, unfileDeck } from "./_categories.js";
 import { MAX_SNAPSHOTS, checkDeck, checkQuestion, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
@@ -55,9 +59,12 @@ export async function GET(req: Request) {
     const value = await getPublished(db, published);
     return value ? json(value, 200, PUBLIC_CACHE) : json({ error: "Not published" }, 404);
   }
+  const cats = params.get("categories");
+  if (cats === "") { const db = getDb(); await ensureSchema(db); return json(await listCategories(db, { publishedOnly: true }), 200, PUBLIC_CACHE); }   // the public read: published decks only
   const denied = authorised(req);
   if (denied) return denied;
   const db = getDb(); await ensureSchema(db);
+  if (cats === "all") return json(await listCategories(db));
   const hist = params.get("history");
   if (hist !== null) {
     if (!validId(hist)) return json({ error: "Bad id" }, 400);
@@ -124,9 +131,16 @@ export async function POST(req: Request) {
     await removePublished(db, body.unpublish);
     return json({ unpublished: true });
   }
+  if ("categories" in body) {
+    const op = parseOp(body.categories);
+    if (!op) return json({ error: "Not a category change" }, 400);
+    const result = await applyOp(db, op);
+    return result.ok ? json(result.data) : json({ error: result.error }, result.status);
+  }
   if ("remove" in body) {
     if (!validId(body.remove)) return json({ error: "Bad id" }, 400);
     await removeDeck(db, body.remove);
+    await unfileDeck(db, body.remove);
     return json({ removed: true });
   }
   if ("question" in body) {

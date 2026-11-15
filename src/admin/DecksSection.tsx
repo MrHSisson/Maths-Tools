@@ -4,7 +4,9 @@ import { Search } from "lucide-react";
 import { allDecks } from "../decks/store";
 import { useSyncedDecks } from "../decks/useSyncedDecks";
 import { usePublishedIndex } from "../decks/published";
-import { DECK_STRANDS, FAMILY_STYLE, type DeckDef, type DeckFamily } from "../decks/types";
+import { useCategories } from "../decks/categories";
+import { menuOptions, pathOf, placeOf } from "../decks/categoryTree";
+import { FAMILY_STYLE, type DeckDef, type DeckFamily } from "../decks/types";
 import { TOOLS } from "./facts";
 import { Drawer, PageHead, Status, panel } from "./ui";
 
@@ -15,18 +17,23 @@ interface Row { deck: DeckDef; mine: boolean; edited: boolean; publishedAt?: str
 
 const familyCounts = (d: DeckDef) => FAMILIES.map(f => ({ f, n: d.slides.filter(s => s.family === f).length })).filter(x => x.n > 0);
 
-/** Every deck at a glance: strand, slides by kind, the tool it belongs to and whether it is published. Read from the decks themselves, never typed. */
+/** Every deck at a glance: category, slides by kind, the tool it belongs to and whether it is published. Read from the decks themselves, never typed. */
 export function DecksSection() {
   const published = usePublishedIndex();
   const synced = useSyncedDecks();
   const [query, setQuery] = useState("");
-  const [strand, setStrand] = useState("all");
+  const [category, setCategory] = useState("all");            // "all", "none" (not filed) or a category id (a strand takes its topics with it)
+  const { data: cats } = useCategories(true);
+  const placeId = (d: DeckDef) => (cats ? placeOf({ id: d.id, strand: d.strand }, cats) : null);
   const [state, setState] = useState<"all" | "published" | "not">("all");
   const [open, setOpen] = useState<string | null>(null);
 
   const rows: Row[] = useMemo(() => allDecks().map(x => ({ ...x, publishedAt: published?.[x.deck.id]?.publishedAt })), [published, synced]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: synced changes when the shared decks have been read into this device
   const shown = rows.filter(r => {
-    if (strand !== "all" && (r.deck.strand ?? "") !== strand) return false;
+    if (category !== "all") {
+      const at = placeId(r.deck), parent = cats?.categories.find(c => c.id === at)?.parent;
+      if (category === "none" ? at !== null : at !== category && parent !== category) return false;
+    }
     if (state === "published" && !r.publishedAt) return false;
     if (state === "not" && r.publishedAt) return false;
     const q = query.trim().toLowerCase();
@@ -45,10 +52,10 @@ export function DecksSection() {
           <Search size={16} className="text-slate-400" />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search decks" className="w-full bg-transparent text-sm outline-none" />
         </label>
-        <select value={strand} onChange={e => setStrand(e.target.value)} aria-label="Strand" className={field}>
-          <option value="all">All strands</option>
-          {DECK_STRANDS.map(s => <option key={s} value={s}>{s}</option>)}
-          <option value="">No strand</option>
+        <select value={category} onChange={e => setCategory(e.target.value)} aria-label="Category" className={field}>
+          <option value="all">All categories</option>
+          {menuOptions(cats).map(o => <option key={o.id} value={o.id}>{o.depth ? "\u00a0\u00a0\u00a0" : ""}{o.label}</option>)}
+          <option value="none">Not filed</option>
         </select>
         <select value={state} onChange={e => setState(e.target.value as typeof state)} aria-label="Published" className={field}>
           <option value="all">Published or not</option><option value="published">Published</option><option value="not">Not published</option>
@@ -62,7 +69,7 @@ export function DecksSection() {
               <button onClick={() => setOpen(r.deck.id)} className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50">
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-900">{r.deck.title}</div>
-                  <div className="text-xs text-slate-500">{[r.deck.strand ?? "No strand", toolName(r.deck.tool), `${r.deck.slides.length} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
+                  <div className="text-xs text-slate-500">{[pathOf(placeId(r.deck), cats), toolName(r.deck.tool), `${r.deck.slides.length} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
                 </div>
                 <Status colour={r.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={r.publishedAt ? `Published ${dateOf(r.publishedAt)}` : "Not published"} />
               </button>
@@ -73,7 +80,7 @@ export function DecksSection() {
 
       {sel && (
         <Drawer title={sel.deck.title} onClose={() => setOpen(null)}
-          sub={<><Status colour={sel.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={sel.publishedAt ? `Published ${dateOf(sel.publishedAt)}` : "Not published"} /><span>{sel.deck.strand ?? "No strand"}</span></>}
+          sub={<><Status colour={sel.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={sel.publishedAt ? `Published ${dateOf(sel.publishedAt)}` : "Not published"} /><span>{pathOf(placeId(sel.deck), cats)}</span></>}
           footer={<div className="flex gap-2">
             <Link to={`/decks/${sel.deck.id}`} className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white">Play</Link>
             <Link to={`/decks/${sel.deck.id}?edit=1`} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</Link>

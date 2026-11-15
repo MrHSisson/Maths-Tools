@@ -4,10 +4,11 @@ Read before building or changing a deck (after `docs/reference/decks.md`). Every
 
 ## The process (every deck)
 
+0. **The look card, before anything is built:** write the build script's first slide of each kind (or the whole script), then `npm run deck -- looks <script>`. It builds to a temp file (the repo is untouched) and writes contact sheets of one slide of each kind in every state. Harry says yes, or what to change, on those pictures. Most rework in this project came from describing a layout in words and building the whole deck on a reading of them.
 1. **Preflight each tool the lesson uses:** `npm run deck -- preflight <tool-id>`. It says whether the tool draws on every tab and level, whether a mixed set is really mixed, whether it has a Depth bank and whether it has a fixed-question builder. Whatever is missing is built **as part of this deck** (the next sections say how), never skipped and never left for review to find. A tool with no Depth bank gets none in the deck unless Harry asks for a bank.
 2. **Plan** the lesson on the skeleton below, with a "what already exists" table against the tool.
 3. **Build** the script, using only `Q.*` builders for authored questions and `S.*` for slides. If a picture the lesson needs is not a slide piece yet, note it for the deck's side-task list (below) and use a plain-words version for now.
-4. **Verify:** `npm run deck -- verify <id>` (content, layout, printed worksheets, the deck's Depth cards). Fix everything it reports before Harry sees the deck.
+4. **Verify, then look:** `npm run deck -- verify <id>` (content, layout at rest, with the working open and with the answers shown, printed worksheets, the deck's Depth cards), then `npm run deck -- review <id>` and read every sheet. The checks cannot tell you whether it looks right. Fix everything before Harry sees the deck.
 4a. **The live copy is the master; the repo holds a backup of it (the app does not bundle it).** `npm run deck -- check <id> --live` checks what Harry sees without touching the repo, `backup` writes live copies into `src/decks/data` for git to keep (commit them), and `publish` publishes the live copy then backs it up. The shared version history (File → Version history) is the rollback for a bad edit.
 4b. **Harry and Claude can edit the same deck** (decided 2026-11-01, built the same day). A pull records the version a change starts from (`.deck-base/<id>.json`); a push sends it, and the server merges the push into the stored deck by slide and element (`api/_deckMerge.ts`). Changes to different things from both sides are both kept; if both changed the very same field, **Harry's version wins** and the push lists the clashes. Pull first, change the JSON by slide or element id, push, and read what the push says it merged. The push refuses to run against a deployment that does not merge yet (`x-deck-merge`), so it cannot overwrite a whole deck by mistake. **Slide order is Harry's:** a merged push never reorders slides (and the CLI writes the merged deck back over your file); to move slides, pull, delete `.deck-base/<id>.json` and push with `--replace-whole`, then read the shared copy back. Until the branch with the merge is deployed, deliver changes as a list, or as slides Harry imports (**File → Import slides**).
 5. **Rebuilding later is safe:** `build --replace` keeps whatever Harry changed in the editor (see `docs/reference/decks.md`); `diff <id>` shows what that was.
@@ -73,6 +74,16 @@ An authored set is held to the same bar as a generator's. No tool checks the mat
 | Answers shown under the question | Grids replace the question with its answer, and a double-tap flips one box. |
 | Printed worksheets spilling | `npm run smoke:deck-print -- <id>` counts the real pages of every pinned sheet (questions and answers); it must be 1. A4 holds 12 questions in 3 × 4 at 21px with short wording (22 fits, 23 spills); the answer sheet has the same boxes. Since 2026-11-02 the script writes the sheet into an iframe whose opener is the page (the print window needs `window.opener.__mtWorksheetLayout`); a stubbed `window.open` draws a blank sheet that always "fits". A hand-written sheet is `frozen` (pattern: `specs/decks/_check/ratio-w3-build.py`). |
 | Buttons of different sizes on different slides | One look for every slide button: `slideButton` in `src/decks/slideButton.ts` (26 units, 48 tall); the Depth slide takes the same size. Never style a new slide button by hand. |
+| A worked example's numbers asked again in the practice (the same 24, 12 and 18 in the models and the questions) | `npm run deck -- build` fails on it (`--allow-repeats` overrides), and the deck check warns for an older deck. In a build script call `assertFreshNumbers` (`src/decks/deckRules.ts`): no worked number is asked about, none twice inside a section, the exit ticket uses numbers asked nowhere else, no pair repeats. The worked example is `specs/decks/factors-hcf-systematic-listing.build.ts`. |
+| Hint or helper text as loud as the question | `quiet` and `hintLine` (`src/decks/pieces.ts`): tiny and grey. Rule: a hint is subtle by design. |
+| Two numbers, or a factor pair, split over lines; two pairs to a line | Rule, built into `mathsGrid` and `mathsStack` (one pair to a line, the two numbers as headings on one line). The layout check warns when a short word or number is left alone on the last line of a text. |
+| Text that fits at rest but overflows once the working opens, on a later question, or with the answers shown | Checked: the layout check measures every question, the working-open view and the answers-shown view. |
+| The same kind of slide with its title in a different place or size | Warned by the deck check; `titleEls` puts it in the standard place. |
+| A whiteboard question too long to be centred (the player centres an open question under 170 characters) | `assertCentred` in the build script. |
+| Sizes and colours tuned by hand, slide by slide | The `LOOK` tokens and `S.whiteboard`, `S.plainBook`, `S.exitRows`, `S.pairModel`. Use them instead of hand-placed elements. |
+| A deck that relies on code that is not on main (the live site runs main) | Warned at `push`, `verify` and `review`. Rule: merge first, or send the branch preview link with the deck. |
+| A drawn imitation of a calculator or other device | Rule: plain text, one step per click; draw a device only if it can be a real, working piece. |
+| Rebuilding on a reading of Harry's words when feedback reverses an earlier decision | Rule: show a before and after look-card picture and confirm. |
 | Names in words where the real thing is shorter ("pound coins") | Write money as £1, 50p, £10. Prefer symbols a pupil would write. |
 | Questions in the order of the sentence every time | Vary the order asked (red to blue, then blue to red); three-part ratios asked out of order. |
 
@@ -83,6 +94,9 @@ An authored set is held to the same bar as a generator's. No tool checks the mat
 3. `npm run lint`, `npm test`, then `npm run deck -- push <id>` (pull first if Harry may have edited).
 
 ## Tooling traps (for the session itself)
+
+- The app does not bundle decks (since 2026-11-11), so a page can only draw a deck the shared service sends it. `check --layout`, `verify`, `sheet` and `review` therefore serve the deck file (the repo copy, or `DECK_FILE`) to the page (`scripts/deckPage.mjs`); a script of your own that opens `/decks/<id>` needs the same.
+- The layout check's "runs off the slide" can come from the hidden working panel that rests just outside a full-width question area; `S.whiteboard` insets the area by 48 for that reason.
 
 - `npm install` first. Start the dev server with `nohup npx vite --port 5191 --strictPort --host 127.0.0.1 &`; it dies between commands, so check before each browser script.
 - Decks and the editor need `localStorage["mt-dev-mode"]="1"` in a script.

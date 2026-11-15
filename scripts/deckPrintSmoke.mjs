@@ -4,11 +4,13 @@
 // (KaTeX read from node_modules, since a sandbox has no CDN), renders it to PDF at its own page size and counts the pages.
 import { createRequire } from "node:module";
 import fs from "node:fs";
+import { loadDeck, serveDeck } from "./deckPage.mjs";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
 const base = process.env.SMOKE_URL ?? "http://127.0.0.1:5173";
 const id = process.argv[2] ?? "manipulating-ratios";
-const slides = JSON.parse(fs.readFileSync(`src/decks/data/${id}.json`, "utf8")).slides;
+const deck = loadDeck(id);                     // the repo copy, or DECK_FILE; served to the page below (decks are not bundled with the app)
+const slides = deck.slides;
 const pinned = slides.map((s, i) => ({ s, n: i + 1 })).filter(({ s }) => s.els.some((e) => e.kind === "worksheet" && e.pin));
 const katex = `file://${process.cwd()}/node_modules/katex/dist/`;
 const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
@@ -18,6 +20,7 @@ let bad = 0;
 for (const { s, n } of pinned) for (const button of ["Print sheet", "Answer sheet"]) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 1200 } });
   await ctx.route("https://cdn.jsdelivr.net/npm/katex@*/dist/**", (r) => { const f = r.request().url().split("/dist/")[1].split("?")[0]; const p = `${process.cwd()}/node_modules/katex/dist/${f}`; fs.existsSync(p) ? r.fulfill({ path: p }) : r.abort(); });
+  await serveDeck(ctx, id, deck);
   const page = await ctx.newPage();
   await page.addInitScript(() => {
     localStorage.setItem("mt-dev-mode", "1");
