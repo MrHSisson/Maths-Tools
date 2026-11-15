@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-15 — Ratio Sharing: three parts, unsimplified ratios, other contexts, a check step (for the Sharing in a ratio deck)
+
+Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSharingTool.tsx,RatioSharingTool.about.ts,ratioSharing.ts}` (new pure builders), `src/decks/{sharingQuestions.ts,builder.ts}`, `src/tests/ratioSharing.test.ts`, `specs/decks/ratio-sharing.md`.
+
+- **Three-part ratios** on all four tabs (a "Parts in the Ratio" pool, off by default; Person C is asked only of a three-part ratio). **Unsimplified ratios** (a switch: the working starts with a "Simplify the ratio first" step). **Contexts** (a pool: money, or whole quantities: sweets, stickers, marbles, litres of paint, kg of flour; units stay out of KaTeX). **Check answer** (a display-only switch: a last step tying the answer back to the question).
+- Defaults are the old tool: two parts, money, simplest form. The generators no longer end their question keys with a random number (rule R2); the About line now says Level 3 uses the numerical method.
+- The three generators now call pure builders (`buildSharing`, `buildKnown`, `buildDifference`), which the deck's `Q.share`, `Q.known` and `Q.diff` also use, so an authored question carries the tool's own wording and bar model.
+- Tests: every answer is recomputed from the question's own words over all tabs, levels, part counts, contexts and the unsimplified switch; the builders and the deck pictures are checked against hand-worked numbers. Build, full tests and lint pass; the shell smoke test passes for the tool.
+- Not done: the Depth bank (spec to write first), the deck itself, calibration, a visual check of the three-part bar on phone and tablet.
+
+Agent: Claude Code
+Notes: planner Build Log block still to be written at the end of the deck work.
+
 ## 2026-11-14 — Deck strands and topics: Harry controls the Decks page headings
 
 Branch `claude/inspiring-pascal-jvm7q2`. Areas: `api/_categories.ts` (new), `api/_db.ts`, `api/decks.ts`, `src/decks/{categoryTree,categories,FileUnder}.ts(x)`, `src/components/{DeckGallery,DecksTab}.tsx`, `src/decks/{DeckPage,Editor}.tsx`, `src/admin/DecksSection.tsx`, `scripts/deck.mjs`, two test files, docs.

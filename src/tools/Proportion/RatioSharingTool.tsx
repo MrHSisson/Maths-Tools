@@ -1,11 +1,14 @@
 import {
   ToolShell, getQuestionBg, FitWidth,
-  type ToolConfig, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
-  mStep, mStr, pick, randInt, pickActive,
+  type ToolConfig, type ToolMultiSelect, type ToolVariable, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  pick, randInt, gcdAll,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./RatioSharingTool.about";
-import { gcd } from "../../shared";
+import {
+  buildSharing, buildKnown, buildDifference, fa, QUANTITY_CONTEXTS,
+  type ContextId,
+} from "./ratioSharing";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -14,103 +17,38 @@ import { gcd } from "../../shared";
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
 type ToolType = "sharing" | "known" | "difference" | "mixed";
+type Vars = Record<string, boolean>;
+type Msv = Record<string, boolean>;
 
 // ── 2. Number helpers ─────────────────────────────────────────────────────────
 
 const NAMES = ["Alice","Ben","Charlie","Diana","Emma","Finn","Grace","Harry","Isla","Jack","Kate","Liam","Mia","Noah","Olivia","Peter"];
-const twoNames = (): string[] => [...NAMES].sort(() => Math.random() - 0.5).slice(0, 2);
+const someNames = (n: number): string[] => [...NAMES].sort(() => Math.random() - 0.5).slice(0, n);
 
-const fmtAmt = (n: number): string => n % 1 === 0 ? String(n) : n.toFixed(2);
-const fp = (n: number): string => `£${fmtAmt(n)}`;
-const fc = (n: number): string => `\\pounds ${fmtAmt(n)}`;
-
-const isCoprime = (a: number, b: number): boolean => gcd(a, b) === 1;
-
-// ── 3. Bar color helpers ──────────────────────────────────────────────────────
-
-const getBarEmptyBg = (cs: string) => getQuestionBg(cs);
-const getBarKnownBg = (cs: string) => ({ blue: "#7eb8e0", pink: "#e07eb8", yellow: "#e0e07e" }[cs] ?? "#93c5fd");
-const getBarDiffBg  = (cs: string) => ({ blue: "#d8b4fe", pink: "#fed8b4", yellow: "#b4fed8" }[cs] ?? "#e9d5ff");
-
-// ── 4. Bar step builder ───────────────────────────────────────────────────────
-
-// One-line caption per step type: it is the step's text in the cascade timeline (the bar model itself
-// is drawn once, beside it, by `ratioStepVisual`).
-const parts_ = (n: number) => `${n} part${n !== 1 ? "s" : ""}`;
-const stepCaption = (t: string, d: Record<string, unknown>): string => {
-  switch (t) {
-    case "bar_empty": return "Bar model: draw a box for each part of the ratio.";
-    case "bar_total": return `Add the parts to find the total: ${d.sum as number} parts.`;
-    case "bar_part": return `Value of 1 part: ${fp(d.total as number)} ÷ ${d.sum as number} = ${fp(d.value as number)}.`;
-    case "bar_filled": return "Calculate each share: the value of 1 part × the number of parts.";
-    case "ka_bar_known": return "Given information: mark the known share on the bar model.";
-    case "ka_identify": return `Identify the ratio part: ${d.knownPerson as string} has ${parts_(d.ratioPart as number)}.`;
-    case "ka_part_val": return `Value of 1 part: ${fp(d.knownAmount as number)} ÷ ${d.ratioPart as number} = ${fp(d.partValue as number)}.`;
-    case "ka_total_bar": return `Add all the shares to find the total: ${(d.shares as number[]).map(fp).join(" + ")} = ${fp(d.total as number)}.`;
-    case "ka_other_bar": return `Read ${d.otherPerson as string}'s share from the bar: ${fp(d.share as number)}.`;
-    case "diff_bar": return "Bar model: the extra boxes show the difference.";
-    case "diff_identify": return `The difference represents ${parts_(d.partDiff as number)} = ${fp(d.difference as number)}.`;
-    case "diff_part_val": return `Value of 1 part: ${fp(d.difference as number)} ÷ ${d.partDiff as number} = ${fp(d.partValue as number)}.`;
-    case "diff_read": return `Read ${d.person as string}'s share from the bar: ${fp(d.share as number)}.`;
-    default: return "";
-  }
+/** `n` different parts in lowest terms (no common factor across them all), or null when the draw fails. */
+const drawParts = (n: number, lo: number, hi: number, sumLo: number, sumHi: number): number[] | null => {
+  const p = Array.from({ length: n }, () => randInt(lo, hi));
+  if (new Set(p).size < n || gcdAll(p) !== 1) return null;
+  const s = p.reduce((a, b) => a + b, 0);
+  return s < sumLo || s > sumHi ? null : p;
 };
 
-const bStep = (t: string, data: Record<string, unknown>): WorkingStep => ({
-  type: t, latex: "", plain: stepCaption(t, data), extra: data,
-});
-
-// ── 5. Bar step builders ──────────────────────────────────────────────────────
-
-const sharingBarSteps = (
-  parts: number[], total: number, ratioSum: number, partValue: number, shares: number[], names: string[],
-): WorkingStep[] => [
-  bStep("bar_empty", { bars: parts.map((p, i) => ({ person: names[i], boxes: p })) }),
-  bStep("bar_total", { sum: ratioSum }),
-  bStep("bar_part",  { total, sum: ratioSum, value: partValue }),
-  bStep("bar_filled", { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
-];
-
-const knownBarSteps = (
-  parts: number[], knownAmount: number, knownPerson: number, partValue: number,
-  shares: number[], total: number, qtype: string, names: string[],
-): WorkingStep[] => {
-  const other = knownPerson === 0 ? 1 : 0;
-  return [
-    bStep("ka_bar_known", { bars: parts.map((p, i) => ({ person: names[i], boxes: p, isKnown: i === knownPerson, knownAmount: i === knownPerson ? knownAmount : null })) }),
-    bStep("ka_identify",  { knownPerson: names[knownPerson], ratioPart: parts[knownPerson] }),
-    bStep("ka_part_val",  { knownAmount, ratioPart: parts[knownPerson], partValue }),
-    bStep("bar_filled",   { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
-    ...(qtype === "total"
-      ? [bStep("ka_total_bar", { shares, total })]
-      : [bStep("ka_other_bar", { otherPerson: names[other], share: shares[other] })]),
-  ];
+/** Part ranges for the known-share and difference questions (and the three-part sharing questions): [lo, hi, sumLo, sumHi]. */
+const KD_RANGE: Record<DifficultyLevel, Record<2 | 3, [number, number, number, number]>> = {
+  level1: { 2: [1, 6, 2, 7], 3: [1, 5, 6, 10] },
+  level2: { 2: [1, 11, 5, 12], 3: [1, 8, 8, 16] },
+  level3: { 2: [2, 12, 10, 20], 3: [2, 9, 12, 24] },
 };
+/** The total shared must fall in this range for known-share and difference questions. */
+const KD_TOTAL: Record<DifficultyLevel, [number, number]> = { level1: [2, 64], level2: [60, 144], level3: [40, 600] };
 
-const diffBarSteps = (
-  parts: number[], difference: number, largerPerson: number, partValue: number,
-  shares: number[], total: number, qtype: string, names: string[],
-): WorkingStep[] => {
-  const partDiff = Math.abs(parts[1] - parts[0]);
-  return [
-    bStep("diff_bar",     { bars: parts.map((p, i) => ({ person: names[i], boxes: p })), difference, largerPerson }),
-    bStep("diff_identify", { difference, partDiff }),
-    bStep("diff_part_val", { difference, partDiff, partValue }),
-    bStep("bar_filled",    { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
-    ...(qtype === "total"
-      ? [bStep("ka_total_bar", { shares, total })]
-      : qtype === "personA"
-      ? [bStep("diff_read", { person: names[0], share: shares[0] })]
-      : [bStep("diff_read", { person: names[1], share: shares[1] })]),
-  ];
-};
-
-// ── 6. QO options ─────────────────────────────────────────────────────────────
+// ── 3. Pools, switches and Question Options ───────────────────────────────────
 
 const SHARE_OPTIONS = [
   { value: "personA", label: "Person A", defaultActive: true },
   { value: "personB", label: "Person B", defaultActive: true },
-  { value: "both",    label: "Both",     defaultActive: true },
+  { value: "personC", label: "Person C", defaultActive: true, requires: ["three"] },
+  { value: "both",    label: "All Shares", defaultActive: true },
 ];
 
 const KNOWN_OPTIONS = [
@@ -122,6 +60,7 @@ const DIFF_OPTIONS = [
   { value: "total",   label: "Total",    defaultActive: true },
   { value: "personA", label: "Person A", defaultActive: true },
   { value: "personB", label: "Person B", defaultActive: true },
+  { value: "personC", label: "Person C", defaultActive: true, requires: ["three"] },
 ];
 
 const MIXED_OPTIONS = [
@@ -130,394 +69,218 @@ const MIXED_OPTIONS = [
   { value: "difference", label: "Difference", defaultActive: true },
 ];
 
-// ── 7. TOOL_CONFIG ────────────────────────────────────────────────────────────
+const PARTS_POOL: ToolMultiSelect = {
+  key: "partCount", tab: "questions", label: "Parts in the Ratio",
+  options: [
+    { value: "two",   label: "Two Parts",   defaultActive: true },
+    { value: "three", label: "Three Parts", defaultActive: false },
+  ],
+};
+const CONTEXT_POOL: ToolMultiSelect = {
+  key: "context", tab: "display", label: "Contexts",
+  options: [
+    { value: "money",      label: "Money",      defaultActive: true },
+    { value: "quantities", label: "Quantities", defaultActive: false },
+  ],
+};
 
-const NUMERICAL_VAR = [{ key: "numerical", tab: "method" as const, label: "Numerical method", displayOnly: true, defaultValue: false }];
+const NUMERICAL_VAR: ToolVariable = { key: "numerical", tab: "method", label: "Numerical method", displayOnly: true, defaultValue: false };
+const CHECK_VAR: ToolVariable = { key: "showCheck", tab: "method", label: "Check answer", displayOnly: true, defaultValue: false };
+const UNSIMPLIFIED_VAR: ToolVariable = { key: "unsimplified", tab: "numbers", label: "Unsimplified ratios*", defaultValue: false };
+
+const askPool = (key: string, label: string, options: { value: string; label: string; defaultActive: boolean; requires?: string[] }[]): ToolMultiSelect =>
+  ({ key, tab: "questions", label, options });
+
+const pools = (ask: ToolMultiSelect): ToolMultiSelect[] => [ask, PARTS_POOL, CONTEXT_POOL];
+
+const entry = (name: string, ask: ToolMultiSelect) => ({
+  name,
+  variables: [NUMERICAL_VAR, CHECK_VAR, UNSIMPLIFIED_VAR],
+  dropdown: null,
+  multiSelect: pools(ask),
+  // Level 3 always uses the numerical method, so its switch goes
+  difficultySettings: { level3: { variables: [CHECK_VAR, UNSIMPLIFIED_VAR] } },
+});
+
+// ── 4. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Ratio Sharing",
   tools: {
-    sharing: {
-      name: "Sharing in a Ratio",
-      variables: NUMERICAL_VAR,
-      dropdown: null,
-      multiSelect: { key: "shareType", tab: "questions" as const, label: "Ask for", options: SHARE_OPTIONS },
-      difficultySettings: { level3: { variables: [] } },
-    },
-    known: {
-      name: "Known Amounts",
-      variables: NUMERICAL_VAR,
-      dropdown: null,
-      multiSelect: { key: "knownType", tab: "questions" as const, label: "Ask for", options: KNOWN_OPTIONS },
-      difficultySettings: { level3: { variables: [] } },
-    },
-    difference: {
-      name: "Given Difference",
-      variables: NUMERICAL_VAR,
-      dropdown: null,
-      multiSelect: { key: "diffType", tab: "questions" as const, label: "Ask for", options: DIFF_OPTIONS },
-      difficultySettings: { level3: { variables: [] } },
-    },
-    mixed: {
-      name: "Mixed",
-      variables: NUMERICAL_VAR,
-      dropdown: null,
-      multiSelect: { key: "mixedPool", tab: "questions" as const, label: "Include", options: MIXED_OPTIONS },
-      difficultySettings: { level3: { variables: [] } },
-    },
+    sharing:    entry("Sharing in a Ratio", askPool("shareType", "Ask for", SHARE_OPTIONS)),
+    known:      entry("Known Amounts",      askPool("knownType", "Ask for", KNOWN_OPTIONS)),
+    difference: entry("Given Difference",   askPool("diffType",  "Ask for", DIFF_OPTIONS)),
+    mixed:      entry("Mixed",              askPool("mixedPool", "Include", MIXED_OPTIONS)),
   },
 };
 
+// ── 5. What the options say about this question ───────────────────────────────
 
-// ── 9. Sharing generator ──────────────────────────────────────────────────────
+/** Three parts only when ticked (an unticked option is `false`, but an absent one must not switch it on). */
+const partCount = (msv: Msv): 2 | 3 => {
+  const three = msv["three"] === true, two = msv["two"] !== false;
+  return three && (!two || Math.random() < 0.5) ? 3 : 2;
+};
+const pickContext = (msv: Msv): ContextId => {
+  const q = msv["quantities"] === true, m = msv["money"] !== false;
+  return q && (!m || Math.random() < 0.5) ? pick(QUANTITY_CONTEXTS) : "money";
+};
+/** One ask from a pool, ignoring Person C unless the ratio has three parts. */
+const pickAsk = (msv: Msv, options: { value: string }[], n: number): string => {
+  const ok = options.filter((o) => msv[o.value] !== false && (n === 3 || o.value !== "personC"));
+  return (ok.length ? pick(ok) : options[0]).value;
+};
+const personIndex = (v: string): number => ({ personA: 0, personB: 1, personC: 2 }[v] ?? 0);
 
-const generateSharingQuestion = (
-  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
-): WordedQuestion => {
+/** The ratio as shown when "Unsimplified ratios" is on: every part multiplied by 2 or 3 (null when off). */
+const unsimplify = (parts: number[], on: boolean): number[] | undefined => {
+  if (!on) return undefined;
+  const k = pick([2, 3]);
+  return parts.map((p) => p * k);
+};
+
+// ── 6. Sharing generator ──────────────────────────────────────────────────────
+
+const generateSharingQuestion = (level: DifficultyLevel, askValue: string | null, variables: Vars, msv: Msv): WordedQuestion => {
   const useBar = level !== "level3" && !(variables["numerical"] ?? false);
+  const check = variables["showCheck"] ?? false;
+  const n = partCount(msv);
+  const ctx = pickContext(msv);
+  const money = ctx === "money";
 
-  for (let att = 0; att < 200; att++) {
-    const names = twoNames();
+  for (let att = 0; att < 400; att++) {
+    const names = someNames(n);
     let parts: number[] = [];
-    let total = 0;
-    let ratioSum = 0;
+    let partValue = 0;
 
-    if (level === "level1") {
-      parts = pick([[1,2],[1,3],[1,4],[1,5],[1,6],[2,3],[2,5],[3,4]]);
-      if (Math.random() < 0.5) parts = [parts[1], parts[0]];
-      ratioSum = parts[0] + parts[1];
-      const mult = randInt(2, 12);
-      total = ratioSum * mult;
-      if (total > 64) continue;
-    } else if (level === "level2") {
-      const a = randInt(1, 11), b = randInt(1, 11);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b]; ratioSum = a + b;
-      if (ratioSum < 5 || ratioSum > 12) continue;
-      const mult = randInt(2, 12);
-      total = ratioSum * mult;
-      if (Math.max(a, b) * mult > 144) continue;
-      if (total < 60) continue;
+    if (n === 2) {
+      if (level === "level1") {
+        parts = pick([[1,2],[1,3],[1,4],[1,5],[1,6],[2,3],[2,5],[3,4]]);
+        if (Math.random() < 0.5) parts = [parts[1], parts[0]];
+        partValue = randInt(2, 12);
+        if ((parts[0] + parts[1]) * partValue > 64) continue;
+      } else if (level === "level2") {
+        const a = randInt(1, 11), b = randInt(1, 11);
+        if (gcdAll([a, b]) !== 1 || a === b) continue;
+        parts = [a, b];
+        const rs = a + b;
+        if (rs < 5 || rs > 12) continue;
+        partValue = randInt(2, 12);
+        if (Math.max(a, b) * partValue > 144) continue;
+        if (rs * partValue < 60) continue;
+      } else {
+        const a = randInt(3, 9), b = randInt(3, 9);
+        if (gcdAll([a, b]) !== 1 || a === b) continue;
+        parts = [a, b];
+        const rs = a + b;
+        if (rs < 8 || rs > 25) continue;
+        partValue = money && Math.random() >= 0.7 ? randInt(10, 30) + 0.5 : randInt(10, 30);
+      }
     } else {
-      const a = randInt(3, 9), b = randInt(3, 9);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b]; ratioSum = a + b;
-      if (ratioSum < 8 || ratioSum > 25) continue;
-      total = ratioSum * (Math.random() < 0.7 ? randInt(10, 30) : randInt(10, 30) + 0.5);
+      const [lo, hi, sLo, sHi] = KD_RANGE[level][3];
+      const p = drawParts(3, lo, hi, sLo, sHi);
+      if (!p) continue;
+      parts = p;
+      const rs = p[0] + p[1] + p[2];
+      if (level === "level1") {
+        partValue = randInt(2, 12);
+        if (rs * partValue > 64) continue;
+      } else if (level === "level2") {
+        partValue = randInt(2, 12);
+        if (rs * partValue < 60 || Math.max(...p) * partValue > 144) continue;
+      } else {
+        partValue = money && Math.random() >= 0.7 ? randInt(10, 30) + 0.5 : randInt(10, 30);
+      }
     }
 
-    if (parts.length < 2 || parts[0] === parts[1]) continue;
-    if (!isCoprime(parts[0], parts[1])) continue;
+    const total = parts.reduce((a, b) => a + b, 0) * partValue;
     if (total < 10 || total > 500) continue;
-
-    const partValue = total / ratioSum;
-    const shares = parts.map(p => p * partValue);
-
-    const qLine =
-      questionType === "personA" ? `How much does ${names[0]} receive?` :
-      questionType === "personB" ? `How much does ${names[1]} receive?` :
-      "Find both shares.";
-
-    const answer =
-      questionType === "personA" ? `${names[0]}: ${fp(shares[0])}` :
-      questionType === "personB" ? `${names[1]}: ${fp(shares[1])}` :
-      `${names[0]}: ${fp(shares[0])}, ${names[1]}: ${fp(shares[1])}`;
-
-    const working: WorkingStep[] = useBar
-      ? sharingBarSteps(parts, total, ratioSum, partValue, shares, names)
-      : [
-          mStep("Total parts:", `${parts.join(" + ")} = ${ratioSum}`),
-          mStep("1 part =", `${fc(total)} \\div ${ratioSum} = ${fc(partValue)}`),
-          ...(questionType === "personA"
-            ? [mStep(`${names[0]}'s share:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`)]
-            : questionType === "personB"
-            ? [mStep(`${names[1]}'s share:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`)]
-            : [
-                mStep(`${names[0]}:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`),
-                mStep(`${names[1]}:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`),
-              ]),
-        ];
-
-    const id = Math.floor(Math.random() * 1_000_000);
-    return {
-      kind: "worded",
-      lines: [
-        `${names[0]} and ${names[1]} share £${fmtAmt(total)} in the ratio ${mStr(parts.join(":"))}`,
-        qLine,
-      ],
-      answer, working,
-      key: `ratio-sharing-${level}-${parts.join("_")}-${total}-${questionType}-${id}`,
-      difficulty: level,
-    };
+    const display = unsimplify(parts, variables["unsimplified"] ?? false);
+    const ask = askValue ?? pickAsk(msv, SHARE_OPTIONS, n);
+    return buildSharing({ names, parts, partValue, ctx, display, bar: useBar, check, level, ask: ask === "both" ? "both" : personIndex(ask) });
   }
-
-  const fb = twoNames();
-  return {
-    kind: "worded",
-    lines: [`${fb[0]} and ${fb[1]} share £90 in the ratio ${mStr("1:2")}`, "Find both shares."],
-    answer: `${fb[0]}: £30, ${fb[1]}: £60`,
-    working: useBar
-      ? sharingBarSteps([1, 2], 90, 3, 30, [30, 60], fb)
-      : [
-          mStep("Total parts:", "1 + 2 = 3"),
-          mStep("1 part =", "\\pounds 90 \\div 3 = \\pounds 30"),
-          mStep(`${fb[0]}:`, "1 \\times \\pounds 30 = \\pounds 30"),
-          mStep(`${fb[1]}:`, "2 \\times \\pounds 30 = \\pounds 60"),
-        ],
-    key: `ratio-sharing-fallback-${Math.floor(Math.random() * 1_000_000)}`,
-    difficulty: level,
-  };
+  return buildSharing({ names: someNames(2), parts: [1, 2], partValue: 30, bar: useBar, check, level, ask: "both" });
 };
 
-// ── 10. Known Amounts generator ───────────────────────────────────────────────
+// ── 7. Known Amounts generator ────────────────────────────────────────────────
 
-const generateKnownAmountsQuestion = (
-  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
-): WordedQuestion => {
+const generateKnownAmountsQuestion = (level: DifficultyLevel, askValue: string | null, variables: Vars, msv: Msv): WordedQuestion => {
   const useBar = level !== "level3" && !(variables["numerical"] ?? false);
+  const check = variables["showCheck"] ?? false;
+  const n = partCount(msv);
+  const ctx = pickContext(msv);
 
-  for (let att = 0; att < 200; att++) {
-    const names = twoNames();
-    let parts: number[] = [];
-    let partValue = 0;
-    let knownPerson = 0;
-
-    if (level === "level1") {
-      const a = randInt(1, 6), b = randInt(1, 6);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 2 || rs > 7) continue;
-      partValue = randInt(1, Math.floor(64 / rs));
-      if (rs * partValue < 2 || rs * partValue > 64) continue;
-      knownPerson = Math.random() < 0.5 ? 0 : 1;
-    } else if (level === "level2") {
-      const a = randInt(1, 11), b = randInt(1, 11);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 5 || rs > 12) continue;
-      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
-      if (lo > hi) continue;
-      partValue = randInt(lo, hi);
-      const t = rs * partValue;
-      if (t < 60 || t > 144) continue;
-      knownPerson = Math.random() < 0.5 ? 0 : 1;
-    } else {
-      const a = randInt(2, 12), b = randInt(2, 12);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 10 || rs > 20) continue;
-      const lo = Math.ceil(40 / rs), hi = Math.floor(600 / rs);
-      if (lo > hi) continue;
-      partValue = randInt(lo, hi);
-      const t = rs * partValue;
-      if (t < 40 || t > 600) continue;
-      knownPerson = Math.random() < 0.5 ? 0 : 1;
-    }
-
-    const knownAmount = parts[knownPerson] * partValue;
-    const shares = parts.map(p => p * partValue);
-    const total = shares[0] + shares[1];
-    const other = knownPerson === 0 ? 1 : 0;
-
+  for (let att = 0; att < 400; att++) {
+    const names = someNames(n);
+    const [lo, hi, sLo, sHi] = KD_RANGE[level][n];
+    const parts = drawParts(n, lo, hi, sLo, sHi);
+    if (!parts) continue;
+    const rs = parts.reduce((a, b) => a + b, 0);
+    const [tLo, tHi] = KD_TOTAL[level];
+    const pLo = Math.ceil(tLo / rs), pHi = Math.floor(tHi / rs);
+    if (pLo > pHi) continue;
+    const partValue = randInt(pLo, pHi);
+    const known = randInt(0, n - 1);
+    const knownAmount = parts[known] * partValue;
     if (knownAmount < 1 || knownAmount > 400) continue;
-    if (total < 2 || total > 600) continue;
-
-    const qLine = questionType === "total"
-      ? "What is the total amount shared?"
-      : `How much does ${names[other]} receive?`;
-
-    const answer = questionType === "total"
-      ? `Total: ${fp(total)}`
-      : `${names[other]}: ${fp(shares[other])}`;
-
-    const working: WorkingStep[] = useBar
-      ? knownBarSteps(parts, knownAmount, knownPerson, partValue, shares, total, questionType, names)
-      : [
-          mStep(`${names[knownPerson]} has ${parts[knownPerson]} part${parts[knownPerson] !== 1 ? "s" : ""}:`, fc(knownAmount)),
-          mStep("1 part =", `${fc(knownAmount)} \\div ${parts[knownPerson]} = ${fc(partValue)}`),
-          ...(questionType === "total"
-            ? [
-                mStep("Total parts:", `${parts.join(" + ")} = ${parts[0] + parts[1]}`),
-                mStep("Total =", `${parts[0] + parts[1]} \\times ${fc(partValue)} = ${fc(total)}`),
-              ]
-            : [mStep(`${names[other]}'s share:`, `${parts[other]} \\times ${fc(partValue)} = ${fc(shares[other])}`)]),
-        ];
-
-    const id = Math.floor(Math.random() * 1_000_000);
-    return {
-      kind: "worded",
-      lines: [
-        `${names[0]} and ${names[1]} share money in the ratio ${mStr(parts.join(":"))}`,
-        `${names[knownPerson]} receives £${fmtAmt(knownAmount)}`,
-        qLine,
-      ],
-      answer, working,
-      key: `ratio-known-${level}-${parts.join("_")}-${knownAmount}-${knownPerson}-${questionType}-${id}`,
-      difficulty: level,
-    };
-  }
-
-  const fb = twoNames();
-  return {
-    kind: "worded",
-    lines: [
-      `${fb[0]} and ${fb[1]} share money in the ratio ${mStr("2:3")}`,
-      `${fb[0]} receives £40`,
-      "What is the total amount shared?",
-    ],
-    answer: "Total: £100",
-    working: useBar
-      ? knownBarSteps([2, 3], 40, 0, 20, [40, 60], 100, "total", fb)
-      : [
-          mStep(`${fb[0]} has 2 parts:`, "\\pounds 40"),
-          mStep("1 part =", "\\pounds 40 \\div 2 = \\pounds 20"),
-          mStep("Total parts:", "2 + 3 = 5"),
-          mStep("Total =", "5 \\times \\pounds 20 = \\pounds 100"),
-        ],
-    key: `ratio-known-fallback-${Math.floor(Math.random() * 1_000_000)}`,
-    difficulty: level,
-  };
-};
-
-// ── 11. Given Difference generator ───────────────────────────────────────────
-
-const generateDifferenceQuestion = (
-  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
-): WordedQuestion => {
-  const useBar = level !== "level3" && !(variables["numerical"] ?? false);
-
-  for (let att = 0; att < 200; att++) {
-    const names = twoNames();
-    let parts: number[] = [];
-    let partValue = 0;
-
-    if (level === "level1") {
-      const a = randInt(1, 6), b = randInt(1, 6);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 2 || rs > 7) continue;
-      partValue = randInt(1, Math.floor(64 / rs));
-      if (rs * partValue < 2 || rs * partValue > 64) continue;
-    } else if (level === "level2") {
-      const a = randInt(1, 11), b = randInt(1, 11);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 5 || rs > 12) continue;
-      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
-      if (lo > hi) continue;
-      partValue = randInt(lo, hi);
-      const t = rs * partValue;
-      if (t < 60 || t > 144) continue;
-    } else {
-      const a = randInt(2, 12), b = randInt(2, 12);
-      if (!isCoprime(a, b) || a === b) continue;
-      parts = [a, b];
-      const rs = a + b;
-      if (rs < 10 || rs > 20) continue;
-      const lo = Math.ceil(40 / rs), hi = Math.floor(600 / rs);
-      if (lo > hi) continue;
-      partValue = randInt(lo, hi);
-      const t = rs * partValue;
-      if (t < 40 || t > 600) continue;
+    const ask = askValue ?? pickAsk(msv, KNOWN_OPTIONS, n);
+    let other = 0;
+    if (ask === "other") {
+      const others = parts.map((_, i) => i).filter((i) => i !== known);
+      other = pick(others);
     }
-
-    if (Math.abs(parts[0] - parts[1]) < 1) continue;
-
-    const shares = parts.map(p => p * partValue);
-    const difference = Math.abs(shares[1] - shares[0]);
-    const total = shares[0] + shares[1];
-    const largerPerson = shares[0] > shares[1] ? 0 : 1;
-    const smallerPerson = largerPerson === 0 ? 1 : 0;
-    const partDiff = Math.abs(parts[1] - parts[0]);
-
-    if (difference < 1) continue;
-
-    const style = randInt(1, 3);
-    const compLine =
-      style === 1 ? `${names[largerPerson]} receives £${fmtAmt(difference)} more than ${names[smallerPerson]}` :
-      style === 2 ? `${names[smallerPerson]} receives £${fmtAmt(difference)} less than ${names[largerPerson]}` :
-      `The difference in their amounts is £${fmtAmt(difference)}`;
-
-    const qLine =
-      questionType === "total"   ? "What is the total amount shared?" :
-      questionType === "personA" ? `How much does ${names[0]} receive?` :
-                                   `How much does ${names[1]} receive?`;
-
-    const answer =
-      questionType === "total"   ? `Total: ${fp(total)}` :
-      questionType === "personA" ? `${names[0]}: ${fp(shares[0])}` :
-                                   `${names[1]}: ${fp(shares[1])}`;
-
-    const ratioSum = parts[0] + parts[1];
-    const working: WorkingStep[] = useBar
-      ? diffBarSteps(parts, difference, largerPerson, partValue, shares, total, questionType, names)
-      : [
-          mStep(`Difference = ${partDiff} part${partDiff !== 1 ? "s" : ""}:`, fc(difference)),
-          mStep("1 part =", `${fc(difference)} \\div ${partDiff} = ${fc(partValue)}`),
-          ...(questionType === "total"
-            ? [
-                mStep("Total parts:", `${parts.join(" + ")} = ${ratioSum}`),
-                mStep("Total =", `${ratioSum} \\times ${fc(partValue)} = ${fc(total)}`),
-              ]
-            : questionType === "personA"
-            ? [mStep(`${names[0]}'s share:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`)]
-            : [mStep(`${names[1]}'s share:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`)]),
-        ];
-
-    const id = Math.floor(Math.random() * 1_000_000);
-    return {
-      kind: "worded",
-      lines: [
-        `${names[0]} and ${names[1]} share money in the ratio ${mStr(parts.join(":"))}`,
-        compLine,
-        qLine,
-      ],
-      answer, working,
-      key: `ratio-diff-${level}-${parts.join("_")}-${difference}-${questionType}-${id}`,
-      difficulty: level,
-    };
+    return buildKnown({
+      names, parts, partValue, ctx, display: unsimplify(parts, variables["unsimplified"] ?? false), bar: useBar, check, level,
+      known, ask: ask === "total" ? "total" : other,
+    });
   }
-
-  const fb = twoNames();
-  return {
-    kind: "worded",
-    lines: [
-      `${fb[0]} and ${fb[1]} share money in the ratio ${mStr("2:3")}`,
-      `The difference in their amounts is £20`,
-      "What is the total amount shared?",
-    ],
-    answer: "Total: £100",
-    working: useBar
-      ? diffBarSteps([2, 3], 20, 1, 20, [40, 60], 100, "total", fb)
-      : [
-          mStep("Difference = 1 part:", "\\pounds 20"),
-          mStep("1 part =", "\\pounds 20 \\div 1 = \\pounds 20"),
-          mStep("Total parts:", "2 + 3 = 5"),
-          mStep("Total =", "5 \\times \\pounds 20 = \\pounds 100"),
-        ],
-    key: `ratio-diff-fallback-${Math.floor(Math.random() * 1_000_000)}`,
-    difficulty: level,
-  };
+  return buildKnown({ names: someNames(2), parts: [2, 3], partValue: 20, bar: useBar, check, level, known: 0, ask: "total" });
 };
 
-// ── 12. Mixed generator ───────────────────────────────────────────────────────
+// ── 8. Given Difference generator ─────────────────────────────────────────────
 
-const generateMixedQuestion = (
-  level: DifficultyLevel, variables: Record<string, boolean>, multiSelectValues: Record<string, boolean>,
-): WordedQuestion => {
-  const subTool = pickActive(multiSelectValues, MIXED_OPTIONS);
-  if (subTool === "sharing")    return generateSharingQuestion(level, pick(["personA","personB","both"]), variables);
-  if (subTool === "known")      return generateKnownAmountsQuestion(level, pick(["total","other"]), variables);
-  return generateDifferenceQuestion(level, pick(["total","personA","personB"]), variables);
+const generateDifferenceQuestion = (level: DifficultyLevel, askValue: string | null, variables: Vars, msv: Msv): WordedQuestion => {
+  const useBar = level !== "level3" && !(variables["numerical"] ?? false);
+  const check = variables["showCheck"] ?? false;
+  const n = partCount(msv);
+  const ctx = pickContext(msv);
+
+  for (let att = 0; att < 400; att++) {
+    const names = someNames(n);
+    const [lo, hi, sLo, sHi] = KD_RANGE[level][n];
+    const parts = drawParts(n, lo, hi, sLo, sHi);
+    if (!parts) continue;
+    const rs = parts.reduce((a, b) => a + b, 0);
+    const [tLo, tHi] = KD_TOTAL[level];
+    const pLo = Math.ceil(tLo / rs), pHi = Math.floor(tHi / rs);
+    if (pLo > pHi) continue;
+    const partValue = randInt(pLo, pHi);
+    let a = 0, b = 1;
+    if (n === 3) {
+      a = randInt(0, 2);
+      b = pick([0, 1, 2].filter((i) => i !== a));
+    }
+    const ask = askValue ?? pickAsk(msv, DIFF_OPTIONS, n);
+    return buildDifference({
+      names, parts, partValue, ctx, display: unsimplify(parts, variables["unsimplified"] ?? false), bar: useBar, check, level,
+      a, b, style: pick([1, 2, 3] as const), ask: ask === "total" ? "total" : personIndex(ask),
+    });
+  }
+  return buildDifference({ names: someNames(2), parts: [2, 3], partValue: 20, bar: useBar, check, level, a: 0, b: 1, style: 3, ask: "total" });
 };
 
-// ── 13. generateQuestion ──────────────────────────────────────────────────────
+// ── 9. Mixed generator ────────────────────────────────────────────────────────
 
+const generateMixedQuestion = (level: DifficultyLevel, variables: Vars, msv: Msv): WordedQuestion => {
+  const kind = pick(MIXED_OPTIONS.filter((o) => msv[o.value] !== false)).value;
+  if (kind === "sharing") return generateSharingQuestion(level, null, variables, msv);
+  if (kind === "known") return generateKnownAmountsQuestion(level, null, variables, msv);
+  return generateDifferenceQuestion(level, null, variables, msv);
+};
+
+// ── 10. generateQuestion ──────────────────────────────────────────────────────
+
+// The ask is drawn inside each generator (it depends on the number of parts), from its own pool.
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
@@ -526,12 +289,17 @@ const generateQuestion = (
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
-  if (t === "sharing")    return generateSharingQuestion(level, pickActive(multiSelectValues, SHARE_OPTIONS), variables);
-  if (t === "known")      return generateKnownAmountsQuestion(level, pickActive(multiSelectValues, KNOWN_OPTIONS), variables);
-  if (t === "difference") return generateDifferenceQuestion(level, pickActive(multiSelectValues, DIFF_OPTIONS), variables);
+  if (t === "sharing")    return generateSharingQuestion(level, null, variables, multiSelectValues);
+  if (t === "known")      return generateKnownAmountsQuestion(level, null, variables, multiSelectValues);
+  if (t === "difference") return generateDifferenceQuestion(level, null, variables, multiSelectValues);
   return generateMixedQuestion(level, variables, multiSelectValues);
 };
 
+// ── 11. Bar colour helpers ────────────────────────────────────────────────────
+
+const getBarEmptyBg = (cs: string) => getQuestionBg(cs);
+const getBarKnownBg = (cs: string) => ({ blue: "#7eb8e0", pink: "#e07eb8", yellow: "#e0e07e" }[cs] ?? "#93c5fd");
+const getBarDiffBg  = (cs: string) => ({ blue: "#d8b4fe", pink: "#fed8b4", yellow: "#b4fed8" }[cs] ?? "#e9d5ff");
 
 // ── 15. Bar component ─────────────────────────────────────────────────────────
 
@@ -565,6 +333,9 @@ type BarEntry = { person: string; boxes: number; isKnown?: boolean; knownAmount?
 // The bar model alone (no heading): the one picture the cascade keeps on screen and updates in place.
 const barVisual = (step: WorkingStep): JSX.Element | null => {
   const d = (step.extra ?? {}) as Record<string, unknown>;
+  const f = (n: number) => fa(d.ctx as string | undefined, n);
+  // a box is small: a quantity shows its number only (the unit is in the question and the totals)
+  const box = (n: number) => (d.ctx && d.ctx !== "money" ? String(n) : f(n));
   const bars = d.bars as BarEntry[] | undefined;
   if (!bars) return null;
   const T = step.type;
@@ -577,8 +348,8 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
     <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
       {bars.map((bar, i) => (
         <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg("default")} borderColor="#1e3a8a"
-          cellLabel={bar.value !== undefined ? fp(bar.value) : undefined}
-          totalLabel={bar.total !== undefined ? fp(bar.total) : undefined} />
+          cellLabel={bar.value !== undefined ? box(bar.value) : undefined}
+          totalLabel={bar.total !== undefined ? f(bar.total) : undefined} />
       ))}
     </div>
   );
@@ -587,12 +358,12 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
       {bars.map((bar, i) => (
         <BarRow key={i} person={bar.person} boxes={bar.boxes}
           fillBg={bar.isKnown ? getBarKnownBg("default") : getBarEmptyBg("default")} borderColor="#1e3a8a"
-          totalLabel={bar.isKnown && bar.knownAmount != null ? fp(bar.knownAmount) : undefined} />
+          totalLabel={bar.isKnown && bar.knownAmount != null ? f(bar.knownAmount) : undefined} />
       ))}
     </div>
   );
   if (T === "diff_bar") {
-    const smallerCount = Math.min(bars[0].boxes, bars[1].boxes);
+    const smallerCount = typeof d.smallerPerson === "number" ? bars[d.smallerPerson].boxes : Math.min(bars[0].boxes, bars[1].boxes);
     return (
       <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
         {bars.map((bar, i) => {
@@ -614,7 +385,7 @@ const barVisual = (step: WorkingStep): JSX.Element | null => {
         })}
         <div className="flex items-center gap-2 mt-1" style={{ marginLeft: NAME_W + 12 }}>
           <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg("default"), flexShrink: 0 }} />
-          <span className="text-base font-bold" style={{ color: "#000" }}>= {fp(d.difference as number)}</span>
+          <span className="text-base font-bold" style={{ color: "#000" }}>= {f(d.difference as number)}</span>
         </div>
       </div>
     );
@@ -635,8 +406,16 @@ const ratioStepVisual = (step: WorkingStep): JSX.Element | null | false => {
 const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
   if (!step.extra) return null;
   const d = step.extra as Record<string, unknown>;
+  const f = (n: number) => fa(d.ctx as string | undefined, n);
   const T = step.type;
   const bars = d.bars as BarEntry[] | undefined;
+
+  if (T === "simplify" || T.startsWith("check_")) return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>{T === "simplify" ? "Simplify the ratio:" : "Check:"}</h4>
+      <div className="text-2xl font-medium" style={{ color: "#000" }}>{step.plain.replace(/^(Simplify the ratio first: |Check: )/, "")}</div>
+    </div>
+  );
 
   if (T === "bar_empty" && bars) return (
     <div>
@@ -656,7 +435,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Value of 1 part:</h4>
       <div className="text-3xl font-medium" style={{ color: "#000" }}>
-        {fp(d.total as number)} ÷ {d.sum as number} = {fp(d.value as number)}
+        {f(d.total as number)} ÷ {d.sum as number} = {f(d.value as number)}
       </div>
     </div>
   );
@@ -688,7 +467,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Calculate value of 1 part:</h4>
       <div className="text-3xl font-bold" style={{ color: "#000" }}>
-        {fp(d.knownAmount as number)} ÷ {d.ratioPart as number} = {fp(d.partValue as number)}
+        {f(d.knownAmount as number)} ÷ {d.ratioPart as number} = {f(d.partValue as number)}
       </div>
     </div>
   );
@@ -697,7 +476,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Add all parts to find total:</h4>
       <div className="text-3xl font-bold" style={{ color: "#000" }}>
-        {(d.shares as number[]).map(s => fp(s)).join(" + ")} = {fp(d.total as number)}
+        {(d.shares as number[]).map(s => f(s)).join(" + ")} = {f(d.total as number)}
       </div>
     </div>
   );
@@ -705,7 +484,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
   if (T === "ka_other_bar") return (
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Read {d.otherPerson as string}'s share from bar:</h4>
-      <div className="text-3xl font-bold" style={{ color: "#000" }}>{fp(d.share as number)}</div>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>{f(d.share as number)}</div>
     </div>
   );
 
@@ -720,7 +499,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>The difference represents:</h4>
       <div className="text-3xl font-bold" style={{ color: "#000" }}>
-        {d.partDiff as number} part{(d.partDiff as number) !== 1 ? "s" : ""} = {fp(d.difference as number)}
+        {d.partDiff as number} part{(d.partDiff as number) !== 1 ? "s" : ""} = {f(d.difference as number)}
       </div>
     </div>
   );
@@ -729,7 +508,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Calculate value of 1 part:</h4>
       <div className="text-3xl font-bold" style={{ color: "#000" }}>
-        {fp(d.difference as number)} ÷ {d.partDiff as number} = {fp(d.partValue as number)}
+        {f(d.difference as number)} ÷ {d.partDiff as number} = {f(d.partValue as number)}
       </div>
     </div>
   );
@@ -737,7 +516,7 @@ const ratioStepRenderer = (step: WorkingStep): JSX.Element | null => {
   if (T === "diff_read") return (
     <div className="text-center">
       <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Read {d.person as string}'s share from bar:</h4>
-      <div className="text-3xl font-bold" style={{ color: "#000" }}>{fp(d.share as number)}</div>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>{f(d.share as number)}</div>
     </div>
   );
 

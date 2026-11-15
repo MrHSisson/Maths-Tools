@@ -2704,24 +2704,24 @@
    ]
   },
   "ratio-sharing": {
-   "purpose": "Share amounts in a given ratio.",
+   "purpose": "Share an amount in a ratio of two or three parts: from the total, from one known share, or from a difference.",
    "subTools": [
     {
-     "name": "Sharing in a Ratio",
+     "name": "Sharing",
      "purpose": "Share a total in a ratio.",
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
-     "name": "Known Amounts",
+     "name": "Known",
      "purpose": "One person's share is given: find the total or the other share.",
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
@@ -2730,7 +2730,7 @@
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     },
     {
@@ -2739,7 +2739,7 @@
      "levels": [
       "Ratios and totals from the times tables (shares within 12 × 12)",
       "Random ratios that do not simplify, with every share at most 144",
-      "Larger ratios with totals up to 600 (the algebra method is always used)"
+      "Larger ratios with totals up to 600 (the numerical method is always used)"
      ]
     }
    ],

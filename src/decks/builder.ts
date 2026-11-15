@@ -7,6 +7,7 @@ import { texNumber } from "../shared/math";
 import { ALL_TOOLS } from "../registry";
 import { barSlide, twoColumnSlide, boardSlide, definitionSlide, depthSlide, discussionSlide, dividerSlide, gridSlide, objectiveSlide, plenarySlide, skillSlide, titleSlide, vocabSlide, numberGridSlide, bookWorkSlide, starterSlide, ratioTableSlide, whiteboardSlide, worksheetSlide } from "./layouts";
 import { fromWorked, materializeDeck, newQuestion } from "./questions";
+import { shareQuestion, knownQuestion, diffQuestion } from "./sharingQuestions";
 import { wholeQuestion, type AskFor, type SimplifyMethod } from "../tools/Proportion/ratioSimplifying";
 import { THREE, TWO, fractionQuestion, type Kind } from "../tools/Proportion/ratioFractionOf";
 import { fractionOfPartToRatio, fractionOfTotalToRatio, formTwoPartRatio } from "../tools/Proportion/ratioFromFraction";
@@ -36,6 +37,8 @@ interface RatioFractionSpec {
 }
 
 export const Q = {
+  /** Ratio Sharing, fixed numbers, with the tool's own wording and working (its bar model kept as a picture): `share` a total, a `known` share, a given difference (`diff`). */
+  share: shareQuestion, known: knownQuestion, diff: diffQuestion,
   /** Fixed rectilinear dimensions, checked independently and worked by the live tool. */
   rectilinear: authoredRectilinear,
   /** Any question: one line of question, one of answer, one reveal per line of working. */
