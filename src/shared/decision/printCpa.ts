@@ -70,8 +70,12 @@ const CSS = `
   table.prec th { width: 1%; background: #1e3a8a; color: #fff; padding: 1mm 2mm; border: 0.3mm solid #1e3a8a; text-align: left; white-space: nowrap; }
   table.prec td { border: 0.3mm solid #1e3a8a; padding: 1mm 2mm; text-align: center; font-style: italic; }
   table.prec td.n { font-style: normal; }
-  .space { flex: 1 1 0; min-height: 0; margin-top: 3mm; border: 0.3mm dashed #94a3b8; border-radius: 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  .space { position: relative; flex: 1 1 0; min-height: 0; margin-top: 3mm; border: 0.3mm dashed #94a3b8; border-radius: 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     background-image: radial-gradient(circle, #94a3b8 0.25mm, transparent 0.3mm); background-size: 5mm 5mm; background-position: 2.5mm 2.5mm; }
+  /* the precedence table sits in the top corner of the dotted drawing space, on white so it reads clearly */
+  table.prec.up { position: absolute; top: 2.5mm; left: 2.5mm; width: auto; background: #fff; font-size: 10pt; }
+  table.prec.up th { width: auto; text-align: center; padding: 1mm 3mm; white-space: normal; }
+  table.prec.up td { padding: 0.8mm 3mm; font-style: normal; text-align: center; }
   .fill { margin-top: 2mm; font-size: 10pt; }
   .fill .row { display: flex; align-items: flex-end; gap: 2mm; height: 8.5mm; }
   .fill .row .line { flex: 1; border-bottom: 0.3mm solid #111827; height: 6mm; }

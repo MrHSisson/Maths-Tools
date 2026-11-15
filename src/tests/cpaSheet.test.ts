@@ -67,7 +67,14 @@ describe("A4 question sheet", () => {
         expect(q).toContain("Name ____");
         expect(q.match(/class="fig /g)).toHaveLength(1);
         expect(a).toContain("answers");
-        if (kind === "cpaNetwork") { expect(q).toContain("fig draw rot"); expect(q).toContain("Immediate predecessors"); expect(a).toContain("fig work"); }
+        if (kind === "cpaNetwork") {
+          // the drawing space stays upright, with the precedence table in its corner: one row per activity (activity, duration, immediate predecessors)
+          expect(q).toContain('class="fig draw"'); expect(q).not.toContain("fig draw rot");
+          expect(q).toContain("Immediate predecessors");
+          expect(q).toContain('class="prec up"');
+          expect((q.match(/<tr>/g) ?? []).length).toBe(g.data.acts.length + 1);   // a header row and one row for each activity
+          expect(a).toContain("fig work");
+        }
         else expect(q).toContain("fig work");
         if (kind === "cpaFull") { expect(q).toContain("Critical activities"); expect(q).toContain("Minimum completion time"); }
         // the answer sheet fills the boxes in
