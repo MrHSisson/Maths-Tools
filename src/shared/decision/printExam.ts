@@ -1,6 +1,7 @@
 import katex from "katex";
 import katexCss from "katex/dist/katex.min.css?inline";   // the stylesheet is part of the page and its fonts come from the site itself: a printed paper needs no connection
 import type { ExamData } from "./types";
+import { FRAME_CSS, esc, frameHeader } from "./printFrame";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Print an exam-style question as a PDF (the browser's print dialog → Save as PDF). Two sheets:
@@ -11,6 +12,8 @@ import type { ExamData } from "./types";
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface ExamPrintInput {
+  /** what the sheet is, for the header ("State the dimensions, then find the powers · Level 1") */
+  subtitle?: string;
   /** where the picture would be, a blank box headed "Working" (a written-working question draws no picture: the student writes their own) */
   workingBox?: boolean;
   title: string;           // the tool's name
@@ -23,7 +26,6 @@ interface ExamPrintInput {
   partFigures?: Array<string | null>;
 }
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 /** one formula as HTML (rendered here, so the printed page needs no script and no connection; a formula KaTeX cannot read is shown as its text) */
 const texHtml = (tex: string): string => { try { return katex.renderToString(tex, { throwOnError: false, output: "html" }); } catch { return esc(tex); } };
 /** text with maths between $…$ as HTML: the prose escaped, each formula typeset */
@@ -31,13 +33,7 @@ const mathHtml = (s: string): string => s.split(/(\$[^$]+\$)/g).map((part, i) =>
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
 const CSS = `
-  @page { size: A4; margin: 14mm; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; font-size: 11.5pt; margin: 0; }
-  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.6mm solid #1e3a8a; padding-bottom: 2mm; margin-bottom: 4mm; }
-  header h1 { font-size: 14pt; margin: 0; color: #1e3a8a; }
-  header .who { font-size: 10pt; color: #374151; }
-  .meta { font-size: 9.5pt; color: #4b5563; margin-bottom: 3mm; }
+  ${FRAME_CSS}
   .intro { font-weight: 600; margin-bottom: 4mm; }
   .fig { width: 100%; height: 88mm; border: 0.3mm solid #cbd5e1; border-radius: 2mm; margin-bottom: 5mm; }
   .fig.small { height: 78mm; margin: 2mm 0 1mm; }
@@ -76,7 +72,7 @@ const CSS = `
 type PartHtml = { paper: string; scheme: string };
 
 /** one question's paper and mark scheme (n of total numbers them when there are several) */
-function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures = [], partFigures = [], workingBox }: ExamPrintInput, n: number, total: number): PartHtml {
+function questionHtml({ title, subtitle, exam, questionFigure, answerFigures, blankFigures = [], partFigures = [], workingBox }: ExamPrintInput, n: number, total: number): PartHtml {
   const lines = (n: number) => Array.from({ length: n }, () => `<div class="rule"></div>`).join("");
   // potentials then augmentation: both are worked on the SAME network (the potentials crossed out and updated as the paths are used), so that one
   // copy is given with the potentials part, and the augmentation part only gets a second copy for the maximum flow
@@ -113,14 +109,15 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
 
   const tag = total > 1 ? `Question ${n} of ${total} · ` : "";
   const paper = `<div class="paper">
-    <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
+    ${frameHeader(title, subtitle)}
     <div class="meta">${tag}${exam.totalMarks} marks · about ${exam.minutes} minutes</div>
     <div class="intro">${mathHtml(exam.intro)}</div>
     ${questionFigure ? `${exam.parts.some((x) => x.figure) ? `<div class="cap">Figure 1</div>` : ""}<div class="fig">${questionFigure}</div>` : workingBox ? `<div class="workbox"><span>Working</span></div>` : ""}
     ${parts}
   </div>`;
   const markScheme = `<div class="markscheme">
-    <header><h1>${esc(title)} — mark scheme</h1><div class="who">${total > 1 ? `Question ${n} · ` : ""}${exam.totalMarks} marks</div></header>
+    ${frameHeader(title, subtitle, { tag: "mark scheme", who: false })}
+    <div class="meta">${total > 1 ? `Question ${n} · ` : ""}${exam.totalMarks} marks</div>
     ${scheme}
   </div>`;
   return { paper, scheme: markScheme };
@@ -150,7 +147,7 @@ interface SkillPrintQuestion {
   space?: "s" | "m" | "l";
 }
 /** the paper and the answers page of a set of skill questions */
-function skillParts(title: string, questions: SkillPrintQuestion[], layout: SkillLayout = { perPage: false, space: "auto" }): { paper: string; answers: string } {
+function skillParts(title: string, subtitle: string | undefined, questions: SkillPrintQuestion[], layout: SkillLayout = { perPage: false, space: "auto" }): { paper: string; answers: string } {
   const area = (q: SkillPrintQuestion): string => {
     if (layout.space === "none") return "";
     const size = layout.space === "s" || layout.space === "m" || layout.space === "l" ? layout.space : q.space ?? "m";
@@ -159,12 +156,13 @@ function skillParts(title: string, questions: SkillPrintQuestion[], layout: Skil
   const count = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
   return {
     paper: `<div class="paper">
-    <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
+    ${frameHeader(title, subtitle)}
     <div class="meta">${count}</div>
     ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div>${area(q)}</section>`).join("\n")}
   </div>`,
     answers: `<div class="markscheme">
-    <header><h1>${esc(title)} — answers</h1><div class="who">${count}</div></header>
+    ${frameHeader(title, subtitle, { tag: "answers", who: false })}
+    <div class="meta">${count}</div>
     <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}</div></div>`).join("\n")}</div>
   </div>`,
   };
@@ -175,20 +173,20 @@ const documentHtml = (title: string, papers: string[], schemes: string[], autoPr
   ${PRINT_SCRIPT}
   </body></html>`;
 /** a worksheet of skill questions: numbered questions each with a blank working box, then (on request) a page of answers (exported so it can be tested without a window) */
-export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean; layout?: SkillLayout } = {}): string {
-  const s = skillParts(title, questions, opts.layout);
+export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean; layout?: SkillLayout; subtitle?: string } = {}): string {
+  const s = skillParts(title, opts.subtitle, questions, opts.layout);
   return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [s.paper], opts.schemes === false ? [] : [s.answers], opts.autoPrint);
 }
 
 /** exam papers and skill questions together in one document: every paper first (exam papers, then the skill sheet), then every mark scheme and the answers page */
-function sheetsHtml(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean }): string {
+function sheetsHtml(exams: ExamPrintInput[], skill: { title: string; subtitle?: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean }): string {
   const items = exams.map((inp, i) => questionHtml(inp, i + 1, exams.length));
-  const s = skill && skill.questions.length ? skillParts(skill.title, skill.questions, skill.layout) : null;
+  const s = skill && skill.questions.length ? skillParts(skill.title, skill.subtitle, skill.questions, skill.layout) : null;
   const title = exams[0]?.title ?? skill?.title ?? "";
   return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [...items.map((x) => x.paper), ...(s ? [s.paper] : [])], opts.schemes === false ? [] : [...items.map((x) => x.scheme), ...(s ? [s.answers] : [])], opts.autoPrint);
 }
 /** `win` is a window already opened at the click (so slow rendering before it cannot make the browser treat the popup as unrequested) */
-export function printSheets(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
+export function printSheets(exams: ExamPrintInput[], skill: { title: string; subtitle?: string; questions: SkillPrintQuestion[]; layout?: SkillLayout } | null, opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
   const html = sheetsHtml(exams, skill, { ...opts, autoPrint: true });
   const win = opts.win ?? window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }

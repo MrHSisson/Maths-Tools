@@ -35,7 +35,7 @@ interface Args {
   /** a saved question brought back onto the page (the shell takes on its sub-tool, level and options and shows the rebuilt problem) */
   onLoad: (item: SavedItem) => void;
   /** print rebuilt exam-style and skill questions (the Worksheet's printer), into a window opened at the click */
-  printProblems: (problems: DecisionProblem[], mode: PrintMode, win: Window) => Promise<void>;
+  printProblems: (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>;
 }
 
 interface PrintBasketState {
@@ -67,6 +67,7 @@ export function usePrintBasket({ config, saved, generate, onLoad, printProblems 
     const winPaper = withPaper ? window.open("", "_blank") : null;
     if ((withSheet && !winSheet) || (withPaper && !winPaper)) { winSheet?.close(); winPaper?.close(); alert("Please allow popups to use the PDF export."); return; }
     const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [], problems: DecisionProblem[] = [];
+    const paperItems: SavedItem[] = [];   // the saved questions that print as papers or a worksheet
     let skipped = basket.length - toPrint.length;   // saved questions from another tool, or with no print route
     try {
       for (let k = 0; k < toPrint.length; k++) {
@@ -78,12 +79,16 @@ export function usePrintBasket({ config, saved, generate, onLoad, printProblems 
           if (sheetTab(it) && config.questionSheet) {
             if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
             if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
-          } else problems.push(pr);
+          } else { problems.push(pr); paperItems.push(it); }
         } catch { skipped++; }
       }
       const sheets = [...questions, ...answers];
       if (winSheet) { if (sheets.length) printCpaSheets(sheets, winSheet); else winSheet.close(); }
-      if (winPaper) { if (problems.length) await printProblems(problems, mode, winPaper); else winPaper.close(); }
+      // one kind of question in the set: say what it is in the header (a mixed set just carries the tool's name)
+      const kinds = new Set(paperItems.map((i) => `${i.tab}|${i.level}`));
+      const only = paperItems[0];
+      const subtitle = kinds.size === 1 && only ? `${config.subTools?.find((x) => x.key === only.tab)?.label ?? only.tab}${(config.subTools?.find((x) => x.key === only.tab)?.levels ?? config.levels ?? 1) > 1 ? ` · Level ${only.level}` : ""}` : undefined;
+      if (winPaper) { if (problems.length) await printProblems(problems, mode, winPaper, subtitle); else winPaper.close(); }
       if (!sheets.length && !problems.length) { setNote("None of the saved questions could be rebuilt."); return; }
       setNote(skipped ? `${skipped} question${skipped > 1 ? "s" : ""} could not be printed (from another tool, no print route, or could not be rebuilt) and ${skipped > 1 ? "were" : "was"} left out.` : null);
     } catch {

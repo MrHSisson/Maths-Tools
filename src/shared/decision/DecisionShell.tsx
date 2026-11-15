@@ -287,8 +287,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
-  const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window) => Promise<void>>(async () => {});   // set where the printers are (below)
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)), printProblems: (problems, mode, win) => printProblemsRef.current(problems, mode, win) });
+  const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>>(async () => {});   // set where the printers are (below)
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
   const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
 
@@ -421,12 +421,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const replaceSheetQuestion = (i: number) => { const q = drawOne(); if (q) { setSheet((s) => s.map((x, k) => (k === i ? q : x))); setSheetNote(null); } else setSheetNote("Could not make another question with these options."); };
   const removeSheetQuestion = (i: number) => setSheet((s) => s.filter((_, k) => k !== i));
   /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
-  const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window) => {
+  const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => {
     const examProblems = problems.filter((pr) => pr.exam);
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    const skill = skillProblems.length ? { title: config.pageTitle, layout: { perPage: sheetPerPage, space: sheetSpace }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: sheetPerPage, space: sheetSpace }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");
@@ -436,7 +436,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         const drawStep = (st: SolveStep) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
         const hasAug = pr.exam!.parts.some((x) => x.role === "augment");
         return {
-          title: config.pageTitle, exam: pr.exam!, questionFigure: draw(), workingBox: !!pr.dim, partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
+          title: config.pageTitle, subtitle, exam: pr.exam!, questionFigure: draw(), workingBox: !!pr.dim, partFigures: pr.exam!.parts.map((p, k, all) => (p.figure && all[k - 1]?.figure?.label !== p.figure.label ? draw(p.figure.view) : null)), answerFigures: pr.exam!.parts.map((p) => (p.stepView ? drawStep(p.stepView) : p.view ? draw(p.view) : null)),
           // where the student draws (potentials, flow augmentation) they get the network with nothing on it: no capacities, no flows
           blankFigures: pr.exam!.parts.map((p) => {
             if (p.blankStep) return drawStep(p.blankStep);
@@ -469,7 +469,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         printCpaSheets([...questions, ...answers], win);
         return;
       }
-      await printProblemList(sheet, mode, win);
+      const tabLabel = sheetCtx ? tabs.find((t) => t.key === sheetCtx.tab)?.label : undefined;
+      await printProblemList(sheet, mode, win, tabLabel ? `${tabLabel}${levelCount > 1 && sheetCtx ? ` · Level ${sheetCtx.level}` : ""}` : undefined);
     } catch {
       win.close();
       alert("Sorry, the print sheet could not be prepared. Please try again.");
