@@ -14,6 +14,7 @@ import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerat
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
 import { printSheets, type SkillLayout } from "./printExam";
+import { printCpaSheets, type CpaSheetInput } from "./printCpa";
 import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
 import { itemKey, type BasketItem } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
@@ -373,11 +374,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const [sheet, setSheet] = useState<DecisionProblem[]>([]);
   const [sheetCtx, setSheetCtx] = useState<{ tab: string; level: number; options: Record<string, string> } | null>(null);   // what the sheet was generated from
   const isExamProblem = !!problem.exam;
-  useEffect(() => { setSheetN(isExamProblem ? 3 : 8); setSheet([]); }, [isExamProblem]); // a new kind of sheet starts at its usual size, empty
+  // a Critical-Path-style skill tab has its own A4 sheet per question (the picture and the drawing space), always one to a page
+  const cpaSkillTab = (tab: string): boolean => !!config.questionSheet?.tabs.includes(tab);
+  const onCpaSheet = !isExamProblem && cpaSkillTab(subTool);
+  const sheetKind = isExamProblem ? "exam" : onCpaSheet ? "cpa" : "skill";
+  useEffect(() => { setSheetN(sheetKind === "exam" ? 3 : sheetKind === "cpa" ? 4 : 8); setSheet([]); }, [sheetKind]); // a new kind of sheet starts at its usual size, empty
   const [sheetAnswers, setSheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   // a Worksheet is for exam-style questions, and (when the tool turns it on) for skill questions too, except on a phone
-  const sheetable = !!problem.exam || (!!config.skillSheet && !isPhone);
+  const sheetable = !!problem.exam || ((!!config.skillSheet || onCpaSheet) && !isPhone);
   const inSheet = sheetMode && sheetable;
   const [sheetBusy, setSheetBusy] = useState<string | null>(null);
   const [sheetNote, setSheetNote] = useState<string | null>(null);
@@ -389,7 +394,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generateSeeded(() => generate(level, ctxOf(subTool, options, level))); if (q.exam || config.skillSheet) out.push(q); } catch { /* try again */ }
+      try { const q = generateSeeded(() => generate(level, ctxOf(subTool, options, level))); if (q.exam || config.skillSheet || onCpaSheet) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
     setSheetCtx({ tab: subTool, level, options: ctxOf(subTool, options, level).options });
@@ -405,11 +410,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     setSheetNote(items.length === 0 ? "These questions cannot be saved." : `${added} question${added === 1 ? "" : "s"} added to the saved list${added < items.length ? ` (${items.length - added} could not be added: already there, or the list is full)` : ""}. Open it from the pin control (on the Practice page) or the menu: Print saved questions.`);
   };
   // choose the questions by hand: swap one for a fresh one drawn with the same settings, take one out, or add another
-  const sheetMax = isExamProblem ? 10 : 20;
+  const sheetMax = sheetKind === "skill" ? 20 : 10;
   const drawOne = (): DecisionProblem | null => {
     if (!sheetCtx) return null;
     for (let g = 0; g < 8; g++) {
-      try { const q = generateSeeded(() => generate(sheetCtx.level, { subTool: sheetCtx.tab, options: sheetCtx.options })); if (q.exam || config.skillSheet) return q; } catch { /* try again */ }
+      try { const q = generateSeeded(() => generate(sheetCtx.level, { subTool: sheetCtx.tab, options: sheetCtx.options })); if (q.exam || config.skillSheet || cpaSkillTab(sheetCtx.tab)) return q; } catch { /* try again */ }
     }
     return null;
   };
@@ -454,6 +459,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
     if (!win) { alert("Please allow popups to use the PDF export."); return; }
     try {
+      if (sheetCtx && !sheet[0].exam && cpaSkillTab(sheetCtx.tab) && config.questionSheet) {
+        // Critical-Path-style sheets: every question first, then every answer sheet
+        const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
+        for (const pr of sheet) {
+          if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
+          if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
+        }
+        if (!questions.length && !answers.length) { win.close(); alert("Sorry, these questions have no print sheet."); return; }
+        printCpaSheets([...questions, ...answers], win);
+        return;
+      }
       await printProblemList(sheet, mode, win);
     } catch {
       win.close();
@@ -884,10 +900,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
       <div className="flex justify-center items-center gap-3 flex-wrap">
         <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={isExamProblem ? 10 : 20} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(isExamProblem ? 10 : 20, parseInt(e.target.value) || 3)))}
+        <input type="number" min={1} max={sheetKind === "skill" ? 20 : 10} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(sheetKind === "skill" ? 20 : 10, parseInt(e.target.value) || 3)))}
           className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
       </div>
-      {!isExamProblem && (
+      {sheetKind === "cpa" && <div className="text-center text-sm text-gray-500">Each question prints on its own A4 sheet, with the pictures and the room to draw it needs.</div>}
+      {sheetKind === "skill" && (
         <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-base font-semibold text-gray-700">
           <label className="flex items-center gap-2 min-h-[40px] cursor-pointer"><input type="checkbox" checked={sheetPerPage} onChange={(e) => setSheetPerPage(e.target.checked)} className="w-5 h-5" /> One question per page</label>
           <label className="flex items-center gap-2">Working space:
