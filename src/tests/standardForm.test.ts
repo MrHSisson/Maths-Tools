@@ -253,6 +253,14 @@ describe("converting: the place value grid (one row of digits slides a column at
       }
     });
   }
+  it("the grid is a scaffold: a display-only switch, on by default, offered on every Converting level", () => {
+    for (const level of ["level1", "level2", "level3"]) {
+      const v = cfg.tools.converting.difficultySettings[level].variables.find((x: any) => x.key === "pvShiftGrid");
+      expect(v).toBeDefined();
+      expect(v.displayOnly).toBe(true);        // it only changes how the same question is shown
+      expect(v.defaultValue).toBe(true);
+    }
+  });
   it("the headings are the standard place value letters, consecutive, with the ones column where the point is drawn", () => {
     for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 100; i++) {
       const q = gen("converting", level, everything("converting", level));

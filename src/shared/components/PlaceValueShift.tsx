@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { PV_WORD_HEADERS_KEY } from "../placeValue";
+import { PV_SHIFT_GRID_KEY, PV_WORD_HEADERS_KEY } from "../placeValue";
 import type { QOSnapshot, WorkingStep } from "../types";
 
 // Place value shift: the standard place value grid with ONE row of digits and a Power cell beside it (Standard Form's Converting picture).
@@ -42,9 +42,10 @@ const CSS = `
 @keyframes pvs-out-up   { from { transform: translateY(0); }     to { transform: translateY(-100%); } }
 @keyframes pvs-in-down  { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 @keyframes pvs-out-down { from { transform: translateY(0); }     to { transform: translateY(100%); } }
+.pvs-grid { transition: border-color ${FADE_MS}ms ease-in-out, background-color ${FADE_MS}ms ease-in-out, color ${FADE_MS}ms ease-in-out; }
 @media (prefers-reduced-motion: reduce) {
   .pvs-roll-in-up, .pvs-roll-out-up, .pvs-roll-in-down, .pvs-roll-out-down { animation: none !important; }
-  .pvs-slide, .pvs-fade { transition: none !important; }
+  .pvs-slide, .pvs-fade, .pvs-grid { transition: none !important; }
 }`;
 
 /** The power of 10: when it changes, the old value rolls out and the new one rolls in (up when it goes up, down when it goes down). */
@@ -70,7 +71,7 @@ function PowerRoll({ power }: { power: number | null }) {
   );
 }
 
-export function PlaceValueShift({ frame, words = false }: { frame: PlaceValueShiftFrame; words?: boolean }) {
+export function PlaceValueShift({ frame, words = false, grid = true }: { frame: PlaceValueShiftFrame; words?: boolean; grid?: boolean }) {
   const n = frame.headings.length;
   const colW = 100 / n;
   const dotX = `${(frame.onesIndex + 1) * colW}%`;
@@ -83,7 +84,7 @@ export function PlaceValueShift({ frame, words = false }: { frame: PlaceValueShi
           {/* headings */}
           <div className="grid" style={{ gridTemplateColumns: `repeat(${n}, 1fr)`, height: HEAD_H }}>
             {frame.headings.map((h, i) => (
-              <div key={i} className={`flex items-center justify-center border-2 border-black bg-slate-100 font-bold text-black ${words ? "px-0.5 text-[10px] leading-tight sm:text-[11px]" : "text-base"}`}>
+              <div key={i} className={`pvs-grid flex items-center justify-center border-2 font-bold ${grid ? "border-black bg-slate-100 text-black" : "border-transparent bg-transparent text-transparent"} ${words ? "px-0.5 text-[10px] leading-tight sm:text-[11px]" : "text-base"}`}>
                 {words ? frame.names[i] : h}
               </div>
             ))}
@@ -91,7 +92,7 @@ export function PlaceValueShift({ frame, words = false }: { frame: PlaceValueShi
           {/* the empty cells, and over them the digits and the zeros that hold places */}
           <div className="relative" style={{ height: ROW_H }}>
             <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
-              {frame.headings.map((_h, i) => <div key={i} className="border-2 border-black bg-white" />)}
+              {frame.headings.map((_h, i) => <div key={i} className={`pvs-grid border-2 ${grid ? "border-black bg-white" : "border-transparent bg-transparent"}`} />)}
             </div>
             <div className="pointer-events-none absolute inset-0">
               {frame.headings.map((_h, i) => (
@@ -109,7 +110,7 @@ export function PlaceValueShift({ frame, words = false }: { frame: PlaceValueShi
             </div>
           </div>
           {/* the decimal point, fixed on the right edge of the ones column */}
-          {[HEAD_H / 2, HEAD_H + ROW_H / 2].map((y) => (
+          {[HEAD_H / 2, HEAD_H + ROW_H / 2].filter((_y, k) => grid || k === 1).map((y) => (
             <div key={y} className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black" style={{ left: dotX, top: y, zIndex: 10 }} />
           ))}
         </div>
@@ -131,7 +132,7 @@ const dataOf = (step: WorkingStep): PlaceValueShiftStep | null => {
 /** `stepVisualRenderer`: the grid alone, so the cascade keeps ONE grid on screen and the digits slide between steps. */
 export const placeValueShiftStepVisual = (step: WorkingStep, qo?: QOSnapshot): JSX.Element | null => {
   const d = dataOf(step);
-  return d ? <PlaceValueShift frame={d.frame} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} /> : null;
+  return d ? <PlaceValueShift frame={d.frame} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} grid={qo?.variables?.[PV_SHIFT_GRID_KEY] !== false} /> : null;
 };
 
 /** `stepRenderer`: the caption and the grid together, where there is no separate picture. */
@@ -140,7 +141,7 @@ export const placeValueShiftStepRenderer = (step: WorkingStep, qo?: QOSnapshot):
   return d ? (
     <div className="flex flex-col gap-3">
       <p className="text-left" style={{ minHeight: "2.6em", lineHeight: 1.3 }}>{d.caption}</p>
-      <PlaceValueShift frame={d.frame} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} />
+      <PlaceValueShift frame={d.frame} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} grid={qo?.variables?.[PV_SHIFT_GRID_KEY] !== false} />
     </div>
   ) : null;
 };

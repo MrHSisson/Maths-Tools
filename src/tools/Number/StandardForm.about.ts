@@ -4,6 +4,7 @@ import type { ToolAbout } from "../../shared";
 export const ABOUT: ToolAbout = {
   purpose: "Work with numbers written in standard form: convert them, calculate with them, compare them and put them in order.",
   options: {
+    "pvShiftGrid": "Switch off to hide the place value grid, leaving just the digits sliding beside the decimal point and the power, once students no longer need the columns.",
     "pvWordHeaders": "Switch on to use words (Tens, Ones, tenths…) instead of letters in the grid headings.",
   },
   tools: {

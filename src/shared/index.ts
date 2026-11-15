@@ -73,7 +73,7 @@ export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./comp
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
-export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_TABLE_START_DD } from "./placeValue";
+export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_SHIFT_GRID_KEY, PV_SHIFT_GRID_VAR, PV_TABLE_START_DD } from "./placeValue";
 export { withDiagramSteps, diagramStepVisual, diagramSplitQuestion } from "./diagramSplit";
 export { rippleIncrement, columnName, type RippleBeat, type RippleResult, type RippleBase } from "./carry";
 // Storage-unit ladder (bit … PB, ×1000) — shared by Data Units and File Sizes. See src/shared/dataUnits.ts.

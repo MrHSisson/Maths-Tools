@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, shuffle, pickActive, mStep, extras,
-  PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type QOSnapshot,
+  PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, PV_SHIFT_GRID_VAR, PV_SHIFT_GRID_KEY, type QOSnapshot,
   PlaceValueShift, placeValueShiftStepRenderer, placeValueShiftStepVisual,
 } from "../../shared";
 import { applyAbout } from "../../shared";
@@ -86,9 +86,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
-        level2: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
-        level3: { variables: [PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_COEF_MS, CONV_START_MS] },
+        level1: { variables: [PV_SHIFT_GRID_VAR, PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level2: { variables: [PV_SHIFT_GRID_VAR, PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level3: { variables: [PV_SHIFT_GRID_VAR, PV_WORD_HEADERS_VAR], dropdown: null, multiSelect: [CONV_COEF_MS, CONV_START_MS] },
       },
     },
     multiplyDivide: {
@@ -306,7 +306,7 @@ const workingScaffold = {
   render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     const spec = extras(q)._grid as GridSpec | undefined;
     if (!spec) return null;
-    return <PlaceValueShift frame={showAnswer ? gridFinal(spec) : gridBlank(spec)} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} />;
+    return <PlaceValueShift frame={showAnswer ? gridFinal(spec) : gridBlank(spec)} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} grid={qo?.variables?.[PV_SHIFT_GRID_KEY] !== false} />;
   },
 };
 

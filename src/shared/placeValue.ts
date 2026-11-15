@@ -42,6 +42,10 @@ export const PV_ONES_DECIMAL = 2;
 export const PV_WORD_HEADERS_KEY = "pvWordHeaders";
 export const PV_WORD_HEADERS_VAR: ToolVariable = { key: PV_WORD_HEADERS_KEY, label: "Words in column headings", tab: "display", displayOnly: true, defaultValue: false };
 
+/** The scaffold switch of the place value shift picture: the grid (headings and cell borders) on, or off to leave just the digits sliding. Display only. */
+export const PV_SHIFT_GRID_KEY = "pvShiftGrid";
+export const PV_SHIFT_GRID_VAR: ToolVariable = { key: PV_SHIFT_GRID_KEY, label: "Place value grid", tab: "method", displayOnly: true, defaultValue: true };
+
 /** Display-only "Table Starts" setting (whiteboard / worksheet grids) — never changes the question. */
 export const PV_TABLE_START_DD: ToolDropdown = {
   key: "tableStart", tab: "method",
