@@ -1,3 +1,5 @@
+import katex from "katex";
+import katexCss from "katex/dist/katex.min.css?inline";   // the stylesheet is part of the page and its fonts come from the site itself: a printed paper needs no connection
 import type { ExamData } from "./types";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -22,9 +24,10 @@ interface ExamPrintInput {
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-/** text with maths between $…$ as HTML: the prose escaped, each formula a span that KaTeX renders once the page has loaded it (a plain string has none, so it is just escaped) */
-const mathHtml = (s: string): string =>
-  s.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? `<span class="katex-render" data-latex="${part.slice(1, -1).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"></span>` : esc(part))).join("");
+/** one formula as HTML (rendered here, so the printed page needs no script and no connection; a formula KaTeX cannot read is shown as its text) */
+const texHtml = (tex: string): string => { try { return katex.renderToString(tex, { throwOnError: false, output: "html" }); } catch { return esc(tex); } };
+/** text with maths between $…$ as HTML: the prose escaped, each formula typeset */
+const mathHtml = (s: string): string => s.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? texHtml(part.slice(1, -1)) : esc(part))).join("");
 const CODE_BG: Record<string, string> = { B: "#1e3a8a", M: "#7c3aed", A: "#166534", E: "#b45309", R: "#b45309" };
 
 const CSS = `
@@ -119,14 +122,13 @@ function questionHtml({ title, exam, questionFigure, answerFigures, blankFigures
   return { paper, scheme: markScheme };
 }
 
-const KATEX_HEAD = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>`;
-const KATEX_SCRIPT = `<script>
+const KATEX_HEAD = `<style>${katexCss}</style>`;
+/** once the fonts are in, open the print dialog (the page itself has no maths to draw: it is already typeset) */
+const PRINT_SCRIPT = `<script>
   window.addEventListener('load', function () {
-    document.querySelectorAll('.katex-render').forEach(function (el) {
-      var tex = el.getAttribute('data-latex');
-      try { if (window.katex) window.katex.render(tex, el, { throwOnError: false, output: 'html' }); else el.textContent = tex; } catch (e) { el.textContent = tex; }
-    });
-    if (document.body.getAttribute('data-autoprint')) setTimeout(function () { window.print(); }, 300);
+    if (!document.body.getAttribute('data-autoprint')) return;
+    var go = function () { setTimeout(function () { window.print(); }, 200); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
   });
   <\/script>`;
 
@@ -151,7 +153,7 @@ export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], o
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — worksheet</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
   ${opts.papers === false ? "" : paper}
   ${opts.schemes === false ? "" : answers}
-  ${KATEX_SCRIPT}
+  ${PRINT_SCRIPT}
   </body></html>`;
 }
 /** `win` is a window already opened at the click */
@@ -170,7 +172,7 @@ export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; 
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
   ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
   ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
-  ${KATEX_SCRIPT}
+  ${PRINT_SCRIPT}
   </body></html>`;
 }
 
