@@ -4,7 +4,8 @@ import { CHAPTERS, GENERAL_RESOURCES, CHECK_NOTES, MECHANICS_TOOLS, MECHANICS_PA
 
 // Further Mechanics: the landing page for the AQA 7367 mechanics option (MA–ME). The look and behaviour are the shared
 // SpecLanding page (the same as Decision Maths); this file supplies the words and reads each chapter's tools from the registry,
-// so whether one is live is never typed here. Developing-tools only (registry `enabled: false`, and the page asks for the password).
+// so whether one is live is never typed here. Open to everyone (`public`), as Decision Maths is: the live generators first, then the statements; the planning
+// material (legacy papers, notes, tools still in development) stays in Developing-tools mode.
 
 /** a sub-tool as a link that opens its tool on that sub-tool and kind of practice (every Mechanics tool so far is AS) */
 const linkOf = (r: MechSubRef): SpecLink[] => {
@@ -26,6 +27,7 @@ const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
 export default function FurtherMechanics() {
   return (
     <SpecLanding
+      public
       title="Further Mechanics"
       subtitle="AQA A-level Further Mathematics"
       about="The mechanics option of AQA 7367 (sections MA to ME), planned chapter by chapter. Each chapter lists the specification statements, which are in AS and which are A2 only, and the older AQA papers they draw on. Open a chapter to find its question generators and exam-style questions; Dimensional Analysis (MA) is the first built."

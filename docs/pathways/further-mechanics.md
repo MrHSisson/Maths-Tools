@@ -1,5 +1,5 @@
 # Further Mechanics (AQA 7367 MA–ME)
-- **Status:** building
+- **Status:** building (Dimensional Analysis is live)
 - **Updated:** 2026-11-14
 
 ## Intention
