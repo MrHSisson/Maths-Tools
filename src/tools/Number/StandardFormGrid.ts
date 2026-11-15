@@ -1,36 +1,28 @@
 import { pvStep, type PlaceValueTableData, type PVCell, type WorkingStep } from "../../shared";
 import { ordinary } from "./StandardFormCore";
 
-// The developing picture for Converting: a place value grid whose columns are headed with powers of ten (10⁵ … 10⁻⁵).
-// Nothing moves. The digits sit in their columns; the power of 10 is read off from the column of the first non-zero digit.
-//   · to standard form: write the number in the grid, circle the first non-zero digit, read its column as the power;
-//   · to an ordinary number: put the first digit of the coefficient in the column of the power, then fill with zeros;
-//   · half-way numbers (304 × 10⁵): the coefficient's ones digit sits in the 10⁵ column, and the first non-zero digit decides the power.
+// The developing picture for Converting: a place value grid headed with powers of ten (10⁵ … 10⁻⁵) with a Power column beside it.
+// The decimal point stays where it is. Row by row, every digit moves one column and the power beside it changes by 1:
+//   digits one column to the right  (each worth 10 times less)  →  the power goes UP by 1, to make up for it;
+//   digits one column to the left   (each worth 10 times more)  →  the power goes DOWN by 1.
+// To standard form the digits move until the first one is in the ones column; to an ordinary number they move until the power is 10⁰.
+//   45 000 × 10⁰ → 4 500 × 10¹ → 450 × 10² → 45 × 10³ → 4.5 × 10⁴
 
 /** What the picture needs to know about a question; stored on it (`_grid`) for the whiteboard scaffold. */
 export interface GridSpec {
   mode: "toStd" | "toOrd" | "half";
-  /** The digits as written in the grid at the start: the ordinary number, the coefficient, or the half-way coefficient ("0.003"). */
-  shown: string;
-  /** The exponent of the column the ones digit of `shown` sits in (0, or the starting power for half-way numbers). */
-  shownUnits: number;
-  /** The coefficient of the answer in standard form ("4.5") and its power. */
-  coef: string;
-  power: number;
+  /** The significant digits, first and last not zero ("45", "304", "72"). */
+  digits: string;
+  /** The exponent of the column the first digit sits in, in the first row and in the last row. */
+  fStart: number;
+  fEnd: number;
+  /** The power of 10 beside the first row. */
+  power0: number;
 }
 
 const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
 const sup = (n: number): string => String(n).split("").map((c) => SUP[c]).join("");
 const power10 = (n: number): string => `10${sup(n)}`;
-
-/** digit by exponent: the string's ones digit sits in the column `units`. */
-const digitMap = (s: string, units: number): Map<number, string> => {
-  const [whole, frac = ""] = s.split(".");
-  const m = new Map<number, string>();
-  [...whole].forEach((d, i) => m.set(units + whole.length - 1 - i, d));
-  [...frac].forEach((d, i) => m.set(units - 1 - i, d));
-  return m;
-};
 
 const withCommas = (s: string): string => {
   const [w, f] = s.split(".");
@@ -38,89 +30,105 @@ const withCommas = (s: string): string => {
   return f === undefined ? g : `${g}.${f}`;
 };
 
-interface Layout { hi: number; lo: number; units: number; }
+interface RowSpec { f: number; power: number; }
 
-const layoutOf = (spec: GridSpec): Layout => {
-  const ord = spec.mode === "toOrd" ? ordinary(spec.coef.replace(".", ""), spec.power) : spec.shown;
-  const exps = [...digitMap(spec.mode === "toOrd" ? ord : spec.shown, spec.mode === "toOrd" ? 0 : spec.shownUnits).keys()];
-  const units = spec.mode === "toOrd" ? 0 : spec.shownUnits;
-  const always = spec.mode === "half" ? [units] : [0];             // an ordinary number always shows its ones column
-  const all = [...exps, ...always, spec.power];
-  return { hi: Math.max(...all), lo: Math.min(...all), units };
+/** Every row of the staircase, first to last: where the first digit sits and the power beside it. */
+const rowsOf = (spec: GridSpec): RowSpec[] => {
+  const step = Math.sign(spec.fEnd - spec.fStart);
+  const count = Math.abs(spec.fEnd - spec.fStart) + 1;
+  return Array.from({ length: count }, (_, r) => ({ f: spec.fStart + step * r, power: spec.power0 - step * r }));
 };
 
-const tableOf = (spec: GridSpec, banner: string, cells: Map<number, PVCell>, highlight?: number): PlaceValueTableData => {
-  const { hi, lo, units } = layoutOf(spec);
+/** The exponents a row fills: its digits, and the zeros that hold places between them and the ones column. */
+const extent = (spec: GridSpec, f: number): [number, number] => [Math.max(f, 0), Math.min(f - spec.digits.length + 1, 0)];
+
+const columnsOf = (spec: GridSpec): { hi: number; lo: number } => {
+  const spans = rowsOf(spec).map((r) => extent(spec, r.f));
+  return { hi: Math.max(...spans.map((s) => s[0])), lo: Math.min(...spans.map((s) => s[1])) };
+};
+
+const rowHeight = (rows: number): number => (rows <= 4 ? 60 : rows <= 6 ? 52 : rows <= 9 ? 44 : 40);
+
+type Look = "plain" | "newest" | "answer";
+
+/** One row's cells: the digits where they sit, a blue 0 in every other column down to the ones column (or up to the first digit). */
+const rowCells = (spec: GridSpec, hi: number, lo: number, r: RowSpec, look: Look, circleFirst: boolean): (PVCell | string)[] => {
+  const [top, bottom] = extent(spec, r.f);
+  const cells: (PVCell | string)[] = [];
+  for (let e = hi; e >= lo; e--) {
+    if (e > top || e < bottom) { cells.push(""); continue; }
+    const i = r.f - e;
+    if (i >= 0 && i < spec.digits.length) {
+      const c: PVCell = { v: spec.digits[i] };
+      if (look === "answer") c.tone = "answer";
+      if (circleFirst && i === 0) c.circle = "on";
+      cells.push(c);
+    } else cells.push({ v: "0", tone: "zero" });
+  }
+  cells.push(look === "plain" ? { v: power10(r.power) } : { v: power10(r.power), tone: look === "newest" ? "highlight" : "answer" });
+  return cells;
+};
+
+/** The grid with the first `shown` rows written in; the rest keep their space, blank, so the table never changes size. */
+const tableOf = (spec: GridSpec, shown: number, finish: boolean): PlaceValueTableData => {
+  const { hi, lo } = columnsOf(spec);
+  const rows = rowsOf(spec);
   const exps = Array.from({ length: hi - lo + 1 }, (_, i) => hi - i);
+  const blank = [...exps.map(() => ""), ""];
   return {
-    columns: exps.map(power10),
-    onesIndex: hi - units,
+    columns: [...exps.map(power10), "Power"],
+    onesIndex: hi,
     showPoint: true,
-    cellHeight: 60,
-    highlightCol: highlight === undefined ? undefined : hi - highlight,
-    rows: [
-      { kind: "banner", text: banner },
-      { kind: "cells", cells: exps.map((e) => cells.get(e) ?? "") },
-    ],
+    detachLast: true,
+    cellHeight: rowHeight(rows.length),
+    rows: rows.map((r, i) => {
+      if (i >= shown) return { kind: "cells" as const, cells: blank };
+      const last = i === shown - 1;
+      const finished = finish && last;
+      return { kind: "cells" as const, cells: rowCells(spec, hi, lo, r, finished ? "answer" : last ? "newest" : "plain", finished && spec.mode !== "toOrd") };
+    }),
   };
 };
 
-/** The digits of the start of the picture, with zeros that only hold the place (before the first digit, after the last) in blue. */
-const shownCells = (spec: GridSpec, upTo: "start" | "circled" | "coefficient"): { cells: Map<number, PVCell>; first: number; last: number } => {
-  const m = digitMap(spec.shown, spec.shownUnits);
-  const nonZero = [...m].filter(([, d]) => d !== "0").map(([e]) => e);
-  const first = Math.max(...nonZero), last = Math.min(...nonZero);
-  const cells = new Map<number, PVCell>();
-  for (const [e, d] of m) {
-    const holder = d === "0" && (e > first || e < last);
-    const cell: PVCell = { v: d };
-    if (holder) cell.tone = "zero";
-    if (upTo === "circled" && e === first) cell.circle = "on";
-    if (upTo === "coefficient" && e <= first && e >= last) cell.tone = "answer";
-    cells.set(e, cell);
-  }
-  return { cells, first, last };
-};
+/** The grid before anything is written in it: the whiteboard scaffold. */
+export const gridBlank = (spec: GridSpec): PlaceValueTableData => tableOf(spec, 0, false);
 
-/** The grid before anything is written in it: the whiteboard scaffold, and the empty start of every picture. */
-export const gridBlank = (spec: GridSpec): PlaceValueTableData => tableOf(spec, spec.mode === "toOrd" ? `${spec.coef} × ${power10(spec.power)}` : " ", new Map());
-
-/** The finished picture (the whiteboard scaffold once the answer is shown). */
+/** The whole staircase (the whiteboard scaffold once the answer is shown). */
 export const gridFinal = (spec: GridSpec): PlaceValueTableData => {
-  const steps = gridSteps(spec);
-  return (steps[steps.length - 1].extra as { table: PlaceValueTableData }).table;
+  const { hi, lo } = columnsOf(spec);
+  const rows = rowsOf(spec);
+  const t = tableOf(spec, rows.length, true);
+  // every earlier row stays plain; only the last row is marked as the answer
+  return { ...t, rows: t.rows.map((row, i) => (i < rows.length - 1 && row.kind === "cells" ? { ...row, cells: rowCells(spec, hi, lo, rows[i], "plain", false) } : row)) };
 };
 
-/** The developing picture as worked-example steps: one snapshot of the grid per step. */
+/** The developing picture as worked-example steps: one more row of the staircase per step. */
 export const gridSteps = (spec: GridSpec): WorkingStep[] => {
-  if (spec.mode === "toOrd") {
-    const digits = spec.coef.replace(".", "");
-    const placed = new Map<number, PVCell>();
-    [...digits].forEach((d, i) => placed.set(spec.power - i, { v: d, ...(i === 0 ? { circle: "on" as const } : {}) }));
-    const { hi, lo } = layoutOf(spec);
-    const filled = new Map<number, PVCell>();
-    for (let e = hi; e >= lo; e--) filled.set(e, placed.get(e) ? { v: placed.get(e)!.v } : { v: "0", tone: "zero" });
-    const answer = new Map<number, PVCell>();
-    for (let e = hi; e >= lo; e--) answer.set(e, { ...filled.get(e)!, tone: filled.get(e)!.tone ?? "answer" });
-    const expr = `${spec.coef} × ${power10(spec.power)}`;
-    const ord = ordinary(digits, spec.power);
-    return [
-      pvStep(`The power is ${spec.power}, so the first digit, ${digits[0]}, goes in the ${power10(spec.power)} column. The other digits of ${spec.coef} follow, one in each column to the right.`, tableOf(spec, expr, placed, spec.power)),
-      pvStep("Put a 0 in every empty column, down to the ones column, so that every column has a digit.", tableOf(spec, expr, filled)),
-      pvStep(`Read the number from the grid: ${withCommas(ord)}.`, tableOf(spec, withCommas(ord), answer)),
-    ];
-  }
-  // to standard form (an ordinary number, or a half-way number whose coefficient is written in the grid)
-  const start = shownCells(spec, "start");
-  const circled = shownCells(spec, "circled");
-  const coefficient = shownCells(spec, "coefficient");
-  const d = digitMap(spec.shown, spec.shownUnits).get(start.first)!;
-  const where = spec.mode === "half"
-    ? `The coefficient ${spec.shown} goes in the grid with its ones digit in the ${power10(spec.shownUnits)} column, because it is multiplied by ${power10(spec.shownUnits)}.`
-    : `Write ${withCommas(spec.shown)} in the grid, one digit in each column. Zeros that only hold a place are blue.`;
-  return [
-    pvStep(where, tableOf(spec, " ", start.cells)),
-    pvStep(`The first non-zero digit, ${d}, is in the ${power10(start.first)} column. So the power of 10 is ${start.first}.`, tableOf(spec, " ", circled.cells, start.first)),
-    pvStep(`The coefficient is the digits from the ${d} onwards, with the point after the first digit: ${spec.coef} × ${power10(spec.power)}.`, tableOf(spec, `${spec.coef} × ${power10(spec.power)}`, coefficient.cells, start.first)),
-  ];
+  const rows = rowsOf(spec);
+  const step = Math.sign(spec.fEnd - spec.fStart);
+  const toRight = step < 0;                       // digits move to the right: smaller places
+  const first = ordinary(spec.digits, spec.fStart);
+  const coef = ordinary(spec.digits, 0);
+  const final = rows[rows.length - 1];
+  const steps: WorkingStep[] = [];
+  rows.forEach((r, i) => {
+    const last = i === rows.length - 1;
+    let caption: string;
+    if (i === 0) {
+      caption = spec.mode === "toStd"
+        ? `Write ${withCommas(first)} in the grid, one digit in each column. Its power of 10 is ${power10(r.power)} for now.`
+        : spec.mode === "half"
+          ? `Write the coefficient ${first} in the grid, with its power of 10, ${power10(r.power)}, beside it.`
+          : `Write the coefficient ${coef} in the grid with its first digit in the ones column, and its power of 10, ${power10(r.power)}, beside it.`;
+    } else {
+      caption = `Move every digit one column to the ${toRight ? "right" : "left"}. Each digit is now worth 10 times ${toRight ? "less" : "more"}, so the power of 10 goes ${toRight ? "up" : "down"} by 1, to ${power10(r.power)}.`;
+    }
+    if (last && rows.length > 1) {
+      caption += spec.mode === "toOrd"
+        ? ` The power is ${power10(final.power)}, so this is the ordinary number: ${withCommas(ordinary(spec.digits, spec.fEnd))}.`
+        : ` The first digit is in the ones column, so this is standard form: ${coef} × ${power10(final.power)}.`;
+    }
+    steps.push(pvStep(caption, tableOf(spec, i + 1, last)));
+  });
+  return steps;
 };

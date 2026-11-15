@@ -79,7 +79,7 @@ const genHalfway = (msv: Record<string, boolean>): AnyQuestion => {
     if (e === 0) continue;                                  // 10⁰ would hide the idea
     const coef = ordinary(digits, 0);
     // the coefficient goes in the grid with its ones digit in the column of the power it is multiplied by
-    const grid: GridSpec = { mode: "half", shown, shownUnits: n, coef, power: e };
+    const grid: GridSpec = { mode: "half", digits, fStart: tooBig ? places : -places, fEnd: 0, power0: n };
     return {
       kind: "worded",
       lines: ["Write in standard form:", `$${shown} \\times 10^{${n}}$`],
@@ -105,7 +105,9 @@ export const genConvert = (level: DifficultyLevel, msv: Record<string, boolean>)
   const coef = ordinary(digits, 0);
   const std = `${coef} \\times 10^{${n}}`;
   // the developing picture: a place value grid headed with powers of ten, the power read from the first non-zero digit's column
-  const grid: GridSpec = { mode: toStd ? "toStd" : "toOrd", shown: toStd ? ord : coef, shownUnits: 0, coef, power: n };
+  const grid: GridSpec = toStd
+    ? { mode: "toStd", digits, fStart: n, fEnd: 0, power0: 0 }       // 45 000 × 10⁰ … 4.5 × 10⁴
+    : { mode: "toOrd", digits, fStart: 0, fEnd: n, power0: n };      // 4.5 × 10⁴ … 45 000 × 10⁰
 
   return {
     kind: "worded",

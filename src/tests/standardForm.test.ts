@@ -200,52 +200,80 @@ describe("adding and subtracting", () => {
   });
 });
 
-describe("converting: the place value grid", () => {
+describe("converting: the place value grid (digits move a column at a time, the power changes by 1)", () => {
   const SUPMAP: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
-  const powerOf = (heading: string): number => Number([...heading.slice(2)].map((c) => SUPMAP[c]).join(""));
-  const tableOf = (step: any) => step.extra.table;
-  const row = (t: any) => t.rows[1].cells.map((c: any) => (typeof c === "string" ? { v: c } : c));
+  const exponentOf = (heading: string): number => Number([...heading.slice(2)].map((c) => SUPMAP[c]).join(""));
+  const table = (step: any) => step.extra.table;
+  /** The rows a step has written (a blank row has no power). */
+  const written = (t: any) => t.rows.map((r: any) => r.cells.map((c: any) => (typeof c === "string" ? { v: c } : c))).filter((cells: any[]) => cells[cells.length - 1].v !== "");
+  const OFFSET = 40;
+  /** The exact value of a row: its digits at their column exponents, times the power beside it (scaled by 10^OFFSET so it is an integer). */
+  const valueOf = (t: any, cells: any[]): bigint => {
+    const power = exponentOf(cells[cells.length - 1].v);
+    let v = 0n;
+    cells.slice(0, -1).forEach((c: any, i: number) => { if (c.v !== "") v += BigInt(c.v) * 10n ** BigInt(exponentOf(t.columns[i]) + power + OFFSET); });
+    return v;
+  };
+  const truth = (q: any): bigint => {
+    const text = q.lines[1].replace(/^\$|\$$/g, "").replace(/\{,\}/g, "");
+    if (text.includes("\\times")) { const [i, e] = parseSF(text); return i * 10n ** BigInt(e + OFFSET); }
+    const dp = (text.split(".")[1] ?? "").length;
+    return BigInt(text.replace(".", "")) * 10n ** BigInt(OFFSET - dp);
+  };
 
   for (const level of ["level1", "level2", "level3"]) {
-    it(`${level}: every step is a grid headed with consecutive powers of ten, with the digits in the right columns`, () => {
+    it(`${level}: every row is the same value, the power changes by 1 a row, and it ends in the right place`, () => {
       for (let i = 0; i < 150; i++) {
         const q = gen("converting", level, everything("converting", level));
-        expect(q.working.length).toBe(3);
-        const [, answerPower] = parseSF(q.lines[0].startsWith("Write as") ? q.lines[1].replace(/^\$|\$$/g, "") : q.answerLatex);
-        for (const step of q.working) {
-          const t = tableOf(step);
-          const powers = t.columns.map(powerOf);
-          // columns run down one power at a time, and the number of rows never changes between steps
-          powers.forEach((p: number, k: number) => k > 0 && expect(p).toBe(powers[k - 1] - 1));
-          expect(t.rows.length).toBe(2);
-          expect(t.columns.length).toBe(tableOf(q.working[0]).columns.length);
+        const toOrd = q.lines[0].startsWith("Write as");
+        const spec = q._grid;
+        expect(q.working.length).toBe(Math.abs(spec.fEnd - spec.fStart) + 1);
+        const want = truth(q);
+        let previous: number | null = null;
+        q.working.forEach((step: any, k: number) => {
+          const t = table(step);
+          const rows = written(t);
+          expect(rows.length).toBe(k + 1);                                       // one more row written each step
+          expect(t.columns[t.columns.length - 1]).toBe("Power");
+          rows.forEach((cells: any[]) => expect(valueOf(t, cells)).toBe(want));  // the digits and the power always make the same number
+          const power = exponentOf(rows[rows.length - 1][rows[rows.length - 1].length - 1].v);
+          if (previous !== null) expect(Math.abs(power - previous)).toBe(1);
+          previous = power;
+          expect(t.rows.length).toBe(q.working.length);                          // the table never changes size
+        });
+        // the last row: standard form has its first digit in the ones column; an ordinary number has the power 10⁰
+        const t = table(q.working[q.working.length - 1]);
+        const cells = written(t)[q.working.length - 1];
+        const onesCol = t.onesIndex;
+        const finalPower = exponentOf(cells[cells.length - 1].v);
+        if (toOrd) expect(finalPower).toBe(0);
+        else {
+          expect(cells[onesCol].v).not.toBe("");
+          expect(cells[onesCol].v).not.toBe("0");
+          expect(cells.slice(0, onesCol).every((c: any) => c.v === "")).toBe(true);
+          expect(finalPower).toBe(Number(q.answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
         }
-        // step 2: the circled digit is the first non-zero digit, and its column heading is the answer's power
-        const t2 = tableOf(q.working[1]);
-        const cells = row(t2);
-        const circled = cells.findIndex((c: any) => c.circle === "on");
-        if (!q.lines[0].startsWith("Write as")) {
-          const firstNonZero = cells.findIndex((c: any) => c.v !== "" && c.v !== "0");
-          expect(circled).toBe(firstNonZero);
-          expect(powerOf(t2.columns[circled])).toBe(Number(q.answerLatex.match(/10\^\{(-?\d+)\}/)![1]));
-        }
-        // the last step shows the answer's digits, and the ordinary number's digits for "to ordinary"
-        const last = row(tableOf(q.working[2])).map((c: any) => c.v).join("");
-        if (q.lines[0].startsWith("Write as")) {
-          expect(last.replace(/^0+(?=\d)/, "")).toContain(q.answerLatex.replace(/\{,\}/g, "").replace(".", "").replace(/^0+/, "").slice(0, 1));
-        }
-        void answerPower;
       }
     });
   }
-  it("the whiteboard scaffold: an empty grid, and the same grid size once the answer is shown", async () => {
+  it("the digits move right and the power goes up for large numbers, left and down for small ones", () => {
+    const up = gen("converting", "level1", { toStd: true, toOrd: false, d2: true, noZero: true });
+    const rows = written(table(up.working[up.working.length - 1]));
+    const powers = rows.map((c: any[]) => exponentOf(c[c.length - 1].v));
+    expect(powers).toEqual(powers.map((_: number, i: number) => i));            // 10⁰, 10¹, 10², …
+    const down = gen("converting", "level2", { toStd: true, toOrd: false, d2: true, noZero: true });
+    const powers2 = written(table(down.working[down.working.length - 1])).map((c: any[]) => exponentOf(c[c.length - 1].v));
+    expect(powers2).toEqual(powers2.map((_: number, i: number) => (i === 0 ? 0 : -i)));         // 10⁰, 10⁻¹, 10⁻², …
+  });
+  it("the whiteboard scaffold: an empty grid, and the same size once the answer is shown", async () => {
     const { gridBlank, gridFinal } = await import("../tools/Number/StandardFormGrid");
     for (const level of ["level1", "level2", "level3"]) for (let i = 0; i < 40; i++) {
       const q = gen("converting", level, everything("converting", level));
       const blank = gridBlank(q._grid), filled = gridFinal(q._grid);
       expect(blank.columns).toEqual(filled.columns);
       expect(blank.rows.length).toBe(filled.rows.length);
-      expect((blank.rows[1] as any).cells.every((c: any) => c === "")).toBe(true);
+      expect(blank.rows.every((r: any) => r.cells.every((c: any) => c === ""))).toBe(true);
+      expect(filled.rows.every((r: any) => r.cells[r.cells.length - 1] !== "")).toBe(true);
     }
   });
 });
