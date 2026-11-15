@@ -29,6 +29,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-15 — Standard Form: Comparing & Ordering (first build, Dev only)
+
+- New tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. One sub-tool, **Comparing & Ordering**, two levels: **L1** insert < or > between two numbers in standard form; **L2** put four numbers in order. Other sub-tools (converting, multiplying and dividing, adding and subtracting) are specced in chat only and not built.
+- Options (two per level): L1 **Powers** (Same, Positive, Negative, Mixed Signs) and **Coefficients** (Agreeing, Misleading: the bigger coefficient is on the smaller number; needs a pair whose powers differ); L2 **Ask for** (Smallest First, Largest First) and **Powers** (Positive, Negative, Mixed Signs). Numbers are held as exact (tenths of coefficient, power) pairs, so the power decides first and the coefficient second.
+- L2 lists share a power about half the time (coefficients at least 0.5 apart) and are never shown already in answer order.
+- Not done: no spec file (`specs/standard-form.md`), no Depth bank, Teach deck or lesson, no calibration, phone/tablet layouts only smoke-checked (start screen and laptop render, no console errors). Review with Harry before going live.
+- Agent: Claude Code
+- Notes: no Build Log block yet (planner not updated this session).
+
 ## 2026-11-15 — Decks: a USB presentation clicker moves the deck
 
 - The deck player now reads keys through `src/decks/clickerKeys.ts` in the capture phase, so nothing on a slide can swallow a clicker press. Next: Page Down, Right, Down, Enter, Space, media-next. Back: Page Up, Left, Up, media-previous. A clicker that reports no key name is read by `code` or `keyCode`. Home / End as before.

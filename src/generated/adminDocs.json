@@ -2027,6 +2027,20 @@
     }
    ]
   },
+  "standard-form": {
+   "purpose": "Work with numbers written in standard form: compare them, and put them in order.",
+   "subTools": [
+    {
+     "name": "Comparing & Ordering",
+     "purpose": "Compare two numbers in standard form with < and >, then put a list of them in order.",
+     "levels": [
+      "Compare two numbers with < or >",
+      "Put four numbers in order"
+     ]
+    }
+   ],
+   "changes": []
+  },
   "powers-of-ten": {
    "purpose": "Multiply and divide by powers of 10 using a place value grid.",
    "subTools": [
