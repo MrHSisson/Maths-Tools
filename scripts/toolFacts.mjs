@@ -108,7 +108,7 @@ function sourceFacts(src, tool, specs) {
     reformat: has(/reformatQuestion/),
     customPrint: has(/customPrintHandler/),
     printables: has(/printables=\{|printTemplates:\s*true/),
-    printBasket: has(/questionSheet:/),
+    printBasket: has(/questionSheet:|skillSheet:|examSheet:/),   // saved questions can be printed from the basket (a sheet, a skill worksheet or exam papers)
     tests: has(/export const __test/),
     skillLinks: has(/\[\[[a-z0-9-]+\|/),
     representations,

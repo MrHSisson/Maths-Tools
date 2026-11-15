@@ -665,6 +665,7 @@ export default function App() {
           ],
         },
         hideMatrix: true,
+        examSheet: true,
         noSandbox: true,
         canvasFooter: (p: DecisionProblem) => <CpaKey p={p} />,
         options: [

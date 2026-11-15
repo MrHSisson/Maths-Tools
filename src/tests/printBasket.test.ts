@@ -70,7 +70,11 @@ describe("print basket — a saved recipe rebuilds the same question", () => {
 });
 
 describe("print basket — the dashboard knows which tools have it", () => {
-  it("Critical Path is read from the code as having the print basket, and no other tool is", () => {
-    expect(TOOLS.filter((t) => t.printBasket).map((t) => t.id)).toEqual(["critical-path"]);
+  it("the tools with a print basket are read from the code: those with a sheet, a skill worksheet or exam papers", () => {
+    expect(TOOLS.filter((t) => t.printBasket).map((t) => t.id).sort()).toEqual(["critical-path", "dimensional-analysis", "network-flows"]);
+  });
+  it("a preview shows maths as plain text: no dollars, Greek letters as themselves", () => {
+    const v = previewOf("The quantities $p$ and $q$ give $\\alpha + \\beta = 1$.");
+    expect(v).toBe("The quantities p and q give α + β = 1.");
   });
 });

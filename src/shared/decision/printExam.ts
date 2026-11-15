@@ -139,26 +139,42 @@ interface SkillPrintQuestion {
   /** how much room to work in: s, m or l */
   space?: "s" | "m" | "l";
 }
-/** a worksheet of skill questions: numbered questions each with a blank working box, then (on request) a page of answers (exported so it can be tested without a window) */
-export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
-  const paper = `<div class="paper">
+/** the paper and the answers page of a set of skill questions */
+function skillParts(title: string, questions: SkillPrintQuestion[]): { paper: string; answers: string } {
+  const count = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
+  return {
+    paper: `<div class="paper">
     <header><h1>${esc(title)}</h1><div class="who">Name ______________________ &nbsp; Date __________</div></header>
-    <div class="meta">${questions.length} question${questions.length === 1 ? "" : "s"}</div>
+    <div class="meta">${count}</div>
     ${questions.map((q, i) => `<section class="skillq"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div><div class="box ${q.space ?? "m"}"></div></section>`).join("\n")}
-  </div>`;
-  const answers = `<div class="markscheme">
-    <header><h1>${esc(title)} — answers</h1><div class="who">${questions.length} question${questions.length === 1 ? "" : "s"}</div></header>
+  </div>`,
+    answers: `<div class="markscheme">
+    <header><h1>${esc(title)} — answers</h1><div class="who">${count}</div></header>
     <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}</div></div>`).join("\n")}</div>
-  </div>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — worksheet</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
-  ${opts.papers === false ? "" : paper}
-  ${opts.schemes === false ? "" : answers}
+  </div>`,
+  };
+}
+const documentHtml = (title: string, papers: string[], schemes: string[], autoPrint?: boolean): string => `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${KATEX_HEAD}<style>${CSS}</style></head><body${autoPrint ? ' data-autoprint="1"' : ""}>
+  ${papers.join("\n")}
+  ${schemes.join("\n")}
   ${PRINT_SCRIPT}
   </body></html>`;
+/** a worksheet of skill questions: numbered questions each with a blank working box, then (on request) a page of answers (exported so it can be tested without a window) */
+export function skillSheetHtml(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
+  const s = skillParts(title, questions);
+  return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [s.paper], opts.schemes === false ? [] : [s.answers], opts.autoPrint);
 }
-/** `win` is a window already opened at the click */
-export function printSkillSheet(title: string, questions: SkillPrintQuestion[], opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
-  const html = skillSheetHtml(title, questions, { ...opts, autoPrint: true });
+
+/** exam papers and skill questions together in one document: every paper first (exam papers, then the skill sheet), then every mark scheme and the answers page */
+function sheetsHtml(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[] } | null, opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean }): string {
+  const items = exams.map((inp, i) => questionHtml(inp, i + 1, exams.length));
+  const s = skill && skill.questions.length ? skillParts(skill.title, skill.questions) : null;
+  const title = exams[0]?.title ?? skill?.title ?? "";
+  return documentHtml(`${title} — worksheet`, opts.papers === false ? [] : [...items.map((x) => x.paper), ...(s ? [s.paper] : [])], opts.schemes === false ? [] : [...items.map((x) => x.scheme), ...(s ? [s.answers] : [])], opts.autoPrint);
+}
+/** `win` is a window already opened at the click (so slow rendering before it cannot make the browser treat the popup as unrequested) */
+export function printSheets(exams: ExamPrintInput[], skill: { title: string; questions: SkillPrintQuestion[] } | null, opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
+  const html = sheetsHtml(exams, skill, { ...opts, autoPrint: true });
   const win = opts.win ?? window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
   win.document.write(html);
@@ -169,21 +185,8 @@ export function printSkillSheet(title: string, questions: SkillPrintQuestion[], 
 export function examSetHtml(inputs: ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; autoPrint?: boolean } = {}): string {
   const items = inputs.map((inp, i) => questionHtml(inp, i + 1, inputs.length));
   const title = inputs[0]?.title ?? "";
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — exam question${inputs.length > 1 ? "s" : ""}</title>${KATEX_HEAD}<style>${CSS}</style></head><body${opts.autoPrint ? ' data-autoprint="1"' : ""}>
-  ${opts.papers === false ? "" : items.map((x) => x.paper).join("\n")}
-  ${opts.schemes === false ? "" : items.map((x) => x.scheme).join("\n")}
-  ${PRINT_SCRIPT}
-  </body></html>`;
+  return documentHtml(`${title} — exam question${inputs.length > 1 ? "s" : ""}`, opts.papers === false ? [] : items.map((x) => x.paper), opts.schemes === false ? [] : items.map((x) => x.scheme), opts.autoPrint);
 }
 
 /** a single question (paper and mark scheme) */
 export function examPrintHtml(input: ExamPrintInput): string { return examSetHtml([input]); }
-
-/** `win` is a window already opened at the click (so the slow rendering before it cannot make the browser treat the popup as unrequested) */
-export function printExam(input: ExamPrintInput | ExamPrintInput[], opts: { papers?: boolean; schemes?: boolean; win?: Window | null } = {}): void {
-  const html = examSetHtml(Array.isArray(input) ? input : [input], { ...opts, autoPrint: true });
-  const win = opts.win ?? window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-}

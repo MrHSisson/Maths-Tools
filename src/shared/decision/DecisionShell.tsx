@@ -13,9 +13,9 @@ import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
 import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
-import { printExam, printSkillSheet } from "./printExam";
-import { usePrintBasket, decisionRecipe } from "./usePrintBasket";
-import { itemKey } from "./printBasket";
+import { printSheets } from "./printExam";
+import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
+import { itemKey, type BasketItem } from "./printBasket";
 import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
@@ -286,9 +286,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)) });
+  const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window) => Promise<void>>(async () => {});   // set where the printers are (below)
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(itemKey(it)), printProblems: (problems, mode, win) => printProblemsRef.current(problems, mode, win) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
-  const savedUi = config.questionSheet ? { ...keeper, basket: basket.basket } : keeper;
+  const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
 
   // keep the address bar bookmarkable
   useEffect(() => {
@@ -368,6 +369,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const [sheetMode, setSheetMode] = useState(false);
   const [sheetN, setSheetN] = useState(3);
   const [sheet, setSheet] = useState<DecisionProblem[]>([]);
+  const [sheetCtx, setSheetCtx] = useState<{ tab: string; level: number; options: Record<string, string> } | null>(null);   // what the sheet was generated from
   const isExamProblem = !!problem.exam;
   useEffect(() => { setSheetN(isExamProblem ? 3 : 8); setSheet([]); }, [isExamProblem]); // a new kind of sheet starts at its usual size, empty
   const [sheetAnswers, setSheetAnswers] = useState(false);
@@ -385,26 +387,32 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
       setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
       await new Promise((r) => setTimeout(r, 20));
-      try { const q = generate(level, ctxOf(subTool, options, level)); if (q.exam || config.skillSheet) out.push(q); } catch { /* try again */ }
+      try { const q = generateSeeded(() => generate(level, ctxOf(subTool, options, level))); if (q.exam || config.skillSheet) out.push(q); } catch { /* try again */ }
     }
     setSheet(out);
+    setSheetCtx({ tab: subTool, level, options: ctxOf(subTool, options, level).options });
     setSheetAnswers(false);
     setSheetBusy(null);
     if (out.length < sheetN) setSheetNote(`Only ${out.length} of ${sheetN} questions could be made with these options. Try Generate again, or change the options.`);
   };
-  const printSheet = async (mode: PrintMode) => {
-    if (!sheet.length) return;
-    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
-    if (!win) { alert("Please allow popups to use the PDF export."); return; }
-    try {
-      if (!sheet[0].exam) {
-        // skill questions: numbered, each with a blank working box, then a page of answers
-        const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-        printSkillSheet(config.pageTitle, sheet.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })), { papers: mode !== "answers", schemes: mode !== "questions", win });
-        return;
-      }
+  // autopopulate the saved list before a lesson: every question of the sheet goes in as its recipe, to be loaded one by one in the lesson or printed from the basket
+  const addSheetToSaved = () => {
+    if (!sheetCtx || !keeper.saved) return;
+    const items = sheet.map((pr) => decisionRecipe(pr, sheetCtx.tab, sheetCtx.level, sheetCtx.options)).filter((x): x is BasketItem => !!x);
+    const added = keeper.saved.merge(items);
+    setSheetNote(items.length === 0 ? "These questions cannot be saved." : `${added} question${added === 1 ? "" : "s"} added to the saved list${added < items.length ? ` (${items.length - added} could not be added: already there, or the list is full)` : ""}. Open it from the pin control (on the Practice page) or the menu: Print saved questions.`);
+  };
+  /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
+  const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window) => {
+    const examProblems = problems.filter((pr) => pr.exam);
+    const skillProblems = problems.filter((pr) => !pr.exam);
+    // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
+    const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
+    const skill = skillProblems.length ? { title: config.pageTitle, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    let inputs: Parameters<typeof printSheets>[0] = [];
+    if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");
-      const inputs = sheet.map((pr) => {
+      inputs = examProblems.map((pr) => {
         // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
         const draw = (view?: unknown) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
         const drawStep = (st: SolveStep) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, st) : null}</>);
@@ -423,7 +431,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           }),
         };
       });
-      printExam(inputs, { papers: mode !== "answers", schemes: mode !== "questions", win });
+    }
+    printSheets(inputs, skill, { papers: mode !== "answers", schemes: mode !== "questions", win });
+  };
+  printProblemsRef.current = printProblemList;
+  const printSheet = async (mode: PrintMode) => {
+    if (!sheet.length) return;
+    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
+    if (!win) { alert("Please allow popups to use the PDF export."); return; }
+    try {
+      await printProblemList(sheet, mode, win);
     } catch {
       win.close();
       alert("Sorry, the print sheet could not be prepared. Please try again.");
@@ -855,6 +872,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         {sheet.length > 0 && (
           <>
             <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            {hasBasketPrint(config) && !isPhone && <button onClick={addSheetToSaved} title="Save these questions to the saved list, to load in a lesson or print later" className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50 flex items-center gap-2">Add to saved list</button>}
             <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
           </>
         )}

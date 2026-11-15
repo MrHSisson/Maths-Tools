@@ -85,6 +85,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        examSheet: true,
         noSandbox: true,
         levelLabels: {
           dims: ["One step: a single quantity, or a product or quotient of two", "A constant from a formula, three factors, roots, and units"],
