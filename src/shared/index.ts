@@ -73,7 +73,7 @@ export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./comp
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
-export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_TABLE_START_DD } from "./placeValue";
+export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_SHIFT_GRID_KEY, PV_SHIFT_GRID_VAR, PV_TABLE_START_DD } from "./placeValue";
 export { withDiagramSteps, diagramStepVisual, diagramSplitQuestion } from "./diagramSplit";
 export { rippleIncrement, columnName, type RippleBeat, type RippleResult, type RippleBase } from "./carry";
 // Storage-unit ladder (bit … PB, ×1000) — shared by Data Units and File Sizes. See src/shared/dataUnits.ts.
@@ -83,6 +83,7 @@ export { recipeAt, fsStep, type FsRecipeDef, type FsSlotDef, type FsRecipe, type
 export { FileSizeRecipe, ColourChain, FileSizeVisual, fileSizeStepVisual } from "./components/FileSizeRecipe";
 export { UnitLadder, type UnitLadderProps } from "./components/UnitLadder";
 export { PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual } from "./components/PlaceValueTable";
+export { PlaceValueShift, placeValueShiftStepRenderer, placeValueShiftStepVisual, power10, type PlaceValueShiftFrame, type PlaceValueShiftStep } from "./components/PlaceValueShift";
 
 // Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted
 // from the Surds tool alongside its four techniques below. See src/shared/surds.ts.

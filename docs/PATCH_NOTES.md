@@ -29,6 +29,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-15 — Standard Form: four sub-tools, all levels built (Dev only)
+
+- Tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. Four sub-tools; the generators for the first three are in `StandardFormConvert.ts`, `StandardFormMulDiv.ts` and `StandardFormAddSub.ts`, the exact-arithmetic helpers (no floating point) in `StandardFormCore.ts`.
+- **Converting** (3 levels): L1 large numbers, positive powers; L2 small numbers, negative powers (both either way round). Options: Ask for (to standard form / to ordinary number), Coefficient Digits (1, 2, 3), Internal Zeros (needs 3 digits). **L3 is the "half-way" numbers** (corrected after a first build that mixed the signs instead): a number in parts such as 304 × 10⁵ or 0.003 × 10⁻² to be rewritten in standard form, to standard form only. Options: Coefficients (Too Big, Too Small) and Starting Power (Positive, Negative); a final power of 0 is never produced.
+- **Multiplying & Dividing** (3 levels): L1 positive powers, answer already standard; L2 positive powers, the coefficient must be adjusted (division adjusts downward too); L3 a negative power as well, still adjusting. Options: Operations; Coefficients (whole numbers, 1 d.p., calculator-style 2 d.p. with the answer to 3 s.f.).
+- **Adding & Subtracting** (3 levels): L1 same power; L2 powers one apart; L3 two to four apart. Options: Operations, Result (already standard / needs adjusting; L1 and L2 only, because from a gap of 2 matching to the larger power can never need adjusting), Powers (positive / negative), Method (match to larger / smaller power; L2 and L3).
+- **Comparing & Ordering** (2 levels): L1 insert < or >, L2 order four numbers (see the earlier build).
+- Tests: `src/tests/standardForm.test.ts` recomputes every answer from the printed question with BigInt arithmetic and checks each level's defining property (level 3 add/subtract, gap sizes, signs of the powers, adjusting step present or absent).
+- **Developing picture on Converting (all three levels): the place value grid with one animated row** (`StandardFormGrid.ts` works out each step, `StandardFormShift.tsx` draws and animates it). The columns are the standard place value headings (B HM TM M HTh TTh Th H T O · t h th tth hth mth, billions down to millionths; "Words in column headings" switches them to names) and the decimal point stays fixed. One row of digits sits in the grid with a **Power** cell beside it. Each step the digits slide one column (a CSS transition on the same grid, so it animates between steps) and the Power cell rolls over like an odometer: digits one column right (each worth 10 times less), the power rolls up by 1; digits one column left, it rolls down by 1. Zeros that only hold a place fade in and out. To standard form the digits slide until the first is in the ones column (circled); to an ordinary number the same slide runs the other way, stopping at 10⁰; half-way numbers (level 3) start at the coefficient as given with its starting power (304 × 10⁵ → 30.4 × 10⁶ → 3.04 × 10⁷). Large numbers go up to 10⁹; a small number's last digit lands at 10⁻⁶ or above, so the more digits a Level 2 coefficient has, the smaller its power can be. Reduced-motion turns the movement off. **The grid is a scaffold:** a display-only "Place value grid" switch (Question Options, Method tab, on by default) hides the headings and cell borders and leaves just the digits sliding beside the fixed point and the rolling Power cell, for when students no longer need the columns (flipping it, like any option, collapses the revealed steps; the question stays the same). Worked example: one slide per step; whiteboard: an empty grid in the working box that fills on Show Answer. Earlier versions replaced: powers of ten as headings with fixed digits, then a staircase of rows.
+- Not done: the other three tabs have no picture; no printable blank grid with power headings; no `specs/standard-form.md`, Depth bank, Teach deck or lesson; no calibration; phone and tablet layouts only smoke-checked. Calculator-style questions are in the Coefficients pool but off by default. Review with Harry before going live.
+- Agent: Claude Code
+- Notes: no Build Log block yet (planner not updated this session).
+
+## 2026-11-15 — Decks: a USB presentation clicker moves the deck
+
+- The deck player now reads keys through `src/decks/clickerKeys.ts` in the capture phase, so nothing on a slide can swallow a clicker press. Next: Page Down, Right, Down, Enter, Space, media-next. Back: Page Up, Left, Up, media-previous. A clicker that reports no key name is read by `code` or `keyCode`. Home / End as before.
+- `.` blanks the screen to black (press it, or a next key, to come back); `F5` starts full screen; `B` still cycles board fill.
+- **K** shows a "Key test" readout of exactly what the last key sent, so an unknown clicker's buttons can be identified.
+- Test: `src/tests/deckClickerKeys.test.ts`. Checked in headless Chromium against the primes deck (Page Down / Arrow Down / Page Up / Enter move, `.` blanks).
+- Not done: Harry's clicker not yet tried; if it still does nothing, press K in a deck and note what appears.
+- Agent: Claude Code
+- Notes: no Build Log block yet (planner not updated this session).
+
 ## 2026-11-15 — Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a Ratio deck
 
 Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSharingTool.tsx,RatioSharingTool.about.ts,ratioSharing.ts,RatioSharingDepth.ts}`, `src/decks/{sharingQuestions,builder,SlideCanvas}`, `src/shared/{barModel,misconceptions}.ts`, `specs/decks/ratio-sharing*`, `specs/depth/ratio-sharing.md`, `src/tests/{ratioSharing,ratioSharingSets,ratioSharingDepth,barModel}.test.ts`, docs.

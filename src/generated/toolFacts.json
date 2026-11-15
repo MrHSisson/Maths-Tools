@@ -173,6 +173,37 @@
    "spec": true
   },
   {
+   "id": "standard-form",
+   "path": "/standard-form",
+   "name": "Standard Form",
+   "description": "Compare numbers in standard form with < and >, and put them in order, including negative powers of 10.",
+   "group": "Powers & standard form",
+   "category": "Number",
+   "subject": "GCSE Maths",
+   "enabled": false,
+   "file": "src/tools/Number/StandardForm.tsx",
+   "kind": "tool",
+   "shell": "ToolShell",
+   "subTools": 4,
+   "lines": 325,
+   "depth": false,
+   "teach": false,
+   "lessons": false,
+   "workedSplit": true,
+   "calibrated": false,
+   "scaffold": true,
+   "reformat": false,
+   "customPrint": false,
+   "printables": false,
+   "printBasket": false,
+   "tests": true,
+   "skillLinks": false,
+   "representations": [
+    "Place value table"
+   ],
+   "spec": false
+  },
+  {
    "id": "powers-of-ten",
    "path": "/powers-of-ten",
    "name": "Powers of 10",
