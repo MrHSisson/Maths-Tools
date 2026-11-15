@@ -29,12 +29,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-11-15 — Standard Form: Comparing & Ordering (first build, Dev only)
+## 2026-11-15 — Standard Form: four sub-tools, all levels built (Dev only)
 
-- New tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. One sub-tool, **Comparing & Ordering**, two levels: **L1** insert < or > between two numbers in standard form; **L2** put four numbers in order. Other sub-tools (converting, multiplying and dividing, adding and subtracting) are specced in chat only and not built.
-- Options (two per level): L1 **Powers** (Same, Positive, Negative, Mixed Signs) and **Coefficients** (Agreeing, Misleading: the bigger coefficient is on the smaller number; needs a pair whose powers differ); L2 **Ask for** (Smallest First, Largest First) and **Powers** (Positive, Negative, Mixed Signs). Numbers are held as exact (tenths of coefficient, power) pairs, so the power decides first and the coefficient second.
-- L2 lists share a power about half the time (coefficients at least 0.5 apart) and are never shown already in answer order.
-- Not done: no spec file (`specs/standard-form.md`), no Depth bank, Teach deck or lesson, no calibration, phone/tablet layouts only smoke-checked (start screen and laptop render, no console errors). Review with Harry before going live.
+- Tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. Four sub-tools; the generators for the first three are in `StandardFormConvert.ts`, `StandardFormMulDiv.ts` and `StandardFormAddSub.ts`, the exact-arithmetic helpers (no floating point) in `StandardFormCore.ts`.
+- **Converting** (3 levels): L1 large numbers, positive powers; L2 small numbers, negative powers; L3 either sign. Options: Ask for (to standard form / to ordinary number), Coefficient Digits (1, 2, 3), Internal Zeros (needs 3 digits).
+- **Multiplying & Dividing** (3 levels): L1 positive powers, answer already standard; L2 positive powers, the coefficient must be adjusted (division adjusts downward too); L3 a negative power as well, still adjusting. Options: Operations; Coefficients (whole numbers, 1 d.p., calculator-style 2 d.p. with the answer to 3 s.f.).
+- **Adding & Subtracting** (3 levels): L1 same power; L2 powers one apart; L3 two to four apart. Options: Operations, Result (already standard / needs adjusting; L1 and L2 only, because from a gap of 2 matching to the larger power can never need adjusting), Powers (positive / negative), Method (match to larger / smaller power; L2 and L3).
+- **Comparing & Ordering** (2 levels): L1 insert < or >, L2 order four numbers (see the earlier build).
+- Tests: `src/tests/standardForm.test.ts` recomputes every answer from the printed question with BigInt arithmetic and checks each level's defining property (level 3 add/subtract, gap sizes, signs of the powers, adjusting step present or absent).
+- Not done: no place value table picture on Converting (working is lines only); no `specs/standard-form.md`, Depth bank, Teach deck or lesson; no calibration; phone and tablet layouts only smoke-checked. Calculator-style questions are in the Coefficients pool but off by default. Review with Harry before going live.
 - Agent: Claude Code
 - Notes: no Build Log block yet (planner not updated this session).
 

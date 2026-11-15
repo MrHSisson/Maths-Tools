@@ -5,10 +5,15 @@ import {
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./StandardForm.about";
+import { CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS, genConvert } from "./StandardFormConvert";
+import { MD_OPS_MS, MD_COEF_MS, genMulDiv } from "./StandardFormMulDiv";
+import { AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS, AS_MATCH_MS, genAddSub } from "./StandardFormAddSub";
 
 // ════════════════════════════════════════════════════════════════════════
-// Standard Form: comparing and ordering (first sub-tool; converting and the
-// four operations join it later as further sub-tools).
+// Standard Form: converting, multiplying and dividing, adding and subtracting,
+// and comparing and ordering. Each sub-tool's generator is in its own file
+// (StandardFormConvert / MulDiv / AddSub); this file holds the comparing and
+// ordering generator and wires them together.
 //
 // Every number is c × 10ⁿ with c in [1, 10) to one decimal place, held as
 // the integer pair (tenths of c, n), so comparing is exact: the power
@@ -17,7 +22,7 @@ import { ABOUT } from "./StandardForm.about";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────
 
-type ToolType = "comparing";
+type ToolType = "converting" | "multiplyDivide" | "addSubtract" | "comparing";
 
 /** A number in standard form: coefficient in tenths (10 … 99) and the power of 10. */
 interface SF { t: number; n: number; }
@@ -73,6 +78,36 @@ const ORDER_POWERS_MS: ToolMultiSelect = {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Standard Form",
   tools: {
+    converting: {
+      name: "Converting",
+      variables: [],
+      dropdown: null,
+      difficultySettings: {
+        level1: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level2: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+      },
+    },
+    multiplyDivide: {
+      name: "Multiplying & Dividing",
+      variables: [],
+      dropdown: null,
+      difficultySettings: {
+        level1: { variables: [], dropdown: null, multiSelect: [MD_OPS_MS, MD_COEF_MS] },
+        level2: { variables: [], dropdown: null, multiSelect: [MD_OPS_MS, MD_COEF_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [MD_OPS_MS, MD_COEF_MS] },
+      },
+    },
+    addSubtract: {
+      name: "Adding & Subtracting",
+      variables: [],
+      dropdown: null,
+      difficultySettings: {
+        level1: { variables: [], dropdown: null, multiSelect: [AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS] },
+        level2: { variables: [], dropdown: null, multiSelect: [AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS, AS_MATCH_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [AS_OPS_MS, AS_POWERS_MS, AS_MATCH_MS] },
+      },
+    },
     comparing: {
       name: "Comparing & Ordering",
       variables: [],
@@ -248,7 +283,9 @@ const generateQuestion = (
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
-  void t;
+  if (t === "converting") return genConvert(level, multiSelectValues);
+  if (t === "multiplyDivide") return genMulDiv(level, multiSelectValues);
+  if (t === "addSubtract") return genAddSub(level, multiSelectValues);
   return level === "level1" ? genCompare(multiSelectValues) : genOrder(multiSelectValues);
 };
 
@@ -256,7 +293,7 @@ const generateQuestion = (
 
 applyAbout(TOOL_CONFIG, ABOUT);
 
-export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2"] };
+export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
   return (
