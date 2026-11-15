@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-11-15 — Ratio Sharing: three parts, unsimplified ratios, other contexts, a check step (for the Sharing in a ratio deck)
+## 2026-11-15 — Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a ratio deck
 
 Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSharingTool.tsx,RatioSharingTool.about.ts,ratioSharing.ts}` (new pure builders), `src/decks/{sharingQuestions.ts,builder.ts}`, `src/tests/ratioSharing.test.ts`, `specs/decks/ratio-sharing.md`.
 
@@ -37,10 +37,13 @@ Branch `claude/affectionate-curie-0ewkxd`. Areas: `src/tools/Proportion/{RatioSh
 - Defaults are the old tool: two parts, money, simplest form. The generators no longer end their question keys with a random number (rule R2); the About line now says Level 3 uses the numerical method.
 - The three generators now call pure builders (`buildSharing`, `buildKnown`, `buildDifference`), which the deck's `Q.share`, `Q.known` and `Q.diff` also use, so an authored question carries the tool's own wording and bar model.
 - Tests: every answer is recomputed from the question's own words over all tabs, levels, part counts, contexts and the unsimplified switch; the builders and the deck pictures are checked against hand-worked numbers. Build, full tests and lint pass; the shell smoke test passes for the tool.
-- Not done: the Depth bank (spec to write first), the deck itself, calibration, a visual check of the three-part bar on phone and tablet.
+- **Depth bank** (`RatioSharingDepth.ts`, 15 items, spec `specs/depth/ratio-sharing.md`; ten new `sharing-…` misconception tags; numbers asserted in `src/tests/ratioSharingDepth.test.ts`).
+- **The deck** `ratio-sharing` (22 slides, `specs/decks/ratio-sharing.build.ts`, plan `specs/decks/ratio-sharing.md`): a recap lesson built round the mistakes. Each section opens with a Depth card ("who is right?") and a worked bar model built a click at a time. Set A is a 3 × 3 board grid (sharing a total, nine questions, no hints); the known-share, difference and mixed sets are pinned printed sheets in the textbook layout (nine, nine and fifteen). All 42 questions are in `specs/decks/ratio-sharing-sets.ts`; `src/tests/ratioSharingSets.test.ts` recomputes every answer from the numbers shown, checks the tool's builder agrees, runs the named wrong method on each and checks no number repeats (table: `specs/decks/ratio-sharing-questions.md`). The deck check passes with `--layout`, and `smoke:deck-print` shows every sheet and answer sheet on one A4 page (the mixed sheet needs 13px type to do it).
+- Build, 141 test files (2,704 tests), lint and the tool's shell smoke test pass.
+- Not done: the deck is in the repo only, **not pushed to the shared copy**: its Depth cards read the new bank, which the live site does not have until this branch is merged (`review` warns). Calibration of the tool; a phone and tablet check of the three-part bar and of the deck.
 
 Agent: Claude Code
-Notes: planner Build Log block still to be written at the end of the deck work.
+Notes: planner Build Log block "Ratio Sharing deck and Depth bank (Claude Code)".
 
 ## 2026-11-14 — Deck strands and topics: Harry controls the Decks page headings
 

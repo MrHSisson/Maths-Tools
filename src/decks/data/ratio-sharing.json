@@ -1,0 +1,1806 @@
+{
+ "id": "ratio-sharing",
+ "title": "Sharing in a Ratio",
+ "strand": "Ratio & Proportion",
+ "tool": "ratio-sharing",
+ "pitch": "middle",
+ "questionVersion": 2,
+ "summary": "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Each section starts with a Depth card (who is right?), then a worked bar model. Nine questions on the board for sharing a total; printed sheets for the known share, the difference and a mixed set of fifteen.",
+ "slides": [
+  {
+   "id": "rsh-title",
+   "family": "structure",
+   "title": "Sharing in a Ratio",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Sharing in a Ratio",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "rsh-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Find the parts. Find one part. Check.",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "rsh-title-2"
+    }
+   ],
+   "built": "lpjn08"
+  },
+  {
+   "id": "rsh-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "rsh-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Share an amount in a ratio of two or three parts, and use a known share or a difference to find the shares and the total.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Share a total in a ratio\n•  Use a known share or a difference to find one part\n•  Check that the shares add to the total",
+     "size": 44,
+     "colour": "#334155",
+     "id": "rsh-objective-3"
+    }
+   ],
+   "built": "1sd3i13"
+  },
+  {
+   "id": "rsh-starter",
+   "family": "retrieval",
+   "title": "Starter",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Starter",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-starter-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "From earlier lessons",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "rsh-starter-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "rsh-starter-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "rsh-st-1",
+       "title": "simplify",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Simplify $9 : 21$."
+       ],
+       "answer": [
+        "$3 : 7$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-st-2",
+       "title": "add",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Add the parts of $3 : 5 : 7$."
+       ],
+       "answer": [
+        "$15$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-st-3",
+       "title": "scale",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Complete: $2 : 5 = 8 : \\,?$"
+       ],
+       "answer": [
+        "$20$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-st-4",
+       "title": "divide",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£56 shared equally between $7$ people. How much each?"
+       ],
+       "answer": [
+        "£8"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "1ba0tc4"
+  },
+  {
+   "id": "rsh-div-a",
+   "family": "structure",
+   "title": "Sharing a total",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Sharing a total",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "rsh-div-a-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Add the parts. Find one part. Multiply.",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "rsh-div-a-2"
+    }
+   ],
+   "built": "nda9vd"
+  },
+  {
+   "id": "rsh-depth-who",
+   "family": "depth",
+   "title": "Who is right?",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-who-is-right",
+     "id": "rsh-depth-who-1"
+    }
+   ],
+   "built": "xb2gr9"
+  },
+  {
+   "id": "rsh-worked-a",
+   "family": "teach",
+   "title": "Share £80 in the ratio 3 : 5",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Share £80 in the ratio 3 : 5",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-worked-a-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Ana and Ben share £80 in the ratio $3 : 5$.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "rsh-worked-a-2"
+    },
+    {
+     "kind": "bar",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 400,
+     "bar": {
+      "parts": [],
+      "rows": [
+       {
+        "name": "Ana",
+        "units": 3
+       },
+       {
+        "name": "Ben",
+        "units": 5
+       }
+      ],
+      "sideBrace": {
+       "label": "total: 8 parts"
+      }
+     },
+     "fill": "filled",
+     "size": 72,
+     "staged": true,
+     "id": "rsh-worked-a-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 680,
+     "w": 1400,
+     "h": 66,
+     "text": "1 part: $80 \\div 8 = 10$, so £10",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 3,
+     "id": "rsh-worked-a-w1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 750,
+     "w": 1400,
+     "h": 66,
+     "text": "Ana: $3 \\times 10 = 30$.  Ben: $5 \\times 10 = 50$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 4,
+     "id": "rsh-worked-a-w2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 820,
+     "w": 1400,
+     "h": 66,
+     "text": "Check: $30 + 50 = 80$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 5,
+     "id": "rsh-worked-a-w3"
+    }
+   ],
+   "brief": "The bar model for sharing a total: the parts add to the total, one part, then multiply back, then check.",
+   "built": "n8786z"
+  },
+  {
+   "id": "rsh-depth-three",
+   "family": "depth",
+   "title": "Three parts",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-three-parts",
+     "id": "rsh-depth-three-1"
+    }
+   ],
+   "built": "127ye6p"
+  },
+  {
+   "id": "rsh-grid-a",
+   "family": "retrieval",
+   "title": "Sharing a total",
+   "els": [
+    {
+     "kind": "text",
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Share each amount in the ratio given.",
+     "size": 38,
+     "colour": "#64748b",
+     "id": "rsh-grid-a-1"
+    },
+    {
+     "kind": "grid",
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
+     "bank": [],
+     "items": [
+      {
+       "version": 2,
+       "id": "rsh-a1",
+       "title": "£40",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£40",
+        "$1 : 4$"
+       ],
+       "answer": [
+        "£8 and £32"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a2",
+       "title": "£28",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£28",
+        "$1 : 6$"
+       ],
+       "answer": [
+        "£4 and £24"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a3",
+       "title": "£65",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£65",
+        "$2 : 3$"
+       ],
+       "answer": [
+        "£26 and £39"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a4",
+       "title": "£42",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£42",
+        "$5 : 2$"
+       ],
+       "answer": [
+        "£30 and £12"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a5",
+       "title": "64 kg",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "64 kg",
+        "$3 : 5$"
+       ],
+       "answer": [
+        "24 kg and 40 kg"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a6",
+       "title": "£132",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£132",
+        "$5 : 7$"
+       ],
+       "answer": [
+        "£55 and £77"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a7",
+       "title": "£112",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£112",
+        "$6 : 8$"
+       ],
+       "answer": [
+        "£48 and £64"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a8",
+       "title": "£72",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£72",
+        "$1 : 3 : 4$"
+       ],
+       "answer": [
+        "£9, £27 and £36"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-a9",
+       "title": "£22.50",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "£22.50",
+        "$2 : 3 : 4$"
+       ],
+       "answer": [
+        "£5, £7.50 and £10"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "cols": 3,
+     "id": "rsh-grid-a-2",
+     "align": "center",
+     "fixed": true,
+     "size": 100
+    }
+   ],
+   "built": "zi15vw"
+  },
+  {
+   "id": "rsh-div-b",
+   "family": "structure",
+   "title": "A known share",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "A known share",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "rsh-div-b-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "One person's share is given. How many parts is it?",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "rsh-div-b-2"
+    }
+   ],
+   "built": "n6bfw2"
+  },
+  {
+   "id": "rsh-depth-known",
+   "family": "depth",
+   "title": "Who is right?",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-known-share",
+     "id": "rsh-depth-known-1"
+    }
+   ],
+   "built": "ceqsta"
+  },
+  {
+   "id": "rsh-worked-b",
+   "family": "teach",
+   "title": "Ana gets £20 in the ratio 2 : 3",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Ana gets £20 in the ratio 2 : 3",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-worked-b-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Ana and Ben share money in the ratio $2 : 3$. Ana gets £20. Find the total.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "rsh-worked-b-2"
+    },
+    {
+     "kind": "bar",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 400,
+     "bar": {
+      "parts": [],
+      "rows": [
+       {
+        "name": "Ana",
+        "units": 2,
+        "known": true,
+        "total": "£20"
+       },
+       {
+        "name": "Ben",
+        "units": 3
+       }
+      ],
+      "sideBrace": {
+       "label": "total: 5 parts"
+      }
+     },
+     "fill": "filled",
+     "size": 72,
+     "staged": true,
+     "id": "rsh-worked-b-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 680,
+     "w": 1400,
+     "h": 66,
+     "text": "£20 is $2$ parts, so 1 part: $20 \\div 2 = 10$, so £10",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 4,
+     "id": "rsh-worked-b-w1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 750,
+     "w": 1400,
+     "h": 66,
+     "text": "Total: $5 \\times 10 = 50$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 5,
+     "id": "rsh-worked-b-w2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 820,
+     "w": 1400,
+     "h": 66,
+     "text": "Check: Ana £20 and Ben $3 \\times 10 = 30$ are in the ratio $2 : 3$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 6,
+     "id": "rsh-worked-b-w3"
+    }
+   ],
+   "brief": "The known share stands for its own parts, not for one part and not for the total.",
+   "built": "1le2o0x"
+  },
+  {
+   "id": "rsh-sheet-b",
+   "family": "practice",
+   "title": "Worksheet: a known share",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet: a known share",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-sheet-b-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "rsh-sheet-b-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
+     "tool": "ratio-sharing",
+     "preset": {
+      "sub": "mixed",
+      "level": "level1"
+     },
+     "count": 9,
+     "cols": 2,
+     "seed": 1,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet: a known share",
+      "paper": "A4",
+      "layout": "list",
+      "borders": false,
+      "fontPx": 17
+     },
+     "id": "rsh-sheet-b-3",
+     "prompt": "Work out each answer. Show your working in your book.",
+     "size": 44,
+     "frozen": {
+      "sig": "[\"ratio-sharing\",{\"sub\":\"mixed\",\"level\":\"level1\"},9,1]",
+      "questions": [
+       {
+        "kind": "worded",
+        "lines": [
+         "Mia and Jack share money in the ratio $1:4$",
+         "Mia receives £15",
+         "How much does Jack receive?"
+        ],
+        "answer": "Jack = £60",
+        "working": [],
+        "key": "rsh-sheet-b-B1",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Jack = } \\pounds 60"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Priya and Leo share money in the ratio $1:5$",
+         "Leo receives £55",
+         "How much does Priya receive?"
+        ],
+        "answer": "Priya = £11",
+        "working": [],
+        "key": "rsh-sheet-b-B2",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Priya = } \\pounds 11"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Zane and Isla share money in the ratio $2:3$",
+         "Zane receives £16",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £40",
+        "working": [],
+        "key": "rsh-sheet-b-B3",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 40"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Noah and Grace share money in the ratio $3:4$",
+         "Grace receives £32",
+         "How much does Noah receive?"
+        ],
+        "answer": "Noah = £24",
+        "working": [],
+        "key": "rsh-sheet-b-B4",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Noah = } \\pounds 24"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Ruth and Sam share marbles in the ratio $4:3$",
+         "Ruth receives 36 marbles",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = 63 marbles",
+        "working": [],
+        "key": "rsh-sheet-b-B5",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } 63 \\text{ marbles}"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Finn and Olivia share money in the ratio $5:8$",
+         "Finn receives £70",
+         "How much does Olivia receive?"
+        ],
+        "answer": "Olivia = £112",
+        "working": [],
+        "key": "rsh-sheet-b-B6",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Olivia = } \\pounds 112"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Hugo and Ella share money in the ratio $6:9$",
+         "Hugo receives £54",
+         "How much does Ella receive?"
+        ],
+        "answer": "Ella = £81",
+        "working": [],
+        "key": "rsh-sheet-b-B7",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Ella = } \\pounds 81"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Dev, Maya and Tom share money in the ratio $3:4:5$",
+         "Maya receives £68",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £204",
+        "working": [],
+        "key": "rsh-sheet-b-B8",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 204"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Eli, Zoe and Max share money in the ratio $2:5:6$",
+         "Eli receives £14",
+         "How much does Max receive?"
+        ],
+        "answer": "Max = £42",
+        "working": [],
+        "key": "rsh-sheet-b-B9",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Max = } \\pounds 42"
+       }
+      ]
+     }
+    }
+   ],
+   "brief": "Printed sheet of nine, easiest first. Not everyone will finish: a secure class can start at question 4. Question 1 starts with the known share as one part, where treating it as one part happens to work.",
+   "built": "12vx33s"
+  },
+  {
+   "id": "rsh-div-c",
+   "family": "structure",
+   "title": "A difference",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "A difference",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "rsh-div-c-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "The gap between two shares. How many parts is it?",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "rsh-div-c-2"
+    }
+   ],
+   "built": "1bcbklv"
+  },
+  {
+   "id": "rsh-recap",
+   "family": "retrieval",
+   "title": "Recap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Recap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-recap-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Lesson 2: three from last time",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "rsh-recap-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 1,
+     "id": "rsh-recap-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "rsh-r1",
+       "title": "£77",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Kit and Lou share £77 in the ratio $3:4$. How much does Kit receive?"
+       ],
+       "answer": [
+        "Kit: £33"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-r2",
+       "title": "£17",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Meg and Nat share money in the ratio $1:4$. Meg receives £17. How much does Nat receive?"
+       ],
+       "answer": [
+        "Nat: £68"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-r3",
+       "title": "£63",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Oli and Pam share money in the ratio $1:4$. Pam receives £63 more than Oli. What is the total amount shared?"
+       ],
+       "answer": [
+        "Total: £105"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "1a70ayw"
+  },
+  {
+   "id": "rsh-depth-diff",
+   "family": "depth",
+   "title": "What is the total?",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-diff-total",
+     "id": "rsh-depth-diff-1"
+    }
+   ],
+   "built": "1u0cdnk"
+  },
+  {
+   "id": "rsh-worked-c",
+   "family": "teach",
+   "title": "Ben gets £60 more than Ana",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Ben gets £60 more than Ana",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-worked-c-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "Ana and Ben share money in the ratio $1 : 4$. Ben gets £60 more than Ana. Find the total.",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "rsh-worked-c-2"
+    },
+    {
+     "kind": "bar",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 400,
+     "bar": {
+      "parts": [],
+      "rows": [
+       {
+        "name": "Ana",
+        "units": 1
+       },
+       {
+        "name": "Ben",
+        "units": 4,
+        "extraFrom": 1,
+        "total": "£60 more"
+       }
+      ]
+     },
+     "fill": "filled",
+     "size": 72,
+     "staged": true,
+     "id": "rsh-worked-c-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 680,
+     "w": 1400,
+     "h": 66,
+     "text": "The difference is $4 - 1 = 3$ parts: £60. 1 part: $60 \\div 3 = 20$, so £20",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 3,
+     "id": "rsh-worked-c-w1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 750,
+     "w": 1400,
+     "h": 66,
+     "text": "Ana £20, Ben £80.  Total: $20 + 80 = 100$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 4,
+     "id": "rsh-worked-c-w2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 820,
+     "w": 1400,
+     "h": 66,
+     "text": "Check: $80 - 20 = 60$",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": false,
+     "step": 5,
+     "id": "rsh-worked-c-w3"
+    }
+   ],
+   "brief": "The difference is the extra boxes only: the parts that differ, not all the parts.",
+   "built": "bechbj"
+  },
+  {
+   "id": "rsh-sheet-c",
+   "family": "practice",
+   "title": "Worksheet: a difference",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet: a difference",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-sheet-c-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "rsh-sheet-c-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 630,
+     "tool": "ratio-sharing",
+     "preset": {
+      "sub": "mixed",
+      "level": "level1"
+     },
+     "count": 9,
+     "cols": 2,
+     "seed": 2,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet: a difference",
+      "paper": "A4",
+      "layout": "list",
+      "borders": false,
+      "fontPx": 17
+     },
+     "id": "rsh-sheet-c-3",
+     "prompt": "Work out each answer. Show your working in your book.",
+     "size": 44,
+     "frozen": {
+      "sig": "[\"ratio-sharing\",{\"sub\":\"mixed\",\"level\":\"level1\"},9,2]",
+      "questions": [
+       {
+        "kind": "worded",
+        "lines": [
+         "Rosa and Carl share money in the ratio $1:3$",
+         "Carl receives £22 more than Rosa",
+         "How much does Carl receive?"
+        ],
+        "answer": "Carl = £33",
+        "working": [],
+        "key": "rsh-sheet-c-C1",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Carl = } \\pounds 33"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Ivy and Sid share money in the ratio $1:3$",
+         "Ivy receives £26 less than Sid",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £52",
+        "working": [],
+        "key": "rsh-sheet-c-C2",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 52"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Nia and Pete share money in the ratio $2:5$",
+         "Pete receives £45 more than Nia",
+         "How much does Nia receive?"
+        ],
+        "answer": "Nia = £30",
+        "working": [],
+        "key": "rsh-sheet-c-C3",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Nia = } \\pounds 30"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Joy and Alan share money in the ratio $4:7$",
+         "The difference in their amounts is £33",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £121",
+        "working": [],
+        "key": "rsh-sheet-c-C4",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 121"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Lena and Omar share money in the ratio $2:7$",
+         "Omar receives £30 more than Lena",
+         "How much does Lena receive?"
+        ],
+        "answer": "Lena = £12",
+        "working": [],
+        "key": "rsh-sheet-c-C5",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Lena = } \\pounds 12"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Tara and Will share sweets in the ratio $5:3$",
+         "Tara receives 34 more sweets than Will",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = 136 sweets",
+        "working": [],
+        "key": "rsh-sheet-c-C6",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } 136 \\text{ sweets}"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Rhys and Cleo share money in the ratio $7:4$",
+         "The difference in their amounts is £96",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £352",
+        "working": [],
+        "key": "rsh-sheet-c-C7",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 352"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Abe, Beth and Cole share money in the ratio $3:4:8$",
+         "The difference between Abe's and Cole's shares is £25",
+         "How much does Beth receive?"
+        ],
+        "answer": "Beth = £20",
+        "working": [],
+        "key": "rsh-sheet-c-C8",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Beth = } \\pounds 20"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Dana, Eric and Fay share money in the ratio $3:5:7$",
+         "Fay receives £52 more than Dana",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £195",
+        "working": [],
+        "key": "rsh-sheet-c-C9",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 195"
+       }
+      ]
+     }
+    }
+   ],
+   "brief": "Printed sheet of nine, easiest first. Not everyone will finish. Questions 4, 6 and 7 ask for the total, where dividing the difference by all the parts and multiplying back gives the difference itself.",
+   "built": "vk61f2"
+  },
+  {
+   "id": "rsh-div-d",
+   "family": "structure",
+   "title": "Mixed",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Mixed",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "rsh-div-d-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Which kind of question is it? Decide, then solve.",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "rsh-div-d-2"
+    }
+   ],
+   "built": "yoacas"
+  },
+  {
+   "id": "rsh-depth-first",
+   "family": "depth",
+   "title": "Which first step?",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-first-step",
+     "id": "rsh-depth-first-1"
+    }
+   ],
+   "built": "15qgtaf"
+  },
+  {
+   "id": "rsh-sheet-d",
+   "family": "practice",
+   "title": "Worksheet: mixed",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 50,
+     "w": 1400,
+     "h": 100,
+     "text": "Worksheet: mixed",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-sheet-d-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 150,
+     "w": 1400,
+     "h": 56,
+     "text": "Hand out the worksheet. Press A for the answers.",
+     "size": 36,
+     "colour": "#64748b",
+     "id": "rsh-sheet-d-2"
+    },
+    {
+     "kind": "worksheet",
+     "x": 40,
+     "y": 230,
+     "w": 1520,
+     "h": 630,
+     "tool": "ratio-sharing",
+     "preset": {
+      "sub": "mixed",
+      "level": "level1"
+     },
+     "count": 15,
+     "cols": 2,
+     "seed": 3,
+     "view": "key",
+     "pin": {
+      "title": "Worksheet: mixed",
+      "paper": "A4",
+      "layout": "list",
+      "borders": false,
+      "fontPx": 13
+     },
+     "id": "rsh-sheet-d-3",
+     "prompt": "Work out each answer. Show your working in your book.",
+     "size": 40,
+     "frozen": {
+      "sig": "[\"ratio-sharing\",{\"sub\":\"mixed\",\"level\":\"level1\"},15,3]",
+      "questions": [
+       {
+        "kind": "worded",
+        "lines": [
+         "Kim and Raj share £85 in the ratio $2:3$",
+         "How much does Raj receive?"
+        ],
+        "answer": "Raj = £51",
+        "working": [],
+        "key": "rsh-sheet-d-D1",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Raj = } \\pounds 51"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Ola and Pat share money in the ratio $3:4$",
+         "Ola receives £39",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £91",
+        "working": [],
+        "key": "rsh-sheet-d-D2",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 91"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Quin and Rae share money in the ratio $1:4$",
+         "Quin receives £57 less than Rae",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £95",
+        "working": [],
+        "key": "rsh-sheet-d-D3",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 95"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Sia and Tim share £104 in the ratio $5:3$",
+         "How much does Sia receive?"
+        ],
+        "answer": "Sia = £65",
+        "working": [],
+        "key": "rsh-sheet-d-D4",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Sia = } \\pounds 65"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Uma and Vik share money in the ratio $2:7$",
+         "Vik receives £49",
+         "How much does Uma receive?"
+        ],
+        "answer": "Uma = £14",
+        "working": [],
+        "key": "rsh-sheet-d-D5",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Uma = } \\pounds 14"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Walt and Xena share £130 in the ratio $8:12$",
+         "How much does Walt receive?"
+        ],
+        "answer": "Walt = £52",
+        "working": [],
+        "key": "rsh-sheet-d-D6",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Walt = } \\pounds 52"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Yara and Zack share paint in the ratio $3:5$",
+         "Zack receives 20 litres",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = 32 litres",
+        "working": [],
+        "key": "rsh-sheet-d-D7",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } 32 \\text{ litres}"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Abel and Bea share flour in the ratio $4:9$",
+         "Bea receives 10 kg more than Abel",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = 26 kg",
+        "working": [],
+        "key": "rsh-sheet-d-D8",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } 26 \\text{ kg}"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Cy and Di share £228 in the ratio $7:5$",
+         "How much does Di receive?"
+        ],
+        "answer": "Di = £95",
+        "working": [],
+        "key": "rsh-sheet-d-D9",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Di = } \\pounds 95"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Eve and Fox share money in the ratio $10:4$",
+         "Fox receives £12",
+         "How much does Eve receive?"
+        ],
+        "answer": "Eve = £30",
+        "working": [],
+        "key": "rsh-sheet-d-D10",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Eve = } \\pounds 30"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Gus, Hana and Ian share £144 in the ratio $1:2:3$",
+         "How much does Hana receive?"
+        ],
+        "answer": "Hana = £48",
+        "working": [],
+        "key": "rsh-sheet-d-D11",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Hana = } \\pounds 48"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Jo, Kai and Liv share money in the ratio $2:3:4$",
+         "Kai receives £51",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £153",
+        "working": [],
+        "key": "rsh-sheet-d-D12",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 153"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Mo, Ned and Pia share money in the ratio $3:5:7$",
+         "The difference between Mo's and Pia's shares is £8",
+         "How much does Ned receive?"
+        ],
+        "answer": "Ned = £10",
+        "working": [],
+        "key": "rsh-sheet-d-D13",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Ned = } \\pounds 10"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Ron, Sue and Ted share money in the ratio $4:6:10$",
+         "Ted receives £44 more than Sue",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = £220",
+        "working": [],
+        "key": "rsh-sheet-d-D14",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } \\pounds 220"
+       },
+       {
+        "kind": "worded",
+        "lines": [
+         "Una, Vic and Wes share flour in the ratio $2:3:6$",
+         "The difference between Vic's and Wes's shares is 27 kg",
+         "What is the total amount shared?"
+        ],
+        "answer": "Total = 99 kg",
+        "working": [],
+        "key": "rsh-sheet-d-D15",
+        "difficulty": "level1",
+        "answerLatex": "\\text{Total = } 99 \\text{ kg}"
+       }
+      ]
+     }
+    }
+   ],
+   "brief": "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
+   "built": "1995n2r"
+  },
+  {
+   "id": "rsh-exit",
+   "family": "retrieval",
+   "title": "Exit ticket",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Exit ticket",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-exit-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Work on your own.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "rsh-exit-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 1,
+     "id": "rsh-exit-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "rsh-x1",
+       "title": "£81",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Quin and Rae share £81 in the ratio $4:5$. Find both shares."
+       ],
+       "answer": [
+        "Quin: £36, Rae: £45"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-x2",
+       "title": "£38",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Sid and Tia share money in the ratio $2:3$. Sid receives £38. What is the total amount shared?"
+       ],
+       "answer": [
+        "Total: £95"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "rsh-x3",
+       "title": "£46",
+       "tool": "ratio-sharing",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Uri and Val share money in the ratio $3:5$. Val receives £46 more than Uri. What is the total amount shared?"
+       ],
+       "answer": [
+        "Total: £184"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "1r1uerd"
+  },
+  {
+   "id": "rsh-summary",
+   "family": "structure",
+   "title": "What I check every time",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "What I check every time",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "rsh-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  What am I given: the total, a known share or a difference?\n•  How many parts is it?\n•  Do the shares add to the total?\n•  Did I answer what was asked?",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "rsh-summary-2"
+    }
+   ],
+   "built": "pqcdme"
+  }
+ ],
+ "toolPath": "/ratio-sharing"
+}
