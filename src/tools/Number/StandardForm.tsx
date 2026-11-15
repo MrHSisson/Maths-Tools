@@ -3,12 +3,12 @@ import {
   type ToolConfig, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
   randInt, shuffle, pickActive, mStep, extras,
   PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type QOSnapshot,
+  PlaceValueShift, placeValueShiftStepRenderer, placeValueShiftStepVisual,
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./StandardForm.about";
 import { CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS, CONV_COEF_MS, CONV_START_MS, genConvert } from "./StandardFormConvert";
 import { gridBlank, gridFinal, type GridSpec } from "./StandardFormGrid";
-import { ShiftGrid, shiftStepRenderer, shiftStepVisual } from "./StandardFormShift";
 import { MD_OPS_MS, MD_COEF_MS, genMulDiv } from "./StandardFormMulDiv";
 import { AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS, AS_MATCH_MS, genAddSub } from "./StandardFormAddSub";
 
@@ -306,7 +306,7 @@ const workingScaffold = {
   render: (q: AnyQuestion, showAnswer: boolean, qo?: QOSnapshot): JSX.Element | null => {
     const spec = extras(q)._grid as GridSpec | undefined;
     if (!spec) return null;
-    return <ShiftGrid frame={showAnswer ? gridFinal(spec) : gridBlank(spec)} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} />;
+    return <PlaceValueShift frame={showAnswer ? gridFinal(spec) : gridBlank(spec)} words={!!qo?.variables?.[PV_WORD_HEADERS_KEY]} />;
   },
 };
 
@@ -315,8 +315,8 @@ export default function App() {
     <ToolShell
       config={TOOL_CONFIG}
       generateQuestion={generateQuestion}
-      stepRenderer={shiftStepRenderer}
-      stepVisualRenderer={shiftStepVisual}
+      stepRenderer={placeValueShiftStepRenderer}
+      stepVisualRenderer={placeValueShiftStepVisual}
       workingScaffold={workingScaffold}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />

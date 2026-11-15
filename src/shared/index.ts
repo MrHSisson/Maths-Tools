@@ -83,6 +83,7 @@ export { recipeAt, fsStep, type FsRecipeDef, type FsSlotDef, type FsRecipe, type
 export { FileSizeRecipe, ColourChain, FileSizeVisual, fileSizeStepVisual } from "./components/FileSizeRecipe";
 export { UnitLadder, type UnitLadderProps } from "./components/UnitLadder";
 export { PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual } from "./components/PlaceValueTable";
+export { PlaceValueShift, placeValueShiftStepRenderer, placeValueShiftStepVisual, power10, type PlaceValueShiftFrame, type PlaceValueShiftStep } from "./components/PlaceValueShift";
 
 // Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted
 // from the Surds tool alongside its four techniques below. See src/shared/surds.ts.

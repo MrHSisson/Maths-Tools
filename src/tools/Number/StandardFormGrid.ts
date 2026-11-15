@@ -1,4 +1,4 @@
-import { tStep, pvColumnSet, type WorkingStep } from "../../shared";
+import { tStep, pvColumnSet, power10, type PlaceValueShiftFrame, type PlaceValueShiftStep, type WorkingStep } from "../../shared";
 import { ordinary } from "./StandardFormCore";
 
 // The developing picture for Converting: the standard place value grid (B HM TM M HTh TTh Th H T O · t h th tth hth mth, letters or words)
@@ -8,7 +8,7 @@ import { ordinary } from "./StandardFormCore";
 //   digits one column to the left   (each worth 10 times more)  →  the power rolls DOWN by 1.
 // To standard form the digits slide until the first one is in the ones column; to an ordinary number they slide until the power is 10⁰.
 //   45 000 × 10⁰ → 4 500 × 10¹ → 450 × 10² → 45 × 10³ → 4.5 × 10⁴
-// This file only works out WHAT the picture shows at each step (a `GridFrame`); `StandardFormShift.tsx` draws it and animates the move.
+// This file only works out WHAT the picture shows at each step (a `PlaceValueShiftFrame`); the shared `PlaceValueShift` draws it and animates the move.
 
 /** What the picture needs to know about a question; stored on it (`_grid`) for the whiteboard scaffold. */
 export interface GridSpec {
@@ -20,22 +20,6 @@ export interface GridSpec {
   fEnd: number;
   /** The power of 10 beside the digits at the first step. */
   power0: number;
-}
-
-/** One picture: the digits in their columns, the zeros that hold places, and the power beside them. */
-export interface GridFrame {
-  /** Column headings, left to right (letters and the full names), and which column is the ones column (the point is drawn on its right edge). */
-  headings: string[];
-  names: string[];
-  onesIndex: number;
-  /** The significant digits in order, each with the column it sits in. The same digit keeps its place in this list from step to step, so it can slide. */
-  digits: { ch: string; col: number }[];
-  /** Columns holding a zero that only keeps a place (before the first digit, or after the last, as far as the ones column). */
-  zeroCols: number[];
-  /** The power of 10 beside the digits; null for the empty grid. */
-  power: number | null;
-  /** The last step: the first digit is circled (standard form) or the answer is marked. */
-  finish: boolean;
 }
 
 /** Placed beyond the shared M (10⁶): ten millions, hundred millions, billions. */
@@ -50,10 +34,6 @@ const placeAt = (e: number): [string, string] => {
   const i = 6 - e;
   return [shared.columns[i], shared.columnNames[i]];
 };
-
-const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
-/** A power of ten as text: 10⁵, 10⁻³. */
-export const power10 = (n: number): string => `10${String(n).split("").map((c) => SUP[c]).join("")}`;
 
 const withCommas = (s: string): string => {
   const [w, f] = s.split(".");
@@ -80,7 +60,7 @@ const columnRange = (spec: GridSpec): { hi: number; lo: number } => {
 };
 
 /** The picture at one step (`row` counts from 0), or the empty grid when `row` is null. */
-const gridFrame = (spec: GridSpec, row: number | null, finish = false): GridFrame => {
+const gridFrame = (spec: GridSpec, row: number | null, finish = false): PlaceValueShiftFrame => {
   const { hi, lo } = columnRange(spec);
   const exps = Array.from({ length: hi - lo + 1 }, (_, i) => hi - i);
   const base = { headings: exps.map((e) => placeAt(e)[0]), names: exps.map((e) => placeAt(e)[1]), onesIndex: hi };
@@ -95,13 +75,10 @@ const gridFrame = (spec: GridSpec, row: number | null, finish = false): GridFram
 };
 
 /** The empty grid: the whiteboard scaffold. */
-export const gridBlank = (spec: GridSpec): GridFrame => gridFrame(spec, null);
+export const gridBlank = (spec: GridSpec): PlaceValueShiftFrame => gridFrame(spec, null);
 
 /** The last step (the whiteboard scaffold once the answer is shown). */
-export const gridFinal = (spec: GridSpec): GridFrame => gridFrame(spec, stepsOf(spec).length - 1, true);
-
-/** How a step is carried on a `WorkingStep`, for `StandardFormShift.tsx` to draw. */
-export interface ShiftStepData { kind: "sfShift"; caption: string; frame: GridFrame; }
+export const gridFinal = (spec: GridSpec): PlaceValueShiftFrame => gridFrame(spec, stepsOf(spec).length - 1, true);
 
 /** The developing picture as worked-example steps: each step slides the digits one more column. */
 export const gridSteps = (spec: GridSpec): WorkingStep[] => {
@@ -127,7 +104,7 @@ export const gridSteps = (spec: GridSpec): WorkingStep[] => {
         ? ` The power is 10⁰, so this is the ordinary number: ${withCommas(ordinary(spec.digits, spec.fEnd))}.`
         : ` The first digit is in the ones column, so this is standard form: ${coef} × ${power10(final.power)}.`;
     }
-    const data: ShiftStepData = { kind: "sfShift", caption, frame: gridFrame(spec, i, last) };
+    const data: PlaceValueShiftStep = { kind: "placeValueShift", caption, frame: gridFrame(spec, i, last) };
     return { ...tStep(caption), extra: data };
   });
 };
