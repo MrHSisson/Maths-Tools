@@ -12,6 +12,7 @@ import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
 import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from "./cpa";
 import type { CpaSheetInput } from "./printCpa";
+import type { DimProblemData } from "./dimGen";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -54,8 +55,24 @@ export interface NetworkTemplate {
 }
 
 // ── A generated problem the shell renders ───────────────────────────────────
+/** The network of a problem, or an empty one when the problem has none: for the network tools' own code, which always has one. */
+export const netOf = (p: { network?: Network }): Network => p.network ?? { nodes: [], edges: [] };
+
+/** Dimensional Analysis: the page a student would write. `known` is what may be taken as known (the given quantities, then each one built so far) and stays
+ *  short; `lines` is the working in progress as TeX rows (a row with "&" is aligned on it: "[F] &= [ma]", "&= [m][a]"; "" is a gap; any other row stands alone).
+ *  A row starting with "#" is a small plain-text heading (it may hold $…$). The last `fresh` rows, and the last `knownFresh` known items, are what this step added. */
+interface DimViewState {
+  /** what the question asks, shown at the top of the page ("Find the dimensions of force"); prose with maths between $…$ */
+  title?: string;
+  known: string[];
+  knownFresh?: number;
+  lines: string[];
+  fresh?: number;
+}
+
 export interface DecisionProblem {
-  network: Network;
+  /** The network the question is about. Absent for a tool whose picture is not a network (Critical Path, and Mechanics chapters): those carry their own data field and draw it through `renderCanvas`. */
+  network?: Network;
   prompt: string; // "Find the minimum spanning tree and its total weight."
   answer: {
     text: string;
@@ -68,6 +85,8 @@ export interface DecisionProblem {
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
   /** An exam-style question: one picture and a chain of lettered parts with marks, each with a model answer and a mark scheme to self-mark against. */
   exam?: ExamData;
+  /** Dimensional Analysis (Further Mechanics MA): the dimension question's rows and answer, drawn as the written working through `renderCanvas` */
+  dim?: DimProblemData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
@@ -168,6 +187,9 @@ export interface SolveStep {
   examChart?: "cascade" | "alloc" | "histogram" | "level" | "choose";
   histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
   ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
+  dimView?: DimViewState; // Dimensional Analysis: the written working so far
+  /** a step that is one line of a longer chain: the step shows the finished chain, and these are its parts, opened one at a time on request ("Show the steps") */
+  more?: SolveStep[];
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in
   /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
   network?: Network;
@@ -266,6 +288,8 @@ export interface DecisionShellProps {
   solve: (p: DecisionProblem) => SolveStep[]; // the algorithm, as ordered beats
   /** Replace the default NetworkView canvas (e.g. FlowView). `step` is undefined in Question mode. */
   renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined, extras?: CanvasExtras) => ReactNode;
+  /** a phone shows the whole solution as one open, scrolling page instead of the stepped picture and cascade: the tool draws it from the finished list of steps */
+  renderSolution?: (problem: DecisionProblem, steps: SolveStep[]) => ReactNode;
   config: {
     pageTitle: string;
     /** One or two plain sentences: what the whole tool is for. The opening of "About this tool". */
@@ -281,6 +305,10 @@ export interface DecisionShellProps {
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    /** a Worksheet mode for the skill questions too (not only the exam-style ones): N questions with working boxes, then the answers. Laptop and tablet; not a phone. */
+    skillSheet?: boolean;
+    /** this tool's exam-style questions print as papers with mark schemes (so a saved exam-style question can be printed from the basket) */
+    examSheet?: boolean;
     noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types

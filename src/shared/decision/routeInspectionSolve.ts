@@ -6,6 +6,7 @@
 
 import { eulerRoute, inspectRoute, networkType, type InspectionRun } from "./routeInspection";
 import type { DecisionProblem, EdgeState, Network, NodeRole, SolveStep, StepListItem } from "./types";
+import { netOf } from "./types";
 
 const idle = (net: Network): Record<string, EdgeState> => Object.fromEntries(net.edges.map((e) => [e.id, "idle" as EdgeState]));
 const and = (ids: string[]) => (ids.length > 1 ? `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}` : ids[0]);
@@ -30,7 +31,7 @@ function oddView(net: Network, run: InspectionRun): Pick<SolveStep, "nodeStates"
 }
 
 export function solveRoute(p: DecisionProblem): SolveStep[] {
-  const net = p.network;
+  const net = netOf(p);
   const kind = p.kind;
   const ends = kind === "routeOpen" && p.route?.end ? { start: p.route.start, end: p.route.end } : undefined;
   const run = inspectRoute(net, ends);

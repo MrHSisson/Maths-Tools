@@ -67,7 +67,14 @@ describe("A4 question sheet", () => {
         expect(q).toContain("Name ____");
         expect(q.match(/class="fig /g)).toHaveLength(1);
         expect(a).toContain("answers");
-        if (kind === "cpaNetwork") { expect(q).toContain("fig draw rot"); expect(q).toContain("Immediate predecessors"); expect(a).toContain("fig work"); }
+        if (kind === "cpaNetwork") {
+          // the drawing space stays upright, with the precedence table in its corner: one row per activity (activity, duration, immediate predecessors)
+          expect(q).toContain('class="fig draw"'); expect(q).not.toContain("fig draw rot");
+          expect(q).toContain("Immediate predecessors");
+          expect(q).toContain('class="prec up"');
+          expect((q.match(/<tr>/g) ?? []).length).toBe(g.data.acts.length + 1);   // a header row and one row for each activity
+          expect(a).toContain("fig work");
+        }
         else expect(q).toContain("fig work");
         if (kind === "cpaFull") { expect(q).toContain("Critical activities"); expect(q).toContain("Minimum completion time"); }
         // the answer sheet fills the boxes in
@@ -99,9 +106,10 @@ describe("levelling question sheet: the blank levelled histogram does not give t
     expect(levelAxisT(150, 167)).toBe(175);          // 167 gives 175
   });
   it("on the printed question both histograms share one axis, and changing the answer does not change what is printed", async () => {
-    await withSeededRandom(77, async () => {
-      for (let i = 0; i < 3; i++) {
-        const g = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" });
+    // the questions are drawn inside the seeded stream; the printing awaits outside it (withSeededRandom puts the real Math.random back as soon as an async function first awaits)
+    const drawn = withSeededRandom(77, () => Array.from({ length: 3 }, () => generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", histShape: "step" })));
+    {
+      for (const g of drawn) {
         const p = problemOf(g, "cpaLevel", 3) as never;
         const q = await html(p, false);
         const hist = [...q.matchAll(/class="fig hist[\s\S]*?<\/svg>/g)].map((m) => m[0]);
@@ -117,6 +125,6 @@ describe("levelling question sheet: the blank levelled histogram does not give t
           expect(q2).toBe(q);
         }
       }
-    });
+    }
   }, 100_000);
 });

@@ -148,7 +148,7 @@ export const MST_HUGE: MstLevelSpec = { nodes: [10, 12], extra: [6, 10], weights
 const ri = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
 /** n DIFFERENT integers from [lo, hi], in random order. */
-export function distinctWeights(n: number, lo: number, hi: number): number[] {
+function distinctWeights(n: number, lo: number, hi: number): number[] {
   const pool: number[] = [];
   for (let v = lo; v <= hi; v++) pool.push(v);
   return shuffle(pool).slice(0, n);

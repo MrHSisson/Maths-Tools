@@ -5,7 +5,7 @@ import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS, PAGES } from './registry';
 import { setLivePaths } from './shared/about';
 import { InkOverlay } from './shared/components/InkOverlay';
-import { usePhoneDevice } from './shared/layoutMode';
+import { usePhoneDevice, useLayoutMode } from './shared/layoutMode';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
 // builds as its own chunk — the landing page stays small and a tool's code
@@ -51,8 +51,10 @@ const TOOL_PATHS = new Set([...ALL_TOOLS, ...PAGES].map((t) => t.path));
 function InkLayer() {
   const { pathname, search } = useLocation();
   const phone = usePhoneDevice();
+  const layout = useLayoutMode();   // ink is for a board or a tablet and up: on a phone (the real device, or View as: Mobile) there is none
   // a deck is a board: ink is on while it is presented (the deck clears it on a slide change), not in its editor or the slide library
   const onDeck = !phone && pathname.startsWith('/decks/') && pathname !== '/decks/library' && !new URLSearchParams(search).has('edit');   // a phone only previews a deck: no ink
+  if (phone || layout.phone) return null;
   return (TOOL_PATHS.has(pathname) || onDeck) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
 }
 

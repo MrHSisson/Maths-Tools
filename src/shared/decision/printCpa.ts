@@ -1,3 +1,4 @@
+import { FRAME_CSS, esc, frameHeader } from "./printFrame";
 // ═══════════════════════════════════════════════════════════════════════════
 // Print a Critical Path question as one A4 sheet for students (the browser's print dialog → Save as PDF): the question, the workers table when
 // they differ, the network with its times and critical path, the cascade (Gantt) chart with its floats, then the histograms — drawn for them or
@@ -31,17 +32,10 @@ export interface CpaSheetInput {
   fill?: string[];
 }
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 const CSS = `
-  @page { size: A4; margin: 10mm; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; font-size: 10pt; margin: 0; }
+  ${FRAME_CSS}
   .sheet { break-after: page; }
   .sheet:last-child { break-after: auto; }
-  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.5mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2.5mm; }
-  header h1 { font-size: 13pt; margin: 0; color: #1e3a8a; }
-  header .who { font-size: 9.5pt; color: #374151; }
   .prompt { margin: 0 0 2mm; line-height: 1.3; font-weight: 600; }
   table.workers { border-collapse: collapse; margin: 0 auto 2mm; font-size: 9.5pt; }
   table.workers th { background: #1e3a8a; color: #fff; padding: 0.6mm 2.5mm; border: 0.3mm solid #1e3a8a; text-align: center; }
@@ -76,15 +70,18 @@ const CSS = `
   table.prec th { width: 1%; background: #1e3a8a; color: #fff; padding: 1mm 2mm; border: 0.3mm solid #1e3a8a; text-align: left; white-space: nowrap; }
   table.prec td { border: 0.3mm solid #1e3a8a; padding: 1mm 2mm; text-align: center; font-style: italic; }
   table.prec td.n { font-style: normal; }
-  .space { flex: 1 1 0; min-height: 0; margin-top: 3mm; border: 0.3mm dashed #94a3b8; border-radius: 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  .space { position: relative; flex: 1 1 0; min-height: 0; margin-top: 3mm; border: 0.3mm dashed #94a3b8; border-radius: 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     background-image: radial-gradient(circle, #94a3b8 0.25mm, transparent 0.3mm); background-size: 5mm 5mm; background-position: 2.5mm 2.5mm; }
+  /* the precedence table sits in the top corner of the dotted drawing space, on white so it reads clearly */
+  table.prec.up { position: absolute; top: 2.5mm; left: 2.5mm; width: auto; background: #fff; font-size: 10pt; }
+  table.prec.up th { width: auto; text-align: center; padding: 1mm 3mm; white-space: normal; }
+  table.prec.up td { padding: 0.8mm 3mm; font-style: normal; text-align: center; }
   .fill { margin-top: 2mm; font-size: 10pt; }
   .fill .row { display: flex; align-items: flex-end; gap: 2mm; height: 8.5mm; }
   .fill .row .line { flex: 1; border-bottom: 0.3mm solid #111827; height: 6mm; }
-  .tag { font-size: 8.5pt; font-weight: 700; color: #fff; background: #166534; border-radius: 1mm; padding: 0 1.5mm; margin-left: 2mm; }
 `;
 
-function sheetHtml(s: CpaSheetInput): string {
+function sheetHtml(s: CpaSheetInput, numbering?: string): string {
   const workers = s.workers && s.workers.length > 0
     ? `<table class="workers"><tr><th>Activity</th>${s.workers.map((w) => `<td>${esc(w.id)}</td>`).join("")}</tr><tr><th>Workers</th>${s.workers.map((w) => `<td class="n">${w.n}</td>`).join("")}</tr></table>`
     : "";
@@ -92,16 +89,21 @@ function sheetHtml(s: CpaSheetInput): string {
     ? `<div class="fig ${f.kind} rot"><div class="rotin">${f.svg}</div></div>`
     : `<div class="fig ${f.kind}${f.tall ? " tall" : ""}">${f.svg}</div>`}`).join("");
   const fill = s.fill && s.fill.length > 0 ? `<div class="fill">${s.fill.map((l) => `<div class="row"><span>${esc(l)}</span><span class="line"></span></div>`).join("")}</div>` : "";
-  const answer = s.answer && s.answer.length > 0
-    ? `<div class="answer"><b>Answer</b><ol>${s.answer.map((l) => `<li>${esc(l)}</li>`).join("")}</ol></div>`
+  const lines = (s.answer ?? []).filter((l) => l.trim() !== "");   // a drawn answer (the network) has no words: no empty "Answer 1." under it
+  const answer = lines.length > 0
+    ? `<div class="answer"><b>Answer</b><ol>${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ol></div>`
     : "";
-  return `<section class="sheet${s.answerSheet ? " ans" : ""}${s.work ? " work" : ""}"><header><h1>${esc(s.title)} — ${esc(s.subtitle)}${s.answerSheet ? `<span class="tag">answers</span>` : ""}</h1><div class="who">${s.answerSheet ? "" : "Name ____________________ &nbsp; Date _________"}</div></header>
+  return `<section class="sheet${s.answerSheet ? " ans" : ""}${s.work ? " work" : ""}">${frameHeader(s.title, s.subtitle, { tag: s.answerSheet ? "answers" : undefined, who: !s.answerSheet })}${numbering ? `<div class="meta">${esc(numbering)}</div>` : ""}
     <div class="prompt">${esc(s.prompt)}</div>${workers}${figs}${fill}${answer}</section>`;
 }
 
 /** the HTML of one or more sheets (exported so it can be tested without a window) */
 export function cpaSheetsHtml(inputs: CpaSheetInput[]): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(inputs[0]?.title ?? "Critical Path")} — ${esc(inputs[0]?.subtitle ?? "")}</title><style>${CSS}</style></head><body>${inputs.map(sheetHtml).join("\n")}</body></html>`;
+  // "Question 2 of 4": the question sheets are numbered in order, and each answer sheet carries the number of the question it answers (they follow in the same order)
+  const total = inputs.filter((x) => !x.answerSheet).length || inputs.filter((x) => x.answerSheet).length;
+  const seen = { q: 0, a: 0 };
+  const sheets = inputs.map((s) => { const k = s.answerSheet ? ++seen.a : ++seen.q; return sheetHtml(s, total > 1 ? `Question ${k} of ${total}` : undefined); });
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(inputs[0]?.title ?? "Critical Path")} — ${esc(inputs[0]?.subtitle ?? "")}</title><style>${CSS}</style></head><body>${sheets.join("\n")}</body></html>`;
 }
 
 /** `win` is a window opened at the click, so the slow rendering before this cannot make the browser treat the popup as unrequested */

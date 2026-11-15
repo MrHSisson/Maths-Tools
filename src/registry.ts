@@ -137,7 +137,6 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'A-Level',
     tools: [
       { id: 'decision-overview', path: '/decision-overview', aliases: ['/decision'], name: 'Decision Maths', description: 'AQA 7367 Discrete (DA–DG): open a part of the specification to find its question generators.', load: () => import('./tools/Decision/DecisionOverview') },
-      { hub: 'decision-overview', id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Free workspace for Decision Maths: load any graph from the shared bank, change weights, drag vertices, show the table — the same board that opens from every Decision question', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
       { hub: 'decision-overview', id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Kruskal\'s and Prim\'s algorithms (on a network or a table of distances) for the minimum spanning tree, at three network sizes, walked through step by step', load: () => import('./tools/Decision/MinimumSpanningTree') },
       { hub: 'decision-overview', id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Upper bound (nearest neighbour), lower bound (deleted vertex) and the interval for the optimal tour of the travelling salesperson problem — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
       { hub: 'decision-overview', id: 'route-inspection', path: '/route-inspection', name: 'Route Inspection', description: 'The Chinese postman problem: degrees and odd vertices, the shortest closed route that uses every edge, and the shortest route between two chosen odd vertices — walked through step by step', enabled: false, load: () => import('./tools/Decision/RouteInspection') },
@@ -150,7 +149,8 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Further Mechanics',
     subject: 'A-Level',
     tools: [
-      { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME) chapter by chapter: AS and A2 content, the link back to the legacy M1–M3 papers and their question banks. Planning space for the Further Mechanics tools.', enabled: false, load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
+      { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME), chapter by chapter: the specification statements and the question generators that cover them.', load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
+      { hub: 'further-mechanics', id: 'dimensional-analysis', path: '/dimensional-analysis', name: 'Dimensional Analysis', description: 'Find the dimensions of quantities and constants, check a formula is dimensionally consistent, and predict a formula by equating the powers of M, L and T (AQA 7367 MA) — skill practice and exam-style questions', load: () => import('./tools/FurtherMechanics/DimensionalAnalysis') },
     ],
   },
   {

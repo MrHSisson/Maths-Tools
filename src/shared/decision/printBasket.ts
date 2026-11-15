@@ -21,8 +21,11 @@ export const BASKET_MAX = 30;
 
 const PREVIEW_LEN = 70;
 /** a short line for the list: the question's own sentence, not the opening every question shares */
+const GREEK: Record<string, string> = { alpha: "α", beta: "β", gamma: "γ", omega: "ω", rho: "ρ", kappa: "κ", eta: "η", sigma: "σ", theta: "θ", tau: "τ", pi: "π", mu: "μ" };
+/** maths between $…$ as plain text for a list: no dollars, Greek letters as themselves */
+const plainMaths = (s: string): string => s.replace(/\$([^$]*)\$/g, (_m, t: string) => t.replace(/\\([a-zA-Z]+)/g, (_x, n: string) => GREEK[n] ?? n).replace(/\\,/g, " ").replace(/[{}]/g, ""));
 export function previewOf(prompt: string): string {
-  const rest = prompt.replace(/^The activity network represents [^.]*\.\s*The times are in \w+\.\s*/, "").replace(/\s+/g, " ").trim();
+  const rest = plainMaths(prompt).replace(/^The activity network represents [^.]*\.\s*The times are in \w+\.\s*/, "").replace(/\s+/g, " ").trim();
   return rest.length > PREVIEW_LEN ? `${rest.slice(0, PREVIEW_LEN - 1).trimEnd()}…` : rest;
 }
 

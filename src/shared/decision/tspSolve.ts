@@ -13,6 +13,7 @@ import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import { completeOf, expandRoute, pairKey, pairsToComplete } from "./tspGenerate";
 import type { DecisionProblem, DistanceTable, EdgeState, MatrixCell, Network, NodeRole, SolveStep, StepListItem } from "./types";
+import { netOf } from "./types";
 
 interface Ctx {
   /** the network drawn in this phase: the original while the table is completed, the complete network after */
@@ -376,7 +377,7 @@ function routeBeat(c0: Ctx, tour: string[], total: number): SolveStep | null {
 
 // ── The whole solution ───────────────────────────────────────────────────────
 export function solveTsp(p: DecisionProblem): SolveStep[] {
-  const net = p.network;
+  const net = netOf(p);
   const real = leastDistances(net);
   const todo = pairsToComplete(real);
   const practical = todo.length > 0;

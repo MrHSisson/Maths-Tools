@@ -125,3 +125,33 @@ export const CHECK_NOTES = {
     "The first map's weighting chart (10 / 55 / 20 / 15) was not derived from anything and is not reproduced.",
   ],
 };
+
+// ── The tools built for each chapter, and which of their sub-tools practise which statement ───────────────────────────────────────────────────
+// The page reads each tool's name, address and whether it is live from the registry (FurtherMechanics.tsx), so none of that is typed here.
+// Every sub-tool of a tool is placed exactly once (src/tests/mechanicsPairings.test.ts), as for the Decision hub.
+export interface MechSubRef { tool: string; sub: string; label: string; practice: "skills" | "exam" }
+const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
+
+/** registry ids of the tools built for each chapter */
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"] };
+
+/** the sub-tools that practise each statement (every one of them is AS) */
+export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
+  MA1: [da("dims", "Find the dimensions"), da("consistent", "Check consistency")],
+  MA2: [da("powers", "Find the powers")],
+};
+
+/** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
+export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?: boolean; links: MechSubRef[] }>> = {
+  MA: [{
+    heading: "Particular kinds of exam question",
+    devOnly: true,
+    links: [da("exCircle", "Circle your answer", "exam"), da("exFind", "State the dimensions, then find the powers", "exam"), da("exConstant", "Dimensions of a constant, then predict", "exam"),
+      da("exConsistent", "Show it is consistent", "exam"), da("exModels", "Two models, reject one", "exam"), da("exZero", "Show a quantity does not matter", "exam")],
+  }],
+};
+
+/** a chapter's exam-style practice: the one mixed question its page opens from the exam card */
+export const MECHANICS_EXAM: Record<string, { text: string; ref: MechSubRef }> = {
+  MA: { text: "A short multi-part question in the style of the paper: state or show dimensions, check a formula, or find the powers in a model.", ref: da("exAny", "Any exam question", "exam") },
+};

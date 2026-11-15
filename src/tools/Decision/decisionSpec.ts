@@ -170,17 +170,24 @@ export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
 };
 
 /** Sub-tools that belong to a chapter but to no single statement: exam-style questions span several, and some come from the older papers only. */
-export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[] }[]> = {
+export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[]; devOnly?: boolean }[]> = {
   DE: [
     {
-      heading: "Exam-style questions",
+      // the public page offers the one mixed exam question (DECISION_EXAM); these particular kinds stay in the tool and in Developing-tools mode
+      heading: "Particular kinds of exam question",
+      devOnly: true,
       links: [
         cpa("exAsAny", "Any AS exam question", "as", "exam"), cpa("exBuild", "Network, then a change or a claim", "as", "exam"), cpa("exClaim", "Times and Glyn's claim", "as", "exam"),
         cpa("exChange", "Effect of a change", "as", "exam"), cpa("exClock", "Clock times and a second project", "as", "exam"),
-        cpa("exAlAny", "Any A-level exam question", "a", "exam"), cpa("exCascade", "Times and a cascade/Gantt chart", "a", "exam"), cpa("exTable", "Table, histogram and levelling", "a", "exam"),
+        cpa("exCascade", "Times and a cascade/Gantt chart", "a", "exam"), cpa("exTable", "Table, histogram and levelling", "a", "exam"),
         cpa("exHist", "Histogram and levelling", "a", "exam"), cpa("exShorten", "Which to shorten and a limitation", "a", "exam"),
       ],
     },
-    { heading: "From the older papers only (not in the current specification)", links: [cpa("alloc", "Worker allocation *", "a"), cpa("exAlloc", "Levelling and worker allocation *", "a", "exam")] },
+    { heading: "From the older papers only (not in the current specification)", devOnly: true, links: [cpa("alloc", "Worker allocation *", "a"), cpa("exAlloc", "Levelling and worker allocation *", "a", "exam")] },
   ],
+};
+
+/** A chapter's exam-style practice: the one mixed generator its page opens from the exam card (placed nowhere else, like every sub-tool). */
+export const DECISION_EXAM: Record<string, { text: string; ref: SubToolRef }> = {
+  DE: { text: "Multi-part questions in the style of the paper, mixing everything in the chapter: build the network, find the times, then a change or a claim.", ref: cpa("exAlAny", "Any A-level exam question", "a", "exam") },
 };

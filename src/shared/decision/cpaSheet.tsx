@@ -38,12 +38,11 @@ function enlargedLayout(l: CpaLayout): CpaLayout {
   return l;
 }
 
-/** the precedence table laid across the page (one column per activity), the exam format */
-function precedenceAcross(d: NonNullable<DecisionProblem["cpa"]>): string {
-  const cells = (f: (a: CpaActivity) => string, cls = "") => d.acts.map((a) => `<td class="${cls}">${f(a)}</td>`).join("");
-  return `<table class="prec"><tr><th>Activity</th>${cells((a) => esc(a.id))}</tr>`
-    + `<tr><th>Duration (${esc(d.unit)})</th>${cells((a) => String(a.duration), "n")}</tr>`
-    + `<tr><th>Immediate predecessors</th>${cells((a) => (a.preds.length ? esc(a.preds.join(", ")) : "&ndash;"))}</tr></table>`;
+/** the precedence table for a drawing sheet: one row per activity (activity, duration, immediate predecessors), upright, to sit in the corner of the drawing space */
+function precedenceDown(d: NonNullable<DecisionProblem["cpa"]>): string {
+  return `<table class="prec up"><tr><th>Activity</th><th>Duration (${esc(d.unit)})</th><th>Immediate predecessors</th></tr>`
+    + d.acts.map((a) => `<tr><td>${esc(a.id)}</td><td class="n">${a.duration}</td><td class="n">${a.preds.length ? esc(a.preds.join(", ")) : "&ndash;"}</td></tr>`).join("")
+    + `</table>`;
 }
 
 async function buildWorkSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
@@ -64,18 +63,18 @@ async function buildWorkSheetInput(p: DecisionProblem, answers: boolean): Promis
     : d.kind === "cpaForward" ? [`Minimum completion time (${d.unit})`]
       : d.kind === "cpaFull" ? ["Critical activities", d.criticalPaths.length > 1 ? "Critical paths" : "Critical path", `Minimum completion time (${d.unit})`]
         : undefined;
-  // a drawing space has a table over it; the page left for a figure is what the header and write-in lines leave
+  // a drawing space has the table in its top corner; the page left for a figure is what the header and write-in lines leave
   const promptMm = Math.ceil(p.prompt.length / 100) * 5 + 2;
   const availH = PAGE_H - 16 - promptMm - 10 - (fill?.length ?? 0) * 8.5 - (answers ? 14 : 0);
   const layout = enlargedLayout(d.layout);
   const { width: lw, height: lh } = layout;
   const up = Math.min(PAGE_W / lw, availH / lh), turned = Math.min(availH / lw, PAGE_W / lh);
-  const rotate = drawing || turned > up * 1.03;
+  const rotate = !drawing && turned > up * 1.03;   // the drawing space stays upright (its table is read the right way up); the other sheets turn when that makes the network bigger
   const { renderToStaticMarkup } = await import("react-dom/server");
   const svg = drawing ? "" : renderToStaticMarkup(createElement(ActivityNodeView, { acts: d.acts as CpaActivity[], layout, view }));
   const turn = rotate ? " (turn the page a quarter turn clockwise)" : "";
   const fig: CpaSheetFigure = drawing
-    ? { caption: `Draw the network in the space below the table${turn}`, svg: `<div class="drawin">${precedenceAcross(d)}<div class="space"></div></div>`, kind: "draw", rotate }
+    ? { caption: "Draw the activity network in the dotted space, including Start and End", svg: `<div class="drawin"><div class="space">${precedenceDown(d)}</div></div>`, kind: "draw" }
     : { caption: answers && d.kind === "cpaNetwork" ? "The activity network" : `The activity network: each box is the activity, then earliest start | duration | latest finish${turn}`, svg, kind: "work", rotate };
   const level = p.level ? ` · Level ${p.level}` : "";
   return { title: "Critical Path Analysis", subtitle: `${WORK_TITLE[d.kind]}${level}`, prompt: p.prompt, figures: [fig], work: true, ...(fill ? { fill } : {}), answerSheet: answers, ...(answers ? { answer: [p.answer.text] } : {}) };

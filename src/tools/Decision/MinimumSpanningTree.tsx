@@ -7,6 +7,7 @@ import {
   solvePrimMatrix,
   solvePrimNetwork,
   edgeName,
+  netOf,
   type DecisionProblem,
   type DecisionProblemExport,
   type GenerateContext,
@@ -96,9 +97,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 }
 
 function solve(p: DecisionProblem): SolveStep[] {
-  if (p.kind === "primMatrix") return solvePrimMatrix(p.network, p.start!, (p.level ?? 1) > 1);
-  if (p.kind === "primNetwork") return solvePrimNetwork(p.network, p.start!);
-  return solveKruskal(p.network);
+  if (p.kind === "primMatrix") return solvePrimMatrix(netOf(p), p.start!, (p.level ?? 1) > 1);
+  if (p.kind === "primNetwork") return solvePrimNetwork(netOf(p), p.start!);
+  return solveKruskal(netOf(p));
 }
 
 const LEGEND: LegendItem[] = [
