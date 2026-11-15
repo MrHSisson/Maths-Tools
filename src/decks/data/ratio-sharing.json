@@ -6,6 +6,7 @@
  "pitch": "middle",
  "questionVersion": 2,
  "summary": "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Each section starts with a Depth card (who is right?), then a worked bar model. Nine questions on the board for sharing a total (a : b from the start); printed sheets for the known share, the difference and a mixed set of fifteen.",
+ "toolPath": "/ratio-sharing",
  "slides": [
   {
    "id": "rsh-title",
@@ -358,9 +359,28 @@
    "built": "n8786z"
   },
   {
+   "id": "rsh-depth-three",
+   "family": "depth",
+   "title": "Three parts",
+   "els": [
+    {
+     "kind": "depth",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "ratio-sharing",
+     "item": "rs-three-parts",
+     "id": "rsh-depth-three-1"
+    }
+   ],
+   "built": "127ye6p"
+  },
+  {
    "id": "rsh-grid-a",
    "family": "retrieval",
    "title": "Sharing a total",
+   "built": "dcxo29",
    "els": [
     {
      "kind": "text",
@@ -577,8 +597,7 @@
      "fixed": true,
      "size": 100
     }
-   ],
-   "built": "dcxo29"
+   ]
   },
   {
    "id": "rsh-div-b",
@@ -736,6 +755,8 @@
    "id": "rsh-sheet-b",
    "family": "practice",
    "title": "Worksheet: a known share",
+   "brief": "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish: a secure class can start at question 3. Questions 7 to 9 have three parts.",
+   "built": "1xcorti",
    "els": [
     {
      "kind": "text",
@@ -908,9 +929,7 @@
       ]
      }
     }
-   ],
-   "brief": "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish: a secure class can start at question 3. Questions 7 to 9 have three parts.",
-   "built": "1xcorti"
+   ]
   },
   {
    "id": "rsh-div-c",
@@ -950,6 +969,7 @@
    "id": "rsh-recap",
    "family": "retrieval",
    "title": "Recap",
+   "built": "kfm7vq",
    "els": [
     {
      "kind": "text",
@@ -1046,8 +1066,7 @@
       }
      ]
     }
-   ],
-   "built": "kfm7vq"
+   ]
   },
   {
    "id": "rsh-depth-diff",
@@ -1168,6 +1187,8 @@
    "id": "rsh-sheet-c",
    "family": "practice",
    "title": "Worksheet: a difference",
+   "brief": "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish. Questions 2, 5, 6, 8 and 9 ask for the total: dividing the difference by all the parts and multiplying back gives the difference itself. Questions 7 to 9 have three parts.",
+   "built": "rlf3x6",
    "els": [
     {
      "kind": "text",
@@ -1340,9 +1361,7 @@
       ]
      }
     }
-   ],
-   "brief": "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish. Questions 2, 5, 6, 8 and 9 ask for the total: dividing the difference by all the parts and multiplying back gives the difference itself. Questions 7 to 9 have three parts.",
-   "built": "rlf3x6"
+   ]
   },
   {
    "id": "rsh-div-d",
@@ -1397,27 +1416,11 @@
    "built": "15qgtaf"
   },
   {
-   "id": "rsh-depth-three",
-   "family": "depth",
-   "title": "Three parts",
-   "els": [
-    {
-     "kind": "depth",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "ratio-sharing",
-     "item": "rs-three-parts",
-     "id": "rsh-depth-three-1"
-    }
-   ],
-   "built": "127ye6p"
-  },
-  {
    "id": "rsh-sheet-d",
    "family": "practice",
    "title": "Worksheet: mixed",
+   "brief": "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
+   "built": "kqkcg7",
    "els": [
     {
      "kind": "text",
@@ -1663,9 +1666,7 @@
       ]
      }
     }
-   ],
-   "brief": "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
-   "built": "kqkcg7"
+   ]
   },
   {
    "id": "rsh-exit",
@@ -1801,6 +1802,5 @@
    ],
    "built": "pqcdme"
   }
- ],
- "toolPath": "/ratio-sharing"
+ ]
 }
