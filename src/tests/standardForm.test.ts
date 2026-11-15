@@ -61,7 +61,7 @@ describe("standard form core", () => {
 });
 
 describe("converting", () => {
-  for (const level of ["level1", "level2", "level3"]) {
+  for (const level of ["level1", "level2"]) {
     it(`${level}: the answer is the question's value, in the right form and range`, () => {
       for (let i = 0; i < 200; i++) {
         const q = gen("converting", level, everything("converting", level));
@@ -84,10 +84,35 @@ describe("converting", () => {
       }
     });
   }
-  it("level 3 uses both signs", () => {
-    const signs = new Set<number>();
-    for (let i = 0; i < 60; i++) { const q = gen("converting", "level3", defaults("converting", "level3")); signs.add(Math.sign(Number((q.answer + q.lines[1]).match(/\^\{?(-?\d+)/)![1]))); }
-    expect(signs.size).toBe(2);
+  it("level 3: a coefficient outside 1 to 10 times a power is rewritten into standard form with the same value", () => {
+    const seen = { big: 0, small: 0, pos: 0, neg: 0 };
+    for (let i = 0; i < 300; i++) {
+      const q = gen("converting", "level3", defaults("converting", "level3"));
+      const shown = q.lines[1].replace(/^\$|\$$/g, "");
+      const m = shown.match(/^(\d+(?:\.\d+)?) \\times 10\^\{(-?\d+)\}$/)!;
+      const given = parseSF(shown), answer = parseSF(q.answerLatex);
+      expect(same(given, answer)).toBe(true);
+      expect(inStandardForm(q.answerLatex)).toBe(true);
+      const c = Number(m[1]);
+      expect(c < 1 || c >= 10).toBe(true);                 // the coefficient given is never already standard form
+      if (c >= 10) seen.big++; else seen.small++;
+      if (Number(m[2]) > 0) seen.pos++; else seen.neg++;
+      expect(q.answerLatex).not.toMatch(/10\^\{0\}/);
+      expect(q.lines[0]).toBe("Write in standard form:");
+    }
+    expect(Object.values(seen).every((n) => n > 40)).toBe(true);
+  });
+  it("level 3 options: Too Big and Too Small, Starting Power positive and negative, are each honoured", () => {
+    const m = defaults("converting", "level3");
+    for (const [coef, sign] of [["tooBig", 1], ["tooSmall", 1], ["tooBig", -1], ["tooSmall", -1]] as const) {
+      m.tooBig = coef === "tooBig"; m.tooSmall = coef === "tooSmall"; m.startPos = sign === 1; m.startNeg = sign === -1;
+      for (let i = 0; i < 40; i++) {
+        const shown = gen("converting", "level3", m).lines[1].replace(/^\$|\$$/g, "");
+        const [, c, n] = shown.match(/^(\d+(?:\.\d+)?) \\times 10\^\{(-?\d+)\}$/)!;
+        expect(Number(c) >= 10).toBe(coef === "tooBig");
+        expect(Math.sign(Number(n))).toBe(sign);
+      }
+    }
   });
   it("internal zeros: the coefficient has a 0 between non-zero digits", () => {
     const m = defaults("converting", "level1"); m.d3 = true; m.withZero = true; m.noZero = false;

@@ -5,7 +5,7 @@ import {
 } from "../../shared";
 import { applyAbout } from "../../shared";
 import { ABOUT } from "./StandardForm.about";
-import { CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS, genConvert } from "./StandardFormConvert";
+import { CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS, CONV_COEF_MS, CONV_START_MS, genConvert } from "./StandardFormConvert";
 import { MD_OPS_MS, MD_COEF_MS, genMulDiv } from "./StandardFormMulDiv";
 import { AS_OPS_MS, AS_RESULT_MS, AS_POWERS_MS, AS_MATCH_MS, genAddSub } from "./StandardFormAddSub";
 
@@ -85,7 +85,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
         level2: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
-        level3: { variables: [], dropdown: null, multiSelect: [CONV_ASK_MS, CONV_DIGITS_MS, CONV_ZEROS_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [CONV_COEF_MS, CONV_START_MS] },
       },
     },
     multiplyDivide: {

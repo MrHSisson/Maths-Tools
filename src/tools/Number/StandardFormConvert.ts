@@ -2,7 +2,8 @@ import { randInt, pickActive, mStep, type AnyQuestion, type DifficultyLevel, typ
 import { ordinary, texOrdinary } from "./StandardFormCore";
 
 // Standard Form: converting between ordinary numbers and standard form.
-// L1 large numbers (positive powers); L2 small numbers (negative powers); L3 either, so the student decides the sign.
+// L1 large numbers (positive powers); L2 small numbers (negative powers), each either way round.
+// L3 "half-way" numbers: a coefficient that is too big (304 × 10⁵) or too small (0.003 × 10⁻²) to be standard form, to be rewritten.
 
 export const CONV_ASK_MS: ToolMultiSelect = {
   key: "convAsk", label: "Ask for", tab: "questions",
@@ -28,6 +29,22 @@ export const CONV_ZEROS_MS: ToolMultiSelect = {
   ],
 };
 
+// Level 3: the number is in parts, with a coefficient outside 1 to 10
+export const CONV_COEF_MS: ToolMultiSelect = {
+  key: "convCoef", label: "Coefficients", tab: "numbers",
+  options: [
+    { value: "tooBig", label: "Too Big", defaultActive: true },
+    { value: "tooSmall", label: "Too Small", defaultActive: true },
+  ],
+};
+export const CONV_START_MS: ToolMultiSelect = {
+  key: "convStart", label: "Starting Power", tab: "numbers",
+  options: [
+    { value: "startPos", label: "Positive", defaultActive: true },
+    { value: "startNeg", label: "Negative", defaultActive: true },
+  ],
+};
+
 /** Coefficient digits: first digit non-zero; the last non-zero (so no trailing zero); a middle digit that is 0 only when asked. */
 const drawDigits = (len: number, zero: boolean): string => {
   if (zero) return `${randInt(1, 9)}0${randInt(1, 9)}`;
@@ -36,14 +53,50 @@ const drawDigits = (len: number, zero: boolean): string => {
   return `${randInt(1, 9)}${randInt(1, 9)}${randInt(1, 9)}`;
 };
 
-const drawPower = (level: DifficultyLevel): number => {
-  const mag = randInt(3, 8);
-  if (level === "level1") return mag;
-  if (level === "level2") return -mag;
-  return Math.random() < 0.5 ? mag : -mag;
+const drawPower = (level: DifficultyLevel): number => (level === "level1" ? randInt(3, 8) : -randInt(3, 8));
+
+/** Level 3: a coefficient that is not between 1 and 10, written with a power, to be put into standard form. */
+const genHalfway = (msv: Record<string, boolean>): AnyQuestion => {
+  for (;;) {
+    const tooBig = pickActive(msv, CONV_COEF_MS.options) === "tooBig";
+    const n = (pickActive(msv, CONV_START_MS.options) === "startPos" ? 1 : -1) * randInt(2, 8);
+    let digits: string, shown: string, places: number;
+    if (tooBig) {
+      // 45, 304: two or three digits, the first and last not zero, so a whole number of 11 to 999 with no trailing zero
+      const len = randInt(2, 3);
+      digits = len === 2 ? `${randInt(1, 9)}${randInt(1, 9)}` : `${randInt(1, 9)}${randInt(0, 9)}${randInt(1, 9)}`;
+      places = len - 1;                                     // the point moves this far left
+      shown = ordinary(digits, places);
+    } else {
+      // 0.45, 0.02, 0.003: one or two digits after none, one or two zeros
+      const zeros = randInt(0, 2);
+      digits = Math.random() < 0.5 ? String(randInt(1, 9)) : `${randInt(1, 9)}${randInt(1, 9)}`;
+      places = zeros + 1;                                   // the point moves this far right
+      shown = ordinary(digits, -places);
+    }
+    const e = tooBig ? n + places : n - places;
+    if (e === 0) continue;                                  // 10⁰ would hide the idea
+    const coef = ordinary(digits, 0);
+    const times = String(10 ** places);
+    const working = [
+      mStep(`The coefficient must be between 1 and 10. Move the decimal point ${places === 1 ? "1 place" : `${places} places`} to the ${tooBig ? "left" : "right"}:`, [shown, `\\rightarrow ${coef}`]),
+      mStep(tooBig ? `That made the coefficient ${times} times smaller, so the power goes up by ${places}:` : `That made the coefficient ${times} times bigger, so the power goes down by ${places}:`, `${n} ${tooBig ? "+" : "-"} ${places} = ${e}`),
+      mStep("Answer:", `${coef} \\times 10^{${e}}`),
+    ];
+    return {
+      kind: "worded",
+      lines: ["Write in standard form:", `$${shown} \\times 10^{${n}}$`],
+      answer: `${coef} × 10^${e}`,
+      answerLatex: `${coef} \\times 10^{${e}}`,
+      working,
+      key: `sf-conv-half-${shown}e${n}`,
+      difficulty: "level3",
+    } as unknown as AnyQuestion;
+  }
 };
 
 export const genConvert = (level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion => {
+  if (level === "level3") return genHalfway(msv);
   const toStd = pickActive(msv, CONV_ASK_MS.options) === "toStd";
   // "With" only counts while 3 digits are on (the option is greyed out otherwise); if it is picked the coefficient has 3 digits
   const zero = pickActive(msv, CONV_ZEROS_MS.options) === "withZero" && msv["d3"] === true;

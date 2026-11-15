@@ -10,12 +10,14 @@ export const ABOUT: ToolAbout = {
       levels: [
         "Large numbers, with positive powers",
         "Small numbers, with negative powers",
-        "Large and small numbers mixed, so you decide whether the power is positive or negative",
+        "Numbers in parts, like 304 × 10⁵ or 0.003 × 10⁻², to be rewritten in standard form",
       ],
       options: {
         "convAsk": "Whether you convert to standard form, from it, or both.",
         "convDigits": "How many digits the coefficient has.",
         "convZeros": "Whether a zero sits between the other digits of the coefficient.",
+        "convCoef": "Whether the coefficient given is too big or too small to be standard form.",
+        "convStart": "Whether the power of 10 given in the question is positive or negative.",
       },
     },
     multiplyDivide: {
