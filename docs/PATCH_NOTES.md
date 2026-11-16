@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-16 — Decision and Mechanics chapter-card spacing
+
+Branch `codex/gantt-print-layouts`. Area: shared `SpecLanding` chapter cards used by Decision Maths and Further Mechanics.
+
+- Statement counts and generator statuses now occupy separate lines with a fixed gap, rather than competing for one row. Card and heading containers can shrink and wrap within the grid.
+- Covers public and Developing-tools statuses, including Not built yet, Coming soon, In development and live generator counts.
+- Validation: 56 public/developing browser layout combinations across seven widths (320–1366px) and normal/enlarged text; visual review of the Mechanics cards; build, lint, six hub-pairing tests and shell smoke on both hubs pass.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Decision and Mechanics chapter-card spacing (Codex)”.
+
 ## 2026-11-16 — Broader small networks, varied reasoning and deck pen input
 
 Branch `codex/gantt-print-layouts`. Areas: CPA generation/working/exam chains, deck grids/player, global ink overlay, tests and references.
