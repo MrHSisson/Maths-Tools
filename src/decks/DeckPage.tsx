@@ -325,7 +325,7 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
       const tap = (e: MouseEvent) => {
         const el = e.target as HTMLElement;
         if (el.closest("[data-player-bar]")) { if (visible) set(true, 4000); return; }      // using the bar keeps it a while longer
-        if (el.closest("button,a,input,select,textarea,summary,[role=button],[data-no-swipe]")) return;
+        if (el.closest("button,a,input,select,textarea,summary,[role=button],[data-ink-pass-through],[data-no-swipe]")) return;
         set(!visible, 4000);
       };
       window.addEventListener("click", tap);

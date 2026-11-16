@@ -161,7 +161,7 @@ export function InkOverlay() {
   const lastInk = useRef<{ x: number; y: number; t: number } | null>(null);   // where and when the pen last wrote (see isWritingNearby)
   const [hint, setHint] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
-  const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
+  const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; target?: Element; control?: boolean; pts: { x: number; y: number }[] } | null>(null);
   const [dock, setDock] = useState<HotbarDock>(loadDock);
   const [drag, setDrag] = useState<{ px: number; py: number; x: number; y: number } | null>(null);   // live centre (px, py) and pointer (x, y) while dragging
   const [size, setSize] = useState({ w: 56, h: 460 });
@@ -269,6 +269,15 @@ export function InkOverlay() {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
     layerRef.current?.setPointerCapture(e.pointerId);
     const p = page(e);
+    const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => !el.closest("[data-ink-ui]"));
+    const target = under?.closest("button, a, input, textarea, select, summary, [role='button'], [role='switch'], [role='checkbox'], [contenteditable='true'], [data-trusted-click], [data-ink-pass-through]");
+    if (target) {
+      // A gesture that starts on a control belongs to that control, even beside fresh writing.
+      if (target.closest("[data-trusted-click]")) { setMode("frozen"); showHint("Frozen — tap again"); return; }
+      press.current = { x0: e.clientX, y0: e.clientY, t0: performance.now(), type: e.pointerType, ink: false, target: under!, control: !target.matches("[data-ink-pass-through]"), pts: [p] };
+      under!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: e.clientX, clientY: e.clientY, pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: true, buttons: 1 }));
+      return;
+    }
     // a stylus always inks; finger / mouse decide on movement
     press.current = { x0: e.clientX, y0: e.clientY, t0: performance.now(), type: e.pointerType, ink: e.pointerType === "pen", pts: [p] };
     if (press.current.ink) beginInk(p);
@@ -293,6 +302,12 @@ export function InkOverlay() {
     if (mode === "eraser") moveRing(e.clientX, e.clientY);
     const pr = press.current;
     if (!pr || !e.isPrimary) return;
+    if (pr.target) {
+      const moved = Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0);
+      if (pr.control || moved <= 8) return;
+      pr.target.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId: e.pointerId }));
+      pr.target = undefined;
+    }
     if (!pr.ink && Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0) > DRAG_PX) {
       pr.ink = true;
       beginInk(pr.pts[0]);                       // start the stroke where the press began
@@ -315,6 +330,16 @@ export function InkOverlay() {
     const pr = press.current;
     press.current = null;
     if (!pr) return;
+    if (pr.target) {
+      const cancelled = e.type === "pointercancel" || e.type === "lostpointercapture";
+      const base = { bubbles: true, clientX: e.clientX, clientY: e.clientY, pointerId: e.pointerId, pointerType: pr.type, isPrimary: true };
+      pr.target.dispatchEvent(new PointerEvent(cancelled ? "pointercancel" : "pointerup", base));
+      if (!cancelled && Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0) <= 8) {
+        if (pr.target instanceof HTMLElement) pr.target.focus();
+        pr.target.dispatchEvent(new MouseEvent("click", { ...base, cancelable: true }));
+      }
+      return;
+    }
     const now = performance.now();
     const moved = Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0);
     // a stylus never presses buttons from the ink layer's point of view unless it is a deliberate still tap far from any writing

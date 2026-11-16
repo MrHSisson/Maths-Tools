@@ -864,7 +864,7 @@ type CpaPathsChoice = "one" | "more" | "either";
 export interface CpaGenOptions { /** an exam chain: use this network for every part (the parts differ only in what they ask) */ fixed?: { acts: CpaActivity[]; layout: CpaLayout }; size?: "small" | "medium"; setting?: "plain" | "context"; paths?: CpaPathsChoice; /** require an arrow that skips a column */ skip?: boolean; /** Missing time: x on the critical path, off it (find what x must be at most), or either */ unknownWhere?: "on" | "off" | "either"; /** Missing time, Level 2: a missing earliest start or latest finish in a box of the filled-in network */ unknownBox?: boolean; /** Missing time: give the answer as one of four values */ unknownChoice?: boolean; /** Resource histogram / levelling: one worker each, or several */ workers?: "one" | "several"; /** Worker allocation: smallest team for the minimum time, or a fixed (smaller) team */ allocKind?: "min" | "fixed"; /** Worker allocation, fixed team: exactly this many workers (an exam chain that has just levelled to this limit) */ allocWorkers?: number; /** Explain and justify: which kind of question */ reasonCase?: "range" | "remove" | "claim" | "glyn" | "limit"; /** Critical paths: ask for every critical path, or which of several activities that can start at once must start first (and why) */ pathsAsk?: "paths" | "first"; /** Clock times: add a second small project (timed partly in seconds) that must finish with the main one */ clockSecond?: boolean; /** Delays and changes: a set delay against the float, a critical activity made quicker, a delay of "up to d", or an activity removed */ changeCase?: "delay" | "shorten" | "range" | "remove"; /** Delays and changes: ask for the project time, or the earliest start and latest finish of named later activities */ changeAsk?: "time" | "boxes"; /** Resource levelling: find the minimum time, or choose the correctly levelled histogram from three */ levelAsk?: "time" | "choose"; /** Cascade chart: the times are not given, so the passes come first */ cascadePasses?: boolean; /** Resource levelling: what the histogram is shown with */ levelRef?: "cascade" | "floats" | "network"; /** Which to shorten: the longest critical activity is best (simple), only an activity on every critical path helps (two), or a near-critical path makes a shorter critical activity better (trap) */ shortenCase?: "simple" | "two" | "trap"; /** Resource histogram: every activity as early or as late as possible */ histStart?: "early" | "late"; /** Resource histogram / levelling blocks: whole rectangles only, stepped blocks allowed, or at least one stepped block */ histShape?: HistShape; /** Cascade chart: given partly drawn, to complete */ partial?: boolean; /** Resource levelling: fits inside the float, needs extra time, or needs two or more delays including a critical activity held up */ levelType?: "within" | "extra"; /** Resource levelling, the three levels of specs/resource-levelling.md (when set, levelType is ignored): 1 one worker each and the top option clears the clash; 2 several workers, the same; 3 the top option leaves a clash (knock-on) */ levelLevel?: 1 | 2 | 3; /** Resource levelling, Level 3: workers per activity */ levelWorkers?: "one" | "several" | "mixed"; /** Resource levelling, Level 3: the most tries a question may need */ /** Level 3 levelling: how big a question may be (default Exam) */ levelSize?: LevelSize; /** Resource levelling: what is asked */ levelWording?: "time" | "extra" | "startLast" | "explain"; /** Resource histogram level 3: cut the peak within the float (when 3, the options below apply; 1 and 2 are the drawing questions) */ histLevel?: 1 | 2 | 3; histWorkers?: "one" | "several" | "mixed"; histCut?: "fewest" | "show" | "canFewer"; /** Resource histogram level 3: the histogram is given (default), or the student draws it first */ histGiven?: boolean; /** the network ends in one activity (nothing else is last) */ singleEnd?: boolean; /** Cascade chart: as early or as late as possible, how the critical activities are laid out, and bars or blocks */ cascade?: { start: CascadeStart; layout: CascadeLayout; style: CascadeStyle } }
 
 const SHAPES: Record<CpaLevel, number[][]> = {
-  1: [[2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
+  1: [[3, 1, 2], [3, 1, 2, 1], [1, 3, 1, 1], [2, 2, 2, 1], [2, 2, 1, 1], [2, 1, 2, 1], [1, 2, 2, 1], [2, 2, 2]],
   2: [[2, 3, 2, 1], [2, 2, 3, 1], [3, 2, 2, 1], [2, 3, 3, 1], [2, 2, 3, 2]],
   3: [[2, 3, 3, 2], [3, 3, 3, 2], [2, 3, 3, 3], [2, 2, 3, 3, 1], [2, 2, 3, 2, 2], [3, 3, 3, 3]],
 };
@@ -903,6 +903,11 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
         const pool = ids.filter((_, j) => (near ? colOf[j] === c - 1 : colOf[j] < c) && !preds.includes(ids[j]));
         if (pool.length) preds.push(pool[randInt(0, pool.length - 1)]);
       }
+      if (prev.length === 3 && Math.random() < 0.6) preds.splice(0, preds.length, ...prev);
+      if (Math.random() < 0.3 && preds.length < 3) {
+        const third = ids.filter((_, j) => colOf[j] === c - 1 && !preds.includes(ids[j]));
+        if (third.length) preds.push(third[randInt(0, third.length - 1)]);
+      }
       preds.sort();
     }
     return { id, duration: randInt(range[0], range[1]), preds };
@@ -915,7 +920,7 @@ function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice,
   if (acts.length < lo || acts.length > hi) return null;
   const hasSucc = new Set(acts.flatMap((a) => a.preds));
   if (acts.filter((a) => !hasSucc.has(a.id)).length > 3) return null; // at most three arrows into End
-  if (acts.filter((a) => a.preds.length === 0).length > (level === 1 ? 2 : 3)) return null;
+  if (acts.filter((a) => a.preds.length === 0).length > 3) return null;
   if (acts.some((a) => a.preds.length === 0 && !hasSucc.has(a.id))) return null; // an activity that is both first and last would stand alone
   const ref = referenceCpa(acts);
   const n = ref.criticalPaths.length;
@@ -1096,12 +1101,15 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       }
     : undefined;
   if (opts.fixed) { acts = opts.fixed.acts; layout = opts.fixed.layout; found = 99; }
+  // Choose the three-way family before scoring: otherwise the narrowest layout always wins.
+  const wantThree = level === 1 && !opts.fixed && Math.random() < 0.4;
   // keep the tidiest of several acceptable networks, rather than the first
   for (let attempt = 0; attempt < 4000 && found < (kind === "cpaLevel" && opts.levelLevel ? 3 : 8); attempt++) {
     let c: CpaActivity[] | null = candidate(level, range);
     // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
     if (!c) continue;
+    if (wantThree && !c.some(a => a.preds.length === 3)) continue;
     if (opts.singleEnd && c.filter((a) => !c.some((b) => b.preds.includes(a.id))).length !== 1) continue;
     const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2, !!opts.skip, pre);
     if (!l) continue;
@@ -1454,7 +1462,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
           { code: "M1", text: `States the float of activity ${c.id} is ${c.float} (or refers to "${c.float + 1} or more", or to "${c.float} or fewer")` },
           { code: "R1", text: `Infers that if the increase is more than ${c.float} the minimum completion time increases (by the excess), and if it is ${c.float} or less it does not` },
         ];
-        model = [`The float of ${c.id} is ${c.float} ${u}.`, `An increase of ${c.float} or less is absorbed by the float, so the minimum completion time stays ${T0} ${u}.`, `An increase of more than ${c.float} delays the project by the excess: at worst ${c.amount} − ${c.float} = ${c.amount - c.float}, so up to ${nT} ${u}.`];
+        model = [`The float of ${c.id} is ${c.float} ${u}.`, `An increase of ${c.float} or less is absorbed by the float, so the minimum completion time stays ${T0} ${u}.`, c.amount <= c.float ? `Even the maximum increase of ${c.amount} is within the float, so the project is not delayed and still takes ${T0} ${u}.` : `An increase of more than ${c.float} delays the project by the excess: at worst ${c.amount} − ${c.float} = ${c.amount - c.float}, so up to ${nT} ${u}.`];
         const base = `The activity network shows the earliest start time, latest finish time and float of every activity of ${g.data.unit === "minutes" ? "a project" : "a project"}. The times are in ${u}.`;
         void base;
         g.prompt = `The activity network shows the earliest start time, latest finish time and float of every activity. The times are in ${u}. The duration of activity ${c.id} may increase by up to ${withUnit(c.amount, u)}. ${ask}`;
@@ -1497,14 +1505,14 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     } else if (rc === "glyn") {
       const critIds = criticalActivities(acts);
       const sum = critIds.reduce((x, id) => x + acts.find((a) => a.id === id)!.duration, 0);
-      if (criticalPaths.length < 2 || sum === T) throw new Error("histogram: no hole-free stack");
+
       const marks: ReasonMark[] = [
-        { code: "E1", text: `(i) Finds the sum of the critical durations (${critIds.map((id) => acts.find((a) => a.id === id)!.duration).join(" + ")} = ${sum}) and compares it with the minimum completion time ${T}` },
+        { code: "E1", text: `(i) Compares the sum of the critical durations (${sum}) with the minimum completion time ${T}, and concludes the claim is ${sum === T ? "true" : "false"} for this network` },
         { code: "E1", text: "(ii) Explains that the claim is true for a network with all the critical activities on a single critical path" },
       ];
-      const model = [`(i) The critical activities are ${list(critIds)}. Their durations add up to ${sum}, but the minimum completion time is ${T}. ${sum} ≠ ${T}, so the claim is false.`, "(ii) It is true when all the critical activities are on a single critical path (there is only one critical path), because then the activities on it follow one another end to end."];
+      const model = [`(i) The critical activities are ${list(critIds)}. Their durations add up to ${sum}, but the minimum completion time is ${T}. ${sum === T ? `${sum} = ${T}, so the claim is true for this network` : `${sum} ≠ ${T}, so the claim is false`}.`, "(ii) It is true when all the critical activities are on a single critical path (there is only one critical path), because then the activities on it follow one another end to end."];
       data.extra = { reason: { type: "glyn", marks, model, sumCritical: sum } };
-      prompt = `The activity network represents ${subject}. The times are in ${unit}. Glyn claims that the minimum completion time of a project can be found by adding together the durations of all the critical activities. (i) Show that Glyn's claim is false for this network. (ii) Describe a situation in which Glyn's claim would be true.`;
+      prompt = `The activity network represents ${subject}. The times are in ${unit}. Glyn claims that the minimum completion time of a project can be found by adding together the durations of all the critical activities. (i) Decide whether Glyn's claim is correct for this network, giving a reason. (ii) Describe a situation in which Glyn's claim would be true.`;
       answerText = model.join(" ");
     } else {
       const limits = [
@@ -1537,7 +1545,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       id = a.id; mode = "shorten"; fl = 0; amount = randInt(1, Math.min(a.duration - 1, Math.max(1, Math.round(a.duration * 0.6))));
     } else if (want === "range") {
       const a = floaty[randInt(0, floaty.length - 1)];
-      id = a.id; mode = "range"; fl = times.float[a.id]; amount = fl + randInt(1, Math.max(1, Math.min(4, range[1])));
+      id = a.id; mode = "range"; fl = times.float[a.id]; amount = Math.random() < 0.5 ? randInt(1, fl) : fl + randInt(1, Math.max(1, Math.min(4, range[1])));
     } else {
       const a = floaty[randInt(0, floaty.length - 1)];
       fl = times.float[a.id]; id = a.id;
@@ -1556,7 +1564,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       walk(id);
       const moved = after.filter((q) => newTimes.es[q] !== times.es[q] || newTimes.lf[q] !== times.lf[q]);
       const still = after.filter((q) => !moved.includes(q));
-      const pickN = [...moved.slice(0, still.length ? 2 : 3), ...still.slice(0, 1)];
+      const pickN = moved.length ? [...moved.slice(0, still.length ? 2 : 3), ...still.slice(0, 1)] : still.slice(0, 3);
       if (pickN.length >= 2) named = pickN.sort();
       else throw new Error("histogram: no hole-free stack");
     }
@@ -1573,7 +1581,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       answerText = `New minimum completion time ${nT} ${unit}; ${withUnit(T - nT, unit)} saved${T - nT < amount ? ` (not all ${amount}, because another path becomes critical)` : ""}.${namedAns}`;
     } else if (mode === "range") {
       prompt = `${base} Activity ${id} may take longer than planned: its duration could increase by up to ${withUnit(amount, unit)}. Explain whether the minimum completion time of the project increases, and by how much at most.`;
-      answerText = `The float of ${id} is ${fl}. An increase of ${fl} or less does not change the minimum time (${T} ${unit}); an increase of more than ${fl} does, by the excess over ${fl}. At most ${amount} − ${fl} = ${amount - fl}, so the time becomes ${nT} ${unit} at worst.`;
+      answerText = `The float of ${id} is ${fl}. An increase of ${fl} or less does not change the minimum time (${T} ${unit}); an increase of more than ${fl} does, by the excess over ${fl}. For the stated increase the maximum delay is ${Math.max(0, amount - fl)}, so the time becomes ${nT} ${unit} at worst.`;
     } else {
       prompt = `${base} Activity ${id} is delayed and takes ${withUnit(amount, unit)} longer than planned.${named ? namedAsk : " State the effect on the minimum completion time."}`;
       answerText = (mode === "more" ? `It increases by ${withUnit(amount - fl, unit)}, to ${nT} ${unit}.` : mode === "equal" ? `No effect: the delay equals the float, so the time stays ${T} ${unit}, but ${id} is now critical.` : `No effect: the delay is less than the float, so the time stays ${T} ${unit}.`) + namedAns;

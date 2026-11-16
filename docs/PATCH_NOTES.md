@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-16 — Broader small networks, varied reasoning and deck pen input
+
+Branch `codex/gantt-print-layouts`. Areas: CPA generation/working/exam chains, deck grids/player, global ink overlay, tests and references.
+
+- Small CPA networks retain 6–7 activities but can include three parallel activities and three immediate predecessors. Three-way families are chosen before layout scoring so narrower diagrams cannot suppress them.
+- Up-to delays can stay within float or exceed it; exam delay questions no longer force an increased completion time. Named-activity questions can have unchanged times. Glyn's claim can be true or false: the question asks students to assess it and the worked solution and mark scheme follow the actual network.
+- Gestures beginning on controls pass through immediately, without ink or proximity-based dots. Continuous strokes beginning elsewhere can cross a button without breaking or activating it.
+- Deck grid/book answer reveal uses a 500 ms hold within 8 px. Short taps do nothing, movement cancels the hold and allows writing, leaving/cancelling a press clears the timer, and player chrome ignores these answer gestures.
+- Verification: seeded variety and ink unit regressions; real Chromium pen events for button taps beside fresh writing, strokes crossing buttons, short taps, jittered holds and writing that cancels a hold. Build and lint pass; 101 broader CPA/ink checks passed, with one existing cascade reference timeout passing in isolation. Additional variety, named-delay/exam and level/size checks pass, as does responsive Critical Path shell smoke.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Broader small networks, varied reasoning and deck pen input (Codex)”.
+
 ## 2026-11-16 — Critical Path print sheets and hand-selected Decision printing
 
 Branch `codex/gantt-print-layouts`. Areas: shared Decision shell, chooser, print basket, CPA sheets/renderers/tests, Dimensional Analysis option wording and docs.

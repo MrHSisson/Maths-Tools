@@ -127,7 +127,7 @@ function floatPart(c: Ctx, label: string): ExamPart {
   });
 }
 function reasonPart(c: Ctx, label: string, rc: "claim" | "glyn" | "limit" | "range" | "remove", prompt?: (p: string) => string, which?: number): ExamPart {
-  const { g, steps } = sub(c, "cpaReason", { reasonCase: rc, paths: rc === "glyn" ? "more" : undefined });
+  const { g, steps } = sub(c, "cpaReason", { reasonCase: rc });
   const r = g.data.extra!.reason!;
   const marks = which === undefined ? r.marks : [r.marks[which]];
   const model = which === undefined ? r.model : [r.model[which]];
@@ -182,7 +182,7 @@ const BUILDERS: Record<CpaChain, Build> = {
       B("B1F", "Finds correctly the latest finish time for each activity on their network (follow through their earliest start times)"),
     ], true);
     const b = variant === "change"
-      ? changePart(c, "(b)", { changeCase: "delay" }, (m) => m === "more", [
+      ? changePart(c, "(b)", { changeCase: "delay" }, () => true, [
         B("M1", "Evaluates the effect of the increase on the activity in their activity network (for example considers its float, or amends the network)"),
         B("A1F", "Determines the new minimum completion time (follow through their minimum completion time)"),
       ], (_g, ch) => `During the project, the duration of activity ${ch!.id} is extended by ${withUnit(ch!.amount, c.unit)}. Determine the new minimum completion time of the project.`)
@@ -199,7 +199,7 @@ const BUILDERS: Record<CpaChain, Build> = {
       ], "Complete the activity network, showing the earliest start time and latest finish time for each activity."),
       minTimePart(c, "(a)(ii)"),
       critPart(c, "(b)", "activities"),
-      reasonPart(c, "(c)(i)", "glyn", () => "Glyn claims that a project's activity network can be used to determine its minimum completion time by adding together the durations of all the project's critical activities. Show that Glyn's claim is false for this network.", 0),
+      reasonPart(c, "(c)(i)", "glyn", () => "Glyn claims that a project's activity network can be used to determine its minimum completion time by adding together the durations of all the project's critical activities. Determine whether Glyn's claim is correct for this network, giving a reason.", 0),
       reasonPart(c, "(c)(ii)", "glyn", () => "Describe a situation in which Glyn's claim would be true.", 1),
     ];
     return { intro: `A community project consists of ${activitiesText(c)}. ${NET_GIVEN(c)}`, parts, q: { view: durOnly } };
@@ -208,7 +208,7 @@ const BUILDERS: Record<CpaChain, Build> = {
   asChange: (c) => {
     if (Math.random() < 0.5) {
       const crit = critPart(c, "(a)", "path");
-      const named = changePart(c, "(b)", { changeCase: "delay", changeAsk: "boxes" }, (m) => m === "more", [
+      const named = changePart(c, "(b)", { changeCase: "delay", changeAsk: "boxes" }, () => true, [
         B("M1", "Uses the model to assess the effect of the change on the earliest start times of the activities asked about (or states that the activity remains non-critical)"),
         B("B1", "States explicitly the activities whose earliest start time and latest finish time remain unchanged"),
         B("A1", "Deduces the new earliest start times and states the latest finish times"),
@@ -427,7 +427,7 @@ export function generateCpaExam(level: number, chain: CpaChain | "asAny" | "alAn
   let lastErr: unknown;
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      const o: CpaGenOptions = { ...opts, paths: spec.paths, size: opts.size ?? (AS_SET.has(ch) && genLevel === 2 ? "small" : "medium") };
+      const o: CpaGenOptions = { ...opts, paths: ch === "asClaim" ? (Math.random() < 0.5 ? "one" : "more") : spec.paths, size: opts.size ?? (AS_SET.has(ch) && genLevel === 2 ? "small" : "medium") };
       const first = generateCpa(genLevel, "cpaFull", o);
       if (spec.ok && !spec.ok(first.data)) continue;
       const fixed: Fixed = { acts: first.data.acts, layout: first.data.layout };
