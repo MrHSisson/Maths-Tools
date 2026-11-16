@@ -90,7 +90,7 @@ const KIND: Record<string, CpaKind> = {
 const CHART_SUBS = new Set(["cascade", "histogram", "level", "alloc", "shorten", "reason", "reasonA"]);
 function sizeDefault(level: number, sub?: string): string {
   if (sub && EXAM_CHAIN[sub]) return sub.startsWith("exAs") || ["exBuild", "exClaim", "exChange", "exClock"].includes(sub) ? (level === 1 ? "small" : "medium") : "medium";
-  if (sub && CHART_SUBS.has(sub)) return "medium";
+  if (sub === "change" || sub && CHART_SUBS.has(sub)) return "medium";
   return level === 1 ? "small" : "medium";
 }
 /** one of the ticked choices of a multi option, at random */
@@ -106,18 +106,18 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const floatQ = sub === "floatPaths" ? pickOf(o.floatQ, "float") : "";
   const kind: CpaKind = sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "change" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   const reasonCase = sub === "reasonA" ? "limit" : (pickOf(o.reasonForm, lv === 1 ? "range" : "claim") as "range" | "remove" | "claim" | "glyn");
   const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
   const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const genLevel = sub === "change" ? (pickOf(o.changeSize, "medium") === "small" ? 1 : 2) : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
   const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: size ?? (CHART_SUBS.has(sub) ? "medium" : undefined),
+    size: size ?? (sub === "change" ? "medium" : CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
     levelRef: "cascade",
@@ -727,6 +727,18 @@ export default function App() {
               { value: "remove", label: "Removed", sub: "An activity is removed" },
               { value: "claim", label: "Claimed time", sub: "A finish time" },
               { value: "glyn", label: "Add durations", sub: "Of the critical activities" },
+            ],
+          },
+          {
+            key: "changeSize",
+            label: "Network size",
+            info: "How many activities the network has, independently of the kind of change being asked about.",
+            forSubTools: ["change"],
+            multi: true,
+            defaultFor: () => "medium",
+            choices: [
+              { value: "small", label: "Small", sub: "6–7 activities" },
+              { value: "medium", label: "Medium", sub: "8–9 activities" },
             ],
           },
           {

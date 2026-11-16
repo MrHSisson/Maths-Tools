@@ -385,6 +385,10 @@
     {
      "t": "p",
      "s": "**For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. An (i) beside the buttons (on a phone, beside the Difficulty title) says what each level means; tapping a level opens a fuller pop-up with what can be chosen there and a button to switch to it. **Where:** every ToolShell tool, and the Decision tools."
+    },
+    {
+     "t": "p",
+     "s": "Critical Path’s Delays and changes levels differ by the change being considered: delay against float; shorten a critical activity; up-to delays or removal. Every level offers Small (6–7 activities) and Medium (8–9 activities) networks independently, defaulting to Medium."
     }
    ]
   },
