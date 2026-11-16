@@ -6,12 +6,12 @@ import { cascadeSequence, criticalActivities, fullGraph, layoutIssues, type CpaL
 import type { DecisionProblem } from "./types";
 import type { CpaSheetFigure, CpaSheetInput } from "./printCpa";
 
-// The A4 sheet for a Critical Path histogram or levelling question: the network with its times and critical path, the cascade chart with its
+// The A4 sheets for Critical Path questions, including cascade charts, histograms and levelling: the network with its times and critical path, the cascade chart with its
 // floats, then histograms to draw on (blank) or already drawn, in the order the question needs them. `answers` fills the blank ones in.
 // The tool hands `buildCpaSheet` to the shell (`config.questionSheet`); the shell prints what it returns.
 
 /** which sub-tools have a sheet */
-export const CPA_SHEET_TABS = ["network", "forward", "backward", "full", "histogram", "level"];
+export const CPA_SHEET_TABS = ["network", "table", "forward", "backward", "full", "floatPaths", "unknown", "change", "reason", "cascade", "histogram", "level", "alloc", "shorten", "reasonA"];
 
 // ── The working sheets: draw the network, forward pass, backward pass, full analysis ──────────────────────────────────────────────────────
 // One A4 portrait page each, laid out for the student to write on. The network is the whole figure: drawn as large as the page allows, and
@@ -39,9 +39,9 @@ function enlargedLayout(l: CpaLayout): CpaLayout {
 }
 
 /** the precedence table for a drawing sheet: one row per activity (activity, duration, immediate predecessors), upright, to sit in the corner of the drawing space */
-function precedenceDown(d: NonNullable<DecisionProblem["cpa"]>): string {
+function precedenceDown(d: NonNullable<DecisionProblem["cpa"]>, filled = true): string {
   return `<table class="prec up"><tr><th>Activity</th><th>Duration (${esc(d.unit)})</th><th>Immediate predecessors</th></tr>`
-    + d.acts.map((a) => `<tr><td>${esc(a.id)}</td><td class="n">${a.duration}</td><td class="n">${a.preds.length ? esc(a.preds.join(", ")) : "&ndash;"}</td></tr>`).join("")
+    + d.acts.map((a) => `<tr><td>${esc(a.id)}</td><td class="n">${a.duration}</td><td class="n">${filled ? a.preds.length ? esc(a.preds.join(", ")) : "&ndash;" : "&nbsp;"}</td></tr>`).join("")
     + `</table>`;
 }
 
@@ -83,6 +83,8 @@ async function buildWorkSheetInput(p: DecisionProblem, answers: boolean): Promis
 async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
   const d = p.cpa;
   if (d && WORK_TITLE[d.kind]) return buildWorkSheetInput(p, answers);
+  if (d?.kind === "cpaCascade") return buildCascadeSheetInput(p, answers);
+  if (d && RESPONSE_TITLE[d.kind]) return buildResponseSheetInput(p, answers);
   if (!d || (d.kind !== "cpaHistogram" && d.kind !== "cpaLevel")) return null;
   const hist = d.extra?.histogram, lv = d.extra?.level, cut = d.extra?.cut;
   if (!hist) return null;
@@ -145,6 +147,96 @@ async function buildCpaSheetInput(p: DecisionProblem, answers: boolean): Promise
     if (answers) out.answer = [p.answer.text];
   }
   return out;
+}
+
+const RESPONSE_TITLE: Record<string, string> = {
+  cpaTable: "Reading the network", cpaFloat: "Float and critical paths", cpaPaths: "Float and critical paths",
+  cpaUnknown: "Missing times", cpaChange: "Delays and changes", cpaReason: "Explain and justify",
+  cpaShorten: "Which to shorten", cpaAlloc: "Worker allocation",
+};
+
+/** Written questions need the supplied network and room to work, without filling in what they ask for. */
+async function buildResponseSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
+  const d = p.cpa;
+  if (!d) return null;
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const view: CpaViewState = {
+    es: { ...d.times.es }, lf: { ...d.times.lf },
+    ...(d.kind === "cpaChange" || d.extra?.reason && ["range", "remove"].includes(d.extra.reason.type)
+      ? { float: Object.fromEntries(d.acts.map((a) => [a.id, d.times.float[a.id]])) } : {}),
+  };
+  if (!answers && d.extra?.reason && ["claim", "glyn", "limit"].includes(d.extra.reason.type)) {
+    view.es = { Start: 0 };
+    delete view.lf;
+  }
+  if (d.kind === "cpaTable") { delete view.es; delete view.lf; }
+  const unknown = d.extra?.unknown;
+  if (unknown && !answers) {
+    if (unknown.box) {
+      const { id, cell } = unknown.box;
+      delete view[cell]![id];
+      if (cell === "es") view.esLabels = { [id]: "x" }; else view.lfLabels = { [id]: "x" };
+    } else {
+      delete view.es; delete view.lf;
+      view.durLabels = { [unknown.id]: "x" };
+    }
+  }
+  const reason = d.extra?.reason;
+  const title = reason?.type === "limit" ? "Limits of the model" : RESPONSE_TITLE[d.kind];
+  const out: CpaSheetInput = {
+    title: "Critical Path Analysis", subtitle: `${title}${p.level ? ` · Level ${p.level}` : ""}`,
+    prompt: p.prompt, answerSheet: answers, work: true,
+    figures: [{ caption: "Activity network: earliest start | duration | latest finish", kind: "network", tall: true,
+      svg: renderToStaticMarkup(createElement(ActivityNodeView, { acts: d.acts, layout: d.layout, view })) }],
+    ...(answers ? { answer: reason ? reason.model : [p.answer.text] } : {}),
+  };
+  const al = d.extra?.alloc;
+  if (al) {
+    // A minimum-team question must not reveal the answer through its row count.
+    const rows = al.kind === "min" ? d.acts.length : al.workers;
+    const chart = { ...al.chart, rowLabels: Array.from({ length: rows }, (_, i) => `Worker ${i + 1}`) };
+    const axisT = al.kind === "min" ? d.times.projectTime : Math.ceil(d.acts.reduce((sum, a) => sum + a.duration, 0) / 5) * 5;
+    out.figures.push({ caption: answers ? "A possible worker allocation" : "Draw your worker allocation (use as many rows as you need)", kind: "gantt", tall: true,
+      svg: renderToStaticMarkup(createElement(GanttView, { data: { ...chart, T: axisT }, view: { bars: answers ? d.acts.map((a) => a.id) : [], floats: [] }, unit: d.unit, rowH: 470 / rows, fineGrid: !answers, labelWidth: 90 })) });
+    out.work = false;
+  } else if (!answers || d.kind === "cpaTable") {
+    out.figures.push({ caption: d.kind === "cpaTable" ? "Complete the precedence table" : "Your working and answer", kind: "response",
+      svg: `<div class="responsein">${d.kind === "cpaTable" ? precedenceDown(d, answers) : ""}${answers ? "" : '<div class="ruled"></div>'}</div>` });
+  }
+  return out;
+}
+
+/** Match the histogram drawing sheets, keeping the question's own chart style, rows and given bars. */
+async function buildCascadeSheetInput(p: DecisionProblem, answers: boolean): Promise<CpaSheetInput | null> {
+  const d = p.cpa, cas = d?.extra?.cascade;
+  if (!d || !cas) return null;
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const all = fullGraph(d.acts);
+  const times = {
+    es: Object.fromEntries(all.map((a) => [a.id, d.times.es[a.id]])),
+    lf: Object.fromEntries(all.map((a) => [a.id, d.times.lf[a.id]])),
+  };
+  const bars = answers ? cas.bars.map((b) => b.id) : cas.given ?? [];
+  const level = p.level ? ` · Level ${p.level}` : "";
+  return {
+    title: "Critical Path Analysis", subtitle: `Cascade/Gantt chart${level}`, prompt: p.prompt, answerSheet: answers,
+    figures: [
+      {
+        caption: cas.passes && !answers ? "Activity network: fill in the earliest starts and latest finishes" : "Activity network (earliest start, duration, latest finish)",
+        svg: renderToStaticMarkup(createElement(ActivityNodeView, {
+          acts: d.acts, layout: d.layout, view: cas.passes && !answers ? { es: { Start: 0 } } : times,
+        })), kind: "network", tall: true,
+      },
+      {
+        caption: `${answers ? "Completed chart" : cas.given?.length ? "Complete the chart" : "Draw the chart"}: every activity as ${cas.start} as possible, float shown dashed`,
+        svg: renderToStaticMarkup(createElement(GanttView, {
+          data: cas, view: { bars, floats: bars.filter((id) => d.times.float[id] > 0) }, unit: d.unit,
+          rowH: 470 / cas.rowLabels.length, fineGrid: !answers,
+        })), kind: "gantt", tall: true,
+      },
+    ],
+    ...(answers ? { answer: [p.answer.text] } : {}),
+  };
 }
 
 /** the printable HTML of a sheet (questions) or answer sheet, or null when this question has none */

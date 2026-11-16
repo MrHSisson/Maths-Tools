@@ -105,7 +105,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
-            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme. Both have a Worksheet (a printable set with working boxes and an answer page) on a laptop or tablet.",
+            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme. Save the questions you choose with the pin, then print your saved questions with working space and answers.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },

@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-16 — Critical Path print sheets and hand-selected Decision printing
+
+Branch `codex/gantt-print-layouts`. Areas: shared Decision shell, chooser, print basket, CPA sheets/renderers/tests, Dimensional Analysis option wording and docs.
+
+- All Critical Path skill tabs now have student print layouts. Gantt Levels 1–3 get the supplied network and large labelled axes, preserving given bars, early/late starts and chart options. Level 2 leaves the network times for students to calculate.
+- Reading the network gets a blank predecessor table; float/paths, missing times, changes, shortening and reasoning get the supplied network and ruled response space. Missing values stay as x. Worker allocation gets labelled axes with spare rows so the minimum team size is not disclosed. Answers fill the diagrams/tables or give model answers.
+- Removed Worksheet mode, batch generation, question counts and bulk saving from DecisionShell and its chooser, including Dimensional Analysis. Teachers inspect one question at a time and pin only the questions they want. Saved skills and exam chains still print with working space, answers and mark schemes; existing saved lists and basket links remain usable.
+- Verified so far: focused print regressions, actual A4 question/answer PDFs, selected-question basket printing for CPA and Dimensional Analysis. Final build, lint, responsive checks and full suite recorded below when complete.
+- Deliberately not changed: GCSE ToolShell worksheets, deck worksheets, generators, exam-chain content, PR/merge/deployment. Mixed Strategies remains the older development-only ToolShell tool, outside the DecisionShell model.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Critical Path print sheets and hand-selected Decision printing (Codex)”.
+
 ## 2026-11-15 — Standard Form: four sub-tools, all levels built (Dev only)
 
 - Tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. Four sub-tools; the generators for the first three are in `StandardFormConvert.ts`, `StandardFormMulDiv.ts` and `StandardFormAddSub.ts`, the exact-arithmetic helpers (no floating point) in `StandardFormCore.ts`.

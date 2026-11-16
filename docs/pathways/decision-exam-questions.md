@@ -6,7 +6,7 @@
 Exam-style questions are the shape every Decision tool should end up with. A question is an exam chain of parts (intro, marks, minutes, model answer, mark scheme, stepped working behind the (?), a picture per part) composed from a parts library and recipes, shown one part at a time and printed as paper then mark scheme. For the three Decision tools that are not live it is also the route to go-live.
 
 ## Progress
-- Decided 2026-10-26. Network Flows has the full pattern (parts library, recipes, Explain and justify, two-figure questions, Practice and Worksheet).
+- Decided 2026-10-26. Network Flows has the full pattern (parts library, recipes, Explain and justify, two-figure questions, single-question practice and hand-selected basket printing).
 - Critical Path Analysis has 11 exam chains but is not yet on the parts and recipes pattern.
 - Minimum Spanning Tree is live as skill practice only. Travelling Salesperson, Route Inspection and Mixed Strategies are dev-gated with no exam chains.
 - Paper questions are tagged as part chains in `specs/corpus/<tool>.md` and checked by a corpus test.

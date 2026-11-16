@@ -11,8 +11,8 @@ export interface CpaSheetFigure {
   /** the picture as markup (an SVG; for `draw`, the precedence table and the drawing space) */
   svg: string;
   /** `work` is a whole-page network the student writes on; `draw` is the table with a large space to draw the network in */
-  kind: "network" | "gantt" | "hist" | "work" | "draw";
-  /** a tall histogram when it is the only one */
+  kind: "network" | "gantt" | "hist" | "work" | "draw" | "response";
+  /** a tall drawing chart (Gantt or histogram), or its accompanying network */
   tall?: boolean;
   /** `work` and `draw` figures: turned a quarter turn (anticlockwise) so the long side of the portrait page carries the width of the network; the student turns the page to read it */
   rotate?: boolean;
@@ -48,6 +48,7 @@ const CSS = `
   .fig.hist { height: 52mm; }
   .fig.network.tall { height: 72mm; }
   .fig.hist.tall { height: 138mm; }
+  .fig.gantt.tall { height: 138mm; }
   .fig svg { width: 100% !important; height: 100% !important; min-width: 0 !important; max-height: none !important; margin: 0 !important; }
   /* an answer sheet carries the answer lines too, so its pictures are a little smaller to keep it on one page */
   .sheet.ans .fig.network { height: 40mm; }
@@ -55,12 +56,18 @@ const CSS = `
   .sheet.ans .fig.hist { height: 42mm; }
   .sheet.ans .fig.network.tall { height: 62mm; }
   .sheet.ans .fig.hist.tall { height: 120mm; }
+  .sheet.ans .fig.gantt.tall { height: 120mm; }
   .answer { margin-top: 2mm; font-size: 9pt; line-height: 1.25; }
   .answer ol { margin: 1mm 0 0 5mm; padding: 0; }
   .answer li { margin-bottom: 0.8mm; }
   /* a working sheet: the page is one column, the figure takes whatever the question, header and write-in lines leave */
   .sheet.work { display: flex; flex-direction: column; height: 276mm; overflow: hidden; break-inside: avoid; }
   .sheet.work .fig.work, .sheet.work .fig.draw { flex: 1 1 0; min-height: 0; height: auto; }
+  .sheet.work .fig.response { flex: 1 1 0; min-height: 0; }
+  .responsein { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 3mm; }
+  .responsein table.prec.up { position: static; width: 100%; }
+  .responsein table.prec td { min-height: 8mm; padding: 2mm; }
+  .ruled { flex: 1; min-height: 0; margin-top: 2mm; background: repeating-linear-gradient(to bottom, transparent 0, transparent 7.7mm, #cbd5e1 7.7mm, #cbd5e1 8mm); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .fig.rot { position: relative; display: block; container-type: size; }
   /* turned a quarter turn anticlockwise: its top is the left edge of the page, so the student turns the page clockwise to read it */
   .fig.rot .rotin { position: absolute; left: 0; top: 100cqh; width: 100cqh; height: 100cqw; transform-origin: 0 0; transform: rotate(-90deg); }

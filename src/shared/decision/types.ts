@@ -305,7 +305,7 @@ export interface DecisionShellProps {
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
-    /** a Worksheet mode for the skill questions too (not only the exam-style ones): N questions with working boxes, then the answers. Laptop and tablet; not a phone. */
+    /** Print hand-selected skill questions from the saved list with working boxes and a separate answers page. */
     skillSheet?: boolean;
     /** this tool's exam-style questions print as papers with mark schemes (so a saved exam-style question can be printed from the basket) */
     examSheet?: boolean;
