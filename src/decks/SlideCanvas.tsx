@@ -19,6 +19,7 @@ import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
+import { blockCols, partLetter } from "./textbookSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
 import { InkLayer } from "./InkLayer";
@@ -391,6 +392,44 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
 }
 
 /** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
+/** A textbook-style sheet: each question's instruction, then its parts (a), (b), (c) ... in columns. `a` (or the button) shows the answers in the
+ *  same places, so showing them never changes the layout. Sized to fill the slide. */
+function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const tb = el.textbook!;
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
+  const size = Math.max(22, Math.min(56, Math.floor(el.h / (lines * 1.5))));
+  const answers = shown || forced;
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {tb.blocks.map((b, bi) => (
+          <div key={bi} style={{ marginBottom: size * 0.5 }}>
+            <div style={{ fontSize: size * 0.62, color: "#64748b", marginBottom: size * 0.2 }}><b>Question {bi + 1}:</b> {b.instruction}</div>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${blockCols(tb, b)}, 1fr)`, columnGap: 24, rowGap: size * 0.22 }}>
+              {b.parts.map((part, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "baseline", gap: size * 0.3, fontSize: size, whiteSpace: "nowrap", color: answers ? "#1e3a8a" : "#0f172a" }}>
+                  <span style={{ fontSize: size * 0.55, color: "#94a3b8", fontWeight: 600, minWidth: size * 1.1 }}>({partLetter(i)})</span>
+                  <InlineMath text={`$${answers ? b.answers[i] : part}$`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [shown, setShown] = useState(false);
@@ -625,7 +664,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
   }
 }
 
