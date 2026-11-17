@@ -1,8 +1,8 @@
 # Tool Spec: Solving Trig Equations
 
-**Status:** draft <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
+**Status:** ready <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
 
-Designed in chat with Harry (17 Nov 2026), ahead of his radians lessons. Open points that block `ready` are listed in section 6.
+Designed in chat with Harry (17 Nov 2026), ahead of his radians lessons. Decisions made: **A-level only**, **extend `SmartGrapher`** for the picture, and **calculator decimals are in the first build**.
 
 ---
 
@@ -12,7 +12,7 @@ Designed in chat with Harry (17 Nov 2026), ahead of his radians lessons. Open po
 |---|---|
 | Tool name | Solving Trig Equations |
 | Tool id / URL path | `/solving-trig-equations` |
-| Category | Pure Mathematics (A-level) — file in `src/tools/Algebra/SolvingTrigEquations.tsx` |
+| Category | Pure Mathematics (A-level) — `subject: 'A-Level'`; file in `src/tools/Algebra/SolvingTrigEquations.tsx`. Not shown to GCSE. |
 | Card description | Solve sin, cos and tan equations in a given range, in degrees or radians, with a graph that builds the solutions up step by step. |
 | Defaults | standard |
 
@@ -56,7 +56,7 @@ Three **independent** properties, so they stay separate controls (R19). Group la
   - `negative` — "b − a·sin θ = c: 1 − 2 sin θ = 2" — defaultActive: false (the sign-flip trap)
 - **multiSelect** `values` — "Values":
   - `exact` — "Exact (½, √2/2, √3/2, 1/√3…)" — defaultActive: true
-  - `decimal` — "Decimal (calculator): 0.3, −0.72" — defaultActive: false
+  - `decimal` — "Decimal (calculator): sin θ = 0.3, tan θ = 2.5" — defaultActive: false (can be ticked together with `exact`; each question then picks one)
   - `extremes` — "Include 0 and ±1" — defaultActive: false (single or boundary solutions)
 - **Per-level differences:**
   - Level 1: `ranges` default active `r0_360`, `r0_720`, `r180`; `r360` off; `r0_180` not offered.
@@ -93,7 +93,14 @@ Value table (exact): sin and cos take `±½`, `±√2/2`, `±√3/2`; tan takes 
 
 **Rearranged forms (all levels, when ticked):** `scaled` `a·f = c` (a ∈ {2, 3, 4}, c = a·k); `shifted` `a·f + b = c` (a ∈ {2, 3}, b ∈ {−3…3} ≠ 0, c = a·k + b); `negative` `b − a·f = c` (a ∈ {1, 2, 3}, c = b − a·k). The generator chooses `k` first, then derives `a, b, c` so the rearranged equation yields exactly `k`, then displays it. Misconception: dividing by a negative coefficient and not flipping the sign of `k`.
 
-**House style for answers:** `θ = 60°, 300°` / `θ = \frac{\pi}{3}, \frac{5\pi}{3}`, ascending. Exact radian answers are reduced multiples of π (`5π/12`, `π`, `0`); never decimals unless `decimal` values are ticked, in which case degrees are given to 1 d.p. and radians to 3 s.f. (computed exactly then rounded, never accumulated rounding).
+**Decimal (calculator) values.** With `decimal` ticked, `k` is a 2-decimal-place value: sin and cos `k ∈ ±{0.10 … 0.95}` in steps of 0.05, tan `k ∈ ±{0.2 … 5}` to 1 or 2 d.p. (so tan questions exercise large values). The solution method is identical to exact questions; the new idea is rounding.
+- **Rounding rule:** degrees to 1 d.p.; radians to 3 s.f. The generator computes each solution from the **unrounded** principal value and rounds only at the end (never accumulating rounding).
+- **What the working shows:** intermediate values to 2 d.p. (degrees) / 4 d.p. (radians), then the answer line rounded. **Reject any question where recomputing from the displayed intermediates would round to a different final answer** than the exact calculation, so a student following the working always reaches the printed answer.
+- A closing line tells the student to keep the full calculator value until the end.
+- Misconception targeted: rounding the principal value early and carrying the error into `kθ ± c` questions.
+- Radian shifts `c` stay as multiples of π/12 in decimal questions (answers are decimals, not π fractions). Decimal values never use `extremes`.
+
+**House style for answers:** `θ = 60°, 300°` / `θ = \frac{\pi}{3}, \frac{5\pi}{3}`, ascending. Exact radian answers are reduced multiples of π (`5π/12`, `π`, `0`); decimals only in `decimal` questions (rules above).
 
 #### 3.2b Picture spec — the developing picture
 
@@ -109,7 +116,7 @@ This is a **developing picture**: one graph updates in place beside the working 
   5. (Levels 2–3) the final step drops the shading and relabels the solution dots with their θ values.
 - **Labelling:** solution dots labelled in the working's own units; the unknown is `u` while solving and `θ` in the answer. Colour: curve in the tool's accent, line `y = k` in grey dashed, solution dots green (as in the answer line).
 - **Reference implementation to follow:** `EquationsOfLines` (graph build with `graphStep`, `GraphBuildSpec`) and `src/shared/grapher/` docs in `docs/reference/pictures.md`.
-- **Known gap — to resolve before the build:** `SmartGrapher` has sine, cosine and tangent curve types but works in **radians** with numeric tick labels. This tool needs (a) a **degree** x-axis, (b) **π tick labels** (`π/6`…), (c) trig functions of a degrees argument. The preferred route is a small, general extension of `SmartGrapher` (a tick formatter and unit option), since the Unit Circle sandbox and later trig tools want it too; the fallback is a dedicated SVG picture using the diagram-split pattern. Decide this at the start of the build.
+- **Known gap — to resolve before the build:** `SmartGrapher` has sine, cosine and tangent curve types but works in **radians** with numeric tick labels. This tool needs (a) a **degree** x-axis, (b) **π tick labels** (`π/6`…), (c) trig functions of a degrees argument. **Decision: extend `SmartGrapher`** with a small, general x-axis option (a unit of `deg` or `rad`, and a tick formatter giving π labels), plus a trig curve whose argument is in degrees, so the Unit Circle sandbox and later trig tools can reuse it. Keep the change additive: existing curves, ticks and their tests must be unchanged (run the grapher-using tools' smoke checks). Document it in `docs/reference/pictures.md` in the same session.
 - **Worksheet cell:** no picture (an equation with an answer line); the picture appears in Whiteboard (after "Show answer") and Worked Example only.
 
 **Possible v2 (not in the first build):** a second linked picture for Levels 2–3 that shows the transformation, with the graph morphing from the graph of `y = f(u)` back to `y = f(kθ ± c)` in θ.
@@ -165,6 +172,13 @@ All answers verified by substitution.
 | 3 | tan(2θ − 25°) = 1, 0 ≤ θ ≤ 360 | θ = 35°, 125°, 215°, 305° | −25 ≤ u ≤ 695; u = 45, 225, 405, 585; θ = (u + 25)/2 |
 | 3 (shifted) | 2 cos(2θ − 40°) + 1 = 2, 0 ≤ θ ≤ 360 | θ = 50°, 170°, 230°, 350° | cos(2θ − 40°) = ½ (as above) |
 | 3 | cos(2θ − π/6) = −½, 0 ≤ θ ≤ 2π | θ = 5π/12, 3π/4, 17π/12, 7π/4 | −π/6 ≤ u ≤ 23π/6; u = 2π/3, 4π/3, 8π/3, 10π/3; θ = (u + π/6)/2 |
+| 1 (decimal) | sin θ = 0.3, 0 ≤ θ ≤ 360 | θ = 17.5°, 162.5° | α = 17.46°; 180° − 17.46° = 162.54° |
+| 1 (decimal) | cos θ = −0.72, 0 ≤ θ ≤ 360 | θ = 136.1°, 223.9° | α = 136.05°; 360° − 136.05° = 223.95° |
+| 1 (decimal) | tan θ = 2.5, 0 ≤ θ ≤ 360 | θ = 68.2°, 248.2° | α = 68.20°; add 180° |
+| 1 (decimal, radians) | tan θ = 0.5, 0 ≤ θ ≤ 2π | θ = 0.464, 3.61 | α = 0.4636; 0.4636 + π = 3.6052 |
+| 2 (decimal) | sin 2θ = 0.4, 0 ≤ θ ≤ 360 | θ = 11.8°, 78.2°, 191.8°, 258.2° | 0 ≤ 2θ ≤ 720; 2θ = 23.58, 156.42, 383.58, 516.42; ÷ 2 |
+| 2 (decimal, radians) | sin 2θ = 0.6, 0 ≤ θ ≤ 2π | θ = 0.322, 1.25, 3.46, 4.39 | 0 ≤ 2θ ≤ 4π; 2θ = 0.6435, 2.4981, 6.9267, 8.7813; ÷ 2 |
+| 3 (decimal) | cos(2θ − 40°) = 0.3, 0 ≤ θ ≤ 360 | θ = 56.3°, 163.7°, 236.3°, 343.7° | −40 ≤ u ≤ 680; u = 72.54, 287.46, 432.54, 647.46; θ = (u + 40)/2 |
 
 #### 3.5 Uniqueness
 
@@ -197,10 +211,7 @@ Key parameters: function, form, `k`, argument (`k`, `c`, sign), range, unit, val
 
 ## 6. Out of scope / future ideas / open points
 
-**Open — resolve before `ready`:**
-1. **Audience.** Coefficients and shifts are A-level Pure; Level 1 (degrees, 0–360, exact values) is also GCSE. Confirm the A-level category, and whether Level 1 should be reachable from a GCSE strand.
-2. **The grapher extension** (degree axis, π tick labels, trig of a degrees argument) vs a dedicated SVG picture: decide at the start of the build (section 3.2b).
-3. **`decimal` values.** Included as an option; confirm it is wanted in the first build or left until after the radians unit.
+**Resolved (17 Nov 2026):** A-level only (no GCSE route); extend `SmartGrapher`; calculator decimals are in the first build.
 
 **Not in this tool:** quadratic trig (`2sin²θ − sin θ = 0`), identities (`tan θ = sin θ / cos θ` equations, `sin² + cos² = 1` substitutions), and reciprocal functions. These are separate future sub-tools, not Level 4.
 
