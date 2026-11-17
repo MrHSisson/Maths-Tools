@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Year 7 rectilinear area: fresh slide 5, lengths inside at 270° corners, a worksheet made to print two to a sheet
+
+Branch `claude/busy-knuth-ru9nyt`. Area: the `year7-rectilinear-area` deck (live copy, pulled and pushed), arrow-style shape diagrams, the pinned authored worksheet's print layout.
+
+- Slide 5 (Internal lengths: practice): all six questions replaced with new numbers (areas 87, 82, 100, 112, 177, 216): staircase, cross, rotated staircase, rotated cross, reflected staircase, four-step staircase. Brief updated. Checked by hand against the formulas.
+- New optional `insideLengths` on a rectilinear question (`api/_rectilinear.ts`, `DEdge.inside`): at each 270° corner one of the two lengths that meet there (the longer; the horizontal one on a tie) is drawn inside the shape, so the pair no longer crowd the same notch. Every other length stays outside. On for slide 5 and worksheet sections B and C only; the teaching slides and section A are unchanged.
+- Worksheet print (`shapeWorksheet`, `src/shared/printables.ts`): A4, one page per kind of question (A split, B internal lengths, C cut-outs) with a header, a Name line and a short instruction; 2 × 2 large pictures with the working underneath, writing lines instead of underscores, and the matching worked-answer pages. Made to be shrunk: lengths in the pictures are sized per picture to about 13pt (so a tall narrow shape is not left with tiny labels), working lines are 12.5pt, nothing is under 10.5pt. The tools' generated diagram worksheets keep the old grid.
+- The repo build file `specs/decks/year7-rectilinear-area.build.ts` is out of date: Harry has since edited the live worksheet (section A is now four partition tasks; the title is capitalised). The live copy is the master; the lesson test was updated to the live structure and a slide 5 test added.
+- Validation: build, lint and the full suite (one local-exports guard fixed), deck check with layout on all three viewport sizes. Merge needed before the live site shows the inside lengths and the new print (the deck data is already live).
+- Not done: other slides' diagrams (slides 4, 6–8) still have every length outside; the reportlab PDFs in `specs/decks/_check/` were not changed.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session.
+
 ## 2026-11-17 — Independent Decision Question Options and category tabs
 
 Branch `codex/gantt-print-layouts`. Area: DecisionShell, option controls/types/helpers, all six tool configurations, regressions, generated facts and reference docs.

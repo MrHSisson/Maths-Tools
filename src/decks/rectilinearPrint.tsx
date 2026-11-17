@@ -2,18 +2,31 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ShapeDiagram } from "../shared/shapes/Diagram";
 import type { Drawing } from "../shared/shapes/drawing";
 import { extras } from "../shared/questionExtras";
-import { diagramPracticeSheet } from "../shared/printables";
+import { diagramPracticeSheet, shapeWorksheet, type ShapeSection } from "../shared/printables";
 import { openPrintWindow } from "../shared/print";
 import type { AnyQuestion, PrintMode } from "../shared";
 import type { CuratedQuestion } from "./types";
 import { rectilinearQuestion } from "./rectilinear";
+import { dimensionPlan } from "../shared/shapes/dimensions";
 
-export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) {
+/** The lengths' size against the shape that makes them `labelMm` tall on paper once the picture is fitted to a box of `box` mm (a tall, narrow shape needs more than a wide one). */
+function printFontScale(d: Drawing, box: { w: number; h: number }, labelMm: number): number {
+  for (let k = 1; k < 2.6; k += 0.1) {
+    const plan = dimensionPlan(d, true, false, undefined, 10, k);
+    if (plan.fs * Math.min(box.w / plan.W, box.h / plan.H) >= labelMm) return k;
+  }
+  return 2.6;
+}
+/** `fontScale` enlarges the lengths against the shape (a number), or `box` sizes them to read at `labelMm` on paper: the printed worksheet is shrunk two A4 pages to a sheet. */
+export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[], fontOrBoxes: number | { labelMm: number; box: { w: number; h: number }; keyBox: { w: number; h: number }; partitionBox: { w: number; h: number } } = 1) {
   return items.map(item => {
     const authored = "version" in item ? item : undefined;
     const q = authored?.rectilinear ? rectilinearQuestion(authored.rectilinear) : item as AnyQuestion;
     const d = extras(q)._diagram as Drawing;
     if (!d) throw new Error("This worksheet question has no shape diagram.");
+    const boxed = typeof fontOrBoxes === "number" ? undefined : fontOrBoxes, isPartition = authored?.rectilinear?.task === "partition";
+    const fontScale = boxed ? printFontScale(d, isPartition ? boxed.partitionBox : boxed.box, boxed.labelMm) : fontOrBoxes as number;
+    const keyScale = boxed ? printFontScale(d, isPartition ? boxed.partitionBox : boxed.keyBox, boxed.labelMm) : fontScale;
     const measure = /perimeter/i.test(d.caption.join(" ")) ? "Perimeter" : "Area", unit = q.answerSuffix ?? "cm²";
     const scaffold = authored?.rectilinear?.scaffold ?? "none";
     const partition=authored?.rectilinear?.task === "partition";
@@ -22,16 +35,19 @@ export function rectilinearPrintCells(items: (CuratedQuestion | AnyQuestion)[]) 
       ? ["Whole rectangle: ____ × ____ = ____ cm²", "Cut-out area(s): __________________", "Shape area: __________________ cm²"]
       : [...d.regions.filter(r => r.id.startsWith("s")).map((_, i) => `Rectangle ${String.fromCharCode(65 + i)}: ____ × ____ = ____ cm²`), "Total area: __________________ cm²"];
     if(full && !partition && authored?.rectilinear?.method === "split") {
-      q.working.filter(w=>w.label?.startsWith("Find the internal")).forEach(w=>prompts.unshift(`${w.label!.replace("Find the ","")} ${w.latex.split("=")[0].trim()} = ____ cm`));
+      q.working.filter(w=>w.label?.startsWith("Find the internal")).forEach(w=>prompts.unshift(`${w.label!.replace("Find the internal ", "Internal ").replace("of rectangle ", "of ")} ${w.latex.split("=")[0].trim().replace(/-/g, "−")} = ____ cm`));
     }
     if (authored?.rectilinear?.missingLength) prompts.unshift("Missing length: __________ cm");
     const clean = (s: string) => s.replace(/\\times/g, "×").replace(/,\\\s*/g, "; ").replace(/\\,/g, " ");
-    return { svg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer={false} small />),
-      answerSvg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer small focus={{ regions: d.regions.map(r => r.id) }} />),
-      prompts, answer: partition ? "One valid partition is shown; accept alternatives." : `${measure} = ${q.answer} ${unit}`, working: partition ? [] : q.working.map(w => clean(w.plain ?? w.latex)) };
+    const section: ShapeSection = partition ? "partition" : authored?.rectilinear?.method === "subtract" ? "cutout" : q.working.some(w => w.label?.startsWith("Find the internal")) ? "internal" : "area";
+    return { section, svg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer={false} small fontScale={fontScale} />),
+      answerSvg: renderToStaticMarkup(<ShapeDiagram hideCaption d={d} showAnswer small fontScale={keyScale} focus={{ regions: d.regions.map(r => r.id) }} />),
+      prompts, answer: partition ? "One valid partition is shown; accept alternatives." : `${measure} = ${q.answer} ${unit}`, working: partition ? [] : q.working.map(w => clean(w.plain ?? w.latex)).filter(t => !/^Equal sides are the same length/.test(t)) };
   });
 }
 export function printRectilinearSheet(items: (CuratedQuestion | AnyQuestion)[], title: string, mode: PrintMode, paper: "A4" | "A5" = "A4") {
   // Open synchronously from the print button: this path has no asynchronous generator or font fetch.
-  openPrintWindow(diagramPracticeSheet(rectilinearPrintCells(items), title, mode, paper, items.some(item => "version" in item) ? 4 : 6), 400);
+  const authored = items.some(item => "version" in item);
+  // A hand-authored sheet is A4 and made to be shrunk two to a sheet; a tool's generated worksheet keeps the grid layout.
+  openPrintWindow(authored ? shapeWorksheet(rectilinearPrintCells(items, { labelMm: 4.7, box: { w: 83, h: 64 }, keyBox: { w: 83, h: 62 }, partitionBox: { w: 84, h: 100 } }), title, mode) : diagramPracticeSheet(rectilinearPrintCells(items), title, mode, paper, 6), 400);
 }

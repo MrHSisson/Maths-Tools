@@ -60,6 +60,23 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
     q.working=[{plain:"One valid rectangle partition is shown.",type:"mStep",label:"One valid partition:",latex:"\\text{Rectangles cover the shape exactly once}"}];
     focuses.splice(0,focuses.length,{regions:drawing.regions.filter(r=>r.id.startsWith("s")).map(r=>r.id)});
   }
+  if (spec.insideLengths) {
+    // At a 270° corner the two lengths that meet there sit side by side in the same notch. Draw ONE of the pair inside the
+    // shape (the longer side, which has the room; the horizontal one if they tie) and leave every other length outside.
+    const poly = drawing.polys[0], n = poly.length;
+    const sign = Math.sign(poly.reduce((t, p, i) => t + p[0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * p[1], 0));
+    const edgeOf = (a: Pt, b: Pt) => drawing.edges.find(e => e.kind === "plain" && !!e.label && ((e.a[0] === a[0] && e.a[1] === a[1] && e.b[0] === b[0] && e.b[1] === b[1]) || (e.a[0] === b[0] && e.a[1] === b[1] && e.b[0] === a[0] && e.b[1] === a[1])));
+    const length = (a: Pt, b: Pt) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+    for (let i = 0; i < n; i++) {
+      const prev = poly[(i + n - 1) % n], v = poly[i], next = poly[(i + 1) % n];
+      const cross = (v[0] - prev[0]) * (next[1] - v[1]) - (v[1] - prev[1]) * (next[0] - v[0]);
+      if (cross * sign >= 0) continue;                                   // a 90° corner, not a 270° one
+      const before = edgeOf(prev, v), after = edgeOf(v, next);
+      if (!before || !after || before.inside || after.inside) continue;  // a side with no label does not crowd its neighbour
+      const lb = length(prev, v), la = length(v, next);
+      (lb > la || (lb === la && prev[1] === v[1]) ? before : after).inside = true;
+    }
+  }
   extras(q)._aspect = aspectOf(drawing);
   return q;
 }

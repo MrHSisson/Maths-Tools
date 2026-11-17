@@ -11,6 +11,8 @@ export interface RectilinearSpec {
   missingLength?: "addition" | "subtraction";
   /** Full prompts, the split only, or independent work. Applies to the printed sheet. */
   scaffold: "full" | "split" | "none";
+  /** Draw the lengths of the notch edges (the steps of a staircase, the corners of a cross) inside the shape. */
+  insideLengths?: boolean;
 }
 export function isRectilinearSpec(value: unknown): value is RectilinearSpec {
   if (!value || typeof value !== "object") return false;
@@ -19,6 +21,7 @@ export function isRectilinearSpec(value: unknown): value is RectilinearSpec {
     || !["full", "split", "none"].includes(s.scaffold) || typeof s.reducedLabels !== "boolean"
     || !Number.isInteger(s.orientation) || s.orientation < 0 || s.orientation > 7) return false;
   if (![s.width, s.height, s.cutWidth, s.cutHeight].every(n => Number.isInteger(n) && n >= 1 && n <= 100)) return false;
+  if (s.insideLengths !== undefined && typeof s.insideLengths !== "boolean") return false;
   if (s.task !== undefined && !["partition", "area"].includes(s.task)) return false;
   const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = s;
   const fits = shape === "frame" ? a <= w - 2 && b <= h - 2

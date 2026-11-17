@@ -9,7 +9,7 @@ import { checkDeck } from "../../api/_decks";
 import { authoredRectilinear, rectilinearQuestion } from "../decks/rectilinear";
 import { authoredSheetSlide, sheetQuestions, isFrozen } from "../decks/worksheets";
 import { rectilinearPrintCells } from "../decks/rectilinearPrint";
-import { diagramPracticeSheet } from "../shared/printables";
+import { diagramPracticeSheet, shapeWorksheet } from "../shared/printables";
 import { GENERATOR_TOOLS, generateFrom, loadConfig, generateSet, supportsGeneratorSubtool } from "../decks/generators";
 import { fromGenerated } from "../decks/SlideCanvas";
 import { dimensionPlan } from "../shared/shapes/dimensions";
@@ -201,4 +201,19 @@ describe("rectilinear deck foundations", () => {
     expect((await checkDeckContent({id:"partition-check",title:"Partition",summary:"",slides:[authoredSheetSlide("partition-sheet","Partition",[item])]})).problems).toEqual([]);
   });
 
+  it("prints the pinned worksheet as A4 pages made to be shrunk two to a sheet: one page per kind of question, 2 × 2, with a worked key",()=>{
+    const items=[
+      ...[0,1,2,3].map(i=>authoredRectilinear(`p${i}`,{...shape(),task:"partition",scaffold:"none"})),
+      ...[0,1,2,3].map(i=>authoredRectilinear(`i${i}`,{...shape(),shape:"stairs3",width:12+i,height:9,cutWidth:4,cutHeight:3,insideLengths:true})),
+      ...[0,1,2,3].map(i=>authoredRectilinear(`c${i}`,{...shape(),shape:"U",width:16+i,height:11,cutWidth:6,cutHeight:7,method:"subtract" as const})),
+    ];
+    const cells=rectilinearPrintCells(items,{labelMm:4.7,box:{w:83,h:64},keyBox:{w:83,h:62},partitionBox:{w:84,h:100}});
+    expect(cells.map(c=>c.section)).toEqual([..."pppp"].map(()=>"partition").concat(Array(4).fill("internal"),Array(4).fill("cutout")));
+    const html=shapeWorksheet(cells,"Area <test>","both");
+    expect(html.match(/<section class="page">/g)).toHaveLength(6);
+    expect(html).toContain("A · Split into rectangles"); expect(html).toContain("B · Internal lengths, then area"); expect(html).toContain("C · Remove the cut-outs");
+    expect(html).toContain("Area &lt;test&gt;"); expect(html).not.toContain("<test>");
+    for(const [,pt] of html.matchAll(/font-size:\s?([0-9.]+)pt/g))expect(Number(pt)).toBeGreaterThanOrEqual(10.5);   // nothing smaller, so it is still readable at 70%
+    expect(shapeWorksheet(cells,"Area","questions").match(/<section class="page">/g)).toHaveLength(3);
+  });
 });
