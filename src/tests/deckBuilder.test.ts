@@ -69,6 +69,11 @@ describe("deck checks", () => {
     expect(text).toContain("under the 26 minimum");
     expect(text).toContain("a Depth card should ask something new, but 649");
   });
+  it("catches a question the shared service would reject, such as an upper-case id", async () => {
+    const deck = await deckOf([S.deliberate("t-set", "Estimate", [...set(4), Q.estimate("WL1", "level1", "52", "\\times", "19")])]);
+    const text = (await checkDeckContent(deck)).problems.join("\n");
+    expect(text).toContain('the shared service would reject this question (its id "WL1" must be lowercase letters, digits and hyphens');
+  });
   it("every built deck passes", async () => {
     for (const d of DECKS as DeckDef[]) expect((await checkDeckContent(d)).problems, d.id).toEqual([]);
   }, 120000);
