@@ -4,12 +4,13 @@ import type { Drawing, Focus } from "./drawing";
 
 interface PlacedDimension {
   id: string; a: Pt; b: Pt; text: string; value?: string; edge: number;
-  options: {rect:Rect; cost:number}[]; line: Seg; segments: Seg[]; label: Rect; vertical: boolean; visible: boolean; found: boolean;
+  inside: boolean; options: {rect:Rect; cost:number}[]; line: Seg; segments: Seg[]; label: Rect; vertical: boolean; visible: boolean; found: boolean;
 }
 
 /** Each arrow follows its own boundary edge at a fixed perpendicular gap; no overall dimension frame. */
-export function dimensionPlan(d: Drawing, small = false, answer = false, focus?: Focus, gap = 10) {
-  const box = boxOf(d.polys), fs = small ? 12 : 30;
+/** `fontScale` makes the lengths larger against the shape (the printed worksheets use it so they stay readable when two A4 pages are shrunk onto one sheet). */
+export function dimensionPlan(d: Drawing, small = false, answer = false, focus?: Focus, gap = 10, fontScale = 1) {
+  const box = boxOf(d.polys), fs = (small ? 12 : 30) * fontScale;
   const sc = (small ? 240 : 600) / Math.max(box.x1-box.x0, box.y1-box.y0, 1);
   const X = (x: number) => (x-box.x0)*sc, Y = (y: number) => (box.y1-y)*sc;
   const shape: Seg[] = d.polys.flatMap(p => p.map((a,i) => { const b=p[(i+1)%p.length]; return {x1:X(a[0]),y1:Y(a[1]),x2:X(b[0]),y2:Y(b[1])}; }));
@@ -20,7 +21,8 @@ export function dimensionPlan(d: Drawing, small = false, answer = false, focus?:
     const ax=X(e.a[0]),ay=Y(e.a[1]),bx=X(e.b[0]),by=Y(e.b[1]),vertical=ax===bx;
     const dx=e.b[0]-e.a[0],dy=e.b[1]-e.a[1],len=Math.hypot(dx,dy)||1;
     let nx=dy/len,ny=-dx/len;
-    if(insideShape((e.a[0]+e.b[0])/2+nx*.001,(e.a[1]+e.b[1])/2+ny*.001,d.polys)){nx=-nx;ny=-ny;}
+    const towardsShape=insideShape((e.a[0]+e.b[0])/2+nx*.001,(e.a[1]+e.b[1])/2+ny*.001,d.polys);
+    if(towardsShape!==!!e.inside){nx=-nx;ny=-ny;}
     ny=-ny;
     const line=vertical?{x1:ax+nx*gap,y1:Math.min(ay,by),x2:ax+nx*gap,y2:Math.max(ay,by)}:{x1:Math.min(ax,bx),y1:ay+ny*gap,x2:Math.max(ax,bx),y2:ay+ny*gap};
     const text=e.kind === "plain"?e.label:"?",chars=Math.max(text.length,e.value?.length??0);
@@ -32,17 +34,17 @@ export function dimensionPlan(d: Drawing, small = false, answer = false, focus?:
       let cost=extra+Math.abs(t-.5)*fs+(padding===0?2:0);
       options.push({rect:r,cost});
       cost+=shape.filter(s=>segHitsRect(s,r,fs*.08)).length*100000;
-      if(insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
+      if(!e.inside&&insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
       for(const p of placed){const space=rectGap(p.label,r);if(space<0)cost+=200000;else cost+=Math.max(0,fs*.1-space)*2;if(segHitsRect(p.line,r,fs*.1))cost+=20000;}
       if(cost<best){best=cost;label=r;}
     }
-    placed.push({id:`edge-${i}`,a:e.a,b:e.b,text,value:e.value,edge:i,options,line,segments:[],label,vertical,visible:true,found:answer||!!focus?.reveal?.includes(i)});
+    placed.push({inside:!!e.inside,id:`edge-${i}`,a:e.a,b:e.b,text,value:e.value,edge:i,options,line,segments:[],label,vertical,visible:true,found:answer||!!focus?.reveal?.includes(i)});
   });
   for(let pass=0;pass<3;pass++)for(const p of pass%2?[...placed].reverse():placed){
     let best=Infinity;
     for(const option of p.options){const r=option.rect;let cost=option.cost;
       cost+=shape.filter(s=>segHitsRect(s,r,fs*.08)).length*100000;
-      if(insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
+      if(!p.inside&&insideShape(box.x0+r.x/sc,box.y1-r.y/sc,d.polys))cost+=100000;
       for(const q of placed)if(q!==p){const space=rectGap(q.label,r);if(space<0)cost+=200000;else cost+=Math.max(0,fs*.1-space)*2;if(segHitsRect(q.line,r,fs*.1))cost+=20000;}
       if(cost<best){best=cost;p.label=r;}
     }

@@ -3,7 +3,7 @@
 import { randInt as ri } from "../../../shared";
 import { dihedral, orient, type Pt } from "../../../shared/shapes/model";
 
-export type RectKind = "L" | "T" | "stairs2" | "stairs3" | "stairs4" | "cross" | "U" | "N" | "comb" | "frame";
+export type RectKind = "L" | "T" | "stairs2" | "stairs3" | "stairs4" | "cross" | "I" | "U" | "N" | "comb" | "frame";
 
 /** Kinds with no notch or hole: the perimeter equals the perimeter of the rectangle round them. */
 export const CONVEX: RectKind[] = ["L", "T", "stairs2", "stairs3", "stairs4", "cross"];
@@ -36,6 +36,13 @@ const polysFor = (kind: RectKind, grid: boolean): Pt[][] => {
       const arm = () => (grid ? ri(2, 3) : ri(3, 5)), core = () => (grid ? ri(2, 3) : ri(3, 5));
       const a = arm(), b = arm(), c = arm(), d = arm(), t = core(), u = core();
       return [[[a, 0], [a + t, 0], [a + t, c], [a + t + b, c], [a + t + b, c + u], [a + t, c + u], [a + t, c + u + d], [a, c + u + d], [a, c + u], [0, c + u], [0, c], [a, c]]];
+    }
+    case "I": {
+      // a capital I: a stem between two flanges; the notch on each side and the flange thicknesses need not match
+      const notch = () => (grid ? ri(2, 3) : ri(3, 5)), flange = () => (grid ? 2 : ri(3, 4));
+      const a = notch(), b = notch(), t = grid ? ri(2, 3) : ri(3, 5), f1 = flange(), f2 = flange(), s = grid ? ri(2, 3) : ri(4, 6);
+      const W = a + t + b, y1 = f1, y2 = f1 + s, H = f1 + s + f2;
+      return [[[0, 0], [W, 0], [W, y1], [a + t, y1], [a + t, y2], [W, y2], [W, H], [0, H], [0, y2], [a, y2], [a, y1], [0, y1]]];
     }
     case "U": {
       const W = ri(12, 16), H = ri(9, 12), n = ri(4, 6), o = ri(3, W - n - 3), d = ri(5, H - 3);

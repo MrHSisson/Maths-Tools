@@ -9,7 +9,7 @@ import { checkDeck } from "../../api/_decks";
 import { authoredRectilinear, rectilinearQuestion } from "../decks/rectilinear";
 import { authoredSheetSlide, sheetQuestions, isFrozen } from "../decks/worksheets";
 import { rectilinearPrintCells } from "../decks/rectilinearPrint";
-import { diagramPracticeSheet } from "../shared/printables";
+import { diagramPracticeSheet, shapeWorksheet } from "../shared/printables";
 import { GENERATOR_TOOLS, generateFrom, loadConfig, generateSet, supportsGeneratorSubtool } from "../decks/generators";
 import { fromGenerated } from "../decks/SlideCanvas";
 import { dimensionPlan } from "../shared/shapes/dimensions";
@@ -201,4 +201,32 @@ describe("rectilinear deck foundations", () => {
     expect((await checkDeckContent({id:"partition-check",title:"Partition",summary:"",slides:[authoredSheetSlide("partition-sheet","Partition",[item])]})).problems).toEqual([]);
   });
 
+  it("prints the pinned worksheet as A4 pages made to be shrunk two to a sheet: one page per kind of question, 2 × 2, with a worked key",()=>{
+    const items=[
+      ...[0,1,2,3].map(i=>authoredRectilinear(`p${i}`,{...shape(),task:"partition",scaffold:"none"})),
+      ...[0,1,2,3].map(i=>authoredRectilinear(`i${i}`,{...shape(),shape:"stairs3",width:12+i,height:9,cutWidth:4,cutHeight:3,insideLengths:true})),
+      ...[0,1,2,3].map(i=>authoredRectilinear(`c${i}`,{...shape(),shape:"U",width:16+i,height:11,cutWidth:6,cutHeight:7,method:"subtract" as const})),
+    ];
+    const cells=rectilinearPrintCells(items,{labelMm:4.7,box:{w:83,h:72},keyBox:{w:83,h:64},partitionBox:{w:84,h:100}});
+    expect(cells.map(c=>c.section)).toEqual([..."pppp"].map(()=>"partition").concat(Array(4).fill("internal"),Array(4).fill("cutout")));
+    const html=shapeWorksheet(cells,"Area <test>","both");
+    expect(html.match(/<section class="page">/g)).toHaveLength(6);
+    expect(html).toContain("A · Split into rectangles"); expect(html).toContain("B · Internal lengths, then area"); expect(html).toContain("C · Remove the cut-outs");
+    expect(html).toContain("Area &lt;test&gt;"); expect(html).not.toContain("<test>");
+    for(const [,pt] of html.matchAll(/font-size:\s?([0-9.]+)pt/g))expect(Number(pt)).toBeGreaterThanOrEqual(10.5);   // nothing smaller, so it is still readable at 70%
+    expect(shapeWorksheet(cells,"Area","questions").match(/<section class="page">/g)).toHaveLength(3);
+  });
+  it("draws a capital I and staircases with steps of different sizes, and checks their areas against the outline",()=>{
+    const base={...shape(),scaffold:"none" as const};
+    const capital=rectilinearQuestion({...base,shape:"I",width:13,height:14,cutWidth:4,cutHeight:3});
+    expect(Number(capital.answer)).toBe(13*14-2*4*(14-6));
+    expect(capital.working.some(w=>w.label?.includes("Find the internal"))).toBe(true);
+    const steps=rectilinearQuestion({...base,shape:"stairs3",width:14,height:11,cutWidth:3,cutHeight:2,stepWidths:[3,5],stepHeights:[2,4]});
+    expect(Number(steps.answer)).toBe(14*2+11*4+6*5);
+    const four=rectilinearQuestion({...base,shape:"stairs4",width:20,height:16,cutWidth:3,cutHeight:3,stepWidths:[3,4,2],stepHeights:[3,2,4]});
+    expect(Number(four.answer)).toBe(20*3+17*2+13*4+11*7);
+    expect(isRectilinearSpec({...base,shape:"stairs3",width:8,height:9,cutWidth:3,cutHeight:2,stepWidths:[4,4],stepHeights:[2,4]})).toBe(false);   // the steps use up the whole width
+    expect(isRectilinearSpec({...base,shape:"stairs3",width:14,height:11,cutWidth:3,cutHeight:2,stepWidths:[3],stepHeights:[2,4]})).toBe(false);   // one width missing
+    expect(isRectilinearSpec({...base,shape:"I",width:8,height:9,cutWidth:4,cutHeight:3})).toBe(false);   // no stem left
+  });
 });

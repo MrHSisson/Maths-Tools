@@ -2,7 +2,7 @@
 export interface RectilinearSpec {
   version: 1;
   task?: "partition" | "area";
-  shape: "L" | "T" | "stairs3" | "stairs4" | "cross" | "U" | "N" | "comb" | "frame";
+  shape: "L" | "T" | "stairs3" | "stairs4" | "cross" | "I" | "U" | "N" | "comb" | "frame";
   width: number; height: number; cutWidth: number; cutHeight: number;
   method: "split" | "subtract";
   orientation: number;
@@ -11,18 +11,30 @@ export interface RectilinearSpec {
   missingLength?: "addition" | "subtraction";
   /** Full prompts, the split only, or independent work. Applies to the printed sheet. */
   scaffold: "full" | "split" | "none";
+  /** Draw the lengths of the notch edges (the steps of a staircase, the corners of a cross) inside the shape. */
+  insideLengths?: boolean;
+  /** Staircases only: the width each step goes in by, and the height of each step but the last, so the steps need not all match (stairs3 takes two of each, stairs4 three). Omitted: every step is `cutWidth` by `cutHeight`. */
+  stepWidths?: number[]; stepHeights?: number[];
 }
+const stepsOf = (shape: string) => shape === "stairs4" ? 3 : shape === "stairs3" ? 2 : 0;
 export function isRectilinearSpec(value: unknown): value is RectilinearSpec {
   if (!value || typeof value !== "object") return false;
   const s = value as RectilinearSpec;
-  if (s.version !== 1 || !["L", "T", "stairs3", "stairs4", "cross", "U", "N", "comb", "frame"].includes(s.shape) || !["split", "subtract"].includes(s.method)
+  if (s.version !== 1 || !["L", "T", "stairs3", "stairs4", "cross", "I", "U", "N", "comb", "frame"].includes(s.shape) || !["split", "subtract"].includes(s.method)
     || !["full", "split", "none"].includes(s.scaffold) || typeof s.reducedLabels !== "boolean"
     || !Number.isInteger(s.orientation) || s.orientation < 0 || s.orientation > 7) return false;
   if (![s.width, s.height, s.cutWidth, s.cutHeight].every(n => Number.isInteger(n) && n >= 1 && n <= 100)) return false;
+  if (s.insideLengths !== undefined && typeof s.insideLengths !== "boolean") return false;
   if (s.task !== undefined && !["partition", "area"].includes(s.task)) return false;
   const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = s;
-  const fits = shape === "frame" ? a <= w - 2 && b <= h - 2
+  const stepped = s.stepWidths !== undefined || s.stepHeights !== undefined;
+  if (stepped) {
+    const n = stepsOf(shape), ok = (v: unknown) => Array.isArray(v) && v.length === n && v.every(x => Number.isInteger(x) && x >= 1 && x <= 100);
+    if (!n || !ok(s.stepWidths) || !ok(s.stepHeights) || s.stepWidths!.reduce((t, x) => t + x, 0) >= w || s.stepHeights!.reduce((t, x) => t + x, 0) >= h) return false;
+  }
+  const fits = stepped ? true : shape === "frame" ? a <= w - 2 && b <= h - 2
     : (shape === "comb" || shape === "N") ? 2 * a <= w - 3 && b < h
+    : (shape === "I" || shape === "cross") ? 2 * a < w && 2 * b < h
     : shape === "U" ? a <= w - 2 && b < h
     : a * (shape === "L" ? 1 : shape === "stairs4" ? 3 : 2) < w && b * (shape === "stairs4" ? 3 : ["stairs3", "cross"].includes(shape) ? 2 : 1) < h;
   if (!fits) return false;
@@ -50,7 +62,9 @@ export function rectilinearPolygons(s: RectilinearSpec): [number, number][][] {
     const bridge = Math.floor((w - 2*a)/3), left = bridge, right = 2*bridge+a;
     return [[[0,0],[left,0],[left,b],[left+a,b],[left+a,0],[w,0],[w,h],[right+a,h],[right+a,h-b],[right,h-b],[right,h],[0,h]]];
   }
-  if (shape === "stairs4") return [[[0,0],[w,0],[w,b],[w-a,b],[w-a,2*b],[w-2*a,2*b],[w-2*a,3*b],[w-3*a,3*b],[w-3*a,h],[0,h]]];
+  const sw = s.stepWidths ?? [a, a, a], sh = s.stepHeights ?? [b, b, b];
+  if (shape === "stairs4") { const x1 = w - sw[0], x2 = x1 - sw[1], x3 = x2 - sw[2], y1 = sh[0], y2 = y1 + sh[1], y3 = y2 + sh[2]; return [[[0,0],[w,0],[w,y1],[x1,y1],[x1,y2],[x2,y2],[x2,y3],[x3,y3],[x3,h],[0,h]]]; }
+  if (shape === "I") return [[[0,0],[w,0],[w,b],[w-a,b],[w-a,h-b],[w,h-b],[w,h],[0,h],[0,h-b],[a,h-b],[a,b],[0,b]]];
   if (shape === "comb") {
     const bridge = Math.floor((w - 2*a)/3), x = bridge, z = 2*bridge+a;
     return [[[0,0],[w,0],[w,h],[z+a,h],[z+a,h-b],[z,h-b],[z,h],[x+a,h],[x+a,h-b],[x,h-b],[x,h],[0,h]]];
@@ -58,6 +72,6 @@ export function rectilinearPolygons(s: RectilinearSpec): [number, number][][] {
   if (shape === "cross") return [[[a,0],[w-a,0],[w-a,b],[w,b],[w,h-b],[w-a,h-b],[w-a,h],[a,h],[a,h-b],[0,h-b],[0,b],[a,b]]];
   if (shape === "L") return [[[0,0],[w,0],[w,h-b],[w-a,h-b],[w-a,h],[0,h]]];
   if (shape === "T") return [[[0,0],[w,0],[w,h-b],[w-a,h-b],[w-a,h],[a,h],[a,h-b],[0,h-b]]];
-  return [[[0,0],[w,0],[w,b],[w-a,b],[w-a,2*b],[w-2*a,2*b],[w-2*a,h],[0,h]]];
+  { const x1 = w - sw[0], x2 = x1 - sw[1], y1 = sh[0], y2 = y1 + sh[1]; return [[[0,0],[w,0],[w,y1],[x1,y1],[x1,y2],[x2,y2],[x2,h],[0,h]]]; }
 }
 export const defaultRectilinear = (): RectilinearSpec => ({ version: 1, shape: "L", width: 8, height: 6, cutWidth: 3, cutHeight: 2, method: "split", orientation: 0, reducedLabels: true, scaffold: "full" });
