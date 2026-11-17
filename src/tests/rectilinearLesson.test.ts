@@ -31,7 +31,9 @@ describe("rebuilt Year 7 lesson progression",()=>{
       expect(q.rectilinear?.scaffold).toBe("none");
       expect(rectilinearQuestion(q.rectilinear!).working.some(w=>w.label?.includes("Find the internal"))).toBe(false);
     }
-    expect(sequence(3).map(q=>q.rectilinear?.scaffold)).toEqual(["split","none","split","none"]);
+    expect(sequence(3).map(q=>q.rectilinear?.shape)).toEqual(["stairs3","stairs3","cross","cross","I","I"]);
+    expect(sequence(3).map(q=>q.rectilinear?.scaffold)).toEqual(["split","none","split","none","split","none"]);
+    expect(sequence(3).filter(q=>q.rectilinear?.shape==="stairs3").every(q=>new Set(q.rectilinear!.stepWidths).size===2&&new Set(q.rectilinear!.stepHeights).size===2)).toBe(true);
   });
   it("lays the worksheet out as three pages: T and L shapes at different turns, then internal lengths (steps, a cross and a capital I), then cut-outs",()=>{
     const sheet=deck.slides[8].els.find(e=>e.kind==="worksheet");

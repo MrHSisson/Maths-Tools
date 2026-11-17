@@ -279,7 +279,7 @@ describe("Rectilinear Shapes", () => {
     }
   });
   it("splitting into rectangles and taking pieces away both give the area", () => {
-    for (const kind of ["L", "T", "stairs2", "stairs3", "cross", "U", "comb", "frame"] as RectKind[]) for (let i = 0; i < 40; i++) {
+    for (const kind of ["L", "T", "stairs2", "stairs3", "cross", "I", "U", "comb", "frame"] as RectKind[]) for (let i = 0; i < 40; i++) {
       const polys = buildRect(kind), b = boxOf([polys[0]]);
       if (kind !== "frame") expect(splitRects(polys).reduce((s, r) => s + rectArea(r), 0)).toBeCloseTo(area(polys), 6);
       expect((b.x1 - b.x0) * (b.y1 - b.y0) - (kind === "frame" ? rectArea({ x0: 0, y0: 0, x1: boxOf([polys[1]]).x1 - boxOf([polys[1]]).x0, y1: boxOf([polys[1]]).y1 - boxOf([polys[1]]).y0 }) : cutRects(polys).reduce((s, r) => s + rectArea(r), 0))).toBeCloseTo(area(polys), 6);

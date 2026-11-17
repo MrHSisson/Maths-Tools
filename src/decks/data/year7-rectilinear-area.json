@@ -393,94 +393,109 @@
           "size": 46,
           "items": [
             {
+              "version": 2,
               "id": "rectilinear-r2-internal-model-stairs",
+              "title": "Rectilinear area",
               "tool": "perimeter-and-area",
               "level": "level1",
-              "title": "Rectilinear area",
-              "answer": [
-                "$96$ cm²"
-              ],
-              "format": "open",
-              "status": "ready",
               "purpose": "explain",
-              "version": 2,
-              "followUp": "",
+              "format": "open",
               "question": [
                 "Find the area."
               ],
-              "rationale": "",
-              "explanation": [
-                "Find the internal width of rectangle B: $14 - 4 = 10$",
-                "Split it into rectangles and find each area: $A = 14 \\times 3 = 42 ,\\ B = 10 \\times 3 = 30 ,\\ C = 6 \\times 4 = 24$",
-                "Add the areas: $42 + 30 + 24 = 96$"
+              "answer": [
+                "$107$ cm²"
               ],
+              "explanation": [
+                "Find the internal width of rectangle B: $15 - 4 = 11$",
+                "Split it into rectangles and find each area: $A = 15 \\times 3 = 45 ,\\ B = 11 \\times 2 = 22 ,\\ C = 8 \\times 5 = 40$",
+                "Add the areas: $45 + 22 + 40 = 107$"
+              ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
               "rectilinear": {
-                "shape": "stairs3",
-                "width": 14,
-                "height": 10,
-                "method": "split",
                 "version": 1,
-                "cutWidth": 4,
-                "scaffold": "split",
-                "cutHeight": 3,
+                "method": "split",
                 "orientation": 0,
-                "reducedLabels": true
-              },
-              "expectedErrors": []
+                "reducedLabels": true,
+                "scaffold": "split",
+                "insideLengths": true,
+                "shape": "stairs3",
+                "width": 15,
+                "height": 10,
+                "cutWidth": 4,
+                "cutHeight": 3,
+                "stepWidths": [
+                  4,
+                  3
+                ],
+                "stepHeights": [
+                  3,
+                  2
+                ]
+              }
             },
             {
+              "version": 2,
               "id": "rectilinear-r2-internal-check-stairs",
+              "title": "Rectilinear area",
               "tool": "perimeter-and-area",
               "level": "level1",
-              "title": "Rectilinear area",
-              "answer": [
-                "$113$ cm²"
-              ],
-              "format": "open",
-              "status": "ready",
               "purpose": "practice",
-              "version": 2,
-              "followUp": "",
+              "format": "open",
               "question": [
                 "Find the area."
               ],
-              "rationale": "",
+              "answer": [
+                "$86$ cm²"
+              ],
               "explanation": [
                 "Find the internal width of rectangle B: $13 - 3 = 10$",
-                "Split it into rectangles and find each area: $A = 13 \\times 4 = 52 ,\\ B = 10 \\times 4 = 40 ,\\ C = 7 \\times 3 = 21$",
-                "Add the areas: $52 + 40 + 21 = 113$"
+                "Split it into rectangles and find each area: $A = 13 \\times 2 = 26 ,\\ B = 10 \\times 3 = 30 ,\\ C = 5 \\times 6 = 30$",
+                "Add the areas: $26 + 30 + 30 = 86$"
               ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
               "rectilinear": {
+                "version": 1,
+                "method": "split",
+                "orientation": 0,
+                "reducedLabels": true,
+                "scaffold": "none",
+                "insideLengths": true,
                 "shape": "stairs3",
                 "width": 13,
                 "height": 11,
-                "method": "split",
-                "version": 1,
                 "cutWidth": 3,
-                "scaffold": "none",
-                "cutHeight": 4,
-                "orientation": 0,
-                "reducedLabels": true
-              },
-              "expectedErrors": []
+                "cutHeight": 2,
+                "stepWidths": [
+                  3,
+                  5
+                ],
+                "stepHeights": [
+                  2,
+                  3
+                ]
+              }
             },
             {
+              "version": 2,
               "id": "rectilinear-r2-internal-model-cross",
+              "title": "Rectilinear area",
               "tool": "perimeter-and-area",
               "level": "level1",
-              "title": "Rectilinear area",
-              "answer": [
-                "$95$ cm²"
-              ],
-              "format": "open",
-              "status": "ready",
               "purpose": "explain",
-              "version": 2,
-              "followUp": "",
+              "format": "open",
               "question": [
                 "Find the area."
               ],
-              "rationale": "",
+              "answer": [
+                "$95$ cm²"
+              ],
               "explanation": [
                 "Equal sides are the same length: $7$",
                 "Equal sides are the same length: $4$",
@@ -492,37 +507,38 @@
                 "Split it into rectangles and find each area: $A = 7 \\times 4 = 28 ,\\ B = 13 \\times 3 = 39 ,\\ C = 7 \\times 4 = 28$",
                 "Add the areas: $28 + 39 + 28 = 95$"
               ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
               "rectilinear": {
+                "version": 1,
+                "method": "split",
+                "orientation": 0,
+                "reducedLabels": true,
+                "scaffold": "split",
+                "insideLengths": true,
                 "shape": "cross",
                 "width": 13,
                 "height": 11,
-                "method": "split",
-                "version": 1,
                 "cutWidth": 3,
-                "scaffold": "split",
-                "cutHeight": 4,
-                "orientation": 0,
-                "reducedLabels": true
-              },
-              "expectedErrors": []
+                "cutHeight": 4
+              }
             },
             {
+              "version": 2,
               "id": "rectilinear-r2-internal-check-cross",
+              "title": "Rectilinear area",
               "tool": "perimeter-and-area",
               "level": "level1",
-              "title": "Rectilinear area",
-              "answer": [
-                "$116$ cm²"
-              ],
-              "format": "open",
-              "status": "ready",
               "purpose": "practice",
-              "version": 2,
-              "followUp": "",
+              "format": "open",
               "question": [
                 "Find the area."
               ],
-              "rationale": "",
+              "answer": [
+                "$116$ cm²"
+              ],
               "explanation": [
                 "Equal sides are the same length: $7$",
                 "Equal sides are the same length: $4$",
@@ -534,19 +550,109 @@
                 "Split it into rectangles and find each area: $A = 7 \\times 4 = 28 ,\\ B = 15 \\times 4 = 60 ,\\ C = 7 \\times 4 = 28$",
                 "Add the areas: $28 + 60 + 28 = 116$"
               ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
               "rectilinear": {
+                "version": 1,
+                "method": "split",
+                "orientation": 0,
+                "reducedLabels": true,
+                "scaffold": "none",
+                "insideLengths": true,
                 "shape": "cross",
                 "width": 15,
                 "height": 12,
-                "method": "split",
-                "version": 1,
                 "cutWidth": 4,
-                "scaffold": "none",
-                "cutHeight": 4,
+                "cutHeight": 4
+              }
+            },
+            {
+              "version": 2,
+              "id": "rectilinear-r2-internal-model-i",
+              "title": "Rectilinear area",
+              "tool": "perimeter-and-area",
+              "level": "level1",
+              "purpose": "explain",
+              "format": "open",
+              "question": [
+                "Find the area."
+              ],
+              "answer": [
+                "$100$ cm²"
+              ],
+              "explanation": [
+                "Equal sides are the same length: $12$",
+                "Equal sides are the same length: $3$",
+                "Equal sides are the same length: $4$",
+                "Equal sides are the same length: $7$",
+                "Equal sides are the same length: $3$",
+                "Equal sides are the same length: $4$",
+                "Find the internal width of rectangle B: $12 - 4 - 4 = 4$",
+                "Split it into rectangles and find each area: $A = 12 \\times 3 = 36 ,\\ B = 4 \\times 7 = 28 ,\\ C = 12 \\times 3 = 36$",
+                "Add the areas: $36 + 28 + 36 = 100$"
+              ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
+              "rectilinear": {
+                "version": 1,
+                "method": "split",
                 "orientation": 0,
-                "reducedLabels": true
-              },
-              "expectedErrors": []
+                "reducedLabels": true,
+                "scaffold": "split",
+                "insideLengths": true,
+                "shape": "I",
+                "width": 12,
+                "height": 13,
+                "cutWidth": 4,
+                "cutHeight": 3
+              }
+            },
+            {
+              "version": 2,
+              "id": "rectilinear-r2-internal-check-i",
+              "title": "Rectilinear area",
+              "tool": "perimeter-and-area",
+              "level": "level1",
+              "purpose": "practice",
+              "format": "open",
+              "question": [
+                "Find the area."
+              ],
+              "answer": [
+                "$108$ cm²"
+              ],
+              "explanation": [
+                "Equal sides are the same length: $14$",
+                "Equal sides are the same length: $3$",
+                "Equal sides are the same length: $5$",
+                "Equal sides are the same length: $6$",
+                "Equal sides are the same length: $3$",
+                "Equal sides are the same length: $5$",
+                "Find the internal width of rectangle B: $14 - 5 - 5 = 4$",
+                "Split it into rectangles and find each area: $A = 14 \\times 3 = 42 ,\\ B = 4 \\times 6 = 24 ,\\ C = 14 \\times 3 = 42$",
+                "Add the areas: $42 + 24 + 42 = 108$"
+              ],
+              "rationale": "",
+              "expectedErrors": [],
+              "followUp": "",
+              "status": "ready",
+              "rectilinear": {
+                "version": 1,
+                "method": "split",
+                "orientation": 2,
+                "reducedLabels": true,
+                "scaffold": "none",
+                "insideLengths": true,
+                "shape": "I",
+                "width": 14,
+                "height": 12,
+                "cutWidth": 5,
+                "cutHeight": 3
+              }
             }
           ]
         },
@@ -562,7 +668,7 @@
           "text": "Find internal lengths first"
         }
       ],
-      "brief": "Two teaching pairs. First staircase model: supplied partition, calculate 14−4=10 before area; second staircase for pupils. Then a cross model adding the adjacent spans, followed by a pupil check. All boundary lengths given or implied.",
+      "brief": "Three teaching pairs, each a model then a pupil check: an uneven three-step staircase (supplied partition; find the internal widths before area), a cross (adjacent spans added), then a capital I (the stem width is the overall width minus the two notches). Steps and notches are different sizes. All boundary lengths given or implied.",
       "title": "Find internal lengths first",
       "family": "teach"
     },
@@ -820,10 +926,9 @@
                 "Equal sides are the same length: $7$",
                 "Equal sides are the same length: $3$",
                 "Equal sides are the same length: $4$",
-                "Find the internal width of rectangle C: $3 + 7 + 3 = 13$",
-                "Find the internal height of rectangle C: $15 - 4 - 4 = 7$",
-                "Split it into rectangles and find each area: $A = 3 \\times 4 = 12 ,\\ B = 3 \\times 4 = 12 ,\\ C = 13 \\times 7 = 91 ,\\ D = 3 \\times 4 = 12 ,\\ E = 3 \\times 4 = 12$",
-                "Add the areas: $12 + 12 + 91 + 12 + 12 = 139$"
+                "Find the internal width of rectangle B: $15 - 4 - 4 = 7$",
+                "Split it into rectangles and find each area: $A = 15 \\times 3 = 45 ,\\ B = 7 \\times 7 = 49 ,\\ C = 15 \\times 3 = 45$",
+                "Add the areas: $45 + 49 + 45 = 139$"
               ],
               "rationale": "",
               "expectedErrors": [],
@@ -832,15 +937,15 @@
               "rectilinear": {
                 "version": 1,
                 "method": "split",
-                "orientation": 1,
+                "orientation": 2,
                 "reducedLabels": true,
                 "scaffold": "none",
+                "insideLengths": true,
                 "shape": "I",
                 "width": 15,
                 "height": 13,
                 "cutWidth": 4,
-                "cutHeight": 3,
-                "insideLengths": true
+                "cutHeight": 3
               }
             }
           ]

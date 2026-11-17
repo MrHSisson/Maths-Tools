@@ -85,7 +85,7 @@ export function genCompound(level: DifficultyLevel, msv: Record<string, boolean>
   // is a sum or difference of others, never a copy
   let kind: RectKind = "L", polys: Pt[][] = [], twins: Hide[] = [], missing: Hide[] = [];
   for (let attempt = 0; attempt < 400; attempt++) {
-    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross"]) : pickOne(["U", "N", "comb", "frame"]);
+    kind = attempt > 80 ? "L" : level === "level1" ? pickOne(["L", "T", "stairs2", "stairs3"]) : level === "level2" ? pickOne(["L", "T", "stairs2", "stairs3", "cross", "I"]) : pickOne(["U", "N", "comb", "frame"]);
     const base = buildRect(kind);
     polys = mixed ? base.map((p) => p.map(([x, y]) => [x * 10, y * 10] as Pt)) : base;
     twins = reducedOn ? twinHides(polys) : [];
