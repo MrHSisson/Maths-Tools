@@ -69,27 +69,35 @@ const item = (id: string) => ITEMS.get(id) ?? (() => { throw new Error(`no item 
 const parts = (id: string) => PARTS.get(id) ?? (() => { throw new Error(`no parts ${id}`); })();
 
 // ---------- the working: the chain (repeated tens) ----------
-/** Large number to standard form: 45 000 = 45 x 1 000 = 45 x 10^3 = 4.5 x 10 x 10^3 = 4.5 x 10^4. */
+/** Large number to standard form, Method 1 (one step): 45 000 = 4.5 x 10 000 = 4.5 x 10^4. */
 function chainLargeToStd(it: Item): string[] {
-  const v = parse(it.ord), k = v.d.length - v.d.replace(/0+$/, "").length, D = v.d.slice(0, v.d.length - k), m = D.length;
-  must(k > 0 && it.p === k + m - 1, `${it.id}: chain shape`);
-  // one short equation to a line: the working panel is narrow and clips a long one
-  const lines = [`$${grp(it.ord)} = ${D} \\times ${oneOf(k)}$`, `$${oneOf(k)} = ${pw(k)}$`, `$${grp(it.ord)} = ${D} \\times ${pw(k)}$`];
-  if (m > 1) {
-    lines.push(`$${D} = ${it.c} \\times ${ten(m - 1)}$`, `$${D} \\times ${pw(k)} = ${it.c} \\times ${ten(m - 1)} \\times ${pw(k)}$`);
-    lines.push(`$${ten(m - 1)} \\times ${pw(k)} = ${pw(it.p)}$`, `$${grp(it.ord)} = ${it.c} \\times ${pw(it.p)}$`);
-  }
+  must(parse(it.ord).d.length - 1 === it.p, `${it.id}: a large whole number`);
+  return [`$${grp(it.ord)} = ${it.c} \\times ${oneOf(it.p)}$`, `$= ${it.c} \\times ${pw(it.p)}$`];
+}
+/** Large standard form to ordinary, Method 1 (one step): 4.3 x 10^3 = 4.3 x 1 000 = 4 300. */
+function chainLargeToOrd(it: Item): string[] {
+  return [`$${pw(it.p)} = ${oneOf(it.p)}$`, `$${it.c} \\times ${pw(it.p)} = ${it.c} \\times ${oneOf(it.p)}$`, `$= ${grp(it.ord)}$`];
+}
+/** Method 2 to standard form, one ten at a time: 32 000 = 3 200 x 10 = 320 x 10 x 10 = 32 x 10 x 10 x 10 = 3.2 x 10 x 10 x 10 x 10 = 3.2 x 10^4. */
+function tensToStd(it: Item): string[] {
+  const tens = (n: number) => Array.from({ length: n }, () => "\\times 10").join(" ");
+  const lines: string[] = [];
+  let cur = it.ord, n = 0;
+  while (Number(cur) >= 10) { cur = over10(cur); n += 1; lines.push(`${lines.length ? "=" : `${grp(it.ord)} =`} ${grp(cur)} ${tens(n)}`); }
+  must(cur === it.c && n === it.p, `${it.id}: tens method ends at ${cur} x 10^${n}`);
+  lines.push(`= ${it.c} \\times ${pw(it.p)}`);
   return lines;
 }
-/** Large standard form to ordinary: 3.2 x 10^4 = 3.2 x 10 x 10^3 = 32 x 10^3 = 32 x 1 000 = 32 000. */
-function chainLargeToOrd(it: Item): string[] {
-  const f = decimals(it.c), D = it.c.replace(".", "");
-  if (f === 0) return [`$${pw(it.p)} = ${oneOf(it.p)}$`, `$${it.c} \\times ${pw(it.p)} = ${it.c} \\times ${oneOf(it.p)}$`, `$= ${grp(it.ord)}$`];
-  if (it.p < f) return [`$${pw(it.p)} = ${oneOf(it.p)}$`, `$${it.c} \\times ${oneOf(it.p)}$`, `$= ${grp(it.ord)}$`];
-  const rest = it.p - f;
-  const lines = [`$${it.c} \\times ${pw(it.p)} = ${it.c} \\times ${ten(f)} \\times ${rest ? pw(rest) : "1"}$`, `$${it.c} \\times ${ten(f)} = ${D}$`];
-  if (rest) lines.push(`$${pw(rest)} = ${oneOf(rest)}$`, `$${D} \\times ${oneOf(rest)} = ${grp(it.ord)}$`);
-  else lines.push(`$${it.c} \\times ${pw(it.p)} = ${grp(it.ord)}$`);
+/** Method 2 to ordinary, one ten at a time: 4.3 x 10^3 = 4.3 x 10 x 10 x 10 = 43 x 10 x 10 = 430 x 10 = 4 300. */
+function tensToOrd(it: Item): string[] {
+  const tens = (n: number) => Array.from({ length: n }, () => "\\times 10").join(" ");
+  const lines = [`${it.c} \\times ${pw(it.p)} = ${it.c} ${tens(it.p)}`];
+  let cur = it.c;
+  for (let n = it.p - 1; n >= 0; n--) {
+    const v = parse(cur); cur = plain({ d: v.d, s: v.s - 1 });       // times 10, written out
+    lines.push(`= ${grp(cur)} ${tens(n)}`.trimEnd());
+  }
+  must(cur === it.ord, `${it.id}: tens method ends at ${cur}, not ${it.ord}`);
   return lines;
 }
 /** Small number to standard form (Harry's route): 0.02 = 2 / 100 = 2 x 1/100 = 2 x 1/10^2 = 2 x 10^-2. */
@@ -296,10 +304,10 @@ const reasons = makeSlide(`${P}-reasons`, "teach", "Why use standard form?", [
 const isItStd = makeSlide(`${P}-is-it`, "discussion", "Is it in standard form?", [
   ...titleEls("Is it in standard form?", "Yes or no, and why."),
   ...([
-    ["3.8 \\times 10^{5}", "Yes", "3.8 is between 1 and 10", true],
-    ["38 \\times 10^{4}", "No", "38 is 10 or more", false],
-    ["0.38 \\times 10^{6}", "No", "0.38 is less than 1", false],
-    ["9.99 \\times 10^{-3}", "Yes", "9.99 is below 10; a negative power is fine", true],
+    ["3.8 \\times 10^{5}", "Yes", "$1 \\le 3.8 < 10$", true],
+    ["38 \\times 10^{4}", "No", "$38 \\ge 10$", false],
+    ["0.38 \\times 10^{6}", "No", "$0.38 < 1$", false],
+    ["9.99 \\times 10^{-3}", "Yes", "$1 \\le 9.99 < 10$, and the power can be negative", true],
   ] as [string, string, string, boolean][]).flatMap(([tex, verdict, why, ok], i) => [
     mathsEl(100, 260 + i * 150, 700, 110, tex, 68, { step: 2 * i + 1 }),
     t(850, 270 + i * 150, 170, 100, verdict, 60, { bold: true, colour: ok ? GREEN : "#b91c1c", middle: true, step: 2 * i + 2 }),
@@ -307,24 +315,32 @@ const isItStd = makeSlide(`${P}-is-it`, "discussion", "Is it in standard form?",
   ]),
 ], "Each row: the class decides, then the verdict and the reason appear.");
 
-const stage1 = chainSlide(`${P}-stage1`, "A 1 with zeros is a power of 10", "Start with the easiest case.", [
-  { tex: "2\\,000 = 2 \\times 1\\,000" },
-  { tex: "1\\,000 = 10^{3}", note: "a 1 followed by zeros" },
-  { tex: "2\\,000 = 2 \\times 10^{3}", final: true, note: "standard form" },
-], "The first idea: write the number as a small number times 1 000, and 1 000 is a power of 10. This already is standard form because 2 is between 1 and 10.");
-const chainModel = chainSlide(`${P}-chain`, "Bigger numbers: take out the tens", "Write 32 000 in standard form.", [
-  { tex: "32\\,000 = 3\\,200 \\times 10" },
-  { tex: "= 320 \\times 10 \\times 10" },
-  { tex: "= 320 \\times 10^{2}", note: "10 × 10 = 10², but 320 is not between 1 and 10" },
-  { tex: "= 32 \\times 10^{3}", note: "320 = 32 × 10, and 10 × 10² = 10³; 32 is not between 1 and 10 either" },
-  { tex: "= 3.2 \\times 10^{4}", final: true, note: "32 = 3.2 × 10, and 10 × 10³ = 10⁴" },
-], "Harry's chain. Each line is the same number: divide by 10 and put another ×10 on the end. Lines 3 and 4 are 'numbers in parts': nearly standard form, with a first number outside 1 to 10.");
-const chainBack = chainSlide(`${P}-chain-back`, "Back again", "Write 3.2 × 10⁴ as an ordinary number.", [
-  { tex: "3.2 \\times 10^{4} = 3.2 \\times 10 \\times 10^{3}", note: "10⁴ = 10 × 10³" },
-  { tex: "= 32 \\times 10^{3}", note: "3.2 × 10 = 32" },
-  { tex: "= 32 \\times 1\\,000", note: "10³ = 1 000" },
-  { tex: "= 32\\,000", final: true },
-], "The chain read the other way: the same lines in reverse order.");
+/** Two methods side by side for the same number: Method 1 in one step, Method 2 one ten at a time. Lines appear one to a click, Method 1 first. */
+function twoMethodsSlide(id: string, title: string, subtitle: string, m1: string[], m2: string[], brief: string): Slide {
+  const els: NoIdEls = [...titleEls(title, subtitle)];
+  els.push(t(60, 232, 600, 56, "Method 1", 44, { bold: true, colour: BLUE }), t(60, 288, 600, 44, "in one step", 32, { colour: grey }));
+  els.push(t(720, 232, 840, 56, "Method 2", 44, { bold: true, colour: BLUE }), t(720, 288, 840, 44, "one ten at a time", 32, { colour: grey }));
+  els.push(lineEl(680, 232, 0, 640));
+  const last = (n: number, i: number) => i === n - 1;
+  m1.forEach((tex, i) => els.push(mathsEl(60, 350 + i * 110, 600, 100, tex, 56, { step: i + 1, ...(last(m1.length, i) ? { colour: GREEN } : {}) })));
+  const pitch = Math.min(100, Math.floor(520 / m2.length));
+  m2.forEach((tex, i) => els.push(mathsEl(720, 350 + i * pitch, 840, pitch - 4, tex, 46, { step: m1.length + i + 1, ...(last(m2.length, i) ? { colour: GREEN } : {}) })));
+  return makeSlide(id, "teach", title, els, brief);
+}
+const methodsToStd = (id: string, ord: string, c: string, p: number, brief: string) => {
+  const it: Item = { id, dir: "toStd", ord, c, p };
+  return twoMethodsSlide(`${P}-${id}`, "Large numbers: two methods", `Write ${grp(ord).replace("\\,", " ")} in standard form.`, chainLargeToStd(it).map((l) => l.replace(/^\$|\$$/g, "")), tensToStd(it), brief);
+};
+const methodsToOrd = (id: string, ord: string, c: string, p: number, brief: string) => {
+  const it: Item = { id, dir: "toOrd", ord, c, p };
+  return twoMethodsSlide(`${P}-${id}`, "Back again: two methods", `Write ${c} × 10${"⁰¹²³⁴⁵⁶⁷⁸⁹"[p] ?? `^${p}`} as an ordinary number.`, [`${c} \\times ${pw(p)} = ${c} \\times ${oneOf(p)}`, `= ${grp(ord)}`], tensToOrd(it), brief);
+};
+const toStd1 = methodsToStd("m-32000", "32000", "3.2", 4, "Both methods on the same number. Method 1: 3.2 times what makes 32 000? 10 000, which is 10⁴. Method 2: peel off a ten at a time until the first number is between 1 and 10, then count the tens.");
+const toStd2 = methodsToStd("m-8500", "8500", "8.5", 3, "The same two methods on a second number: fewer tens to peel.");
+const toStd3 = methodsToStd("m-190000", "190000", "1.9", 5, "A third example, with five tens to count.");
+const toOrd1 = methodsToOrd("m-4300", "4300", "4.3", 3, "The two methods read the other way. Method 1: 10³ = 1 000, so multiply 4.3 by 1 000. Method 2: each ten multiplies the number by 10 in turn.");
+const toOrd2 = methodsToOrd("m-57000", "57000", "5.7", 4, "A second example going back.");
+const toOrd3 = methodsToOrd("m-790000", "790000", "7.9", 5, "A third example, with five tens.");
 const partsDisc = S.discuss(`${P}-parts-disc`, "Is $25 \\times 10^{6}$ in standard form?",
   "No. 25 is not between 1 and 10. $25 = 2.5 \\times 10$, so we can take a ten out and add it to the power.", "Write $25 \\times 10^{6}$ in standard form.", "2.5 \\times 10^{7}");
 
@@ -394,23 +410,24 @@ export default () => ({
     // Why we use it
     S.divider(`${P}-div-why`, "Why do we use it?"),
     hook, hookReveal, reasons,
-    S.definition(`${P}-definition`, "Standard form", "A number is in standard form when it is written as $A \\times 10^{n}$, where $A$ is a number between $1$ and $10$ (at least $1$, but less than $10$) and $n$ is a whole number (positive or negative)."),
+    S.definition(`${P}-definition`, "Standard form", "A number is in standard form when it is written as\n\n$A \\times 10^{n}$\n\nwhere $1 \\le A < 10$ and $n$ is an integer."),
     isItStd,
     // Large to standard form
-    S.divider(`${P}-div-large`, "Large numbers to standard form", "Take out the tens."),
-    stage1, chainModel,
+    S.divider(`${P}-div-large`, "Large numbers to standard form", "Two methods."),
+    toStd1, toStd2, toStd3,
     wb("wl-a", "Large to standard form", slice(WL, 0, 4), "Chain working. Help climbs: the first line started, a small grey hint, then none."),
     bridgeSlide(`${P}-bridge-large`, "The same thing in the grid", "32 000 written in the place value grid, one place at a time. The decimal point never moves.", { id: "m1", dir: "toStd", ord: "32000", c: "3.2", p: 4 }, "The bridge: after the chain has been seen several times. The number moves down one place per click and the power goes up by 1. The point stays where it is."),
     wb("wl-b", "Large to standard form", slice(WL, 4), "Grid working after the bridge."),
+    // Large from standard form
+    S.divider(`${P}-div-large-back`, "Large numbers from standard form", "Two methods the other way."),
+    toOrd1, toOrd2, toOrd3,
+    wb("wf-a", "Large from standard form", slice(WF, 0, 3), "Chain working, with help."),
+    bridgeSlide(`${P}-bridge-large-back`, "The grid the other way", "4.3 × 10³ in the grid: each click moves the number up a place and the power comes down by 1, until it reaches 10⁰ (= 1).", { id: "m2", dir: "toOrd", ord: "4300", c: "4.3", p: 3 }, "The same grid read the other way round: up one place, power down 1, until the power is 10⁰, which is 1."),
+    wb("wf-b", "Large from standard form", slice(WF, 3), "Grid working. The last has a decimal answer."),
+    // Numbers in parts (large): after both large directions, before Sheet 1
     S.divider(`${P}-div-large-parts`, "Numbers in parts", "A first number that is not between 1 and 10."),
     partsDisc,
-    wb("wpl", "Numbers in parts (large)", WPL, "Finish the chain from where it is. Eight whiteboards; the first two have help."),
-    // Large from standard form
-    S.divider(`${P}-div-large-back`, "Large numbers from standard form", "The chain the other way."),
-    chainBack,
-    wb("wf-a", "Large from standard form", slice(WF, 0, 3), "Chain working, with help."),
-    bridgeSlide(`${P}-bridge-large-back`, "The grid the other way", "3.2 × 10⁴ written in the grid: the number moves up, the power goes down.", { id: "m2", dir: "toOrd", ord: "32000", c: "3.2", p: 4 }, "The same grid read the other way round."),
-    wb("wf-b", "Large from standard form", slice(WF, 3), "Grid working. The last has a decimal answer."),
+    wb("wpl", "Numbers in parts (large)", WPL, "One ten at a time: peel a ten off the first number until it is between 1 and 10. Eight whiteboards; the first two have help."),
     sheetPlaceholder(`${P}-sheet-1`, 1, "Questions 1 and 2: write in standard form, and write as an ordinary number (large)", "1 and 2"),
     // Small numbers
     S.divider(`${P}-div-small`, "Small numbers to standard form", "Divide by tens."),
@@ -433,6 +450,6 @@ export default () => ({
     S.general(`${P}-gen-1`, "Converting: Level 1", T, { sub: "converting", level: "level1" }, 11, "The tool's generator. Its working is the place value grid; the chain working is still to be built into the tool."),
     S.general(`${P}-gen-2`, "Converting: Level 2", T, { sub: "converting", level: "level2" }, 12),
     S.general(`${P}-gen-3`, "Converting: Level 3 (numbers in parts)", T, { sub: "converting", level: "level3" }, 13),
-    S.summary(`${P}-summary`, "Summary", ["Standard form is $A \\times 10^{n}$ with $A$ between $1$ and $10$.", "Take out the tens: write the number as a smaller number times a power of ten, then make the first number between $1$ and $10$.", "Down one place, the power goes up by $1$. Up one place, the power goes down by $1$.", "Small numbers: divide by tens, so the power is negative."]),
+    S.summary(`${P}-summary`, "Summary", ["Standard form is $A \\times 10^{n}$ with $1 \\le A < 10$ and $n$ an integer.", "Write the number as $A$ times a 1 with zeros, then as a power of ten; or peel off one ten at a time.", "Down one place, the power goes up by $1$. Up one place, the power goes down by $1$.", "Small numbers: divide by tens, so the power is negative."]),
   ] as Slide[],
 });
