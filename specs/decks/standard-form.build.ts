@@ -175,6 +175,8 @@ const gridWorking = (it: Item): string[] => {
 };
 
 // ---------- the question forms ----------
+/** The server only accepts question ids of lowercase letters, digits and hyphens. */
+const qid = (id: string) => `${P}-${id.toLowerCase()}`;
 type Help = "start" | "hint" | "none";
 const BOX = "\\Box";
 /** The help line under the question: the first line of working with the key part left as a box, or a small grey hint. */
@@ -195,7 +197,7 @@ function wbq(id: string, help: Help, working: "chain" | "grid"): CuratedQuestion
   assertCentred(lines, id);
   const answer = it.dir === "toStd" ? `$${it.c} \\times ${pw(it.p)}$` : `$${grp(it.ord)}$`;
   return {
-    ...Q.open(id, T, "level1", lines[0], answer, working === "chain" ? chain(it) : gridWorking(it)),
+    ...Q.open(qid(id), T, "level1", lines[0], answer, working === "chain" ? chain(it) : gridWorking(it)),
     title: it.dir === "toStd" ? `${grp(it.ord)} to standard form` : `${it.c} x 10^${it.p} to ordinary`,
     question: lines,
     rationale: working === "chain" ? "Write the number as a smaller number times a power of ten, then make the coefficient between 1 and 10 and combine the tens." : "Move the number a place at a time; each place down adds 1 to the power, each place up takes 1 off.",
@@ -208,7 +210,7 @@ function partsQ(id: string, help: Help): CuratedQuestion {
   if (help === "hint") lines.push(hintLine("is the first number between 1 and 10?"));
   assertCentred(lines, id);
   return {
-    ...Q.open(id, T, "level1", lines[0], `$${x.c} \\times ${pw(x.p)}$`, chainParts(x)),
+    ...Q.open(qid(id), T, "level1", lines[0], `$${x.c} \\times ${pw(x.p)}$`, chainParts(x)),
     title: `${x.shown} x 10^${x.sp} in standard form`, question: lines,
     rationale: "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
   };
