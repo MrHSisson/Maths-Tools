@@ -14,6 +14,7 @@ import { fractionOfPartToRatio, fractionOfTotalToRatio, formTwoPartRatio } from 
 import { gcd } from "../shared";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
 import { exitRowsSlide, pairModelSlide, plainBookSlide, whiteboardQuestionsSlide } from "./pieces";
+import { textbookSheetSlide } from "./textbookSheet";
 // Shared look and rules for build scripts (see pieces.ts and deckRules.ts): sizes and colours that work, hint lines, factor-pair tables, fresh-number assertions.
 export { LOOK, assertCentred, fitsCentred, green, hintLine, lineEl, makeSlide, mathsGrid, mathsStack, quiet, textEl, titleEls, type Els, type Footer, type PairColumn } from "./pieces";
 export { assertFreshNumbers, freshNumberProblems, headlineNumbers } from "./deckRules";
@@ -143,6 +144,8 @@ export const S = {
   exitRows: exitRowsSlide,
   /** A two-number model: each number as a heading with its pairs underneath, common values ringed, footer lines revealed by click. */
   pairModel: pairModelSlide,
+  /** A textbook-style printed sheet (Question 1: instruction, parts (a) to (x) in columns), pinned to the lesson: printed on A4 with an answer page, answers on a click on the slide. */
+  textbookSheet: textbookSheetSlide,
 };
 
 /** The deck the player opens: embedded questions (nothing left to look up) and the tool's page filled in. */

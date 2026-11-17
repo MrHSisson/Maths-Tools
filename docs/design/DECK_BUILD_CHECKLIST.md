@@ -57,6 +57,7 @@ An authored set is held to the same bar as a generator's. No tool checks the mat
 
 | Pitfall | Guard |
 |---|---|
+| A push is refused with "a question activity contains invalid question content" (an upper-case or otherwise bad question id such as `WL1`) | Question ids are lowercase letters, digits and hyphens, at most 80; the deck check now fails the build with the id named (`isCuratedQuestion`, the server's own test) |
 | The tool cannot do what the lesson needs (a level missing, two kinds that cannot be mixed in a set, wording that hides the idea) | Write the plan, then a "what already exists" table against the tool (see `specs/decks/manipulating-ratios.md`). Change the tool first, as its own step, with its own tests. |
 | The tool's levels do not match the lesson's stages | Agree with Harry which level is which stage before building; re-level the tool if that is simpler than working around it. |
 | A mixed option set is secretly one-sided (rejection sampling favoured the easy kind: Level 3 was nearly all "of the total") | Any generator with a pool of kinds needs a test that counts the kinds over many questions (`ratioFractionOf.test.ts`). Choose the kind once, then retry the numbers within it. |

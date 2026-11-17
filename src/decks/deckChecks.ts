@@ -1,5 +1,6 @@
 import { isCuratedQuestion } from "../../api/_questions";
 import { rectilinearQuestion } from "./rectilinear";
+import { textbookProblems } from "./textbookSheet";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
@@ -120,6 +121,9 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         for (const s of questionStrings(q)) checkMaths(label, s);
         if (q.status === "draft") warnings.push(`${label}: still a draft`);
         else for (const p of readyProblems(q)) problems.push(`${label}: ${p}`);
+        // what the shared service checks on a push: a question it would reject stops the build, not the push
+        const asSent: unknown = q;           // the guard narrows to `never` when it fails, so look at the id through a plain type
+        if (!isCuratedQuestion(asSent)) problems.push(`${label}: the shared service would reject this question${/^[a-z0-9-]{1,80}$/.test(q.id) ? "" : ` (its id "${q.id}" must be lowercase letters, digits and hyphens, at most 80)`}`);
         if (isDepthQuestion(q)) { depthCards.push({ where: label, q }); continue; }
         [...q.question, q.title].forEach((s) => numbersIn(s).forEach((n) => used.add(n)));
         asks.push({ label, nums: numbersIn(q.title) });
@@ -131,6 +135,11 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "questions" && slide.family === "practice" && items.length && items.every((q) => q.purpose === "practice")) {
         if (items.length < 5) problems.push(`${where}: a deliberate-practice set has ${items.length} questions; the least is 5`);
         if (items.length > 8) warnings.push(`${where}: ${items.length} questions in one set is a long run`);
+      }
+      if (el.kind === "worksheet" && el.textbook) {
+        for (const p of textbookProblems(el.textbook)) problems.push(`${where}: ${p}`);
+        for (const b of el.textbook.blocks) for (const m of [...b.parts, ...b.answers]) renders(where, m);
+        continue;
       }
       if (el.kind === "worksheet" && el.authored) {
         for (const q of el.authored) {
