@@ -62,7 +62,8 @@ const TOOL_CONFIG: ToolConfig = {
 const SHIFT_DEG = [5, 10, 15, 20, 25, 30, 40, 45, 50, 60];
 const SHIFT_RAD = [15, 30, 45, 60];      // π/12, π/6, π/4, π/3
 
-const generateQuestion = (_tool: string, level: DifficultyLevel, variables: Record<string, boolean>, _dd: string, msv: Record<string, boolean> = {}): AnyQuestion => {
+const generateQuestion = (tool: string, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, msv: Record<string, boolean> = {}): AnyQuestion => {
+  void tool; void dropdownValue;   // one sub-tool and no dropdown, so neither changes the question
   const extremes = variables.extremes === true;
   const opts = (xs: { value: string }[]) => xs;
   for (let attempt = 0; attempt < 400; attempt++) {
