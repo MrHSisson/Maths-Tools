@@ -29,6 +29,61 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Independent Decision Question Options and category tabs
+
+Branch `codex/gantt-print-layouts`. Area: DecisionShell, option controls/types/helpers, all six tool configurations, regressions, generated facts and reference docs.
+
+- Explain and justify offers delay/removal at Level 1 and claimed finish/add critical durations at Level 2. Choices can now declare legal levels independently of their defaults.
+- Each sub-tool × level remembers its own options during the visit. Course/practice selectors stay shared. UI, generators, old links, saved rebuilding and basket printing validate against the same legal choices; the level guide uses the level it describes.
+- Audited every sub-tool/level across Critical Path, Network Flows, MST, TSP, Route Inspection and Dimensional Analysis. Removed ignored CPA controls and flow scaling on reasoning/exam routes, and restricted constant/zero-power questions to their advertised levels. See `docs/reference/decision-options-audit.md` for findings and retained valid customisations.
+- Long menus use the normal tools’ Questions/Numbers/Method/Display tabs on laptop, tablet and phone. Short menus stay together. Exam-part practice links select the target’s filters and a compatible level so the requested task remains available.
+- Validation: build/lint, final all-six-tool shell smoke, 73 focused configuration/option/dimensional/delay/pairing/label/export regressions and responsive option/restore/stale-link/category checks pass. Exam-to-skill navigation and other-level guides also pass at all three viewport sizes. The full-suite attempt stopped without a summary; it reported a levelling timeout (passed in isolation) and a random-sample knock-on assumption (replaced with a fixed case). All three affected checks pass together after that fix. The full suite is not claimed green.
+- PR #137 validation: the full CI run passed all functional tests; documentation guards caught a missing audit index link/read-when line and descriptive wording. Added the reference metadata and clarified the wording before merging.
+- CI timing: split the 120 generated-network samples per CPA level into six seeded batches, retaining all samples and assertions while giving each batch its own timeout budget. Seeded the one/multiple-path distribution check as well; no application behavior changed.
+- Regression maintenance: the histogram knock-on check now uses a fixed two-chain example to guarantee predecessor-caption coverage; seeded generated-network checks remain. The broader sample no longer assumes a rare case must occur.
+- Deliberately not done: old ToolShell Mixed Strategies, PR, merge or deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Independent Decision Question Options and category tabs (16 Nov 2026)”, block `b_mwjwuf6see08d81e`.
+
+## 2026-11-16 — Decision and Mechanics chapter-card spacing
+
+Branch `codex/gantt-print-layouts`. Area: shared `SpecLanding` chapter cards used by Decision Maths and Further Mechanics.
+
+- Statement counts and generator statuses now occupy separate lines with a fixed gap, rather than competing for one row. Card and heading containers can shrink and wrap within the grid.
+- Covers public and Developing-tools statuses, including Not built yet, Coming soon, In development and live generator counts.
+- Validation: 56 public/developing browser layout combinations across seven widths (320–1366px) and normal/enlarged text; visual review of the Mechanics cards; build, lint, six hub-pairing tests and shell smoke on both hubs pass.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Decision and Mechanics chapter-card spacing (Codex)”.
+
+## 2026-11-16 — Broader small networks, varied reasoning and deck pen input
+
+Branch `codex/gantt-print-layouts`. Areas: CPA generation/working/exam chains, deck grids/player, global ink overlay, tests and references.
+
+- Small CPA networks retain 6–7 activities but can include three parallel activities and three immediate predecessors. Three-way families are chosen before layout scoring so narrower diagrams cannot suppress them.
+- Up-to delays can stay within float or exceed it; exam delay questions no longer force an increased completion time. Named-activity questions can have unchanged times. Glyn's claim can be true or false: the question asks students to assess it and the worked solution and mark scheme follow the actual network.
+- Gestures beginning on controls pass through immediately, without ink or proximity-based dots. Continuous strokes beginning elsewhere can cross a button without breaking or activating it.
+- Deck grid/book answer reveal uses a 500 ms hold within 8 px. Short taps do nothing, movement cancels the hold and allows writing, leaving/cancelling a press clears the timer, and player chrome ignores these answer gestures.
+- Verification: seeded variety and ink unit regressions; real Chromium pen events for button taps beside fresh writing, strokes crossing buttons, short taps, jittered holds and writing that cancels a hold. Build and lint pass; 101 broader CPA/ink checks passed, with one existing cascade reference timeout passing in isolation. Additional variety, named-delay/exam and level/size checks pass, as does responsive Critical Path shell smoke.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Broader small networks, varied reasoning and deck pen input (Codex)”.
+
+## 2026-11-16 — Critical Path print sheets and hand-selected Decision printing
+
+Branch `codex/gantt-print-layouts`. Areas: shared Decision shell, chooser, print basket, CPA sheets/renderers/tests, Dimensional Analysis option wording and docs.
+
+- **Delays and changes follow-up:** fixed the generator silently capping Level 3 at Level 2. Levels now match the (i): delay against float; shorten a critical activity; up-to delays/removal. Every level has an independent Small (6–7) / Medium (8–9) network option, defaulting to Medium. Duration defaults are also the same across these levels. Seeded regressions cover all six level/size combinations.
+- All Critical Path skill tabs now have student print layouts. Gantt Levels 1–3 get the supplied network and large labelled axes, preserving given bars, early/late starts and chart options. Level 2 leaves the network times for students to calculate.
+- Reading the network gets a blank predecessor table; float/paths, missing times, changes, shortening and reasoning get the supplied network and ruled response space. Missing values stay as x. Worker allocation gets labelled axes with spare rows so the minimum team size is not disclosed. Answers fill the diagrams/tables or give model answers.
+- Removed Worksheet mode, batch generation, question counts and bulk saving from DecisionShell and its chooser, including Dimensional Analysis. Teachers inspect one question at a time and pin only the questions they want. Saved skills and exam chains still print with working space, answers and mark schemes; existing saved lists and basket links remain usable.
+- Verified: build, lint, focused print regressions, actual one-page A4 question/answer PDFs, selected-only CPA and Dimensional Analysis basket printing, and phone/tablet/laptop smoke on CPA, Dimensional Analysis and Network Flows. Full suite: 2,794 passed, 19 skipped; two CPU-contention timeouts passed targeted reruns with a 180-second allowance. The remaining unused `SkillLayout` export (left by the Worksheet removal) was made private and its export/print-frame checks rerun.
+- Deliberately not changed: GCSE ToolShell worksheets, deck worksheets, generators, exam-chain content, PR/merge/deployment. Mixed Strategies remains the older development-only ToolShell tool, outside the DecisionShell model.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Critical Path print sheets and hand-selected Decision printing (Codex)”.
+
 ## 2026-11-15 — Standard Form: four sub-tools, all levels built (Dev only)
 
 - Tool `standard-form` (`src/tools/Number/StandardForm.tsx`, group Powers & standard form), registered `enabled: false` until reviewed. Four sub-tools; the generators for the first three are in `StandardFormConvert.ts`, `StandardFormMulDiv.ts` and `StandardFormAddSub.ts`, the exact-arithmetic helpers (no floating point) in `StandardFormCore.ts`.

@@ -242,12 +242,14 @@ export interface ShellChooser {
   art?: (key: string) => ReactNode;
 }
 export interface ShellOption {
+  /** Standard Question Options category, used for tabs when more than eight choices are offered. */
+  tab?: import("../types").QOTab;
   key: string;
   label: string;
   /** What this option is for, in a plain sentence: shown in "About this tool" (required for every option; a test checks). */
   info?: string;
-  /** `sub`: a small descriptive line under the (short) label */
-  choices: Array<{ value: string; label: string; sub?: string }>;
+  /** `sub`: a small descriptive line under the label; `forLevels`: legal levels for this choice (default all). */
+  choices: Array<{ value: string; label: string; sub?: string; forLevels?: number[] }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
   /** only show this option while another option has one of these values (an array: every condition must hold) */
@@ -256,10 +258,12 @@ export interface ShellOption {
   forSubTools?: string[];
   /** only offer this option at these levels (default: every level). At another level it is hidden and the generator never sees it; "About this tool" still lists it under its tab. */
   forLevels?: number[];
+  /** Extra level restrictions for named sub-tools sharing this option; omitted sub-tools retain all levels. */
+  forSubToolLevels?: Record<string, number[]>;
   /** Changing this only changes how the SAME problem is shown, so the shell redraws the current problem from its saved seed
    *  instead of leaving it as it is. Any other option change leaves the problem alone: the next one follows the new options. */
   displayOnly?: boolean;
-  /** the value this option takes for a level (reset whenever the level changes) */
+  /** Initial value for a sub-tool and level; later visits restore that profile’s own selections. */
   defaultFor?: (level: number, subTool?: string) => string;
   /**
    * Several of the choices can be ticked at once (never none). The value is the ticked choices joined with commas ("one,more"), and a question draws
@@ -305,7 +309,7 @@ export interface DecisionShellProps {
     levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key (a `default` entry covers the rest)
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
-    /** a Worksheet mode for the skill questions too (not only the exam-style ones): N questions with working boxes, then the answers. Laptop and tablet; not a phone. */
+    /** Print hand-selected skill questions from the saved list with working boxes and a separate answers page. */
     skillSheet?: boolean;
     /** this tool's exam-style questions print as papers with mark schemes (so a saved exam-style question can be printed from the basket) */
     examSheet?: boolean;

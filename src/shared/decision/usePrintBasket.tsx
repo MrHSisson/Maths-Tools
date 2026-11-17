@@ -34,7 +34,7 @@ interface Args {
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem;
   /** a saved question brought back onto the page (the shell takes on its sub-tool, level and options and shows the rebuilt problem) */
   onLoad: (item: SavedItem) => void;
-  /** print rebuilt exam-style and skill questions (the Worksheet's printer), into a window opened at the click */
+  /** print rebuilt exam-style and skill questions (the saved-question printer), into a window opened at the click */
   printProblems: (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>;
 }
 
@@ -52,7 +52,7 @@ export function usePrintBasket({ config, saved, generate, onLoad, printProblems 
   const basket = saved.items;
   const here = (i: SavedItem) => i.page === window.location.pathname;
   const sheetTab = (i: SavedItem) => !!tabs?.includes(i.tab);   // a question with a Critical-Path-style A4 sheet
-  // printable: this tool's, and either that sheet or a paper / worksheet (exam-style and skill questions print through the Worksheet's printer)
+  // printable: this tool's, and either that sheet or a paper / worksheet (exam-style and skill questions print through the saved-question printer)
   const printable = (i: SavedItem) => here(i) && (sheetTab(i) || !!config.skillSheet || !!config.examSheet);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);

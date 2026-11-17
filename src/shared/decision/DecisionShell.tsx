@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
@@ -13,21 +14,18 @@ import { useRecentQuestions, questionFingerprint } from "../recentQuestions";
 import { generateSeeded, generateFromSeed, replaySeeded } from "../seededGenerate";
 import { PinButton } from "../components/PinButton";
 import { STAGE_H } from "./layout";
-import { printSheets, type SkillLayout } from "./printExam";
-import { printCpaSheets, type CpaSheetInput } from "./printCpa";
+import { printSheets } from "./printExam";
 import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket";
-import { type BasketItem } from "./printBasket";
 import { savedId } from "../savedLists";
-import { PrintSplitButton } from "../components/PrintSplitButton";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
-import type { PrintMode } from "../types";
+import type { QOTab, PrintMode } from "../types";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
-import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
+import { OptionGrid, SegButtons, usePopover, QOTabs, QO_TABS_ABOVE } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
 import { GlossCaption, glossSegments } from "./glossary";
 import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
@@ -56,9 +54,7 @@ const defaultOptions = (config: DecisionShellProps["config"], level: number): Re
   Object.fromEntries((config.options ?? []).map((o) => [o.key, o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value]));
 /** The ticks a multi option shows and the generator sees: the teacher's own, or what the level and sub-tool call for (a comma list). */
 const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number], value: string | undefined, level: number, sub: string): string[] => {
-  const raw = value || o.defaultFor?.(level, sub) || o.choices[0].value;
-  const ok = raw.split(",").filter((v) => o.choices.some((c) => c.value === v));
-  return ok.length ? ok : [o.choices[0].value];
+  return optionValue(o, value, level, sub).split(",").filter(Boolean);
 };
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
@@ -88,7 +84,7 @@ function readUrl(config: DecisionShellProps["config"]) {
   options = settle(config, options, level);
   const tabs = tabsFor(config, options);
   const subTool = tabs.some((t) => t.key === tool) ? (tool as string) : tabs[0]?.key ?? "";
-  return { level, subTool, options };
+  return { level: Math.min(level, config.subTools?.find(t => t.key === subTool)?.levels ?? levels), subTool, options };
 }
 
 let problemCount = 0;
@@ -100,11 +96,22 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const levelCount = config.subTools?.find((t) => t.key === subTool)?.levels ?? config.levels ?? 1;
   const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
+  const profiles = useRef<Record<string, Record<string, string>>>({});
+  useEffect(() => { profiles.current[`${subTool}:${level}`] = options; }, [subTool, level, options]);
+  const optionsFor = (sub: string, lv: number, base = options) => {
+    profiles.current[`${subTool}:${level}`] = options;
+    return profileOptions(config.options ?? [], base, profiles.current[`${sub}:${lv}`], lv, sub);
+  };
+  const chooseSubTool = (sub: string) => {
+    const lv = Math.min(level, config.subTools?.find(t => t.key === sub)?.levels ?? config.levels ?? 1);
+    const opts = optionsFor(sub, lv);
+    setLevel(lv); setSubTool(sub); setOptions(opts); newQuestion(lv, sub, opts);
+  };
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && (!o.forLevels || o.forLevels.includes(lv)) && whenOk(o.when, opts);
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, opts) && levelOption(o, lv).choices.length > 0;
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts, lv)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
+    options: resolvedOptions(config.options ?? [], opts, lv, sub),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
@@ -190,9 +197,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       const v = t.options?.[o.key]; if (v === undefined) continue;
       if (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v)) set[o.key] = v;
     }
-    const opts = settle(config, { ...options, ...set }, level);
+    const target = config.subTools?.find(s => s.key === t.subTool);
+    const lv = levelForOptions(config.options ?? [], set, level, target?.levels ?? config.levels ?? 1, t.subTool);
+    const opts = settle(config, { ...optionsFor(t.subTool, lv), ...set }, lv);
+    // An exam part links back to Skills, and sometimes to the other course.
+    for (const c of target?.when ? Array.isArray(target.when) ? target.when : [target.when] : []) {
+      if (!c.values.includes(opts[c.key]) && config.options?.some(o => o.top && o.key === c.key)) opts[c.key] = c.values[0];
+    }
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
-    setOptions(opts); setSubTool(t.subTool); setSheetMode(false); newQuestion(level, t.subTool, opts);
+    setLevel(lv); setOptions(opts); setSubTool(t.subTool); newQuestion(lv, t.subTool, opts);
   };
   const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
@@ -201,7 +214,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const opts = settle(config, { ...options, [key]: value }, level);
     const t = tabsFor(config, opts);
     const sub = t.some((x) => x.key === subTool) ? subTool : t[0]?.key ?? subTool;
-    setOptions(opts); setSubTool(sub); newQuestion(level, sub, opts);
+    const lv = Math.min(level, config.subTools?.find(t => t.key === sub)?.levels ?? config.levels ?? 1);
+    const scoped = optionsFor(sub, lv, opts);
+    setLevel(lv); setOptions(scoped); setSubTool(sub); newQuestion(lv, sub, scoped);
   };
 
   // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
@@ -236,7 +251,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     }
     histStage.current = narrowStage;
   }, [narrow, narrowStage]);
-  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
+  const optionsAt = (lv: number) => (config.options ?? []).filter(o => !o.top && shownFor(subTool, options, lv)(o)).map(o => levelOption(o, lv)).filter(o => o.choices.length > 1);
+  const visibleOptions = optionsAt(level);
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
@@ -270,7 +286,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const sentences = (problem.exam ? problem.exam.intro : problem.prompt).split(/(?<=[.?!])\s+/);
   const keeper = useQuestionKeeper<{ problem: DecisionProblem; level: number; subTool: string; options: Record<string, string> }>(
     { id: `q${problemNo(problem)}`, label: `#${problemNo(problem)} · ${tabs.find((t) => t.key === subTool)?.label ?? config.pageTitle}${levelCount > 1 ? ` · L${level}` : ""} · ${sentences[sentences.length > 1 ? 1 : 0]}`, state: { problem, level, subTool, options } },
-    (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); setSheetMode(false); },
+    (k) => { setLevel(k.level); setSubTool(k.subTool); setOptions(k.options); setProblem(k.problem); setStepIdx(-1); setShowAll(false); setStarted(true); },
     !(narrow && !started && !config.chooser && (config.options ?? []).some((o) => o.top)),   // not while the phone start screens are choosing: those questions were never shown
     {
       pageTitle: config.pageTitle,
@@ -281,15 +297,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         if (!config.subTools?.some((x) => x.key === it.tab)) return null;
         const set: Record<string, string> = {};
         for (const o of config.options ?? []) { const v = it.options[o.key]; if (v !== undefined) set[o.key] = v; }
-        const opts = settle(config, { ...options, ...set }, it.level);
-        return { problem: generateFromSeed(it.seed, () => generate(it.level, ctxOf(it.tab, opts, it.level))), level: it.level, subTool: it.tab, options: opts };
+        const lv = Math.max(1, Math.min(it.level, config.subTools.find(t => t.key === it.tab)?.levels ?? config.levels ?? 1));
+        const opts = settle(config, profileOptions(config.options ?? [], { ...options, ...set }, set, lv, it.tab), lv);
+        return { problem: generateFromSeed(it.seed, () => generate(lv, ctxOf(it.tab, opts, lv))), level: lv, subTool: it.tab, options: opts };
       },
     },
   );
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
   const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>>(async () => {});   // set where the printers are (below)
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
+  const generateSaved = useCallback((lv: number, ctx?: GenerateContext) => {
+    if (!ctx) return generate(lv, ctx);
+    const target = Math.min(lv, config.subTools?.find(t => t.key === ctx.subTool)?.levels ?? config.levels ?? 1);
+    return generate(target, { subTool: ctx.subTool, options: resolvedOptions(config.options ?? [], ctx.options, target, ctx.subTool) });
+  }, [config, generate]);
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate: generateSaved, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
   const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
   // stepping through the saved list in a lesson: this tool's saved questions, and where the question on screen is among them
@@ -310,7 +332,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, optionValue(o, options[o.key], level, subTool));
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -379,67 +401,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div className="shrink-0 py-2 text-center text-base font-semibold text-gray-800"><InlineMath text={problem.caption} /></div>
     </div>
   ) : shownCanvas(st);
-  // ── Exam worksheets, as in the other tools' Worksheet mode: choose how many, Generate, look at them, Show Answers, Print (Both / Questions / Answers) ──
-  const [sheetMode, setSheetMode] = useState(false);
-  const [sheetN, setSheetN] = useState(3);
-  const [sheetPerPage, setSheetPerPage] = useState(false);                 // skill worksheet: one question to a page
-  const [sheetSpace, setSheetSpace] = useState<SkillLayout["space"]>("auto");   // skill worksheet: what each question has to work in
-  const [sheet, setSheet] = useState<DecisionProblem[]>([]);
-  const [sheetCtx, setSheetCtx] = useState<{ tab: string; level: number; options: Record<string, string> } | null>(null);   // what the sheet was generated from
-  const isExamProblem = !!problem.exam;
-  // a Critical-Path-style skill tab has its own A4 sheet per question (the picture and the drawing space), always one to a page
-  const cpaSkillTab = (tab: string): boolean => !!config.questionSheet?.tabs.includes(tab);
-  const onCpaSheet = !isExamProblem && cpaSkillTab(subTool);
-  const sheetKind = isExamProblem ? "exam" : onCpaSheet ? "cpa" : "skill";
-  useEffect(() => { setSheetN(sheetKind === "exam" ? 3 : sheetKind === "cpa" ? 4 : 8); setSheet([]); }, [sheetKind]); // a new kind of sheet starts at its usual size, empty
-  const [sheetAnswers, setSheetAnswers] = useState(false);
-  const [printMode, setPrintMode] = useState<PrintMode>("both");
-  // a Worksheet is for exam-style questions, and (when the tool turns it on) for skill questions too, except on a phone
-  const sheetable = !!problem.exam || ((!!config.skillSheet || onCpaSheet) && !isPhone);
-  const inSheet = sheetMode && sheetable;
-  const [sheetBusy, setSheetBusy] = useState<string | null>(null);
-  const [sheetNote, setSheetNote] = useState<string | null>(null);
-  // one question at a time, giving the page a breath between them (a big exam-sized network can take a second or two each)
-  const generateSheet = async () => {
-    if (sheetBusy) return;
-    const out: DecisionProblem[] = [];
-    setSheetNote(null);
-    for (let guard = 0; out.length < sheetN && guard < sheetN * 4; guard++) {
-      setSheetBusy(`Generating question ${out.length + 1} of ${sheetN}…`);
-      await new Promise((r) => setTimeout(r, 20));
-      try { const q = generateSeeded(() => generate(level, ctxOf(subTool, options, level))); if (q.exam || config.skillSheet || onCpaSheet) out.push(q); } catch { /* try again */ }
-    }
-    setSheet(out);
-    setSheetCtx({ tab: subTool, level, options: ctxOf(subTool, options, level).options });
-    setSheetAnswers(false);
-    setSheetBusy(null);
-    if (out.length < sheetN) setSheetNote(`Only ${out.length} of ${sheetN} questions could be made with these options. Try Generate again, or change the options.`);
-  };
-  // autopopulate the saved list before a lesson: every question of the sheet goes in as its recipe, to be loaded one by one in the lesson or printed from the basket
-  const addSheetToSaved = () => {
-    if (!sheetCtx || !keeper.saved) return;
-    const items = sheet.map((pr) => decisionRecipe(pr, sheetCtx.tab, sheetCtx.level, sheetCtx.options)).filter((x): x is BasketItem => !!x);
-    const added = keeper.saved.merge(items);
-    setSheetNote(items.length === 0 ? "These questions cannot be saved." : `${added} question${added === 1 ? "" : "s"} added to the saved list${added < items.length ? ` (${items.length - added} could not be added: already there, or the list is full)` : ""}. Open it from the pin control (on the Practice page) or the menu: Print saved questions.`);
-  };
-  // choose the questions by hand: swap one for a fresh one drawn with the same settings, take one out, or add another
-  const sheetMax = sheetKind === "skill" ? 20 : 10;
-  const drawOne = (): DecisionProblem | null => {
-    if (!sheetCtx) return null;
-    for (let g = 0; g < 8; g++) {
-      try { const q = generateSeeded(() => generate(sheetCtx.level, { subTool: sheetCtx.tab, options: sheetCtx.options })); if (q.exam || config.skillSheet || cpaSkillTab(sheetCtx.tab)) return q; } catch { /* try again */ }
-    }
-    return null;
-  };
-  const replaceSheetQuestion = (i: number) => { const q = drawOne(); if (q) { setSheet((s) => s.map((x, k) => (k === i ? q : x))); setSheetNote(null); } else setSheetNote("Could not make another question with these options."); };
-  const removeSheetQuestion = (i: number) => setSheet((s) => s.filter((_, k) => k !== i));
   /** print a set of questions (exam-style ones as papers with mark schemes, skill ones as a numbered worksheet with an answers page) into a window already opened at the click */
   const printProblemList = async (problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => {
     const examProblems = problems.filter((pr) => pr.exam);
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: sheetPerPage, space: sheetSpace }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: false, space: "auto" as const }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");
@@ -466,29 +434,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     printSheets(inputs, skill, { papers: mode !== "answers", schemes: mode !== "questions", win });
   };
   printProblemsRef.current = printProblemList;
-  const printSheet = async (mode: PrintMode) => {
-    if (!sheet.length) return;
-    const win = window.open("", "_blank");   // opened here, at the click, before the slow rendering below
-    if (!win) { alert("Please allow popups to use the PDF export."); return; }
-    try {
-      if (sheetCtx && !sheet[0].exam && cpaSkillTab(sheetCtx.tab) && config.questionSheet) {
-        // Critical-Path-style sheets: every question first, then every answer sheet
-        const questions: CpaSheetInput[] = [], answers: CpaSheetInput[] = [];
-        for (const pr of sheet) {
-          if (mode !== "answers") questions.push(...((await config.questionSheet.build(pr, false)) ?? []));
-          if (mode !== "questions") answers.push(...((await config.questionSheet.build(pr, true)) ?? []));
-        }
-        if (!questions.length && !answers.length) { win.close(); alert("Sorry, these questions have no print sheet."); return; }
-        printCpaSheets([...questions, ...answers], win);
-        return;
-      }
-      const tabLabel = sheetCtx ? tabs.find((t) => t.key === sheetCtx.tab)?.label : undefined;
-      await printProblemList(sheet, mode, win, tabLabel ? `${tabLabel}${levelCount > 1 && sheetCtx ? ` · Level ${sheetCtx.level}` : ""}` : undefined);
-    } catch {
-      win.close();
-      alert("Sorry, the print sheet could not be prepared. Please try again.");
-    }
-  };
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
@@ -540,16 +485,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
   const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} onPickLevel={i => changeLevel(i + 1)}
-    optionsAt={(i) => visibleOptions.map((o) => {
+    optionsAt={(i) => optionsAt(i + 1).map((o) => {
       const on = o.multi ? ticksOf(o, "", i + 1, subTool) : [o.defaultFor?.(i + 1, subTool) ?? o.choices[0].value];
       return { title: o.label, info: o.info, items: o.choices.map((c) => ({ label: c.label, on: on.includes(c.value) })) };
     }).filter((g) => g.items.length > 1)} /> : null;
 
   const changeLevel = (lv: number) => {
     setLevel(lv);
-    // options with a per-level default follow the level; the teacher's own choices stay put
-    const opts = { ...options };
-    for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
+    const opts = optionsFor(subTool, lv);
     setOptions(opts);
     newQuestion(lv, subTool, opts);
   };
@@ -582,32 +525,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
             </button>
             {optionsPop.open && visibleOptions.length > 0 && (
-              (() => {
-                // a long list splits into two columns with a thin grey divider (the Split QO layout)
-                const split = visibleOptions.length > 4;
-                const half = Math.ceil(visibleOptions.length / 2);
-                const cols = split ? [visibleOptions.slice(0, half), visibleOptions.slice(half)] : [visibleOptions];
-                return (
-                  <div className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 flex ${split ? "left-1/2 -translate-x-1/2 w-[min(44rem,92vw)]" : "left-0 min-w-[min(24rem,86vw)]"}`}>
-                    {cols.map((col, ci) => (
-                      <div key={ci} className={`flex flex-col gap-5 flex-1 min-w-0 ${ci > 0 ? "border-l border-gray-200 pl-5 ml-5" : ""}`}>
-                        {col.map((o) => (
-                          <div key={o.key}>
-                            <OptionHeading o={o} />
-                            <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
-                              onChange={(v) => changeOption(o, v)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-card border border-slate-300 z-50 p-5 w-[min(38rem,92vw)] max-h-[70dvh] overflow-y-auto">
+                <DecisionOptionGroups groups={visibleOptions} options={options} level={level} sub={subTool} onChange={changeOption} />
+              </div>
             )}
           </div>
         )}
-        {!inSheet ? <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
+        <div className="flex gap-2 xl:gap-3 items-center justify-end ml-auto lg:ml-0">
           {hereItems.length > 0 && !isPhone && (
             <div className="flex items-center rounded-xl border border-slate-200 bg-white h-10" role="group" aria-label="Move through the saved questions">
               <button onClick={() => stepSaved(-1)} disabled={!canStepBack} aria-label="Previous saved question" title="Previous saved question" className="w-10 h-10 flex items-center justify-center text-blue-900 hover:bg-slate-50 rounded-l-xl disabled:opacity-30"><ChevronLeft size={18} /></button>
@@ -619,7 +543,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           <button onClick={() => newQuestion()} className="px-4 xl:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18} /> New Question
           </button>
-        </div> : <div />}
+        </div>
       </div>
   );
 
@@ -627,9 +551,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const chooserVariants = chooser ? chooserFilters.reduce<Array<Record<string, string>>>((acc, o) => acc.flatMap((a) => o.choices.map((c) => ({ ...a, [o.key]: c.value }))), [{}]).map((values) => ({ values, tabs: tabsFor(config, settle(config, { ...options, ...values }, level)) })) : undefined;
   const topicChooser = chooser ? (
     <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
-      mode={sheetable ? { value: sheetMode ? "worksheet" : "practice", choices: [{ value: "practice", label: "Practice" }, { value: "worksheet", label: "Worksheet" }], onChange: (v) => setSheetMode(v === "worksheet") } : undefined}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
-      onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
+      onFilter={chooseTop} onTopic={(k) => { chooseSubTool(k); }} />
   ) : null;
 
   const controlBar = (
@@ -898,109 +821,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     </div>
   );
 
-  // Practice | Worksheet, only for exam-style questions (on a phone, as tabs; on a big screen it lives in the topic chooser)
-  const examTabs = sheetable ? (
-    <div className="flex justify-center gap-7 border-b border-slate-300">
-      {([["Practice", false], ["Worksheet", true]] as const).map(([label, on]) => (
-        <button key={label} onClick={() => setSheetMode(on)}
-          className={`pb-3 pt-2 min-h-[40px] -mb-px text-base font-semibold border-b-2 transition-colors ${sheetMode === on ? "border-blue-900 text-blue-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>{label}</button>
-      ))}
-    </div>
-  ) : null;
-  const [sheetPreview, setSheetPreview] = useState<number | null>(null);
-  // like the other tools' Worksheet mode: its own settings (level, options, how many), then Generate; it does not use the question on screen
-  const cardTools = (n: number) => (
-    <div className="flex gap-1 justify-end px-3 pb-2 pt-0 mt-auto" onClick={(e) => e.stopPropagation()}>
-      <button type="button" onClick={() => replaceSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-blue-900 hover:bg-blue-50 flex items-center gap-1.5"><RefreshCw size={14} /> Replace</button>
-      <button type="button" onClick={() => removeSheetQuestion(n)} className="px-3 min-h-[40px] rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5"><X size={14} /> Remove</button>
-    </div>
-  );
-  const sheetPanel = (
-    <div className="p-4 sm:p-6 flex flex-col gap-5">
-      <div className="[&>div]:justify-center [&>div]:gap-x-6">{controlRow}</div>
-      <div className="flex justify-center items-center gap-3 flex-wrap">
-        <label className="text-base font-semibold text-gray-700">Questions:</label>
-        <input type="number" min={1} max={sheetMax} value={sheetN} onChange={(e) => setSheetN(Math.max(1, Math.min(sheetMax, parseInt(e.target.value) || 3)))}
-          className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
-      </div>
-      {sheetKind === "cpa" && <div className="text-center text-sm text-gray-500">Each question prints on its own A4 sheet, with the pictures and the room to draw it needs.</div>}
-      {sheetKind === "skill" && (
-        <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-base font-semibold text-gray-700">
-          <label className="flex items-center gap-2 min-h-[40px] cursor-pointer"><input type="checkbox" checked={sheetPerPage} onChange={(e) => setSheetPerPage(e.target.checked)} className="w-5 h-5" /> One question per page</label>
-          <label className="flex items-center gap-2">Working space:
-            <select value={sheetSpace} onChange={(e) => setSheetSpace(e.target.value as SkillLayout["space"])} className="px-3 py-2 min-h-[40px] border border-slate-200 rounded-lg text-base font-semibold bg-white">
-              <option value="auto">Automatic</option><option value="s">Small box</option><option value="m">Medium box</option><option value="l">Large box</option><option value="lines">Ruled lines</option><option value="grid">Squared grid</option><option value="none">None</option>
-            </select>
-          </label>
-        </div>
-      )}
-      <div className="flex justify-center items-center gap-3 sm:gap-4 flex-wrap">
-        <button onClick={generateSheet} disabled={!!sheetBusy} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"><RefreshCw size={18} className={sheetBusy ? "animate-spin" : ""} /> {sheetBusy ? "Generating…" : "Generate"}</button>
-        {sheet.length > 0 && (
-          <>
-            <button onClick={() => setSheetAnswers(!sheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {sheetAnswers ? "Hide Answers" : "Show Answers"}</button>
-            {hasBasketPrint(config) && !isPhone && <button onClick={addSheetToSaved} title="Save these questions to the saved list, to load in a lesson or print later" className="px-5 py-2 bg-white text-blue-900 border-2 border-blue-900 rounded-xl font-semibold text-base hover:bg-blue-50 flex items-center gap-2">Add to saved list</button>}
-            <PrintSplitButton onPrint={printSheet} printMode={printMode} setPrintMode={setPrintMode} />
-          </>
-        )}
-      </div>
-      {sheetBusy && <div className="text-center text-gray-500 text-base">{sheetBusy}</div>}
-      {sheetNote && !sheetBusy && <div className="text-center text-amber-700 text-sm font-semibold">{sheetNote}</div>}
-      {sheet.length === 0 && !sheetBusy && <div className="text-center text-gray-500 text-base">Choose the level, options and how many questions, then Generate.</div>}
-      <div className="grid gap-4" style={{ gridTemplateColumns: isPhone ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
-        {sheet.map((pr, n) => !pr.exam ? (
-          // a skill question: its number, the question, and (on request) the answer
-          <div key={n} className="rounded-xl border border-gray-200 bg-white p-4 flex flex-col gap-2">
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Question {n + 1}</div>
-            <div className="text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.prompt} /></div>
-            {sheetAnswers && <div className="rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold"><InlineMath text={pr.answer?.text ?? ""} /></div>}
-            {cardTools(n)}
-          </div>
-        ) : (
-          <div key={n} role="button" tabIndex={0} onClick={() => setSheetPreview(n)} onKeyDown={(e) => { if (e.key === "Enter") setSheetPreview(n); }} title="Click to preview this question and its parts"
-            className="text-left rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col hover:border-blue-900 hover:shadow-card transition-shadow cursor-pointer">
-            <div className="px-4 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400"><span>Question {n + 1} · {pr.exam!.totalMarks} mark{pr.exam!.totalMarks === 1 ? "" : "s"}</span><span className="text-blue-900 normal-case tracking-normal">Preview</span></div>
-            <div className="px-4 pt-1 text-sm font-semibold text-gray-900 leading-snug"><InlineMath text={pr.exam!.intro} /></div>
-            {!pr.dim && <div className="relative m-3 rounded-lg border border-gray-200 overflow-hidden pointer-events-none" style={{ height: 220 }}>{renderCanvas ? renderCanvas(pr, undefined) : null}</div>}
-            <div className="px-4 pb-4 flex flex-col gap-2 pt-2">
-              {pr.exam!.parts.map((pt, k) => (
-                <div key={k} className="text-sm leading-snug">
-                  <div className="flex gap-2"><b>{pt.label}</b><span className="flex-1 text-gray-900"><InlineMath text={pt.prompt} /></span><span className="font-bold text-gray-500 whitespace-nowrap">[{pt.marks}]</span></div>
-                  {sheetAnswers && (
-                    <div className="mt-1 ml-7 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-gray-800 font-semibold">
-                      {pt.onDiagram ? "Shown on the network" : pt.model.map((l, j) => <div key={j} style={{ whiteSpace: "pre-line" }}><InlineMath text={l} /></div>)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {cardTools(n)}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-  // a generated question opened in full: the picture and its parts, answers and working, as when practising
-  const previewQ = sheetPreview !== null ? sheet[sheetPreview] : undefined;
-  const previewDialog = previewQ ? (
-    <div className="fixed inset-0 z-[300] overflow-y-auto" style={{ backgroundColor: PAGE_BG }}>
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="font-semibold text-slate-900">Question {sheetPreview! + 1} of {sheet.length}</div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setSheetPreview(Math.max(0, sheetPreview! - 1))} disabled={sheetPreview === 0} className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-blue-900 disabled:opacity-40"><ChevronLeft size={18} /></button>
-          <button onClick={() => setSheetPreview(Math.min(sheet.length - 1, sheetPreview! + 1))} disabled={sheetPreview === sheet.length - 1} className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-blue-900 disabled:opacity-40"><ChevronRight size={18} /></button>
-          <button onClick={() => setSheetPreview(null)} className="px-4 py-2 rounded-xl bg-blue-900 text-white font-semibold">Close</button>
-        </div>
-      </div>
-      <div className="max-w-[1180px] mx-auto">
-        <ExamView key={previewQ.exam!.id} problem={previewQ} shown={(st) => (renderCanvas ? renderCanvas(previewQ, st) : null)} narrow={isPhone} tablet={isTablet}
-          footer={typeof config.canvasFooter === "function" ? config.canvasFooter(previewQ) : config.canvasFooter} />
-      </div>
-    </div>
-  ) : null;
-
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  const body = inSheet ? sheetPanel : problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} onPractise={practiseThis} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
+  const body = problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} onPractise={practiseThis} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
 
   if (failed)
     return (
@@ -1018,7 +840,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     return (
       <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: PAGE_BG }}>
         {overlay}
-        {previewDialog}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
+        {levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
         <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
@@ -1062,7 +884,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   if (narrow) {
     const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
       ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
-      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
+      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
     ];
     if (!started && launchSteps.length && !chooser) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
@@ -1090,7 +912,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         {navBar}
         <RotateHint show={isTablet && layout.portrait} />
         {/* phone: once the working starts it gets a screen of its own: the picture, the steps (scrolling) and < Step 4/19 > (nothing else) */}
-        {narrow && !tabletLand && !problem.exam && !phoneSolution && !inSheet && !drawer && !atQuestion && (
+        {narrow && !tabletLand && !problem.exam && !phoneSolution && !drawer && !atQuestion && (
           <div className="fixed inset-0 z-[60] flex flex-col bg-white" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
             <div className="flex items-center justify-between px-2 h-12 shrink-0">
               <button onClick={() => jump(-1)} aria-label="Back to the question" className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 active:bg-slate-100"><X size={22} /></button>
@@ -1129,18 +951,16 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           </div>
         )}
         {overlay}
-        {previewDialog}
         {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: PAGE_BG }}>
           <div className={isTablet ? "max-w-[68rem] mx-auto" : undefined}>
             {topicChooser && <div className="sticky top-0 z-30 -mx-3 px-3 pb-2 pt-1" style={{ backgroundColor: PAGE_BG }}>{topicChooser}</div>}
-            {examTabs && <div className="mb-3">{examTabs}</div>}
-            <div className={phoneSolution && !problem.exam && !inSheet ? "" : `${CARD} overflow-clip`} style={
-              phoneSolution && !problem.exam && !inSheet ? undefined : tabletLand && !problem.exam && !inSheet ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
-              : atQuestion || inSheet ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
+            <div className={phoneSolution && !problem.exam ? "" : `${CARD} overflow-clip`} style={
+              phoneSolution && !problem.exam ? undefined : tabletLand && !problem.exam ? { height: `calc(100dvh - ${atQuestion ? "9.5rem" : "12.5rem"} - env(safe-area-inset-bottom))`, minHeight: "24rem" }
+              : atQuestion ? undefined : { height: "calc(100dvh - 12rem - env(safe-area-inset-bottom))", minHeight: "26rem" }}>{body}</div>
           </div>
         </div>
-        {!drawer && !inSheet && (
+        {!drawer && (
           <>
             {!atQuestion && !(phoneSolution && !problem.exam) && (
               // the stepper: fixed just above the buttons, in the same columns as them (as in the other tools' phone Worked Example)
@@ -1214,7 +1034,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       {tabs.map((t) => (
                         <button
                           key={t.key}
-                          onClick={() => { setSubTool(t.key); newQuestion(level, t.key, options); setDrawer(false); }}
+                          onClick={() => { chooseSubTool(t.key); setDrawer(false); }}
                           className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
                           {t.label}
@@ -1231,21 +1051,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
                       onChange={(v) => {
                         const lv = parseInt(v.replace("level", ""), 10);
-                        setLevel(lv);
-                        const opts = { ...options };
-                        for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
-                        setOptions(opts);
-                        newQuestion(lv, subTool, opts);
+                        changeLevel(lv);
                       }}
                     />
                   </div>
                 )}
-                {visibleOptions.map((o) => (
-                  <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
-                    <OptionHeading o={o} sheet />
-                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => changeOption(o, v)} />
-                  </div>
-                ))}
+                <DecisionOptionGroups groups={visibleOptions} options={options} level={level} sub={subTool} onChange={changeOption} sheet />
               </div>
             </div>
             <div className="flex-shrink-0 bg-white border-t border-gray-200 px-3 pt-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
@@ -1261,7 +1072,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     <div>
       {navBar}
       {overlay}
-      {previewDialog}
+
       {infoOpen && <InfoModal infoSections={infoSections} title={config.pageTitle} model={aboutModel} current={subTool} onClose={() => setInfoOpen(false)} />}{levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
       <div className="min-h-screen p-3 sm:px-8 sm:pt-5 sm:pb-3" style={{ backgroundColor: PAGE_BG }}>
         <div className="max-w-[1180px] mx-auto">
@@ -1303,8 +1114,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           )}
           <div className="flex flex-col gap-4">
             {topicChooser}
-            {!chooser && examTabs}
-            {!inSheet && controlBar}
+            {controlBar}
             <div className={`${CARD} overflow-clip`}>{body}</div>
           </div>
         </div>
@@ -1324,11 +1134,31 @@ function OptionHeading({ o, sheet }: { o: { label: string }; sheet?: boolean }) 
     : <div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>;
 }
 
+/** The same category tabs on the desktop popover and touch settings sheet. */
+function DecisionOptionGroups({ groups, options, level, sub, onChange, sheet = false }: {
+  groups: NonNullable<DecisionShellProps["config"]["options"]>; options: Record<string, string>;
+  level: number; sub: string; onChange: (o: { key: string; displayOnly?: boolean }, value: string) => void; sheet?: boolean;
+}) {
+  const [picked, setPicked] = useState<QOTab | null>(null);
+  const order: QOTab[] = ["questions", "numbers", "method", "display"];
+  const tabs = order.filter(t => groups.some(o => (o.tab ?? "questions") === t));
+  const tabbed = tabs.length > 1 && groups.reduce((n, o) => n + o.choices.length, 0) > QO_TABS_ABOVE;
+  const active = tabbed ? picked && tabs.includes(picked) ? picked : tabs[0] : null;
+  const shown = order.flatMap(t => groups.filter(o => (o.tab ?? "questions") === t && (!active || t === active)));
+  return <div className={`flex flex-col gap-4 ${sheet ? "[&_button]:min-h-10" : ""}`}>
+    <QOTabs tabs={tabs} active={active} onPick={setPicked} />
+    {shown.map(o => <div key={o.key} className={sheet ? "bg-white rounded-2xl border border-slate-300 p-4" : ""}>
+      <OptionHeading o={o} sheet={sheet} />
+      <OptionControl o={o} value={options[o.key]} level={level} sub={sub} onChange={v => onChange(o, v)} />
+    </div>)}
+  </div>;
+}
+
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
 function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
   // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
-  const on = o.multi ? ticksOf(o, value, level, sub) : [value];
+  const on = o.multi ? ticksOf(o, value, level, sub) : [optionValue(o, value, level, sub)];
   const auto = o.multi ? ticksOf(o, "", level, sub) : [];
   const press = (v: string) => {
     if (!o.multi) { onChange(v); return; }

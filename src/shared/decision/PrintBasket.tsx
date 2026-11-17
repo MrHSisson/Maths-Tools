@@ -73,7 +73,7 @@ export default function PrintBasket({ items, label, printable, here, busy, note,
           </div>
           {busy && <div className="text-sm font-semibold text-blue-900">{busy}</div>}
           {note && !busy && <div className="text-sm text-slate-600">{note}</div>}
-          <div className="text-xs text-slate-400">Each Critical Path question prints on its own A4 sheet; exam-style questions print as papers with mark schemes, and skill questions as a worksheet with an answers page. &ldquo;Both&rdquo; prints every question first, then every answer. Reload brings a question back onto the page to work through. The link rebuilds the same questions on any device that opens it.</div>
+          <div className="text-xs text-slate-400">Only questions you save are included. Each Critical Path question prints on its own A4 sheet; exam-style questions print as papers with mark schemes, and skill questions as a worksheet with an answers page. &ldquo;Both&rdquo; prints every question first, then every answer. Reload brings a question back onto the page to work through. The link rebuilds the same questions on any device that opens it.</div>
         </div>
       </div>
     </div>

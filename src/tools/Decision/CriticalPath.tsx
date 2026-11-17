@@ -90,7 +90,7 @@ const KIND: Record<string, CpaKind> = {
 const CHART_SUBS = new Set(["cascade", "histogram", "level", "alloc", "shorten", "reason", "reasonA"]);
 function sizeDefault(level: number, sub?: string): string {
   if (sub && EXAM_CHAIN[sub]) return sub.startsWith("exAs") || ["exBuild", "exClaim", "exChange", "exClock"].includes(sub) ? (level === 1 ? "small" : "medium") : "medium";
-  if (sub && CHART_SUBS.has(sub)) return "medium";
+  if (sub === "change" || sub && CHART_SUBS.has(sub)) return "medium";
   return level === 1 ? "small" : "medium";
 }
 /** one of the ticked choices of a multi option, at random */
@@ -106,18 +106,18 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const floatQ = sub === "floatPaths" ? pickOf(o.floatQ, "float") : "";
   const kind: CpaKind = sub === "floatPaths" ? (floatQ === "float" ? "cpaFloat" : "cpaPaths") : KIND[sub] ?? "cpaFull";
   // Forward pass and Full analysis have three levels (6–7, 8–9, 10–12 activities); the Cascade chart has three (8–9, 10–12, then as late as possible); the rest have one or two
-  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
+  const maxLv = sub === "forward" || sub === "backward" || sub === "full" || sub === "change" || sub === "cascade" || sub === "histogram" || sub === "level" || sub === "alloc" || sub === "shorten" ? 3 : 2;
   const lv = Math.min(maxLv, Math.max(1, level)) as 1 | 2 | 3;
   const reasonCase = sub === "reasonA" ? "limit" : (pickOf(o.reasonForm, lv === 1 ? "range" : "claim") as "range" | "remove" | "claim" | "glyn");
-  const picked = pickOf(o.paths, "one") === "more" ? "more" : "one";
+  const picked = sub === "floatPaths" ? (lv === 1 ? "one" : "more") : (pickOf(o.paths, "one") === "more" ? "more" : "one");
   // the question that names its own critical paths fixes the count: "which must start first" and the missing time have exactly one
-  const paths = sub === "reason" && reasonCase === "glyn" ? "more" : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
-  const genLevel = sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
+  const paths = sub === "reason" && reasonCase === "glyn" ? (Math.random() < 0.5 ? "one" : "more") : sub === "shorten" ? (lv === 2 ? "more" : "one") : sub === "unknown" || floatQ === "first" ? "one" : picked;
+  const genLevel = sub === "change" ? (pickOf(o.changeSize, "medium") === "small" ? 1 : 2) : sub === "reason" || sub === "reasonA" ? 2 : sub === "unknown" ? (lv === 2 ? 2 : 1) : sub === "cascade" ? (pickOf(o.actCount, lv === 1 ? "n89" : "n1012") === "n89" ? 2 : 3) : sub === "histogram" ? (lv === 1 && pickOf(o.histSize, "n89") === "n89" ? 2 : 3) : sub === "level" || sub === "alloc" || sub === "shorten" ? (lv === 3 ? 3 : 2) : lv;
   const workers = lv === 2 ? "several" : "one"; // the histogram's Level 3 (cut the peak) takes its workers from its own option below
   const levelWording = pickOf(o.levelWording, "time"); // the new start of the last activity needs a network that ends in one activity
   const blocks = pickOf(o.histBlocks, "whole,jump") === "whole" ? "whole" : "jump";
   const { data, prompt, answerText } = generateCpa(genLevel as 1 | 2 | 3, kind, {
-    size: size ?? (CHART_SUBS.has(sub) ? "medium" : undefined),
+    size: size ?? (sub === "change" ? "medium" : CHART_SUBS.has(sub) ? "medium" : undefined),
     setting: "context",
     paths,
     levelRef: "cascade",
@@ -648,7 +648,7 @@ export default function App() {
           floatPaths: ["Small projects (6–7 activities), one critical path", "Medium projects (8–9 activities), more than one critical path, and which activity must start first"],
           reason: ["Explain the effect of a change (a delay of up to d, or an activity removed)", "Comment on a claim (a finish time, or adding the critical durations)"],
           reasonA: ["State a limitation of the model and its effect"],
-          unknown: ["One duration x from the critical path", "A missing earliest start or latest finish in a box"],
+          unknown: ["A duration x, on or off the critical path", "A missing earliest start or latest finish in a box"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
         subTools: SUB_TOOLS,
@@ -700,11 +700,12 @@ export default function App() {
             choices: [
               { value: "float", label: "Float", sub: "Of each activity" },
               { value: "paths", label: "Critical paths", sub: "Every one" },
-              { value: "first", label: "Start first", sub: "Which activity" },
+              { value: "first", forLevels: [2], label: "Start first", sub: "Which activity" },
             ],
           },
           {
             key: "unknownWhere",
+            forLevels: [1],
             label: "Where is x",
             info: "Whether the unknown x is on the critical path, or off it (then find x ≤ …).",
             forSubTools: ["unknown"],
@@ -723,10 +724,23 @@ export default function App() {
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "range,remove" : "claim,glyn"),
             choices: [
-              { value: "range", label: "Delay up to d", sub: "Effect of a delay" },
-              { value: "remove", label: "Removed", sub: "An activity is removed" },
-              { value: "claim", label: "Claimed time", sub: "A finish time" },
-              { value: "glyn", label: "Add durations", sub: "Of the critical activities" },
+              { value: "range", forLevels: [1], label: "Delay up to d", sub: "Effect of a delay" },
+              { value: "remove", forLevels: [1], label: "Removed", sub: "An activity is removed" },
+              { value: "claim", forLevels: [2], label: "Claimed time", sub: "A finish time" },
+              { value: "glyn", forLevels: [2], label: "Add durations", sub: "Of the critical activities" },
+            ],
+          },
+          {
+            key: "changeSize",
+            tab: "numbers",
+            label: "Network size",
+            info: "How many activities the network has, independently of the kind of change being asked about.",
+            forSubTools: ["change"],
+            multi: true,
+            defaultFor: () => "medium",
+            choices: [
+              { value: "small", label: "Small", sub: "6–7 activities" },
+              { value: "medium", label: "Medium", sub: "8–9 activities" },
             ],
           },
           {
@@ -743,6 +757,7 @@ export default function App() {
           },
           {
             key: "histSize",
+            tab: "numbers",
             label: "Network size",
             info: "How many activities the Level 1 histogram has.",
             forSubTools: ["histogram"],
@@ -756,6 +771,7 @@ export default function App() {
           },
           {
             key: "histWorkers",
+            tab: "numbers",
             label: "Workers per activity",
             info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to three.",
             forSubTools: ["histogram"],
@@ -811,6 +827,7 @@ export default function App() {
           },
           {
             key: "levelWorkers",
+            tab: "numbers",
             label: "Workers per activity",
             info: "How many workers each activity needs in a Level 3 question; Level 1 is one each and Level 2 is one to four.",
             forSubTools: ["level"],
@@ -825,6 +842,7 @@ export default function App() {
           },
           {
             key: "levelSize",
+            tab: "numbers",
             label: "Question size",
             info: "How a Level 3 levelling question unfolds. The first try always leaves one knock-on clash. Short: the smallest option at that new clash clears it. Exam: the same one knock-on, but the next try may go back to an option from the first list if every new option is bigger. Stretch: allows a second knock-on (three tries); real papers rarely ask for it.",
             forSubTools: ["level"],
@@ -838,6 +856,7 @@ export default function App() {
           },
           {
             key: "allocKind",
+            forLevels: [3],
             label: "Question",
             info: "What to find about the team.",
             forSubTools: ["alloc"],
@@ -850,6 +869,8 @@ export default function App() {
           },
           {
             key: "histBlocks",
+            tab: "display",
+            forSubToolLevels: { histogram: [1, 2] },
             label: "Blocks",
             info: "How the blocks are drawn.",
             forSubTools: ["histogram", "level"],
@@ -874,6 +895,7 @@ export default function App() {
           },
           {
             key: "actCount",
+            tab: "numbers",
             label: "Activities",
             info: "How many activities there are.",
             forSubTools: ["cascade"],
@@ -886,6 +908,7 @@ export default function App() {
           },
           {
             key: "chartGiven",
+            forLevels: [1, 3],
             label: "Chart",
             info: "Whether you draw the whole chart, or complete a partly drawn one.",
             forSubTools: ["cascade"],
@@ -898,6 +921,7 @@ export default function App() {
           },
           {
             key: "critRow",
+            tab: "display",
             label: "Critical activities",
             info: "Whether the critical activities share one row (in sequence) or each have their own row.",
             forSubTools: ["cascade"],
@@ -910,6 +934,7 @@ export default function App() {
           },
           {
             key: "ganttStyle",
+            tab: "display",
             label: "Style",
             info: "Whether activities are drawn as blocks or as thin bars.",
             forSubTools: ["cascade"],
@@ -922,6 +947,7 @@ export default function App() {
           },
           {
             key: "size",
+            tab: "numbers",
             label: "Numbers",
             info: "How big the durations are.",
             multi: true,
@@ -935,9 +961,9 @@ export default function App() {
             key: "paths",
             label: "Critical paths",
             info: "Whether there is one critical path or more than one.",
-            forSubTools: ["full", "floatPaths", "cascade", "histogram", "level"],
+            forSubTools: ["full", "cascade", "histogram", "level"],
             multi: true,
-            defaultFor: (lv: number, sub?: string) => (sub === "floatPaths" && lv === 2 ? "more" : "one"),
+            defaultFor: () => "one",
             choices: [
               { value: "one", label: "One" },
               { value: "more", label: "More than one" },

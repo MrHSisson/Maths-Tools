@@ -542,17 +542,17 @@ describe("CPA — delays and changes, level 3 (a delay given as a range, an acti
       const c = data.extra!.change!;
       const T = referenceCpa(data.acts).projectTime;
       expect(c.mode).toBe("range");
-      expect(c.amount).toBeGreaterThan(c.float);
+      expect(c.amount).toBeGreaterThan(0);
       expect(c.float).toBe(referenceCpa(data.acts).lf[c.id] - referenceCpa(data.acts).es[c.id] - data.acts.find((a) => a.id === c.id)!.duration);
-      expect(referenceCpa(c.newActs).projectTime).toBe(T + c.amount - c.float); // worst case
+      expect(referenceCpa(c.newActs).projectTime).toBe(T + Math.max(0, c.amount - c.float)); // worst case
       // a delay of exactly the float changes nothing
       const atFloat = data.acts.map((a) => (a.id === c.id ? { ...a, duration: a.duration + c.float } : a));
       expect(referenceCpa(atFloat).projectTime).toBe(T);
       // one more than the float adds one
       const over = data.acts.map((a) => (a.id === c.id ? { ...a, duration: a.duration + c.float + 1 } : a));
       expect(referenceCpa(over).projectTime).toBe(T + 1);
-      expect(answerText).toContain(`${c.amount - c.float}`);
-      expect(steps[steps.length - 1].runningTotal).toBe(T + c.amount - c.float);
+      expect(answerText).toContain(`${Math.max(0, c.amount - c.float)}`);
+      expect(steps[steps.length - 1].runningTotal).toBe(T + Math.max(0, c.amount - c.float));
     }
   });
   it("remove: the activity takes 0 time and the new minimum time matches an independent recomputation", () => {
@@ -707,9 +707,10 @@ describe("CPA — explain and justify (written reasoning, marked against mark po
       const T = referenceCpa(data.acts).projectTime;
       const nT = referenceCpa(c.newActs).projectTime;
       if (rc === "range") {
-        expect(nT).toBe(T + c.amount - c.float);
+        expect(nT).toBe(T + Math.max(0, c.amount - c.float));
         expect(r.marks[0].text).toContain(`${c.float}`);
-        expect(answerText).toContain(`${c.amount - c.float}`);
+        if (c.amount > c.float) expect(answerText).toContain(`${c.amount - c.float}`);
+        else expect(answerText).toContain("not delayed");
       } else {
         expect(nT).toBeLessThan(T);
         expect(c.newActs.find((a) => a.id === c.id)!.duration).toBe(0);

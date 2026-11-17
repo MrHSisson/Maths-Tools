@@ -11,6 +11,7 @@ const optionBlock = (key: string): string => {
 
 describe("Critical Path — level-specific Question Options", () => {
   const expected: [string, string, string][] = [
+    ["changeSize", "change", ""],
     ["levelWording", "level", ""],
     ["levelWorkers", "level", "[3]"],
     ["levelSize", "level", "[3]"],

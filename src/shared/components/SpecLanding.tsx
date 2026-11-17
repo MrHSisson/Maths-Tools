@@ -266,15 +266,15 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                 const n = c.statements.length;
                 return (
                   <button key={c.id} onClick={() => setView({ kind: "chapter", id: c.id })}
-                    className={`${card} group flex min-h-[112px] flex-col justify-between p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift`}>
+                    className={`${card} group flex min-h-[112px] min-w-0 flex-col justify-between p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift`}>
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <span className="font-mono text-xs font-semibold text-slate-400">{c.id}</span>
                         <h2 className="text-lg font-semibold leading-tight text-slate-900">{c.name}</h2>
                       </div>
                       <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
+                    <div className="mt-3 flex flex-col items-start gap-1 text-sm text-slate-500">
                       <span>{`${n} statement${n === 1 ? "" : "s"}`}</span>
                       <span className={`text-xs ${c.tools.some(t => t.live) ? "font-semibold text-emerald-700" : "text-slate-400"}`}>{toolState(c, planning)}</span>
                     </div>

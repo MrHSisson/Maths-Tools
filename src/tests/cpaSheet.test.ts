@@ -4,13 +4,39 @@ import { buildCpaSheet, CPA_SHEET_TABS, generateCpa, levelAxisT } from "../share
 import { cpaSheetsHtml } from "../shared/decision/printCpa";
 import { withSeededRandom } from "./seededRandom";
 
-const problemOf = (g: ReturnType<typeof generateCpa>, kind: "cpaHistogram" | "cpaLevel", level: number) => ({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind, level }) as never;
+const problemOf = (g: ReturnType<typeof generateCpa>, kind: ReturnType<typeof generateCpa>["data"]["kind"], level: number) => ({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind, level }) as never;
 const html = async (p: never, answers: boolean) => cpaSheetsHtml((await buildCpaSheet(p, answers))!);
 const figs = (h: string) => (h.match(/class="fig (network|gantt|hist)/g) ?? []).map((x) => x.replace('class="fig ', ""));
 const blocksIn = (h: string) => (h.match(/<rect/g) ?? []).length;
 
 describe("A4 question sheet", () => {
-  it("is offered on the network, pass, full analysis, histogram and levelling tabs", () => { expect(CPA_SHEET_TABS).toEqual(["network", "forward", "backward", "full", "histogram", "level"]); });
+  it("is offered on every Critical Path skill tab", () => { expect(CPA_SHEET_TABS).toEqual(["network", "table", "forward", "backward", "full", "floatPaths", "unknown", "change", "reason", "cascade", "histogram", "level", "alloc", "shorten", "reasonA"]); });
+  it("Gantt Levels 1–3: drawing axes, given bars only, and missing network times at Level 2", async () => {
+    await withSeededRandom(36, async () => {
+      for (const level of [1, 2, 3]) for (const layout of ["sequence", "rows"] as const) for (const style of ["blocks", "bars"] as const) for (const partial of [false, true]) {
+        if (level === 2 && partial) continue;
+        const g = generateCpa(3, "cpaCascade", { paths: "one", partial, cascadePasses: level === 2,
+          cascade: { start: level === 3 ? "late" : "early", layout, style } });
+        const p = problemOf(g, "cpaCascade", level);
+        const q = (await buildCpaSheet(p, false))![0], a = (await buildCpaSheet(p, true))![0];
+        expect(q.figures.map((f) => f.kind)).toEqual(["network", "gantt"]);
+        expect(q.subtitle).toContain(`Level ${level}`);
+        expect(q.figures[1].tall).toBe(true);
+        expect(q.figures[1].svg).toContain(`Time (${g.data.unit})`);
+        expect(q.figures[1].svg).toContain('stroke="#334155"');
+        const cas = g.data.extra!.cascade!;
+        const given = cas.given ?? [];
+        // Each visible bar is one filled rectangle, plus a float rectangle in blocks style.
+        const rects = (ids: string[]) => ids.length + (style === "blocks" ? ids.filter((id) => g.data.times.float[id] > 0).length : 0);
+        expect(blocksIn(q.figures[1].svg)).toBe(rects(given));
+        expect(blocksIn(a.figures[1].svg)).toBe(rects(cas.bars.map((b) => b.id)));
+        expect(q.figures[1].caption).toContain(level === 3 ? "late" : "early");
+        if (level === 2) expect((q.figures[0].svg.match(/<text/g) ?? []).length).toBeLessThan((a.figures[0].svg.match(/<text/g) ?? []).length);
+        else expect(q.figures[0].svg).toBe(a.figures[0].svg);
+        expect(a.answer).toEqual([g.answerText]);
+      }
+    });
+  });
   it("histogram Level 3, histogram given: network, Gantt chart, the given histogram and one blank to cut the peak", async () => {
     await withSeededRandom(31, async () => {
       const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histGiven: true, histWorkers: "mixed" });
@@ -83,9 +109,51 @@ describe("A4 question sheet", () => {
       }
     });
   }, 100_000);
-  it("other tabs have no sheet", async () => {
-    const g = generateCpa(2, "cpaFloat", {});
-    expect(await buildCpaSheet({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaFloat" } as never, false)).toBeNull();
+  it("written skills have a network and response space; reading the network leaves the predecessor column blank", async () => {
+    await withSeededRandom(37, async () => {
+      for (const kind of ["cpaTable", "cpaFloat", "cpaPaths", "cpaChange", "cpaReason", "cpaShorten"] as const) {
+        const g = generateCpa(2, kind, { paths: "one" });
+        const p = problemOf(g, kind, 2);
+        const q = (await buildCpaSheet(p, false))![0], a = (await buildCpaSheet(p, true))![0];
+        expect(q.figures.map((f) => f.kind)).toEqual(["network", "response"]);
+        expect(q.figures[1].svg).toContain('class="ruled"');
+        expect(a.answer?.length).toBeGreaterThan(0);
+        if (kind === "cpaTable") {
+          expect(q.figures[1].svg).toContain("Immediate predecessors");
+          expect((q.figures[1].svg.match(/&nbsp;/g) ?? []).length).toBe(g.data.acts.length);
+          expect(a.figures[1].svg).not.toContain("&nbsp;");
+        }
+      }
+    });
+  });
+  it("missing durations and missing box times stay as x until the answer sheet", async () => {
+    await withSeededRandom(38, async () => {
+      for (const unknownBox of [false, true]) {
+        const g = generateCpa(2, "cpaUnknown", { paths: "one", unknownBox });
+        const p = problemOf(g, "cpaUnknown", 2);
+        const q = (await buildCpaSheet(p, false))![0], a = (await buildCpaSheet(p, true))![0];
+        expect(q.figures[0].svg).toContain(">x</text>");
+        expect(a.figures[0].svg).not.toContain(">x</text>");
+        expect(q.figures[0].svg).not.toBe(a.figures[0].svg);
+      }
+    });
+  });
+  it("allocation has blank worker axes without giving away the minimum team size", async () => {
+    await withSeededRandom(39, async () => {
+      const g = generateCpa(2, "cpaAlloc", { paths: "one" });
+      const p = problemOf(g, "cpaAlloc", 1);
+      const q = (await buildCpaSheet(p, false))![0], a = (await buildCpaSheet(p, true))![0];
+      expect(q.figures.map((f) => f.kind)).toEqual(["network", "gantt"]);
+      expect(blocksIn(q.figures[1].svg)).toBe(0);
+      expect(blocksIn(a.figures[1].svg)).toBe(g.data.acts.length);
+      expect(q.figures[1].svg).toContain(`Worker ${g.data.acts.length}</text>`);
+      const before = q.figures[1].svg;
+      g.data.extra!.alloc!.workers++;
+      expect((await buildCpaSheet(p, false))![0].figures[1].svg).toBe(before);
+    });
+  });
+  it("a question without Critical Path data has no sheet", async () => {
+    expect(await buildCpaSheet({ network: { nodes: [], edges: [] }, prompt: "Q", answer: { text: "A" } }, false)).toBeNull();
   });
 });
 

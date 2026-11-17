@@ -57,7 +57,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   } else {
     const lv = Math.min(2, Math.max(1, level));
     const circle = o.dimsForm === "circle";
-    // a constant needs a formula to rearrange: Level 1 asks for quantities and expressions unless a teacher ticks it
+    // A constant needs a formula to rearrange, so its question option belongs to Level 2.
     const ask = pickOf(o.dimsAsk, lv === 1 ? "quantity,expression" : "quantity,expression,constant");
     q = ask === "constant" ? genDimsConst(circle) : ask === "expression" ? genDimsExpr(lv, circle) : genDimsName(lv, pickOf(o.dimsGiven, "name") === "units", circle);
   }
@@ -105,7 +105,7 @@ export default function App() {
           {
             key: "practice",
             label: "Practice",
-            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme. Both have a Worksheet (a printable set with working boxes and an answer page) on a laptop or tablet.",
+            info: "Skills gives one skill at a time, worked step by step. Exam style gives multi-part questions in the style of the exam paper, with marks and a mark scheme. Save the questions you choose with the pin, then print your saved questions with working space and answers.",
             top: true,
             choices: [
               { value: "skills", label: "Skills" },
@@ -114,6 +114,7 @@ export default function App() {
           },
           {
             key: "dimsBuilds",
+            tab: "display",
             label: "Builds",
             info: "A quantity that is not given (force, energy, viscosity…) is built before it is used. One step each keeps the working short, and a student can open any build to see its parts; Every step shows all of them.",
             forSubTools: ["dims", "consistent", "powers"],
@@ -127,18 +128,19 @@ export default function App() {
           {
             key: "dimsAsk",
             label: "Ask for",
-            info: "What to find the dimensions of. A constant in a formula is ticked at Level 2 by default.",
+            info: "What to find the dimensions of. Constants from formulas are offered at Level 2.",
             forSubTools: ["dims"],
             multi: true,
             defaultFor: (lv: number) => (lv === 1 ? "quantity,expression" : "quantity,expression,constant"),
             choices: [
               { value: "quantity", label: "A quantity", sub: "Force, density…" },
               { value: "expression", label: "An expression", sub: "ρv²r" },
-              { value: "constant", label: "A constant", sub: "In a formula" },
+              { value: "constant", forLevels: [2], label: "A constant", sub: "In a formula" },
             ],
           },
           {
             key: "dimsGiven",
+            tab: "display",
             label: "Quantity Given As",
             info: "Whether a named quantity is given by its name or by the units it is measured in.",
             forSubTools: ["dims"],
@@ -151,6 +153,7 @@ export default function App() {
           },
           {
             key: "dimsForm",
+            tab: "display",
             label: "Answer Format",
             info: "Whether the student writes the dimensions or circles one of four options.",
             forSubTools: ["dims"],
@@ -176,6 +179,7 @@ export default function App() {
           },
           {
             key: "consNumbers",
+            tab: "numbers",
             label: "Numbers in Formulas",
             info: "Whether formulas can contain numbers such as ½, 2 and 2π, which have no dimensions, and roots.",
             forSubTools: ["consistent"],
@@ -207,12 +211,13 @@ export default function App() {
             defaultFor: () => "find",
             choices: [
               { value: "find", label: "Find the powers" },
-              { value: "zero", label: "Show one is zero", sub: "Three powers" },
+              { value: "zero", forLevels: [2, 3], label: "Show one is zero", sub: "Three powers" },
               { value: "cannot", label: "Show it cannot work" },
             ],
           },
           {
             key: "powGiven",
+            tab: "display",
             label: "Dimensions Given As",
             info: "Whether the question states the dimensions of the quantities, or only the units they are measured in (so the student first finds the dimensions).",
             forSubTools: ["powers"],

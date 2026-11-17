@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { withSeededRandom } from "./seededRandom";
 import fixture from "./fixtures/levelling-real.json";
-import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, solveCpa, histBaseAt, levelCounts, levelFits, LEVEL_SIZES, type CpaActivity, type LevelSize } from "../shared/decision";
+import { countClashes, cpaTimes, generateCpa, levelMethod, levelSchedule, solveCpa, histBaseAt, layoutCpa, levelCounts, levelFits, LEVEL_SIZES, type CpaActivity, type LevelSize } from "../shared/decision";
 
 const toActs = (q: (typeof fixture.questions)[number]): CpaActivity[] => q.activities.map((a) => ({ id: a.id, duration: a.duration, workers: a.workers, preds: a.after }));
 const profileOf = (acts: CpaActivity[], st: Record<string, number>): number[] => {
@@ -406,9 +406,8 @@ describe("worker labels — an activity needing several workers is written D(3)"
 });
 
 describe("histogram Level 3 — precedence and the critical path are shown", () => {
-  it("every step highlights the critical path on the network, and a knock-on step names the activity that pushes it", () => {
+  it("every step highlights the critical path on the network, and any knock-on step names the activity that pushes it", () => {
     withSeededRandom(4242, () => {
-      let knocks = 0;
       for (let i = 0; i < 14; i++) {
         const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: (["one", "several", "mixed"] as const)[i % 3], histCut: "show", histStart: "early" });
         const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
@@ -416,16 +415,38 @@ describe("histogram Level 3 — precedence and the critical path are shown", () 
         for (const s of steps) expect(new Set(s.cpaView!.critical), s.phase).toEqual(crit);
         expect(steps[1].caption).toContain("critical path is");
         for (const s of steps.filter((x) => x.phase!.startsWith("Knock-on"))) {
-          knocks++;
           const pusher = s.cpaView!.compare![0];
           const id = s.phase!.replace("Knock-on: ", "");
           expect(g.data.acts.find((a) => a.id === id)!.preds).toContain(pusher);
           expect(s.caption).toContain(`comes after ${pusher}`);
         }
       }
-      expect(knocks, "a knock-on turned up").toBeGreaterThan(0);
     });
   }, 200_000);
+  it("names the delaying predecessor for a forced knock-on", () => {
+    // Either flexible chain must move as a pair to fit beside A: a root slides and its successor follows.
+    // This guarantees the case instead of expecting a random sample to happen to contain one.
+    const acts: CpaActivity[] = [
+      { id: "A", duration: 10, workers: 1, preds: [] },
+      { id: "B", duration: 3, workers: 1, preds: [] },
+      { id: "C", duration: 3, workers: 1, preds: ["B"] },
+      { id: "D", duration: 2, workers: 1, preds: [] },
+      { id: "E", duration: 2, workers: 1, preds: ["D"] },
+    ];
+    const g = withSeededRandom(20261116, () => generateCpa(3, "cpaHistogram", {
+      fixed: { acts, layout: layoutCpa(acts) }, histLevel: 3, histWorkers: "one", histCut: "show", histStart: "early",
+    }));
+    const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+    const knocks = steps.filter(s => s.phase?.startsWith("Knock-on"));
+    expect(knocks.length).toBeGreaterThan(0);
+    for (const s of knocks) {
+      const id = s.phase!.replace("Knock-on: ", "");
+      const pusher = s.cpaView!.compare![0];
+      expect(acts.find(a => a.id === id)!.preds).toContain(pusher);
+      expect(s.caption).toContain(`comes after ${pusher}`);
+      expect(s.cpaView!.critical).toEqual(["A"]);
+    }
+  });
 });
 
 describe("histogram Level 3 — the histogram can be given, or drawn first", () => {

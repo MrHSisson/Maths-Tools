@@ -134,7 +134,7 @@ const PRINT_SCRIPT = `<script>
   <\/script>`;
 
 /** how a skill worksheet is laid out: several questions to a page or one, and what each has to work in */
-export interface SkillLayout {
+interface SkillLayout {
   perPage: boolean;
   /** "auto" gives each kind of question the room it needs; the others make every working area that kind */
   space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "none";

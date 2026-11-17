@@ -68,6 +68,7 @@ export default function App() {
         options: [
           {
             key: "starts",
+            tab: "method",
             label: "Start vertices",
             info: "How many start vertices the nearest-neighbour method tries.",
             forSubTools: ["upper"],
@@ -78,6 +79,7 @@ export default function App() {
           },
           {
             key: "weights",
+            tab: "numbers",
             label: "Initial weights",
             info: "Whether the distances obey the triangle inequality.",
             choices: [

@@ -13,7 +13,6 @@ const BLUE = "#2563eb";
 const PURPLE = "#7c3aed";
 const SKY = "#bae6fd";
 const GREEN_FILL = "#bbf7d0";
-const LEFT = 64;
 const PLOT = 700;
 const TOP = 12;
 
@@ -28,11 +27,16 @@ interface GanttViewProps {
   axisT?: number;
   /** the height of one row (default 36, or 30 for bars); a smaller row fits a long chart on a page */
   rowH?: number;
+  /** Unit grid lines for a printed chart students draw on. */
+  fineGrid?: boolean;
+  /** Space for longer row labels such as Worker 12 on a printed allocation grid. */
+  labelWidth?: number;
   qIndex?: number;
   background?: string;
 }
 
-export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, qIndex, background = "#ffffff" }: GanttViewProps) {
+export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, fineGrid = false, labelWidth = 64, qIndex, background = "#ffffff" }: GanttViewProps) {
+  const LEFT = labelWidth;
   const { rowLabels, style } = data;
   const T = Math.max(data.T, axisT ?? 0);
   const blocks = style === "blocks";
@@ -61,6 +65,9 @@ export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, qIn
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >
       {/* dashed time grid */}
+      {fineGrid && Array.from({ length: Math.floor(T) + 1 }, (_, t) => t).filter((t) => !ticks.includes(t)).map((t) => (
+        <line key={`minor-${t}`} x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke="#e2e8f0" strokeWidth={0.7} />
+      ))}
       {ticks.map((t, i) => (
         <g key={t}>
           <line x1={x(t)} y1={TOP} x2={x(t)} y2={bodyBottom} stroke="#cbd5e1" strokeWidth={1} strokeDasharray="3 4" />

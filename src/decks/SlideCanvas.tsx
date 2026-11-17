@@ -267,12 +267,23 @@ const BOOK_AUTO_MAX = 160;
 /** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
  *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
  *  by this one component, so they always look alike. `qSize` is the question's drawn size; `extra` is for a control floating in the corner. */
-function BookCell({ num, qSize, answerSize, up, question, answer, onPointerUp, title, extra, centre }: {
+function BookCell({ num, qSize, answerSize, up, question, answer, onHold, title, extra, centre }: {
   centre?: boolean; num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
-  onPointerUp?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
+  onHold?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
 }) {
+  const hold = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number; pointer: number } | null>(null);
+  const cancelHold = () => { if (hold.current) clearTimeout(hold.current.timer); hold.current = null; };
+  useEffect(() => () => { if (hold.current) clearTimeout(hold.current.timer); }, []);
   return (
-    <div onPointerUp={onPointerUp} title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
+    <div data-ink-pass-through={onHold ? "hold" : undefined}
+      onPointerDown={(e) => {
+        cancelHold();
+        if (!onHold || !e.isPrimary || e.button !== 0 || (e.target as Element).closest("button, a, input, select, textarea")) return;
+        hold.current = { x: e.clientX, y: e.clientY, pointer: e.pointerId, timer: setTimeout(() => { hold.current = null; onHold(e); }, 500) };
+      }}
+      onPointerMove={(e) => { const h = hold.current; if (h && (h.pointer !== e.pointerId || Math.hypot(e.clientX - h.x, e.clientY - h.y) > 8)) cancelHold(); }}
+      onPointerLeave={cancelHold} onPointerUp={cancelHold} onPointerCancel={cancelHold} onContextMenu={(e) => { if (onHold) e.preventDefault(); }}
+      title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
       <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
         <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
@@ -292,8 +303,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [seed, setSeed] = useState(el.seed ?? 1);
   const [answers, setAnswers] = useState(false);
-  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a double-tap, by question key
-  const lastTap = useRef<Record<string, number>>({});
+  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a half-second hold, by question key
   // The regenerate buttons stay out of the way: a press anywhere on the activity shows them, and they fade after a few seconds
   const [tools, setTools] = useState(false);
   const toolsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -320,11 +330,10 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const flip = (key: string) => setFlips((f) => { const n = new Set(f); if (n.has(key)) n.delete(key); else n.add(key); return n; });
-  /** A double-tap on a cell flips just that cell between its question and its answer. */
+  /** A half-second hold on a cell flips just that cell between its question and its answer. */
   const tap = (e: PointerEvent, key: string) => {
     if ((e.target as HTMLElement).closest("button")) return;
-    const now = Date.now();
-    if (now - (lastTap.current[key] ?? 0) < 400) { lastTap.current[key] = 0; flip(key); } else lastTap.current[key] = now;
+    flip(key);
   };
   /** Replace one question with a new one that is not already on the slide. */
   const reroll = async (i: number) => {
@@ -365,8 +374,8 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
         {qs.map((q, i) => {
           const sh = shown[i], cell = shared && !prompt ? { ...sh, lines: sh.lines!.slice(1) } : sh;
           return (
-            <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a double-tap on the cell
-              onPointerUp={live ? (e) => tap(e, q.key) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
+            <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a half-second hold on the cell
+              onHold={live ? (e) => tap(e, q.key) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
               question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
               extra={live && !el.authored && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
@@ -506,8 +515,7 @@ function TextEl({ el }: { el: Extract<DeckElement, { kind: "text" }> }) {
 function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live: boolean }) {
   const qs = useMemo(() => legacyItems(el, bankQuestion), [el]);
   const [answers, setAnswers] = useState(false);
-  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a double-tap
-  const lastTap = useRef<Record<string, number>>({});
+  const [flips, setFlips] = useState<Set<string>>(new Set());   // cells flipped by a half-second hold
   useEffect(() => {
     if (!live) return;
     const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") { setAnswers((v) => !v); setFlips(new Set()); } };
@@ -529,11 +537,10 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
   const forceAnswers = useContext(ForceAnswersCtx);
   useReportSize(el.id, size);
   useReportSize(`${el.id}#a`, answerSize / Q_SCALE);
-  /** A double-tap on a cell flips just that cell between its question and its answer. */
+  /** A half-second hold on a cell flips just that cell between its question and its answer. */
   const tap = (e: PointerEvent, id: string) => {
     if (!live || (e.target as HTMLElement).closest("button")) return;
-    const now = Date.now();
-    if (now - (lastTap.current[id] ?? 0) < 400) { lastTap.current[id] = 0; setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; }); } else lastTap.current[id] = now;
+    setFlips((f) => { const n = new Set(f); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
   const instructionAndMaths = (lines: string[]) => lines.length === 2 && !isMathsLine(lines[0]) && isMathsLine(lines[1]);
   const sharedInstruction = qs.length > 1 && qs.every((q) => instructionAndMaths(q.question) && q.question[0] === qs[0].question[0]) ? qs[0].question[0] : "";
@@ -546,7 +553,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div ref={gridRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => (
           <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
-            onPointerUp={live ? (e) => tap(e, q.id) : undefined} title={live ? "Double-tap to flip between the question and its answer" : undefined}
+            onHold={live ? (e) => tap(e, q.id) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
             question={q.rectilinear ? <ShapeQuestion drawing={extras(rectilinearQuestion(q.rectilinear))._diagram as Drawing} /> : instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
             answer={<QuestionText lines={q.answer} />} />
         ))}
@@ -554,7 +561,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div style={{ marginTop: 12, fontSize: 26 }}>
         <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={slideButton}>
           {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
-        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Double-tap a row for its answer</span>}
+        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Hold a row for half a second to show its answer</span>}
       </div>
     </div>
   );

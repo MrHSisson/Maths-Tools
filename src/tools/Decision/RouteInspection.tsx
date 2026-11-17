@@ -122,6 +122,7 @@ export default function App() {
         options: [
           {
             key: "odd",
+            tab: "numbers",
             label: "Odd vertices",
             info: "How many odd vertices the network has.",
             choices: [
@@ -132,6 +133,7 @@ export default function App() {
           },
           {
             key: "triangle",
+            tab: "numbers",
             label: "Triangle inequality",
             info: "Whether the direct edge is always the shortest way between two odd vertices (obeys the triangle inequality), or sometimes a route through other vertices is shorter (breaks it).",
             forSubTools: ["closed", "open"],

@@ -12,7 +12,7 @@ MA is pure algebra on three base dimensions (M, L, T), and the papers test it as
 ## Decisions (Harry, 2026-11-13)
 - **Few, rich sub-tools** rather than one per skill: each must be able to give hundreds of different questions, with **Question Options (QO)** doing the differentiating and **fewer than three levels** where three would be forced.
 - **One abstract tool** for equating powers and solving the equations: the context is not needed to form and solve them, so the generator can run with no context at all. Real contexts are the limited resource (about 20), so they are an option, not the base.
-- **Skills → exam style follows the Decision model** (Critical Path / Network Flows): a **Practice | Exam style** switch, exam chains as named tiles in the chooser plus "Any exam question", each question a chain of lettered parts with marks, model answer, mark scheme and stepped working behind the (?), Practice | Worksheet, printed paper then mark scheme. Built on `DecisionShell`.
+- **Skills → exam style follows the Decision model** (Critical Path / Network Flows): a **Practice | Exam style** switch, exam chains as named tiles in the chooser plus "Any exam question", each question a chain of lettered parts with marks, model answer, mark scheme and stepped working behind the (?), hand-selected saved questions, printed paper then mark scheme. Built on `DecisionShell`.
 - **Picture:** the **written working** (below), changed from an exponent grid on 2026-11-14: Harry preferred the picture to be the answer as a student would write it, building up line by line beside the steps that explain it.
 
 ## Shell and picture
@@ -64,7 +64,7 @@ Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
 - **Level 3:** three unknown powers where the equations couple and the answers are fractions (halves, thirds) or zero.
 - **QO:**
   - *Context* (exclusive): none (generic letters, the dimensions of each given) · named quantities (e.g. "a mass m, a length l, an acceleration g") · a worded situation (below).
-  - *Ask for* (exclusive): find all the powers · show one power is zero (overdetermined: three equations, two unknowns) · decide the model cannot work (the equations have no solution).
+  - *Ask for* (exclusive): find all the powers · show one power is zero (Levels 2–3 only; three unknown powers) · decide the model cannot work (the equations have no solution).
   - *Dimensions given as*: the grid and the dimensions · units (the student first finds the dimensions; ties to sub-tool 1).
 - **Generator (equations first, R5):** pick the powers first (integers −3…3 and halves, thirds at Level 3 only), pick the quantities' dimension triples from the library (or random small triples in context-free mode, kept linearly independent), compute the target's dimensions from them, then check the system has exactly one solution with an independent solver. The answer is never searched for afterwards.
 - **Pool:** context-free mode is effectively unlimited (the powers and the triples both vary). The worded situations are the limited resource: **about 19**, listed next, used by this sub-tool and by the exam chains.
@@ -110,7 +110,7 @@ Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
 - The student reveals each part's answer with its mark lines, marks themselves, and opens (?) for the stepped working on the pinned grid. No typed answers, no scoring (as Critical Path and Network Flows).
 - **Parts library** (as `flowParts.ts`): `circleDims`, `stateDims`, `showDims`, `findPowers`, `showConsistent`, `explainReject`, `showZero`; each part is a skill generator run on the question's shared quantities and returns its model answer, marks and working, so the exam answers cannot drift from the skills. Recipes compose the parts into the chains above.
 - **Context:** every chain draws its situation from the worded list above (and, for the circle and consistency chains, from the library), so the chains and the skill tool share their ~19 situations.
-- **Worksheet:** generates a set; Print gives the paper (the grid with its cells blank where the student fills them) then the mark scheme (`printExam.ts`).
+- **Hand-selected printing:** save individual questions with the pin; Print saved questions gives the selected papers (the grid with its cells blank where the student fills them) then the mark scheme (`printExam.ts`).
 
 ## Correctness (the tests check)
 - **Independent solver:** a rational-arithmetic Gaussian elimination written in the test, not shared with the generator, solves every generated `powers` question and every exam `findPowers` part from the dimension triples alone; the tool's stated powers must equal its answer, the system must have exactly one solution (full rank) except in the *show one is zero* and *cannot work* cases, which must be overdetermined with a consistent / an inconsistent system respectively.
@@ -142,14 +142,14 @@ Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
 - `about.ts` words (`DimensionalAnalysis.about.ts`): the tool's purpose, each sub-tool's purpose and one plain line per level, from this brief.
 
 ## Not in this brief
-- Printable skill worksheets beyond the exam Worksheet: decide as for Critical Path (its question sheets) once the skills exist.
+- Skill questions print from the same hand-selected basket, with working space and an answers page; no Worksheet mode or batch generator.
 - Units arithmetic (converting between units) and dimensional analysis beyond M, L, T (no temperature, charge or angle as a dimension).
 - A Depth bank and a Teach deck for MA (separate briefs).
 - Renaming `DecisionShell` and its folder (a separate tidy-up; see `docs/architecture/DECISION_SHELL_PLAN.md`).
 
 ## Decisions on the open questions (Harry, 2026-11-13)
 1. **Moment of a force and energy:** keep both (they share ML²T⁻², and a question may ask for each).
-2. **Pool size:** no 30-question minimum. A level's pool is as extensive as the topic allows with three base dimensions and what an A-level student knows; if that is fewer than 30 distinct questions, that is fine. (`recentQuestions.test.ts` only checks tools that export the ToolShell `__test`; this is a `DecisionShell` tool and is not in it. Confirm at build time and, if the test does pick it up, say so rather than padding the pool.) Do not add contrived variants to reach a number; the worksheet may repeat a question only when the pool is genuinely smaller than the sheet.
+2. **Pool size:** no 30-question minimum. A level's pool is as extensive as the topic allows with three base dimensions and what an A-level student knows; if that is fewer than 30 distinct questions, that is fine. (`recentQuestions.test.ts` only checks tools that export the ToolShell `__test`; this is a `DecisionShell` tool and is not in it. Confirm at build time and, if the test does pick it up, say so rather than padding the pool.) Do not add contrived variants to reach a number; questions are selected individually for the saved list, so no batch size is required.
 3. **Circle-your-answer wrong options:** the slips listed (a flipped sign, a wrong power of one base dimension, a missing factor), each wrong option naming its misconception.
 
 
