@@ -39,6 +39,7 @@ Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle
 - Exact values and conversions live in `unitCircleMath.ts` and are checked against decimals for all 16 marked angles in `src/tests/unitCircle.test.ts`.
 - Layout checked at laptop (1366×768), tablet landscape (1180×820) and phone (390×800). The Pen overlay stays available, so the circle can be annotated.
 - Second pass (decluttered, steadier): fixed graph scale (no rescale when tan is switched on), fixed-height readout so the graph never resizes as the angle changes, one-row controls with the less-used switches in a Display menu, and quieter labels (grey degrees, indigo radians, no legend or θ marker).
+- Third pass: Radians is a real mode (the angle badge, the working order and the labels all lead with radians; Display menu adds Multiples of π / Decimals). Exact coordinates moved off the circle into a popup over the point (hover any marked point to preview it; Hide answers shows ? until revealed). Cleaner circle styling.
 - Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
 
 Agent: Claude Code

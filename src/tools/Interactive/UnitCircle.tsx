@@ -176,6 +176,8 @@ export default function UnitCircle() {
   const [hide, setHide] = useState(false);
   const [revealed, setRevealed] = useState<number[]>([]);
   const [optsOpen, setOptsOpen] = useState(false);
+  const [radStyle, setRadStyle] = useState<"pi" | "dec">("pi");
+  const [hoverDeg, setHoverDeg] = useState<number | null>(null);
   const optsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!optsOpen) return;
@@ -254,6 +256,7 @@ export default function UnitCircle() {
   const visibleAnswer = (deg: number) => !hide || revealed.includes(deg % 360) || shown % 360 === deg % 360;
   const showRadLabel = (deg: number) => (units !== "deg") && visibleAnswer(deg);
   const showDegLabel = units !== "rad";
+  const radLabel = (deg: number) => (radStyle === "pi" ? radText(deg) : deg === 0 ? "0" : ((deg * Math.PI) / 180).toFixed(2));
 
   // ── Circle ──────────────────────────────────────────────────────────────────────────────────────────────────────────
   const [px, py] = cp(angle);
@@ -261,7 +264,6 @@ export default function UnitCircle() {
   const tanA = Math.abs(cosA) < 1e-9 ? null : sinA / cosA;
   const arcR = 26;
   const [ax, ay] = cp(angle, arcR);
-  const labelSize = family === "all" ? 8.6 : 10.5;
 
   const ringLabels = SPECIALS.filter((s) => inFamily(s, family)).map((s) => {
     const [lx, ly] = cp(s.deg, R + (units === "both" ? 28 : 20));
@@ -269,21 +271,10 @@ export default function UnitCircle() {
     return (
       <g key={"r" + s.deg}>
         {dShow && <text x={lx} y={ly + (rShow ? -7 : 4)} textAnchor="middle" fontSize={10.5} fontWeight={600} fill="#64748b">{s.deg}°</text>}
-        {rShow && <Q x={lx} y={dShow ? ly + 9 : ly} t={radText(s.deg)} size={10} fill="#4f46e5" />}
+        {rShow && <Q x={lx} y={dShow ? ly + 9 : ly} t={radLabel(s.deg)} size={10} fill="#4f46e5" />}
       </g>
     );
   });
-
-  const coordLabels = showExact ? SPECIALS.filter((s) => inFamily(s, family)).map((s) => {
-    if (!visibleAnswer(s.deg)) return null;
-    const ev = exactValues(s.deg)!;
-    const axis = s.deg % 90 === 0;
-    const only45 = family === "all" && s.family === "45";
-    const r = axis ? R * 0.7 : only45 ? R * 0.33 : family === "all" ? R * 0.74 : R * 0.64;
-    const [lx, ly0] = cp(s.deg, r);
-    const ly = s.deg === 0 || s.deg === 180 ? ly0 - 12 : ly0;
-    return <Row key={"c" + s.deg} x={lx} y={ly} items={["(", ev.cos, ",", ev.sin, ")"]} size={only45 ? 7.6 : labelSize} fill={INK} />;
-  }) : null;
 
   const tanEnd = (() => {
     if (tanA === null) return null;
@@ -291,14 +282,41 @@ export default function UnitCircle() {
     return { rayX: R * k, rayY: -R * tanA * k, segY: Math.max(-(VB - 4), Math.min(VB - 4, -R * tanA)) };
   })();
 
+  const popup = (() => {
+    const a = hoverDeg ?? angle;
+    const [qx, qy] = cp(a);
+    const d = Math.round(a);
+    const ex = exactValues(d);
+    const hiddenPop = hide && !visibleAnswer(hoverDeg ?? shown);
+    const f2 = (v: number) => (Math.abs(v) < 0.0005 ? "0" : v.toFixed(2)).replace("-", "−");
+    const items = hiddenPop ? ["(", "?", ",", "?", ")"] : ex ? ["(", ex.cos, ",", ex.sin, ")"] : ["(", f2(Math.cos((a * Math.PI) / 180)), ",", f2(Math.sin((a * Math.PI) / 180)), ")"];
+    const size = 13;
+    const w = items.reduce((t, it) => t + qWidth(it, size), 0) + size * 0.2 * 4 + 30;
+    const h = 56;
+    const below = qy < -R * 0.5;
+    const cx = Math.max(-VB + w / 2 + 2, Math.min(VB - w / 2 - 2, qx));
+    const cy = below ? qy + 20 + h / 2 + 9 : qy - 20 - h / 2 - 9;
+    const edge = below ? cy - h / 2 : cy + h / 2;
+    const tx = Math.max(cx - w / 2 + 14, Math.min(cx + w / 2 - 14, qx));
+    return (
+      <g style={{ pointerEvents: "none", filter: "drop-shadow(0 3px 6px rgba(15,23,42,0.22))" }}>
+        <polygon points={`${tx - 7},${edge} ${tx + 7},${edge} ${tx},${edge + (below ? -9 : 9)}`} fill="#fff" stroke="#cbd5e1" strokeWidth={1} />
+        <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx={10} fill="#fff" stroke="#cbd5e1" strokeWidth={1} />
+        <rect x={tx - 6} y={below ? edge - 1.5 : edge - 1} width={12} height={2.5} fill="#fff" />
+        <text x={cx} y={cy - h / 2 + 15} textAnchor="middle" fontSize={9} fill="#94a3b8" fontWeight={600}>(cos θ , sin θ)</text>
+        <Row x={cx} y={cy + 6} items={items} size={size} fill={INK} />
+      </g>
+    );
+  })();
+
   const circleSvg = (
     <svg ref={circleRef} viewBox={`${-VB} ${-VB} ${VB * 2} ${VB * 2}`} className="w-full h-full select-none" style={{ touchAction: "none", cursor: "grab" }}
       onPointerDown={down("circle")} onPointerMove={move("circle")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Unit circle">
       {/* axes */}
-      <line x1={-R - 14} x2={R + 14} y1={0} y2={0} stroke="#94a3b8" strokeWidth={1} />
-      <line y1={-R - 14} y2={R + 14} x1={0} x2={0} stroke="#94a3b8" strokeWidth={1} />
+      <line x1={-R - 14} x2={R + 14} y1={0} y2={0} stroke="#cbd5e1" strokeWidth={1.2} />
+      <line y1={-R - 14} y2={R + 14} x1={0} x2={0} stroke="#cbd5e1" strokeWidth={1.2} />
       {fns.tan && <line x1={R} x2={R} y1={-VB} y2={VB} stroke={COL.tan} strokeWidth={1} strokeDasharray="4 4" opacity={0.55} />}
-      <circle cx={0} cy={0} r={R} fill="#fff" fillOpacity={0.6} stroke="#475569" strokeWidth={1.8} />
+      <circle cx={0} cy={0} r={R} fill="#f8faff" stroke="#475569" strokeWidth={1.8} />
 
       {/* angle sector */}
       {angle >= 359.5
@@ -320,13 +338,21 @@ export default function UnitCircle() {
       {SPECIALS.filter((s) => inFamily(s, family)).map((s) => {
         const [sx, sy] = cp(s.deg);
         const on = shown % 360 === s.deg;
-        return <circle key={"d" + s.deg} cx={sx} cy={sy} r={on ? 5.5 : 3.6} fill={on ? FAM_COL[s.family] : "#fff"} stroke={FAM_COL[s.family]} strokeWidth={1.8} />;
+        return (
+          <g key={"d" + s.deg}>
+            <circle cx={sx} cy={sy} r={on ? 5.5 : 3.6} fill={on ? FAM_COL[s.family] : "#fff"} stroke={FAM_COL[s.family]} strokeWidth={1.8} />
+            {showExact && <circle cx={sx} cy={sy} r={12} fill="transparent" onPointerEnter={(e) => { if (e.pointerType === "mouse") setHoverDeg(s.deg); }} onPointerLeave={() => setHoverDeg(null)} />}
+          </g>
+        );
       })}
-      {coordLabels}
       {ringLabels}
 
       {/* handle */}
+      <circle cx={px} cy={py} r={14} fill="#4f46e5" opacity={0.15} style={{ pointerEvents: "none" }} />
       <circle cx={px} cy={py} r={8} fill="#4f46e5" stroke="#fff" strokeWidth={2.5} />
+
+      {/* exact coordinates: a popup over the point */}
+      {showExact && popup}
     </svg>
   );
 
@@ -385,7 +411,7 @@ export default function UnitCircle() {
     <svg ref={graphRef} viewBox={`0 0 ${GW} ${GH}`} className="w-full h-full select-none" style={{ touchAction: "pan-y", cursor: "ew-resize" }}
       onPointerDown={down("graph")} onPointerMove={move("graph")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Graphs of sine, cosine and tangent">
       <defs><clipPath id="uc-plot"><rect x={PX0} y={PY0} width={PW} height={PH} /></clipPath></defs>
-      <rect x={PX0} y={PY0} width={PW} height={PH} fill="#fff" stroke="#cbd5e1" />
+      <rect x={PX0} y={PY0} width={PW} height={PH} rx={6} fill="#fff" stroke="#cbd5e1" />
       {/* grid */}
       {xMarks.map((m) => <line key={"g" + m.deg} x1={xOf(m.deg)} x2={xOf(m.deg)} y1={PY0} y2={PY1} stroke={axisLine(m.deg) ? "#cbd5e1" : "#eef2f7"} strokeWidth={1} />)}
       {yTicks.map((v) => <line key={"h" + v} x1={PX0} x2={PX1} y1={yOf(v)} y2={yOf(v)} stroke={v === 0 ? "#64748b" : "#eef2f7"} strokeWidth={v === 0 ? 1.3 : 1} />)}
@@ -401,7 +427,7 @@ export default function UnitCircle() {
           <g key={"xl" + m.deg}>
             <line x1={x} x2={x} y1={PY1} y2={PY1 + 4} stroke="#94a3b8" />
             {dShow && <text x={x} y={PY1 + 17 + stagger} textAnchor="middle" fontSize={11} fontWeight={600} fill="#64748b">{m.deg}°</text>}
-            {rShow && <Q x={x} y={PY1 + (dShow ? 34 : 22) + stagger} t={radText(m.deg)} size={10} fill="#4f46e5" />}
+            {rShow && <Q x={x} y={PY1 + (dShow ? 34 : 22) + stagger} t={radLabel(m.deg)} size={10} fill="#4f46e5" />}
           </g>
         );
       })}
@@ -447,16 +473,11 @@ export default function UnitCircle() {
     </div>
   );
 
+  const toRad = line("Degrees → radians", hideWorking ? <span className="text-slate-400">{shown}° × π/180 = ?</span> : <Rich s={degToRadWorking(shown).join(" = ")} />);
+  const toDeg = line("Radians → degrees", hideWorking ? <span className="text-slate-400">? × 180/π = {shown}°</span> : <Rich s={radToDegWorking(shown).join(" = ")} />);
   const readout = (
-    <div className="p-3 grid gap-2" style={{ gridTemplateRows: "40px 52px 58px" }}>
-      <div className="flex items-center gap-x-4 text-xl font-semibold text-slate-800 whitespace-nowrap">
-        <span>{shown}° =</span>
-        {hideWorking ? <span className="text-slate-400">? rad</span> : <><span className="text-indigo-700 inline-flex items-center"><H t={radText(shown)} /><span className="ml-1">rad</span></span><span className="text-sm font-normal text-slate-500">≈ {radDecimal.toFixed(3)}</span></>}
-      </div>
-      <div className="grid grid-cols-2 gap-x-4">
-        {line("Degrees → radians", hideWorking ? <span className="text-slate-400">{shown}° × π/180 = ?</span> : <Rich s={degToRadWorking(shown).join(" = ")} />)}
-        {line("Radians → degrees", hideWorking ? <span className="text-slate-400">? × 180/π = {shown}°</span> : <Rich s={radToDegWorking(shown).join(" = ")} />)}
-      </div>
+    <div className="p-3 grid gap-2" style={{ gridTemplateRows: "52px 58px" }}>
+      <div className="grid grid-cols-2 gap-x-4">{units === "rad" ? <>{toDeg}{toRad}</> : <>{toRad}{toDeg}</>}</div>
       <div className="flex gap-2">
         {(["sin", "cos", "tan"] as Fn[]).filter((f) => fns[f]).map(valueChip)}
         {!anyFn && <div className="text-sm text-slate-400 self-center">Switch on sin, cos or tan to see its value.</div>}
@@ -466,6 +487,22 @@ export default function UnitCircle() {
 
   // ── Page ────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const card = "bg-white rounded-2xl border border-slate-300 shadow-card";
+
+  const hiddenNow = hide && !visibleAnswer(shown);
+  const radNow = hiddenNow ? "?" : radLabel(shown);
+  const badge = (
+    <div className="absolute top-3 left-4 pointer-events-none h-[58px]">
+      <div className="text-2xl font-semibold text-slate-800 flex items-center gap-2 h-9 whitespace-nowrap">
+        {units === "deg" && <span>{shown}°</span>}
+        {units === "both" && <><span>{shown}°</span><span className="text-slate-400">=</span><span className="text-indigo-700"><H t={radNow} /></span></>}
+        {units === "rad" && <span className="text-indigo-700 inline-flex items-center"><H t={radNow} /><span className="ml-1.5 text-lg">rad</span></span>}
+      </div>
+      <div className="text-xs text-slate-500 h-5 whitespace-nowrap">
+        {units === "rad" && <>= {shown}°{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
+        {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}
+      </div>
+    </div>
+  );
 
   const playbar = (
     <div className="flex items-center gap-2 px-3 py-2 border-t border-slate-200">
@@ -511,8 +548,9 @@ export default function UnitCircle() {
             {optsOpen && (
               <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-lift border border-slate-200 z-40 p-3 space-y-3">
                 <Seg label="Points" value={family} onChange={setFamily} options={[{ id: "30", text: "30°s" }, { id: "45", text: "45°s" }, { id: "all", text: "All" }]} />
+                {units !== "deg" && <Seg label="Radians" value={radStyle} onChange={setRadStyle} options={[{ id: "pi", text: "Multiples of π" }, { id: "dec", text: "Decimals" }]} />}
                 <div className="flex flex-wrap gap-2">
-                  <Toggle on={showExact} onClick={() => setShowExact((v) => !v)}>Exact values</Toggle>
+                  <Toggle on={showExact} onClick={() => setShowExact((v) => !v)}>Coordinate popup</Toggle>
                   <Toggle on={graphLabels} onClick={() => setGraphLabels((v) => !v)}>Label graph points</Toggle>
                   <Toggle on={trace} onClick={() => setTrace((v) => !v)}>Build graph</Toggle>
                   <Toggle on={hide} onClick={() => { setHide((v) => !v); setRevealed([]); }}>Hide answers</Toggle>
@@ -526,7 +564,7 @@ export default function UnitCircle() {
       {stacked ? (
         <div className="flex flex-col gap-3 p-3">
           <div className={card}>
-            <div className="w-full max-w-[560px] mx-auto aspect-square">{circleSvg}</div>
+            <div className="relative w-full max-w-[560px] mx-auto aspect-square">{circleSvg}{badge}</div>
             {playbar}
           </div>
           <div className={`${card} p-2`}><div className="w-full" style={{ aspectRatio: `${GW} / ${GH}` }}>{graphSvg}</div></div>
@@ -536,7 +574,7 @@ export default function UnitCircle() {
       ) : (
         <div className="flex-1 min-h-0 grid grid-cols-2 gap-3 p-3">
           <div className={`${card} flex flex-col min-h-0`}>
-            <div className="flex-1 min-h-0 p-2">{circleSvg}</div>
+            <div className="relative flex-1 min-h-0 p-2">{circleSvg}{badge}</div>
             {playbar}
           </div>
           <div className="flex flex-col gap-3 min-h-0">
