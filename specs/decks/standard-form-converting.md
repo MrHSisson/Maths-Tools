@@ -1,128 +1,128 @@
 # Deck plan: Standard form, lesson 1 (why we use it, and converting)
 
-**Status:** plan for review (2026-11-17). Nothing built. Written from the tool's code and `npm run deck -- preflight standard-form`; the sample numbers below are recomputed by `specs/decks/_check/standard-form-converting-check.py` (all pass).
-**Deck id:** `standard-form` (proposed) · **Tool:** `standard-form` (`/standard-form`, Converting tab, Levels 1 to 3; dev-gated, `enabled: false`) · **Representation:** the place value shift grid (digits slide a column, the power rolls by 1)
+**Status:** plan, revised 2026-11-17 with Harry's answers (50 minutes, no starter; numbers in parts are in; the method is repeated tens, never a moving point; one worksheet at the end). Nothing built. Every number below is recomputed by `specs/decks/_check/standard-form-converting-check.py` (93 numbers, all pass).
+**Deck id:** `standard-form` (proposed) · **Tool:** `standard-form` (`/standard-form`, Converting tab, Levels 1 to 3; dev-gated) · **Picture:** none. The method is lines of equal numbers (see "The method"); the tool's place value grid is **not used** in this deck.
 
-## The lesson (plan, using the lesson-plan template)
+## The lesson
 
-**Lesson:** Standard form 1: why we use it, and converting both ways · **Class / year:** assumed Year 9 higher (SoL Y9H Unit 4, Topics 5 to 8 sit after Indices) — *please correct* · **Length:** assumed one 60 minute lesson; the deck is built for about two, with dividers as the pick-up points · **Tool it uses:** Standard Form, Converting
+**Lesson:** Standard form 1: why we use it, and converting both ways · **Class / year:** Year 9 higher (assumed) · **Length:** 50 minutes (Harry gives his own starter) · **Tool:** Standard Form, Converting
 
-**Objective:** By the end, pupils can say why standard form is used, say whether a number is in standard form, and convert large and small numbers to and from it.
+**Objective:** pupils can say why standard form is used, say whether a number is in standard form, and convert large and small numbers to and from it, including numbers "in parts" such as 320 × 10².
 
-**Starting point:** they have met powers of 10 in Indices (positive, and 10⁻¹ to 10⁻³ as 0.1 to 0.001). Usual errors: the power is the number of zeros; the sign of the power for a small number; a coefficient outside 1 to 10 (92 × 10³); a lost internal zero (2.04 → 2.4).
+**Starting point:** powers of 10 from Indices (10³ = 1 000; 10⁻² = 0.01). The method below needs two things they have: `10 × 10 = 10²` (adding powers) and, for small numbers, `10⁻³ = 0.001`.
 
-**Class profile:** *to confirm.* Calculator assumed, used only to see its display. Writing: Harry's usual book work (nine questions, 3 × 3, or 12 in 3 columns). Numbers kept inside the tool's grid (10⁹ down to 10⁻⁶) wherever a fixed question will show the grid working.
-
-**Flow (lesson 1, indicative minutes)**
+**Teach both ways first, with lots of whiteboard practice; then one worksheet at the end** (Harry). There is no exit ticket: the worksheet is the check.
 
 | Min | What happens | Slide type |
 |---|---|---|
-| 5 | Starter: powers of 10 as ordinary numbers (10⁴, 10⁷, 10⁻², 10⁻⁵) | Retrieval starter, 2 × 2 |
-| 12 | **Why we use it:** count the zeros, spot the mistake, compare; the key definition; "is it in standard form?" | Discussion, definition, sort |
-| 20 | **Large numbers, both ways:** the grid, one idea (the power is how far the point moves); worked; whiteboards; fixed sets A and B; generator | Board, whiteboard, fixed set, generator |
-| 15 | **Small numbers, both ways:** the same idea, the power goes negative; worked; whiteboards; fixed sets C and D; generator | as above |
-| 5 | **Mixed:** you decide which way and what sign; fixed set E; generator | Fixed set, generator |
-| 3 | Exit ticket | Exit ticket, one question a row |
-| — | **Stretch, numbers in parts** (45 × 10⁵): optional, lesson 2 pick-up | Fixed set, generator (Level 3) |
-| — | **Printed worksheet:** the practice volume (see the last section) | Pinned sheet(s) |
+| 8 | **Why we use it:** the zeros test (hook), three reasons, key definition, four "is it standard form?" cards | Discussion, definition |
+| 7 | **The method, large numbers:** 2 000 = 2 × 1 000 = 2 × 10³, then the chain for 32 000 | Model, one line per click |
+| 7 | **Whiteboards, large to standard form** (WL) | Whiteboards |
+| 6 | **Back again:** 3.2 × 10⁴ to 32 000, the same lines read the other way (WF) | Model, whiteboards |
+| 5 | **Numbers in parts** (WP): the middle lines of the chain, finished off | Whiteboards |
+| 8 | **Small numbers, both ways** (WS, WT), then a mixed run (WM) | Model, whiteboards |
+| 9 | **Worksheet** (four questions) | Printed sheet |
+
+The whiteboard bank is bigger than the lesson (28 questions); the dividers are pick-up points, so what is not reached carries to lesson 2.
+
+## The method (decided with Harry): repeated tens, never a moving point
+
+**Nothing on a slide or in a caption moves, slides or shifts a decimal point or a digit, and no arrow crosses the digits.** The words are "multiply", "divide", "is the same as", "write as". The tool's place value grid ("slide every digit one column") is therefore not used in this deck.
+
+**Stage 1: a 1 followed by zeros is a power of 10.**
+`2 000 = 2 × 1 000` and `1 000 = 10³`, so `2 000 = 2 × 10³`.
+
+**Stage 2: the chain** (built one line per click), for 32 000:
+
+1. `32 000 = 3 200 × 10`
+2. `= 320 × 10 × 10`
+3. `10 × 10 = 10²`, so `= 320 × 10²`
+4. `= 32 × 10³` (320 is 32 × 10, and 10 × 10² = 10³)
+5. `= 3.2 × 10⁴` (32 is 3.2 × 10, and 10 × 10³ = 10⁴)
+
+Lines 3 and 4 are **numbers in parts** (a coefficient that is too big). They are named as stepping stones, so the "numbers in parts" work is simply "finish the chain from here". Pupils meet 32 × 10³ as a form that is *nearly* standard form and see exactly why 32 is not allowed (it is 3.2 × 10).
+
+**Back again:** the same lines read in the other direction: `3.2 × 10⁴ = 3.2 × 10 × 10³ = 32 × 10³ = 32 × 1 000 = 32 000`.
+
+**Small numbers (proposal, to confirm):** the same idea with `0.001 = 10⁻³`. `0.003 = 3 × 0.001 = 3 × 10⁻³`. Then `0.00058 = 58 × 0.00001 = 58 × 10⁻⁵ = 5.8 × 10 × 10⁻⁵ = 5.8 × 10⁻⁴` (the line `10 × 10⁻⁵ = 10⁻⁴` is the one to rehearse: `10⁻⁵` is 1 ÷ 100 000, ten times that is 1 ÷ 10 000). Back: `4.6 × 10⁻³ = 4.6 × 0.001 = 0.0046`.
+
+**Why the zeros trap is the point of the lesson:** 32 000 has three zeros but the power is 4. The chain shows why: the power is not the zeros, it is the tens that were peeled off, and the last one comes from turning 32 into 3.2 × 10. (A 1 followed by zeros, such as 1 000, does have as many zeros as its power; stage 1 uses only that.)
 
 ## Slide plan
 
 | Section | Slides |
 |---|---|
 | Opening | Title · Learning objective with three "I can" lines |
-| Starter | Powers of 10 as ordinary numbers (4 boxes; a timer) |
-| Why we use it | Divider · **Discussion, the zeros test:** show 150 000 000 km (Earth to the Sun) and 0.000007 m (a red blood cell); class write each in words, then the atom challenge, 0.00000000000000000000000000167 kg (the mass of a hydrogen atom): "count the zeros, and tell your partner how sure you are" · same three as 1.5 × 10⁸, 7 × 10⁻⁶, 1.67 × 10⁻²⁷, one per click · **Three reasons** (short to write, hard to miscount, size shown at a glance by the power) and "your calculator uses it when the screen is full" · **Key definition** (formal wording; vocabulary: ordinary number, standard form, power) · **Is it standard form?** (discussion, six cards, below) · Depth ×2 (later, once a bank exists) |
-| Large to standard form | Divider · **Board:** 4 700 000 on the grid, digits slide right one click at a time, power rolls 0 to 6, finishing 4.7 × 10⁶ (grid on, then the same with the grid off) · the two rules in words (1: point after the first non-zero digit; 2: count the places it moved) · Whiteboards 56 000 (partly completed), 8 100 000 (count), 270 000 000 (none) · **Fixed set A** (6) · generator |
-| Large to ordinary | Divider · **Board:** 6.3 × 10⁵, the digits slide left 5 columns to 630 000 · "n is how far, not how many zeros" · **Fixed set B** (6) · generator (Converting L1, Ask for both) |
-| Small to standard form | Divider · **Board:** 0.00058 on the grid, digits slide left, the power rolls 0, −1 … −4 (negative: smaller than 1) · Whiteboards 0.0042 (partly completed), 0.000063 (count), 0.00074 (none) · **Fixed set C** (6) · generator |
-| Small to ordinary | **Board:** 1.6 × 10⁻² to 0.016 · **Fixed set D** (6) · generator (Converting L2) |
-| Mixed | Divider · **Fixed set E** (6, large and small, both ways, in a shuffled order) · generator (Converting L1 + L2, Ask for both) |
-| Stretch (optional) | Divider · discussion "Is 45 × 10⁵ in standard form? Fix it." · **Fixed set P** (5) · generator (Converting L3) |
-| End | Exit ticket (3) · Summary (the definition and the two rules) |
+| Why we use it | Divider · **the zeros test:** show 150 000 000 km (Earth to the Sun) and 0.000007 m (a red blood cell), pupils say each aloud, then 0.00000000000000000000000000167 kg (a hydrogen atom): "count the zeros, and say how sure you are" · same three as 1.5 × 10⁸, 7 × 10⁻⁶, 1.67 × 10⁻²⁷, one per click · **three reasons** (short to write, hard to miscount, the power shows the size; "your calculator switches to it when the screen is full") · **key definition** (formal wording; the words ordinary number, standard form, power) · **is it standard form?** (four cards, below) |
+| The method, large | Divider · stage 1 (2 000) · stage 2, the chain for 32 000, one line per click · what is in standard form: the lines that are, the lines that are not |
+| Large to standard form | WL 1 to 7 (help climbs: chain started, a small grey hint "how many tens?", none; the last has none) |
+| Back again | The chain reversed for 3.2 × 10⁴ · WF 1 to 6 |
+| Numbers in parts | Divider (four-question recap first) · "Is 25 × 10⁶ standard form? Fix it." · WP 1 to 7 (the last three have a coefficient that is too small, 0.9 × 10⁷, and are marked as a step up) |
+| Small numbers | Divider · stage 1 and the chain for 0.003 and 0.00058 · WS 1 to 6 · the chain reversed for 1.6 × 10⁻² · WT 1 to 5 · WM 1 to 5 (mixed, both ways, shuffled) |
+| End | Worksheet (instructions only, no title; the answers shown on a click) · Summary |
 
-Dividers are pick-up points; the slide after a divider where the lesson is likely to restart is a four-question recap (per `docs/design/LESSON_STYLE.md`).
+**Is it standard form?** (four cards, each answer a reason): `3.8 × 10⁵` yes (3.8 is between 1 and 10) · `38 × 10⁴` no (38 is 10 or more) · `0.38 × 10⁶` no (0.38 is less than 1) · `9.99 × 10⁻³` yes (a negative power is fine). Spares for a Depth card later: `10 × 10²` (10 is not below 10) and `380 000` (an ordinary number).
 
-### "Is it standard form?" (discussion cards; each answer is a reason, not just yes or no)
+## The whiteboard bank
 
-| Card | In standard form? | Why / the fix |
-|---|---|---|
-| 3.8 × 10⁵ | Yes | 3.8 is between 1 and 10 |
-| 38 × 10⁴ | No | 38 is 10 or more: 3.8 × 10⁵ |
-| 0.38 × 10⁶ | No | 0.38 is less than 1: 3.8 × 10⁵ |
-| 9.99 × 10⁻³ | Yes | 9.99 is below 10; a negative power is fine |
-| 10 × 10² | No | 10 is not below 10: 1 × 10³ |
-| 380 000 | No | it is an ordinary number |
+Whiteboard slides are full width, centred, one question each, with the help climbing; working is authored as the lines of the chain (not the grid), so a pupil's own working looks like the model's. **Authored questions have no levels.** Every pair of coefficient digits and power is used by one question only (checked); the hook and worked numbers are asked nowhere.
 
-## The question ladders (Harry to agree before any question is written, per the authoring routine)
-
-One ladder shape for all four sets; **consecutive questions change one thing**. Edge cases are few and last. Calculators are not needed. Authored working uses the tool's own captions and the grid, so it matches the generator (R42).
-
-| Rung | Large (sets A, B) | Small (sets C, D) |
-|---|---|---|
-| 1 | one significant figure, round (7 000) | one significant figure (0.006) |
-| 2 | two figures | two figures |
-| 3 | extreme power (six zeros) | extreme power (the grid's 10⁻⁶) |
-| 4 | three figures | three figures |
-| 5 | internal zero (2.04) | internal zero (3.05) |
-| 6 | edge: coefficient is 1 (100 000), or in B, the answer has a decimal point (648.2) | edge: power only −1 (0.82), the "no zeros but still negative" case |
-
-**Traps** (new tags to add to `src/shared/misconceptions.ts`; none for standard form exist yet):
-
-| Tag (proposed) | Wrong method | Caught by |
-|---|---|---|
-| `sf-count-zeros` | power = the number of zeros, not the places the point moved | A2, A4, A5, C2, C4, C5 (the zeros-count power differs from the right one in each; checked) |
-| `sf-small-positive-power` | a small number gets a positive power | every question in C |
-| `sf-coefficient-range` | 92 × 10³, 0.92 × 10⁵ | A2, A4 and the "Is it standard form?" cards |
-| `sf-lost-internal-zero` | 2.04 → 2.4 | A5, C5, B5 |
-| `sf-adds-zeros` | to ordinary: writes the digits then n zeros (4.07 × 10⁷ → 4.07 followed by 7 zeros) | B5, B6 |
-| `sf-point-wrong-way` | moves the point the wrong way (big power, small number) | D1 to D5 |
-
-### Sample numbers (all recomputed by an independent route; no (digits, power) pair is used twice)
-
-| Slot | Numbers (ordinary ⇄ standard form) |
+| Run | Numbers (ordinary ⇄ standard form) |
 |---|---|
-| Hook | 150 000 000 = 1.5 × 10⁸ · 0.000007 = 7 × 10⁻⁶ · 0.00000000000000000000000000167 = 1.67 × 10⁻²⁷ |
-| Worked | 4 700 000 = 4.7 × 10⁶ · 630 000 = 6.3 × 10⁵ · 0.00058 = 5.8 × 10⁻⁴ · 0.016 = 1.6 × 10⁻² |
-| Whiteboards, large | 56 000 = 5.6 × 10⁴ · 8 100 000 = 8.1 × 10⁶ · 270 000 000 = 2.7 × 10⁸ |
-| Whiteboards, small | 0.0042 = 4.2 × 10⁻³ · 0.000063 = 6.3 × 10⁻⁵ · 0.00074 = 7.4 × 10⁻⁴ |
-| **A** to standard form | 7 000 = 7 × 10³ · 92 000 = 9.2 × 10⁴ · 640 000 000 = 6.4 × 10⁸ · 358 000 = 3.58 × 10⁵ · 2 040 000 = 2.04 × 10⁶ · 100 000 = 1 × 10⁵ |
-| **B** to ordinary | 5 × 10⁴ = 50 000 · 3.9 × 10⁶ = 3 900 000 · 7.1 × 10³ = 7 100 · 2.65 × 10⁵ = 265 000 · 4.07 × 10⁷ = 40 700 000 · 6.482 × 10² = 648.2 |
-| **C** to standard form | 0.006 = 6 × 10⁻³ · 0.00091 = 9.1 × 10⁻⁴ · 0.000008 = 8 × 10⁻⁶ · 0.0364 = 3.64 × 10⁻² · 0.00305 = 3.05 × 10⁻³ · 0.82 = 8.2 × 10⁻¹ |
-| **D** to ordinary | 2 × 10⁻³ = 0.002 · 5.9 × 10⁻² = 0.059 · 8.3 × 10⁻⁵ = 0.000083 · 1.45 × 10⁻³ = 0.00145 · 6.02 × 10⁻⁴ = 0.000602 · 4.7 × 10⁻¹ = 0.47 |
-| **E** mixed | 56 700 000 → 5.67 × 10⁷ · 3.1 × 10⁻⁴ → 0.00031 · 0.000046 → 4.6 × 10⁻⁵ · 8.04 × 10⁶ → 8 040 000 · 940 000 → 9.4 × 10⁵ · 0.0705 → 7.05 × 10⁻² |
-| Exit ticket | 17 000 000 → 1.7 × 10⁷ · 0.00036 → 3.6 × 10⁻⁴ · 5.2 × 10⁻³ → 0.0052 |
-| **P** stretch | 24 × 10⁵ → 2.4 × 10⁶ · 0.7 × 10⁴ → 7 × 10³ · 365 × 10³ → 3.65 × 10⁵ · 0.052 × 10⁻² → 5.2 × 10⁻⁴ · 480 × 10⁻⁵ → 4.8 × 10⁻³ |
+| Worked | 2 000 = 2 × 10³ · 32 000 = 3.2 × 10⁴ · 0.003 = 3 × 10⁻³ · 0.00058 = 5.8 × 10⁻⁴ · 1.6 × 10⁻² = 0.016 |
+| **WL** large to standard form | 60 000 = 6 × 10⁴ · 450 000 = 4.5 × 10⁵ · 91 000 = 9.1 × 10⁴ · 7 300 000 = 7.3 × 10⁶ · 862 000 = 8.62 × 10⁵ · 3 050 000 = 3.05 × 10⁶ (internal zero) · 100 000 = 1 × 10⁵ (coefficient 1) |
+| **WF** large to ordinary | 9 × 10⁴ = 90 000 · 5.4 × 10³ = 5 400 · 2.8 × 10⁶ = 2 800 000 · 7.25 × 10⁵ = 725 000 · 3.06 × 10⁷ = 30 600 000 (internal zero) · 8.346 × 10² = 834.6 (the answer has a decimal point) |
+| **WP** in parts | 50 × 10⁶ → 5 × 10⁷ · 25 × 10⁵ → 2.5 × 10⁶ · 640 × 10² → 6.4 × 10⁴ · 480 × 10⁻⁵ → 4.8 × 10⁻³ · 0.9 × 10⁷ → 9 × 10⁶ · 0.38 × 10⁸ → 3.8 × 10⁷ · 0.052 × 10⁻² → 5.2 × 10⁻⁴ |
+| **WS** small to standard form | 0.0007 = 7 × 10⁻⁴ · 0.025 = 2.5 × 10⁻² · 0.00046 = 4.6 × 10⁻⁴ · 0.000019 = 1.9 × 10⁻⁵ · 0.00802 = 8.02 × 10⁻³ (internal zero) · 0.4 = 4 × 10⁻¹ (power only −1) |
+| **WT** small to ordinary | 2 × 10⁻³ = 0.002 · 3.7 × 10⁻² = 0.037 · 9.2 × 10⁻⁴ = 0.00092 · 5.01 × 10⁻³ = 0.00501 · 2.6 × 10⁻¹ = 0.26 |
+| **WM** mixed | 83 000 000 → 8.3 × 10⁷ · 4.5 × 10⁻⁵ → 0.000045 · 0.00061 → 6.1 × 10⁻⁴ · 7.04 × 10⁶ → 7 040 000 · 540 000 → 5.4 × 10⁵ |
 
-**Numbers already used** (worked, hook, discussion, whiteboards, the "Is it standard form?" cards): no question in A to E, the exit ticket or the worksheet may reuse them; the exit ticket uses numbers used nowhere else. Set B6 (648.2) and set A6 are written by hand: the generator's Level 1 does not draw them, so check the grid still fits (B6 is four digits).
+**The ladder** (consecutive questions change one thing; edge cases last): one non-zero digit · two digits · more digits · internal zero · coefficient 1 or power only ±1 or a decimal answer.
+
+**Traps** (new tags for `src/shared/misconceptions.ts`; none for standard form exist):
+
+| Tag (proposed) | Wrong method | Where it bites |
+|---|---|---|
+| `sf-count-zeros` | the power is the number of zeros (32 000 → 3.2 × 10³) | every question whose coefficient has two or more digits or whose number is small (checked: the zeros count differs from the power in 29 of the 34 to-standard-form questions; it matches only in WL1, WL7 and worksheet 1a, 1b, 1i, which are the one-digit and coefficient-1 cases) |
+| `sf-coefficient-range` | 32 × 10³, 0.32 × 10⁵ left as the answer | WP, the cards, the chain's middle lines |
+| `sf-small-positive-power` | a small number gets a positive power | every small to-standard-form question |
+| `sf-negative-power-large` | a negative power makes a big number (3.7 × 10⁻² = 370) | WT, worksheet 4 |
+| `sf-negative-power-negative` | a negative power makes a negative number (−0.037) | WT, worksheet 4 |
+| `sf-lost-internal-zero` | 3.05 → 3.5 | WL6, WS5, WF5, WT4 |
+| `sf-adds-zeros` | to ordinary: the digits then n zeros (4.07 × 10⁷ → 4.07 followed by seven zeros) | WF5, WF6 |
+
+## The worksheet (one, at the end; textbook format)
+
+Four numbered questions, each a to l in three columns of four, climbing the ladder above:
+
+| Q | Asks | Parts |
+|---|---|---|
+| 1 | Write in standard form (large) | a to i whole numbers; j to l numbers in parts (36 × 10⁴, 810 × 10³, 0.74 × 10⁸) |
+| 2 | Write as an ordinary number (large) | a to l (ends on 3.274 × 10⁵, 6.005 × 10⁴, 9.18 × 10²) |
+| 3 | Write in standard form (small) | a to i; j to l in parts (750 × 10⁻⁶, 0.6 × 10⁻², 0.081 × 10⁻³) |
+| 4 | Write as an ordinary number (small) | a to l (ends on 5.381 × 10⁻², 1.002 × 10⁻³, 7.7 × 10⁻⁷) |
+
+All 48 numbers are in the checked file, none used on a slide. Pupils answer in their books; there is an answers page and the slide shows the answers on a click. Possible textbook extras: a "Key ideas" box (the definition and the chain in one picture) and one worked example per question.
+
+**To confirm:** I read "a worksheet which looks at 4 questions" as these four questions with lettered parts. If you meant four short questions in total, it is a smaller sheet with the same four kinds. Also: are the in-parts parts (Q1 j to l, Q3 j to l) wanted on the sheet, or only on whiteboards?
+
+**Open: how a textbook layout is produced.** Pinned worksheets (up to three, A4 or A5, hand-written `frozen` sets, an answer sheet) are numbered grids of questions; they have no lettered parts. Options: (a) one pinned A4 sheet using the existing engine, the lettered parts written into each question's cell (four cells); (b) a new printable in `src/shared/printables.ts` with the textbook layout (R38 limits printables to blanks pupils fill in, so it needs a decision); (c) a document built outside the deck and linked from the lesson. We agreed to settle this when we get there; a one-page mock-up of (a) is the first step.
 
 ## What already exists, and what needs building
 
 | Need | Status |
 |---|---|
-| Converting tab, Levels 1 to 3, the grid working, Whiteboard / Worked Example / Worksheet | **Yes.** Levels: L1 large, L2 small, L3 "in parts". Ask for both ways; digits 1 to 3; internal zero option |
-| Standard Form tool live | **No: `enabled: false`.** Decks link to it; confirm a deck's generator slides work against a dev-gated tool, or take it live (the tool's review is open in `docs/TASKS.md`) |
-| The grid as a **slide piece** (a board that slides one column per click, grid on and off) | **To check.** The tool draws it; deck slides have ratio tables and bar models but this is not a listed slide piece. If missing, build it as part of this deck, from `PlaceValueShift.tsx` (the deck checklist's side-task list) |
-| **Fixed-question builder** (`Q.standardForm…`) | **None** (preflight). Pull the Converting generator's inner function (digits and power in, question and grid working out) into its own file, then add a `Q.` builder that verifies the answer; pattern `src/tools/Proportion/ratioFromFraction.ts`. Needed for sets A to E and P to carry the grid working |
-| **Depth bank** | **None** (preflight), so no Depth cards yet. Write `specs/depth/standard-form.md` from `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`: the "which is in standard form?" choice and the six misconception wrongs above (TASKS already says these belong in Depth, not the generator). Two cards, at the end of "Why" and at the end of "Small" (never three together, R44) |
-| Mixed options skewing | Preflight flags Multiplying & Dividing only; not used in this lesson |
-| `<Tool>.about.ts` | Exists; no change |
-
-## The printed worksheet (textbook format; to review later, as agreed)
-
-Not planned in detail yet. What follows is a starting point for that review.
-
-- **Why print:** the practice volume is too large for book-work slides; pupils work in books or on the sheet.
-- **Textbook shape:** a "Key ideas" box (definition and the two rules); a **Worked example** box per skill (large to standard form, small to standard form, standard form to ordinary); then **lettered exercises** of twelve parts (a to l) climbing the same ladder as the sets above, in 3 columns × 4 rows; an end block of **problem solving and reasoning** (spot the mistake, "Is it standard form? Explain", a short context question); an **answers** page.
-- **Likely exercises:** 1 Is it standard form? · 2 Large to standard form · 3 Standard form to large · 4 Small to standard form · 5 Standard form to small · 6 Mixed · 7 In parts (stretch) · 8 Problem solving. About three A4 sides and an answer page.
-- **All numbers fresh:** none from the table above, none from the deck's own sets; the same ladder and traps.
-- **Open: how it is produced.** The lesson's pinned worksheets (up to three, A4 or A5, hand-written `frozen` sets, an answer sheet) are grids of numbered questions; they have no worked-example box and no lettered parts. Options: (a) up to three pinned A4 sheets using the existing engine, one per stage, lettered parts written into each cell; (b) a new printable in `src/shared/printables.ts` with the textbook layout (a build, and R38 limits printables to blanks pupils fill in, so it needs deciding); (c) a document built outside the deck, linked from the lesson. I recommend settling the layout first on a one-page mock-up, then choosing.
+| Converting tab, Levels 1 to 3 (large, small, in parts), Whiteboard / Worked Example / Worksheet | **Yes**, but its working is the place value grid ("slide every digit one column"), which is the idea this lesson avoids. **Decision needed (below).** |
+| **Working in the chain method** | **To build.** The working lines (peel a ten, combine the tens, finish the coefficient) are ordinary `mStep` lines, with no new picture. The generator's number and answer stay as they are; only the working changes (R5: one computation) |
+| Fixed-question builder (`Q.…`) | **None** (preflight). Because the working is plain lines the builder is small: take the Converting generator's inner function out into its own file (pattern `src/tools/Proportion/ratioFromFraction.ts`), add a `Q.` builder that verifies the answer |
+| Depth bank | **None.** Write `specs/depth/standard-form.md` from `docs/design/templates/DEPTH_SPEC_TEMPLATE.md` once the deck is agreed: "which is in standard form?" and the seven wrongs above. The deck has none until then |
+| The tool is dev-gated (`enabled: false`) | Confirm generator slides work against it, or take it live |
+| `<Tool>.about.ts` | Needs a line for the new method (R11) |
 
 ## To settle with Harry
 
-1. **Class, year and length** (assumed above), and the calculator.
-2. **The ladders and traps** above: right rungs for this class? Anything to add (for example a "which is bigger, 6 × 10⁻⁴ or 6 × 10⁻⁵?" idea belongs in lesson 2)?
-3. **Stretch, numbers in parts:** in lesson 1 as an optional last section, or move to lesson 2 with comparing and the calculations? I lean to lesson 2.
-4. **The hook:** are the Sun, blood cell and atom the right examples, or is there a better class story?
-5. **Worksheet production** (the open question above), when we get to it.
-6. **Build order I propose:** the Converting fixed-question builder, then the Depth bank spec, then the look card (`npm run deck -- looks`), then the deck, then the worksheet.
+1. **The tool's working (needs a yes or no).** Recommendation: add a **Method** option on Converting, "Powers of 10" and "Place value grid", display-only (R24: it changes only the displayed working), with "Powers of 10" the default, so the tool and the deck teach the same idea and the grid stays for anyone who wants it. Alternative: change the working outright and drop the grid. Either way the grid's "slide" captions are not used in this deck.
+2. **Small numbers:** is the `0.001 = 10⁻³` route right, with `10 × 10⁻⁵ = 10⁻⁴` as the line to rehearse?
+3. **Too-small coefficients** (0.9 × 10⁷, the last three of WP): in lesson 1, or lesson 2? I have put them last and marked as a step up.
+4. **Worksheet:** the reading of "four questions" above, and the in-parts parts.
+5. **Build order (agreed):** the Converting working and fixed-question builder, then the Depth bank spec, then the look card (`npm run deck -- looks`), then the deck, then the worksheet.
