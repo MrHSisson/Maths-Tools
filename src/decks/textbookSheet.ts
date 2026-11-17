@@ -6,7 +6,7 @@ import type { PrintMode } from "../shared";
 import { openPrintWindow } from "../shared/print";
 import type { DeckElement, Slide } from "./types";
 
-export interface TextbookBlock {
+interface TextbookBlock {
   /** "Write each of the following numbers in standard form." The question number is added. */
   instruction: string;
   /** One maths string (KaTeX, no dollar signs) per part, in the order (a), (b), (c) ... */
