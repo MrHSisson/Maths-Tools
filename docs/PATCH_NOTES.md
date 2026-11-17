@@ -41,6 +41,7 @@ Branch `claude/busy-knuth-ru9nyt`. Area: the `year7-rectilinear-area` deck (live
 - Follow-up (same day, after Harry's review): worksheet page A is back to T, L, T, L area questions (no internal lengths) at four different turns; page B is a three-step staircase, a cross, a new **capital I** and a rotated staircase; page C unchanged. No four-step staircase on the worksheet or slide 5 (too many lengths); slide 5 now ends with a capital I.
 - New shape `I` and optional `stepWidths` / `stepHeights` on staircases (`api/_rectilinear.ts`), so steps need not all match (the old uniform steps made every label 3 or 4). Area is now checked against the shoelace area of the drawn outline, not a per-shape formula. The authoring panel lists the Capital I (step sizes are set in data, not in the panel).
 - Worksheet clarity: pictures are larger (about 72mm tall), and the first question of each page is laid out as numbered steps (find the lengths you need, find each rectangle, add them up; or whole rectangle, part cut out, take it away).
+- Label clarity fix: the inside lengths are now chosen as the fewest, longest edges that put one length inside at every 270° corner, never two that meet at a 90° corner (they touched on the mirrored staircase), and page A uses it too (the L had a stray 3 cm beside its 5 cm).
 - Not done: other slides' diagrams (slides 4, 6–8) still have every length outside; the reportlab PDFs in `specs/decks/_check/` were not changed.
 
 Agent: Claude Code

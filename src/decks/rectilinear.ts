@@ -1,6 +1,6 @@
 import { aspectOf } from "../shared/shapes/Diagram";
 import { extras } from "../shared/questionExtras";
-import type { Drawing, Focus } from "../shared/shapes/drawing";
+import type { DEdge, Drawing, Focus } from "../shared/shapes/drawing";
 import { isRectilinearSpec, rectilinearPolygons, type RectilinearSpec } from "../../api/_rectilinear";
 import { buildCompound, chosenMissingSide } from "../tools/Geometry/perimeterArea/compound";
 import { toQuestion } from "../tools/Geometry/perimeterArea/build";
@@ -60,20 +60,31 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
     focuses.splice(0,focuses.length,{regions:drawing.regions.filter(r=>r.id.startsWith("s")).map(r=>r.id)});
   }
   if (spec.insideLengths) {
-    // At a 270° corner the two lengths that meet there sit side by side in the same notch. Draw ONE of the pair inside the
-    // shape (the longer side, which has the room; the horizontal one if they tie) and leave every other length outside.
+    // At a 270° corner the two lengths that meet there sit side by side in the same notch, so ONE of the pair is drawn inside the shape.
+    // Choose the fewest, longest ones, and never two that meet at a 90° corner (their inside labels would touch there).
     const poly = drawing.polys[0], n = poly.length;
     const sign = Math.sign(poly.reduce((t, p, i) => t + p[0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * p[1], 0));
     const edgeOf = (a: Pt, b: Pt) => drawing.edges.find(e => e.kind === "plain" && !!e.label && ((e.a[0] === a[0] && e.a[1] === a[1] && e.b[0] === b[0] && e.b[1] === b[1]) || (e.a[0] === b[0] && e.a[1] === b[1] && e.b[0] === a[0] && e.b[1] === a[1])));
-    const length = (a: Pt, b: Pt) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const length = (e: { a: Pt; b: Pt }) => Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]);
+    const needs: DEdge[][] = [], apart: DEdge[][] = [];
     for (let i = 0; i < n; i++) {
       const prev = poly[(i + n - 1) % n], v = poly[i], next = poly[(i + 1) % n];
-      const cross = (v[0] - prev[0]) * (next[1] - v[1]) - (v[1] - prev[1]) * (next[0] - v[0]);
-      if (cross * sign >= 0) continue;                                   // a 90° corner, not a 270° one
       const before = edgeOf(prev, v), after = edgeOf(v, next);
-      if (!before || !after || before.inside || after.inside) continue;  // a side with no label does not crowd its neighbour
-      const lb = length(prev, v), la = length(v, next);
-      (lb > la || (lb === la && prev[1] === v[1]) ? before : after).inside = true;
+      if (!before || !after) continue;                                   // a side with no label does not crowd its neighbour
+      const cross = (v[0] - prev[0]) * (next[1] - v[1]) - (v[1] - prev[1]) * (next[0] - v[0]);
+      (cross * sign < 0 ? needs : apart).push([before, after]);
+    }
+    const pool = [...new Set(needs.flat())];
+    if (pool.length <= 16) {
+      let best = -Infinity, pick = 0;
+      for (let mask = 0; mask < 1 << pool.length; mask++) {
+        const on = (e: DEdge) => !!(mask >> pool.indexOf(e) & 1);
+        if (!needs.every(([x, y]) => on(x) || on(y)) || apart.some(([x, y]) => pool.includes(x) && pool.includes(y) && on(x) && on(y))) continue;
+        let score = 0;
+        pool.forEach((e, k) => { if (mask >> k & 1) score += length(e) - 1000; });
+        if (score > best) { best = score; pick = mask; }
+      }
+      pool.forEach((e, k) => { if (pick >> k & 1) e.inside = true; });
     }
   }
   extras(q)._aspect = aspectOf(drawing);

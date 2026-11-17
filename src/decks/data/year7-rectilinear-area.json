@@ -1398,7 +1398,8 @@
                 "width": 12,
                 "height": 9,
                 "cutWidth": 4,
-                "cutHeight": 5
+                "cutHeight": 5,
+                "insideLengths": true
               }
             },
             {
@@ -1433,7 +1434,8 @@
                 "width": 13,
                 "height": 8,
                 "cutWidth": 5,
-                "cutHeight": 3
+                "cutHeight": 3,
+                "insideLengths": true
               }
             },
             {
@@ -1470,7 +1472,8 @@
                 "width": 15,
                 "height": 10,
                 "cutWidth": 5,
-                "cutHeight": 4
+                "cutHeight": 4,
+                "insideLengths": true
               }
             },
             {
@@ -1505,7 +1508,8 @@
                 "width": 11,
                 "height": 12,
                 "cutWidth": 6,
-                "cutHeight": 7
+                "cutHeight": 7,
+                "insideLengths": true
               }
             },
             {
