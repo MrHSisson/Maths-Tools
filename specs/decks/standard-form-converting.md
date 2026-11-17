@@ -1,11 +1,11 @@
 # Deck plan: Standard form, lesson 1 (why we use it, and converting)
 
-**Status:** plan, revised 2026-11-17 (third round with Harry: the place value grid comes in as the second stage). Nothing built. Every number below is recomputed by `specs/decks/_check/standard-form-converting-check.py` (115 questions and 14 worked or hook numbers; all correct, none repeated, none used on a slide and also asked).
+**Status:** plan, revised 2026-11-17 (fourth round with Harry: printed book work inside the lesson). Nothing built. Every number below is recomputed by `specs/decks/_check/standard-form-converting-check.py` (115 questions and 14 worked or hook numbers; all correct, none repeated, none used on a slide and also asked).
 **Deck id:** `standard-form` (proposed) · **Tool:** `standard-form` (`/standard-form`, Converting tab, Levels 1 to 3; dev-gated)
 
 ## Decided with Harry
 
-- **50 minutes, no starter** (Harry gives his own). One worksheet at the end: four questions (large to standard form, large to ordinary, small to standard form, small to ordinary), a to l each, textbook format.
+- **50 minutes, no starter** (Harry gives his own). **Printed book work inside the lesson**, not only at the end: the pupils need something to do in their books, and it is printed because counting the zeros in a long number off a projector, and copying it down, is really hard. Four questions (large to standard form, large to ordinary, small to standard form, small to ordinary), a to l each, textbook format, **on two printed sheets**: Sheet 1 (large) after the large section, Sheet 2 (small) after the small section.
 - **The pupils have just done the laws of indices**, so the method uses them: `10 × 10 = 10²`, `10 × 10² = 10³`, and for small numbers `1/10² = 10⁻²` and `10 × 10⁻⁵ = 10⁻⁴`.
 - **Large numbers** (Harry's route): `2 000 = 2 × 1 000`, `1 000 = 10³`. Then the chain, `32 000 = 3 200 × 10 = 320 × 10 × 10`, `10 × 10 = 10²`, `320 × 10² = 32 × 10³ = 3.2 × 10⁴`.
 - **Small numbers** (Harry's route, via a division and the index law): `0.02 = 2 ÷ 100 = 2 × 1/100 = 2 × 1/10² = 2 × 10⁻²`.
@@ -19,16 +19,25 @@
 
 **Class:** Year 9 higher (assumed) · **Starting point:** laws of indices, just taught; powers of 10 as ordinary numbers. Usual errors: the power is the number of zeros; a small number gets a positive power; `1/10²` read as `10²`; a coefficient outside 1 to 10; a lost internal zero.
 
-| Min | What happens | Slide type |
-|---|---|---|
-| 6 | **Why we use it:** the zeros test, three reasons, the definition, four "is it standard form?" cards | Discussion, definition |
-| 14 | **Large to standard form:** the chain, a few whiteboards, **the grid** (the bridge), whiteboards, then numbers in parts | Model, whiteboards |
-| 6 | **Large from standard form:** the chain read the other way, whiteboards | Model, whiteboards |
-| 14 | **Small to standard form:** the index-law recap, a build-up of four models, a few whiteboards, **the grid**, whiteboards | Model, whiteboards |
-| 6 | **Small from standard form** and numbers in parts for small numbers | Model, whiteboards |
-| 4 | **Worksheet** handed out; finished at the start of the next lesson or at home | Printed sheet |
+Printing the book work changes the time: each sheet needs about 15 minutes in the lesson (two to hand out and start, the rest working). Two ways to fit it, **I recommend B**:
 
-**Honest note on time:** with this much on small numbers and a large bank, 50 minutes reaches about the end of "Small from standard form"; the dividers are pick-up points, so the mixed run and the worksheet can open the next lesson. I would rather plan that than rush the small numbers.
+**B. Two lessons, a sheet in each** (recommended: it keeps lots of whiteboard practice and gives the small numbers the effort you asked for)
+
+| Lesson | Min | What happens | Slide type |
+|---|---|---|---|
+| 1 | 5 | **Why we use it:** the zeros test, three reasons, the definition, four "is it standard form?" cards | Discussion, definition |
+| 1 | 12 | **Large to standard form:** the chain, a few whiteboards, **the grid** (the bridge), whiteboards | Model, whiteboards |
+| 1 | 7 | **Large from standard form:** the chain read the other way, whiteboards | Model, whiteboards |
+| 1 | 6 | **Numbers in parts (large):** whiteboards | Whiteboards |
+| 1 | 15 | **Sheet 1 (printed): Q1 and Q2, large**, in books | Printed sheet |
+| 1 | 5 | A mixed large run, or the summary | Whiteboards |
+| 2 | 20 | **Small to standard form:** the index-law recap, four models, a few whiteboards, **the grid**, whiteboards | Model, whiteboards |
+| 2 | 8 | **Small from standard form**, whiteboards | Model, whiteboards |
+| 2 | 6 | **Numbers in parts (small):** whiteboards | Whiteboards |
+| 2 | 15 | **Sheet 2 (printed): Q3 and Q4, small**, in books | Printed sheet |
+| 2 | — | Mixed run (WM) and generator slides, if time | Whiteboards |
+
+**A. One 50 minute lesson, everything:** Why 5 · large to standard form 9 · large from 4 · **Sheet 1** 8 · small to standard form 10 · small from 4 · **Sheet 2** 8 · summary 2. It fits only by cutting the whiteboards to about ten in total, dropping numbers in parts to a single example, and giving about six minutes to each sheet (a to f of each question; the rest at home).
 
 ## The method in full
 
@@ -72,11 +81,11 @@ After the bridge, whiteboard working in the run shows the grid, with the chain s
 | Opening | Title · Learning objective with three "I can" lines |
 | Why we use it | Divider · **the zeros test:** 150 000 000 km (Earth to the Sun) and 0.000007 m (a red blood cell) said aloud, then 0.00000000000000000000000000167 kg (a hydrogen atom): "count the zeros, and say how sure you are" · the same three as 1.5 × 10⁸, 7 × 10⁻⁶, 1.67 × 10⁻²⁷ · **three reasons** (short to write, hard to miscount, the power shows the size; "your calculator switches to it when the screen is full") · **key definition** (formal wording; ordinary number, standard form, power) · **is it standard form?**: `3.8 × 10⁵` yes (3.8 is between 1 and 10) · `38 × 10⁴` no (38 is 10 or more) · `0.38 × 10⁶` no (0.38 is less than 1) · `9.99 × 10⁻³` yes (a negative power is fine) |
 | Large to standard form | Divider · stage 1 (2 000) · the chain for 32 000, one line per click · which lines are standard form and which are not · WL 1 to 4 (chain working) · **the bridge: the chain on the grid** and the rule · WL 5 to 10 (grid working) · divider (four-question recap) · numbers in parts: "Is 25 × 10⁶ standard form? Fix it." · WPL 1 to 8 |
-| Large from standard form | The chain reversed · WF 1 to 3 · the grid reversed (the number moves up, the power goes down) · WF 4 to 9 |
+| Large from standard form | The chain reversed · WF 1 to 3 · the grid reversed (the number moves up, the power goes down) · WF 4 to 9 · **book work slide: Sheet 1** (an instruction only, no title: "Sheet 1, questions 1 and 2"; answers on a click) |
 | Small to standard form | Divider · four retrieval questions · models 1 to 4 (one per slide, one line per click) · WS 1 to 4 (chain working) · **the bridge, small:** 0.02 on the grid, the number moves up, the power goes down, and the rule again · WS 5 to 12 (grid working) |
-| Small from standard form | The two reversed models · WT 1 to 4 (chain working) · the grid reversed · WT 5 to 10 · numbers in parts, small: worked `0.8 × 10³` on the chain and on the grid, then WPS 1 to 8 |
-| Mixed (next lesson, or if time) | Divider · WM 1 to 10 · generator slides (Converting L1, L2, L3) |
-| End | Worksheet slide (instruction only, no title; answers on a click) · Summary |
+| Small from standard form | The two reversed models · WT 1 to 4 (chain working) · the grid reversed · WT 5 to 10 · numbers in parts, small: worked `0.8 × 10³` on the chain and on the grid, then WPS 1 to 8 · **book work slide: Sheet 2** (questions 3 and 4; answers on a click) |
+| Mixed (if time) | Divider · WM 1 to 10 · generator slides (Converting L1, L2, L3) |
+| End | Summary (the definition, the chain, the rule) |
 
 ## The whiteboard bank (67 questions, all authored)
 
@@ -108,20 +117,22 @@ Whiteboards are full width and centred, one question each, with help that climbs
 | `sf-lost-internal-zero` | 3.06 → 3.6 | WL9, WS10, WF7, WT8 |
 | `sf-adds-zeros` | to ordinary: the digits then n zeros (5.08 × 10⁶ → 5.08 followed by six zeros) | WF7, WF9 |
 
-## The worksheet (one, at the end; textbook format)
+## The printed sheets (two, used inside the lesson; textbook format)
 
-Four numbered questions, each a to l in three columns of four, climbing the same ladder; **no numbers in parts** on the sheet (they are practised in each section, and appear as lines of the pupils' own working):
+Four numbered questions, each a to l in three columns of four, climbing the same ladder, on **two sheets**: **Sheet 1** (Q1, Q2: large, taught first) and **Sheet 2** (Q3, Q4: small). **No numbers in parts** on the sheets (they are practised on the whiteboards in each section and appear as lines of the pupils' own working). Pupils answer in their books; each sheet has an answers page, and the slide shows the answers on a click. In the lesson pupils start with a to f of each question; g to l are the stretch, or home.
 
-| Q | Asks | Ends on |
-|---|---|---|
-| 1 | Write in standard form (large) | 1 000 000 (coefficient 1), then 1 280 000, 90 700 000, 6 150 000 |
-| 2 | Write as an ordinary number (large) | 3.274 × 10⁵, 6.005 × 10⁴, 9.18 × 10² |
-| 3 | Write in standard form (small) | 0.3 (power −1), then 0.00725, 0.0000604, 0.0013 |
-| 4 | Write as an ordinary number (small) | 5.381 × 10⁻², 1.002 × 10⁻³, 7.7 × 10⁻⁷ |
+| Sheet | Q | Asks | Ends on |
+|---|---|---|---|
+| 1 | 1 | Write in standard form (large) | 1 000 000 (coefficient 1), then 1 280 000, 90 700 000, 6 150 000 |
+| 1 | 2 | Write as an ordinary number (large) | 3.274 × 10⁵, 6.005 × 10⁴, 9.18 × 10² |
+| 2 | 3 | Write in standard form (small) | 0.3 (power −1), then 0.00725, 0.0000604, 0.0013 |
+| 2 | 4 | Write as an ordinary number (small) | 5.381 × 10⁻², 1.002 × 10⁻³, 7.7 × 10⁻⁷ |
 
-All 48 numbers are in the checked file; none appears on a slide. Pupils answer in their books; an answers page, and the slide shows the answers on a click. Possible textbook extras: a "Key ideas" box (the definition and the chain) and a worked example for each question.
+All 48 numbers are in the checked file; none appears on a slide. Possible textbook extras on each sheet: a "Key ideas" box (the definition and the chain, or the rule) and one worked example per question.
 
-**Open: how a textbook layout is produced.** Pinned worksheets (up to three, A4 or A5, hand-written `frozen` sets, an answer sheet) are numbered grids; they have no lettered parts. Options: (a) one pinned A4 sheet with four cells, the lettered parts written into each; (b) a new printable in `src/shared/printables.ts` with the textbook layout (R38 limits printables to blanks pupils fill in, so it needs a decision); (c) a document built outside the deck and linked from it. A one-page mock-up of (a) is the first step when we reach it.
+**Making the zeros countable (why it is printed):** large numbers print in groups of three (`4 070 000`, a thin space, in a big even-width font) on the sheets and on the slides. Small numbers are harder; proposal for the look card: print the digits after the point in groups of three too (`0.000 058 3`) on the sheets and whiteboards, so a pupil can see how many places there are, with a note that exam papers do not group them. Decide on the picture, not in words.
+
+**Open: how the textbook layout is produced.** Pinned worksheets (up to three, A4 or A5, hand-written `frozen` sets, an answer sheet) are numbered grids; they have no lettered parts and one instruction above the set. Two sheets fits the limit of three. Options: (a) two pinned A4 sheets, each with two blocks (an instruction above each 12) and the answers sheet, using the engine as it is if it can carry two instructions on one sheet (to check); (b) a new printable in `src/shared/printables.ts` with the textbook layout (R38 limits printables to blanks pupils fill in, so it needs a decision); (c) a document built outside the deck and linked from it. A one-page mock-up of (a) is the first step, now that the sheets are needed for lesson 1 rather than last. The third pinned sheet is free: a mixed sheet with numbers in parts for the second lesson, if wanted.
 
 ## What already exists, and what needs building
 
@@ -139,7 +150,9 @@ All 48 numbers are in the checked file; none appears on a slide. Pupils answer i
 
 1. **The tool's working (answered in part):** the grid is kept and used as the second stage. Still open: the new chain working as a **Method** option on Converting (display-only, R24), "Powers of 10" and "Place value grid", and which is the tool's default. For this lesson the deck uses the chain first and the grid second either way.
 2. **Small numbers, model 3:** `0.00058 = 58 ÷ 100 000`: is the line "58 is 5.8 × 10, which takes one off the power" the right place to rehearse the sign, or should that model be built from a smaller number first (0.0058 = 58 × 10⁻⁴)?
-3. **Bank size:** 67 whiteboards plus the 48 on the worksheet. Right amount, or more for small numbers? The small runs (WS 12, WT 10, WPS 8) are the biggest.
-4. **Time:** the grid bridge adds a slide to each section. Are you happy with the lesson ending after "Small from standard form", and the worksheet and mixed run opening lesson 2?
-5. **When the grid comes in:** after the chain model and the first four whiteboards of each section. Right, or sooner (straight after the model)?
-6. **Build order (agreed):** the Converting working and fixed-question builder, then the Depth bank spec, then the look card (`npm run deck -- looks`), then the deck, then the worksheet.
+3. **One lesson or two (A or B above)?** I recommend B: Sheet 1 closes lesson 1, Sheet 2 closes lesson 2. With A, the whiteboards drop to about ten and numbers in parts shrink to one example.
+4. **Grouping digits in small numbers** (`0.000 058 3`) to make the zeros countable: yes, no, or large numbers only? I will put it on the look card.
+5. **Layout of the sheets:** the mock-up of option (a) first, since lesson 1 now needs Sheet 1.
+6. **Bank size:** 67 whiteboards plus the 48 on the sheets. Right amount, or more for small numbers (WS 12, WT 10, WPS 8 are the biggest)?
+7. **When the grid comes in:** after the chain model and the first four whiteboards of each section. Right, or sooner?
+8. **Build order (agreed):** the Converting working and fixed-question builder, then the Depth bank spec, then the look card (`npm run deck -- looks`), **then Sheet 1 mock-up**, the deck, and Sheet 2.
