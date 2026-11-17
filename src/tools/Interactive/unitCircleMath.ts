@@ -55,8 +55,9 @@ function radFraction(deg: number): RadFrac {
   return { n: Math.round(deg) / g, d: 180 / g };
 }
 
-/** Radians as text: 0, π/6, 5π/6, π, 3π/2, 2π. */
+/** Radians as text: 0, π/6, 5π/6, π, 3π/2, 2π, and negatives (−π/6). */
 export function radText(deg: number): string {
+  if (deg < 0) return `−${radText(-deg)}`;
   const { n, d } = radFraction(deg);
   if (n === 0) return "0";
   const top = n === 1 ? "π" : `${n}π`;
@@ -81,4 +82,22 @@ export function radToDegWorking(deg: number): string[] {
   const { n, d } = radFraction(dd);
   const rad = radText(dd);
   return d === 1 ? [`${rad} × 180/π`, `${n} × 180`, `${dd}°`] : [`${rad} × 180/π`, `${n} × 180/${d}`, `${dd}°`];
+}
+
+// ── Inverse functions ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The principal range of each inverse function, in degrees: sin⁻¹ and tan⁻¹ give −90° to 90°, cos⁻¹ gives 0° to 180°. */
+export const BRANCH: Record<"sin" | "cos" | "tan", [number, number]> = { sin: [-90, 90], cos: [0, 180], tan: [-90, 90] };
+
+/** The principal value of the inverse function at a given angle: sin⁻¹(sin θ), cos⁻¹(cos θ) or tan⁻¹(tan θ), in degrees (null where tan is undefined).
+ *  It equals θ only when θ lies in the inverse's range; otherwise it is the other angle with the same value. */
+export function principalDeg(fn: "sin" | "cos" | "tan", thetaDeg: number): number | null {
+  const t = (thetaDeg * Math.PI) / 180;
+  let a: number;
+  if (fn === "sin") a = Math.asin(Math.sin(t));
+  else if (fn === "cos") a = Math.acos(Math.cos(t));
+  else { const c = Math.cos(t); if (Math.abs(c) < 1e-9) return null; a = Math.atan(Math.sin(t) / c); }
+  const d = (a * 180) / Math.PI;
+  const r = Math.round(d);
+  return Math.abs(d - r) < 1e-6 ? (r === 0 ? 0 : r) : d;
 }
