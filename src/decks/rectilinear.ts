@@ -13,11 +13,10 @@ import { fromWorked } from "./questions";
 /** Chosen dimensions go through the same geometry, labelling and worked solution as the live tool. */
 export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   if (!isRectilinearSpec(spec)) throw new Error("The cut-out must fit inside the shape; use positive whole-number lengths.");
-  const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = spec;
+  const { shape } = spec;
   const outlines = rectilinearPolygons(spec);
-  const expected = shape === "L" || shape === "U" || shape === "frame" ? w*h-a*b
-    : (shape === "comb" || shape === "N") ? w*h-2*a*b : shape === "cross" ? w*h-4*a*b
-    : shape === "T" ? w*(h-b)+(w-2*a)*b : shape === "stairs4" ? w*b+(w-a)*b+(w-2*a)*b+(w-3*a)*(h-3*b) : w*b+(w-a)*b+(w-2*a)*(h-2*b);
+  const polyArea = (poly: Pt[]) => Math.abs(poly.reduce((t, p, i) => t + p[0] * poly[(i + 1) % poly.length][1] - poly[(i + 1) % poly.length][0] * p[1], 0)) / 2;
+  const expected = outlines.slice(1).reduce((t, hole) => t - polyArea(hole), polyArea(outlines[0]));
   const rotated: Pt[][] = outlines.map(outline => outline.map(([x0, y0]) => {
     let x = spec.orientation >= 4 ? -x0 : x0, y = y0;
     for (let turn = 0; turn < spec.orientation % 4; turn++) [x, y] = [-y, x];
@@ -26,7 +25,7 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   const bounds = boxOf(rotated);
   const polys = orient(rotated.map(poly => poly.map(([x, y]) => [x - bounds.x0, y - bounds.y0] as Pt)));
   const q = replaySeeded({ _seed: 1 } as unknown as AnyQuestion, () => toQuestion(buildCompound(polys, {
-    kind: shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
+    kind: shape === "I" ? "cross" : shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
   })));
   if (!q) throw new Error("The rectilinear question could not be built.");
   if (Number(q.answer) !== expected) throw new Error("The shape's area does not match its dimensions.");
