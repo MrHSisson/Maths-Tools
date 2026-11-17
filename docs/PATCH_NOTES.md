@@ -40,6 +40,7 @@ Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle
 - Layout checked at laptop (1366×768), tablet landscape (1180×820) and phone (390×800). The Pen overlay stays available, so the circle can be annotated.
 - Second pass (decluttered, steadier): fixed graph scale (no rescale when tan is switched on), fixed-height readout so the graph never resizes as the angle changes, one-row controls with the less-used switches in a Display menu, and quieter labels (grey degrees, indigo radians, no legend or θ marker).
 - Third pass: Radians is a real mode (the angle badge, the working order and the labels all lead with radians; Display menu adds Multiples of π / Decimals). Exact coordinates moved off the circle into a popup over the point (hover any marked point to preview it; Hide answers shows ? until revealed). Cleaner circle styling.
+- Fourth pass (design uplift): one palette (cos green, sin blue, tan amber, shared by the circle, popup, graph and readout), one label size for every degree and radian label, consistent line weights, a segmented control and switch rows in the Display menu (marked angles, radians as π or decimals, Play speed, popup, graph labels, Build graph, Hide answers), a styled slider with progress, guide lines from each graph point to the axis, and the angle badge as its own row on phone and portrait tablet.
 - Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
 
 Agent: Claude Code
