@@ -49,6 +49,8 @@ Deck grids and book activities reveal an individual answer with a 500 ms hold wi
 
 ## Controls — what a teacher can change
 
+**Decision Question Options:** each sub-tool and level shows its own relevant choices and remembers its own selections during the visit. Switching levels starts with that level’s defaults, then restores its previous selections on return. Course/practice selectors remain shared. Larger menus use the same Questions, Numbers, Method and Display tabs as normal tools on laptop, tablet and phone. Old links and saved questions are checked against the current level’s choices. This also covers Dimensional Analysis.
+
 ### Levels
 **For:** moving the same question type from easy to harder. **How it works:** Level 1, 2 and 3 buttons above the question. A tool can offer fewer than three; the buttons it does not use are hidden. An (i) beside the buttons (on a phone, beside the Difficulty title) says what each level means; tapping a level opens a fuller pop-up with what can be chosen there and a button to switch to it. **Where:** every ToolShell tool, and the Decision tools.
 

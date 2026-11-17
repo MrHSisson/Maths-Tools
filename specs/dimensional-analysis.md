@@ -64,7 +64,7 @@ Form the M, L, T equations from `X = k p^a q^b r^c` and solve them.
 - **Level 3:** three unknown powers where the equations couple and the answers are fractions (halves, thirds) or zero.
 - **QO:**
   - *Context* (exclusive): none (generic letters, the dimensions of each given) · named quantities (e.g. "a mass m, a length l, an acceleration g") · a worded situation (below).
-  - *Ask for* (exclusive): find all the powers · show one power is zero (overdetermined: three equations, two unknowns) · decide the model cannot work (the equations have no solution).
+  - *Ask for* (exclusive): find all the powers · show one power is zero (Levels 2–3 only; three unknown powers) · decide the model cannot work (the equations have no solution).
   - *Dimensions given as*: the grid and the dimensions · units (the student first finds the dimensions; ties to sub-tool 1).
 - **Generator (equations first, R5):** pick the powers first (integers −3…3 and halves, thirds at Level 3 only), pick the quantities' dimension triples from the library (or random small triples in context-free mode, kept linearly independent), compute the target's dimensions from them, then check the system has exactly one solution with an independent solver. The answer is never searched for afterwards.
 - **Pool:** context-free mode is effectively unlimited (the powers and the triples both vary). The worded situations are the limited resource: **about 19**, listed next, used by this sub-tool and by the exam chains.

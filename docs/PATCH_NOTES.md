@@ -29,6 +29,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Independent Decision Question Options and category tabs
+
+Branch `codex/gantt-print-layouts`. Area: DecisionShell, option controls/types/helpers, all six tool configurations, regressions, generated facts and reference docs.
+
+- Explain and justify offers delay/removal at Level 1 and claimed finish/add critical durations at Level 2. Choices can now declare legal levels independently of their defaults.
+- Each sub-tool × level remembers its own options during the visit. Course/practice selectors stay shared. UI, generators, old links, saved rebuilding and basket printing validate against the same legal choices; the level guide uses the level it describes.
+- Audited every sub-tool/level across Critical Path, Network Flows, MST, TSP, Route Inspection and Dimensional Analysis. Removed ignored CPA controls and flow scaling on reasoning/exam routes, and restricted constant/zero-power questions to their advertised levels. See `docs/reference/decision-options-audit.md` for findings and retained valid customisations.
+- Long menus use the normal tools’ Questions/Numbers/Method/Display tabs on laptop, tablet and phone. Short menus stay together. Exam-part practice links select the target’s filters and a compatible level so the requested task remains available.
+- Validation: build/lint, final all-six-tool shell smoke, 73 focused configuration/option/dimensional/delay/pairing/label/export regressions and responsive option/restore/stale-link/category checks pass. Exam-to-skill navigation and other-level guides also pass at all three viewport sizes. The full-suite attempt stopped without a summary; it reported a levelling timeout (passed in isolation) and a random-sample knock-on assumption (replaced with a fixed case). All three affected checks pass together after that fix. The full suite is not claimed green.
+- Regression maintenance: the histogram knock-on check now uses a fixed two-chain example to guarantee predecessor-caption coverage; seeded generated-network checks remain. The broader sample no longer assumes a rare case must occur.
+- Deliberately not done: old ToolShell Mixed Strategies, PR, merge or deployment.
+
+Agent: Codex
+Notes: Maths Tools — Build Log, “Codex — Independent Decision Question Options and category tabs (16 Nov 2026)”, block `b_mwjwuf6see08d81e`.
+
 ## 2026-11-16 — Decision and Mechanics chapter-card spacing
 
 Branch `codex/gantt-print-layouts`. Area: shared `SpecLanding` chapter cards used by Decision Maths and Further Mechanics.

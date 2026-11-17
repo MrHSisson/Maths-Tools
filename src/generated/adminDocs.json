@@ -380,7 +380,12 @@
   {
    "title": "Controls — what a teacher can change",
    "level": 2,
-   "blocks": []
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**Decision Question Options:** each sub-tool and level shows its own relevant choices and remembers its own selections during the visit. Switching levels starts with that level’s defaults, then restores its previous selections on return. Course/practice selectors remain shared. Larger menus use the same Questions, Numbers, Method and Display tabs as normal tools on laptop, tablet and phone. Old links and saved questions are checked against the current level’s choices. This also covers Dimensional Analysis."
+    }
+   ]
   },
   {
    "title": "Levels",

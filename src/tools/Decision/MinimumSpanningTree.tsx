@@ -136,6 +136,7 @@ export default function App() {
           },
           {
             key: "size",
+            tab: "numbers",
             label: "Network size",
             info: "How big the network is.",
             forSubTools: ["kruskal", "primNetwork"],

@@ -214,6 +214,7 @@ export default function App() {
           },
           {
             key: "bounds",
+            tab: "numbers",
             label: "Network",
             info: "Whether each arc has a capacity only, or a minimum and a maximum (A-level only).",
             when: A_ONLY, // AS is capacity-only networks
@@ -256,6 +257,7 @@ export default function App() {
           },
           {
             key: "backSteps",
+            tab: "method",
             label: "Paths",
             info: "Whether flow-augmenting paths can include a backward step.",
             forSubTools: ["augment", "maxFlow"],
@@ -278,6 +280,7 @@ export default function App() {
           },
           {
             key: "shape",
+            tab: "numbers",
             label: "Sources and sinks",
             info: "Whether there are several sources, several sinks, both, or any of these.",
             forSubTools: ["superST"],
@@ -290,6 +293,8 @@ export default function App() {
           },
           {
             key: "scale",
+            tab: "numbers",
+            forSubTools: ["initialFind", "missingFlow", "potentials", "augment", "cutValue", "cutTable", "maxInspect", "maxCut", "maxFlow", "nodeCap", "superAS", "superST"],
             label: "Numbers",
             info: "How big the capacities are.",
             choices: [

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
@@ -18,13 +19,13 @@ import { usePrintBasket, decisionRecipe, hasBasketPrint } from "./usePrintBasket
 import { savedId } from "../savedLists";
 import { useLayoutMode } from "../layoutMode";
 import { RotateHint } from "../components/RotateHint";
-import type { PrintMode } from "../types";
+import type { QOTab, PrintMode } from "../types";
 import TopicChooser from "./TopicChooser";
 import { DifficultyToggle } from "../components/DifficultyToggle";
 import { MenuDropdown } from "../components/MenuDropdown";
 import { InfoModal } from "../components/InfoModal";
 import { shouldAutoOpenAbout, markAboutSeen, type AboutModel } from "../about";
-import { OptionGrid, SegButtons, usePopover } from "../components/QOPopovers";
+import { OptionGrid, SegButtons, usePopover, QOTabs, QO_TABS_ABOVE } from "../components/QOPopovers";
 import { PAGE_BG, getQuestionBg } from "../colors";
 import { GlossCaption, glossSegments } from "./glossary";
 import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
@@ -53,9 +54,7 @@ const defaultOptions = (config: DecisionShellProps["config"], level: number): Re
   Object.fromEntries((config.options ?? []).map((o) => [o.key, o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value]));
 /** The ticks a multi option shows and the generator sees: the teacher's own, or what the level and sub-tool call for (a comma list). */
 const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number], value: string | undefined, level: number, sub: string): string[] => {
-  const raw = value || o.defaultFor?.(level, sub) || o.choices[0].value;
-  const ok = raw.split(",").filter((v) => o.choices.some((c) => c.value === v));
-  return ok.length ? ok : [o.choices[0].value];
+  return optionValue(o, value, level, sub).split(",").filter(Boolean);
 };
 
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
@@ -85,7 +84,7 @@ function readUrl(config: DecisionShellProps["config"]) {
   options = settle(config, options, level);
   const tabs = tabsFor(config, options);
   const subTool = tabs.some((t) => t.key === tool) ? (tool as string) : tabs[0]?.key ?? "";
-  return { level, subTool, options };
+  return { level: Math.min(level, config.subTools?.find(t => t.key === subTool)?.levels ?? levels), subTool, options };
 }
 
 let problemCount = 0;
@@ -97,11 +96,22 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const levelCount = config.subTools?.find((t) => t.key === subTool)?.levels ?? config.levels ?? 1;
   const hasLevels = config.levels != null; // a tool with levels always shows the level buttons, even with just Level 1
   const [options, setOptions] = useState<Record<string, string>>(init.options);
+  const profiles = useRef<Record<string, Record<string, string>>>({});
+  useEffect(() => { profiles.current[`${subTool}:${level}`] = options; }, [subTool, level, options]);
+  const optionsFor = (sub: string, lv: number, base = options) => {
+    profiles.current[`${subTool}:${level}`] = options;
+    return profileOptions(config.options ?? [], base, profiles.current[`${sub}:${lv}`], lv, sub);
+  };
+  const chooseSubTool = (sub: string) => {
+    const lv = Math.min(level, config.subTools?.find(t => t.key === sub)?.levels ?? config.levels ?? 1);
+    const opts = optionsFor(sub, lv);
+    setLevel(lv); setSubTool(sub); setOptions(opts); newQuestion(lv, sub, opts);
+  };
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => (o.top || !o.forSubTools || o.forSubTools.includes(sub)) && (!o.forLevels || o.forLevels.includes(lv)) && whenOk(o.when, opts);
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, opts) && levelOption(o, lv).choices.length > 0;
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
-    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub, opts, lv)).map((o) => [o.key, o.multi ? ticksOf(o, opts[o.key], lv, sub).join(",") : opts[o.key]])),
+    options: resolvedOptions(config.options ?? [], opts, lv, sub),
   });
   const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generateSeeded(() => generate(init.level, ctxOf(init.subTool, init.options, init.level))));
@@ -187,9 +197,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       const v = t.options?.[o.key]; if (v === undefined) continue;
       if (o.multi ? v.split(",").every((x) => o.choices.some((c) => c.value === x)) : o.choices.some((c) => c.value === v)) set[o.key] = v;
     }
-    const opts = settle(config, { ...options, ...set }, level);
+    const target = config.subTools?.find(s => s.key === t.subTool);
+    const lv = levelForOptions(config.options ?? [], set, level, target?.levels ?? config.levels ?? 1, t.subTool);
+    const opts = settle(config, { ...optionsFor(t.subTool, lv), ...set }, lv);
+    // An exam part links back to Skills, and sometimes to the other course.
+    for (const c of target?.when ? Array.isArray(target.when) ? target.when : [target.when] : []) {
+      if (!c.values.includes(opts[c.key]) && config.options?.some(o => o.top && o.key === c.key)) opts[c.key] = c.values[0];
+    }
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
-    setOptions(opts); setSubTool(t.subTool); newQuestion(level, t.subTool, opts);
+    setLevel(lv); setOptions(opts); setSubTool(t.subTool); newQuestion(lv, t.subTool, opts);
   };
   const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
   const tabs = tabsFor(config, options);
@@ -198,7 +214,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const opts = settle(config, { ...options, [key]: value }, level);
     const t = tabsFor(config, opts);
     const sub = t.some((x) => x.key === subTool) ? subTool : t[0]?.key ?? subTool;
-    setOptions(opts); setSubTool(sub); newQuestion(level, sub, opts);
+    const lv = Math.min(level, config.subTools?.find(t => t.key === sub)?.levels ?? config.levels ?? 1);
+    const scoped = optionsFor(sub, lv, opts);
+    setLevel(lv); setOptions(scoped); setSubTool(sub); newQuestion(lv, sub, scoped);
   };
 
   // Phone Back: the start screens are React state, so a Back swipe would skip them and leave the tool. Mirror the
@@ -233,7 +251,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     }
     histStage.current = narrowStage;
   }, [narrow, narrowStage]);
-  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
+  const optionsAt = (lv: number) => (config.options ?? []).filter(o => !o.top && shownFor(subTool, options, lv)(o)).map(o => levelOption(o, lv)).filter(o => o.choices.length > 1);
+  const visibleOptions = optionsAt(level);
   const qBg = getQuestionBg(colorScheme);
   // level labels may differ by question type (the TSP table question has no "complete network" level)
   const levelLabelList = Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool] ?? config.levelLabels?.default;
@@ -278,15 +297,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         if (!config.subTools?.some((x) => x.key === it.tab)) return null;
         const set: Record<string, string> = {};
         for (const o of config.options ?? []) { const v = it.options[o.key]; if (v !== undefined) set[o.key] = v; }
-        const opts = settle(config, { ...options, ...set }, it.level);
-        return { problem: generateFromSeed(it.seed, () => generate(it.level, ctxOf(it.tab, opts, it.level))), level: it.level, subTool: it.tab, options: opts };
+        const lv = Math.max(1, Math.min(it.level, config.subTools.find(t => t.key === it.tab)?.levels ?? config.levels ?? 1));
+        const opts = settle(config, profileOptions(config.options ?? [], { ...options, ...set }, set, lv, it.tab), lv);
+        return { problem: generateFromSeed(it.seed, () => generate(lv, ctxOf(it.tab, opts, lv))), level: lv, subTool: it.tab, options: opts };
       },
     },
   );
 
   // the print basket (the page that prints the saved questions, and its menu item): see usePrintBasket.tsx
   const printProblemsRef = useRef<(problems: DecisionProblem[], mode: PrintMode, win: Window, subtitle?: string) => Promise<void>>(async () => {});   // set where the printers are (below)
-  const basket = usePrintBasket({ config, saved: keeper.saved!, generate, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
+  const generateSaved = useCallback((lv: number, ctx?: GenerateContext) => {
+    if (!ctx) return generate(lv, ctx);
+    const target = Math.min(lv, config.subTools?.find(t => t.key === ctx.subTool)?.levels ?? config.levels ?? 1);
+    return generate(target, { subTool: ctx.subTool, options: resolvedOptions(config.options ?? [], ctx.options, target, ctx.subTool) });
+  }, [config, generate]);
+  const basket = usePrintBasket({ config, saved: keeper.saved!, generate: generateSaved, onLoad: (it) => keeper.onPick(savedId(it)), printProblems: (problems, mode, win, subtitle) => printProblemsRef.current(problems, mode, win, subtitle) });
   // the saved-questions control (pin + print basket) the toolbar and the phone's bottom bar show
   const savedUi = hasBasketPrint(config) ? { ...keeper, basket: basket.basket } : keeper;
   // stepping through the saved list in a lesson: this tool's saved questions, and where the question on screen is among them
@@ -307,7 +332,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const q = new URLSearchParams();
     if (tabs.length && subTool !== tabs[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool, options, level)(o) && options[o.key] !== (o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, optionValue(o, options[o.key], level, subTool));
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -460,16 +485,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 border border-blue-900 text-white shadow-sm" : "bg-white border border-slate-300 text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-400"}`;
 
   const levelInfoDialog = levelInfoOpen && levelLabelList ? <LevelInfoDialog title={tabs.find((x) => x.key === subTool)?.label} labels={levelLabelList.slice(0, levelCount)} level={level} onClose={() => setLevelInfoOpen(false)} onPickLevel={i => changeLevel(i + 1)}
-    optionsAt={(i) => visibleOptions.map((o) => {
+    optionsAt={(i) => optionsAt(i + 1).map((o) => {
       const on = o.multi ? ticksOf(o, "", i + 1, subTool) : [o.defaultFor?.(i + 1, subTool) ?? o.choices[0].value];
       return { title: o.label, info: o.info, items: o.choices.map((c) => ({ label: c.label, on: on.includes(c.value) })) };
     }).filter((g) => g.items.length > 1)} /> : null;
 
   const changeLevel = (lv: number) => {
     setLevel(lv);
-    // options with a per-level default follow the level; the teacher's own choices stay put
-    const opts = { ...options };
-    for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
+    const opts = optionsFor(subTool, lv);
     setOptions(opts);
     newQuestion(lv, subTool, opts);
   };
@@ -502,28 +525,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
             </button>
             {optionsPop.open && visibleOptions.length > 0 && (
-              (() => {
-                // a long list splits into two columns with a thin grey divider (the Split QO layout)
-                const split = visibleOptions.length > 4;
-                const half = Math.ceil(visibleOptions.length / 2);
-                const cols = split ? [visibleOptions.slice(0, half), visibleOptions.slice(half)] : [visibleOptions];
-                return (
-                  <div className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 flex ${split ? "left-1/2 -translate-x-1/2 w-[min(44rem,92vw)]" : "left-0 min-w-[min(24rem,86vw)]"}`}>
-                    {cols.map((col, ci) => (
-                      <div key={ci} className={`flex flex-col gap-5 flex-1 min-w-0 ${ci > 0 ? "border-l border-gray-200 pl-5 ml-5" : ""}`}>
-                        {col.map((o) => (
-                          <div key={o.key}>
-                            <OptionHeading o={o} />
-                            <OptionControl o={o} value={options[o.key]} level={level} sub={subTool}
-                              onChange={(v) => changeOption(o, v)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-card border border-slate-300 z-50 p-5 w-[min(38rem,92vw)] max-h-[70dvh] overflow-y-auto">
+                <DecisionOptionGroups groups={visibleOptions} options={options} level={level} sub={subTool} onChange={changeOption} />
+              </div>
             )}
           </div>
         )}
@@ -548,7 +552,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const topicChooser = chooser ? (
     <TopicChooser chooser={chooser} filters={chooserFilters} options={options} tabs={tabs} variants={chooserVariants} subTool={subTool} narrow={narrow}
       startOpen={typeof window !== "undefined" && !/[?&](tool|level)=/.test(window.location.search)}
-      onFilter={chooseTop} onTopic={(k) => { setSubTool(k); newQuestion(level, k, options); }} />
+      onFilter={chooseTop} onTopic={(k) => { chooseSubTool(k); }} />
   ) : null;
 
   const controlBar = (
@@ -880,7 +884,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   if (narrow) {
     const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
       ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
-      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { setSubTool(v); newQuestion(level, v, options); } }] : []),
+      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
     ];
     if (!started && launchSteps.length && !chooser) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
@@ -1030,7 +1034,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       {tabs.map((t) => (
                         <button
                           key={t.key}
-                          onClick={() => { setSubTool(t.key); newQuestion(level, t.key, options); setDrawer(false); }}
+                          onClick={() => { chooseSubTool(t.key); setDrawer(false); }}
                           className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
                           {t.label}
@@ -1047,21 +1051,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
                       onChange={(v) => {
                         const lv = parseInt(v.replace("level", ""), 10);
-                        setLevel(lv);
-                        const opts = { ...options };
-                        for (const o of config.options ?? []) if (o.defaultFor && !o.multi && opts[o.key] === o.defaultFor(level)) opts[o.key] = o.defaultFor(lv);
-                        setOptions(opts);
-                        newQuestion(lv, subTool, opts);
+                        changeLevel(lv);
                       }}
                     />
                   </div>
                 )}
-                {visibleOptions.map((o) => (
-                  <div key={o.key} className="bg-white rounded-2xl border border-gray-200 p-4">
-                    <OptionHeading o={o} sheet />
-                    <OptionControl o={o} value={options[o.key]} level={level} sub={subTool} onChange={(v) => changeOption(o, v)} />
-                  </div>
-                ))}
+                <DecisionOptionGroups groups={visibleOptions} options={options} level={level} sub={subTool} onChange={changeOption} sheet />
               </div>
             </div>
             <div className="flex-shrink-0 bg-white border-t border-gray-200 px-3 pt-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
@@ -1139,11 +1134,31 @@ function OptionHeading({ o, sheet }: { o: { label: string }; sheet?: boolean }) 
     : <div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">{o.label}</div>;
 }
 
+/** The same category tabs on the desktop popover and touch settings sheet. */
+function DecisionOptionGroups({ groups, options, level, sub, onChange, sheet = false }: {
+  groups: NonNullable<DecisionShellProps["config"]["options"]>; options: Record<string, string>;
+  level: number; sub: string; onChange: (o: { key: string; displayOnly?: boolean }, value: string) => void; sheet?: boolean;
+}) {
+  const [picked, setPicked] = useState<QOTab | null>(null);
+  const order: QOTab[] = ["questions", "numbers", "method", "display"];
+  const tabs = order.filter(t => groups.some(o => (o.tab ?? "questions") === t));
+  const tabbed = tabs.length > 1 && groups.reduce((n, o) => n + o.choices.length, 0) > QO_TABS_ABOVE;
+  const active = tabbed ? picked && tabs.includes(picked) ? picked : tabs[0] : null;
+  const shown = order.flatMap(t => groups.filter(o => (o.tab ?? "questions") === t && (!active || t === active)));
+  return <div className={`flex flex-col gap-4 ${sheet ? "[&_button]:min-h-10" : ""}`}>
+    <QOTabs tabs={tabs} active={active} onPick={setPicked} />
+    {shown.map(o => <div key={o.key} className={sheet ? "bg-white rounded-2xl border border-slate-300 p-4" : ""}>
+      <OptionHeading o={o} sheet={sheet} />
+      <OptionControl o={o} value={options[o.key]} level={level} sub={sub} onChange={v => onChange(o, v)} />
+    </div>)}
+  </div>;
+}
+
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
 function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
   // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
-  const on = o.multi ? ticksOf(o, value, level, sub) : [value];
+  const on = o.multi ? ticksOf(o, value, level, sub) : [optionValue(o, value, level, sub)];
   const auto = o.multi ? ticksOf(o, "", level, sub) : [];
   const press = (v: string) => {
     if (!o.multi) { onChange(v); return; }

@@ -82,7 +82,7 @@ const useQOTab = (present: QOTab[], on: boolean) => {
   const active: QOTab | null = !on || present.length < 2 ? null : picked && present.includes(picked) ? picked : present[0];
   return [active, setPicked] as const;
 };
-const QOTabs = ({ tabs, active, onPick, center }: { tabs: QOTab[]; active: QOTab | null; onPick: (t: QOTab) => void; center?: boolean }) =>
+export const QOTabs = ({ tabs, active, onPick, center }: { tabs: QOTab[]; active: QOTab | null; onPick: (t: QOTab) => void; center?: boolean }) =>
   active === null ? null : (
     <div role="tablist" aria-label="Option groups" className={`flex flex-wrap gap-1.5 ${center ? "justify-center" : ""}`}>
       {tabs.map(t => (
