@@ -1,5 +1,6 @@
 import { isCuratedQuestion } from "../../api/_questions";
 import { rectilinearQuestion } from "./rectilinear";
+import { textbookProblems } from "./textbookSheet";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
@@ -134,6 +135,11 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "questions" && slide.family === "practice" && items.length && items.every((q) => q.purpose === "practice")) {
         if (items.length < 5) problems.push(`${where}: a deliberate-practice set has ${items.length} questions; the least is 5`);
         if (items.length > 8) warnings.push(`${where}: ${items.length} questions in one set is a long run`);
+      }
+      if (el.kind === "worksheet" && el.textbook) {
+        for (const p of textbookProblems(el.textbook)) problems.push(`${where}: ${p}`);
+        for (const b of el.textbook.blocks) for (const m of [...b.parts, ...b.answers]) renders(where, m);
+        continue;
       }
       if (el.kind === "worksheet" && el.authored) {
         for (const q of el.authored) {

@@ -8,6 +8,11 @@ import json, os, sys
 
 D = json.load(open(os.path.join(os.path.dirname(__file__), "standard-form-converting.json")))
 HOOK_AND_WORKED, WORKED_PARTS, QUESTIONS, QUESTION_PARTS = D["hookAndWorked"], D["workedParts"], D["questions"], D["questionParts"]
+# the printed sheets: each part is one more question (id "S1.1a" = sheet 1, question 1, part a)
+for sh in D["sheets"]:
+    for bi, blk in enumerate(sh["blocks"], 1):
+        for i, (o, c, pw) in enumerate(blk["items"]):
+            QUESTIONS.append([f"S{sh['id']}.{bi}{chr(97 + i)}", blk["dir"], o, c, pw])
 bad = 0
 def digits_of(c): return c.replace(".", "").rstrip("0") or "0"
 def check(i, c, p, v):
@@ -43,7 +48,7 @@ print(f"zeros-count power differs from the answer in {len(caught)} of {len(std)}
 def grid_fits(c, p):
     d = len(digits_of(c))
     return p <= 9 and p - (d - 1) >= -6
-outside = [i for i, d, o, c, p in QUESTIONS if not grid_fits(c, p)]
+outside = [i for i, d, o, c, p in QUESTIONS if not i.startswith("S") and not grid_fits(c, p)]
 print(f"outside the grid (10^9 to 10^-6), {len(outside)} of {len(QUESTIONS)} questions:", " ".join(outside))
 print("FAILED" if bad else "all conversions correct,", bad, "problems;", len(QUESTIONS) + len(QUESTION_PARTS), "questions and", len(HOOK_AND_WORKED) + len(WORKED_PARTS), "worked or hook numbers checked")
 sys.exit(1 if bad else 0)

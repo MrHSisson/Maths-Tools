@@ -105,9 +105,9 @@ function tensToOrd(it: Item): string[] {
 function smallLines(ord: string, c: string, p: number): string[] {
   const t = -p;
   must(stdOf(ord).c === c && stdOf(ord).p === p, `${ord} is ${stdOf(ord).c} x 10^${stdOf(ord).p}, not ${c} x 10^${p}`);
-  // the fractions are written inline (1/100), as Harry writes them: a stacked fraction renders smaller than the lines around it
-  const lines = [`${ord} = ${c} \\div ${oneOf(t)}`, `= ${c} \\times 1/${oneOf(t)}`];
-  if (t > 1) lines.push(`= ${c} \\times 1/${pw(t)}`);
+  // fractions are always stacked (Harry, 2026-11-17); `chainSlide` gives a slide with fractions room so every line keeps the same size
+  const lines = [`${ord} = ${c} \\div ${oneOf(t)}`, `= ${c} \\times \\dfrac{1}{${oneOf(t)}}`];
+  if (t > 1) lines.push(`= ${c} \\times \\dfrac{1}{${pw(t)}}`);
   lines.push(`= ${c} \\times ${pw(p)}`);
   return lines;
 }
@@ -197,11 +197,14 @@ const mathsEl = (x: number, y: number, w: number, h: number, latex: string, size
 
 /** Lines of working built one to a click, each with a small grey note on the right. */
 function chainSlide(id: string, title: string, subtitle: string, lines: { tex: string; note?: string; final?: boolean }[], brief: string): Slide {
+  // a stacked fraction is taller than a line of text, and an element too short for it shrinks its text: when any line has a fraction,
+  // every line on the slide gets the taller box and the same size, so the fonts match
+  const roomy = lines.some((l) => l.tex.includes("dfrac")), pitch = roomy ? 150 : 118, size = roomy ? 48 : 62;
   return makeSlide(id, "teach", title, [
     ...titleEls(title, subtitle),
     ...lines.flatMap((l, i) => [
-      mathsEl(100, 240 + i * 118, 1000, 116, l.tex, l.tex.includes("dfrac") ? 54 : 62, { step: i + 1, ...(l.final ? { colour: GREEN } : {}) }),
-      ...(l.note ? [t(1130, 250 + i * 118, 410, 96, l.note, 36, { colour: grey, step: i + 1, middle: true })] : []),
+      mathsEl(100, 240 + i * pitch, 1000, pitch - 2, l.tex, size, { fixed: true, step: i + 1, ...(l.final ? { colour: GREEN } : {}) }),
+      ...(l.note ? [t(1130, (l.note.includes("dfrac") ? 235 : 260) + i * pitch, 410, l.note.includes("dfrac") ? 140 : 96, l.note, 36, { fixed: true, colour: grey, step: i + 1, middle: true })] : []),
     ]),
   ], brief);
 }
@@ -235,12 +238,21 @@ function bridgeSlide(id: string, title: string, subtitle: string, it: Item, brie
 }
 type NoIdEls = Parameters<typeof makeSlide>[3];
 
-const sheetPlaceholder = (id: string, n: number, which: string, qs: string) => makeSlide(id, "retrieval", `Sheet ${n}`, [
-  t(60, 46, 1480, 64, `Sheet ${n}: questions ${qs}. Write your answers in your book.`, 38, { colour: grey }),
-  { kind: "shape", shape: "rect", x: 60, y: 140, w: 1480, h: 720, fill: "#f8fafc", stroke: "#cbd5e1", strokeWidth: 4, radius: 18 } as never,
-  t(160, 330, 1280, 120, `PLACEHOLDER: Sheet ${n}`, 72, { bold: true, colour: "#94a3b8", align: "center", middle: true }),
-  t(160, 470, 1280, 200, `${which}. Printed, textbook format, parts (a) to (x). Replace this with the pinned worksheet when it is built; the answers show on a click.`, 40, { colour: "#94a3b8", align: "center" }),
-], `Placeholder. The printed sheet (${which}) is built and pinned next; the questions for it are in specs/decks/_check/standard-form-converting.json (${n === 1 ? "1a to 1l and 2a to 2l" : "3a to 3l and 4a to 4l"}), to be extended because 15 minutes is far more than 12 parts a question needs.`);
+// ---------- the printed sheets (textbook layout, like the Corbett Maths sheet; pupils write in their books) ----------
+interface SheetData { id: string; title: string; blocks: { dir: "toStd" | "toOrd"; instruction: string; items: Row[] }[] }
+const sheetSlide = (n: number): Slide => {
+  const data = (DATA.sheets as unknown as SheetData[]).find((s) => s.id === String(n));
+  must(!!data, `no sheet ${n}`);
+  const blocks = data!.blocks.map((b, bi) => {
+    const its = b.items.map((r, i) => toItem([`${n}.${bi + 1}${i}`, b.dir, ...r]));       // every part is checked against its ordinary number
+    return {
+      instruction: b.instruction,
+      parts: its.map((it) => (it.dir === "toStd" ? grp(it.ord) : `${it.c} \\times ${pw(it.p)}`)),
+      answers: its.map((it) => (it.dir === "toStd" ? `${it.c} \\times ${pw(it.p)}` : grp(it.ord))),
+    };
+  });
+  return S.textbookSheet(`${P}-sheet-${n}`, { title: data!.title, note: "Write your answers in your book. Show your working.", blocks }, T);
+};
 
 // ---------- the worked slides ----------
 const hook = makeSlide(`${P}-hook`, "teach", "Say each number aloud", [
@@ -279,30 +291,31 @@ const isItStd = makeSlide(`${P}-is-it`, "discussion", "Is it in standard form?",
   ]),
 ], "Each row: the class decides, then the verdict and the reason appear.");
 
-/** Two methods side by side for the same number: Method 1 in one step, Method 2 one ten at a time. Lines appear one to a click, Method 1 first. */
-function twoMethodsSlide(id: string, title: string, subtitle: string, m1: string[], m2: string[], brief: string): Slide {
+/** Two methods side by side for the same number. Method 1 (one ten at a time) is the scaffold and comes first, on the left; Method 2 (in one step)
+ *  is where we lean them, on the right (Harry, 2026-11-17). Lines appear one to a click, Method 1 first. */
+function twoMethodsSlide(id: string, title: string, subtitle: string, tens: string[], oneStep: string[], brief: string): Slide {
   const els: NoIdEls = [...titleEls(title, subtitle)];
-  els.push(t(60, 232, 600, 56, "Method 1", 44, { bold: true, colour: BLUE }), t(60, 288, 600, 44, "in one step", 32, { colour: grey }));
-  els.push(t(720, 232, 840, 56, "Method 2", 44, { bold: true, colour: BLUE }), t(720, 288, 840, 44, "one ten at a time", 32, { colour: grey }));
-  els.push(lineEl(680, 232, 0, 640));
+  els.push(t(60, 232, 860, 56, "Method 1", 44, { bold: true, colour: BLUE }), t(60, 288, 860, 44, "one ten at a time", 32, { colour: grey }));
+  els.push(t(980, 232, 580, 56, "Method 2", 44, { bold: true, colour: BLUE }), t(980, 288, 580, 44, "in one step", 32, { colour: grey }));
+  els.push(lineEl(940, 232, 0, 640));
   const last = (n: number, i: number) => i === n - 1;
-  m1.forEach((tex, i) => els.push(mathsEl(60, 350 + i * 110, 600, 100, tex, 56, { step: i + 1, ...(last(m1.length, i) ? { colour: GREEN } : {}) })));
-  const pitch = Math.min(100, Math.floor(520 / m2.length));
-  m2.forEach((tex, i) => els.push(mathsEl(720, 350 + i * pitch, 840, pitch - 4, tex, 46, { step: m1.length + i + 1, ...(last(m2.length, i) ? { colour: GREEN } : {}) })));
+  const pitch = Math.min(100, Math.floor(520 / tens.length));
+  tens.forEach((tex, i) => els.push(mathsEl(60, 350 + i * pitch, 860, pitch - 4, tex, 46, { step: i + 1, ...(last(tens.length, i) ? { colour: GREEN } : {}) })));
+  oneStep.forEach((tex, i) => els.push(mathsEl(980, 350 + i * 110, 580, 100, tex, 56, { step: tens.length + i + 1, ...(last(oneStep.length, i) ? { colour: GREEN } : {}) })));
   return makeSlide(id, "teach", title, els, brief);
 }
 const methodsToStd = (id: string, ord: string, c: string, p: number, brief: string) => {
   const it: Item = { id, dir: "toStd", ord, c, p };
-  return twoMethodsSlide(`${P}-${id}`, "Large numbers: two methods", `Write ${grp(ord).replace("\\,", " ")} in standard form.`, chainLargeToStd(it).map((l) => l.replace(/^\$|\$$/g, "")), tensToStd(it), brief);
+  return twoMethodsSlide(`${P}-${id}`, "Large numbers: two methods", `Write ${grp(ord).replace("\\,", " ")} in standard form.`, tensToStd(it), chainLargeToStd(it).map((l) => l.replace(/^\$|\$$/g, "")), brief);
 };
 const methodsToOrd = (id: string, ord: string, c: string, p: number, brief: string) => {
   const it: Item = { id, dir: "toOrd", ord, c, p };
-  return twoMethodsSlide(`${P}-${id}`, "Back again: two methods", `Write ${c} × 10${"⁰¹²³⁴⁵⁶⁷⁸⁹"[p] ?? `^${p}`} as an ordinary number.`, [`${c} \\times ${pw(p)} = ${c} \\times ${oneOf(p)}`, `= ${grp(ord)}`], tensToOrd(it), brief);
+  return twoMethodsSlide(`${P}-${id}`, "Back again: two methods", `Write ${c} × 10${"⁰¹²³⁴⁵⁶⁷⁸⁹"[p] ?? `^${p}`} as an ordinary number.`, tensToOrd(it), [`${c} \\times ${pw(p)} = ${c} \\times ${oneOf(p)}`, `= ${grp(ord)}`], brief);
 };
-const toStd1 = methodsToStd("m-32000", "32000", "3.2", 4, "Both methods on the same number. Method 1: 3.2 times what makes 32 000? 10 000, which is 10⁴. Method 2: peel off a ten at a time until the first number is between 1 and 10, then count the tens.");
+const toStd1 = methodsToStd("m-32000", "32000", "3.2", 4, "Both methods on the same number. Method 1 (the scaffold): peel off a ten at a time until the first number is between 1 and 10, then count the tens. Method 2 (where we lean them): 3.2 times what makes 32 000? 10 000, which is 10⁴.");
 const toStd2 = methodsToStd("m-8500", "8500", "8.5", 3, "The same two methods on a second number: fewer tens to peel.");
 const toStd3 = methodsToStd("m-190000", "190000", "1.9", 5, "A third example, with five tens to count.");
-const toOrd1 = methodsToOrd("m-4300", "4300", "4.3", 3, "The two methods read the other way. Method 1: 10³ = 1 000, so multiply 4.3 by 1 000. Method 2: each ten multiplies the number by 10 in turn.");
+const toOrd1 = methodsToOrd("m-4300", "4300", "4.3", 3, "The two methods read the other way. Method 1 (the scaffold): each ten multiplies the number by 10 in turn. Method 2 (where we lean them): 10³ = 1 000, so multiply 4.3 by 1 000.");
 const toOrd2 = methodsToOrd("m-57000", "57000", "5.7", 4, "A second example going back.");
 const toOrd3 = methodsToOrd("m-790000", "790000", "7.9", 5, "A third example, with five tens.");
 const partsDisc = S.discuss(`${P}-parts-disc`, "Is $25 \\times 10^{6}$ in standard form?",
@@ -311,7 +324,7 @@ const partsDisc = S.discuss(`${P}-parts-disc`, "Is $25 \\times 10^{6}$ in standa
 /** A small number in standard form: get the first number between 1 and 10 first, then divide by the power of ten (the lines come from `smallLines`). */
 const smallSlide = (id: string, title: string, ord: string, c: string, p: number, notes: (string | undefined)[], brief: string) =>
   chainSlide(`${P}-${id}`, title, `Write ${ord} in standard form.`, smallLines(ord, c, p).map((tex, i, all) => ({ tex, note: notes[i], final: i === all.length - 1 })), brief);
-const small1 = smallSlide("small1", "Small numbers: divide by tens", "0.02", "2", -2, ["two hundredths", undefined, undefined, "1 ÷ 10² is 10⁻², from the laws of indices"],
+const small1 = smallSlide("small1", "Small numbers: divide by tens", "0.02", "2", -2, ["two hundredths", undefined, undefined, "$\\dfrac{1}{10^{2}} = 10^{-2}$, from the laws of indices"],
   "Model 1: a decimal is a number between 1 and 10 divided by a power of ten, and the laws of indices turn the division into a negative power.");
 const small2 = smallSlide("small2", "Get it between 1 and 10 first", "0.35", "3.5", -1, ["3.5 is between 1 and 10, and 3.5 ÷ 10 = 0.35"],
   "Model 2: two digits. Write the digits as a number between 1 and 10 (3.5) and divide by 10, rather than 35 ÷ 100 and then fixing it.");
@@ -320,13 +333,13 @@ const small3 = smallSlide("small3", "More zeros", "0.00058", "5.8", -4, ["5.8 fi
 const small4 = S.discuss(`${P}-small4`, "$0.02 = 2 \\times 10^{-2}$. Why is the power negative?",
   "We divided by tens, so the number is smaller than 1. A number smaller than 1 has a negative power.", "What is $2 \\times 10^{2}$?", "200");
 const smallBack1 = chainSlide(`${P}-small-back1`, "Small numbers, back again", "Write 1.6 × 10⁻² as an ordinary number.", [
-  { tex: "10^{-2} = 1/10^{2} = 1/100", note: "a negative power is one over the power" },
-  { tex: "1.6 \\times 10^{-2} = 1.6 \\times 1/100" },
+  { tex: "10^{-2} = \\dfrac{1}{10^{2}} = \\dfrac{1}{100}", note: "a negative power is one over the power" },
+  { tex: "1.6 \\times 10^{-2} = 1.6 \\times \\dfrac{1}{100}" },
   { tex: "= 1.6 \\div 100" },
   { tex: "= 0.016", final: true },
 ], "Reverse of model 1: a negative power means divide by that power of ten.");
 const smallBack2 = chainSlide(`${P}-small-back2`, "Small numbers, back again", "Write 3.7 × 10⁻³ as an ordinary number.", [
-  { tex: "10^{-3} = 1/10^{3} = 1/1\\,000" },
+  { tex: "10^{-3} = \\dfrac{1}{10^{3}} = \\dfrac{1}{1\\,000}" },
   { tex: "3.7 \\times 10^{-3} = 3.7 \\div 1\\,000" },
   { tex: "= 0.0037", final: true },
 ], "A second reversed model, with three decimal places.");
@@ -379,7 +392,7 @@ export default () => ({
     wb("wf-a", "Large from standard form", slice(WF, 0, 5), "Five whiteboards. Working is Method 1."),
     bridgeSlide(`${P}-bridge-large-back`, "The grid the other way", "4.3 × 10³ in the grid: each click moves the number up a place and the power comes down by 1, until it reaches 10⁰ (= 1).", { id: "m2", dir: "toOrd", ord: "4300", c: "4.3", p: 3 }, "The same grid read the other way round: up one place, power down 1, until the power is 10⁰, which is 1."),
     wb("wf-b", "Large from standard form", slice(WF, 5), "Five more whiteboards, after the grid."),
-    sheetPlaceholder(`${P}-sheet-1`, 1, "Questions 1 and 2: write in standard form, and write as an ordinary number (large)", "1 and 2"),
+    sheetSlide(1),
     // Small numbers
     S.divider(`${P}-div-small`, "Small numbers to standard form", "Divide by tens."),
     retrieval, small1, small2, small3, small4,
@@ -391,7 +404,7 @@ export default () => ({
     wb("wt-a", "Small from standard form", slice(WT, 0, 5), "Five whiteboards."),
     bridgeSlide(`${P}-bridge-small-back`, "The grid the other way", "2 × 10⁻² written in the grid: the number moves down, the power goes up.", { id: "m4", dir: "toOrd", ord: "0.02", c: "2", p: -2 }, "The reverse of the small bridge."),
     wb("wt-b", "Small from standard form", slice(WT, 5), "Five more whiteboards, after the grid."),
-    sheetPlaceholder(`${P}-sheet-2`, 2, "Questions 3 and 4: write in standard form, and write as an ordinary number (small)", "3 and 4"),
+    sheetSlide(2),
     // Mixed: all four directions together
     S.divider(`${P}-div-mixed`, "Mixed", "You decide which way, and which sign."),
     wb("wm-a", "Mixed: both ways, large and small", slice(WM, 0, 5), "Five mixed whiteboards."),
