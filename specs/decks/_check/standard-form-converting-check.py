@@ -29,14 +29,14 @@ QUESTIONS = [
   ("WS1","toStd","0.7","7",-1), ("WS2","toStd","0.09","9",-2), ("WS3","toStd","0.0004","4",-4), ("WS4","toStd","0.38","3.8",-1),
   ("WS5","toStd","0.0062","6.2",-3), ("WS6","toStd","0.00083","8.3",-4), ("WS7","toStd","0.000071","7.1",-5),
   ("WS8","toStd","0.0258","2.58",-2), ("WS9","toStd","0.000419","4.19",-4), ("WS10","toStd","0.00306","3.06",-3),
-  ("WS11","toStd","0.0000052","5.2",-6), ("WS12","toStd","0.1","1",-1),
+  ("WS11","toStd","0.000052","5.2",-5), ("WS12","toStd","0.1","1",-1),
   # WT: small to ordinary
   ("WT1","toOrd","0.03","3",-2), ("WT2","toOrd","0.0008","8",-4), ("WT3","toOrd","0.0025","2.5",-3), ("WT4","toOrd","0.061","6.1",-2),
   ("WT5","toOrd","0.00094","9.4",-4), ("WT6","toOrd","0.000017","1.7",-5), ("WT7","toOrd","0.00436","4.36",-3),
   ("WT8","toOrd","0.000705","7.05",-4), ("WT9","toOrd","0.59","5.9",-1), ("WT10","toOrd","0.0208","2.08",-2),
   # WM: mixed
   ("WM1","toStd","28000000","2.8",7), ("WM2","toStd","0.000046","4.6",-5), ("WM3","toOrd","3300000","3.3",6), ("WM4","toOrd","0.0081","8.1",-3),
-  ("WM5","toStd","0.0705","7.05",-2), ("WM6","toStd","640000","6.4",5), ("WM7","toOrd","57200","5.72",4), ("WM8","toStd","0.0000093","9.3",-6),
+  ("WM5","toStd","0.0705","7.05",-2), ("WM6","toStd","640000","6.4",5), ("WM7","toOrd","57200","5.72",4), ("WM8","toStd","0.000093","9.3",-5),
   ("WM9","toOrd","0.049","4.9",-2), ("WM10","toStd","710000000","7.1",8),
   # worksheet 1: large to standard form; 2: large to ordinary; 3: small to standard form; 4: small to ordinary
   ("1a","toStd","4000","4",3), ("1b","toStd","70000","7",4), ("1c","toStd","53000","5.3",4), ("1d","toStd","920000","9.2",5),
@@ -89,5 +89,12 @@ std = [(i, o, p) for i, d, o, c, p in QUESTIONS if d == "toStd"]
 caught = [i for i, o, p in std if zeros_power(o) != p]
 same = [i for i, o, p in std if zeros_power(o) == p]
 print(f"zeros-count power differs from the answer in {len(caught)} of {len(std)} to-standard-form questions; matches in:", " ".join(same))
+
+# the tool's place value grid runs from 10^9 (billions) down to 10^-6 (millionths): which questions can show it?
+def grid_fits(c, p):
+    d = len(digits_of(c))
+    return p <= 9 and p - (d - 1) >= -6
+outside = [i for i, d, o, c, p in QUESTIONS if not grid_fits(c, p)]
+print(f"outside the grid (10^9 to 10^-6), {len(outside)} of {len(QUESTIONS)} questions:", " ".join(outside))
 print("FAILED" if bad else "all conversions correct,", bad, "problems;", len(QUESTIONS) + len(QUESTION_PARTS), "questions and", len(HOOK_AND_WORKED) + len(WORKED_PARTS), "worked or hook numbers checked")
 sys.exit(1 if bad else 0)
