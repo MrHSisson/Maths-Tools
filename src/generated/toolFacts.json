@@ -1431,6 +1431,36 @@
    "spec": false
   },
   {
+   "id": "solving-trig-equations",
+   "path": "/solving-trig-equations",
+   "name": "Solving Trig Equations",
+   "description": "Solve sin, cos and tan equations in a given range, in degrees or radians, with a graph that builds up the solutions step by step",
+   "category": "Pure Mathematics",
+   "subject": "A-Level",
+   "enabled": true,
+   "file": "src/tools/Algebra/SolvingTrigEquations.tsx",
+   "kind": "tool",
+   "shell": "ToolShell",
+   "subTools": 1,
+   "lines": 128,
+   "depth": false,
+   "teach": false,
+   "lessons": false,
+   "workedSplit": true,
+   "calibrated": false,
+   "scaffold": false,
+   "reformat": false,
+   "customPrint": false,
+   "printables": false,
+   "printBasket": false,
+   "tests": true,
+   "skillLinks": false,
+   "representations": [
+    "Graph"
+   ],
+   "spec": true
+  },
+  {
    "id": "partial-fractions",
    "path": "/partial-fractions",
    "name": "Partial Fractions",

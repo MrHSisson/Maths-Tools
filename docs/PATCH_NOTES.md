@@ -29,6 +29,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Solving Trig Equations (A-level) and the grapher's angle axis
+
+Branch `claude/epic-goldberg-2yb9q4`. Area: new ToolShell tool `/solving-trig-equations` (Pure Mathematics), additive changes to `src/shared/grapher/`, spec `specs/solving-trig-equations.md` (now implemented).
+
+- **New tool.** Solve sin, cos and tan equations in a stated range, in **degrees or radians**, finding every solution. Level 1: a function of θ equal to a value. Level 2: a multiple of θ (the range is widened first). Level 3: a multiple of θ plus or minus a shift (the transformed range can start below zero). Question Options: functions, ranges, angle forms, **equation forms** (`2 sin θ + 2 = 1`, `1 − 2 sin θ = 2`), **angle unit**, **exact or calculator-decimal values**, and a switch to include 0 and ±1.
+- **Built backwards** from a chosen value, so every question has solutions in its range; answers come from the unrounded value and are rounded once at the end (1 d.p. degrees, 3 s.f. radians), and a question is rejected if the working's 2 d.p. / 4 d.p. figures would round to a different answer. Solutions sitting exactly on an end of the range are excluded unless "Include 0 and ±1" is on.
+- **Developing picture** (Worked Example): the real graph of the function, the dashed line y = k, tan's asymptotes, and each solution appearing as its step finds it, then labelled with its θ value (degrees or π fractions).
+- **Grapher extension (additive):** `xAxis: { unit: "deg" | "rad" }` for angle gridlines and π labels, `lockDomainY` to frame y exactly (tan), and `FOI.showLabel` to draw a label beside a dot. Existing grapher tools are unchanged; the shell smoke check passes for Equations of Lines, Simultaneous Equations (Substitution) and Mixed Strategies. Documented in `docs/reference/pictures.md`.
+- **Checks:** every sample in the brief (exact, rearranged, radians, decimal) matches; a 4,000-spec property test substitutes each solution back, checks it is in range and counts crossings on a fine grid so none are missed; KaTeX renders every question, step and fragment across all 16 unit × form × value-kind variants.
+- **Found along the way:** a lesson for option ids: ticks carry across levels by id, so a level that needs different defaults needs its own ids (Levels 2–3 have their own range ids).
+- **Deliberately not done:** a Whiteboard picture (Worked Example only), calibration (no Smart Progressor for this tool yet), and the dashboard notes for the two new tools.
+
+Agent: Claude Code
+Notes: Maths Tools — Build Log, “Claude Code — Unit Circle sandbox and Solving Trig Equations (17 Nov 2026)”, block `b_mwl8q23i6154d949`.
+
 ## 2026-11-17 — Unit Circle sandbox
 
 Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle` (Interactive Tools → Sandboxes & explorers), its maths module and tests.
@@ -44,7 +59,7 @@ Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle
 - Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
 
 Agent: Claude Code
-Notes: Planner Build Log not written (see chat).
+Notes: Maths Tools — Build Log, “Claude Code — Unit Circle sandbox and Solving Trig Equations (17 Nov 2026)”, block `b_mwl8q23i6154d949`.
 
 ## 2026-11-17 — Independent Decision Question Options and category tabs
 

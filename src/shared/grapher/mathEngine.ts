@@ -31,6 +31,8 @@ export interface FOI {
   kind: "root" | "vertex" | "turning" | "intercept" | "centre" | "extent" | "point";
   /** Optional short label, e.g. "(2, 0)" or "vertex". */
   label?: string;
+  /** Draw `label` on the canvas beside the dot (otherwise it only shows on hover). */
+  showLabel?: boolean;
   /** Render as a hollow dot (a strict-inequality endpoint, x not included). */
   open?: boolean;
   /** Render as an emphasised ringed marker (e.g. the peak of a lower envelope). */
@@ -56,6 +58,9 @@ export interface FrameOptions {
   /** When true, the framer uses the domain as the hard x-range instead of the
    *  FOI spread — used e.g. for probability graphs locked to p ∈ [0, 1]. */
   lockDomain?: boolean;
+  /** With `domain.yMin` and `domain.yMax` set: use them as the hard y-range instead of framing to the curves and points
+   *  (a graph with asymptotes, such as tan, would otherwise be framed to its huge sampled extent). */
+  lockDomainY?: boolean;
   /** Fractional visual padding around the framed content. Default 0.23 — frames
    *  a little wider so the key points sit more centrally with surrounding context. */
   padding?: number;
@@ -485,9 +490,10 @@ export function computeFrame(
   if (!Number.isFinite(box.xMin) || !Number.isFinite(box.xMax)) { box.xMin = -5; box.xMax = 5; }
   if (near(box.xMin, box.xMax)) { box.xMin -= 5; box.xMax += 5; }
 
-  // 2. Y-range: FOIs plus a sample of every curve across the x-range.
-  for (const f of fois) addY(f.y);
-  for (const spec of specList) {
+  // 2. Y-range: FOIs plus a sample of every curve across the x-range (or a locked y-domain).
+  const yLocked = !!(opts.lockDomainY && dom && dom.yMin !== undefined && dom.yMax !== undefined);
+  if (!yLocked) for (const f of fois) addY(f.y);
+  for (const spec of yLocked ? [] : specList) {
     if (spec.kind === "function") {
       if (spec.hintY) {
         // Bounded window (asymptotic curves) — trust it over raw sampling.
@@ -512,7 +518,7 @@ export function computeFrame(
   const domLocked = !!(opts.lockDomain && dom && dom.xMin !== undefined && dom.xMax !== undefined);
   const padX = domLocked ? 0.04 : pad;
   const xSpan = (box.xMax - box.xMin) * (1 + 2 * padX);
-  const ySpan = (box.yMax - box.yMin) * (1 + 2 * pad);
+  const ySpan = (box.yMax - box.yMin) * (1 + 2 * (yLocked ? 0.04 : pad));
   const centreX = (box.xMin + box.xMax) / 2;
   const centreY = (box.yMin + box.yMax) / 2;
 

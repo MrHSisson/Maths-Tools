@@ -1,6 +1,6 @@
 # Tool Spec: Solving Trig Equations
 
-**Status:** ready <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
+**Status:** implemented <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
 
 Designed in chat with Harry (17 Nov 2026), ahead of his radians lessons. Decisions made: **A-level only**, **extend `SmartGrapher`** for the picture, and **calculator decimals are in the first build**.
 
@@ -106,7 +106,7 @@ Value table (exact): sin and cos take `±½`, `±√2/2`, `±√3/2`; tan takes 
 
 This is a **developing picture**: one graph updates in place beside the working (`stepVisualRenderer` + `stepVisualKeepsWorking`, the "Keep working" flavour in `docs/reference/pictures.md`). It uses the graph build, the same mechanism as Equations of Lines.
 
-- **What's drawn:** the graph of `y = f(u)` for the function in the question (the *argument* `u`, so Level 1 is `y = f(θ)`), over the question's range (for Levels 2–3, over the **transformed** range of `u`, shaded to show the widened range). A dashed horizontal line `y = k` is drawn from the first step. The frame is computed from the full range, so the view never jumps.
+- **What's drawn (as built):** the graph of the **actual function** `y = f(kθ ± c)` against θ over the question's range, so the solutions read straight off as θ values, with a dashed horizontal line `y = k` from the first step. The frame is computed from the full range, so the view never jumps. (The first draft drew `y = f(u)` over the transformed range; the build kept the θ graph because the final points are what students need to see. The transformed-range picture stays as the v2 idea.)
 - **Axes:** degrees (ticks at multiples of 90°, with minor ticks at 30° or 45°) or radians (ticks labelled as multiples of π: `π/6`, `π/2`, `π`, `3π/2`, `2π`…), chosen by `unit`. The y-axis marks `k`.
 - **Developing order** (one beat per working step):
   1. the curve, the range and the line `y = k`;
@@ -117,7 +117,7 @@ This is a **developing picture**: one graph updates in place beside the working 
 - **Labelling:** solution dots labelled in the working's own units; the unknown is `u` while solving and `θ` in the answer. Colour: curve in the tool's accent, line `y = k` in grey dashed, solution dots green (as in the answer line).
 - **Reference implementation to follow:** `EquationsOfLines` (graph build with `graphStep`, `GraphBuildSpec`) and `src/shared/grapher/` docs in `docs/reference/pictures.md`.
 - **Known gap — to resolve before the build:** `SmartGrapher` has sine, cosine and tangent curve types but works in **radians** with numeric tick labels. This tool needs (a) a **degree** x-axis, (b) **π tick labels** (`π/6`…), (c) trig functions of a degrees argument. **Decision: extend `SmartGrapher`** with a small, general x-axis option (a unit of `deg` or `rad`, and a tick formatter giving π labels), plus a trig curve whose argument is in degrees, so the Unit Circle sandbox and later trig tools can reuse it. Keep the change additive: existing curves, ticks and their tests must be unchanged (run the grapher-using tools' smoke checks). Document it in `docs/reference/pictures.md` in the same session.
-- **Worksheet cell:** no picture (an equation with an answer line); the picture appears in Whiteboard (after "Show answer") and Worked Example only.
+- **Worksheet cell:** no picture (an equation with an answer line). **As built, the picture appears in Worked Example only**; a Whiteboard picture after "Show Answer" is not done.
 
 **Possible v2 (not in the first build):** a second linked picture for Levels 2–3 that shows the transformation, with the graph morphing from the graph of `y = f(u)` back to `y = f(kθ ± c)` in θ.
 
