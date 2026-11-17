@@ -100,21 +100,19 @@ function tensToOrd(it: Item): string[] {
   must(cur === it.ord, `${it.id}: tens method ends at ${cur}, not ${it.ord}`);
   return lines;
 }
-/** Small number to standard form (Harry's route): 0.02 = 2 / 100 = 2 x 1/100 = 2 x 1/10^2 = 2 x 10^-2. */
-function chainSmallToStd(it: Item): string[] {
-  const v = parse(it.ord), t = v.s, D = v.d, m = D.length;
-  must(it.p === -t + m - 1, `${it.id}: small chain shape`);
-  const lines = [
-    `$${it.ord} = ${D} \\div ${oneOf(t)}$`,
-    `$= ${D} \\times \\dfrac{1}{${oneOf(t)}}$`,
-    `$= ${D} \\times \\dfrac{1}{${pw(t)}}$`,
-    `$= ${D} \\times ${pw(-t)}$`,
-  ];
-  if (m > 1) {
-    lines.push(`$${D} = ${it.c} \\times ${ten(m - 1)}$`, `$${D} \\times ${pw(-t)} = ${it.c} \\times ${ten(m - 1)} \\times ${pw(-t)}$`);
-    lines.push(`$${ten(m - 1)} \\times ${pw(-t)} = ${pw(it.p)}$`, `$${it.ord} = ${it.c} \\times ${pw(it.p)}$`);
-  }
+/** Small number to standard form (Harry's route): get the number between 1 and 10 first, then divide by the power of ten.
+ *  0.35 = 3.5 / 10 = 3.5 x 1/10 = 3.5 x 10^-1;  0.02 = 2 / 100 = 2 x 1/100 = 2 x 1/10^2 = 2 x 10^-2. */
+function smallLines(ord: string, c: string, p: number): string[] {
+  const t = -p;
+  must(stdOf(ord).c === c && stdOf(ord).p === p, `${ord} is ${stdOf(ord).c} x 10^${stdOf(ord).p}, not ${c} x 10^${p}`);
+  // the fractions are written inline (1/100), as Harry writes them: a stacked fraction renders smaller than the lines around it
+  const lines = [`${ord} = ${c} \\div ${oneOf(t)}`, `= ${c} \\times 1/${oneOf(t)}`];
+  if (t > 1) lines.push(`= ${c} \\times 1/${pw(t)}`);
+  lines.push(`= ${c} \\times ${pw(p)}`);
   return lines;
+}
+function chainSmallToStd(it: Item): string[] {
+  return smallLines(it.ord, it.c, it.p).map((l) => `$${l}$`);
 }
 /** Small standard form to ordinary: 3.7 x 10^-2 = 3.7 x 1/10^2 = 3.7 / 100 = 0.037. */
 function chainSmallToOrd(it: Item): string[] {
@@ -161,61 +159,27 @@ function gridPlan(dg: string, p: number, mode: "toStd" | "toOrd"): GridPlan {
   const hi = Math.max(...used), lo = Math.min(...used);
   return { cols: Array.from({ length: hi - lo + 1 }, (_, i) => hi - i), rows };
 }
-/** The grid as one maths array: headings (with the powers of ten underneath), a row per place, and `x 10^n` beside it. */
-function gridArray(plan: GridPlan): string {
-  const spec = plan.cols.map((q) => (q === 0 && plan.cols.includes(-1) ? "c|" : "c")).join("") + "|c";
-  const head1 = [...plan.cols.map((q) => `\\mathbf{${NAMES[q]}}`), ""].join("&");
-  const head2 = [...plan.cols.map((q) => `\\color{${grey}}\\scriptstyle ${pw(q)}`), ""].join("&");
-  const last = plan.rows.length - 1;
-  const body = plan.rows.map((r, i) => [
-    ...plan.cols.map((q) => { const c = r.cells.get(q); return !c ? "" : c.zero ? `\\color{#94a3b8}${c.t}` : i === last ? green(c.t) : c.t; }),
-    i === last ? green(`\\times ${pw(r.power)}`) : `\\times ${pw(r.power)}`,
-  ].join("&")).join("\\\\");
-  return `$\\begin{array}{${spec}}${head1}\\\\${head2}\\\\\\hline ${body}\\end{array}$`;
-}
-const gridWorking = (it: Item): string[] => {
-  const { dg } = stdOf(it.ord), mode = it.dir;
-  const steps = Math.abs(it.p);
-  const down = (mode === "toStd") === (it.p > 0);               // the number moves down a place (to a smaller column) or up
-  const move = `The number moves ${down ? "down" : "up"} ${steps} ${steps === 1 ? "place" : "places"}, so the power goes ${down ? "up" : "down"} ${steps === 1 ? "by 1" : `${steps} times, by 1 each time`}.`;
-  const end = it.dir === "toStd" ? `$${it.c} \\times ${pw(it.p)}$` : `$${grp(it.ord)}$`;
-  return [move, gridArray(gridPlan(dg, it.p, mode)), `The answer is ${end}.`];
-};
 
 // ---------- the question forms ----------
 /** The server only accepts question ids of lowercase letters, digits and hyphens. */
 const qid = (id: string) => `${P}-${id.toLowerCase()}`;
-type Help = "start" | "hint" | "none";
-const BOX = "\\Box";
-/** The help line under the question: the first line of working with the key part left as a box, or a small grey hint. */
-function helpLine(it: Item, help: Help): string | undefined {
-  if (help === "none") return undefined;
-  const v = parse(it.ord), D = it.c.replace(".", ""), f = decimals(it.c);
-  if (it.dir === "toStd" && it.p > 0) return help === "start" ? `$${grp(it.ord)} = ${v.d.replace(/0+$/, "")} \\times ${BOX}$` : hintLine("how many tens?");
-  if (it.dir === "toStd") return help === "start" ? `$${it.ord} = ${v.d} \\div ${BOX}$` : hintLine("divided by what?");
-  if (it.p > 0 && f > 0 && it.p >= f) return help === "start" ? `$${it.c} \\times ${pw(it.p)} = ${D} \\times 10^{${BOX}}$` : hintLine("how many tens are left?");
-  if (it.p > 0) return help === "start" ? `$${pw(it.p)} = ${BOX}$` : hintLine("what is 10 to that power?");
-  return help === "start" ? `$${pw(it.p)} = \\dfrac{1}{${BOX}}$` : hintLine("a negative power is one over a power");
-}
-function wbq(id: string, help: Help, working: "chain" | "grid"): CuratedQuestion {
+// Whiteboard questions carry no help lines or hints (Harry, 2026-11-17: that structure came from another deck and does not help here): an
+// instruction, then the number, all at one size. The working is Method 1 throughout; the place value table is a model slide only.
+function wbq(id: string): CuratedQuestion {
   const it = item(id);
   const lines = it.dir === "toStd" ? ["Write in standard form:", `$${grp(it.ord)}$`] : ["Write as an ordinary number:", `$${it.c} \\times ${pw(it.p)}$`];
-  const h = helpLine(it, help);
-  if (h) lines.push(h);
   assertCentred(lines, id);
   const answer = it.dir === "toStd" ? `$${it.c} \\times ${pw(it.p)}$` : `$${grp(it.ord)}$`;
   return {
-    ...Q.open(qid(id), T, "level1", lines[0], answer, working === "chain" ? chain(it) : gridWorking(it)),
+    ...Q.open(qid(id), T, "level1", lines[0], answer, chain(it)),
     title: it.dir === "toStd" ? `${grp(it.ord)} to standard form` : `${it.c} x 10^${it.p} to ordinary`,
     question: lines,
-    rationale: working === "chain" ? "Write the number as a smaller number times a power of ten, then make the coefficient between 1 and 10 and combine the tens." : "Move the number a place at a time; each place down adds 1 to the power, each place up takes 1 off.",
+    rationale: it.dir === "toStd" ? "Write the number as a number between 1 and 10 times a 1 followed by zeros, then as a power of ten (a small number is divided by the power)." : "Write the power of ten out in full, then multiply (or divide) by it.",
   };
 }
-function partsQ(id: string, help: Help): CuratedQuestion {
+function partsQ(id: string): CuratedQuestion {
   const x = parts(id);
   const lines = ["Write in standard form:", `$${x.shown} \\times ${pw(x.sp)}$`];
-  if (help === "start") lines.push(Number(x.shown) < 1 ? `$${x.shown} = ${stdOf(x.shown).c} \\times 10^{${BOX}}$` : `$${x.shown} = ${over10(x.shown)} \\times ${BOX}$`);
-  if (help === "hint") lines.push(hintLine("is the first number between 1 and 10?"));
   assertCentred(lines, id);
   return {
     ...Q.open(qid(id), T, "level1", lines[0], `$${x.c} \\times ${pw(x.p)}$`, chainParts(x)),
@@ -223,8 +187,8 @@ function partsQ(id: string, help: Help): CuratedQuestion {
     rationale: "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
   };
 }
-const wbRun = (ids: string[], helps: Help[], working: "chain" | "grid") => ids.map((id, i) => wbq(id, helps[i] ?? "none", working));
-const partsRun = (ids: string[], helps: Help[]) => ids.map((id, i) => partsQ(id, helps[i] ?? "none"));
+const wbRun = (ids: string[]) => ids.map(wbq);
+const partsRun = (ids: string[]) => ids.map(partsQ);
 
 // ---------- slide pieces ----------
 const t = textEl;
@@ -344,35 +308,25 @@ const toOrd3 = methodsToOrd("m-790000", "790000", "7.9", 5, "A third example, wi
 const partsDisc = S.discuss(`${P}-parts-disc`, "Is $25 \\times 10^{6}$ in standard form?",
   "No. 25 is not between 1 and 10. $25 = 2.5 \\times 10$, so we can take a ten out and add it to the power.", "Write $25 \\times 10^{6}$ in standard form.", "2.5 \\times 10^{7}");
 
-const small1 = chainSlide(`${P}-small1`, "Small numbers: divide by tens", "Write 0.02 in standard form.", [
-  { tex: "0.02 = 2 \\div 100", note: "two hundredths" },
-  { tex: "= 2 \\times \\dfrac{1}{100}" },
-  { tex: "= 2 \\times \\dfrac{1}{10^{2}}" },
-  { tex: "= 2 \\times 10^{-2}", final: true, note: "1 ÷ 10² is 10⁻², from the laws of indices" },
-], "Model 1: a decimal is a division by a power of ten, and the laws of indices turn the division into a negative power. Standard form straight away.");
-const small2 = chainSlide(`${P}-small2`, "The first number is too big", "Write 0.35 in standard form.", [
-  { tex: "0.35 = 35 \\div 100" },
-  { tex: "= 35 \\times 10^{-2}", note: "as before: 1 ÷ 10² = 10⁻²" },
-  { tex: "= 3.5 \\times 10 \\times 10^{-2}", note: "35 = 3.5 × 10" },
-  { tex: "= 3.5 \\times 10^{-1}", final: true, note: "10 × 10⁻² = 10⁻¹" },
-], "Model 2: the first number (35) is not between 1 and 10, so take a ten out of it, exactly as with the large numbers. 10 × 10⁻² = 10¹ × 10⁻² = 10⁻¹: add the powers.");
-const small3 = chainSlide(`${P}-small3`, "More zeros", "Write 0.00058 in standard form.", [
-  { tex: "0.00058 = 58 \\div 100\\,000" },
-  { tex: "= 58 \\times \\dfrac{1}{10^{5}}" },
-  { tex: "= 58 \\times 10^{-5}", note: "58 is not between 1 and 10" },
-  { tex: "= 5.8 \\times 10 \\times 10^{-5}", note: "58 = 5.8 × 10" },
-  { tex: "= 5.8 \\times 10^{-4}", final: true, note: "10 × 10⁻⁵ = 10⁻⁴" },
-], "Model 3: five decimal places but the power is -4, because 58 gives back one ten. The power is not the number of zeros.");
+/** A small number in standard form: get the first number between 1 and 10 first, then divide by the power of ten (the lines come from `smallLines`). */
+const smallSlide = (id: string, title: string, ord: string, c: string, p: number, notes: (string | undefined)[], brief: string) =>
+  chainSlide(`${P}-${id}`, title, `Write ${ord} in standard form.`, smallLines(ord, c, p).map((tex, i, all) => ({ tex, note: notes[i], final: i === all.length - 1 })), brief);
+const small1 = smallSlide("small1", "Small numbers: divide by tens", "0.02", "2", -2, ["two hundredths", undefined, undefined, "1 ÷ 10² is 10⁻², from the laws of indices"],
+  "Model 1: a decimal is a number between 1 and 10 divided by a power of ten, and the laws of indices turn the division into a negative power.");
+const small2 = smallSlide("small2", "Get it between 1 and 10 first", "0.35", "3.5", -1, ["3.5 is between 1 and 10, and 3.5 ÷ 10 = 0.35"],
+  "Model 2: two digits. Write the digits as a number between 1 and 10 (3.5) and divide by 10, rather than 35 ÷ 100 and then fixing it.");
+const small3 = smallSlide("small3", "More zeros", "0.00058", "5.8", -4, ["5.8 first, then divide by 10 000"],
+  "Model 3: five decimal places but the power is -4. The power is not the number of zeros: it is how many tens we divide 5.8 by.");
 const small4 = S.discuss(`${P}-small4`, "$0.02 = 2 \\times 10^{-2}$. Why is the power negative?",
   "We divided by tens, so the number is smaller than 1. A number smaller than 1 has a negative power.", "What is $2 \\times 10^{2}$?", "200");
 const smallBack1 = chainSlide(`${P}-small-back1`, "Small numbers, back again", "Write 1.6 × 10⁻² as an ordinary number.", [
-  { tex: "10^{-2} = \\dfrac{1}{10^{2}} = \\dfrac{1}{100}", note: "a negative power is one over the power" },
-  { tex: "1.6 \\times 10^{-2} = 1.6 \\times \\dfrac{1}{100}" },
+  { tex: "10^{-2} = 1/10^{2} = 1/100", note: "a negative power is one over the power" },
+  { tex: "1.6 \\times 10^{-2} = 1.6 \\times 1/100" },
   { tex: "= 1.6 \\div 100" },
   { tex: "= 0.016", final: true },
 ], "Reverse of model 1: a negative power means divide by that power of ten.");
 const smallBack2 = chainSlide(`${P}-small-back2`, "Small numbers, back again", "Write 3.7 × 10⁻³ as an ordinary number.", [
-  { tex: "10^{-3} = \\dfrac{1}{10^{3}} = \\dfrac{1}{1\\,000}" },
+  { tex: "10^{-3} = 1/10^{3} = 1/1\\,000" },
   { tex: "3.7 \\times 10^{-3} = 3.7 \\div 1\\,000" },
   { tex: "= 0.0037", final: true },
 ], "A second reversed model, with three decimal places.");
@@ -384,26 +338,27 @@ const smallParts = chainSlide(`${P}-small-parts`, "A first number that is too sm
 const retrieval = S.quick(`${P}-index-recap`, "Laws of indices: four quick ones", [
   Q.open(`${P}-rec-1`, T, "level1", "Write $\\dfrac{1}{10^{2}}$ as a power of 10.", "$10^{-2}$", ["$\\dfrac{1}{10^{2}} = 10^{-2}$"]),
   Q.open(`${P}-rec-2`, T, "level1", "Write $\\dfrac{1}{10^{4}}$ as a power of 10.", "$10^{-4}$", ["$\\dfrac{1}{10^{4}} = 10^{-4}$"]),
-  Q.open(`${P}-rec-3`, T, "level1", "Work out $10 \\times 10^{-5}$.", "$10^{-4}$", ["$10 \\times 10^{-5} = 10^{1} \\times 10^{-5} = 10^{-4}$: add the powers"]),
+  Q.open(`${P}-rec-3`, T, "level1", "Write $\\dfrac{1}{10}$ as a power of 10.", "$10^{-1}$", ["$\\dfrac{1}{10} = \\dfrac{1}{10^{1}} = 10^{-1}$"]),
   Q.open(`${P}-rec-4`, T, "level1", "Write $10^{-3}$ as a fraction.", "$\\dfrac{1}{1\\,000}$", ["$10^{-3} = \\dfrac{1}{10^{3}} = \\dfrac{1}{1\\,000}$"]),
-], 2, "Both laws are needed for small numbers: one over a power, and adding powers.");
+], 2, "The law the small-number method uses: one over a power of ten is a negative power.");
 
 // ---------- the question runs ----------
-const WL = [...wbRun(run("WL", 4), ["start", "start", "hint", "none"], "chain"), ...wbRun(["WL5", "WL6", "WL7", "WL8", "WL9", "WL10"], [], "grid")];
-const WF = [...wbRun(run("WF", 3), ["start", "hint", "none"], "chain"), ...wbRun(["WF4", "WF5", "WF6", "WF7", "WF8", "WF9"], [], "grid")];
-const WS = [...wbRun(run("WS", 4), ["start", "start", "hint", "none"], "chain"), ...wbRun(["WS5", "WS6", "WS7", "WS8", "WS9", "WS10", "WS11", "WS12"], [], "grid")];
-const WT = [...wbRun(run("WT", 4), ["start", "hint", "none", "none"], "chain"), ...wbRun(["WT5", "WT6", "WT7", "WT8", "WT9", "WT10"], [], "grid")];
-const WPL = partsRun(run("WPL", 8), ["start", "hint", "none"]);
-const WPS = partsRun(run("WPS", 8), ["start", "hint", "none"]);
-const WM = wbRun(run("WM", 10), [], "chain");
+// Every whiteboard slide has five questions and no help lines. Numbers in parts come last of all.
+const WL = wbRun(run("WL", 10));
+const WF = wbRun(run("WF", 10));
+const WS = wbRun(["WS1", "WS2", "WS3", "WS4", "WS5", "WS6", "WS7", "WS9", "WS10", "WS12"]);
+const WT = wbRun(run("WT", 10));
+const WPL = partsRun(["WPL1", "WPL2", "WPL4", "WPL6", "WPL8"]);
+const WPS = partsRun(["WPS1", "WPS4", "WPS5", "WPS6", "WPS8"]);
+const WM = wbRun(run("WM", 10));
 const slice = (qs: CuratedQuestion[], a: number, b?: number) => qs.slice(a, b);
-must(WL.length === 10 && WF.length === 9 && WS.length === 12 && WT.length === 10 && WPL.length === 8 && WPS.length === 8 && WM.length === 10, "run sizes");
+must([WL, WF, WS, WT, WM].every((r) => r.length === 10) && WPL.length === 5 && WPS.length === 5, "run sizes");
 
 const wb = (id: string, title: string, qs: CuratedQuestion[], brief: string) => S.whiteboard(`${P}-${id}`, title, qs, brief);
 
 export default () => ({
   id: ID, title: "Standard Form 1: Converting", strand: "Number", questionVersion: 2, tool: "standard-form",
-  summary: "Why we use standard form, and converting large and small numbers both ways. The method: write the number as a smaller number times a power of ten, make the first number between 1 and 10, combine the tens; the place value grid then gives the quicker rule (down a place, power up 1). Numbers in parts sit inside each section. Printed Sheets 1 and 2 are placeholders. All questions are authored.",
+  summary: "Why we use standard form, and converting large and small numbers both ways. Large numbers: two methods (one step, or one ten at a time). Small numbers: write the first number between 1 and 10, then divide by a power of ten. The place value grid then gives the quicker rule (down a place, power up 1). Numbers in parts come last of all. Whiteboards have five questions and no hints. Printed Sheets 1 and 2 are placeholders. All questions are authored.",
   slides: [
     S.title(`${P}-title`, "Standard Form", "Why we use it, and converting"),
     S.objective(`${P}-objective`, "Write large and small numbers in standard form, and convert them back.", ["Say why standard form is used", "Say whether a number is in standard form", "Convert large and small numbers both ways"]),
@@ -415,41 +370,41 @@ export default () => ({
     // Large to standard form
     S.divider(`${P}-div-large`, "Large numbers to standard form", "Two methods."),
     toStd1, toStd2, toStd3,
-    wb("wl-a", "Large to standard form", slice(WL, 0, 4), "Chain working. Help climbs: the first line started, a small grey hint, then none."),
+    wb("wl-a", "Large to standard form", slice(WL, 0, 5), "Five whiteboards. Working is Method 1."),
     bridgeSlide(`${P}-bridge-large`, "The same thing in the grid", "32 000 written in the place value grid, one place at a time. The decimal point never moves.", { id: "m1", dir: "toStd", ord: "32000", c: "3.2", p: 4 }, "The bridge: after the chain has been seen several times. The number moves down one place per click and the power goes up by 1. The point stays where it is."),
-    wb("wl-b", "Large to standard form", slice(WL, 4), "Grid working after the bridge."),
+    wb("wl-b", "Large to standard form", slice(WL, 5), "Five more whiteboards, after the grid."),
     // Large from standard form
     S.divider(`${P}-div-large-back`, "Large numbers from standard form", "Two methods the other way."),
     toOrd1, toOrd2, toOrd3,
-    wb("wf-a", "Large from standard form", slice(WF, 0, 3), "Chain working, with help."),
+    wb("wf-a", "Large from standard form", slice(WF, 0, 5), "Five whiteboards. Working is Method 1."),
     bridgeSlide(`${P}-bridge-large-back`, "The grid the other way", "4.3 × 10³ in the grid: each click moves the number up a place and the power comes down by 1, until it reaches 10⁰ (= 1).", { id: "m2", dir: "toOrd", ord: "4300", c: "4.3", p: 3 }, "The same grid read the other way round: up one place, power down 1, until the power is 10⁰, which is 1."),
-    wb("wf-b", "Large from standard form", slice(WF, 3), "Grid working. The last has a decimal answer."),
-    // Numbers in parts (large): after both large directions, before Sheet 1
-    S.divider(`${P}-div-large-parts`, "Numbers in parts", "A first number that is not between 1 and 10."),
-    partsDisc,
-    wb("wpl", "Numbers in parts (large)", WPL, "One ten at a time: peel a ten off the first number until it is between 1 and 10. Eight whiteboards; the first two have help."),
+    wb("wf-b", "Large from standard form", slice(WF, 5), "Five more whiteboards, after the grid."),
     sheetPlaceholder(`${P}-sheet-1`, 1, "Questions 1 and 2: write in standard form, and write as an ordinary number (large)", "1 and 2"),
     // Small numbers
     S.divider(`${P}-div-small`, "Small numbers to standard form", "Divide by tens."),
     retrieval, small1, small2, small3, small4,
-    wb("ws-a", "Small to standard form", slice(WS, 0, 4), "Chain working with help. These start at the power -1."),
+    wb("ws-a", "Small to standard form", slice(WS, 0, 5), "Five whiteboards. These start at the power -1."),
     bridgeSlide(`${P}-bridge-small`, "The small numbers in the grid", "0.02 written in the grid: the number moves up, the power goes down.", { id: "m3", dir: "toStd", ord: "0.02", c: "2", p: -2 }, "The bridge for small numbers: link back to 2 ÷ 100."),
-    wb("ws-b", "Small to standard form", slice(WS, 4), "Grid working after the bridge."),
+    wb("ws-b", "Small to standard form", slice(WS, 5), "Five more whiteboards, after the grid."),
     S.divider(`${P}-div-small-back`, "Small numbers from standard form"),
     smallBack1, smallBack2,
-    wb("wt-a", "Small from standard form", slice(WT, 0, 4), "Chain working with help."),
+    wb("wt-a", "Small from standard form", slice(WT, 0, 5), "Five whiteboards."),
     bridgeSlide(`${P}-bridge-small-back`, "The grid the other way", "2 × 10⁻² written in the grid: the number moves down, the power goes up.", { id: "m4", dir: "toOrd", ord: "0.02", c: "2", p: -2 }, "The reverse of the small bridge."),
-    wb("wt-b", "Small from standard form", slice(WT, 4), "Grid working after the bridge: the number moves down, the power goes up."),
-    S.divider(`${P}-div-small-parts`, "Numbers in parts, small", "A first number too big, or too small."),
-    smallParts,
-    wb("wps", "Numbers in parts (small)", WPS, "Too big (70 × 10⁻⁴) and too small (0.9 × 10⁷). The first two have help."),
+    wb("wt-b", "Small from standard form", slice(WT, 5), "Five more whiteboards, after the grid."),
     sheetPlaceholder(`${P}-sheet-2`, 2, "Questions 3 and 4: write in standard form, and write as an ordinary number (small)", "3 and 4"),
-    // Mixed
+    // Mixed: all four directions together
     S.divider(`${P}-div-mixed`, "Mixed", "You decide which way, and which sign."),
-    wb("wm", "Mixed: both ways, large and small", WM, "Ten mixed whiteboards, no help."),
-    S.general(`${P}-gen-1`, "Converting: Level 1", T, { sub: "converting", level: "level1" }, 11, "The tool's generator. Its working is the place value grid; the chain working is still to be built into the tool."),
+    wb("wm-a", "Mixed: both ways, large and small", slice(WM, 0, 5), "Five mixed whiteboards."),
+    wb("wm-b", "Mixed: both ways, large and small", slice(WM, 5), "Five more mixed whiteboards."),
+    S.general(`${P}-gen-1`, "Converting: Level 1", T, { sub: "converting", level: "level1" }, 11, "The tool's generator. Its working is the place value grid; the Method 1 working is still to be built into the tool."),
     S.general(`${P}-gen-2`, "Converting: Level 2", T, { sub: "converting", level: "level2" }, 12),
+    // Numbers in parts: the very end, once all four directions are secure
+    S.divider(`${P}-div-parts`, "Numbers in parts", "A first number that is not between 1 and 10."),
+    partsDisc,
+    wb("wpl", "Numbers in parts (large)", WPL, "Peel a ten off the first number until it is between 1 and 10. Five whiteboards."),
+    smallParts,
+    wb("wps", "Numbers in parts (small)", WPS, "Too big (70 × 10⁻⁴) and too small (0.9 × 10⁷). Five whiteboards."),
     S.general(`${P}-gen-3`, "Converting: Level 3 (numbers in parts)", T, { sub: "converting", level: "level3" }, 13),
-    S.summary(`${P}-summary`, "Summary", ["Standard form is $A \\times 10^{n}$ with $1 \\le A < 10$ and $n$ an integer.", "Write the number as $A$ times a 1 with zeros, then as a power of ten; or peel off one ten at a time.", "Down one place, the power goes up by $1$. Up one place, the power goes down by $1$.", "Small numbers: divide by tens, so the power is negative."]),
+    S.summary(`${P}-summary`, "Summary", ["Standard form is $A \\times 10^{n}$ with $1 \\le A < 10$ and $n$ an integer.", "Large: write the number as $A$ times a 1 with zeros, then as a power of ten; or peel off one ten at a time.", "Small: write $A$, divide by a power of ten, and the power is negative.", "Down one place, the power goes up by $1$. Up one place, the power goes down by $1$."]),
   ] as Slide[],
 });
