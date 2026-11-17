@@ -47,10 +47,10 @@ export function decimalValues(deg: number): { sin: number; cos: number; tan: num
   return { sin: Math.abs(s) < 1e-12 ? 0 : s, cos: Math.abs(c) < 1e-12 ? 0 : c, tan: Math.abs(c) < 1e-9 ? null : s / c };
 }
 
-export interface RadFrac { n: number; d: number }
+interface RadFrac { n: number; d: number }
 
 /** Whole degrees as a reduced multiple of π: 150° → { n: 5, d: 6 } (5π/6). */
-export function radFraction(deg: number): RadFrac {
+function radFraction(deg: number): RadFrac {
   const g = gcd(Math.round(deg), 180) || 1;
   return { n: Math.round(deg) / g, d: 180 / g };
 }

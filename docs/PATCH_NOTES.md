@@ -38,6 +38,7 @@ Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle
 - Teaching aids: Hide answers (radian labels and coordinates hidden until the point is tapped), Build graph (curves drawn only up to the current angle) and Label graph points (exact values beside the marked points). On the circle, tan θ is drawn as the length cut off on the tangent line at (1, 0), with the asymptotes at 90° and 270° on the graph.
 - Exact values and conversions live in `unitCircleMath.ts` and are checked against decimals for all 16 marked angles in `src/tests/unitCircle.test.ts`.
 - Layout checked at laptop (1366×768), tablet landscape (1180×820) and phone (390×800). The Pen overlay stays available, so the circle can be annotated.
+- Second pass (decluttered, steadier): fixed graph scale (no rescale when tan is switched on), fixed-height readout so the graph never resizes as the angle changes, one-row controls with the less-used switches in a Display menu, and quieter labels (grey degrees, indigo radians, no legend or θ marker).
 - Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
 
 Agent: Claude Code

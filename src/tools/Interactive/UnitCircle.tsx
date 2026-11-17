@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
-import { Home, Menu, X, Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
+import { Home, Menu, X, Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown } from "lucide-react";
 import { InfoModal, type InfoSection } from "../../shared";
 import { shouldAutoOpenAbout, markAboutSeen } from "../../shared/about";
 import { useLayoutMode } from "../../shared/layoutMode";
@@ -134,8 +134,8 @@ function IconBtn({ onClick, title, children, active }: { onClick: () => void; ti
 }
 
 // ── Geometry ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-const R = 105;                  // circle radius in SVG units
-const VB = 175;                 // circle viewBox half-size
+const R = 118;                  // circle radius in SVG units
+const VB = 172;                 // circle viewBox half-size
 const cp = (deg: number, r = R): [number, number] => [r * Math.cos((deg * Math.PI) / 180), -r * Math.sin((deg * Math.PI) / 180)];
 
 const GW = 600, GH = 410, PX0 = 58, PX1 = 586, PY0 = 16, PY1 = 290;
@@ -175,6 +175,14 @@ export default function UnitCircle() {
   const [trace, setTrace] = useState(false);
   const [hide, setHide] = useState(false);
   const [revealed, setRevealed] = useState<number[]>([]);
+  const [optsOpen, setOptsOpen] = useState(false);
+  const optsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!optsOpen) return;
+    const h = (e: MouseEvent) => { if (optsRef.current && !optsRef.current.contains(e.target as Node)) setOptsOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [optsOpen]);
 
   const shown = Math.round(angle);
   const exact = exactValues(shown);
@@ -201,7 +209,7 @@ export default function UnitCircle() {
     for (const s of [...fam, 360]) if (Math.min(Math.abs(d - s), 360 - Math.abs(d - s)) <= tol) return s === 360 && d < 180 ? 0 : s;
     return d;
   }, [fam]);
-  const setTo = useCallback((d: number, tol = 3.5) => {
+  const setTo = useCallback((d: number, tol = 2.5) => {
     const v = snap(Math.round(d), tol);
     setAngle(v);
     if (exactValues(v)) reveal(v);
@@ -256,15 +264,12 @@ export default function UnitCircle() {
   const labelSize = family === "all" ? 8.6 : 10.5;
 
   const ringLabels = SPECIALS.filter((s) => inFamily(s, family)).map((s) => {
-    const col = FAM_COL[s.family];
-    const [lx, ly] = cp(s.deg, R + (units === "both" ? 31 : 22));
+    const [lx, ly] = cp(s.deg, R + (units === "both" ? 28 : 20));
     const dShow = showDegLabel, rShow = showRadLabel(s.deg);
-    const rad = radText(s.deg);
-    const dy = dShow && rShow ? -9 : 0;
     return (
       <g key={"r" + s.deg}>
-        {dShow && <text x={lx} y={ly + dy + 4} textAnchor="middle" fontSize={11.5} fontWeight={600} fill={col}>{s.deg}°</text>}
-        {rShow && <Q x={lx} y={dShow ? ly + 11 : ly} t={rad} size={units === "rad" ? 12 : 10.5} fill={col} />}
+        {dShow && <text x={lx} y={ly + (rShow ? -7 : 4)} textAnchor="middle" fontSize={10.5} fontWeight={600} fill="#64748b">{s.deg}°</text>}
+        {rShow && <Q x={lx} y={dShow ? ly + 9 : ly} t={radText(s.deg)} size={10} fill="#4f46e5" />}
       </g>
     );
   });
@@ -277,7 +282,7 @@ export default function UnitCircle() {
     const r = axis ? R * 0.7 : only45 ? R * 0.33 : family === "all" ? R * 0.74 : R * 0.64;
     const [lx, ly0] = cp(s.deg, r);
     const ly = s.deg === 0 || s.deg === 180 ? ly0 - 12 : ly0;
-    return <Row key={"c" + s.deg} x={lx} y={ly} items={["(", ev.cos, ",", ev.sin, ")"]} size={only45 ? 7.6 : labelSize} fill={FAM_COL[s.family]} />;
+    return <Row key={"c" + s.deg} x={lx} y={ly} items={["(", ev.cos, ",", ev.sin, ")"]} size={only45 ? 7.6 : labelSize} fill={INK} />;
   }) : null;
 
   const tanEnd = (() => {
@@ -322,14 +327,13 @@ export default function UnitCircle() {
 
       {/* handle */}
       <circle cx={px} cy={py} r={8} fill="#4f46e5" stroke="#fff" strokeWidth={2.5} />
-      <text x={Math.cos((angle / 2 * Math.PI) / 180) * 40} y={-Math.sin((angle / 2 * Math.PI) / 180) * 40 + 4} textAnchor="middle" fontSize={13} fontStyle="italic" fill="#4f46e5" style={{ pointerEvents: "none" }}>{angle > 20 && family !== "all" ? "θ" : ""}</text>
     </svg>
   );
 
   // ── Graph ───────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const ymax = fns.tan ? 3.2 : 1.25;
+  const ymax = 2;
   const yOf = (v: number) => PY0 + PH * (1 - (v + ymax) / (2 * ymax));
-  const yTicks = fns.tan ? [-3, -2, -1, 0, 1, 2, 3] : [-1, -0.5, 0, 0.5, 1];
+  const yTicks = [-2, -1, 0, 1, 2];
 
   const curve = (f: Fn): string => {
     const upto = trace ? Math.min(360, angle) : 360;
@@ -396,8 +400,8 @@ export default function UnitCircle() {
         return (
           <g key={"xl" + m.deg}>
             <line x1={x} x2={x} y1={PY1} y2={PY1 + 4} stroke="#94a3b8" />
-            {dShow && <text x={x} y={PY1 + 17 + stagger} textAnchor="middle" fontSize={11} fontWeight={600} fill={m.family === "45" ? FAM_COL["45"] : "#475569"}>{m.deg}°</text>}
-            {rShow && <Q x={x} y={PY1 + (dShow ? 34 : 22) + stagger} t={radText(m.deg)} size={10.5} fill={m.family === "45" ? FAM_COL["45"] : "#475569"} />}
+            {dShow && <text x={x} y={PY1 + 17 + stagger} textAnchor="middle" fontSize={11} fontWeight={600} fill="#64748b">{m.deg}°</text>}
+            {rShow && <Q x={x} y={PY1 + (dShow ? 34 : 22) + stagger} t={radText(m.deg)} size={10} fill="#4f46e5" />}
           </g>
         );
       })}
@@ -417,58 +421,46 @@ export default function UnitCircle() {
         return <circle key={"m" + f} cx={xOf(Math.min(360, angle))} cy={yOf(v)} r={6} fill={COL[f]} stroke="#fff" strokeWidth={2} />;
       })}
       {!anyFn && <text x={PX0 + PW / 2} y={PY0 + PH / 2} textAnchor="middle" fontSize={14} fill="#94a3b8">Switch on sin, cos or tan to draw a graph</text>}
-      {/* legend */}
-      {(["sin", "cos", "tan"] as Fn[]).filter((f) => fns[f]).map((f, i) => (
-        <g key={"lg" + f} transform={`translate(${PX0 + 10 + i * 64},${PY0 + 14})`}>
-          <rect x={-4} y={-11} width={58} height={20} rx={10} fill="#fff" fillOpacity={0.9} stroke={COL[f]} />
-          <line x1={2} x2={16} y1={-1} y2={-1} stroke={COL[f]} strokeWidth={3} />
-          <text x={22} y={3} fontSize={12} fontWeight={600} fill={COL[f]}>{f === "sin" ? "sin θ" : f === "cos" ? "cos θ" : "tan θ"}</text>
-        </g>
-      ))}
     </svg>
   );
 
   // ── Readout ─────────────────────────────────────────────────────────────────────────────────────────────────────────
   const radDecimal = (shown * Math.PI) / 180;
+  const hideWorking = hide && !visibleAnswer(shown);
   const valueChip = (f: Fn) => {
     const e = exact ? exact[f] : null;
     const d = f === "tan" ? dec.tan : dec[f];
-    const hiddenNow = hide && !visibleAnswer(shown);
     return (
-      <div key={f} className="rounded-xl border px-3 py-2 min-w-[7.5rem]" style={{ borderColor: COL[f], background: fns[f] ? COL[f] + "14" : "#fff", opacity: fns[f] ? 1 : 0.6 }}>
-        <div className="text-xs font-semibold" style={{ color: COL[f] }}>{f} {shown}°</div>
-        <div className="text-base font-semibold text-slate-800">
-          {hiddenNow ? "?" : e ? <>= <H t={e} /></> : <>= {d === null ? "undefined" : d.toFixed(3)}</>}
-          {!hiddenNow && e && e !== "undefined" && d !== null && <span className="text-xs font-normal text-slate-500"> ≈ {d.toFixed(3)}</span>}
+      <div key={f} className="rounded-xl border px-3 h-[58px] flex flex-col justify-center flex-1 min-w-0" style={{ borderColor: COL[f] + "88", background: COL[f] + "10" }}>
+        <div className="text-xs font-semibold" style={{ color: COL[f] }}>{f} θ</div>
+        <div className="text-base font-semibold text-slate-800 h-7 flex items-center whitespace-nowrap">
+          {hideWorking ? "?" : e ? <>= <H t={e} /></> : <>= {d === null ? "undefined" : d.toFixed(3)}</>}
+          {!hideWorking && e && e !== "undefined" && d !== null && <span className="text-xs font-normal text-slate-500 ml-1.5">≈ {d.toFixed(2)}</span>}
         </div>
       </div>
     );
   };
-  const hideWorking = hide && !visibleAnswer(shown);
-
-  const working = (
-    <div className="grid gap-x-6 gap-y-1 text-sm text-slate-700 sm:grid-cols-2">
-      <div>
-        <div className="text-xs font-semibold text-slate-500">Degrees → radians</div>
-        <div className="text-base">{hideWorking ? <span className="text-slate-400">{shown}° × π/180 = ?</span> : <Rich s={degToRadWorking(shown).join(" = ")} />}</div>
-      </div>
-      <div>
-        <div className="text-xs font-semibold text-slate-500">Radians → degrees</div>
-        <div className="text-base">{hideWorking ? <span className="text-slate-400">? × 180/π = {shown}°</span> : <Rich s={radToDegWorking(shown).join(" = ")} />}</div>
-      </div>
+  const line = (label: string, body: ReactNode) => (
+    <div className="min-w-0">
+      <div className="text-xs font-semibold text-slate-500">{label}</div>
+      <div className="text-base text-slate-700 h-8 flex items-center whitespace-nowrap overflow-hidden">{body}</div>
     </div>
   );
 
   const readout = (
-    <div className="p-3 space-y-2">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <div className="text-xl font-semibold text-slate-800">
-          θ = {shown}°{hideWorking ? <span className="text-slate-400"> = ? rad</span> : <> = <span className="text-indigo-700"><H t={radText(shown)} /></span> rad</>}
-        </div>
-        {!hideWorking && shown !== 0 && <div className="text-sm text-slate-500">≈ {radDecimal.toFixed(3)} rad</div>}
+    <div className="p-3 grid gap-2" style={{ gridTemplateRows: "40px 52px 58px" }}>
+      <div className="flex items-center gap-x-4 text-xl font-semibold text-slate-800 whitespace-nowrap">
+        <span>{shown}° =</span>
+        {hideWorking ? <span className="text-slate-400">? rad</span> : <><span className="text-indigo-700 inline-flex items-center"><H t={radText(shown)} /><span className="ml-1">rad</span></span><span className="text-sm font-normal text-slate-500">≈ {radDecimal.toFixed(3)}</span></>}
       </div>
-      {working}
-      <div className="flex flex-wrap gap-2 pt-1">{(["sin", "cos", "tan"] as Fn[]).map(valueChip)}</div>
+      <div className="grid grid-cols-2 gap-x-4">
+        {line("Degrees → radians", hideWorking ? <span className="text-slate-400">{shown}° × π/180 = ?</span> : <Rich s={degToRadWorking(shown).join(" = ")} />)}
+        {line("Radians → degrees", hideWorking ? <span className="text-slate-400">? × 180/π = {shown}°</span> : <Rich s={radToDegWorking(shown).join(" = ")} />)}
+      </div>
+      <div className="flex gap-2">
+        {(["sin", "cos", "tan"] as Fn[]).filter((f) => fns[f]).map(valueChip)}
+        {!anyFn && <div className="text-sm text-slate-400 self-center">Switch on sin, cos or tan to see its value.</div>}
+      </div>
     </div>
   );
 
@@ -511,12 +503,22 @@ export default function UnitCircle() {
             <span className="text-xs font-semibold text-slate-500">Graphs</span>
             {(["sin", "cos", "tan"] as Fn[]).map((f) => <Toggle key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((s) => ({ ...s, [f]: !s[f] }))}>{f}</Toggle>)}
           </div>
-          <Seg label="Points" value={family} onChange={setFamily} options={[{ id: "30", text: "30°s" }, { id: "45", text: "45°s" }, { id: "all", text: "All" }]} />
-          <div className="flex flex-wrap items-center gap-2">
-            <Toggle on={showExact} onClick={() => setShowExact((v) => !v)}>Exact values</Toggle>
-            <Toggle on={graphLabels} onClick={() => setGraphLabels((v) => !v)}>Label graph points</Toggle>
-            <Toggle on={trace} onClick={() => setTrace((v) => !v)}>Build graph</Toggle>
-            <Toggle on={hide} onClick={() => { setHide((v) => !v); setRevealed([]); }}>Hide answers</Toggle>
+          <div className="relative" ref={optsRef}>
+            <button onClick={() => setOptsOpen((o) => !o)} aria-expanded={optsOpen}
+              className={`min-h-[40px] px-3 rounded-lg border text-sm font-semibold flex items-center gap-1.5 transition-colors ${optsOpen ? "bg-slate-100 border-slate-400 text-slate-800" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}>
+              Display <ChevronDown size={16} />
+            </button>
+            {optsOpen && (
+              <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-lift border border-slate-200 z-40 p-3 space-y-3">
+                <Seg label="Points" value={family} onChange={setFamily} options={[{ id: "30", text: "30°s" }, { id: "45", text: "45°s" }, { id: "all", text: "All" }]} />
+                <div className="flex flex-wrap gap-2">
+                  <Toggle on={showExact} onClick={() => setShowExact((v) => !v)}>Exact values</Toggle>
+                  <Toggle on={graphLabels} onClick={() => setGraphLabels((v) => !v)}>Label graph points</Toggle>
+                  <Toggle on={trace} onClick={() => setTrace((v) => !v)}>Build graph</Toggle>
+                  <Toggle on={hide} onClick={() => { setHide((v) => !v); setRevealed([]); }}>Hide answers</Toggle>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
