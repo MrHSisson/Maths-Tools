@@ -121,7 +121,8 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         if (q.status === "draft") warnings.push(`${label}: still a draft`);
         else for (const p of readyProblems(q)) problems.push(`${label}: ${p}`);
         // what the shared service checks on a push: a question it would reject stops the build, not the push
-        if (!isCuratedQuestion(q)) problems.push(`${label}: the shared service would reject this question${/^[a-z0-9-]{1,80}$/.test(q.id) ? "" : ` (its id "${q.id}" must be lowercase letters, digits and hyphens, at most 80)`}`);
+        const asSent: unknown = q;           // the guard narrows to `never` when it fails, so look at the id through a plain type
+        if (!isCuratedQuestion(asSent)) problems.push(`${label}: the shared service would reject this question${/^[a-z0-9-]{1,80}$/.test(q.id) ? "" : ` (its id "${q.id}" must be lowercase letters, digits and hyphens, at most 80)`}`);
         if (isDepthQuestion(q)) { depthCards.push({ where: label, q }); continue; }
         [...q.question, q.title].forEach((s) => numbersIn(s).forEach((n) => used.add(n)));
         asks.push({ label, nums: numbersIn(q.title) });
