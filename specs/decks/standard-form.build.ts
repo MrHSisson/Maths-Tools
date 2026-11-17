@@ -212,6 +212,7 @@ function chainSlide(id: string, title: string, subtitle: string, lines: { tex: s
 /** The bridge: the number written in the place value grid and moved one place per click, the power beside it. The point never moves. */
 function bridgeSlide(id: string, title: string, subtitle: string, it: Item, brief: string): Slide {
   const { dg } = stdOf(it.ord), plan = gridPlan(dg, it.p, it.dir);
+  const rowH = plan.rows.length > 5 ? 76 : 90;                    // six rows (five moves) need tighter rows to leave room for the rule underneath
   const cell = 140, W = plan.cols.length * cell, x0 = 400, px = x0 + W + 40;
   const down = (it.dir === "toStd") === (it.p > 0);
   const els: NoIdEls = [...titleEls(title, subtitle)];
@@ -222,16 +223,16 @@ function bridgeSlide(id: string, title: string, subtitle: string, it: Item, brie
   els.push(lineEl(x0, 326, W, 0));
   els.push(t(px, 232, 300, 48, "Power", 40, { bold: true, colour: grey }));
   const point = plan.cols.indexOf(0);
-  if (plan.cols.includes(-1)) els.push(lineEl(x0 + (point + 1) * cell, 238, 0, 80 + plan.rows.length * 90, { colour: "#94a3b8" }));
+  if (plan.cols.includes(-1)) els.push(lineEl(x0 + (point + 1) * cell, 238, 0, 80 + plan.rows.length * rowH, { colour: "#94a3b8" }));
   const last = plan.rows.length - 1;
   plan.rows.forEach((r, i) => {
-    const y = 345 + i * 90, step = i + 1;
+    const y = 345 + i * rowH, step = i + 1;
     plan.cols.forEach((q, j) => {
       const c = r.cells.get(q);
-      if (c) els.push(t(x0 + j * cell, y, cell, 80, c.t, 64, { bold: !c.zero, align: "center", middle: true, colour: c.zero ? "#94a3b8" : i === last ? GREEN : LOOK.ink, step }));
+      if (c) els.push(t(x0 + j * cell, y, cell, rowH - 10, c.t, rowH < 90 ? 54 : 64, { bold: !c.zero, align: "center", middle: true, colour: c.zero ? "#94a3b8" : i === last ? GREEN : LOOK.ink, step }));
     });
-    els.push(t(px, y, 320, 80, `$\\times ${pw(r.power)}$`, 56, { middle: true, colour: i === last ? GREEN : LOOK.ink, bold: i === last, step }));
-    els.push(t(40, y, x0 - 60, 80, i === 0 ? "Start" : `${down ? "down" : "up"} 1 place: power ${down ? "up" : "down"} 1`, 34, { colour: grey, middle: true, align: "right", step }));
+    els.push(t(px, y, 320, rowH - 10, `$\\times ${pw(r.power)}$`, 56, { middle: true, colour: i === last ? GREEN : LOOK.ink, bold: i === last, step }));
+    els.push(t(40, y, x0 - 60, rowH - 10, i === 0 ? "Start" : `${down ? "down" : "up"} 1 place: power ${down ? "up" : "down"} 1`, 34, { colour: grey, middle: true, align: "right", step }));
   });
   els.push(t(100, 825, 1400, 60, "Down one place: the power goes up by 1. Up one place: the power goes down by 1.", 42, { bold: true, colour: BLUE, align: "center", middle: true, step: plan.rows.length + 1 }));
   return makeSlide(id, "teach", title, els, brief);
@@ -397,12 +398,12 @@ export default () => ({
     S.divider(`${P}-div-small`, "Small numbers to standard form", "Divide by tens."),
     retrieval, small1, small2, small3, small4,
     wb("ws-a", "Small to standard form", slice(WS, 0, 5), "Five whiteboards. These start at the power -1."),
-    bridgeSlide(`${P}-bridge-small`, "The small numbers in the grid", "0.02 written in the grid: the number moves up, the power goes down.", { id: "m3", dir: "toStd", ord: "0.02", c: "2", p: -2 }, "The bridge for small numbers: link back to 2 ÷ 100."),
+    bridgeSlide(`${P}-bridge-small`, "The small numbers in the grid", "0.00002 written in the grid: each click moves the number up a place and the power goes down by 1.", { id: "m3", dir: "toStd", ord: "0.00002", c: "2", p: -5 }, "The bridge for small numbers: link back to 2 ÷ 100."),
     wb("ws-b", "Small to standard form", slice(WS, 5), "Five more whiteboards, after the grid."),
     S.divider(`${P}-div-small-back`, "Small numbers from standard form"),
     smallBack1, smallBack2,
     wb("wt-a", "Small from standard form", slice(WT, 0, 5), "Five whiteboards."),
-    bridgeSlide(`${P}-bridge-small-back`, "The grid the other way", "2 × 10⁻² written in the grid: the number moves down, the power goes up.", { id: "m4", dir: "toOrd", ord: "0.02", c: "2", p: -2 }, "The reverse of the small bridge."),
+    bridgeSlide(`${P}-bridge-small-back`, "The grid the other way", "2 × 10⁻⁵ written in the grid: each click moves the number down a place and the power goes up by 1, until it reaches 10⁰.", { id: "m4", dir: "toOrd", ord: "0.00002", c: "2", p: -5 }, "The reverse of the small bridge."),
     wb("wt-b", "Small from standard form", slice(WT, 5), "Five more whiteboards, after the grid."),
     sheetSlide(2),
     // Mixed: all four directions together
