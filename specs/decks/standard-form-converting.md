@@ -1,6 +1,6 @@
 # Deck plan: Standard form, lesson 1 (why we use it, and converting)
 
-**Status:** plan, revised 2026-11-17 (fourth round with Harry: printed book work inside the lesson). Nothing built. Every number below is recomputed by `specs/decks/_check/standard-form-converting-check.py` (115 questions and 14 worked or hook numbers; all correct, none repeated, none used on a slide and also asked).
+**Status:** plan, revised 2026-11-17 (fourth round with Harry: printed book work inside the lesson). **First build done the same day** (`specs/decks/standard-form.build.ts`, deck `standard-form`, 48 slides, Sheets 1 and 2 as placeholders; Harry's look at it is next). Harry's fifth round: **15 minutes per sheet is far too generous**, so plan about 6 to 8 minutes a sheet and make each sheet long, like the Corbett Maths standard-form sheet he showed (four columns, questions with parts (a) to (r) or (x), no scaffold, a QR code and video link at the top): about 18 to 26 parts a question, in textbook layout, so quick pupils are never waiting. The sheets are still to be built; the deck holds placeholders. Every number below is recomputed by `specs/decks/_check/standard-form-converting-check.py` (115 questions and 14 worked or hook numbers; all correct, none repeated, none used on a slide and also asked).
 **Deck id:** `standard-form` (proposed) · **Tool:** `standard-form` (`/standard-form`, Converting tab, Levels 1 to 3; dev-gated)
 
 ## Decided with Harry

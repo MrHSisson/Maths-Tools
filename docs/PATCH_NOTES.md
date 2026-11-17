@@ -29,6 +29,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Standard Form lesson 1: plan and first deck build
+
+Branch `ccr-f381c72e-ijr6e3`. Area: `specs/decks/`, `src/decks/data/standard-form.json` (local backup only; not pushed to the shared copy).
+
+- Plan `specs/decks/standard-form-converting.md`, agreed with Harry over several rounds: two stages (the chain of repeated tens, then the place value grid as the quicker rule: down a place, power up 1), small numbers by `0.02 = 2 ÷ 100 = 2 × 1/10² = 2 × 10⁻²`, numbers in parts inside each section, no moving decimal point, printed sheets used inside the lessons.
+- Deck `standard-form` (48 slides) built by `specs/decks/standard-form.build.ts`: why-we-use-it hook, definition and cards; the chain model, the grid bridge slides (the number moves a place per click, the power beside it), 67 authored whiteboards in runs with climbing help, retrieval of the index laws, the generator slides, and two placeholder slides for printed Sheets 1 and 2. All numbers live in `specs/decks/_check/standard-form-converting.json`; `standard-form-converting-check.py` recomputes all of them independently (all correct, none repeated). Content and layout checks and the deck tests pass.
+- Deliberately not done: the printed sheets (placeholders only; Harry wants a Corbett-style layout and many more parts a question, about 18 to 26), the Converting tool's chain working and a `Q.` builder (the deck's working is authored lines; the generator slides still show the tool's grid working), a Depth bank, the look card, any push to the shared deck copy, any PR.
+
+Agent: Claude Code
+Notes: planner Build Log block not written this session (still to do).
+
 ## 2026-11-17 — Independent Decision Question Options and category tabs
 
 Branch `codex/gantt-print-layouts`. Area: DecisionShell, option controls/types/helpers, all six tool configurations, regressions, generated facts and reference docs.
