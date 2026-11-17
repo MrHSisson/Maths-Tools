@@ -41,7 +41,7 @@ Branch `ccr-f381c72e-ijr6e3`. Area: `specs/decks/`, `src/decks/data/standard-for
 - Deliberately not done: the Converting tool's chain working and a `Q.` builder (the deck's working is authored lines; the generator slides still show the tool's grid working), a Depth bank, the look card, any PR, the Editor's Configure button for a textbook sheet, the planner Build Log.
 
 Agent: Claude Code
-Notes: planner Build Log block not written this session (still to do).
+Notes: Maths Tools — Build Log, “2026-11-17 — Standard Form lesson 1 deck and textbook-style printed sheets (Claude Code)”, block `b_mwl75x3nfdb530ca`.
 
 ## 2026-11-17 — Independent Decision Question Options and category tabs
 
