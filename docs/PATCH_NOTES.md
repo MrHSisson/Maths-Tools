@@ -44,6 +44,7 @@ Branch `claude/busy-knuth-ru9nyt`. Area: the `year7-rectilinear-area` deck (live
 - Label clarity fix: the inside lengths are now chosen as the fewest, longest edges that put one length inside at every 270° corner, never two that meet at a 90° corner (they touched on the mirrored staircase), and page A uses it too (the L had a stray 3 cm beside its 5 cm).
 - Deck and tool, same day: slide 4 now teaches an uneven three-step staircase, a cross and a capital I (model then check each); slide 5 ends with an upright capital I. The Perimeter & Area tool draws a capital I at Level 2 (its staircases and crosses already had unequal sizes); `perimeterArea` tests extended.
 - **Standard Form tool is live** (`/standard-form`) at Harry's request: `enabled: false` removed from its registry entry, landing description now names all four sub-tools, `npm run facts` re-run. Its open review items (Depth bank, Teach deck, calibration, phone/tablet check) stay in `docs/TASKS.md`.
+- Merged as PR #139; once the production deploy finished the deck was pushed and the live copy checked (slide 4: staircase, cross, I pairs; slide 5 ends with an I; the worksheet as above). The live copy was backed up into `src/decks/data/year7-rectilinear-area.json`.
 - Not done: other slides' diagrams (slides 6–8) still have every length outside; the reportlab PDFs in `specs/decks/_check/` were not changed.
 
 Agent: Claude Code

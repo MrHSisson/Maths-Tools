@@ -19,7 +19,7 @@ Banked 2026-11-17 at Harry's request. **Why:** deck data lives in Vercel Blob on
 3. **Claude:** make `scripts/deck.mjs` send the bypass secret (`x-vercel-protection-bypass`) when `DECKS_URL` is a preview; copy the live decks into the preview store once (`backup` writes them into the repo); make `push` refuse to write to the live store from a branch with unmerged deck code and push to the preview instead (today it only warns).
 4. **Claude:** make the server tolerant: `api/_rectilinear.ts` / `api/_decks.ts` accept unfamiliar optional fields and shapes after a dimension sanity check, and the app shows "needs the latest version" for a question it cannot draw instead of crashing the slide. Tests for both. (This only helps once merged; it does not fix an unmerged branch.)
 5. Document the setup (store split, secret name, how to push to a preview) in `docs/reference/decks.md` and `docs/design/DECK_BUILD_CHECKLIST.md`.
-**Waiting on now:** the branch `claude/busy-knuth-ru9nyt` (rectilinear lesson, capital I and unequal steps, Standard Form tool live) is not merged, so its deck changes are not on the live deck yet. Trial merge with `main` on 2026-11-17: the only conflict is `docs/PATCH_NOTES.md` (both sides added an entry at the top); the code from both sides builds and its tests pass together.
+**Done 2026-11-17:** the rectilinear branch was merged (PR #139) and the deck pushed once the deploy finished, so the capital I, unequal steps and the new worksheet are on the live deck. Steps 1–5 above are still open.
 Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Standard Form: finish the tool and take it live
