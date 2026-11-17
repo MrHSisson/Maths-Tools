@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-17 — Unit Circle sandbox
+
+Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle` (Interactive Tools → Sandboxes & explorers), its maths module and tests.
+
+- New **Unit Circle** tool for teaching radians. A unit circle drives live graphs of sin, cos and tan: drag the point (or the graph, the slider, or step between marked angles; Play sweeps once round in ten seconds).
+- Angles show in degrees, radians or both. The circle is marked with exact (cos θ, sin θ) coordinates at the multiples of 30°, of 45°, or both. The readout gives θ in degrees and radians, the working for degrees × π/180 and radians × 180/π, and exact and decimal sin, cos and tan.
+- Teaching aids: Hide answers (radian labels and coordinates hidden until the point is tapped), Build graph (curves drawn only up to the current angle) and Label graph points (exact values beside the marked points). On the circle, tan θ is drawn as the length cut off on the tangent line at (1, 0), with the asymptotes at 90° and 270° on the graph.
+- Exact values and conversions live in `unitCircleMath.ts` and are checked against decimals for all 16 marked angles in `src/tests/unitCircle.test.ts`.
+- Layout checked at laptop (1366×768), tablet landscape (1180×820) and phone (390×800). The Pen overlay stays available, so the circle can be annotated.
+- Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
+
+Agent: Claude Code
+Notes: Planner Build Log not written (see chat).
+
 ## 2026-11-17 — Independent Decision Question Options and category tabs
 
 Branch `codex/gantt-print-layouts`. Area: DecisionShell, option controls/types/helpers, all six tool configurations, regressions, generated facts and reference docs.
