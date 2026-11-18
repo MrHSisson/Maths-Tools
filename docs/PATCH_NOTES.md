@@ -39,6 +39,7 @@ Branch `ccr-8fd397fb-lwfz38`. Area: `src/decks/` (a new slide piece), `src/share
 - Editor: Add → Factor tree (starts from 20), Tree options (start number builds a tree splitting off the smallest prime, fill, staged, the extra clicks, the two reminders); `S.factorTree` and a Slide library entry; `stagedClicks` counts the tree's clicks.
 - `npm run deck -- review` now takes a staged factor tree's clicks (half way, then all) so the contact sheet shows the build, not just the first state.
 - Tests `src/tests/factorTree.test.ts` (10): leaves and product, tally and index text, every automatic tree for 2 to 999 is valid, bad trees are named, colours, full-size layout and click order, Structure only, click counts, the deck check.
+- **Later the same day (Harry):** he will draw every tree live on the board to follow the class, so the prime factor trees deck does **not** use the Factor tree piece: its slides hold the questions and the answers (primes as a product, or index form). The piece stays on the branch, tested, for later decks; the deck needs no new code beyond the misconception tags.
 - **Not done:** the deck itself (the sets, Depth cards and misconception tags are the next steps in the plan). This is new code, so it must be merged to `main` before the deck can be pushed.
 
 Agent: Claude Code

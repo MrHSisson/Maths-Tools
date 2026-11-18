@@ -1,6 +1,6 @@
 # Lesson plan: Prime factorisation with factor trees (and index form)
 
-**Status:** plan agreed in chat, updated 2026-11-18 (the Factor tree slide piece is built; the deck is not) · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
+**Status:** plan agreed in chat, revised 2026-11-18: **Harry draws every tree live on the board, so the deck holds the questions and answers, not tree pictures** · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
 **Follows:** Harry's LCM and HCF lesson. **Banked as:** "Prime factorisation lesson (factor trees)" in `docs/TASKS.md`.
 **Class:** weak group; **weak on times tables**; **no calculators**. **They have been taught the divisibility rules but are not confident on them.**
 
@@ -19,12 +19,12 @@
    - The build script asserts this for every number in the deck.
 3. **No times table above 10 × 10 is needed, and the first split of every number uses the 2, 3, 5 or 10 table.** A big prime is found by splitting off a small one ($52 = 2 \times 26$, then $26 = 2 \times 13$; $220 = 10 \times 22$). No calculator is ever needed.
 4. **Divisibility rules are a quiet support, not a new lesson.** They know them but are not confident, so (a) a short **"Which prime goes in first?"** slide with four quick questions opens the tree section, and (b) every tree slide carries a small grey reminder line: *Even: 2 goes in · Ends in 0 or 5: 5 goes in · Digits add to a 3 table number: 3 goes in*.
-5. **Any split is allowed, and the teacher chooses it (Harry, 2026-11-18):** 200 can start 2 × 100, 4 × 50 or 20 × 10, and any number below can be split again a different way. The editor has a "How each number splits" picker for every non-prime, and a build script writes any shape as nested pairs. Original wording: any split is allowed (12 as $2 \times 6$ or $3 \times 4$ gives the same primes). We teach "split into two numbers from a times table you know, or use a divisibility rule to find a small prime that goes in". A discussion slide shows two trees for one number reaching the same primes.
+5. **Harry draws the trees himself (decided 2026-11-18).** He wants to follow the class's own responses (200 might start 2 × 100, 4 × 50 or 20 × 10), so no tree is fixed on a slide. Slides show the number and the question; the answer on a click is the **product of primes** (or the index form), never a tree. Any split is allowed (12 as $2 \times 6$ or $3 \times 4$ gives the same primes). We teach "split into two numbers from a times table you know, or use a divisibility rule to find a small prime that goes in". A discussion slide shows two trees for one number reaching the same primes.
 6. **A permanent "Primes to 20" strip** (2 3 5 7 11 13 17 19) sits on every tree slide, small and grey, so "is it prime?" is a look-up, not a worry.
-7. **Circle the prime the moment you see it** (that branch stops). Circles are in the prime's own colour, the same colours as the number grid (2 blue, 3 green, 5 orange, 7 purple; 11 to 19 a neutral dark ring), so the pupils *see* the three blue 2s before they are asked to count them. This is the bridge to index form.
+7. **Circle the prime the moment you see it** (that branch stops). Harry's own colours on the board (the number grid's 2 blue, 3 green, 5 orange, 7 purple are a suggestion) make the repeated 2s easy to count: the bridge to index form.
 8. **Index form is taught as counting, in a tally table:** prime · how many · index form. Only after that does the shorthand appear.
 9. **Words (my default, say if you want otherwise):** "index" is the word used; "power" appears once on the vocabulary slide.
-10. **One new slide piece is needed: a Factor tree** (below). Go-ahead given.
+10. **No new slide piece is needed.** The Factor tree piece built earlier the same day is not used by this deck (see below), so the deck needs no new code to be pushed.
 
 ---
 
@@ -32,21 +32,11 @@
 
 | Need | Exists? | Plan |
 |---|---|---|
-| A generator for prime factorisation | **No** | Every question is authored. No generator slides, no pinned worksheets (those need a generator). |
-| A factor tree as a slide piece | **No.** The deck model has text, shapes, lines, ratio table, bar model, board, number grid. | **Build the "Factor tree" slide piece** (next section). |
-| Fixed question slides that show a tree | **No** (fixed questions cannot hold a picture) | Practice is "tree whiteboards": the number is the question, the tree is the answer, revealed a split per click (same idea as `S.whiteboard`). Book work is numbers in a grid, with answers written out. |
+| A generator for prime factorisation | **No** | Every question is authored. No generator slides, no pinned worksheets. |
+| Tree pictures | Built (Factor tree slide piece, 2026-11-18) | **Not used in this deck**: Harry draws the trees on the board. The piece stays on the branch, tested and documented, for any later deck that wants a fixed tree. It does not need to be merged for this deck. |
+| Whiteboard, book work, board, key point and discussion slides | Yes (`S.whiteboard`, `S.plainBook`, `S.board`, `S.definition`, `S.discuss`, `S.exitRows`) | Used as they are. |
 | Depth cards | **No bank** for this topic | Author three Depth cards in the deck (below), as the primes deck did. |
-| Misconception tags | **None** for primes or index | Add four (listed below) as part of the build. |
-
-## Slide piece to build: Factor tree
-
-- **What it draws:** a tree from a root number, each non-prime splitting into two branches. Each node is a number; a prime is **circled and stops**. Spreads to fit (never a fixed pixel height) and is sized for a projector, as the board is.
-- **Click by click:** one click per split, so the class predicts the next split before it appears. The last click circles the final primes, and a **tally panel** beside the tree gathers them: prime · how many · index form (also staged).
-- **Fill modes, as for the board:** *Filled in* (the whole tree), *Structure only* (the default: the root and the boxes where numbers go, unknown boxes drawn as "?", as the ratio table does), *Blank* (just the root). The player's existing Filled in / Structure only / Blank control and `B` key work on it.
-- **A supported tree:** the author can give some nodes (for example $4 \times 7$ given, the 4 still to split) so the first whiteboard in a set is partly completed.
-- **Data:** a node is `{ n, kids?: [node, node] }`; a prime has no kids and is circled automatically (primality comes from the number, so a wrong circle cannot be authored).
-- **Checks (unit tests):** every leaf is prime; the leaves multiply back to the root; a split never uses 1; the tally matches the leaves; layout is the same each time it is drawn; a tree draws within its box at the phone, tablet and laptop sizes. The deck build also checks the big-prime rule in decision 2.
-- **Branch note (`AGENTS.md`):** a new element kind is new code, and the live server refuses a deck that uses it until it is on `main`. So the piece goes in its own small merge first, then the deck is pushed.
+| Misconception tags | **None** for primes or index | Add four (listed below). This is a small change to `src/shared/misconceptions.ts`; it needs to be on `main` before the deck is pushed, if the server checks the tag ids. |
 
 ---
 
@@ -62,21 +52,21 @@
 | 6 | Quick check: circle the primes in a grid of 12 numbers up to 20 | Quick grid | If time | Introduces the "Primes to 20" strip |
 | 7 | **Section 2: Factor trees** | Divider | Core | |
 | 8 | **Which prime goes in first?** Even: 2 · ends in 0 or 5: 5 · digits add to a 3 table number: 3 | Key point + quick grid | Core | Four questions, "which of 2, 3, 5 goes in?": 65 (5) · 34 (2) · 51 (3) · 78 (2 and 3) |
-| 9 | Build a tree for 20, step by step | Factor tree, staged | Core | Rules on the slide: 1 split into two numbers · 2 prime? circle it, it stops · 3 not prime? split again. Ends: $2 \times 2 \times 5$ |
-| 10 | Your turn, stage 1: tree whiteboards, partly drawn / a count / nothing | Tree whiteboard × 3 | Core | 28 · 45 · 30 |
-| 11 | Discussion: two trees for 24 ($2 \times 12$ and $4 \times 6$); can both be right? | Split discussion | Core | Same primes either way. A claim to test |
+| 9 | Draw a tree for 20 (you model it, then the class tries): 1 split into two numbers · 2 prime? circle it, it stops · 3 not prime? split again | Key point + whiteboard | Core | The number is large; the answer on a click is $20 = 2 \times 2 \times 5$ |
+| 10 | Your turn, stage 1: three whiteboards | Whiteboard × 3 | Core | 28 · 45 · 30; the answer is the primes as a product |
+| 11 | Discussion: two pupils start 24 with $2 \times 12$ and $4 \times 6$; can both be right? | Split discussion | Core | Same primes either way. A claim to test |
 | 12 | Why we never split with 1 ($1 \times 20$ never ends) | Key point | Core | Short; the trap is real for weak groups |
 | 13 | Book work: draw a tree for each (copy into books) | Plain book 3 × 3 | Core | Set B1 below |
 | 14 | **Section 3: Writing it as a product** | Divider | Core | |
-| 15 | Read the primes off the tree, smallest first: $2 \times 2 \times 5$ | Factor tree, staged | Core | Colours help the ordering |
+| 15 | Write the primes as a product, smallest first: $2 \times 2 \times 5$ | Key point | Core | Colours on your tree help the ordering |
 | 16 | Check: multiply the primes back to the number | Board (Structure only) | If time | Small numbers only: $2 \times 2 \times 5 = 20$ |
 | 17 | **Section 4: Index form** | Divider | Core | The slow build |
-| 18 | How many of each? Count the colours | Factor tree + tally | Core | For 18: one 2, two 3s |
+| 18 | How many of each? Fill in the tally for 18 from your tree | Board (Structure only) | Core | Prime · how many: one 2, two 3s |
 | 19 | Key definition: **index form** writes repeats with a small raised number, $3 \times 3 = 3^2$ | Key definition | Core | "The small number counts how many times the big number is written" |
 | 20 | What the small number means (and does not): $3^2$ is $3 \times 3$ | Board (Structure only) | Core | $3^2 = 9$, not $6$; $2^3 = 2 \times 2 \times 2 = 8$, not 6 |
 | 21 | **Set C: write in index form** (6, ladder below) | Deliberate practice | Core | Products of primes given |
-| 22 | Index form of 18 from the tree | Factor tree + tally, staged | Core | $2 \times 3^2$; a prime that appears once has no raised number |
-| 23 | Tree to index form, stage 2: partly drawn / a count / nothing | Tree whiteboard × 3 | Core | 72 · 100 · 80 |
+| 22 | Index form of 18 from the tally: $2 \times 3^2$ | Board (Structure only) | Core | A prime that appears once has no raised number |
+| 23 | Tree to index form, stage 2: three whiteboards | Whiteboard × 3 | Core | 72 · 100 · 80; the answer is the index form |
 | 24 | **Depth:** one card (index meaning) | Depth | Overflow | |
 | 25 | Book work: tree, then index form (copy into books) | Plain book 3 × 3 | Overflow | Set B2 below |
 | 26 | **Depth:** two cards (two trees; the circled non-prime) | Depth | Overflow | Never three in a row, so a book set sits between 24 and these |
@@ -109,12 +99,12 @@
 | 51 | 3 | digit sum 6 (not 2: odd; not 5: ends in 1) |
 | 78 | 2 and 3 | even; digit sum 15 |
 
-### Whiteboards, stage 1 (slide 10): trees to primes (partly drawn, a count, nothing)
+### Whiteboards, stage 1 (slide 10): number to primes (a count, a smaller count, nothing)
 
 | # | Number | Help | Answer | Tempting wrong method |
 |---|---|---|---|---|
-| 1 | 28 | partly drawn: $4 \times 7$ given, the 4 to split | $2 \times 2 \times 7$ | stopping at 4 and 7 (4 is not prime) |
-| 2 | 45 | a count: "(3 primes at the end)" | $3 \times 3 \times 5$ | $5 \times 9$ and stopping, or 3 and 5 listed once |
+| 1 | 28 | a count: "(3 primes at the end)" | $2 \times 2 \times 7$ | stopping at 4 and 7 (4 is not prime) |
+| 2 | 45 | a count, small and grey: "(3 primes)" | $3 \times 3 \times 5$ | $5 \times 9$ and stopping, or 3 and 5 listed once |
 | 3 | 30 | none | $2 \times 3 \times 5$ | $5 \times 6$, circling 6 |
 
 ### Set B1: draw a tree (book work, slide 13; 9 questions, 3 × 3; the first six with a quiet hint, the last three without)
@@ -144,11 +134,11 @@
 | 5 | $2 \times 2 \times 3 \times 3 \times 5$ | $2^2 \times 3^2 \times 5$ | $2^2 \times 3^2 \times 5^2$ |
 | 6 (edge, last) | Is $2^3$ the same as $2 \times 3$? Explain | $2^3 = 8$, $2 \times 3 = 6$; no | "index means multiply" |
 
-### Whiteboards, stage 2 (slide 23): tree to index form
+### Whiteboards, stage 2 (slide 23): number to index form (a count, a different-primes count, nothing)
 
 | # | Number | Help | Answer | Tempting wrong method |
 |---|---|---|---|---|
-| 1 | 72 | partly drawn: $8 \times 9$ given | $2^3 \times 3^2$ | $2^3 \times 3^3$, or $2 \times 3$ |
+| 1 | 72 | a count: "(5 primes, 2 different)" | $2^3 \times 3^2$ | $2^3 \times 3^3$, or $2 \times 3$ |
 | 2 | 100 | a count: "(2 different primes)" | $2^2 \times 5^2$ | $10 \times 10$, stopping |
 | 3 | 80 | none | $2^4 \times 5$ | $2^3 \times 5$ (miscounting the 2s) |
 
@@ -209,14 +199,14 @@ Each has a claim to test, a named misconception on every wrong option, speakers 
 ## Look and feel
 
 - Plain big numbers, the primes strip and the rules line small and grey, hints quiet (`hintLine`, `quiet`), whiteboards full-width, book work 3 × 3 at size 100 with the instruction once at the top, titles in the standard place.
-- Check the tree at the three screen sizes (a phone only previews decks), and run the layout check on every state, including the tally open.
-- The look card comes first: one slide of each kind in every state (the tree at each click, the three help levels, the tally, a book grid, a Depth card). **No full deck is built until you say yes on those pictures.**
+- Whiteboards leave room to write: the number large, the primes strip and the rules line small and grey under it. Check the three screen sizes and run the layout check on every state.
+- The look card comes first: one slide of each kind in every state (a whiteboard at each help level with its answer shown, the board for the tally, a book grid, a Depth card). **No full deck is built until you say yes on those pictures.**
 
 ## Steps
 
-1. **Build the Factor tree piece and its tests, as its own small merge to `main`** (needed before the deck can be pushed). *Built 2026-11-18 on branch `ccr-8fd397fb-lwfz38`; merge pending.*
+1. ~~Factor tree slide piece~~ Built, but not used by this deck (Harry draws the trees).
 2. Write the sets from this plan and send you the table (rung, answer, trap, wrong-method result), recomputed by a different route.
-3. Add the four misconception tags.
+3. Add the four misconception tags (small code change, merged before the push if needed).
 4. `npm run deck -- looks <script>`: the look card for you to approve.
 5. Build, then `verify`, `review` (every contact sheet looked at), and push.
 6. Record: patch note, the task update, the planner Build Log and the Tools dashboard note.
