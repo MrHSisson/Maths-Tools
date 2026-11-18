@@ -212,8 +212,7 @@ export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/
 // get the "= " prefix; full-equation answers ("x = 10") already read correctly on
 // their own and are returned unchanged — prevents "= x = 10" ever being shown.
 // An answer that is the question's own number with a digit underlined (Identify Sig. Figs) is not "= …" either.
-// An answer that already has an equals sign, a blank to fill, lettered parts ((a) 0.6, (b) −0.6…) or a table is shown as it is; any other answer gets "= " in front.
-export const ansEq = (answer: string): string => (/=|\\underline\{|^\([a-z]\)\s|^\\begin\{array\}/.test(answer) ? answer : `= ${answer}`);
+export const ansEq = (answer: string): string => (/=|\\underline\{/.test(answer) ? answer : `= ${answer}`);
 
 const KEY_PREFIX = "key:";
 

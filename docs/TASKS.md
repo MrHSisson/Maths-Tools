@@ -26,7 +26,6 @@ Links: `src/decks/clickerKeys.ts`, `src/decks/DeckPage.tsx`, `docs/reference/dec
 
 ### Worksheet formats: textbook style and more on a page
 Banked 2026-11-03 at Harry's request, not started. The printed worksheet (pinned worksheets: File → Worksheets, and the tool pages' Worksheet) feels limited: the cell structure caps how much fits on a page. Idea: a **textbook-style** option (flowing columns, thin dividers instead of boxed cells, lettered parts) that fits 20 to 30 questions on a page while still looking clean and well divided; the tool pages already have a Worksheet / Textbook layout (`layout: "grid" | "list"`) that a pinned worksheet could offer under that name. Still to settle with Harry: whether this is the printed sheet or the on-slide book work (assumed: the printed sheet), the page sizes (A5 by default today), and how many questions a sheet may hold.
-Progress 2026-11-18: the Textbook (`list`) layout now packs questions by their own measured height (`worksheetLayout.ts`) instead of giving every question the tallest one's height, and a first hand-written Textbook sheet with lettered parts in columns is the `trig-symmetry-radians` deck. Still open: the on-slide book work, the page sizes, how many questions a sheet may hold.
 Links: `src/decks/worksheets.ts`, `src/shared/print.ts`, `docs/reference/decks.md` (pinned worksheets).
 
 ### Questions render inside their containers
