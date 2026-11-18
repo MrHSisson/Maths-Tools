@@ -38,6 +38,7 @@ Branch `ccr-8fd397fb-lwfz38`. Area: `src/components/DecksPage.tsx`, `DecksTab.ts
 - `scripts/publishedDecksSmoke.mjs` updated for the one page (and for older drift in it: it opened the Decks page from a landing button that no longer exists, and the player now holds the slide text twice); it passes end to end against the simulated service.
 - **Decided without asking** (shout if wrong): one address (`/deck-gallery`, with the old `/decks` redirecting) rather than renaming it; a quiet Sign in link rather than a hidden login; signing in on the Decks page is the same switch as Developing tools, so it also turns Developing tools on.
 - Follow-up: the **Filed under** menu is gone from a deck card's (i) (drag a card onto a heading to file it; the editor's About the deck still has it), and the cards sit in a grid, **four to a row on a laptop (1024px up), two on a tablet, one on a phone**, all the same width (was fixed 296px cards that wrapped). Checked at 1366, 1024, 820 and 390 wide.
+- The topic headings under a strand (Maths and Further Maths under A-Level) no longer sit indented: they line up with the strand heading, and the cards under them with the cards above.
 - Not done: a filter for published / not published in the signed-in list; the shared code is not on `main` until this branch is merged.
 
 Agent: Claude Code

@@ -184,7 +184,7 @@ export function DeckSections({ decks, admin = false }: { decks: GalleryDeck[]; a
             {direct.length > 0 && <div className={row}>{direct}</div>}
             {empty && admin && <p className="text-sm text-slate-400">Nothing here yet{canEdit ? ': drag a deck onto this heading.' : '.'}</p>}
             {s.topics.map((t) => (
-              <DropZone key={t.category.id} on={canEdit} dragging={!!dragging} onDrop={drop(t.category.id)} className={`${direct.length > 0 ? 'mt-5' : 'mt-1'} ml-0 p-1 sm:ml-4`}>
+              <DropZone key={t.category.id} on={canEdit} dragging={!!dragging} onDrop={drop(t.category.id)} className={`${direct.length > 0 ? 'mt-5' : 'mt-1'} p-1`}>
                 <Heading category={t.category} level={2} manage={manage && canEdit} strands={strands} hasTopics={false} onOp={(op) => void run(op)} />
                 {t.decks.length > 0 ? <div className={row}>{cards(t.decks, t.category.id)}</div> : admin && <p className="text-sm text-slate-400">Nothing here yet.</p>}
               </DropZone>
