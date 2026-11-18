@@ -4,6 +4,7 @@ import { InfoModal, type InfoSection } from "../../shared";
 import { shouldAutoOpenAbout, markAboutSeen } from "../../shared/about";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
+import { printPrintable, trigGraphSheet } from "../../shared/printables";
 import {
   SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking, principalDeg, BRANCH,
   type Family,
@@ -23,6 +24,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Angles", detail: "Show angles in degrees, radians or both together." },
     { label: "Graphs", detail: "Switch sin, cos and tan on or off. Any combination can be shown at once." },
     { label: "View", detail: "Functions shows sin, cos and tan against the angle. Inverses shows sin⁻¹, cos⁻¹ and tan⁻¹ against their input. Reflection shows each function, its inverse and the line y = x together." },
+    { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes." },
     { label: "Display", detail: "Choose which angles are marked (multiples of 30°, of 45°, or both), whether radians are shown as multiples of π or as decimals, and how fast Play runs." },
     { label: "Hide answers", detail: "Hides the radian labels, coordinates and values until you tap a point to reveal it. Good for asking the class first." },
     { label: "Build graph", detail: "Draws each graph only as far as the current angle, so it grows as the angle moves." },
@@ -204,6 +206,8 @@ const poly = (pts: Array<[number, number] | null>): string => {
   for (const p of pts) { if (!p) { pen = false; continue; } d += `${pen ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`; pen = true; }
   return d;
 };
+
+const TRIG_SHEET = trigGraphSheet();
 
 const RANGE_CSS = `
 .uc-range{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;outline:none;cursor:pointer;background:linear-gradient(to right,${ACCENT} var(--p),${HAIR} var(--p))}
@@ -839,8 +843,15 @@ export default function UnitCircle() {
           <div className="relative">
             <button onClick={() => setMenuOpen((o) => !o)} aria-label="Menu" className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">{menuOpen ? <X size={26} /> : <Menu size={26} />}</button>
             {menuOpen && (
-              <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-slate-200 z-50 overflow-hidden" style={{ minWidth: 200 }}>
+              <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-slate-200 z-50 overflow-hidden" style={{ minWidth: 260 }}>
                 <button onClick={() => { setInfoOpen(true); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">About this tool</button>
+                <div className="border-t border-slate-100 my-1" />
+                <div className="px-4 pt-1.5 pb-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Printables</div>
+                <button data-trusted-click onClick={() => { printPrintable(TRIG_SHEET); setMenuOpen(false); }} title={TRIG_SHEET.hint}
+                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                  {TRIG_SHEET.label}
+                  <span className="block text-xs font-normal text-slate-400">{TRIG_SHEET.hint}</span>
+                </button>
               </div>
             )}
           </div>
