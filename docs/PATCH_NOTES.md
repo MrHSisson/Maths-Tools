@@ -43,7 +43,7 @@ Branch `ccr-8fd397fb-lwfz38`. Area: `src/components/DecksPage.tsx`, `DecksTab.ts
 - Not done: a filter for published / not published in the signed-in list; the shared code is not on `main` until this branch is merged.
 
 Agent: Claude Code
-Notes: planner Build Log block not written (the planner was not reachable this session).
+Notes: Build Log block "2026-11-18 — Prime Factor Trees deck, one Decks page, number buttons on book work, Factor tree piece (Claude Code)" in `Maths Tools — Build Log` (PR #141, merge commit 777b2be).
 
 ## 2026-11-18 — Factor tree slide piece, and the plan for the prime factorisation lesson
 
@@ -63,7 +63,7 @@ Branch `ccr-8fd397fb-lwfz38`. Area: `src/decks/` (a new slide piece), `src/share
 - Skipped: the look card (Harry asked for the deck to be built straight away) and a push to the shared copy (see the session notes).
 
 Agent: Claude Code
-Notes: planner Build Log block not written yet (session continues with the deck).
+Notes: Build Log block "2026-11-18 — Prime Factor Trees deck, one Decks page, number buttons on book work, Factor tree piece (Claude Code)" in `Maths Tools — Build Log` (PR #141, merge commit 777b2be).
 
 ## 2026-11-17 — Year 7 rectilinear area: fresh slide 5, lengths inside at 270° corners, a worksheet made to print two to a sheet
 
