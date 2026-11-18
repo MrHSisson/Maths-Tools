@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Plus, Printer, Smartphone } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FileText, ListOrdered, Maximize, Pencil, Printer, Smartphone } from "lucide-react";
 import { WorksheetsDialog } from "./WorksheetsDialog";
 import { PrintSlidesDialog } from "./PrintSlidesDialog";
 import { pinnedSheets, printSheet } from "./worksheets";
@@ -18,12 +18,11 @@ import { clickerAction } from "./clickerKeys";
 import { loadKaTeX } from "../shared/katex";
 import { AdminGate } from "./AdminGate";
 import { Editor } from "./Editor";
-import { fetchPublishedDeck, usePublishedIndex } from "./published";
+import { fetchPublishedDeck } from "./published";
 import { useDevMode } from "../devMode";
-import { LAYOUTS, PLANNED, titleSlide } from "./layouts";
+import { LAYOUTS, PLANNED } from "./layouts";
 import { FILL_LABELS, SlideCanvas, slideSteps } from "./SlideCanvas";
-import { DeckSections, type GalleryDeck } from "../components/DeckGallery";
-import { allDecks, loadDeck, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from "./store";
+import { loadDeck, syncFromCloud } from "./store";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type DeckDef, type FillMode } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,60 +54,6 @@ function useFit(ref: React.RefObject<HTMLDivElement | null>) {
   return scale;
 }
 
-// ── Deck list ────────────────────────────────────────────────────────────────
-
-function DeckIndex() {
-  const navigate = useNavigate();
-  const [, refresh] = useState(0);
-  // The shared copies are the live ones: wait for them (a moment at most; offline, the device's copies are used) so a deck's older title or
-  // preview is not shown and then swapped.
-  const [synced, setSynced] = useState(false);
-  useEffect(() => {
-    let on = true;
-    const done = () => { if (on) { refresh((n) => n + 1); setSynced(true); } };
-    const stop = window.setTimeout(done, LIVE_WAIT_MS);
-    void syncFromCloud().catch(() => false).then(() => { window.clearTimeout(stop); done(); });
-    return () => { on = false; window.clearTimeout(stop); };
-  }, []);
-  const published = usePublishedIndex();
-  const decks = allDecks();
-  // Nothing checks in the background (it would keep the database awake): this looks for decks changed elsewhere, only when pressed.
-  const [checking, setChecking] = useState<string | null>(null);
-  const check = async () => {
-    setChecking("Checking…");
-    const updated = await syncAllDecks();
-    refresh((n) => n + 1);
-    setChecking(updated === null ? "Could not reach the shared copy" : updated.length ? `Updated: ${updated.join(", ")}` : "All decks are up to date");
-  };
-  const create = () => {
-    const id = newDeckId();
-    saveDeck({ id, title: "New deck", summary: "", slides: [titleSlide(`${id}-title`, "New deck", "")] });
-    navigate(`/decks/${id}?edit=1`);
-  };
-  return (
-    <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
-      <div className="mx-auto max-w-6xl">
-        <Link to="/deck-gallery" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
-        <div className="mt-3 flex items-center gap-3">
-          <h1 className="text-3xl font-semibold text-slate-900">Deck editor</h1>
-          {checking && <span className="ml-auto text-sm text-slate-500" role="status">{checking}</span>}
-          <button onClick={() => void check()} disabled={checking === "Checking…"} title="Look for decks changed on another device or by Claude" className={`${checking ? "" : "ml-auto "}rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-60`}>Check for changes</button>
-          <Link to="/decks/library" className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">Slide library</Link>
-          <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
-        </div>
-        <div className="mt-6">
-          {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : <DeckSections admin decks={decks.map(({ deck, mine, edited }): GalleryDeck => ({
-            id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, slides: deck.slides.length, preview: deck.slides[0],
-            badge: published?.[deck.id] ? undefined : "Not published",
-            notes: [published?.[deck.id] ? "published" : "not published", ...(mine ? ["your deck"] : []), ...(edited ? ["edited on this device"] : [])],
-            action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
-          }))} />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Slide library ────────────────────────────────────────────────────────────
 
 function Library() {
@@ -118,7 +63,7 @@ function Library() {
   return (
     <div className="min-h-screen px-4 py-8" style={{ background: DECK_PAGE }}>
       <div className="mx-auto max-w-6xl">
-        <Link to="/decks" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
+        <Link to="/deck-gallery" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />Decks</Link>
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Slide library</h1>
         <p className="mt-1 text-slate-500">Every layout a slide can start from, with sample content. In the editor, Add slide offers these; once added, every part can be moved, changed or deleted.</p>
         {groups.map((group) => (
@@ -371,7 +316,7 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
     <div className={`flex ${turned ? "h-full w-full" : "h-app"} flex-col ${full ? "" : "p-2"}`} style={{ background: full ? "#000" : DECK_PAGE, ...(phone ? { touchAction: "none" } : {}) }}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {!full && <div className="flex flex-wrap items-center gap-3 pb-2">
-        <Link to={backTo ?? "/decks"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
+        <Link to={backTo ?? "/deck-gallery"} className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"><ArrowLeft size={15} />{deck.title}</Link>
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: family.colour }} />{family.label}</span>
         {badge && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">{badge}</span>}
         <div className="ml-auto flex max-w-full flex-wrap items-center gap-2">
@@ -482,7 +427,7 @@ function DeckView({ id }: { id: string }) {
   // a newer copy saved on another device replaces this one when leaving the editor (not while editing, so nothing is pulled from under the teacher)
   useEffect(() => { if (!editing && loaded === id) void syncFromCloud(id).then((changed) => { if (changed) setDeck(loadDeck(id)); }); }, [id, editing]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: re-sync on leaving the editor, not when the first load finishes
   if (loaded !== id) return <div className="flex min-h-screen items-center justify-center" style={{ background: DECK_PAGE }}><p className="font-medium text-slate-500" role="status">Loading the latest copy…</p></div>;
-  if (!deck) return <div className="p-8"><Link to="/decks" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
+  if (!deck) return <div className="p-8"><Link to="/deck-gallery" className="font-semibold text-blue-900">← No such deck. See all decks</Link></div>;
   if (editing) return <Editor start={deck} startIndex={Math.max(0, (Number.isFinite(s) ? s : 1) - 1)} onPresent={(d, i) => { setDeck(d); clearInk(); setParams({ s: String(i + 1) }); }} />;
   return <Player deck={deck} badge="Working copy" onEdit={(i) => { clearInk(); setParams({ s: String(i + 1), edit: "1" }); }} />;
 }
@@ -513,9 +458,9 @@ export default function DeckPage() {
   useEffect(() => { document.title = id === "library" ? "Slide library · Maths Tools" : id ? `${loadDeck(id)?.title ?? "Deck"} · Maths Tools` : "Deck editor · Maths Tools"; }, [id]);
   // The deck list, the slide library and the editor need the admin password; the player shows the published copy to everyone else.
   // a phone only previews a deck: no deck list, slide library or editor, and no Edit
-  if (phone && (!id || id === "library")) return <Navigate to="/deck-gallery" replace />;
+  if (phone && id === "library") return <Navigate to="/deck-gallery" replace />;
   if (phone && params.get("edit") === "1") { const q = new URLSearchParams(params); q.delete("edit"); return <Navigate to={`/decks/${id}${q.toString() ? `?${q}` : ""}`} replace />; }
-  if (!id) return <AdminGate what="deck editor"><DeckIndex /></AdminGate>;
+  if (!id) return <Navigate to="/deck-gallery" replace />;   // the deck list is the Decks page: one page, with the editing controls when signed in
   if (id === "library") return <AdminGate what="slide library"><Library /></AdminGate>;
   if (params.get("edit") === "1" && !admin) return <AdminGate what="deck editor"><></></AdminGate>;
   if (!admin || params.has("published")) return <PublishedView key={id} id={id} />;

@@ -751,10 +751,10 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           <MenuItem icon={<RefreshCw size={14} />} label="Check for changes" note="Look in the shared copy for edits made on another device or by Claude." onClick={() => { close(); void checkForUpdates(); }} />
           <MenuItem icon={<History size={14} />} label="Version history…" note="Go back to an earlier version of this deck." onClick={() => { close(); setVersionsOpen(true); }} />
           <MenuItem icon={<Play size={14} />} label="Present from this slide" onClick={() => { close(); present(); }} />
-          <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/decks"; }} />
+          <MenuItem icon={<ArrowLeft size={14} />} label="Back to all decks" onClick={() => { close(); window.location.href = "/deck-gallery"; }} />
           <MenuDivider />
           <MenuItem danger icon={<Trash2 size={14} />} label="Delete this deck" note="Removes it from the shared copy and this device."
-            onClick={() => { close(); if (window.confirm("Delete this deck? It is removed from the shared copy and from this device. Version history can bring it back.")) { deleteDeck(deck.id); window.location.href = "/decks"; } }} />
+            onClick={() => { close(); if (window.confirm("Delete this deck? It is removed from the shared copy and from this device. Version history can bring it back.")) { deleteDeck(deck.id); window.location.href = "/deck-gallery"; } }} />
         </>
       )}
     </Menu>
@@ -1007,7 +1007,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     <div className="flex h-app flex-col" style={{ background: DECK_PAGE }}>
       {/* header: back, the deck's name, the menus, Lesson thread and Present */}
       <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 py-1.5 sm:px-3">
-        <a href="/decks" title="All decks" aria-label="All decks" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><ArrowLeft size={18} /></a>
+        <a href="/deck-gallery" title="All decks" aria-label="All decks" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><ArrowLeft size={18} /></a>
         <div className="flex min-w-0 flex-col">
           <input value={deck.title} onChange={(e) => apply((d) => ({ ...d, title: e.target.value }))} size={Math.max(8, Math.min(32, deck.title.length + 1))}
             className="min-w-0 rounded-md px-1.5 text-base font-semibold text-slate-900 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Deck title" />

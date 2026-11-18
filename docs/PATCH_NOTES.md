@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-18 — One Decks page: the deck editor's list merged into the published decks page
+
+Branch `ccr-8fd397fb-lwfz38`. Area: `src/components/DecksPage.tsx`, `DecksTab.tsx`, `src/decks/DeckPage.tsx`, `Editor.tsx`, `scripts/publishedDecksSmoke.mjs`, `docs/reference/decks.md`.
+
+- At Harry's request the deck editor's list (`/decks`) and the published decks page (`/deck-gallery`) are **one page**, `/deck-gallery`. Signed out you see the published decks and no editing controls (just a quiet **Sign in** in the header). Signed in (the Developing tools password and switch, the same one as everywhere) you see every deck with an Edit pencil on each, **New deck**, **Slide library** and **Check for changes**, and unpublished decks are tagged "Not published". **Sign out** turns the switch off.
+- `/decks` (no id) now redirects to `/deck-gallery`; the editor's back links and the player's "Decks" links go there. The deck list component (`DeckIndex`) is deleted from `DeckPage.tsx`; direct links to `?edit=1` and `/decks/library` still show the password prompt. A phone is unchanged (previews only, no sign-in).
+- `scripts/publishedDecksSmoke.mjs` updated for the one page (and for older drift in it: it opened the Decks page from a landing button that no longer exists, and the player now holds the slide text twice); it passes end to end against the simulated service.
+- **Decided without asking** (shout if wrong): one address (`/deck-gallery`, with the old `/decks` redirecting) rather than renaming it; a quiet Sign in link rather than a hidden login; signing in on the Decks page is the same switch as Developing tools, so it also turns Developing tools on.
+- Not done: a filter for published / not published in the signed-in list; the shared code is not on `main` until this branch is merged.
+
+Agent: Claude Code
+Notes: planner Build Log block not written (the planner was not reachable this session).
+
 ## 2026-11-18 — Factor tree slide piece, and the plan for the prime factorisation lesson
 
 Branch `ccr-8fd397fb-lwfz38`. Area: `src/decks/` (a new slide piece), `src/shared/factorTree.ts`, `specs/decks/prime-factor-trees.md`.
