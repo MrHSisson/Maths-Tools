@@ -1,6 +1,6 @@
 # Lesson plan: Prime factorisation with factor trees (and index form)
 
-**Status:** plan for review (nothing built) · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
+**Status:** plan for review, updated for one deck in one go (nothing built) · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
 **Follows:** Harry's LCM and HCF lesson. **Banked as:** "Prime factorisation lesson (factor trees)" in `docs/TASKS.md`.
 **Class:** weak group; **weak on times tables**; **no calculators** (decided in the request). Check the profile below.
 
@@ -12,7 +12,7 @@
 
 ## Decisions I have made (shout if wrong)
 
-1. **One deck, built for about one and a half lessons**, with dividers as pick-up points. Index form gets its own section and its own slow build, because that is the stated weak spot.
+1. **One deck, aimed at one lesson, built in one go (decided with Harry).** The aim is ambitious for this group, so every slide is tagged **Core** (the lesson), **If time** (drop freely) or **Overflow** (the natural start of the next lesson). Dividers are the pick-up points, so if the class only reaches index form the deck simply carries on next time; nothing is a separate deck. Index form keeps its own section and slow build, because that is the stated weak spot.
 2. **Numbers are chosen so that no times table above 10 × 10 is needed, and the first split of every number uses the 2, 3, 5 or 10 times table.** A 7 or 11 only ever turns up as an end prime. No calculator is ever needed (the largest numbers are 120 and 200, built from 10 ×).
 3. **Any split is allowed** (12 as 2 × 6 or 3 × 4 gives the same primes). We teach "split into two numbers from a times table you know". The discussion slide shows two different trees for the same number reaching the same primes.
 4. **A permanent "Primes to 20" strip** (2 3 5 7 11 13 17 19) sits on every tree slide, so "is it prime?" is a look-up, not a worry.
@@ -45,40 +45,40 @@
 
 ---
 
-## Flow (about 1.5 lessons)
+## Flow (one lesson as the aim; tags show what to cut or carry over)
 
-| # | Slide | Type | Notes |
-|---|---|---|---|
-| 1 | Title: Prime factor trees | Title | |
-| 2 | Objective and success criteria | Learning objective | Three "I can" lines: draw a tree; write the primes; write in index form |
-| 3 | **Section 1: What is a prime?** (short recap) | Divider | |
-| 4 | Prime, factor, product (the three words) | Vocabulary | **Product** is the new word: the answer to a multiplication |
-| 5 | **A prime number** has exactly two factors: 1 and itself | Key definition | |
-| 6 | Quick check: circle the primes in a grid of 12 numbers up to 20 (2 to 19) | Quick grid | Introduces the "Primes to 20" strip |
-| 7 | **Section 2: Factor trees** | Divider | |
-| 8 | Build a tree for 20, three steps | Factor tree, staged | Rules on the slide: 1 split into two numbers from a times table · 2 prime? circle it, it stops · 3 not prime? split again. Ends: $2 \times 2 \times 5$ |
-| 9 | Your turn, stage 1: tree whiteboards, partly drawn / a count / nothing | Tree whiteboard × 3 | 28 · 45 · 30 |
-| 10 | Discussion: two trees for 24 (2 × 12 and 4 × 6); can both be right? | Split discussion | Same primes either way. Claim to test |
-| 11 | Why we never split with 1 (1 × 20 never ends) | Key point | Short; the trap is real for weak groups |
-| 12 | Book work: draw a tree for each (copy into books) | Plain book 3 × 3 | Set B1 below |
-| 13 | **Section 3: Writing it as a product** | Divider | Recap slide after the divider: 4 quick trees' primes (pick-up point) |
-| 14 | Read the primes off the tree, smallest first: $2 \times 2 \times 5$ | Factor tree, staged | Colours help ordering |
-| 15 | Check: multiply the primes back to the number | Board (Structure only) | Small numbers only: $2 \times 2 \times 5 = 20$ |
-| 16 | Exit ticket mini-check (optional cut) | | Cut first if short on time |
-| 17 | **Section 4: Index form** | Divider | The slow build |
-| 18 | How many of each? Count the colours | Factor tree + tally | For 18: one 2, two 3s |
-| 19 | Key definition: **index form** writes repeats with a small raised number, $3 \times 3 = 3^2$ | Key definition | "The small number counts how many times the big number is written" |
-| 20 | What the small number means (and does not): $3^2$ is $3 \times 3$ | Board (Structure only) | $3^2 = 9$, not $6$; $2^3 = 2 \times 2 \times 2 = 8$, not 6 |
-| 21 | **Set C: write in index form** (6, ladder below) | Deliberate practice | Products of primes given |
-| 22 | Index form of 18 from the tree | Factor tree + tally, staged | $2 \times 3^2$; a prime that appears once has no raised number |
-| 23 | Tree to index form, stage 2: partly drawn / a count / nothing | Tree whiteboard × 3 | 72 · 100 · 80 |
-| 24 | **Depth:** one card (index meaning) | Depth | |
-| 25 | Book work: write each in index form (copy into books) | Plain book 3 × 3 | Set B2 below |
-| 26 | **Depth:** two cards (two trees; the circled non-prime) | Depth | Never three in a row, so a book set sits between 24 and these |
-| 27 | Exit ticket: three questions, one to a row | Exit ticket | Numbers used nowhere else |
-| 28 | Summary | Summary | |
+| # | Slide | Type | Tag | Notes |
+|---|---|---|---|---|
+| 1 | Title: Prime factor trees | Title | Core | |
+| 2 | Objective and success criteria | Learning objective | Core | Three "I can" lines: draw a tree; write the primes; write in index form |
+| 3 | **Section 1: What is a prime?** (short recap) | Divider | Core | |
+| 4 | Prime, factor, product (the three words) | Vocabulary | Core | **Product** is the new word: the answer to a multiplication |
+| 5 | **A prime number** has exactly two factors: 1 and itself | Key definition | Core | |
+| 6 | Quick check: circle the primes in a grid of 12 numbers up to 20 (2 to 19) | Quick grid | If time | Introduces the "Primes to 20" strip |
+| 7 | **Section 2: Factor trees** | Divider | Core | |
+| 8 | Build a tree for 20, three steps | Factor tree, staged | Core | Rules on the slide: 1 split into two numbers from a times table · 2 prime? circle it, it stops · 3 not prime? split again. Ends: $2 \times 2 \times 5$ |
+| 9 | Your turn, stage 1: tree whiteboards, partly drawn / a count / nothing | Tree whiteboard × 3 | Core | 28 · 45 · 30 |
+| 10 | Discussion: two trees for 24 (2 × 12 and 4 × 6); can both be right? | Split discussion | Core | Same primes either way. Claim to test |
+| 11 | Why we never split with 1 (1 × 20 never ends) | Key point | Core | Short; the trap is real for weak groups |
+| 12 | Book work: draw a tree for each (copy into books) | Plain book 3 × 3 | Core | Set B1 below |
+| 13 | **Section 3: Writing it as a product** | Divider | Core | Recap slide after the divider: 4 quick trees' primes (pick-up point) |
+| 14 | Read the primes off the tree, smallest first: $2 \times 2 \times 5$ | Factor tree, staged | Core | Colours help ordering |
+| 15 | Check: multiply the primes back to the number | Board (Structure only) | If time | Small numbers only: $2 \times 2 \times 5 = 20$ |
+| 16 | Exit ticket mini-check (optional cut) | | If time | Cut first if short on time |
+| 17 | **Section 4: Index form** | Divider | Core | The slow build |
+| 18 | How many of each? Count the colours | Factor tree + tally | Core | For 18: one 2, two 3s |
+| 19 | Key definition: **index form** writes repeats with a small raised number, $3 \times 3 = 3^2$ | Key definition | Core | "The small number counts how many times the big number is written" |
+| 20 | What the small number means (and does not): $3^2$ is $3 \times 3$ | Board (Structure only) | Core | $3^2 = 9$, not $6$; $2^3 = 2 \times 2 \times 2 = 8$, not 6 |
+| 21 | **Set C: write in index form** (6, ladder below) | Deliberate practice | Core | Products of primes given |
+| 22 | Index form of 18 from the tree | Factor tree + tally, staged | Core | $2 \times 3^2$; a prime that appears once has no raised number |
+| 23 | Tree to index form, stage 2: partly drawn / a count / nothing | Tree whiteboard × 3 | Core | 72 · 100 · 80 |
+| 24 | **Depth:** one card (index meaning) | Depth | Overflow | |
+| 25 | Book work: write each in index form (copy into books) | Plain book 3 × 3 | Overflow | Set B2 below |
+| 26 | **Depth:** two cards (two trees; the circled non-prime) | Depth | Overflow | Never three in a row, so a book set sits between 24 and these |
+| 27 | Exit ticket: three questions, one to a row | Exit ticket | Core | Numbers used nowhere else |
+| 28 | Summary | Summary | Core | |
 
-Slides 6 and 16 are the first cuts if time runs short, then the second Depth pair on slide 26.
+**Pacing, for one lesson of about 50 minutes (a guide, not timings):** Core slides carry the lesson. If it runs short, cut the **If time** slides (6, 15, 16) first, then carry the **Overflow** slides (24 to 26: Depth and the second book set) to the start of the next lesson; the recap-style slide after the Section 3 and 4 dividers works as that restart. The exit ticket (27) stays at the end of whichever lesson finishes the index section.
 
 **Take-home piece:** book work only (slides 12 and 25), not both book work and a pinned worksheet. Optional: a printable of blank tree frames (open question 3).
 
@@ -99,20 +99,20 @@ Slides 6 and 16 are the first cuts if time runs short, then the second Depth pai
 
 | # | Number | Help | Answer | Tempting wrong method |
 |---|---|---|---|---|
-| 1 | 28 | partly drawn: $4 \times 7$ given, 4 to split | $2 \times 2 \times 7$ | stopping at 4 and 7 (4 not prime) |
-| 2 | 45 | a count: "(3 primes at the end)" | $3 \times 3 \times 5$ | $5 \times 9$ and stopping, or listing 3 and 5 once |
-| 3 | 30 | none | $2 \times 3 \times 5$ | $5 \times 6$, circling 6 |
+| 1 | 28 | partly drawn: $4 \times 7$ given, 4 to split | Core | $2 \times 2 \times 7$ | stopping at 4 and 7 (4 not prime) |
+| 2 | 45 | a count: "(3 primes at the end)" | Core | $3 \times 3 \times 5$ | $5 \times 9$ and stopping, or listing 3 and 5 once |
+| 3 | 30 | none | Core | $2 \times 3 \times 5$ | $5 \times 6$, circling 6 |
 
 ### Set B1: draw a tree (book work, slide 12; 9 questions, 3 × 3; the first six with a quiet hint, the last three without)
 
 | Rung | Numbers | Hint | Answer (primes) |
 |---|---|---|---|
-| 1 | 14 | 2 primes | $2 \times 7$ |
-| 1 | 22 | 2 primes | $2 \times 11$ |
-| 2 | 12 | 3 primes | $2 \times 2 \times 3$ |
-| 2 | 27 | 3 primes | $3 \times 3 \times 3$ |
-| 3 | 40 | 4 primes | $2 \times 2 \times 2 \times 5$ |
-| 3 | 50 | 3 primes | $2 \times 5 \times 5$ |
+| 1 | 14 | 2 primes | Core | $2 \times 7$ |
+| 1 | 22 | 2 primes | Core | $2 \times 11$ |
+| 2 | 12 | 3 primes | Core | $2 \times 2 \times 3$ |
+| 2 | 27 | 3 primes | Core | $3 \times 3 \times 3$ |
+| 3 | 40 | 4 primes | Core | $2 \times 2 \times 2 \times 5$ |
+| 3 | 50 | 3 primes | Core | $2 \times 5 \times 5$ |
 | stretch | 56 | none | $2 \times 2 \times 2 \times 7$ |
 | stretch | 63 | none | $3 \times 3 \times 7$ (3 × 21 works if 7 × 9 is shaky) |
 | stretch | 90 | none | $2 \times 3 \times 3 \times 5$ |
@@ -123,31 +123,31 @@ Slides 6 and 16 are the first cuts if time runs short, then the second Depth pai
 
 | Rung | Question | Answer | Trap |
 |---|---|---|---|
-| 1 | $5 \times 5$ | $5^2$ | writing $5 \times 2$ or $10$ |
-| 2 | $2 \times 2 \times 2 \times 2$ | $2^4$ | $2^3$ (miscounting) |
-| 3 | $2 \times 2 \times 5$ | $2^2 \times 5$ | $2^2 \times 5^1$, or $2^25$ |
-| 4 | $2 \times 3 \times 3 \times 3$ | $2 \times 3^3$ | $2^3 \times 3$ (index on the wrong prime) |
-| 5 | $2 \times 2 \times 3 \times 3 \times 5$ | $2^2 \times 3^2 \times 5$ | $2^2 \times 3^2 \times 5^2$ |
-| 6 | Explain: is $2^3$ the same as $2 \times 3$? | $2^3 = 8$, $2 \times 3 = 6$; no | "index means multiply" |
+| 1 | $5 \times 5$ | $5^2$ | Core | writing $5 \times 2$ or $10$ |
+| 2 | $2 \times 2 \times 2 \times 2$ | $2^4$ | Core | $2^3$ (miscounting) |
+| 3 | $2 \times 2 \times 5$ | $2^2 \times 5$ | Core | $2^2 \times 5^1$, or $2^25$ |
+| 4 | $2 \times 3 \times 3 \times 3$ | $2 \times 3^3$ | Core | $2^3 \times 3$ (index on the wrong prime) |
+| 5 | $2 \times 2 \times 3 \times 3 \times 5$ | $2^2 \times 3^2 \times 5$ | Core | $2^2 \times 3^2 \times 5^2$ |
+| 6 | Explain: is $2^3$ the same as $2 \times 3$? | $2^3 = 8$, $2 \times 3 = 6$; no | If time | "index means multiply" |
 
 ### Whiteboards, stage 2 (slide 23): tree to index form
 
 | # | Number | Help | Answer | Tempting wrong method |
 |---|---|---|---|---|
-| 1 | 72 | partly drawn: $8 \times 9$ given | $2^3 \times 3^2$ | $2^3 \times 3^3$ or $2 \times 3$ |
-| 2 | 100 | a count: "(2 different primes)" | $2^2 \times 5^2$ | $10 \times 10$, stopping |
-| 3 | 80 | none | $2^4 \times 5$ | $2^3 \times 5$ (miscounting 2s) |
+| 1 | 72 | partly drawn: $8 \times 9$ given | Core | $2^3 \times 3^2$ | $2^3 \times 3^3$ or $2 \times 3$ |
+| 2 | 100 | a count: "(2 different primes)" | Core | $2^2 \times 5^2$ | $10 \times 10$, stopping |
+| 3 | 80 | none | Core | $2^4 \times 5$ | $2^3 \times 5$ (miscounting 2s) |
 
 ### Set B2: tree to index form (book work, slide 25; 9 questions, 3 × 3; the first six hinted)
 
 | Rung | Numbers | Hint | Answer |
 |---|---|---|---|
-| 1 | 16 | 1 prime | $2^4$ |
-| 1 | 25 | 1 prime | $5^2$ |
-| 2 | 54 | 2 primes | $2 \times 3^3$ |
-| 2 | 32 | 1 prime | $2^5$ |
-| 3 | 75 | 2 primes | $3 \times 5^2$ |
-| 3 | 42 | 3 primes | $2 \times 3 \times 7$ (no raised numbers: a trap in itself) |
+| 1 | 16 | 1 prime | Core | $2^4$ |
+| 1 | 25 | 1 prime | Core | $5^2$ |
+| 2 | 54 | 2 primes | Core | $2 \times 3^3$ |
+| 2 | 32 | 1 prime | Core | $2^5$ |
+| 3 | 75 | 2 primes | Core | $3 \times 5^2$ |
+| 3 | 42 | 3 primes | Core | $2 \times 3 \times 7$ (no raised numbers: a trap in itself) |
 | stretch | 120 | none | $2^3 \times 3 \times 5$ |
 | stretch | 84 | none | $2^2 \times 3 \times 7$ |
 | stretch | 200 | none | $2^3 \times 5^2$ |
@@ -170,9 +170,9 @@ Each has a claim to test, a named misconception on every wrong option, speakers 
 
 | Card | Claim | What it tests | Numbers |
 |---|---|---|---|
-| 1 | "$5^3 = 15$" | The index is a count of repeats, not "times" | $5^3 = 125$; a spare option $5 \times 3$ |
-| 2 | Two pupils draw 70 as $7 \times 10$ and $2 \times 35$: only one can be right | Different trees, same primes ($2 \times 5 \times 7$) | 70 |
-| 3 | A pupil's tree for 48 stops at $6 \times 8$ with both circled | Circling a number that is not prime | 48 ($2^4 \times 3$) |
+| 1 | "$5^3 = 15$" | The index is a count of repeats, not "times" | Core | $5^3 = 125$; a spare option $5 \times 3$ |
+| 2 | Two pupils draw 70 as $7 \times 10$ and $2 \times 35$: only one can be right | Different trees, same primes ($2 \times 5 \times 7$) | Core | 70 |
+| 3 | A pupil's tree for 48 stops at $6 \times 8$ with both circled | Circling a number that is not prime | Core | 48 ($2^4 \times 3$) |
 
 **New misconception tags to add** (`src/shared/misconceptions.ts`): `index-as-multiply` ($2^3 = 6$) · `circle-non-prime` (circling 4, 6, 8 or 9) · `stop-after-one-split` (a tree with only one split) · `repeat-prime-once` (listing a repeated prime once, such as 12 as $2 \times 3$).
 
@@ -208,7 +208,7 @@ Each has a claim to test, a named misconception on every wrong option, speakers 
 
 ## Open questions for Harry
 
-1. **How long?** About one and a half lessons as planned, or squeezed into one (cut slides 6, 15, 16 and the second Depth pair)?
+1. ~~How long?~~ **Decided:** one deck, aimed at one lesson, built in one go; tagged Core / If time / Overflow so it can run over.
 2. **Primes strip:** primes to 20 on every tree slide, or only to 13 to keep it quiet?
 3. **A printable of blank tree frames** (A4, empty tree shapes to draw on): yes, or only draw in books?
 4. **Do they use the divisibility rules** (even ends in 2 → 2 goes in, ends in 5 or 0 → 5 goes in)? I have only put them in as an optional hint, not taught.
