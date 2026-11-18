@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Info, Plus, Settings2, Trash2 } from 'lucide-react';
 import type { CategoryOp } from '../../api/_categories';
 import { useCategories } from '../decks/categories';
-import { layoutDecks, menuOptions, pathOf, type Category } from '../decks/categoryTree';
+import { layoutDecks, pathOf, type Category } from '../decks/categoryTree';
 import { SlideCanvas } from '../decks/SlideCanvas';
 import { CANVAS_W, PITCH_LABEL, type Pitch, type Slide } from '../decks/types';
 
 
 // The one way decks are laid out: a card per deck (its first slide, its title and an (i) for the details), grouped under a heading per
 // category. The categories are Harry's to control (a strand, with topics inside it; src/decks/categoryTree.ts), and with Developing tools on he files a
-// deck by dragging its card onto a heading, or with the Filed under menu in the card's (i) (a touch screen cannot drag). The Decks page and the deck
+// deck by dragging its card onto a heading. The Decks page and the deck
 // editor's list both draw this, so the two always mirror each other: the page shows the published decks (and, with Developing tools on, the rest),
 // the editor shows every deck.
 
@@ -40,19 +40,16 @@ function FitPreview({ slide }: { slide: Slide }) {
   return <div ref={ref} className="w-full"><SlideCanvas slide={slide} scale={w / CANVAS_W} /></div>;
 }
 
-type MenuOption = { id: string; label: string; depth: 0 | 1 };
-
-/** On a tablet or laptop every card is the same fixed width, so a row of them lines up and the gaps stay even; on a phone each is the full width. */
-function DeckCard({ d, admin, filedIn, where, options, onDragStart, onDragEnd, onFile }: {
-  d: GalleryDeck; admin?: boolean; filedIn?: string | null; where?: string; options?: MenuOption[];
-  onDragStart?: (id: string) => void; onDragEnd?: () => void; onFile?: (categoryId: string | null) => void;
+/** The cards fill a grid (one to a row on a phone, two on a tablet, four on a laptop), so every card in a row is the same width and the gaps stay even. */
+function DeckCard({ d, admin, where, onDragStart, onDragEnd }: {
+  d: GalleryDeck; admin?: boolean; where?: string; onDragStart?: (id: string) => void; onDragEnd?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <div draggable={!!admin} data-deck={d.id}
       onDragStart={admin ? (e) => { e.dataTransfer.setData('text/plain', d.id); e.dataTransfer.effectAllowed = 'move'; onDragStart?.(d.id); } : undefined}
       onDragEnd={admin ? () => onDragEnd?.() : undefined}
-      className={`w-full sm:w-[296px] sm:shrink-0 rounded-2xl border border-slate-300 bg-white p-3 shadow-card ${admin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+      className={`w-full min-w-0 rounded-2xl border border-slate-300 bg-white p-3 shadow-card ${admin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
       <div className="relative">
         <Link to={`/decks/${d.id}`} draggable={false} aria-label={`Play ${d.title}`} className="block overflow-hidden rounded-lg border border-slate-200 hover:shadow-lift transition-shadow">
           {d.preview
@@ -71,15 +68,6 @@ function DeckCard({ d, admin, filedIn, where, options, onDragStart, onDragEnd, o
         <div className="border-t border-slate-200 pt-2">
           {d.summary && <div className="text-sm text-slate-500">{d.summary}</div>}
           <div className="mt-1 text-xs text-slate-400">{[where, d.pitch && `Pitched at the ${PITCH_LABEL[d.pitch].toLowerCase()}`, `${d.slides} slides`, ...d.notes].filter(Boolean).join(' · ')}</div>
-          {admin && onFile && options && (
-            <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-500">Filed under
-              <select value={filedIn ?? ''} onChange={(e) => onFile(e.target.value || null)} aria-label={`File ${d.title} under`}
-                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-normal text-slate-700">
-                <option value="">Not filed</option>
-                {options.map((o) => <option key={o.id} value={o.id}>{o.depth ? '   ' : ''}{o.label}</option>)}
-              </select>
-            </label>
-          )}
         </div>
       )}
     </div>
@@ -161,16 +149,15 @@ export function DeckSections({ decks, admin = false }: { decks: GalleryDeck[]; a
   if (data === undefined) return <p className="text-slate-500">Loading…</p>;
   const canEdit = admin && data !== null;                      // without the sharing service nothing can be filed
   const layout = layoutDecks(decks, data, { showEmpty: admin });
-  const options = menuOptions(data);
   const strands = (data ?? { categories: [] }).categories.filter((c) => c.parent === null);
   const byId = new Map(decks.map((d) => [d.id, d]));
   const run = async (op: CategoryOp) => setError(await act(op));
   const file = (deckId: string, categoryId: string | null) => { setDragging(null); void run({ op: 'file', deckId, categoryId }); };
   const cards = (ids: string[], filedIn: string | null) => ids.map((id) => {
     const d = byId.get(id);
-    return d ? <DeckCard key={id} d={d} admin={canEdit} filedIn={filedIn} where={pathOf(filedIn, data)} options={options} onDragStart={setDragging} onDragEnd={() => setDragging(null)} onFile={(c) => file(id, c)} /> : null;
+    return d ? <DeckCard key={id} d={d} admin={canEdit} where={pathOf(filedIn, data)} onDragStart={setDragging} onDragEnd={() => setDragging(null)} /> : null;
   });
-  const row = 'flex flex-col gap-4 sm:flex-row sm:flex-wrap';
+  const row = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4';
   const drop = (target: string | null) => () => { if (dragging) file(dragging, target); };
 
   return (
@@ -178,7 +165,7 @@ export function DeckSections({ decks, admin = false }: { decks: GalleryDeck[]; a
       {admin && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           {canEdit && <button onClick={() => setManage((m) => !m)} aria-pressed={manage} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-semibold shadow-card ${manage ? 'border-blue-400 bg-blue-50 text-blue-900' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}><Settings2 size={14} />Manage categories</button>}
-          <span className="text-slate-500">{!canEdit ? "Categories can't be changed here: the sharing service isn't available." : manage ? 'Click a name to rename it. Arrows reorder; + adds a topic.' : 'Drag a deck onto a heading to file it (or use Filed under in its (i)).'}</span>
+          <span className="text-slate-500">{!canEdit ? "Categories can't be changed here: the sharing service isn't available." : manage ? 'Click a name to rename it. Arrows reorder; + adds a topic.' : 'Drag a deck onto a heading to file it.'}</span>
           {manage && (
             <form className="ml-auto flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); if (name.trim()) { void run({ op: 'add', name }); setName(''); } }}>
               <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="New strand" aria-label="New strand name" className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm" />
