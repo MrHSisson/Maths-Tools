@@ -30,7 +30,6 @@ const counts = (primes: number[]) => { const m = new Map<number, number>(); prim
 const idxTex = (primes: number[]) => counts(primes).map(([p, c]) => (c > 1 ? `${p}^{${c}}` : `${p}`)).join(" \\times ");
 
 type Mistake = { response: string; reasoning: string };
-const tagged = (q: CuratedQuestion, id: string): CuratedQuestion => ({ ...q, misconception: { id, label: misconceptionLabel(id) } });
 
 /** "Write n as a product of primes" (or in index form): no working, because Harry draws the tree; the answer is the product or the index form.
  *  `book` makes plain book work (just the number, with an optional quiet hint). */
@@ -46,7 +45,10 @@ function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | 
   else { lines = [index ? `Write $${n}$ in index form.` : `Write $${n}$ as a product of primes.`]; assertCentred(lines, `${n}`); }
   const base = Q.open(id, T, "level1", lines[0], answer, [], o.mistakes ?? []);
   const q: CuratedQuestion = { ...base, title: `$${n}$`, question: lines, rationale: index ? "Draw the tree, then count each prime." : "Split into two numbers, circle each prime, stop when every branch ends in a prime." };
-  return o.tag ? tagged(q, o.tag) : q;
+  // Practice questions carry no misconception tag: the deck test (R42) reads tagged practice as a single-misconception sequence of five or more,
+  // and these sets mix several slips. The Depth cards below are diagnostic questions, so they keep their tags.
+  void o.tag;
+  return q;
 }
 
 // ---------- section 1: trees to a product of primes ----------
@@ -68,7 +70,8 @@ function indexQ(id: string, given: number[], expectIdx: string, tag?: string, mi
   const idx = idxTex(sorted);
   must(idx === expectIdx, `index form of ${tex(given)}: expected ${expectIdx}, got ${idx}`);
   const q = { ...Q.open(id, T, "level1", `Write $${tex(given)}$ in index form.`, `$${idx}$`, [], mistakes), title: "Write the product in index form" };
-  return tag ? tagged(q, tag) : q;
+  void tag;   // not tagged: see treeQ
+  return q;
 }
 // the product is given in any order; the answer is always written smallest first. A good half are not written smallest first.
 const setC: [number[], string, string?][] = [

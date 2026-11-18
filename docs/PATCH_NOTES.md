@@ -39,6 +39,7 @@ Branch `ccr-8fd397fb-lwfz38`. Area: `src/components/DecksPage.tsx`, `DecksTab.ts
 - **Decided without asking** (shout if wrong): one address (`/deck-gallery`, with the old `/decks` redirecting) rather than renaming it; a quiet Sign in link rather than a hidden login; signing in on the Decks page is the same switch as Developing tools, so it also turns Developing tools on.
 - Follow-up: the **Filed under** menu is gone from a deck card's (i) (drag a card onto a heading to file it; the editor's About the deck still has it), and the cards sit in a grid, **four to a row on a laptop (1024px up), two on a tablet, one on a phone**, all the same width (was fixed 296px cards that wrapped). Checked at 1366, 1024, 820 and 390 wide.
 - The topic headings under a strand (Maths and Further Maths under A-Level) no longer sit indented: they line up with the strand heading, and the cards under them with the cards above.
+- Merge check (full `npm run build` and `npm test`): one real failure found and fixed. The deck test R42 reads any tagged practice question sequence as a single-misconception set of five or more, so the Prime Factor Trees practice sets (which mix several slips) no longer carry per-question misconception tags; the three Depth cards keep theirs. Deck re-pushed. `npm run facts` re-run (`adminDocs.json` changed with the docs).
 - Not done: a filter for published / not published in the signed-in list; the shared code is not on `main` until this branch is merged.
 
 Agent: Claude Code

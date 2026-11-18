@@ -421,10 +421,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -465,10 +461,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-circle-non-prime",
-        "label": "Circles a number that can still be split, so the tree stops too early"
-       },
        "expectedErrors": []
       },
       {
@@ -489,10 +481,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -533,10 +521,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -625,7 +609,7 @@
     }
    ],
    "brief": "Ten whiteboards: the number on the left, your tree on the right, the product of primes on a click.",
-   "built": "2glpi4",
+   "built": "ku2up1",
    "title": "Factor tree whiteboards",
    "family": "teach"
   },
@@ -694,10 +678,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -758,10 +738,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -782,10 +758,6 @@
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
        "expectedErrors": []
       },
       {
@@ -911,7 +883,7 @@
      ]
     }
    ],
-   "built": "195spgh",
+   "built": "1bz6n55",
    "title": "Factor tree book work",
    "family": "retrieval"
   },
@@ -1170,10 +1142,6 @@
        ],
        "rationale": "",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-wrong-base",
-        "label": "Puts the index on the wrong prime, or on every prime"
-       },
        "expectedErrors": []
       },
       {
@@ -1194,10 +1162,6 @@
        ],
        "rationale": "",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-wrong-base",
-        "label": "Puts the index on the wrong prime, or on every prime"
-       },
        "expectedErrors": []
       },
       {
@@ -1278,10 +1242,6 @@
        ],
        "rationale": "",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-wrong-base",
-        "label": "Puts the index on the wrong prime, or on every prime"
-       },
        "expectedErrors": []
       },
       {
@@ -1302,10 +1262,6 @@
        ],
        "rationale": "",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-wrong-base",
-        "label": "Puts the index on the wrong prime, or on every prime"
-       },
        "expectedErrors": []
       },
       {
@@ -1386,10 +1342,6 @@
        ],
        "rationale": "",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-as-multiply",
-        "label": "Reads the index as a multiplier instead of a count of repeats"
-       },
        "expectedErrors": []
       }
      ],
@@ -1398,7 +1350,7 @@
     }
    ],
    "brief": "Fifteen products of primes to write in index form, climbing from one repeated prime to three. Many are not written smallest first. The product is given; the answer, always smallest first, is on a click.",
-   "built": "3c1hzi",
+   "built": "rrei2l",
    "title": "Index form whiteboards",
    "family": "teach"
   },
@@ -1594,10 +1546,6 @@
        ],
        "rationale": "Draw the tree, then count each prime.",
        "explanation": [],
-       "misconception": {
-        "id": "primes-index-wrong-base",
-        "label": "Puts the index on the wrong prime, or on every prime"
-       },
        "expectedErrors": []
       },
       {
@@ -1686,7 +1634,7 @@
     }
    ],
    "brief": "Twelve whiteboards: draw the tree, then write the answer in index form.",
-   "built": "1yap7dv",
+   "built": "ho13w3",
    "title": "Factor trees in index form",
    "family": "teach"
   },
