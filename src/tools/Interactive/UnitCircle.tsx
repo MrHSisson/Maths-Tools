@@ -39,9 +39,10 @@ type RadStyle = "pi" | "dec";
 // ── One palette, one type scale, one set of line weights ───────────────────────────────────────────────────────────────────
 const COL: Record<Fn, string> = { sin: "#2563eb", cos: "#059669", tan: "#d97706" };
 const INK = "#0f172a", MUTE = "#64748b", FAINT = "#94a3b8", RULE = "#cbd5e1", HAIR = "#e2e8f0", ACCENT = "#4f46e5";
-const FS = 11.5;                 // every axis and ring label (degrees and radians) is this size
-const LINE = 4;                  // the coloured helper lines on the circle
-const CURVE = 3;                 // the graph curves
+const FS = 15;                   // graph axis labels
+const FS_MAIN = 18, FS_SUB = 13; // circle labels: the main unit large, the other small
+const LINE = 5;                  // the coloured helper lines on the circle
+const CURVE = 3.5;                 // the graph curves
 
 // ── Drawing text with stacked fractions ("−√3/2" → minus, √3 over 2) ───────────────────────────────────────────────────────
 const parseExact = (t: string) => {
@@ -158,8 +159,8 @@ function IconBtn({ onClick, title, children, primary }: { onClick: () => void; t
 }
 
 // ── Geometry ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-const R = 118;                  // circle radius in SVG units
-const VB = 172;                 // circle viewBox half-size
+const R = 124;                  // circle radius in SVG units
+const VB = 188;                 // circle viewBox half-size
 const cp = (deg: number, r = R): [number, number] => [r * Math.cos((deg * Math.PI) / 180), -r * Math.sin((deg * Math.PI) / 180)];
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
@@ -185,7 +186,7 @@ const SPEEDS = { slow: 18, normal: 36, fast: 72 } as const;
 
 // Inverse view: value x along the bottom (−3 to 3), the angle up the side (−110° to 200°) with a wider left margin for two label columns.
 const IV_X = 3;
-const IPX0 = 92;
+const IPX0 = 100;
 const IPW = PX1 - IPX0;
 const A_MIN = -110, A_MAX = 200;
 const xv = (v: number) => IPX0 + ((v + IV_X) / (2 * IV_X)) * IPW;
@@ -340,17 +341,26 @@ export default function UnitCircle() {
   const [px, py] = cp(angle);
   const cosA = Math.cos(rad(angle)), sinA = Math.sin(rad(angle));
   const tanA = Math.abs(cosA) < 1e-9 ? null : sinA / cosA;
-  const arcR = 30;
+  const arcR = 34;
   const [ax, ay] = cp(angle, arcR);
   const marked = SPECIALS.filter((s) => inFamily(s, family));
 
+  // One main label per point, large: radians outside (degrees outside when degrees only). With both, the degrees are small and just inside the rim.
   const ringLabels = marked.map((s) => {
-    const [lx, ly] = cp(s.deg, R + (units === "both" ? 27 : 20));
     const rShow = radOn(s.deg);
+    const [ox, oy] = cp(s.deg, R + (units === "deg" ? 30 : 36));
+    const [ix, iy] = cp(s.deg, R - 31);
+    // an inner degree label steps aside when the point or a helper line runs through it
+    const nearPoint = Math.hypot(ix - px, iy - py) < 44;
+    const onSin = fns.sin && Math.abs(ix - px) < 26 && iy > Math.min(0, py) - 12 && iy < Math.max(0, py) + 12;
+    const onCos = fns.cos && Math.abs(iy) < 20 && ix > Math.min(0, px) - 12 && ix < Math.max(0, px) + 12;
+    const onTan = fns.tan && tanA !== null && Math.abs(ix - R) < 26;
+    const innerOk = !(nearPoint || onSin || onCos || onTan);
     return (
       <g key={"r" + s.deg}>
-        {degOn && <text x={lx} y={ly + (rShow ? -6 : 4)} textAnchor="middle" fontSize={FS} fontWeight={600} fill={MUTE}>{s.deg}°</text>}
-        {rShow && <Q x={lx} y={degOn ? ly + 10 : ly} t={radLabel(s.deg)} size={FS} fill={ACCENT} />}
+        {units === "deg" && <text x={ox} y={oy + 6} textAnchor="middle" fontSize={FS_MAIN} fontWeight={700} fill="#475569">{s.deg}°</text>}
+        {units !== "deg" && rShow && <Q x={ox} y={oy} t={radLabel(s.deg)} size={FS_MAIN} fill={ACCENT} weight={700} />}
+        {units === "both" && innerOk && <text x={ix} y={iy + 4.5} textAnchor="middle" fontSize={FS_SUB} fontWeight={600} fill={MUTE} stroke="#f8fafc" strokeWidth={3} paintOrder="stroke">{s.deg}°</text>}
       </g>
     );
   });
@@ -371,22 +381,19 @@ export default function UnitCircle() {
     const sn = hiddenPop ? "?" : ex ? ex.sin : f2(Math.sin(rad(a)));
     const items = ["(", cs, ",", sn, ")"];
     const fills = [MUTE, COL.cos, MUTE, COL.sin, MUTE];
-    const size = 14;
-    const w = Math.max(118, items.reduce((t, it) => t + qWidth(it, size), 0) + size * 0.2 * 4 + 30);
-    const h = 58;
+    const size = 21;
+    const w = items.reduce((t, it) => t + qWidth(it, size), 0) + size * 0.2 * 4 + 34;
+    const h = 66;
     const below = qy < -R * 0.5;
     const cx = Math.max(-VB + w / 2 + 2, Math.min(VB - w / 2 - 2, qx));
-    const cy = below ? qy + 22 + h / 2 + 8 : qy - 22 - h / 2 - 8;
+    const cy = below ? qy + 24 + h / 2 + 8 : qy - 24 - h / 2 - 8;
     const edge = below ? cy - h / 2 : cy + h / 2;
     const tx = Math.max(cx - w / 2 + 16, Math.min(cx + w / 2 - 16, qx));
     return (
       <g style={{ pointerEvents: "none", filter: "drop-shadow(0 4px 10px rgba(15,23,42,0.18))" }}>
         <polygon points={`${tx - 7},${edge} ${tx + 7},${edge} ${tx},${edge + (below ? -9 : 9)}`} fill="#fff" />
         <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx={12} fill="#fff" />
-        <text x={cx} y={cy - h / 2 + 16} textAnchor="middle" fontSize={9.5} fontWeight={600} fill={MUTE}>
-          <tspan>(</tspan><tspan fill={COL.cos}>cos θ</tspan><tspan>, </tspan><tspan fill={COL.sin}>sin θ</tspan><tspan>)</tspan>
-        </text>
-        <Row x={cx} y={cy + 7} items={items} size={size} fills={fills} />
+        <Row x={cx} y={cy - 2} items={items} size={size} fills={fills} />
       </g>
     );
   })();
@@ -407,12 +414,12 @@ export default function UnitCircle() {
     const diff = (((a - angle) % 360) + 360) % 360;
     if (diff < 0.5 || diff > 359.5) return null;
     const [qx, qy] = cp(a);
-    const [tx, ty] = cp(a, R - 40);
+    const [tx, ty] = cp(a, R - 46);
     return (
       <g key={"pm" + f} style={{ pointerEvents: "none" }}>
         <line x1={px} y1={py} x2={qx} y2={qy} stroke={COL[f]} strokeWidth={1.5} strokeDasharray="4 4" opacity={0.85} />
-        <circle cx={qx} cy={qy} r={7.5} fill="#fff" stroke={COL[f]} strokeWidth={3} />
-        <Q x={tx} y={ty} t={`${f}⁻¹`} size={11} fill={COL[f]} />
+        <circle cx={qx} cy={qy} r={9.5} fill="#fff" stroke={COL[f]} strokeWidth={3.5} />
+        <Q x={tx} y={ty} t={`${f}⁻¹`} size={16} fill={COL[f]} weight={700} />
       </g>
     );
   }) : null;
@@ -438,7 +445,7 @@ export default function UnitCircle() {
         )}
 
       {/* radius, then the coloured helper lines */}
-      <line x1={0} y1={0} x2={px} y2={py} stroke={ACCENT} strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={0} y1={0} x2={px} y2={py} stroke={ACCENT} strokeWidth={3.2} strokeLinecap="round" />
       {fns.cos && <line x1={0} y1={0} x2={px} y2={0} stroke={COL.cos} strokeWidth={LINE} strokeLinecap="round" />}
       {fns.sin && <line x1={px} y1={0} x2={px} y2={py} stroke={COL.sin} strokeWidth={LINE} strokeLinecap="round" />}
       {fns.tan && tanEnd && (
@@ -454,7 +461,7 @@ export default function UnitCircle() {
         const on = shown % 360 === s.deg;
         return (
           <g key={"d" + s.deg}>
-            <circle cx={sx} cy={sy} r={on ? 5 : 3.6} fill={on ? ACCENT : "#fff"} stroke={on ? ACCENT : "#475569"} strokeWidth={1.8} />
+            <circle cx={sx} cy={sy} r={on ? 6 : 4.4} fill={on ? ACCENT : "#fff"} stroke={on ? ACCENT : "#475569"} strokeWidth={2} />
             {showExact && <circle cx={sx} cy={sy} r={12} fill="transparent" onPointerEnter={(e) => { if (e.pointerType === "mouse") setHoverDeg(s.deg); }} onPointerLeave={() => setHoverDeg(null)} />}
           </g>
         );
@@ -463,13 +470,14 @@ export default function UnitCircle() {
       {principalMarks}
 
       {/* the moving point */}
-      <circle cx={px} cy={py} r={15} fill={ACCENT} opacity={0.14} style={{ pointerEvents: "none" }} />
-      <circle cx={px} cy={py} r={8.5} fill={ACCENT} stroke="#fff" strokeWidth={3} />
+      <circle cx={px} cy={py} r={18} fill={ACCENT} opacity={0.14} style={{ pointerEvents: "none" }} />
+      <circle cx={px} cy={py} r={10.5} fill={ACCENT} stroke="#fff" strokeWidth={3} />
       {showExact && popup}
     </svg>
   );
 
   // ── Graph ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+  const radTag = (d: number): string => (radStyle === "pi" ? radText(d) : rad(d).toFixed(2));
   const curve = (f: Fn): string => {
     const upto = trace ? Math.min(360, angle) : 360;
     const segs: [number, number][] = f === "tan" ? [[0, 89.5], [90.5, 269.5], [270.5, 360]] : [[0, 360]];
@@ -526,19 +534,30 @@ export default function UnitCircle() {
       {Y_TICKS.map((v) => <text key={"yl" + v} x={PX0 - 9} y={yOf(v) + 4} textAnchor="end" fontSize={FS} fill={MUTE}>{v < 0 ? `−${-v}` : v}</text>)}
       {fns.tan && [90, 270].map((a) => <line key={"as" + a} x1={xOf(a)} x2={xOf(a)} y1={PY0} y2={PY1} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.55} />)}
 
-      {/* x labels: degrees grey, radians indigo, the same sizes as the circle */}
-      {xMarks.map((m) => {
-        const stagger = family === "all" && m.family === "45" ? 30 : 0;
-        const rShow = radOn(m.deg);
-        const x = xOf(m.deg);
+      {/* ticks at every marked point, labels at the quarter turns only, and a tag showing the current angle */}
+      {xMarks.map((m) => <line key={"tk" + m.deg} x1={xOf(m.deg)} x2={xOf(m.deg)} y1={PY1} y2={PY1 + (m.deg % 90 === 0 ? 7 : 4)} stroke={FAINT} strokeWidth={1.5} />)}
+      {xMarks.filter((m) => m.deg % 90 === 0 && Math.abs(m.deg - Math.min(360, angle)) > 32).map((m) => {
+        const x = xOf(m.deg), rShow = radOn(m.deg);
         return (
           <g key={"xl" + m.deg}>
-            <line x1={x} x2={x} y1={PY1} y2={PY1 + 5} stroke={FAINT} />
-            {degOn && <text x={x} y={PY1 + 19 + stagger} textAnchor="middle" fontSize={FS} fontWeight={600} fill={MUTE}>{m.deg}°</text>}
-            {rShow && <Q x={x} y={PY1 + (degOn ? 36 : 22) + stagger} t={radLabel(m.deg)} size={FS} fill={ACCENT} />}
+            {units === "deg" && <text x={x} y={PY1 + 29} textAnchor="middle" fontSize={FS + 1} fontWeight={700} fill="#475569">{m.deg}°</text>}
+            {units !== "deg" && rShow && <Q x={x} y={PY1 + 26} t={radLabel(m.deg)} size={FS + 1} fill={ACCENT} weight={700} />}
+            {units === "both" && <text x={x} y={PY1 + 62} textAnchor="middle" fontSize={FS - 2} fontWeight={600} fill={MUTE}>{m.deg}°</text>}
           </g>
         );
       })}
+      {anyFn && (() => {
+        const cx = Math.max(PX0 + 52, Math.min(PX1 - 52, curX));
+        const hid = hide && !visibleAnswer(shown);
+        const txt = units === "deg" ? `${shown}°` : units === "rad" ? (hid ? "?" : radTag(shown)) : `${shown}° · ${hid ? "?" : radTag(shown)}`;
+        const w = txt.length * 9.2 + 22;
+        return (
+          <g style={{ pointerEvents: "none" }}>
+            <rect x={cx - w / 2} y={PY1 + 12} width={w} height={32} rx={16} fill={ACCENT} />
+            <text x={cx} y={PY1 + 33} textAnchor="middle" fontSize={16} fontWeight={700} fill="#fff">{txt}</text>
+          </g>
+        );
+      })()}
 
       {/* curves */}
       <g clipPath="url(#uc-plot)">
@@ -556,10 +575,9 @@ export default function UnitCircle() {
       {FNS.map((f) => {
         const v = valueAt(f);
         if (!fns[f] || v === null || Math.abs(v) > YMAX) return null;
-        return <circle key={"m" + f} cx={curX} cy={yOf(v)} r={6.5} fill={COL[f]} stroke="#fff" strokeWidth={2.5} />;
+        return <circle key={"m" + f} cx={curX} cy={yOf(v)} r={8.5} fill={COL[f]} stroke="#fff" strokeWidth={3} />;
       })}
       {!anyFn && <text x={PX0 + PW / 2} y={PY0 + PH / 2} textAnchor="middle" fontSize={14} fill={FAINT}>Switch on sin, cos or tan to draw a graph</text>}
-      <text x={PX1} y={GH - 6} textAnchor="end" fontSize={11} fontStyle="italic" fill={MUTE}>angle θ{units === "deg" ? " (degrees)" : units === "rad" ? " (radians)" : ""}</text>
     </svg>
   );
 
@@ -583,10 +601,10 @@ export default function UnitCircle() {
       {(fns.sin || fns.cos) && <text x={xv(0)} y={PY0 + 14} textAnchor="middle" fontSize={10.5} fontWeight={600} fill={ACCENT}>domain of sin⁻¹ and cos⁻¹</text>}
 
       {/* axis labels: the angle up the side (degrees grey, radians indigo), the input along the bottom */}
-      {A_TICKS.map((a) => (
+      {A_TICKS.filter((a) => a % 90 === 0).map((a) => (
         <g key={"al" + a}>
-          {degOn && <text x={units === "both" ? IPX0 - 50 : IPX0 - 9} y={ya(a) + 4} textAnchor="end" fontSize={FS} fontWeight={600} fill={MUTE}>{a < 0 ? `−${-a}` : a}°</text>}
-          {radOn(((a % 360) + 360) % 360) && <Q x={IPX0 - 26} y={ya(a)} t={radLabel(a)} size={FS} fill={ACCENT} />}
+          {degOn && <text x={units === "both" ? IPX0 - 54 : IPX0 - 9} y={ya(a) + 5} textAnchor="end" fontSize={FS} fontWeight={700} fill={MUTE}>{a < 0 ? `−${-a}` : a}°</text>}
+          {radOn(((a % 360) + 360) % 360) && <Q x={IPX0 - 28} y={ya(a)} t={radLabel(a)} size={FS} fill={ACCENT} weight={700} />}
         </g>
       ))}
       {[-3, -2, -1, 0, 1, 2, 3].map((v) => <text key={"vl" + v} x={xv(v)} y={PY1 + 18} textAnchor="middle" fontSize={FS} fontWeight={600} fill={MUTE}>{v < 0 ? `−${-v}` : v}</text>)}
@@ -713,44 +731,43 @@ export default function UnitCircle() {
   const radNow = hiddenNow ? "?" : radLabel(shown);
   const badgeEl = (cls: string) => (
     <div className={cls}>
-      <div className="text-2xl font-semibold text-slate-800 flex items-center gap-2 h-9 whitespace-nowrap">
+      <div className="text-[40px] leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap">
         {units === "deg" && <span>{shown}°</span>}
         {units === "both" && <><span>{shown}°</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
-        {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-1.5 text-lg">rad</span></span>}
+        {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
       </div>
-      <div className="text-xs text-slate-500 h-5 whitespace-nowrap">
+      <div className="text-sm text-slate-500 h-6 mt-1 whitespace-nowrap">
         {units === "rad" && <>= {shown}°{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
         {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}
       </div>
     </div>
   );
-  const badge = badgeEl("absolute top-3 left-4 pointer-events-none h-[58px]");
 
   const hideWorking = hide && !visibleAnswer(shown);
   const valueChip = (f: Fn) => {
     const e = exact ? exact[f] : null;
     const d = f === "tan" ? dec.tan : dec[f];
     return (
-      <div key={f} className="rounded-xl bg-white h-[58px] flex-1 min-w-0 flex flex-col justify-center pl-3.5 pr-2 border border-slate-200" style={{ borderLeft: `4px solid ${COL[f]}` }}>
-        <div className="text-xs font-semibold" style={{ color: COL[f] }}>{f} θ</div>
-        <div className="text-[17px] font-semibold text-slate-900 h-7 flex items-center gap-1.5 whitespace-nowrap">
+      <div key={f} className="rounded-xl bg-white h-[76px] flex-1 min-w-0 flex flex-col justify-center pl-4 pr-2 border border-slate-200" style={{ borderLeft: `5px solid ${COL[f]}` }}>
+        <div className="text-[13px] font-semibold" style={{ color: COL[f] }}>{f} θ</div>
+        <div className="text-[26px] font-semibold text-slate-900 h-12 flex items-center gap-2 whitespace-nowrap">
           {hideWorking ? "?" : e ? <>= <H t={e} /></> : <>= {d === null ? "undefined" : d.toFixed(3)}</>}
-          {!hideWorking && e && e !== "undefined" && d !== null && <span className="text-xs font-normal text-slate-400 ml-2">≈ {d.toFixed(2)}</span>}
+          {!hideWorking && e && e !== "undefined" && d !== null && <span className="text-sm font-normal text-slate-400 ml-1">≈ {d.toFixed(2)}</span>}
         </div>
       </div>
     );
   };
-  const line = (label: string, body: ReactNode) => (
+  const line = (label: string, body: ReactNode, big = true) => (
     <div className="min-w-0">
-      <div className="text-xs font-semibold text-slate-500">{label}</div>
-      <div className="text-[15px] text-slate-800 h-8 flex items-center whitespace-nowrap overflow-hidden"><span>{body}</span></div>
+      <div className="text-[13px] font-semibold text-slate-500">{label}</div>
+      <div className={`${big ? "text-[24px] h-14" : "text-[18px] h-10"} text-slate-800 flex items-center whitespace-nowrap overflow-hidden`}><span>{body}</span></div>
     </div>
   );
   const toRad = line("Degrees → radians", hideWorking ? <span className="text-slate-400">{shown}° × π/180 = ?</span> : <Rich s={degToRadWorking(shown).join(" = ")} />);
   const toDeg = line("Radians → degrees", hideWorking ? <span className="text-slate-400">? × 180/π = {shown}°</span> : <Rich s={radToDegWorking(shown).join(" = ")} />);
   const readout = (
-    <div className="p-3 grid gap-2.5" style={{ gridTemplateRows: "52px 58px" }}>
-      <div className="grid grid-cols-2 gap-x-5">{units === "rad" ? <>{toDeg}{toRad}</> : <>{toRad}{toDeg}</>}</div>
+    <div className="p-3.5 grid gap-2" style={{ gridTemplateRows: "74px 76px" }}>
+      {units === "rad" ? toDeg : toRad}
       <div className="flex gap-2.5">
         {FNS.filter((f) => fns[f]).map(valueChip)}
         {!anyFn && <div className="text-sm text-slate-400 self-center">Switch on sin, cos or tan to see its value.</div>}
@@ -776,9 +793,9 @@ export default function UnitCircle() {
     const e = exact ? exact[f] : null;
     const xTxt = e && e !== "undefined" ? e : v === null ? "undefined" : v.toFixed(2);
     return (
-      <div key={f} className="rounded-xl bg-white h-[58px] flex-1 min-w-0 flex flex-col justify-center pl-3.5 pr-2 border border-slate-200" style={{ borderLeft: `4px solid ${COL[f]}` }}>
-        <div className="text-xs font-semibold" style={{ color: COL[f] }}>{f}⁻¹ x</div>
-        <div className="text-[17px] font-semibold text-slate-900 h-7 flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
+      <div key={f} className="rounded-xl bg-white h-[76px] flex-1 min-w-0 flex flex-col justify-center pl-4 pr-2 border border-slate-200" style={{ borderLeft: `5px solid ${COL[f]}` }}>
+        <div className="text-[13px] font-semibold" style={{ color: COL[f] }}>{f}⁻¹ x</div>
+        <div className="text-[22px] font-semibold text-slate-900 h-12 flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
           {hideWorking ? "?" : a === null ? "undefined" : <><span>x =</span><H t={xTxt} /><span className="mx-1 text-slate-300">→</span><span><Rich s={angleTxt(a)} /></span></>}
         </div>
       </div>
@@ -786,11 +803,11 @@ export default function UnitCircle() {
   };
   const inside = a1 !== null && Math.abs(a1 - angle) < 0.5;
   const invReadout = (
-    <div className="p-3 grid gap-2.5" style={{ gridTemplateRows: phone ? "auto 58px" : "52px 58px" }}>
+    <div className="p-3.5 grid gap-2" style={{ gridTemplateRows: phone ? "auto 76px" : "74px 76px" }}>
       <div className={`grid ${phone ? "grid-cols-1 gap-y-1" : "grid-cols-2 gap-x-5"}`}>
-        {f1 ? line(`Range of ${f1}⁻¹ (${f1 === "tan" ? "any x" : "−1 ≤ x ≤ 1"})`, <Rich s={rangeTxt(f1)} />) : line("Range", <span className="text-slate-400">—</span>)}
+        {f1 ? line(`Range of ${f1}⁻¹ (${f1 === "tan" ? "any x" : "−1 ≤ x ≤ 1"})`, <Rich s={rangeTxt(f1)} />, false) : line("Range", <span className="text-slate-400">—</span>, false)}
         {f1 ? line(`${f1}⁻¹(${f1} ${shown}°)${inside || a1 === null || hideWorking ? "" : ` · ${shown}° is outside the range`}`, hideWorking ? <span className="text-slate-400">?</span> : a1 === null ? <span>undefined</span>
-          : <span><Rich s={angleTxt(a1)} /> <span className="text-slate-500">{inside ? "— the same angle" : `— not ${shown}°`}</span></span>) : line("Principal value", <span className="text-slate-400">—</span>)}
+          : <span><Rich s={angleTxt(a1)} /> <span className="text-slate-500">{inside ? "— the same angle" : `— not ${shown}°`}</span></span>, false) : line("Principal value", <span className="text-slate-400">—</span>, false)}
       </div>
       <div className="flex gap-2.5">
         {onFns.map(invChip)}
@@ -817,7 +834,7 @@ export default function UnitCircle() {
   );
 
   const displayPanel = (
-    <div className="absolute left-0 mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white rounded-2xl shadow-lift border border-slate-200 z-40 p-4 space-y-4">
+    <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white rounded-2xl shadow-lift border border-slate-200 z-40 p-4 space-y-4">
       <div className="space-y-2.5">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Marked angles (multiples of)</div>
         <Seg value={family} onChange={setFamily} options={[{ id: "30", text: "30°s" }, { id: "45", text: "45°s" }, { id: "all", text: "Both" }]} />
@@ -832,6 +849,21 @@ export default function UnitCircle() {
       </div>
     </div>
   );
+
+  const anglesSeg = <Seg value={units} onChange={setUnits} options={[{ id: "deg", text: "Degrees" }, { id: "rad", text: "Radians" }, { id: "both", text: "Both" }]} />;
+  const displayBtn = (
+    <div className="relative" ref={optsRef}>
+      <button onClick={() => setOptsOpen((o) => !o)} aria-expanded={optsOpen}
+        className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors ${optsOpen ? "bg-slate-200 text-slate-900" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
+        Display <ChevronDown size={16} className={`transition-transform ${optsOpen ? "rotate-180" : ""}`} />
+      </button>
+      {optsOpen && displayPanel}
+    </div>
+  );
+  const viewSeg = <Seg value={view} onChange={setView} options={[{ id: "trig", text: "Functions" }, { id: "inverse", text: "Inverses" }, { id: "reflect", text: "Reflection" }]} />;
+  const fnChips = <div className="flex items-center gap-2">{FNS.map((f) => <FnChip key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((st) => ({ ...st, [f]: !st[f] }))}>{f}</FnChip>)}</div>;
+  const circleHead = <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0")}<div className="flex items-center gap-2 flex-wrap">{anglesSeg}{displayBtn}</div></div>;
+  const graphHead = <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 pt-3">{viewSeg}{fnChips}</div>;
 
   return (
     <div className="flex flex-col" style={{ background: PAGE_BG, minHeight: "100vh", height: stacked ? undefined : "100vh", overflow: stacked ? undefined : "hidden" }}>
@@ -859,43 +891,26 @@ export default function UnitCircle() {
       </div>
       {infoOpen && <InfoModal title="Unit Circle" infoSections={INFO_SECTIONS} onClose={() => setInfoOpen(false)} />}
 
-      <div className="flex-shrink-0 px-3 pt-3">
-        <div className={`${card} px-4 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-2`}>
-          <Seg label="Angles" value={units} onChange={setUnits} options={[{ id: "deg", text: "Degrees" }, { id: "rad", text: "Radians" }, { id: "both", text: "Both" }]} />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 mr-0.5">Graphs</span>
-            {FNS.map((f) => <FnChip key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((s) => ({ ...s, [f]: !s[f] }))}>{f}</FnChip>)}
-          </div>
-          <Seg label="View" value={view} onChange={setView} options={[{ id: "trig", text: "Functions" }, { id: "inverse", text: "Inverses" }, { id: "reflect", text: "Reflection" }]} />
-          <div className="relative" ref={optsRef}>
-            <button onClick={() => setOptsOpen((o) => !o)} aria-expanded={optsOpen}
-              className={`min-h-[40px] px-3.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors ${optsOpen ? "bg-slate-200 text-slate-900" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
-              Display <ChevronDown size={16} className={`transition-transform ${optsOpen ? "rotate-180" : ""}`} />
-            </button>
-            {optsOpen && displayPanel}
-          </div>
-        </div>
-      </div>
-
       {stacked ? (
         <div className="flex flex-col gap-3 p-3">
           <div className={card}>
-            {badgeEl("px-4 pt-3 h-[70px]")}
+            {circleHead}
             <div className="w-full max-w-[560px] mx-auto aspect-square">{circleSvg}</div>
             {playbar}
           </div>
-          <div className={`${card} p-2`}><div className="w-full" style={{ aspectRatio: `${GW} / ${GH}` }}>{graphSvg}</div></div>
+          <div className={`${card} pb-2`}>{graphHead}<div className="w-full px-2 pt-1" style={{ aspectRatio: `${GW} / ${GH}` }}>{graphSvg}</div></div>
           <div className={card}>{view === "trig" ? readout : invReadout}</div>
           {portrait && !phone && <p className="text-center text-xs text-slate-500 pb-2">Works best in landscape.</p>}
         </div>
       ) : (
         <div className="flex-1 min-h-0 grid grid-cols-2 gap-3 p-3">
           <div className={`${card} flex flex-col min-h-0`}>
-            <div className="relative flex-1 min-h-0 p-2">{circleSvg}{badge}</div>
+            {circleHead}
+            <div className="flex-1 min-h-0 p-1">{circleSvg}</div>
             {playbar}
           </div>
           <div className="flex flex-col gap-3 min-h-0">
-            <div className={`${card} flex-1 min-h-0 p-2`}>{graphSvg}</div>
+            <div className={`${card} flex-1 min-h-0 flex flex-col pb-2`}>{graphHead}<div className="flex-1 min-h-0 px-2 pt-1">{graphSvg}</div></div>
             <div className={`${card} flex-shrink-0`}>{view === "trig" ? readout : invReadout}</div>
           </div>
         </div>
