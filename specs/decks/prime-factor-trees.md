@@ -10,6 +10,38 @@
 
 ---
 
+## Revised 2026-11-18 after Harry's first look: the deck as built (19 slides)
+
+Harry found the first version (29 slides) too complicated and not enough practice. **What changed:** the "which prime goes in first" slide, the vocabulary slide, "is it prime?", the discussion, "never split with 1", the whole "writing it as a product" section and the tally and index-meaning boards are all gone. Practice moved to a half-and-half layout so he has a side to draw on, and there is far more of it. Everything below this section is the earlier plan, kept for its reasoning (the number rules, the traps, the Depth cards); where it disagrees with this section, this section is right.
+
+| # | Slide | Notes |
+|---|---|---|
+| 1 | Title | |
+| 2 | Objective | Two lines |
+| 3 | Divider: Factor trees | |
+| 4 | Prime number | Definition, primes to 20 listed, 1 is not prime |
+| 5 | How to draw a factor tree | **A flow chart**, one click per part: start with a number → is it prime? → yes: circle it, it stops · no: split it into two numbers (not using 1) → ask again for each new number. Primes to 20 in small grey text |
+| 6 | Factor tree whiteboards | **10 questions**, trees to a product of primes: 18, 28, 30, 45, 52, 24, 50, 44, 66, 63 |
+| 7 | Book work | **15 questions** (3 × 5): 14, 22, 12, 20, 27, 55, 40, 36, 56 (first nine with a quiet hint of the number of primes), then 90, 75, 220, 150, 99, 140 |
+| 8 | Divider: Index form | |
+| 9 | Index form | What it means: $2 \times 2 \times 2 = 2^3$; the small raised number is the index and counts how many |
+| 10 | Write it in index form | **One table of four to work through together:** $7 \times 7$, $2 \times 2 \times 2$, $3 \times 3 \times 5$, $2 \times 2 \times 3 \times 3 \times 3$ |
+| 11 | Index form whiteboards | **15 questions**, a product of primes to write in index form, one repeated prime up to three different primes |
+| 12 | Divider: Back to the trees | |
+| 13 | Factor trees in index form | **12 whiteboards**: 25, 16, 54, 32, 72, 100, 80, 42, 88, 120, 108, 200 |
+| 14 | Depth | $7^3 = 21$? (index is a count, not a times) |
+| 15 | Book work | **15 questions**, index form: 49, 64, 81, 125, 96, 144, 135, 175, 225 (hinted: number of different primes), then 180, 126, 250, 300, 360, 400 |
+| 16 | Depth | Two trees for 70 |
+| 17 | Depth | Is the tree for 48 finished? |
+| 18 | Exit ticket | 33, 60 and $2 \times 2 \times 3 \times 3 \times 3$ |
+| 19 | Summary | |
+
+**The new practice layout.** Every whiteboard is the existing **Workspace right** layout with no working: the number on the left, a blank workspace on the right for the tree, and only the answer (the product of primes, or the index form) on a click under the question. The questions carry no working steps at all. If you want something purpose-built (for example the number small at the top and the whole slide to draw on), that is a new layout to build.
+
+**Rules kept:** 11, 13, 17 and 19 appear once only and only beside 2, 3 or 5 (asserted for every number); every first split uses the 2, 3, 5 or 10 table; no number is asked twice; no calculators. The build script computes and asserts every answer.
+
+---
+
 ## Decisions (agreed with Harry unless marked)
 
 1. **One deck, aimed at one lesson, built in one go.** The aim is ambitious for this group, so every slide is tagged **Core** (the lesson), **If time** (drop freely) or **Overflow** (carries to the next lesson). Dividers are the pick-up points; nothing is a separate deck. Index form keeps its own section and slow build, because that is the stated weak spot.
