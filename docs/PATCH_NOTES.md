@@ -29,6 +29,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-18 — Unit Circle: symmetry and periodicity worksheet
+
+- The Unit Circle menu's Printables list now has a second sheet: an A4 worksheet on trigonometric symmetry and periodicity in radians (8 questions in three sections, parts in columns, stacked fractions), with its answers on the last page. It is a fixed page (`unitCircleSheets.ts`), opened in a print window like the blank graphs; every answer was checked numerically.
+
 ## 2026-11-17 — Solving Trig Equations (A-level) and the grapher's angle axis
 
 Branch `claude/epic-goldberg-2yb9q4`. Area: new ToolShell tool `/solving-trig-equations` (Pure Mathematics), additive changes to `src/shared/grapher/`, spec `specs/solving-trig-equations.md` (now implemented).

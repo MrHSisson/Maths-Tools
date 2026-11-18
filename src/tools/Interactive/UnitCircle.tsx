@@ -5,6 +5,8 @@ import { shouldAutoOpenAbout, markAboutSeen } from "../../shared/about";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
 import { printPrintable, trigGraphSheet } from "../../shared/printables";
+import { openPrintWindow } from "../../shared/print";
+import { TRIG_SYMMETRY_SHEET_HTML } from "./unitCircleSheets";
 import {
   SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking,
   type Family,
@@ -23,7 +25,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Graphs", detail: "Switch sin, cos and tan on or off. Any combination can be shown at once." },
     { label: "Angle headline", detail: "The eye button beside the angle in the top left hides it, so the class can work the angle out first." },
     { label: "Working", detail: "Shows or hides the conversion working and the values under the graph. Hidden, the graph fills the right-hand side." },
-    { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes." },
+    { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes, and a symmetry and periodicity worksheet in radians with its answers." },
     { label: "Display", detail: "Choose which angles are marked (multiples of 30°, of 45°, or both), whether radians are shown as multiples of π or as decimals, and how fast Play runs." },
     { label: "Hide answers", detail: "Hides the radian labels, coordinates and values until you tap a point to reveal it. Good for asking the class first." },
     { label: "Build graph", detail: "Draws each graph only as far as the current angle, so it grows as the angle moves." },
@@ -650,6 +652,11 @@ export default function UnitCircle() {
                   className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                   {TRIG_SHEET.label}
                   <span className="block text-xs font-normal text-slate-400">{TRIG_SHEET.hint}</span>
+                </button>
+                <button data-trusted-click onClick={() => { openPrintWindow(TRIG_SYMMETRY_SHEET_HTML); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                  Print symmetry and periodicity worksheet (A4)
+                  <span className="block text-xs font-normal text-slate-400">8 questions on radians, with an answer page</span>
                 </button>
               </div>
             )}
