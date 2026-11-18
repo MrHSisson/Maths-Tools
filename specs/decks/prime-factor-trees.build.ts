@@ -40,7 +40,7 @@ function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | 
   must(primes.reduce((a, b) => a * b, 1) === n, `${n}: the primes multiply back to the number`);
   checkPrimes(n, primes);
   const index = o.form === "index";
-  const answer = index ? `$${n} = ${idxTex(primes)}$` : `$${n} = ${tex(primes)}$`;
+  const answer = o.book ? (index ? `$${idxTex(primes)}$` : `$${tex(primes)}$`) : index ? `$${n} = ${idxTex(primes)}$` : `$${n} = ${tex(primes)}$`;
   let lines: string[];
   if (o.book) lines = [`$${n}$`];
   else { lines = [index ? `Write $${n}$ in index form.` : `Write $${n}$ as a product of primes.`]; assertCentred(lines, `${n}`); }
@@ -52,15 +52,15 @@ function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | 
 // ---------- section 1: trees to a product of primes ----------
 // whiteboards (10): the numbers climb from two or three small primes to four primes, a big prime and a 7
 const WBA = ([
-  [18, [2, 3, 3], "primes-repeat-once"], [28, [2, 2, 7], "primes-circle-non-prime"], [30, [2, 3, 5]], [45, [3, 3, 5], "primes-repeat-once"],
-  [52, [2, 2, 13]], [24, [2, 2, 2, 3], "primes-repeat-once"], [50, [2, 5, 5]], [44, [2, 2, 11]], [66, [2, 3, 11]], [63, [3, 3, 7]],
+  [18, [2, 3, 3], "primes-repeat-once"], [30, [2, 3, 5]], [28, [2, 2, 7], "primes-circle-non-prime"], [24, [2, 2, 2, 3], "primes-repeat-once"], [50, [2, 5, 5]],
+  [45, [3, 3, 5], "primes-repeat-once"], [52, [2, 2, 13]], [44, [2, 2, 11]], [66, [2, 3, 11]], [63, [3, 3, 7]],
 ] as [number, number[], string?][]).map(([n, e, tag], i) => treeQ(`${P}-wa${i + 1}`, n, e, { tag }));
 // book work (12, plain numbers, no hints): not in ascending order
 const bookA: [number, number[]][] = [
-  [14, [2, 7]], [22, [2, 11]], [12, [2, 2, 3]], [20, [2, 2, 5]], [27, [3, 3, 3]], [55, [5, 11]], [40, [2, 2, 2, 5]], [90, [2, 3, 3, 5]], [75, [3, 5, 5]],
-  [220, [2, 2, 5, 11]], [99, [3, 3, 11]], [140, [2, 2, 5, 7]],
+  [20, [2, 2, 5]], [12, [2, 2, 3]], [14, [2, 7]], [22, [2, 11]], [40, [2, 2, 2, 5]], [27, [3, 3, 3]], [55, [5, 11]], [90, [2, 3, 3, 5]], [75, [3, 5, 5]],
+  [140, [2, 2, 5, 7]], [220, [2, 2, 5, 11]], [99, [3, 3, 11]],
 ];
-const BKA = bookA.map(([n, e], i) => treeQ(`${P}-ba${i + 1}`, n, e, { book: true, ...(i === 2 || i === 4 || i === 6 ? { tag: "primes-repeat-once" } : {}) }));
+const BKA = bookA.map(([n, e], i) => treeQ(`${P}-ba${i + 1}`, n, e, { book: true, ...(i === 1 || i === 4 || i === 5 ? { tag: "primes-repeat-once" } : {}) }));
 
 // ---------- section 2: index form (from a product) ----------
 function indexQ(id: string, given: number[], expectIdx: string, tag?: string, mistakes: Mistake[] = []): CuratedQuestion {
@@ -81,12 +81,12 @@ const SETC = setC.map(([p, e, tag], i) => indexQ(`${P}-c${i + 1}`, p, e, tag));
 
 // ---------- section 3: back to the trees, answers in index form ----------
 const WBB = ([
-  [25, [5, 5]], [16, [2, 2, 2, 2]], [54, [2, 3, 3, 3]], [32, [2, 2, 2, 2, 2]], [72, [2, 2, 2, 3, 3], "primes-index-wrong-base"], [100, [2, 2, 5, 5]],
-  [80, [2, 2, 2, 2, 5]], [42, [2, 3, 7]], [88, [2, 2, 2, 11]], [120, [2, 2, 2, 3, 5]], [108, [2, 2, 3, 3, 3]], [200, [2, 2, 2, 5, 5]],
+  [25, [5, 5]], [16, [2, 2, 2, 2]], [100, [2, 2, 5, 5]], [32, [2, 2, 2, 2, 2]], [80, [2, 2, 2, 2, 5]], [200, [2, 2, 2, 5, 5]],
+  [54, [2, 3, 3, 3]], [72, [2, 2, 2, 3, 3], "primes-index-wrong-base"], [120, [2, 2, 2, 3, 5]], [108, [2, 2, 3, 3, 3]], [88, [2, 2, 2, 11]], [42, [2, 3, 7]],
 ] as [number, number[], string?][]).map(([n, e, tag], i) => treeQ(`${P}-wb${i + 1}`, n, e, { form: "index", tag }));
 const bookB: [number, number[]][] = [
-  [135, [3, 3, 3, 5]], [96, [2, 2, 2, 2, 2, 3]], [175, [5, 5, 7]], [49, [7, 7]], [144, [2, 2, 2, 2, 3, 3]], [180, [2, 2, 3, 3, 5]],
-  [64, [2, 2, 2, 2, 2, 2]], [126, [2, 3, 3, 7]], [250, [2, 5, 5, 5]], [81, [3, 3, 3, 3]], [300, [2, 2, 3, 5, 5]], [360, [2, 2, 2, 3, 3, 5]],
+  [36, [2, 2, 3, 3]], [150, [2, 3, 5, 5]], [64, [2, 2, 2, 2, 2, 2]], [250, [2, 5, 5, 5]], [81, [3, 3, 3, 3]], [300, [2, 2, 3, 5, 5]],
+  [49, [7, 7]], [144, [2, 2, 2, 2, 3, 3]], [180, [2, 2, 3, 3, 5]], [400, [2, 2, 2, 2, 5, 5]], [126, [2, 3, 3, 7]], [135, [3, 3, 3, 5]],
 ];
 const BKB = bookB.map(([n, e], i) => treeQ(`${P}-bb${i + 1}`, n, e, { form: "index", book: true }));
 

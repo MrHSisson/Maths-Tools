@@ -290,7 +290,7 @@ function BookCell({ num, qSize, answerSize, up, question, answer, onHold, onNumb
       {/* in the player the number is a button: pressing it flips just this cell between its question and its answer */}
       {onNumber
         ? <button type="button" onClick={onNumber} aria-pressed={up} aria-label={`${up ? "Show the question" : "Show the answer"} for number ${num}`} data-cell-number
-            style={{ fontSize: qSize * 0.6, fontWeight: 600, color: up ? "white" : "#64748b", background: up ? "#1e3a8a" : "#f1f5f9", border: `2px solid ${up ? "#1e3a8a" : "#cbd5e1"}`, borderRadius: "0.5em", width: "1.9em", height: "1.9em", padding: 0, flexShrink: 0, cursor: "pointer", lineHeight: 1 }}>{num}</button>
+            style={{ fontSize: qSize * 0.4, fontWeight: 500, color: up ? "#475569" : "#94a3b8", background: "transparent", border: `1px solid ${up ? "#94a3b8" : "#e2e8f0"}`, borderRadius: "50%", width: "1.8em", height: "1.8em", padding: 0, flexShrink: 0, cursor: "pointer", lineHeight: 1 }}>{num}</button>
         : <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
         <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>

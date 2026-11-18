@@ -22,7 +22,7 @@ Harry found the first version (29 slides) too complicated and not enough practic
 | 4 | Prime number | Definition, primes to 20 listed, 1 is not prime |
 | 5 | How to draw a factor tree | **A flow chart**, one click per part: start with a number → is it prime? → yes: circle it, it stops · no: split it into two numbers (not using 1) → ask again for each new number. (No footnote) |
 | 6 | Factor tree whiteboards | **10 questions**, trees to a product of primes: 18, 28, 30, 45, 52, 24, 50, 44, 66, 63 |
-| 7 | Book work | **12 questions** (3 × 4), no hints: 14, 22, 12, 20, 27, 55, 40, 90, 75, 220, 99, 140 |
+| 7 | Book work | **12 questions** (3 × 4), no hints, easiest to split first: 20, 12, 14, 22, 40, 27, 55, 90, 75, 140, 220, 99 |
 | 8 | Divider: Index form | |
 | 9 | Index form | What it means: $2 \times 2 \times 2 = 2^3$; the small raised number is the index and counts how many |
 | 10 | Write it in index form | **One table of four to work through together:** $7 \times 7$, $2 \times 2 \times 2$, $3 \times 5 \times 3$, $3 \times 2 \times 3 \times 2 \times 3$ (two not written smallest first) |
@@ -30,7 +30,7 @@ Harry found the first version (29 slides) too complicated and not enough practic
 | 12 | Divider: Back to the trees | |
 | 13 | Factor trees in index form | **12 whiteboards**: 25, 16, 54, 32, 72, 100, 80, 42, 88, 120, 108, 200 |
 | 14 | Depth | $7^3 = 21$? (index is a count, not a times) |
-| 15 | Book work | **12 questions**, index form, no hints and not opening on squares: 135, 96, 175, 49, 144, 180, 64, 126, 250, 81, 300, 360 |
+| 15 | Book work | **12 questions**, index form, no hints, ordered by how easily each number splits: 36, 150, 64, 250, 81, 300, 49, 144, 180, 400, 126, 135 |
 | 16 | Depth | Two trees for 70 |
 | 17 | Depth | Is the tree for 48 finished? |
 | 18 | Exit ticket | 33, 60 and $2 \times 2 \times 3 \times 3 \times 3$ |
