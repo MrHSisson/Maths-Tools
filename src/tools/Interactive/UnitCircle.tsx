@@ -6,7 +6,7 @@ import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
 import { printPrintable, trigGraphSheet } from "../../shared/printables";
 import {
-  SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking,
+  SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking, norm360,
   type Family,
 } from "./unitCircleMath";
 
@@ -21,6 +21,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Controls", icon: "🛠️", content: [
     { label: "Angles", detail: "Show angles in degrees, radians or both together." },
     { label: "Graphs", detail: "Switch sin, cos and tan on or off. Any combination can be shown at once." },
+    { label: "Angle range", detail: "In Display, choose how far the angle can go: 0 to 2π, −π to 3π (the range of the printable graphs) or −2π to 4π. Negative angles turn clockwise, and past one turn the arc winds round again. The headline says which position on the circle the angle matches." },
+    { label: "Angle headline", detail: "The eye button beside the angle in the top left hides it, so the class can work the angle out first." },
     { label: "Working", detail: "Shows or hides the conversion working and the values under the graph. Hidden, the graph fills the right-hand side." },
     { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes." },
     { label: "Display", detail: "Choose which angles are marked (multiples of 30°, of 45°, or both), whether radians are shown as multiples of π or as decimals, and how fast Play runs." },
@@ -113,14 +115,14 @@ function Rich({ s }: { s: string }) {
 }
 
 // ── Controls ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
-function Seg<T extends string>({ label, value, options, onChange }: { label?: string; value: T; options: { id: T; text: string }[]; onChange: (v: T) => void }) {
+function Seg<T extends string>({ label, value, options, onChange, stacked }: { label?: string; value: T; options: { id: T; text: string }[]; onChange: (v: T) => void; stacked?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className={stacked ? "flex flex-col items-start gap-1.5" : "flex items-center gap-2.5"}>
       {label && <span className="text-xs font-semibold text-slate-500">{label}</span>}
       <div className="inline-flex rounded-xl bg-slate-100 p-1 gap-0.5">
         {options.map((o) => (
           <button key={o.id} onClick={() => onChange(o.id)} aria-pressed={value === o.id}
-            className={`min-h-[36px] px-3.5 rounded-lg text-sm font-semibold transition-all ${value === o.id ? "bg-white text-slate-900 shadow-card" : "text-slate-500 hover:text-slate-800"}`}>{o.text}</button>
+            className={`min-h-[36px] px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${value === o.id ? "bg-white text-slate-900 shadow-card" : "text-slate-500 hover:text-slate-800"}`}>{o.text}</button>
         ))}
       </div>
     </div>
@@ -164,7 +166,9 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 
 const GW = 600, GH = 400, PX0 = 52, PX1 = 586, PY0 = 14, PY1 = 292;
 const PW = PX1 - PX0, PH = PY1 - PY0;
-const xOf = (deg: number) => PX0 + (deg / 360) * PW;
+type AngleRange = "turn" | "lesson" | "wide";
+const ANGLE_RANGES: Record<AngleRange, { lo: number; hi: number }> = { turn: { lo: 0, hi: 360 }, lesson: { lo: -180, hi: 540 }, wide: { lo: -360, hi: 720 } };
+const dg = (d: number): string => `${d}°`.replace("-", "−");
 const YMAX = 2;
 const yOf = (v: number) => PY0 + PH * (1 - (v + YMAX) / (2 * YMAX));
 const Y_TICKS = [-2, -1, 0, 1, 2];
@@ -217,6 +221,10 @@ export default function UnitCircle() {
   const [revealed, setRevealed] = useState<number[]>([]);
   const [hoverDeg, setHoverDeg] = useState<number | null>(null);
   const [showWorking, setShowWorking] = useState(true);
+  const [showHeadline, setShowHeadline] = useState(true);
+  const [range, setRange] = useState<AngleRange>("turn");
+  const { lo, hi } = ANGLE_RANGES[range];
+  const xOf = (deg: number) => PX0 + ((deg - lo) / (hi - lo)) * PW;
   const [optsOpen, setOptsOpen] = useState(false);
   const optsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -239,23 +247,30 @@ export default function UnitCircle() {
     const tick = (t: number) => {
       const dt = (t - last) / 1000;
       last = t;
-      setAngle((a) => { const n = a + dt * SPEEDS[speed]; return n >= 360 ? n - 360 : n; });
+      setAngle((a) => { const n = a + dt * SPEEDS[speed]; return n >= hi ? n - (hi - lo) : n; });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speed]);
+  }, [playing, speed, lo, hi]);
 
-  const reveal = useCallback((d: number) => { const k = d % 360; setRevealed((r) => (r.includes(k) ? r : [...r, k])); }, []);
+  const reveal = useCallback((d: number) => { const k = norm360(d); setRevealed((r) => (r.includes(k) ? r : [...r, k])); }, []);
+  // The marked angles inside the range, in order (every turn has its own copy: −30°, 330°, 690°…).
+  const specialsInRange = useMemo(() => {
+    const out: number[] = [];
+    for (let k = Math.floor(lo / 360) - 1; k <= Math.ceil(hi / 360) + 1; k++) for (const sp of fam) { const v = sp + 360 * k; if (v >= lo && v <= hi) out.push(v); }
+    return out.sort((a, b) => a - b);
+  }, [fam, lo, hi]);
   const snap = useCallback((d: number, tol: number) => {
-    for (const s of [...fam, 360]) if (Math.min(Math.abs(d - s), 360 - Math.abs(d - s)) <= tol) return s === 360 && d < 180 ? 0 : s;
+    for (const v of specialsInRange) if (Math.abs(d - v) <= tol) return v;
     return d;
-  }, [fam]);
+  }, [specialsInRange]);
   const setTo = useCallback((d: number, tol = 2.5) => {
-    const v = snap(Math.round(d), tol);
+    const v = Math.max(lo, Math.min(hi, snap(Math.round(d), tol)));
     setAngle(v);
     if (exactValues(v)) reveal(v);
-  }, [snap, reveal]);
+  }, [snap, reveal, lo, hi]);
+  const changeRange = (r: AngleRange) => { const { lo: l2, hi: h2 } = ANGLE_RANGES[r]; setRange(r); setPlaying(false); setAngle((a) => Math.max(l2, Math.min(h2, a))); };
 
   const circleRef = useRef<SVGSVGElement>(null);
   const graphRef = useRef<SVGSVGElement>(null);
@@ -266,12 +281,17 @@ export default function UnitCircle() {
     if (!p) return;
     let d = (Math.atan2(-p.y, p.x) * 180) / Math.PI;
     if (d < 0) d += 360;
-    setTo(Math.round(d) % 360);
+    // Follow the pointer round the shortest way, so dragging past 0° or 360° carries on into negative or second-turn angles when the range allows.
+    const here = ((angle % 360) + 360) % 360;
+    let target = angle + ((((Math.round(d) % 360) - here + 540) % 360) - 180);
+    if (target < lo) target += 360;
+    if (target > hi) target -= 360;
+    setTo(target);
   };
   const moveFromGraph = (e: React.PointerEvent) => {
     const p = graphRef.current && toSvg(graphRef.current, e);
     if (!p) return;
-    setTo(Math.max(0, Math.min(360, ((p.x - PX0) / PW) * 360)), 4);
+    setTo(lo + Math.max(0, Math.min(1, (p.x - PX0) / PW)) * (hi - lo), 4);
   };
   const down = (which: "circle" | "graph") => (e: React.PointerEvent<SVGSVGElement>) => {
     setPlaying(false);
@@ -286,14 +306,14 @@ export default function UnitCircle() {
 
   const stepSpecial = (dir: 1 | -1) => {
     setPlaying(false);
-    const list = [...fam, 360];
+    const list = specialsInRange;
     const next = dir === 1 ? list.find((s) => s > shown) ?? list[0] : [...list].reverse().find((s) => s < shown) ?? list[list.length - 1];
     setAngle(next);
     reveal(next);
   };
   const reset = () => { setPlaying(false); setAngle(30); setRevealed([]); };
 
-  const visibleAnswer = (deg: number) => !hide || revealed.includes(deg % 360) || shown % 360 === deg % 360;
+  const visibleAnswer = (deg: number) => !hide || revealed.includes(norm360(deg)) || norm360(shown) === norm360(deg);
   const radOn = (deg: number) => units !== "deg" && visibleAnswer(deg);
   const radLabel = (deg: number) => (radStyle === "pi" ? radText(deg) : deg === 0 ? "0" : rad(deg).toFixed(2));
 
@@ -302,7 +322,6 @@ export default function UnitCircle() {
   const cosA = Math.cos(rad(angle)), sinA = Math.sin(rad(angle));
   const tanA = Math.abs(cosA) < 1e-9 ? null : sinA / cosA;
   const arcR = 34;
-  const [ax, ay] = cp(angle, arcR);
   const marked = SPECIALS.filter((s) => inFamily(s, family));
 
   // One main label per point, large: radians outside (degrees outside when degrees only). With both, the degrees are small and just inside the rim.
@@ -368,15 +387,19 @@ export default function UnitCircle() {
       {fns.tan && <line x1={R} x2={R} y1={-VB} y2={VB} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="4 4" opacity={0.5} />}
       <circle cx={0} cy={0} r={R} fill="#f8fafc" stroke="#334155" strokeWidth={2} />
 
-      {/* angle: soft sector with a clean arc */}
-      {angle >= 359.5
-        ? <circle cx={0} cy={0} r={arcR} fill={ACCENT} fillOpacity={0.1} stroke={ACCENT} strokeWidth={2.5} />
-        : angle > 0.5 && (
+      {/* the angle: a soft sector and arc, one ring per completed turn, clockwise when negative */}
+      {Math.abs(angle) > 0.5 && (() => {
+        const turns = Math.floor(Math.abs(angle) / 360), rem = (Math.abs(angle) % 360) * Math.sign(angle);
+        const rr = arcR + 9 * turns, [ex, ey] = cp(rem, rr), [fx, fy] = cp(rem, arcR);
+        const arc = (r: number, x: number, y: number) => `M${r},0 A${r},${r} 0 ${Math.abs(rem) > 180 ? 1 : 0} ${rem >= 0 ? 0 : 1} ${x},${y}`;
+        return (
           <>
-            <path d={`M0,0 L${arcR},0 A${arcR},${arcR} 0 ${angle > 180 ? 1 : 0} 0 ${ax},${ay} Z`} fill={ACCENT} fillOpacity={0.1} />
-            <path d={`M${arcR},0 A${arcR},${arcR} 0 ${angle > 180 ? 1 : 0} 0 ${ax},${ay}`} fill="none" stroke={ACCENT} strokeWidth={2.5} strokeLinecap="round" />
+            {Array.from({ length: turns }, (_, i) => <circle key={"lap" + i} cx={0} cy={0} r={arcR + 9 * i} fill={i === 0 ? ACCENT : "none"} fillOpacity={0.08} stroke={ACCENT} strokeWidth={2.5} opacity={0.75} />)}
+            {Math.abs(rem) > 0.5 && turns === 0 && <path d={`M0,0 L${arcR},0 A${arcR},${arcR} 0 ${Math.abs(rem) > 180 ? 1 : 0} ${rem >= 0 ? 0 : 1} ${fx},${fy} Z`} fill={ACCENT} fillOpacity={0.1} />}
+            {Math.abs(rem) > 0.5 && <path d={arc(rr, ex, ey)} fill="none" stroke={ACCENT} strokeWidth={2.5} strokeLinecap="round" />}
           </>
-        )}
+        );
+      })()}
 
       {/* the fixed arm of the angle: the dark line from the centre to 0° */}
       <line x1={0} y1={0} x2={R} y2={0} stroke={INK} strokeWidth={3.4} strokeLinecap="round" />
@@ -395,7 +418,7 @@ export default function UnitCircle() {
       {/* marked points and their labels */}
       {marked.map((s) => {
         const [sx, sy] = cp(s.deg);
-        const on = shown % 360 === s.deg;
+        const on = norm360(shown) === s.deg;
         return (
           <g key={"d" + s.deg}>
             <circle cx={sx} cy={sy} r={on ? 6 : 4.4} fill={on ? ACCENT : "#fff"} stroke={on ? ACCENT : "#475569"} strokeWidth={2} />
@@ -414,9 +437,14 @@ export default function UnitCircle() {
 
   // ── Graph ───────────────────────────────────────────────────────────────────────────────────────────────────────────
   const radTag = (d: number): string => (radStyle === "pi" ? radText(d) : rad(d).toFixed(2));
+  const asymptotes: number[] = [];
+  for (let k = Math.floor((lo - 90) / 180); k <= Math.ceil((hi - 90) / 180); k++) { const a = 90 + 180 * k; if (a > lo + 1e-6 && a < hi - 1e-6) asymptotes.push(a); }
   const curve = (f: Fn): string => {
-    const upto = trace ? Math.min(360, angle) : 360;
-    const segs: [number, number][] = f === "tan" ? [[0, 89.5], [90.5, 269.5], [270.5, 360]] : [[0, 360]];
+    const upto = trace ? Math.min(hi, angle) : hi;
+    const bounds = [lo, ...asymptotes, hi];
+    const segs: [number, number][] = f === "tan"
+      ? bounds.slice(0, -1).map((b, i) => [b + (i > 0 ? 0.5 : 0), bounds[i + 1] - (i < bounds.length - 2 ? 0.5 : 0)] as [number, number])
+      : [[lo, hi]];
     const step = f === "tan" ? 1 : 2;
     let d = "";
     for (const [a, b] of segs) {
@@ -434,15 +462,18 @@ export default function UnitCircle() {
     return d;
   };
 
-  const xMarks = [...marked, { deg: 360, family: "both" as const }];
-  const curX = xOf(Math.min(360, angle));
+  const xMarks: { deg: number; family: "30" | "45" | "both" }[] = [];
+  for (let k = Math.floor(lo / 360) - 1; k <= Math.ceil(hi / 360) + 1; k++) for (const sp of marked) { const v = sp.deg + 360 * k; if (v >= lo && v <= hi) xMarks.push({ deg: v, family: sp.family }); }
+  xMarks.sort((a, b) => a.deg - b.deg);
+  const labelStep = hi - lo > 800 ? 180 : 90;       // a wide axis labels every half turn
+  const curX = xOf(angle);
   const valueAt = (f: Fn): number | null => (f === "sin" ? sinA : f === "cos" ? cosA : tanA);
 
   const graphLabelPoints: ReactNode[] = [];
   if (graphLabels) {
     FNS.forEach((f) => {
       if (!fns[f]) return;
-      marked.forEach((s) => {
+      xMarks.forEach((s) => {
         const txt = exactValues(s.deg)![f];
         if (txt === "undefined" || !visibleAnswer(s.deg)) return;
         const v = FN[f](rad(s.deg));
@@ -458,6 +489,10 @@ export default function UnitCircle() {
     });
   }
 
+  const tagHid = hide && !visibleAnswer(shown);
+  const tagTxt = units === "deg" ? dg(shown) : units === "rad" ? (tagHid ? "?" : radTag(shown)) : `${dg(shown)} · ${tagHid ? "?" : radTag(shown)}`;
+  const tagW = tagTxt.length * 9.2 + 22;
+  const tag = { txt: tagTxt, w: tagW, cx: Math.max(PX0 + tagW / 2, Math.min(PX1 - tagW / 2, curX)) };
   const graphSvg = (
     <svg ref={graphRef} viewBox={`0 0 ${GW} ${GH}`} className="w-full h-full select-none" style={{ touchAction: "pan-y", cursor: "ew-resize" }}
       onPointerDown={down("graph")} onPointerMove={move("graph")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Graphs of sine, cosine and tangent">
@@ -468,32 +503,26 @@ export default function UnitCircle() {
       {Y_TICKS.map((v) => <line key={"h" + v} x1={PX0} x2={PX1} y1={yOf(v)} y2={yOf(v)} stroke={v === 0 ? FAINT : HAIR} strokeWidth={v === 0 ? 1.5 : 1} />)}
       <line x1={PX0} x2={PX0} y1={PY0} y2={PY1} stroke={RULE} strokeWidth={1} />
       {Y_TICKS.map((v) => <text key={"yl" + v} x={PX0 - 9} y={yOf(v) + 4} textAnchor="end" fontSize={FS} fill={MUTE}>{v < 0 ? `−${-v}` : v}</text>)}
-      {fns.tan && [90, 270].map((a) => <line key={"as" + a} x1={xOf(a)} x2={xOf(a)} y1={PY0} y2={PY1} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.55} />)}
+      {fns.tan && asymptotes.map((a) => <line key={"as" + a} x1={xOf(a)} x2={xOf(a)} y1={PY0} y2={PY1} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.55} />)}
 
       {/* ticks at every marked point, labels at the quarter turns only, and a tag showing the current angle */}
       {xMarks.map((m) => <line key={"tk" + m.deg} x1={xOf(m.deg)} x2={xOf(m.deg)} y1={PY1} y2={PY1 + (m.deg % 90 === 0 ? 7 : 4)} stroke={FAINT} strokeWidth={1.5} />)}
-      {xMarks.filter((m) => m.deg % 90 === 0 && Math.abs(m.deg - Math.min(360, angle)) > 32).map((m) => {
+      {xMarks.filter((m) => m.deg % labelStep === 0 && (!anyFn || Math.abs(xOf(m.deg) - tag.cx) > tag.w / 2 + 12)).map((m) => {
         const x = xOf(m.deg), rShow = radOn(m.deg);
         return (
           <g key={"xl" + m.deg}>
-            {units === "deg" && <text x={x} y={PY1 + 29} textAnchor="middle" fontSize={FS + 1} fontWeight={700} fill="#475569">{m.deg}°</text>}
+            {units === "deg" && <text x={x} y={PY1 + 29} textAnchor="middle" fontSize={FS + 1} fontWeight={700} fill="#475569">{dg(m.deg)}</text>}
             {units !== "deg" && rShow && <Q x={x} y={PY1 + 26} t={radLabel(m.deg)} size={FS + 1} fill={ACCENT} weight={700} />}
-            {units === "both" && <text x={x} y={PY1 + 62} textAnchor="middle" fontSize={FS - 2} fontWeight={600} fill={MUTE}>{m.deg}°</text>}
+            {units === "both" && <text x={x} y={PY1 + 62} textAnchor="middle" fontSize={FS - 2} fontWeight={600} fill={MUTE}>{dg(m.deg)}</text>}
           </g>
         );
       })}
-      {anyFn && (() => {
-        const cx = Math.max(PX0 + 52, Math.min(PX1 - 52, curX));
-        const hid = hide && !visibleAnswer(shown);
-        const txt = units === "deg" ? `${shown}°` : units === "rad" ? (hid ? "?" : radTag(shown)) : `${shown}° · ${hid ? "?" : radTag(shown)}`;
-        const w = txt.length * 9.2 + 22;
-        return (
-          <g style={{ pointerEvents: "none" }}>
-            <rect x={cx - w / 2} y={PY1 + 12} width={w} height={32} rx={16} fill={ACCENT} />
-            <text x={cx} y={PY1 + 33} textAnchor="middle" fontSize={16} fontWeight={700} fill="#fff">{txt}</text>
-          </g>
-        );
-      })()}
+      {anyFn && (
+        <g style={{ pointerEvents: "none" }}>
+          <rect x={tag.cx - tag.w / 2} y={PY1 + 12} width={tag.w} height={32} rx={16} fill={ACCENT} />
+          <text x={tag.cx} y={PY1 + 33} textAnchor="middle" fontSize={16} fontWeight={700} fill="#fff">{tag.txt}</text>
+        </g>
+      )}
 
       {/* curves */}
       <g clipPath="url(#uc-plot)">
@@ -521,17 +550,33 @@ export default function UnitCircle() {
   const radDecimal = rad(shown);
   const hiddenNow = hide && !visibleAnswer(shown);
   const radNow = hiddenNow ? "?" : radLabel(shown);
+  const outside = shown < 0 || shown >= 360;
+  const headLen = units === "deg" ? dg(shown).length : units === "rad" ? radNow.length + 2 : dg(shown).length + radNow.length;
+  const headSize = headLen <= 8 ? 40 : headLen <= 10 ? 36 : headLen <= 12 ? 32 : 28;
+  const same = norm360(shown);
+  const sameTxt = hiddenNow ? `${same}°` : `${same}° = ${radText(same)}`;
   const badgeEl = (cls: string) => (
-    <div className={cls}>
-      <div className="text-[40px] leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap">
-        {units === "deg" && <span>{shown}°</span>}
-        {units === "both" && <><span>{shown}°</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
-        {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
-      </div>
-      <div className="text-sm text-slate-500 h-6 mt-1 whitespace-nowrap">
-        {units === "rad" && <>= {shown}°{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
-        {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}
-      </div>
+    <div className={`${cls} min-h-[84px]`}>
+      {!showHeadline ? (
+        <button onClick={() => setShowHeadline(true)} className="mt-1 min-h-[44px] px-4 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-sm font-semibold flex items-center gap-2"><Eye size={17} />Show angle</button>
+      ) : (
+        <>
+          <div className="flex items-start gap-2">
+            <div className="leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap" style={{ fontSize: headSize }}>
+              {units === "deg" && <span>{dg(shown)}</span>}
+              {units === "both" && <><span>{dg(shown)}</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
+              {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
+            </div>
+            <button onClick={() => setShowHeadline(false)} title="Hide the angle" aria-label="Hide the angle" className="mt-1 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex-shrink-0"><EyeOff size={18} /></button>
+          </div>
+          <div className="text-sm text-slate-500 h-6 mt-1 whitespace-nowrap overflow-hidden">
+            {outside
+              ? <>Same point as <Rich s={sameTxt} /></>
+              : <>{units === "rad" && <>= {dg(shown)}{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
+                {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}</>}
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -569,7 +614,7 @@ export default function UnitCircle() {
 
   // ── Page ────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const card = "bg-white rounded-2xl border border-slate-300 shadow-card";
-  const pct = (Math.min(360, shown) / 360) * 100;
+  const pct = ((shown - lo) / (hi - lo)) * 100;
 
   const playbar = (
     <div className="flex items-center gap-2.5 px-4 py-2.5 border-t border-slate-200">
@@ -577,7 +622,7 @@ export default function UnitCircle() {
       <IconBtn onClick={() => setPlaying((p) => !p)} title={playing ? "Pause" : "Play"} primary>{playing ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}</IconBtn>
       <IconBtn onClick={() => stepSpecial(1)} title="Next marked angle"><SkipForward size={18} /></IconBtn>
       <div className="flex-1 min-w-0 h-10 flex items-center px-1.5">
-        <input type="range" className="uc-range" min={0} max={360} step={1} value={shown} aria-label="Angle in degrees" style={{ "--p": `${pct}%` } as CSSProperties}
+        <input type="range" className="uc-range" min={lo} max={hi} step={1} value={shown} aria-label="Angle in degrees" style={{ "--p": `${pct}%` } as CSSProperties}
           onChange={(e) => { setPlaying(false); setTo(Number(e.target.value), 3); }} />
       </div>
       <IconBtn onClick={reset} title="Reset"><RotateCcw size={17} /></IconBtn>
@@ -589,6 +634,7 @@ export default function UnitCircle() {
       <div className="space-y-2.5">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Marked angles (multiples of)</div>
         <Seg value={family} onChange={setFamily} options={[{ id: "30", text: "30°s" }, { id: "45", text: "45°s" }, { id: "all", text: "Both" }]} />
+        <Seg stacked label="Angle range" value={range} onChange={changeRange} options={(Object.keys(ANGLE_RANGES) as AngleRange[]).map((r) => ({ id: r, text: units === "deg" ? `${dg(ANGLE_RANGES[r].lo)} to ${dg(ANGLE_RANGES[r].hi)}`.replace(/°/g, "") + "°" : `${radText(ANGLE_RANGES[r].lo)} to ${radText(ANGLE_RANGES[r].hi)}` }))} />
         {units !== "deg" && <Seg label="Radians as" value={radStyle} onChange={setRadStyle} options={[{ id: "pi", text: "π" }, { id: "dec", text: "Decimals" }]} />}
         <Seg label="Play speed" value={speed} onChange={setSpeed} options={[{ id: "slow", text: "Slow" }, { id: "normal", text: "Normal" }, { id: "fast", text: "Fast" }]} />
       </div>
@@ -612,7 +658,7 @@ export default function UnitCircle() {
     </div>
   );
   const fnChips = <div className="flex items-center gap-2">{FNS.map((f) => <FnChip key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((st) => ({ ...st, [f]: !st[f] }))}>{f}</FnChip>)}</div>;
-  const circleHead = <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0")}<div className="flex items-center gap-2 flex-wrap">{anglesSeg}{displayBtn}</div></div>;
+  const circleHead = <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0 flex-1")}<div className="flex items-center gap-2 flex-shrink-0">{anglesSeg}{displayBtn}</div></div>;
   const workingBtn = (
     <button onClick={() => setShowWorking((v) => !v)} aria-pressed={showWorking} title={showWorking ? "Hide the working and values" : "Show the working and values"}
       className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors ${showWorking ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>
