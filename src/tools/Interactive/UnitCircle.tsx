@@ -349,7 +349,8 @@ export default function UnitCircle() {
   const ringLabels = marked.map((s) => {
     const rShow = radOn(s.deg);
     const [ox, oy] = cp(s.deg, R + (units === "deg" ? 30 : 36));
-    const [ix, iy] = cp(s.deg, R - 31);
+    const [ix, iy0] = cp(s.deg, R - 31);
+    const iy = s.deg === 0 ? iy0 + 19 : iy0;       // the fixed arm runs along 0°, so its label sits just below it
     // an inner degree label steps aside when the point or a helper line runs through it
     const nearPoint = Math.hypot(ix - px, iy - py) < 44;
     const onSin = fns.sin && Math.abs(ix - px) < 26 && iy > Math.min(0, py) - 12 && iy < Math.max(0, py) + 12;
@@ -443,6 +444,9 @@ export default function UnitCircle() {
             <path d={`M${arcR},0 A${arcR},${arcR} 0 ${angle > 180 ? 1 : 0} 0 ${ax},${ay}`} fill="none" stroke={ACCENT} strokeWidth={2.5} strokeLinecap="round" />
           </>
         )}
+
+      {/* the fixed arm of the angle: the dark line from the centre to 0° */}
+      <line x1={0} y1={0} x2={R} y2={0} stroke={INK} strokeWidth={3.4} strokeLinecap="round" />
 
       {/* radius, then the coloured helper lines */}
       <line x1={0} y1={0} x2={px} y2={py} stroke={ACCENT} strokeWidth={3.2} strokeLinecap="round" />
