@@ -22,9 +22,7 @@ export const SPECIALS: Special[] = (() => {
 export const inFamily = (s: Special, f: Family): boolean => f === "all" || s.family === "both" || s.family === f;
 export const specialsFor = (f: Family): number[] => SPECIALS.filter((s) => inFamily(s, f)).map((s) => s.deg);
 
-/** The matching position within one turn: −30° → 330°, 390° → 30°. */
-export const norm360 = (deg: number): number => ((Math.round(deg) % 360) + 360) % 360;
-const norm = norm360;
+const norm = (deg: number): number => ((Math.round(deg) % 360) + 360) % 360;
 
 /** Reference (acute) angle in 0–90 for a degree value. */
 const refAngle = (d: number): number => (d <= 90 ? d : d <= 180 ? 180 - d : d <= 270 ? d - 180 : 360 - d);
@@ -66,8 +64,6 @@ export function radText(deg: number): string {
   return d === 1 ? top : `${top}/${d}`;
 }
 
-const minus = (t: string): string => t.replace(/-/g, "−");
-
 /** Working for degrees → radians: ["150° × π/180", "150π/180", "5π/6"] (last step skipped when nothing reduces). */
 export function degToRadWorking(deg: number): string[] {
   const dd = Math.round(deg);
@@ -76,7 +72,7 @@ export function degToRadWorking(deg: number): string[] {
   const reduced = radText(dd);
   const steps = [`${dd}° × π/180`, unreduced];
   if (reduced !== unreduced) steps.push(reduced);
-  return steps.map(minus);
+  return steps;
 }
 
 /** Working for radians → degrees: ["5π/6 × 180/π", "5 × 180/6", "150°"]. */
@@ -85,5 +81,5 @@ export function radToDegWorking(deg: number): string[] {
   if (dd === 0) return ["0 × 180/π = 0°"];
   const { n, d } = radFraction(dd);
   const rad = radText(dd);
-  return (d === 1 ? [`${rad} × 180/π`, `${n} × 180`, `${dd}°`] : [`${rad} × 180/π`, `${n} × 180/${d}`, `${dd}°`]).map(minus);
+  return d === 1 ? [`${rad} × 180/π`, `${n} × 180`, `${dd}°`] : [`${rad} × 180/π`, `${n} × 180/${d}`, `${dd}°`];
 }
