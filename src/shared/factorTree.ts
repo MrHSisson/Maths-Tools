@@ -56,10 +56,10 @@ export function treeProblems(tree: TreeNode): string[] {
 
 /** A number placed on the tree's canvas. `stage` is the click it appears on (0 is when the slide opens). */
 export interface PlacedNode { id: string; n: number; x: number; y: number; depth: number; parent: string | null; prime: boolean; given: boolean; shown: boolean; stage: number }
-export interface TreeLayout { nodes: PlacedNode[]; width: number; height: number; slot: number; level: number }
+interface TreeLayout { nodes: PlacedNode[]; width: number; height: number; slot: number; level: number }
 
-export const TREE_SLOT = 150;     // the width given to each prime at the bottom
-export const TREE_LEVEL = 140;    // the height of each row
+const TREE_SLOT = 150;     // the width given to each prime at the bottom
+const TREE_LEVEL = 140;    // the height of each row
 
 /** Lays the whole tree out at its full size (so nothing moves as the splits appear). Each prime at the bottom gets its own slot, left
  *  to right; a split sits over the middle of its two numbers. A split appears on the click its position has in reading order (top row
