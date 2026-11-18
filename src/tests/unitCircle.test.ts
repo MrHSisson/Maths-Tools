@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { exactValues, decimalValues, radText, SPECIALS, degToRadWorking, radToDegWorking, principalDeg, BRANCH } from "../tools/Interactive/unitCircleMath";
+import { exactValues, decimalValues, radText, SPECIALS, degToRadWorking, radToDegWorking } from "../tools/Interactive/unitCircleMath";
 
 describe("unit circle exact values", () => {
   it("matches the standard table", () => {
@@ -42,26 +42,7 @@ describe("unit circle exact values", () => {
   });
 });
 
-describe("unit circle inverse functions", () => {
-  it("gives the principal value, which is θ only inside the inverse's range", () => {
-    expect(principalDeg("sin", 30)).toBe(30);
-    expect(principalDeg("sin", 150)).toBe(30);        // sin⁻¹(sin 150°) = 30°, not 150°
-    expect(principalDeg("sin", 210)).toBe(-30);
-    expect(principalDeg("cos", 300)).toBe(60);        // cos⁻¹(cos 300°) = 60°
-    expect(principalDeg("cos", 120)).toBe(120);
-    expect(principalDeg("tan", 225)).toBe(45);
-    expect(principalDeg("tan", 150)).toBe(-30);
-    expect(principalDeg("tan", 90)).toBeNull();
-  });
-  it("always lands inside its branch and has the same trig value as θ", () => {
-    for (const fn of ["sin", "cos", "tan"] as const) for (let d = 0; d <= 360; d += 5) {
-      const a = principalDeg(fn, d);
-      if (a === null) continue;
-      expect(a).toBeGreaterThanOrEqual(BRANCH[fn][0] - 1e-9);
-      expect(a).toBeLessThanOrEqual(BRANCH[fn][1] + 1e-9);
-      expect(Math[fn]((a * Math.PI) / 180)).toBeCloseTo(Math[fn]((d * Math.PI) / 180), 9);
-    }
-  });
+describe("unit circle radians", () => {
   it("writes negative angles in radians", () => {
     expect(radText(-30)).toBe("−π/6");
     expect(radText(-90)).toBe("−π/2");

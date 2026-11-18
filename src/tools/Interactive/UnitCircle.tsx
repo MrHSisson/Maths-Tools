@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode, type CSSProperties } from "react";
-import { Home, Menu, X, Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown } from "lucide-react";
+import { Home, Menu, X, Play, Pause, SkipBack, SkipForward, RotateCcw, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { InfoModal, type InfoSection } from "../../shared";
 import { shouldAutoOpenAbout, markAboutSeen } from "../../shared/about";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { PAGE_BG } from "../../shared/colors";
 import { printPrintable, trigGraphSheet } from "../../shared/printables";
 import {
-  SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking, principalDeg, BRANCH,
+  SPECIALS, specialsFor, inFamily, exactValues, decimalValues, radText, degToRadWorking, radToDegWorking,
   type Family,
 } from "./unitCircleMath";
 
@@ -17,13 +17,11 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Radians", detail: "Every marked angle shows its radian form as a fraction of π, with the working for degrees × π/180 and radians × 180/π underneath." },
     { label: "Exact values", detail: "A popup over the point gives its exact coordinates (cos θ, sin θ): the x-coordinate is cos θ and the y-coordinate is sin θ. Hover over any marked point to preview its coordinates." },
     { label: "Tan", detail: "On the circle, tan θ is the length cut off on the tangent line at (1, 0). It grows without limit as the angle reaches 90° and 270°, which is why the graph has asymptotes there." },
-    { label: "Inverse functions", detail: "Switch View to Inverses to see sin⁻¹, cos⁻¹ and tan⁻¹ with their domains and ranges. The coloured band on the circle is the half of the circle each inverse can return; when θ is outside it, the ring shows the principal value and θ is the other solution." },
-    { label: "Reflection", detail: "View Reflection draws a function, restricted so it passes the horizontal line test, with its inverse and the line y = x, on the same scale (radians). A point and its mirror image swap their coordinates." },
   ]},
   { title: "Controls", icon: "🛠️", content: [
     { label: "Angles", detail: "Show angles in degrees, radians or both together." },
     { label: "Graphs", detail: "Switch sin, cos and tan on or off. Any combination can be shown at once." },
-    { label: "View", detail: "Functions shows sin, cos and tan against the angle. Inverses shows sin⁻¹, cos⁻¹ and tan⁻¹ against their input. Reflection shows each function, its inverse and the line y = x together." },
+    { label: "Working", detail: "Shows or hides the conversion working and the values under the graph. Hidden, the graph fills the right-hand side." },
     { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes." },
     { label: "Display", detail: "Choose which angles are marked (multiples of 30°, of 45°, or both), whether radians are shown as multiples of π or as decimals, and how fast Play runs." },
     { label: "Hide answers", detail: "Hides the radian labels, coordinates and values until you tap a point to reveal it. Good for asking the class first." },
@@ -184,30 +182,6 @@ const FN: Record<Fn, (r: number) => number> = { sin: Math.sin, cos: Math.cos, ta
 const FNS: Fn[] = ["sin", "cos", "tan"];
 const SPEEDS = { slow: 18, normal: 36, fast: 72 } as const;
 
-// Inverse view: value x along the bottom (−3 to 3), the angle up the side (−110° to 200°) with a wider left margin for two label columns.
-const IV_X = 3;
-const IPX0 = 100;
-const IPW = PX1 - IPX0;
-const A_MIN = -110, A_MAX = 200;
-const xv = (v: number) => IPX0 + ((v + IV_X) / (2 * IV_X)) * IPW;
-const ya = (a: number) => PY0 + PH * (1 - (a - A_MIN) / (A_MAX - A_MIN));
-const A_TICKS = [-90, -60, -30, 0, 30, 60, 90, 120, 150, 180];
-// Reflection view: the same scale on both axes (radians), so reflecting in y = x really is a reflection.
-const RF_X0 = -4.9, RF_X1 = 6.4, RF_Y0 = -2.3;
-const RF_S = PW / (RF_X1 - RF_X0);
-const RF_Y1 = RF_Y0 + PH / RF_S;
-const rx = (x: number) => PX0 + (x - RF_X0) * RF_S;
-const ry = (y: number) => PY1 - (y - RF_Y0) * RF_S;
-const COL_DARK: Record<Fn, string> = { sin: "#1e3a8a", cos: "#065f46", tan: "#92400e" };
-const INV_RAD: Record<Fn, (v: number) => number> = { sin: Math.asin, cos: Math.acos, tan: Math.atan };
-type GraphView = "trig" | "inverse" | "reflect";
-const poly = (pts: Array<[number, number] | null>): string => {
-  let d = "";
-  let pen = false;
-  for (const p of pts) { if (!p) { pen = false; continue; } d += `${pen ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`; pen = true; }
-  return d;
-};
-
 const TRIG_SHEET = trigGraphSheet();
 
 const RANGE_CSS = `
@@ -242,7 +216,7 @@ export default function UnitCircle() {
   const [hide, setHide] = useState(false);
   const [revealed, setRevealed] = useState<number[]>([]);
   const [hoverDeg, setHoverDeg] = useState<number | null>(null);
-  const [view, setView] = useState<GraphView>("trig");
+  const [showWorking, setShowWorking] = useState(true);
   const [optsOpen, setOptsOpen] = useState(false);
   const optsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -297,20 +271,7 @@ export default function UnitCircle() {
   const moveFromGraph = (e: React.PointerEvent) => {
     const p = graphRef.current && toSvg(graphRef.current, e);
     if (!p) return;
-    if (view === "trig") { setTo(Math.max(0, Math.min(360, ((p.x - PX0) / PW) * 360)), 4); return; }
-    // Inverse views: the pointer picks the input (inverse view) or the principal angle (reflection), and the point lands on that branch.
-    const f = FNS.find((g) => fns[g]) ?? "sin";
-    let deg: number;
-    if (view === "inverse") {
-      const v0 = ((p.x - IPX0) / IPW) * 2 * IV_X - IV_X;
-      const v = f === "tan" ? v0 : Math.max(-1, Math.min(1, v0));
-      deg = (INV_RAD[f](v) * 180) / Math.PI;
-    } else {
-      const [lo, hi] = BRANCH[f];
-      deg = Math.max(lo, Math.min(hi, (((RF_X0 + (p.x - PX0) / RF_S) * 180) / Math.PI)));
-      if (f === "tan") deg = Math.max(-89, Math.min(89, deg));
-    }
-    setTo(Math.round(((deg % 360) + 360) % 360), 2.5);
+    setTo(Math.max(0, Math.min(360, ((p.x - PX0) / PW) * 360)), 4);
   };
   const down = (which: "circle" | "graph") => (e: React.PointerEvent<SVGSVGElement>) => {
     setPlaying(false);
@@ -333,7 +294,6 @@ export default function UnitCircle() {
   const reset = () => { setPlaying(false); setAngle(30); setRevealed([]); };
 
   const visibleAnswer = (deg: number) => !hide || revealed.includes(deg % 360) || shown % 360 === deg % 360;
-  const degOn = units !== "rad";
   const radOn = (deg: number) => units !== "deg" && visibleAnswer(deg);
   const radLabel = (deg: number) => (radStyle === "pi" ? radText(deg) : deg === 0 ? "0" : rad(deg).toFixed(2));
 
@@ -399,32 +359,6 @@ export default function UnitCircle() {
     );
   })();
 
-  const inv = view !== "trig";
-  const onFns = FNS.filter((f) => fns[f]);
-  const BRANCH_R: Record<Fn, number> = { sin: R - 10, cos: R - 17, tan: R - 24 };
-  // The half of the circle each inverse can return (sin⁻¹ and tan⁻¹ the right half, cos⁻¹ the top half) as a coloured band.
-  const branchArcs = inv ? onFns.map((f) => {
-    const [a1, a2] = BRANCH[f], r = BRANCH_R[f];
-    const [x1, y1] = cp(a1, r), [xm, ym] = cp((a1 + a2) / 2, r), [x2, y2] = cp(a2, r);
-    return <path key={"ba" + f} d={`M${x1},${y1} A${r},${r} 0 0 0 ${xm},${ym} A${r},${r} 0 0 0 ${x2},${y2}`} fill="none" stroke={COL[f]} strokeWidth={5} opacity={0.42} style={{ pointerEvents: "none" }} />;
-  }) : null;
-  // Where the inverse sends the point: a ring at the principal value, joined to the point by the chord that keeps the same value.
-  const principalMarks = inv ? onFns.map((f) => {
-    const a = principalDeg(f, angle);
-    if (a === null) return null;
-    const diff = (((a - angle) % 360) + 360) % 360;
-    if (diff < 0.5 || diff > 359.5) return null;
-    const [qx, qy] = cp(a);
-    const [tx, ty] = cp(a, R - 46);
-    return (
-      <g key={"pm" + f} style={{ pointerEvents: "none" }}>
-        <line x1={px} y1={py} x2={qx} y2={qy} stroke={COL[f]} strokeWidth={1.5} strokeDasharray="4 4" opacity={0.85} />
-        <circle cx={qx} cy={qy} r={9.5} fill="#fff" stroke={COL[f]} strokeWidth={3.5} />
-        <Q x={tx} y={ty} t={`${f}⁻¹`} size={16} fill={COL[f]} weight={700} />
-      </g>
-    );
-  }) : null;
-
   const circleSvg = (
     <svg ref={circleRef} viewBox={`${-VB} ${-VB} ${VB * 2} ${VB * 2}`} className="w-full h-full select-none" style={{ touchAction: "none", cursor: "grab" }}
       onPointerDown={down("circle")} onPointerMove={move("circle")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Unit circle">
@@ -433,7 +367,6 @@ export default function UnitCircle() {
       <line y1={-R - 14} y2={R + 14} x1={0} x2={0} stroke={RULE} strokeWidth={1.25} />
       {fns.tan && <line x1={R} x2={R} y1={-VB} y2={VB} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="4 4" opacity={0.5} />}
       <circle cx={0} cy={0} r={R} fill="#f8fafc" stroke="#334155" strokeWidth={2} />
-      {branchArcs}
 
       {/* angle: soft sector with a clean arc */}
       {angle >= 359.5
@@ -471,7 +404,6 @@ export default function UnitCircle() {
         );
       })}
       {ringLabels}
-      {principalMarks}
 
       {/* the moving point */}
       <circle cx={px} cy={py} r={18} fill={ACCENT} opacity={0.14} style={{ pointerEvents: "none" }} />
@@ -526,7 +458,7 @@ export default function UnitCircle() {
     });
   }
 
-  const graphTrigSvg = (
+  const graphSvg = (
     <svg ref={graphRef} viewBox={`0 0 ${GW} ${GH}`} className="w-full h-full select-none" style={{ touchAction: "pan-y", cursor: "ew-resize" }}
       onPointerDown={down("graph")} onPointerMove={move("graph")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Graphs of sine, cosine and tangent">
       <defs><clipPath id="uc-plot"><rect x={PX0} y={PY0} width={PW} height={PH} /></clipPath></defs>
@@ -585,150 +517,6 @@ export default function UnitCircle() {
     </svg>
   );
 
-  // ── Inverse graphs: sin⁻¹ x, cos⁻¹ x, tan⁻¹ x against the input ──
-  const invPath = (f: Fn): string => {
-    const [lo, hi] = f === "tan" ? [-IV_X, IV_X] : [-1, 1];
-    const pts: Array<[number, number]> = [];
-    for (let i = 0; i <= 240; i++) { const v = lo + ((hi - lo) * i) / 240; pts.push([xv(v), ya((INV_RAD[f](v) * 180) / Math.PI)]); }
-    return poly(pts);
-  };
-  const graphInvSvg = (
-    <svg ref={graphRef} viewBox={`0 0 ${GW} ${GH}`} className="w-full h-full select-none" style={{ touchAction: "pan-y", cursor: "ew-resize" }}
-      onPointerDown={down("graph")} onPointerMove={move("graph")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Graphs of the inverse functions">
-      <defs><clipPath id="uc-plot-i"><rect x={IPX0} y={PY0} width={IPW} height={PH} /></clipPath></defs>
-      {/* the domain of sin⁻¹ and cos⁻¹ */}
-      {(fns.sin || fns.cos) && <rect x={xv(-1)} y={PY0} width={xv(1) - xv(-1)} height={PH} fill="#eef2ff" opacity={0.9} />}
-      {[-3, -2, -1, 0, 1, 2, 3].map((v) => <line key={"gv" + v} x1={xv(v)} x2={xv(v)} y1={PY0} y2={PY1} stroke={v === 0 ? FAINT : HAIR} strokeWidth={v === 0 ? 1.5 : 1} />)}
-      {A_TICKS.map((a) => <line key={"ga" + a} x1={IPX0} x2={PX1} y1={ya(a)} y2={ya(a)} stroke={a === 0 ? FAINT : HAIR} strokeWidth={a === 0 ? 1.5 : 1} />)}
-      <line x1={IPX0} x2={IPX0} y1={PY0} y2={PY1} stroke={RULE} strokeWidth={1} />
-      {fns.tan && [-90, 90].map((a) => <line key={"ta" + a} x1={IPX0} x2={PX1} y1={ya(a)} y2={ya(a)} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.6} />)}
-      {(fns.sin || fns.cos) && <text x={xv(0)} y={PY0 + 14} textAnchor="middle" fontSize={10.5} fontWeight={600} fill={ACCENT}>domain of sin⁻¹ and cos⁻¹</text>}
-
-      {/* axis labels: the angle up the side (degrees grey, radians indigo), the input along the bottom */}
-      {A_TICKS.filter((a) => a % 90 === 0).map((a) => (
-        <g key={"al" + a}>
-          {degOn && <text x={units === "both" ? IPX0 - 54 : IPX0 - 9} y={ya(a) + 5} textAnchor="end" fontSize={FS} fontWeight={700} fill={MUTE}>{a < 0 ? `−${-a}` : a}°</text>}
-          {radOn(((a % 360) + 360) % 360) && <Q x={IPX0 - 28} y={ya(a)} t={radLabel(a)} size={FS} fill={ACCENT} weight={700} />}
-        </g>
-      ))}
-      {[-3, -2, -1, 0, 1, 2, 3].map((v) => <text key={"vl" + v} x={xv(v)} y={PY1 + 18} textAnchor="middle" fontSize={FS} fontWeight={600} fill={MUTE}>{v < 0 ? `−${-v}` : v}</text>)}
-      <text x={PX1} y={GH - 8} textAnchor="end" fontSize={11} fontStyle="italic" fill={MUTE}>input x</text>
-      <text x={IPX0 + 6} y={GH - 8} textAnchor="start" fontSize={11} fontStyle="italic" fill={MUTE}>output: the angle{units === "deg" ? " (degrees)" : units === "rad" ? " (radians)" : ""}</text>
-
-      <g clipPath="url(#uc-plot-i)">
-        {onFns.map((f) => <path key={f} d={invPath(f)} fill="none" stroke={COL[f]} strokeWidth={CURVE} strokeLinecap="round" strokeLinejoin="round" />)}
-      </g>
-      {onFns.length === 0 && <text x={IPX0 + IPW / 2} y={PY0 + PH / 2} textAnchor="middle" fontSize={14} fill={FAINT}>Switch on sin, cos or tan to draw its inverse</text>}
-
-      {/* the current point: the input is the function's value, the output is the principal angle (which is θ only inside the range) */}
-      {onFns.map((f) => {
-        const v = valueAt(f), a = principalDeg(f, angle);
-        if (v === null || a === null || Math.abs(v) > IV_X) return null;
-        const X = xv(v), Y = ya(a);
-        const showTheta = angle <= A_MAX && Math.abs(angle - a) > 0.5;
-        return (
-          <g key={"iv" + f}>
-            <line x1={IPX0} x2={X} y1={Y} y2={Y} stroke={COL[f]} strokeWidth={1.25} strokeDasharray="2 4" opacity={0.8} />
-            <line x1={X} x2={X} y1={Y} y2={PY1} stroke={COL[f]} strokeWidth={1.25} strokeDasharray="2 4" opacity={0.8} />
-            {showTheta && <line x1={X} x2={X} y1={Y} y2={ya(angle)} stroke={COL[f]} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.7} />}
-            {showTheta && <circle cx={X} cy={ya(angle)} r={6} fill="#fff" stroke={COL[f]} strokeWidth={2.5} />}
-            {showTheta && <text x={X + 11} y={ya(angle) + 4} fontSize={11} fontWeight={700} fill={COL[f]} stroke="#fff" strokeWidth={2.6} paintOrder="stroke">θ</text>}
-            <circle cx={X} cy={Y} r={6.5} fill={COL[f]} stroke="#fff" strokeWidth={2.5} />
-          </g>
-        );
-      })}
-    </svg>
-  );
-
-  // ── Reflection: a restricted function, its inverse and y = x on one scale ──
-  const rfPoint = (x: number, y: number): [number, number] | null => (!Number.isFinite(y) || y < RF_Y0 - 0.4 || y > RF_Y1 + 0.4 ? null : [rx(x), ry(y)]);
-  const rfFull = (f: Fn): string => { const pts: Array<[number, number] | null> = []; for (let x = RF_X0; x <= RF_X1; x += 0.04) pts.push(rfPoint(x, FN[f](x))); return poly(pts); };
-  const rfRestricted = (f: Fn): string => {
-    const [a, b] = BRANCH[f];
-    const eps = f === "tan" ? 0.012 : 0;
-    const lo = rad(a) + eps, hi = rad(b) - eps;
-    const pts: Array<[number, number] | null> = [];
-    for (let x = lo; x < hi; x += 0.02) pts.push(rfPoint(x, FN[f](x)));
-    pts.push(rfPoint(hi, FN[f](hi)));
-    return poly(pts);
-  };
-  const rfInverse = (f: Fn): string => {
-    const [lo, hi] = f === "tan" ? [RF_X0, RF_X1] : [-1, 1];
-    const pts: Array<[number, number] | null> = [];
-    for (let i = 0; i <= 300; i++) { const v = lo + ((hi - lo) * i) / 300; pts.push(rfPoint(v, INV_RAD[f](v))); }
-    return poly(pts);
-  };
-  const RF_XT = [-3, -2, -1, 0, 1, 2, 3, 4];
-  const RF_YT = [-1, 0, 1, 2];
-  const graphRefSvg = (
-    <svg ref={graphRef} viewBox={`0 0 ${GW} ${GH}`} className="w-full h-full select-none" style={{ touchAction: "pan-y", cursor: "ew-resize" }}
-      onPointerDown={down("graph")} onPointerMove={move("graph")} onPointerUp={up} onPointerCancel={up} role="img" aria-label="A function, its inverse and the line y equals x">
-      <defs><clipPath id="uc-plot-r"><rect x={PX0} y={PY0} width={PW} height={PH} /></clipPath></defs>
-      {RF_XT.map((k) => <line key={"rgx" + k} x1={rx((k * Math.PI) / 2)} x2={rx((k * Math.PI) / 2)} y1={PY0} y2={PY1} stroke={HAIR} strokeWidth={1} />)}
-      {RF_YT.map((k) => <line key={"rgy" + k} x1={PX0} x2={PX1} y1={ry((k * Math.PI) / 2)} y2={ry((k * Math.PI) / 2)} stroke={HAIR} strokeWidth={1} />)}
-      <line x1={PX0} x2={PX1} y1={ry(0)} y2={ry(0)} stroke={FAINT} strokeWidth={1.5} />
-      <line x1={rx(0)} x2={rx(0)} y1={PY0} y2={PY1} stroke={FAINT} strokeWidth={1.5} />
-      <line x1={PX0} x2={PX0} y1={PY0} y2={PY1} stroke={RULE} strokeWidth={1} />
-
-      <g clipPath="url(#uc-plot-r)">
-        {/* the mirror line y = x */}
-        <line x1={rx(RF_X0)} y1={ry(RF_X0)} x2={rx(RF_X1)} y2={ry(RF_X1)} stroke={MUTE} strokeWidth={1.5} strokeDasharray="6 5" />
-        {fns.tan && [-1, 1].map((k) => <line key={"rv" + k} x1={rx((k * Math.PI) / 2)} x2={rx((k * Math.PI) / 2)} y1={PY0} y2={PY1} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.55} />)}
-        {fns.tan && [-1, 1].map((k) => <line key={"rh" + k} x1={PX0} x2={PX1} y1={ry((k * Math.PI) / 2)} y2={ry((k * Math.PI) / 2)} stroke={COL.tan} strokeWidth={1.25} strokeDasharray="5 4" opacity={0.55} />)}
-        {/* the whole function, faint, so you can see what the restriction keeps */}
-        {onFns.map((f) => <path key={"ff" + f} d={rfFull(f)} fill="none" stroke={COL[f]} strokeWidth={2} opacity={0.22} />)}
-        {onFns.map((f) => <path key={"fr" + f} d={rfRestricted(f)} fill="none" stroke={COL[f]} strokeWidth={CURVE} strokeLinecap="round" />)}
-        {onFns.map((f) => <path key={"fi" + f} d={rfInverse(f)} fill="none" stroke={COL_DARK[f]} strokeWidth={CURVE} strokeLinecap="round" strokeLinejoin="round" />)}
-        {onFns.filter((f) => f !== "tan").map((f) => BRANCH[f].map((b, i) => {
-          const y = FN[f](rad(b)), q = rfPoint(rad(b), y), q2 = rfPoint(y, rad(b));
-          return <g key={`ep${f}${i}`}>{q && <circle cx={q[0]} cy={q[1]} r={4} fill="#fff" stroke={COL[f]} strokeWidth={2} />}{q2 && <circle cx={q2[0]} cy={q2[1]} r={4} fill="#fff" stroke={COL_DARK[f]} strokeWidth={2} />}</g>;
-        }))}
-      </g>
-
-      {/* the point and its mirror image: coordinates swap */}
-      {onFns.map((f) => {
-        const v = valueAt(f), a = principalDeg(f, angle);
-        if (v === null || a === null) return null;
-        const A = rfPoint(rad(a), v), B = rfPoint(v, rad(a));
-        if (!A || !B) return null;
-        return (
-          <g key={"mp" + f}>
-            <line x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={COL[f]} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.85} />
-            <circle cx={A[0]} cy={A[1]} r={6.5} fill={COL[f]} stroke="#fff" strokeWidth={2.5} />
-            <circle cx={B[0]} cy={B[1]} r={6.5} fill={COL_DARK[f]} stroke="#fff" strokeWidth={2.5} />
-          </g>
-        );
-      })}
-
-      {/* labels: radians on both axes (the same scale), the value 1 marked on each */}
-      {RF_XT.map((k) => {
-        const x = rx((k * Math.PI) / 2), d = k * 90;
-        return (
-          <g key={"rlx" + k}>
-            <line x1={x} x2={x} y1={PY1} y2={PY1 + 5} stroke={FAINT} />
-            {degOn && <text x={x} y={PY1 + 19} textAnchor="middle" fontSize={FS} fontWeight={600} fill={MUTE}>{d < 0 ? `−${-d}` : d}°</text>}
-            {units !== "deg" && <Q x={x} y={PY1 + (degOn ? 36 : 22)} t={radLabel(d)} size={FS} fill={ACCENT} />}
-          </g>
-        );
-      })}
-      {RF_YT.map((k) => (k === 0 ? null : <Q key={"rly" + k} x={PX0 - 24} y={ry((k * Math.PI) / 2)} t={radText(k * 90)} size={FS} fill={ACCENT} />))}
-      {[-1, 1].map((v) => <text key={"one" + v} x={rx(v)} y={ry(0) + 14} textAnchor="middle" fontSize={10} fill={MUTE}>{v < 0 ? "−1" : "1"}</text>)}
-      {[-1, 1].map((v) => <text key={"onev" + v} x={rx(0) - 7} y={ry(v) + 4} textAnchor="end" fontSize={10} fill={MUTE}>{v < 0 ? "−1" : "1"}</text>)}
-      <text x={PX1} y={GH - 6} textAnchor="end" fontSize={11} fontStyle="italic" fill={MUTE}>same scale on both axes (radians)</text>
-
-      {/* key */}
-      {onFns.map((f, i) => (
-        <g key={"lg" + f} transform={`translate(${PX0 + 10},${PY0 + 12 + i * 34})`}>
-          <line x1={0} x2={16} y1={0} y2={0} stroke={COL[f]} strokeWidth={3} /><text x={22} y={4} fontSize={11} fontWeight={600} fill={COL[f]}>{f} x, restricted</text>
-          <line x1={0} x2={16} y1={16} y2={16} stroke={COL_DARK[f]} strokeWidth={3} /><text x={22} y={20} fontSize={11} fontWeight={600} fill={COL_DARK[f]}>{f}⁻¹ x</text>
-        </g>
-      ))}
-      {onFns.length === 0 && <text x={PX0 + PW / 2} y={PY0 + PH / 2} textAnchor="middle" fontSize={14} fill={FAINT}>Switch on sin, cos or tan to see its inverse</text>}
-    </svg>
-  );
-
-  const graphSvg = view === "trig" ? graphTrigSvg : view === "inverse" ? graphInvSvg : graphRefSvg;
-
   // ── Angle badge and readout ─────────────────────────────────────────────────────────────────────────────────────────
   const radDecimal = rad(shown);
   const hiddenNow = hide && !visibleAnswer(shown);
@@ -779,47 +567,6 @@ export default function UnitCircle() {
     </div>
   );
 
-  const f1: Fn | undefined = onFns[0];
-  const a1 = f1 ? principalDeg(f1, angle) : null;
-  const angleTxt = (a: number): string => {
-    const isInt = Math.abs(a - Math.round(a)) < 1e-6;
-    const degS = `${isInt ? Math.round(a) : a.toFixed(1)}°`.replace("-", "−");
-    const radS = isInt ? (radStyle === "pi" ? radText(Math.round(a)) : rad(Math.round(a)).toFixed(2)) : rad(a).toFixed(3);
-    return units === "deg" ? degS : units === "rad" ? radS : `${degS} = ${radS}`;
-  };
-  const rangeTxt = (f: Fn): string => {
-    const [a, b] = BRANCH[f];
-    const d = `${a}° to ${b}°`.replace("-", "−"), r = `${radText(a)} to ${radText(b)}`;
-    return units === "deg" ? d : units === "rad" ? r : `${d} = ${r}`;
-  };
-  const invChip = (f: Fn) => {
-    const a = principalDeg(f, angle), v = valueAt(f);
-    const e = exact ? exact[f] : null;
-    const xTxt = e && e !== "undefined" ? e : v === null ? "undefined" : v.toFixed(2);
-    return (
-      <div key={f} className="rounded-xl bg-white h-[76px] flex-1 min-w-0 flex flex-col justify-center pl-4 pr-2 border border-slate-200" style={{ borderLeft: `5px solid ${COL[f]}` }}>
-        <div className="text-[13px] font-semibold" style={{ color: COL[f] }}>{f}⁻¹ x</div>
-        <div className="text-[22px] font-semibold text-slate-900 h-12 flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-          {hideWorking ? "?" : a === null ? "undefined" : <><span>x =</span><H t={xTxt} /><span className="mx-1 text-slate-300">→</span><span><Rich s={angleTxt(a)} /></span></>}
-        </div>
-      </div>
-    );
-  };
-  const inside = a1 !== null && Math.abs(a1 - angle) < 0.5;
-  const invReadout = (
-    <div className="p-3.5 grid gap-2" style={{ gridTemplateRows: phone ? "auto 76px" : "74px 76px" }}>
-      <div className={`grid ${phone ? "grid-cols-1 gap-y-1" : "grid-cols-2 gap-x-5"}`}>
-        {f1 ? line(`Range of ${f1}⁻¹ (${f1 === "tan" ? "any x" : "−1 ≤ x ≤ 1"})`, <Rich s={rangeTxt(f1)} />, false) : line("Range", <span className="text-slate-400">—</span>, false)}
-        {f1 ? line(`${f1}⁻¹(${f1} ${shown}°)${inside || a1 === null || hideWorking ? "" : ` · ${shown}° is outside the range`}`, hideWorking ? <span className="text-slate-400">?</span> : a1 === null ? <span>undefined</span>
-          : <span><Rich s={angleTxt(a1)} /> <span className="text-slate-500">{inside ? "— the same angle" : `— not ${shown}°`}</span></span>, false) : line("Principal value", <span className="text-slate-400">—</span>, false)}
-      </div>
-      <div className="flex gap-2.5">
-        {onFns.map(invChip)}
-        {!anyFn && <div className="text-sm text-slate-400 self-center">Switch on sin, cos or tan to see its inverse.</div>}
-      </div>
-    </div>
-  );
-
   // ── Page ────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const card = "bg-white rounded-2xl border border-slate-300 shadow-card";
   const pct = (Math.min(360, shown) / 360) * 100;
@@ -847,8 +594,8 @@ export default function UnitCircle() {
       </div>
       <div className="divide-y divide-slate-100 border-t border-slate-100 pt-1">
         <Switch on={showExact} onClick={() => setShowExact((v) => !v)} label="Coordinate popup" hint="Exact (cos θ, sin θ) over the point" />
-        <Switch on={graphLabels} onClick={() => setGraphLabels((v) => !v)} label="Label graph points" hint="Exact values on the marked points (Functions view)" />
-        <Switch on={trace} onClick={() => setTrace((v) => !v)} label="Build graph" hint="Draw the curves as the angle moves (Functions view)" />
+        <Switch on={graphLabels} onClick={() => setGraphLabels((v) => !v)} label="Label graph points" hint="Exact values on the marked points" />
+        <Switch on={trace} onClick={() => setTrace((v) => !v)} label="Build graph" hint="Draw the curves as the angle moves" />
         <Switch on={hide} onClick={() => { setHide((v) => !v); setRevealed([]); }} label="Hide answers" hint="Tap a point to reveal it" />
       </div>
     </div>
@@ -864,10 +611,15 @@ export default function UnitCircle() {
       {optsOpen && displayPanel}
     </div>
   );
-  const viewSeg = <Seg value={view} onChange={setView} options={[{ id: "trig", text: "Functions" }, { id: "inverse", text: "Inverses" }, { id: "reflect", text: "Reflection" }]} />;
   const fnChips = <div className="flex items-center gap-2">{FNS.map((f) => <FnChip key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((st) => ({ ...st, [f]: !st[f] }))}>{f}</FnChip>)}</div>;
   const circleHead = <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0")}<div className="flex items-center gap-2 flex-wrap">{anglesSeg}{displayBtn}</div></div>;
-  const graphHead = <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 pt-3">{viewSeg}{fnChips}</div>;
+  const workingBtn = (
+    <button onClick={() => setShowWorking((v) => !v)} aria-pressed={showWorking} title={showWorking ? "Hide the working and values" : "Show the working and values"}
+      className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors ${showWorking ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>
+      {showWorking ? <EyeOff size={17} /> : <Eye size={17} />}{showWorking ? "Hide working" : "Show working"}
+    </button>
+  );
+  const graphHead = <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 pt-3">{fnChips}{workingBtn}</div>;
 
   return (
     <div className="flex flex-col" style={{ background: PAGE_BG, minHeight: "100vh", height: stacked ? undefined : "100vh", overflow: stacked ? undefined : "hidden" }}>
@@ -903,7 +655,7 @@ export default function UnitCircle() {
             {playbar}
           </div>
           <div className={`${card} pb-2`}>{graphHead}<div className="w-full px-2 pt-1" style={{ aspectRatio: `${GW} / ${GH}` }}>{graphSvg}</div></div>
-          <div className={card}>{view === "trig" ? readout : invReadout}</div>
+          {showWorking && <div className={card}>{readout}</div>}
           {portrait && !phone && <p className="text-center text-xs text-slate-500 pb-2">Works best in landscape.</p>}
         </div>
       ) : (
@@ -915,7 +667,7 @@ export default function UnitCircle() {
           </div>
           <div className="flex flex-col gap-3 min-h-0">
             <div className={`${card} flex-1 min-h-0 flex flex-col pb-2`}>{graphHead}<div className="flex-1 min-h-0 px-2 pt-1">{graphSvg}</div></div>
-            <div className={`${card} flex-shrink-0`}>{view === "trig" ? readout : invReadout}</div>
+            {showWorking && <div className={`${card} flex-shrink-0`}>{readout}</div>}
           </div>
         </div>
       )}
