@@ -21,6 +21,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Controls", icon: "🛠️", content: [
     { label: "Angles", detail: "Show angles in degrees, radians or both together." },
     { label: "Graphs", detail: "Switch sin, cos and tan on or off. Any combination can be shown at once." },
+    { label: "Angle headline", detail: "The eye button beside the angle in the top left hides it, so the class can work the angle out first." },
     { label: "Working", detail: "Shows or hides the conversion working and the values under the graph. Hidden, the graph fills the right-hand side." },
     { label: "Printables", detail: "The menu has a blank sheet of sin, cos and tan graphs (−π to 3π across, −2 to 2 up) to draw on once the class has built the shapes." },
     { label: "Display", detail: "Choose which angles are marked (multiples of 30°, of 45°, or both), whether radians are shown as multiples of π or as decimals, and how fast Play runs." },
@@ -217,6 +218,7 @@ export default function UnitCircle() {
   const [revealed, setRevealed] = useState<number[]>([]);
   const [hoverDeg, setHoverDeg] = useState<number | null>(null);
   const [showWorking, setShowWorking] = useState(true);
+  const [showHeadline, setShowHeadline] = useState(true);
   const [optsOpen, setOptsOpen] = useState(false);
   const optsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -472,7 +474,7 @@ export default function UnitCircle() {
 
       {/* ticks at every marked point, labels at the quarter turns only, and a tag showing the current angle */}
       {xMarks.map((m) => <line key={"tk" + m.deg} x1={xOf(m.deg)} x2={xOf(m.deg)} y1={PY1} y2={PY1 + (m.deg % 90 === 0 ? 7 : 4)} stroke={FAINT} strokeWidth={1.5} />)}
-      {xMarks.filter((m) => m.deg % 90 === 0 && Math.abs(m.deg - Math.min(360, angle)) > 32).map((m) => {
+      {xMarks.filter((m) => m.deg % 90 === 0 && (playing || Math.abs(m.deg - Math.min(360, angle)) > 32)).map((m) => {
         const x = xOf(m.deg), rShow = radOn(m.deg);
         return (
           <g key={"xl" + m.deg}>
@@ -482,7 +484,7 @@ export default function UnitCircle() {
           </g>
         );
       })}
-      {anyFn && (() => {
+      {anyFn && !playing && (() => {
         const cx = Math.max(PX0 + 52, Math.min(PX1 - 52, curX));
         const hid = hide && !visibleAnswer(shown);
         const txt = units === "deg" ? `${shown}°` : units === "rad" ? (hid ? "?" : radTag(shown)) : `${shown}° · ${hid ? "?" : radTag(shown)}`;
@@ -522,16 +524,25 @@ export default function UnitCircle() {
   const hiddenNow = hide && !visibleAnswer(shown);
   const radNow = hiddenNow ? "?" : radLabel(shown);
   const badgeEl = (cls: string) => (
-    <div className={cls}>
-      <div className="text-[40px] leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap">
-        {units === "deg" && <span>{shown}°</span>}
-        {units === "both" && <><span>{shown}°</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
-        {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
-      </div>
-      <div className="text-sm text-slate-500 h-6 mt-1 whitespace-nowrap">
-        {units === "rad" && <>= {shown}°{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
-        {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}
-      </div>
+    <div className={`${cls} min-h-[84px]`}>
+      {!showHeadline ? (
+        <button onClick={() => setShowHeadline(true)} className="mt-1 min-h-[44px] px-4 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-sm font-semibold flex items-center gap-2"><Eye size={17} />Show angle</button>
+      ) : (
+        <>
+          <div className="flex items-start gap-2">
+            <div className="text-[40px] leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap">
+              {units === "deg" && <span>{shown}°</span>}
+              {units === "both" && <><span>{shown}°</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
+              {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
+            </div>
+            <button onClick={() => setShowHeadline(false)} title="Hide the angle" aria-label="Hide the angle" className="mt-1 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex-shrink-0"><EyeOff size={18} /></button>
+          </div>
+          <div className="text-sm text-slate-500 h-6 mt-1 whitespace-nowrap">
+            {units === "rad" && <>= {shown}°{!hiddenNow && radStyle === "pi" && shown !== 0 ? <> ≈ {radDecimal.toFixed(3)} rad</> : null}</>}
+            {units === "both" && !hiddenNow && radStyle === "pi" && shown !== 0 ? <>≈ {radDecimal.toFixed(3)} rad</> : null}
+          </div>
+        </>
+      )}
     </div>
   );
 
