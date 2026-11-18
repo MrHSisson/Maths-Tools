@@ -90,3 +90,32 @@ describe("the factor tree", () => {
     expect((await checkDeckContent(deckOf(t(20, t(4), t(6))))).problems.join(" ")).toMatch(/not 20/);
   });
 });
+
+describe("choosing how a number splits", () => {
+  it("lists every ordered pair, so 200 can start 2 × 100, 4 × 50 or 20 × 10", async () => {
+    const { factorPairs } = await import("../shared/factorTree");
+    const pairs = factorPairs(200).map(([a, b]) => `${a}x${b}`);
+    for (const p of ["2x100", "4x50", "10x20", "20x10", "100x2"]) expect(pairs).toContain(p);
+    expect(factorPairs(200).every(([a, b]) => a * b === 200 && a > 1 && b > 1)).toBe(true);
+    expect(factorPairs(13)).toEqual([]);
+  });
+
+  it("re-splitting a number keeps the tree good and gives the same primes however it starts", async () => {
+    const { withSplit, splittable, splitOf, factorPairs } = await import("../shared/factorTree");
+    for (const [a] of factorPairs(200)) {
+      const tree = withSplit(autoTree(200), [], a);
+      expect(tree.kids![0].n).toBe(a);
+      expect(treeProblems(tree)).toEqual([]);
+      expect(productText(tree)).toBe("2 × 2 × 2 × 5 × 5");
+    }
+    // split the 100 of 2 × 100 as 20 × 5, then the 20 as 10 × 2
+    let tree = withSplit(autoTree(200), [], 2);
+    tree = withSplit(tree, [1], 20);
+    tree = withSplit(tree, [1, 0], 10);
+    expect(treeProblems(tree)).toEqual([]);
+    expect(splitOf(tree, [1, 0])).toBe(10);
+    expect(splittable(tree).map((s) => s.n)).toEqual([200, 100, 20, 10]);
+    expect(withSplit(autoTree(200), [], 7)).toEqual(autoTree(200));        // 7 does not divide 200: unchanged
+    expect(withSplit({ n: 28, given: true }, [], 4).given).toBe(true);      // keeps its given mark
+  });
+});

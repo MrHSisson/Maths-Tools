@@ -104,3 +104,41 @@ export function autoTree(n: number): TreeNode {
   while (n % p !== 0) p++;
   return { n, kids: [{ n: p }, autoTree(n / p)] };
 }
+
+/** Every way to split `n` into two numbers bigger than 1, in both orders (the left number first), smallest left number first:
+ *  200 gives 2 × 100, 4 × 50, 5 × 40, 8 × 25, 10 × 20, 20 × 10 and so on. A prime has none. */
+export function factorPairs(n: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (let a = 2; a < n; a++) if (n % a === 0) out.push([a, n / a]);
+  return out;
+}
+
+/** The numbers in a tree that can still be split in a different way (every non-prime), in reading order, each with the path to it
+ *  (0 for the left number of a split, 1 for the right). */
+export function splittable(tree: TreeNode): { path: number[]; n: number; depth: number }[] {
+  const out: { path: number[]; n: number; depth: number }[] = [];
+  const walk = (t: TreeNode, path: number[]) => { if (!isPrime(t.n)) out.push({ path, n: t.n, depth: path.length }); if (t.kids) { walk(t.kids[0], [...path, 0]); walk(t.kids[1], [...path, 1]); } };
+  walk(tree, []);
+  return out.sort((x, y) => x.depth - y.depth || x.path.join("").localeCompare(y.path.join("")));
+}
+
+/** The tree with the number at `path` split as `a × (n / a)` instead, each new number then split off its smallest prime as `autoTree`
+ *  does; the author can split those again. The number keeps its `given` mark. `a` must divide it and leave both parts bigger than 1. */
+export function withSplit(tree: TreeNode, path: number[], a: number): TreeNode {
+  if (path.length === 0) {
+    if (a < 2 || tree.n % a !== 0 || tree.n / a < 2) return tree;
+    return { n: tree.n, ...(tree.given ? { given: true } : {}), kids: [autoTree(a), autoTree(tree.n / a)] };
+  }
+  if (!tree.kids) return tree;
+  const [i, ...rest] = path;
+  const kids: [TreeNode, TreeNode] = [tree.kids[0], tree.kids[1]];
+  kids[i] = withSplit(kids[i], rest, a);
+  return { ...tree, kids };
+}
+
+/** The split a number currently has, as its left number (0 when it is prime), so a picker can show it. */
+export function splitOf(tree: TreeNode, path: number[]): number {
+  let t = tree;
+  for (const i of path) { if (!t.kids) return 0; t = t.kids[i]; }
+  return t.kids ? t.kids[0].n : 0;
+}

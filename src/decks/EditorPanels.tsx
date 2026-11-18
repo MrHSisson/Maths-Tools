@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { GENERATOR_TOOLS } from "./generators";
 import { CANVAS_H, CANVAS_W, type DeckElement, type FillMode, type Slide } from "./types";
-import { TREE_REVEALS, autoTree, treeProblems, type TreeReveal } from "../shared/factorTree";
+import { TREE_REVEALS, autoTree, factorPairs, splitOf, splittable, treeProblems, withSplit, type TreeReveal } from "../shared/factorTree";
 import { BAR_TONES, barProblems, barUnits } from "../shared/barModel";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
@@ -141,6 +141,18 @@ export function FactorTreeProps({ el, set }: { el: ElOf<"factorTree">; set: (p: 
     <>
       <Label>Start number</Label>
       <input type="number" min={2} max={999} className={input} value={el.tree.n} onChange={(e) => { const n = Math.round(Number(e.target.value)); if (n >= 2 && n <= 999) set({ tree: autoTree(n) }); }} />
+      <Label>How each number splits</Label>
+      <div className="flex flex-col gap-1">
+        {splittable(el.tree).map(({ path, n, depth }) => (
+          <label key={path.join("-") || "root"} className="flex items-center gap-2 text-sm text-slate-700" style={{ paddingLeft: depth * 14 }}>
+            <span className="w-10 text-right font-semibold">{n}</span> =
+            <select className={input} value={splitOf(el.tree, path)} onChange={(e) => set({ tree: withSplit(el.tree, path, Number(e.target.value)) })} aria-label={`How ${n} splits`}>
+              {factorPairs(n).map(([a, b]) => <option key={a} value={a}>{a} × {b}</option>)}
+            </select>
+          </label>
+        ))}
+      </div>
+      <p className="mt-1 text-xs text-slate-500">Pick any pair: 200 can start 2 × 100, 4 × 50 or 20 × 10. A number you split can be split again below it.</p>
       <Label>Starts as</Label>
       <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
       <p className="mt-1 text-xs text-slate-500">Filled in: the whole tree. Structure only: the start number, the numbers marked as given and "?" where the next ones go. Blank: the start number alone.</p>
