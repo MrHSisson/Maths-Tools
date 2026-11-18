@@ -20,17 +20,17 @@ Harry found the first version (29 slides) too complicated and not enough practic
 | 2 | Objective | Two lines |
 | 3 | Divider: Factor trees | |
 | 4 | Prime number | Definition, primes to 20 listed, 1 is not prime |
-| 5 | How to draw a factor tree | **A flow chart**, one click per part: start with a number → is it prime? → yes: circle it, it stops · no: split it into two numbers (not using 1) → ask again for each new number. Primes to 20 in small grey text |
+| 5 | How to draw a factor tree | **A flow chart**, one click per part: start with a number → is it prime? → yes: circle it, it stops · no: split it into two numbers (not using 1) → ask again for each new number. (No footnote) |
 | 6 | Factor tree whiteboards | **10 questions**, trees to a product of primes: 18, 28, 30, 45, 52, 24, 50, 44, 66, 63 |
-| 7 | Book work | **15 questions** (3 × 5): 14, 22, 12, 20, 27, 55, 40, 36, 56 (first nine with a quiet hint of the number of primes), then 90, 75, 220, 150, 99, 140 |
+| 7 | Book work | **12 questions** (3 × 4), no hints: 14, 22, 12, 20, 27, 55, 40, 90, 75, 220, 99, 140 |
 | 8 | Divider: Index form | |
 | 9 | Index form | What it means: $2 \times 2 \times 2 = 2^3$; the small raised number is the index and counts how many |
-| 10 | Write it in index form | **One table of four to work through together:** $7 \times 7$, $2 \times 2 \times 2$, $3 \times 3 \times 5$, $2 \times 2 \times 3 \times 3 \times 3$ |
-| 11 | Index form whiteboards | **15 questions**, a product of primes to write in index form, one repeated prime up to three different primes |
+| 10 | Write it in index form | **One table of four to work through together:** $7 \times 7$, $2 \times 2 \times 2$, $3 \times 5 \times 3$, $3 \times 2 \times 3 \times 2 \times 3$ (two not written smallest first) |
+| 11 | Index form whiteboards | **15 questions**, a product of primes (many not written smallest first) to write in index form, always answered smallest first |
 | 12 | Divider: Back to the trees | |
 | 13 | Factor trees in index form | **12 whiteboards**: 25, 16, 54, 32, 72, 100, 80, 42, 88, 120, 108, 200 |
 | 14 | Depth | $7^3 = 21$? (index is a count, not a times) |
-| 15 | Book work | **15 questions**, index form: 49, 64, 81, 125, 96, 144, 135, 175, 225 (hinted: number of different primes), then 180, 126, 250, 300, 360, 400 |
+| 15 | Book work | **12 questions**, index form, no hints and not opening on squares: 135, 96, 175, 49, 144, 180, 64, 126, 250, 81, 300, 360 |
 | 16 | Depth | Two trees for 70 |
 | 17 | Depth | Is the tree for 48 finished? |
 | 18 | Exit ticket | 33, 60 and $2 \times 2 \times 3 \times 3 \times 3$ |

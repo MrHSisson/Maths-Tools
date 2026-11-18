@@ -4,7 +4,7 @@
 //   npm run deck -- build specs/decks/prime-factor-trees.build.ts --replace
 //   npm run deck -- check prime-factor-trees --layout
 //   npm run deck -- review prime-factor-trees
-import { LOOK, Q, S, assertCentred, assertFreshNumbers, hintLine, lineEl, makeSlide, textEl, titleEls } from "/src/decks/builder";
+import { LOOK, Q, S, assertCentred, assertFreshNumbers, lineEl, makeSlide, textEl, titleEls } from "/src/decks/builder";
 import { misconceptionLabel } from "/src/shared/misconceptions";
 import type { CuratedQuestion, DeckElement, Slide } from "/src/decks/types";
 
@@ -34,7 +34,7 @@ const tagged = (q: CuratedQuestion, id: string): CuratedQuestion => ({ ...q, mis
 
 /** "Write n as a product of primes" (or in index form): no working, because Harry draws the tree; the answer is the product or the index form.
  *  `book` makes plain book work (just the number, with an optional quiet hint). */
-function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | "index"; book?: boolean; hint?: string; tag?: string; mistakes?: Mistake[] } = {}): CuratedQuestion {
+function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | "index"; book?: boolean; tag?: string; mistakes?: Mistake[] } = {}): CuratedQuestion {
   const primes = primeFactors(n);
   must(same(primes, expect), `primes of ${n}: expected ${expect.join(" x ")}, got ${primes.join(" x ")}`);
   must(primes.reduce((a, b) => a * b, 1) === n, `${n}: the primes multiply back to the number`);
@@ -42,7 +42,7 @@ function treeQ(id: string, n: number, expect: number[], o: { form?: "product" | 
   const index = o.form === "index";
   const answer = index ? `$${n} = ${idxTex(primes)}$` : `$${n} = ${tex(primes)}$`;
   let lines: string[];
-  if (o.book) { lines = [`$${n}$`]; if (o.hint) lines.push(hintLine(o.hint)); }
+  if (o.book) lines = [`$${n}$`];
   else { lines = [index ? `Write $${n}$ in index form.` : `Write $${n}$ as a product of primes.`]; assertCentred(lines, `${n}`); }
   const base = Q.open(id, T, "level1", lines[0], answer, [], o.mistakes ?? []);
   const q: CuratedQuestion = { ...base, title: `$${n}$`, question: lines, rationale: index ? "Draw the tree, then count each prime." : "Split into two numbers, circle each prime, stop when every branch ends in a prime." };
@@ -55,26 +55,27 @@ const WBA = ([
   [18, [2, 3, 3], "primes-repeat-once"], [28, [2, 2, 7], "primes-circle-non-prime"], [30, [2, 3, 5]], [45, [3, 3, 5], "primes-repeat-once"],
   [52, [2, 2, 13]], [24, [2, 2, 2, 3], "primes-repeat-once"], [50, [2, 5, 5]], [44, [2, 2, 11]], [66, [2, 3, 11]], [63, [3, 3, 7]],
 ] as [number, number[], string?][]).map(([n, e, tag], i) => treeQ(`${P}-wa${i + 1}`, n, e, { tag }));
-// book work (15): the first nine with a quiet hint, the last six none and stretching
+// book work (12, plain numbers, no hints): not in ascending order
 const bookA: [number, number[]][] = [
-  [14, [2, 7]], [22, [2, 11]], [12, [2, 2, 3]], [20, [2, 2, 5]], [27, [3, 3, 3]], [55, [5, 11]], [40, [2, 2, 2, 5]], [36, [2, 2, 3, 3]], [56, [2, 2, 2, 7]],
-  [90, [2, 3, 3, 5]], [75, [3, 5, 5]], [220, [2, 2, 5, 11]], [150, [2, 3, 5, 5]], [99, [3, 3, 11]], [140, [2, 2, 5, 7]],
+  [14, [2, 7]], [22, [2, 11]], [12, [2, 2, 3]], [20, [2, 2, 5]], [27, [3, 3, 3]], [55, [5, 11]], [40, [2, 2, 2, 5]], [90, [2, 3, 3, 5]], [75, [3, 5, 5]],
+  [220, [2, 2, 5, 11]], [99, [3, 3, 11]], [140, [2, 2, 5, 7]],
 ];
-const BKA = bookA.map(([n, e], i) => treeQ(`${P}-ba${i + 1}`, n, e, { book: true, ...(i < 9 ? { hint: `Hint: ${e.length} primes` } : {}), ...(i === 2 || i === 4 || i === 6 || i === 7 ? { tag: "primes-repeat-once" } : {}) }));
+const BKA = bookA.map(([n, e], i) => treeQ(`${P}-ba${i + 1}`, n, e, { book: true, ...(i === 2 || i === 4 || i === 6 ? { tag: "primes-repeat-once" } : {}) }));
 
 // ---------- section 2: index form (from a product) ----------
-function indexQ(id: string, primes: number[], expectIdx: string, tag?: string, mistakes: Mistake[] = []): CuratedQuestion {
-  const idx = idxTex(primes);
-  must(idx === expectIdx, `index form of ${tex(primes)}: expected ${expectIdx}, got ${idx}`);
-  must(!primes.some((p, i) => i > 0 && p < primes[i - 1]), `${tex(primes)} is written smallest first`);
-  const q = { ...Q.open(id, T, "level1", `Write $${tex(primes)}$ in index form.`, `$${idx}$`, [], mistakes), title: "Write the product in index form" };
+function indexQ(id: string, given: number[], expectIdx: string, tag?: string, mistakes: Mistake[] = []): CuratedQuestion {
+  const sorted = [...given].sort((x, y) => x - y);
+  const idx = idxTex(sorted);
+  must(idx === expectIdx, `index form of ${tex(given)}: expected ${expectIdx}, got ${idx}`);
+  const q = { ...Q.open(id, T, "level1", `Write $${tex(given)}$ in index form.`, `$${idx}$`, [], mistakes), title: "Write the product in index form" };
   return tag ? tagged(q, tag) : q;
 }
+// the product is given in any order; the answer is always written smallest first. A good half are not written smallest first.
 const setC: [number[], string, string?][] = [
   [[5, 5], "5^{2}"], [[3, 3, 3], "3^{3}"], [[2, 2, 2, 2], "2^{4}"], [[3, 3, 3, 3], "3^{4}"],
-  [[2, 2, 5], "2^{2} \\times 5", "primes-index-wrong-base"], [[2, 3, 3], "2 \\times 3^{2}", "primes-index-wrong-base"], [[3, 5, 5], "3 \\times 5^{2}"], [[2, 2, 11], "2^{2} \\times 11"],
-  [[2, 2, 2, 7], "2^{3} \\times 7"], [[2, 3, 3, 3], "2 \\times 3^{3}", "primes-index-wrong-base"], [[2, 2, 3, 3, 5], "2^{2} \\times 3^{2} \\times 5", "primes-index-wrong-base"], [[2, 5, 5, 5], "2 \\times 5^{3}"],
-  [[2, 2, 3, 5, 5], "2^{2} \\times 3 \\times 5^{2}"], [[2, 2, 2, 2, 2, 3], "2^{5} \\times 3"], [[2, 2, 2, 3, 3, 3], "2^{3} \\times 3^{3}", "primes-index-as-multiply"],
+  [[5, 2, 2], "2^{2} \\times 5", "primes-index-wrong-base"], [[3, 2, 3], "2 \\times 3^{2}", "primes-index-wrong-base"], [[5, 3, 5], "3 \\times 5^{2}"], [[2, 11, 2], "2^{2} \\times 11"],
+  [[7, 2, 2, 2], "2^{3} \\times 7"], [[3, 2, 3, 3], "2 \\times 3^{3}", "primes-index-wrong-base"], [[3, 2, 5, 2, 3], "2^{2} \\times 3^{2} \\times 5", "primes-index-wrong-base"], [[5, 2, 5, 5], "2 \\times 5^{3}"],
+  [[2, 5, 3, 5, 2], "2^{2} \\times 3 \\times 5^{2}"], [[2, 3, 2, 2, 2, 2], "2^{5} \\times 3"], [[3, 2, 3, 2, 3, 2], "2^{3} \\times 3^{3}", "primes-index-as-multiply"],
 ];
 const SETC = setC.map(([p, e, tag], i) => indexQ(`${P}-c${i + 1}`, p, e, tag));
 
@@ -84,10 +85,10 @@ const WBB = ([
   [80, [2, 2, 2, 2, 5]], [42, [2, 3, 7]], [88, [2, 2, 2, 11]], [120, [2, 2, 2, 3, 5]], [108, [2, 2, 3, 3, 3]], [200, [2, 2, 2, 5, 5]],
 ] as [number, number[], string?][]).map(([n, e, tag], i) => treeQ(`${P}-wb${i + 1}`, n, e, { form: "index", tag }));
 const bookB: [number, number[]][] = [
-  [49, [7, 7]], [64, [2, 2, 2, 2, 2, 2]], [81, [3, 3, 3, 3]], [125, [5, 5, 5]], [96, [2, 2, 2, 2, 2, 3]], [144, [2, 2, 2, 2, 3, 3]], [135, [3, 3, 3, 5]], [175, [5, 5, 7]], [225, [3, 3, 5, 5]],
-  [180, [2, 2, 3, 3, 5]], [126, [2, 3, 3, 7]], [250, [2, 5, 5, 5]], [300, [2, 2, 3, 5, 5]], [360, [2, 2, 2, 3, 3, 5]], [400, [2, 2, 2, 2, 5, 5]],
+  [135, [3, 3, 3, 5]], [96, [2, 2, 2, 2, 2, 3]], [175, [5, 5, 7]], [49, [7, 7]], [144, [2, 2, 2, 2, 3, 3]], [180, [2, 2, 3, 3, 5]],
+  [64, [2, 2, 2, 2, 2, 2]], [126, [2, 3, 3, 7]], [250, [2, 5, 5, 5]], [81, [3, 3, 3, 3]], [300, [2, 2, 3, 5, 5]], [360, [2, 2, 2, 3, 3, 5]],
 ];
-const BKB = bookB.map(([n, e], i) => treeQ(`${P}-bb${i + 1}`, n, e, { form: "index", book: true, ...(i < 9 ? { hint: `Hint: ${counts(e).length} different prime${counts(e).length > 1 ? "s" : ""}` } : {}) }));
+const BKB = bookB.map(([n, e], i) => treeQ(`${P}-bb${i + 1}`, n, e, { form: "index", book: true }));
 
 // ---------- exit ticket ----------
 const exitItems: CuratedQuestion[] = [
@@ -131,7 +132,7 @@ const depthSlide = (id: string, q: CuratedQuestion): Slide =>
   const asked = [...WBA, ...BKA, ...WBB, ...BKB, ...exitItems.slice(0, 2)].map((q) => Number(q.title.replace(/\D/g, "")));
   const dup = asked.filter((n, i) => asked.indexOf(n) !== i);
   must(dup.length === 0, `a number is asked twice: ${dup.join(", ")}`);
-  must(WBA.length === 10 && BKA.length === 15 && SETC.length === 15 && WBB.length === 12 && BKB.length === 15, "the plan's counts");
+  must(WBA.length === 10 && BKA.length === 12 && SETC.length === 15 && WBB.length === 12 && BKB.length === 12, "the plan's counts");
 }
 assertFreshNumbers({
   worked: [],
@@ -141,15 +142,9 @@ assertFreshNumbers({
 
 // ---------- the slides ----------
 /** Practice: the question on the left, a blank workspace on the right, and only the answer (no working) under the question on a click. */
-const practice = (id: string, title: string, items: CuratedQuestion[], brief: string): Slide => {
+const practice = (id: string, title: string, items: CuratedQuestion[], brief: string, size = 48): Slide => {
   const s = S.deliberate(id, title, items, brief);
-  return { ...s, family: "teach", els: s.els.map((e) => (e.kind === "questions" ? { ...e, presentation: "whiteboard", visualiser: false, size: 64 } : e)) as DeckElement[] };
-};
-
-/** Fifteen book questions (5 rows of 3) need smaller numbers than the standard nine to fit above the buttons. */
-const book15 = (id: string, items: CuratedQuestion[], instruction: string, title: string, size = 70): Slide => {
-  const b = S.plainBook(id, items, 3, instruction, title);
-  return { ...b, els: b.els.map((e) => (e.kind === "grid" ? { ...e, size } : e)) as DeckElement[] };
+  return { ...s, family: "teach", els: s.els.map((e) => (e.kind === "questions" ? { ...e, presentation: "whiteboard", visualiser: false, size } : e)) as DeckElement[] };
 };
 
 /** The flow chart: start with a number, is it prime? yes: circle it and stop; no: split it into two numbers, then ask the same of each new number. */
@@ -179,8 +174,16 @@ const flow = makeSlide(`${P}-flow`, "teach", "How to draw a factor tree", [
   lineEl(410, 675, 0, -260, { colour: "#64748b", step: 5 }),
   lineEl(410, 415, 150, 0, { arrow: true, colour: "#64748b", step: 5 }),
   t(60, 470, 330, 130, "Ask it again for each new number", 34, { bold: true, colour: grey, align: "center", step: 5 }),
-  t(100, 820, 1400, 44, "Primes to 20:  2   3   5   7   11   13   17   19", 30, { colour: grey, align: "center" }),
 ], "The method as a flow chart, one click at a time. You draw the trees; the practice slides give the number and, on a click, the answer.");
+
+/** What index form means, at a size that reads from the back of the room. */
+const indexSlide = makeSlide(`${P}-index`, "language", "Index form", [
+  t(100, 70, 1400, 50, "KEY DEFINITION", 30, { bold: true, colour: "#6d28d9" }),
+  t(100, 130, 1400, 130, "Index form", 100, { bold: true }),
+  t(100, 290, 1400, 190, "Index form is a short way to write the same number multiplied by itself again and again.", 62),
+  t(100, 510, 1400, 150, "$2 \\times 2 \\times 2 = 2^3$", 110, { bold: true, align: "center", middle: true }),
+  t(100, 700, 1400, 160, "The small raised number is the index. It counts how many times the number is written.", 54, { colour: grey }),
+]);
 
 export default () => ({
   id: ID, title: "Prime Factor Trees", strand: "Number", questionVersion: 2,
@@ -194,19 +197,19 @@ export default () => ({
     S.divider(`${P}-d1`, "Factor trees"),
     S.definition(`${P}-prime`, "Prime number", "A prime number has exactly two factors: 1 and itself.\n\nThe primes up to 20 are 2, 3, 5, 7, 11, 13, 17 and 19.\n\n1 is not a prime number."),
     flow,
-    practice(`${P}-wb-a`, "Factor tree whiteboards", WBA, "Ten whiteboards: the number on the left, your tree on the right, the product of primes on a click."),
-    book15(`${P}-book-a`, BKA, "Copy into your book. Draw a tree and write each number as a product of primes.", "Factor tree book work"),
+    practice(`${P}-wb-a`, "Factor tree whiteboards", WBA, "Ten whiteboards: the number on the left, your tree on the right, the product of primes on a click.", 44),
+    S.plainBook(`${P}-book-a`, BKA, 3, "Copy into your book. Draw a tree and write each number as a product of primes.", "Factor tree book work"),
     S.divider(`${P}-d2`, "Index form"),
-    S.definition(`${P}-index`, "Index form", "Index form is a short way to write the same number multiplied by itself again and again.\n\n$2 \\times 2 \\times 2 = 2^3$\n\nThe small raised number is the index. It counts how many times the number is written."),
+    indexSlide,
     S.board(`${P}-table`, "Write it in index form", "", {
       head: ["Product of primes", "Index form"], given: 1,
-      rows: [["$7 \\times 7$", "$7^2$"], ["$2 \\times 2 \\times 2$", "$2^3$"], ["$3 \\times 3 \\times 5$", "$3^2 \\times 5$"], ["$2 \\times 2 \\times 3 \\times 3 \\times 3$", "$2^2 \\times 3^3$"]],
+      rows: [["$7 \\times 7$", "$7^2$"], ["$2 \\times 2 \\times 2$", "$2^3$"], ["$3 \\times 5 \\times 3$", "$3^2 \\times 5$"], ["$3 \\times 2 \\times 3 \\times 2 \\times 3$", "$2^2 \\times 3^3$"]],
     }),
-    practice(`${P}-set-c`, "Index form whiteboards", SETC, "Fifteen products of primes to write in index form, climbing from one repeated prime to three. The product is given; the answer is on a click."),
+    practice(`${P}-set-c`, "Index form whiteboards", SETC, "Fifteen products of primes to write in index form, climbing from one repeated prime to three. Many are not written smallest first. The product is given; the answer, always smallest first, is on a click.", 44),
     S.divider(`${P}-d3`, "Back to the trees"),
     practice(`${P}-wb-b`, "Factor trees in index form", WBB, "Twelve whiteboards: draw the tree, then write the answer in index form."),
     depthSlide(`${P}-depth-1`, depth1),
-    book15(`${P}-book-b`, BKB, "Copy into your book. Draw a tree and write each number in index form.", "Index form book work"),
+    S.plainBook(`${P}-book-b`, BKB, 3, "Copy into your book. Draw a tree and write each number in index form.", "Index form book work"),
     depthSlide(`${P}-depth-2`, depth2),
     depthSlide(`${P}-depth-3`, depth3),
     S.exitRows(`${P}-exit`, exitItems, "Work on your own."),

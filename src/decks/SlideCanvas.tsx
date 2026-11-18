@@ -270,9 +270,9 @@ const BOOK_AUTO_MAX = 160;
 /** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
  *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
  *  by this one component, so they always look alike. `qSize` is the question's drawn size; `extra` is for a control floating in the corner. */
-function BookCell({ num, qSize, answerSize, up, question, answer, onHold, title, extra, centre }: {
+function BookCell({ num, qSize, answerSize, up, question, answer, onHold, onNumber, title, extra, centre }: {
   centre?: boolean; num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
-  onHold?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
+  onHold?: (e: PointerEvent) => void; onNumber?: () => void; title?: string; extra?: ReactNode;
 }) {
   const hold = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number; pointer: number } | null>(null);
   const cancelHold = () => { if (hold.current) clearTimeout(hold.current.timer); hold.current = null; };
@@ -287,7 +287,11 @@ function BookCell({ num, qSize, answerSize, up, question, answer, onHold, title,
       onPointerMove={(e) => { const h = hold.current; if (h && (h.pointer !== e.pointerId || Math.hypot(e.clientX - h.x, e.clientY - h.y) > 8)) cancelHold(); }}
       onPointerLeave={cancelHold} onPointerUp={cancelHold} onPointerCancel={cancelHold} onContextMenu={(e) => { if (onHold) e.preventDefault(); }}
       title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
-      <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
+      {/* in the player the number is a button: pressing it flips just this cell between its question and its answer */}
+      {onNumber
+        ? <button type="button" onClick={onNumber} aria-pressed={up} aria-label={`${up ? "Show the question" : "Show the answer"} for number ${num}`} data-cell-number
+            style={{ fontSize: qSize * 0.6, fontWeight: 600, color: up ? "white" : "#64748b", background: up ? "#1e3a8a" : "#f1f5f9", border: `2px solid ${up ? "#1e3a8a" : "#cbd5e1"}`, borderRadius: "0.5em", width: "1.9em", height: "1.9em", padding: 0, flexShrink: 0, cursor: "pointer", lineHeight: 1 }}>{num}</button>
+        : <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
         <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
         <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
@@ -378,7 +382,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
           const sh = shown[i], cell = shared && !prompt ? { ...sh, lines: sh.lines!.slice(1) } : sh;
           return (
             <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a half-second hold on the cell
-              onHold={live ? (e) => tap(e, q.key) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
+              onHold={live ? (e) => tap(e, q.key) : undefined} onNumber={live ? () => flip(q.key) : undefined} title={live ? "Press the number to flip between the question and its answer" : undefined}
               question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
               extra={live && !el.authored && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
@@ -594,7 +598,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div ref={gridRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => (
           <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
-            onHold={live ? (e) => tap(e, q.id) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
+            onHold={live ? (e) => tap(e, q.id) : undefined} onNumber={live ? () => setFlips((f) => { const n = new Set(f); if (n.has(q.id)) n.delete(q.id); else n.add(q.id); return n; }) : undefined} title={live ? "Press the number to flip between the question and its answer" : undefined}
             question={q.rectilinear ? <ShapeQuestion drawing={extras(rectilinearQuestion(q.rectilinear))._diagram as Drawing} /> : instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
             answer={<QuestionText lines={q.answer} />} />
         ))}
@@ -602,7 +606,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div style={{ marginTop: 12, fontSize: 26 }}>
         <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={slideButton}>
           {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
-        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Hold a row for half a second to show its answer</span>}
+        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Press a number to show its answer</span>}
       </div>
     </div>
   );

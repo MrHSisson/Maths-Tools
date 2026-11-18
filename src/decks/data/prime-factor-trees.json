@@ -384,22 +384,10 @@
      "text": "Ask it again for each new number",
      "align": "center",
      "colour": "#64748b"
-    },
-    {
-     "h": 44,
-     "w": 1400,
-     "x": 100,
-     "y": 820,
-     "id": "pft-flow-19",
-     "kind": "text",
-     "size": 30,
-     "text": "Primes to 20:  2   3   5   7   11   13   17   19",
-     "align": "center",
-     "colour": "#64748b"
     }
    ],
    "brief": "The method as a flow chart, one click at a time. You draw the trees; the practice slides give the number and, on a click, the answer.",
-   "built": "6ketr2",
+   "built": "fnc18b",
    "title": "How to draw a factor tree",
    "family": "teach"
   },
@@ -413,7 +401,7 @@
      "y": 24,
      "id": "pft-wb-a-1",
      "kind": "questions",
-     "size": 64,
+     "size": 44,
      "items": [
       {
        "id": "pft-wa1",
@@ -637,7 +625,7 @@
     }
    ],
    "brief": "Ten whiteboards: the number on the left, your tree on the right, the product of primes on a click.",
-   "built": "1e9gxwe",
+   "built": "snokf0",
    "title": "Factor tree whiteboards",
    "family": "teach"
   },
@@ -664,7 +652,7 @@
      "bank": [],
      "cols": 3,
      "kind": "grid",
-     "size": 70,
+     "size": 100,
      "align": "center",
      "fixed": true,
      "items": [
@@ -682,8 +670,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$14$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 primes}}$"
+        "$14$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -703,8 +690,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$22$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 primes}}$"
+        "$22$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -724,8 +710,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$12$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 primes}}$"
+        "$12$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -749,8 +734,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$20$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 primes}}$"
+        "$20$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -770,8 +754,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$27$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 3 primes}}$"
+        "$27$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -795,8 +778,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$55$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 primes}}$"
+        "$55$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -816,8 +798,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$40$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 primes}}$"
+        "$40$"
        ],
        "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
        "explanation": [],
@@ -829,52 +810,6 @@
       },
       {
        "id": "pft-ba8",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$36$",
-       "answer": [
-        "$36 = 2 \\times 2 \\times 3 \\times 3$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$36$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 primes}}$"
-       ],
-       "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
-       "explanation": [],
-       "misconception": {
-        "id": "primes-repeat-once",
-        "label": "Lists a repeated prime only once"
-       },
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-ba9",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$56$",
-       "answer": [
-        "$56 = 2 \\times 2 \\times 2 \\times 7$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$56$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 4 primes}}$"
-       ],
-       "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-ba10",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$90$",
@@ -894,7 +829,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-ba11",
+       "id": "pft-ba9",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$75$",
@@ -914,7 +849,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-ba12",
+       "id": "pft-ba10",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$220$",
@@ -934,27 +869,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-ba13",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$150$",
-       "answer": [
-        "$150 = 2 \\times 3 \\times 5 \\times 5$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$150$"
-       ],
-       "rationale": "Split into two numbers, circle each prime, stop when every branch ends in a prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-ba14",
+       "id": "pft-ba11",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$99$",
@@ -974,7 +889,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-ba15",
+       "id": "pft-ba12",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$140$",
@@ -996,7 +911,7 @@
      ]
     }
    ],
-   "built": "9d1een",
+   "built": "67pek2",
    "title": "Factor tree book work",
    "family": "retrieval"
   },
@@ -1029,7 +944,7 @@
      "h": 50,
      "w": 1400,
      "x": 100,
-     "y": 120,
+     "y": 70,
      "id": "pft-index-1",
      "bold": true,
      "kind": "text",
@@ -1038,30 +953,55 @@
      "colour": "#6d28d9"
     },
     {
-     "h": 140,
+     "h": 130,
      "w": 1400,
      "x": 100,
-     "y": 190,
+     "y": 130,
      "id": "pft-index-2",
      "bold": true,
      "kind": "text",
-     "size": 96,
+     "size": 100,
      "text": "Index form",
      "colour": "#0f172a"
     },
     {
-     "h": 420,
+     "h": 190,
      "w": 1400,
      "x": 100,
-     "y": 370,
+     "y": 290,
      "id": "pft-index-3",
      "kind": "text",
-     "size": 52,
-     "text": "Index form is a short way to write the same number multiplied by itself again and again.\n\n$2 \\times 2 \\times 2 = 2^3$\n\nThe small raised number is the index. It counts how many times the number is written.",
+     "size": 62,
+     "text": "Index form is a short way to write the same number multiplied by itself again and again.",
      "colour": "#0f172a"
+    },
+    {
+     "h": 150,
+     "w": 1400,
+     "x": 100,
+     "y": 510,
+     "id": "pft-index-4",
+     "bold": true,
+     "kind": "text",
+     "size": 110,
+     "text": "$2 \\times 2 \\times 2 = 2^3$",
+     "align": "center",
+     "colour": "#0f172a",
+     "middle": true
+    },
+    {
+     "h": 160,
+     "w": 1400,
+     "x": 100,
+     "y": 700,
+     "id": "pft-index-5",
+     "kind": "text",
+     "size": 54,
+     "text": "The small raised number is the index. It counts how many times the number is written.",
+     "colour": "#64748b"
     }
    ],
-   "built": "wmrvhy",
+   "built": "1tspl45",
    "title": "Index form",
    "family": "language"
   },
@@ -1102,11 +1042,11 @@
         "$2^3$"
        ],
        [
-        "$3 \\times 3 \\times 5$",
+        "$3 \\times 5 \\times 3$",
         "$3^2 \\times 5$"
        ],
        [
-        "$2 \\times 2 \\times 3 \\times 3 \\times 3$",
+        "$3 \\times 2 \\times 3 \\times 2 \\times 3$",
         "$2^2 \\times 3^3$"
        ]
       ],
@@ -1116,7 +1056,7 @@
      "size": 46
     }
    ],
-   "built": "1cx1l1d",
+   "built": "tday2p",
    "title": "Write it in index form",
    "family": "teach"
   },
@@ -1130,7 +1070,7 @@
      "y": 24,
      "id": "pft-set-c-1",
      "kind": "questions",
-     "size": 64,
+     "size": 44,
      "items": [
       {
        "id": "pft-c1",
@@ -1226,7 +1166,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 5$ in index form."
+        "Write $5 \\times 2 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1250,7 +1190,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 3 \\times 3$ in index form."
+        "Write $3 \\times 2 \\times 3$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1274,7 +1214,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $3 \\times 5 \\times 5$ in index form."
+        "Write $5 \\times 3 \\times 5$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1294,7 +1234,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 11$ in index form."
+        "Write $2 \\times 11 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1314,7 +1254,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 2 \\times 7$ in index form."
+        "Write $7 \\times 2 \\times 2 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1334,7 +1274,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 3 \\times 3 \\times 3$ in index form."
+        "Write $3 \\times 2 \\times 3 \\times 3$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1358,7 +1298,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 3 \\times 3 \\times 5$ in index form."
+        "Write $3 \\times 2 \\times 5 \\times 2 \\times 3$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1382,7 +1322,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 5 \\times 5 \\times 5$ in index form."
+        "Write $5 \\times 2 \\times 5 \\times 5$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1402,7 +1342,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 3 \\times 5 \\times 5$ in index form."
+        "Write $2 \\times 5 \\times 3 \\times 5 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1422,7 +1362,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 2 \\times 2 \\times 2 \\times 3$ in index form."
+        "Write $2 \\times 3 \\times 2 \\times 2 \\times 2 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1442,7 +1382,7 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "Write $2 \\times 2 \\times 2 \\times 3 \\times 3 \\times 3$ in index form."
+        "Write $3 \\times 2 \\times 3 \\times 2 \\times 3 \\times 2$ in index form."
        ],
        "rationale": "",
        "explanation": [],
@@ -1457,8 +1397,8 @@
      "presentation": "whiteboard"
     }
    ],
-   "brief": "Fifteen products of primes to write in index form, climbing from one repeated prime to three. The product is given; the answer is on a click.",
-   "built": "c4qi38",
+   "brief": "Fifteen products of primes to write in index form, climbing from one repeated prime to three. Many are not written smallest first. The product is given; the answer, always smallest first, is on a click.",
+   "built": "3c1hzi",
    "title": "Index form whiteboards",
    "family": "teach"
   },
@@ -1494,7 +1434,7 @@
      "y": 24,
      "id": "pft-wb-b-1",
      "kind": "questions",
-     "size": 64,
+     "size": 48,
      "items": [
       {
        "id": "pft-wb1",
@@ -1746,7 +1686,7 @@
     }
    ],
    "brief": "Twelve whiteboards: draw the tree, then write the answer in index form.",
-   "built": "1saqmzl",
+   "built": "12s2c0z",
    "title": "Factor trees in index form",
    "family": "teach"
   },
@@ -1851,138 +1791,12 @@
      "bank": [],
      "cols": 3,
      "kind": "grid",
-     "size": 70,
+     "size": 100,
      "align": "center",
      "fixed": true,
      "items": [
       {
        "id": "pft-bb1",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$49$",
-       "answer": [
-        "$49 = 7^{2}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$49$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 1 different prime}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb2",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$64$",
-       "answer": [
-        "$64 = 2^{6}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$64$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 1 different prime}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb3",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$81$",
-       "answer": [
-        "$81 = 3^{4}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$81$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 1 different prime}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb4",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$125$",
-       "answer": [
-        "$125 = 5^{3}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$125$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 1 different prime}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb5",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$96$",
-       "answer": [
-        "$96 = 2^{5} \\times 3$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$96$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 different primes}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb6",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$144$",
-       "answer": [
-        "$144 = 2^{4} \\times 3^{2}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$144$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 different primes}}$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
-      },
-      {
-       "id": "pft-bb7",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$135$",
@@ -1995,15 +1809,34 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$135$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 different primes}}$"
+        "$135$"
        ],
        "rationale": "Draw the tree, then count each prime.",
        "explanation": [],
        "expectedErrors": []
       },
       {
-       "id": "pft-bb8",
+       "id": "pft-bb2",
+       "tool": "prime-factors",
+       "level": "level1",
+       "title": "$96$",
+       "answer": [
+        "$96 = 2^{5} \\times 3$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$96$"
+       ],
+       "rationale": "Draw the tree, then count each prime.",
+       "explanation": [],
+       "expectedErrors": []
+      },
+      {
+       "id": "pft-bb3",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$175$",
@@ -2016,20 +1849,19 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$175$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 different primes}}$"
+        "$175$"
        ],
        "rationale": "Draw the tree, then count each prime.",
        "explanation": [],
        "expectedErrors": []
       },
       {
-       "id": "pft-bb9",
+       "id": "pft-bb4",
        "tool": "prime-factors",
        "level": "level1",
-       "title": "$225$",
+       "title": "$49$",
        "answer": [
-        "$225 = 3^{2} \\times 5^{2}$"
+        "$49 = 7^{2}$"
        ],
        "format": "open",
        "status": "ready",
@@ -2037,15 +1869,34 @@
        "version": 2,
        "followUp": "",
        "question": [
-        "$225$",
-        "$\\textcolor{#64748b}{\\tiny\\text{Hint: 2 different primes}}$"
+        "$49$"
        ],
        "rationale": "Draw the tree, then count each prime.",
        "explanation": [],
        "expectedErrors": []
       },
       {
-       "id": "pft-bb10",
+       "id": "pft-bb5",
+       "tool": "prime-factors",
+       "level": "level1",
+       "title": "$144$",
+       "answer": [
+        "$144 = 2^{4} \\times 3^{2}$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$144$"
+       ],
+       "rationale": "Draw the tree, then count each prime.",
+       "explanation": [],
+       "expectedErrors": []
+      },
+      {
+       "id": "pft-bb6",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$180$",
@@ -2065,7 +1916,27 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-bb11",
+       "id": "pft-bb7",
+       "tool": "prime-factors",
+       "level": "level1",
+       "title": "$64$",
+       "answer": [
+        "$64 = 2^{6}$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$64$"
+       ],
+       "rationale": "Draw the tree, then count each prime.",
+       "explanation": [],
+       "expectedErrors": []
+      },
+      {
+       "id": "pft-bb8",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$126$",
@@ -2085,7 +1956,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-bb12",
+       "id": "pft-bb9",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$250$",
@@ -2105,7 +1976,27 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-bb13",
+       "id": "pft-bb10",
+       "tool": "prime-factors",
+       "level": "level1",
+       "title": "$81$",
+       "answer": [
+        "$81 = 3^{4}$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$81$"
+       ],
+       "rationale": "Draw the tree, then count each prime.",
+       "explanation": [],
+       "expectedErrors": []
+      },
+      {
+       "id": "pft-bb11",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$300$",
@@ -2125,7 +2016,7 @@
        "expectedErrors": []
       },
       {
-       "id": "pft-bb14",
+       "id": "pft-bb12",
        "tool": "prime-factors",
        "level": "level1",
        "title": "$360$",
@@ -2143,31 +2034,11 @@
        "rationale": "Draw the tree, then count each prime.",
        "explanation": [],
        "expectedErrors": []
-      },
-      {
-       "id": "pft-bb15",
-       "tool": "prime-factors",
-       "level": "level1",
-       "title": "$400$",
-       "answer": [
-        "$400 = 2^{4} \\times 5^{2}$"
-       ],
-       "format": "open",
-       "status": "ready",
-       "purpose": "practice",
-       "version": 2,
-       "followUp": "",
-       "question": [
-        "$400$"
-       ],
-       "rationale": "Draw the tree, then count each prime.",
-       "explanation": [],
-       "expectedErrors": []
       }
      ]
     }
    ],
-   "built": "ly315l",
+   "built": "12c08zk",
    "title": "Index form book work",
    "family": "retrieval"
   },
