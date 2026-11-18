@@ -117,7 +117,7 @@ export function Splitter({ side, width, min, max, onChange }: { side: "left" | "
 
 // ── element names (the list of what is on the slide, and the properties header) ─────────────────────────────────
 
-export const KIND_NAME: Record<string, string> = { ink: "Writing", text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", ratioTable: "Ratio table", bar: "Bar model", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
+export const KIND_NAME: Record<string, string> = { ink: "Writing", text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", ratioTable: "Ratio table", factorTree: "Factor tree", bar: "Bar model", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
 
 /** A short, human description of one element for the objects list. */
 function elementLabel(el: DeckElement): string {
@@ -131,6 +131,7 @@ function elementLabel(el: DeckElement): string {
     case "ratioTable": return `Ratio table, ${el.table.rows.length} rows`;
     case "ink": return `Writing, ${el.strokes.length} stroke${el.strokes.length === 1 ? "" : "s"}`;
     case "numberGrid": return `Number grid, 1 to 100${el.staged ? ", staged" : ""}`;
+    case "factorTree": return `Factor tree for ${el.tree.n}${el.staged ? ", staged" : ""}`;
     case "bar": return `Bar model, ${el.bar.parts.reduce((n, p) => n + p.units, 0)} boxes`;
     case "practice": case "generator": case "worksheet": case "depth": return `${KIND_NAME[el.kind]} (${el.tool})`;
     case "questions": return `${KIND_NAME.questions}, ${el.items.length} questions`;

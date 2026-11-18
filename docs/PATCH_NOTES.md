@@ -29,6 +29,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-18 — Factor tree slide piece, and the plan for the prime factorisation lesson
+
+Branch `ccr-8fd397fb-lwfz38`. Area: `src/decks/` (a new slide piece), `src/shared/factorTree.ts`, `specs/decks/prime-factor-trees.md`.
+
+- **Plan** `specs/decks/prime-factor-trees.md`, agreed with Harry: one deck aimed at one lesson (slides tagged Core / If time / Overflow), for a weak group with weak times tables and no calculators; trees to circled primes, then the product, then index form built as a tally first. Numbers are chosen so every first split uses the 2, 3, 5 or 10 table; 11, 13, 17 and 19 may appear only to the power 1 and only with 2, 3 or 5. They know the divisibility rules but are not confident, so there is a short "which prime goes in first?" slide and a quiet reminder under every tree. No printables. Every factorisation in the plan was recomputed by script.
+- **New slide piece: Factor tree** (`kind: "factorTree"`, `FactorTree.tsx`, logic in `src/shared/factorTree.ts`): a number splits in two until every branch ends in a prime, circled in the number grid's colours (2 blue, 3 green, 5 orange, 7 purple, one neutral ring for 11 and above). Laid out at its full size so nothing moves; one split per click when staged, then optional clicks for the primes as a product, a tally (prime, how many), and the index column with the product in index form. Filled in / Structure only (root, the numbers marked `given`, "?" where the next ones go) / Blank (root alone). Optional "Primes to 20" strip and divisibility reminder underneath. Primality comes from the number, so a wrong circle cannot be authored; `treeProblems` names a split using 1, a wrong product, an unsplit non-prime or a split prime, and the deck check reports them.
+- Editor: Add → Factor tree (starts from 20), Tree options (start number builds a tree splitting off the smallest prime, fill, staged, the extra clicks, the two reminders); `S.factorTree` and a Slide library entry; `stagedClicks` counts the tree's clicks.
+- `npm run deck -- review` now takes a staged factor tree's clicks (half way, then all) so the contact sheet shows the build, not just the first state.
+- Tests `src/tests/factorTree.test.ts` (10): leaves and product, tally and index text, every automatic tree for 2 to 999 is valid, bad trees are named, colours, full-size layout and click order, Structure only, click counts, the deck check.
+- **Not done:** the deck itself (the sets, Depth cards and misconception tags are the next steps in the plan). This is new code, so it must be merged to `main` before the deck can be pushed.
+
+Agent: Claude Code
+Notes: planner Build Log block not written yet (session continues with the deck).
+
 ## 2026-11-17 — Year 7 rectilinear area: fresh slide 5, lengths inside at 270° corners, a worksheet made to print two to a sheet
 
 Branch `claude/busy-knuth-ru9nyt`. Area: the `year7-rectilinear-area` deck (live copy, pulled and pushed), arrow-style shape diagrams, the pinned authored worksheet's print layout.

@@ -9,6 +9,7 @@ import {
   Printer, RefreshCw,
 } from "lucide-react";
 import { loadKaTeX } from "../shared/katex";
+import { autoTree } from "../shared/factorTree";
 import { useLayoutMode } from "../shared/layoutMode";
 import { useCloudState } from "./cloud";
 import { fetchPublishedIndex, publishDeck, unpublishDeck, type PublishedEntry } from "./published";
@@ -22,7 +23,7 @@ import { VersionsDialog } from "./VersionsDialog";
 import { applyLayout, loadTemplates, removeTemplate, saveTemplate } from "./relayout";
 import { MAX_PINNED, nextSheetTitle, pinnedSheets } from "./worksheets";
 import { useShownSize } from "./shownSize";
-import { BarProps, BoardProps, GeneratorProps, NumberGridProps, RatioTableProps, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
+import { BarProps, BoardProps, FactorTreeProps, GeneratorProps, NumberGridProps, RatioTableProps, Num, SNAP, Swatches, inlineErrors, input, readImage, reId, reIdSlide, small, snap, toolBtn, uid } from "./EditorPanels";
 import { BarDivider, Menu, MenuDivider, MenuHeading, MenuItem, ObjectList, RibbonGroup, RibbonPanel, RibbonTabs, ShortcutsDialog, KIND_NAME, SlideStrip, Splitter, usePref } from "./EditorChrome";
 import { GENERATOR_TOOLS } from "./generators";
 import { align, bbox, distribute, intersects, moveIndex, snapBox, snapEdge, snapTargets, unionBox, type AlignHow, type Guide, type Rect } from "./geometry";
@@ -342,6 +343,7 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
     { label: "Book activity", icon: <BookOpen size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "worksheet", x: 100, y: 170, w: 1400, h: 690, tool: deck.tool ?? GENERATOR_TOOLS[0][0], preset: { level: "level1" }, count: 12, cols: 3, seed: 1 }]) },
     { label: "Ratio table", icon: <Table2 size={16} />, note: "Quantities across the top, a row per step, the factor between rows.", run: () => addEls([{ id: uid(slide.id), kind: "ratioTable", ...centre(1000, 420), table: { headers: ["Red", "Blue"], given: 1, rows: [["3", "2"], ["6", "4"], ["12", "8"]], operations: ["\\times 2", "\\times 2"] }, fill: "filled", size: 56 }]) },
     { label: "Number grid", icon: <LayoutGrid size={16} />, note: "1 to 100: tap to scribble, finish a times table in one click, or build the sieve click by click.", run: () => addEls([{ id: uid(slide.id), kind: "numberGrid", ...centre(760, 800), fill: "structure" }]) },
+    { label: "Factor tree", icon: <Table2 size={16} />, note: "A number splits in two until every branch ends in a circled prime; one split per click.", run: () => addEls([{ id: uid(slide.id), kind: "factorTree", ...centre(1300, 640), tree: autoTree(20), fill: "filled", staged: true }]) },
     { label: "Bar model", icon: <BarChartHorizontal size={16} />, note: "Boxes in coloured parts, with braces for the parts and the total.", run: () => addEls([{ id: uid(slide.id), kind: "bar", ...centre(1200, 420), bar: { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } }, fill: "filled", size: 64 }]) },
     { label: "Board", icon: <Table2 size={16} />, run: () => addEls([{ id: uid(slide.id), kind: "board", ...centre(1000, 400), grid: { head: ["", ""], given: 1, rows: [["", ""], ["", ""], ["", ""]] }, fill: "filled", size: 46 }]) },
   ];
@@ -868,17 +870,18 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           {one.kind === "grid" && <Num label="Columns" value={one.cols} min={1} onChange={(cols) => setEl(one.id, { cols: Math.max(1, Math.min(4, cols)) })} />}
           {(one.kind === "grid" || one.kind === "worksheet") && (["left", "center"] as const).map((al) => <button key={al} className={`${toolBtn} ${iconOn((one.align ?? "left") === al)}`} aria-pressed={(one.align ?? "left") === al} title={`Questions ${al === "left" ? "at the left of" : "centred in"} their cells`} onClick={() => setEl(one.id, { align: al === "left" ? undefined : al })}>{al === "left" ? <AlignLeft size={16} /> : <AlignCenter size={16} />}</button>)}
         </RibbonGroup>}
-        {(one.kind === "board" || one.kind === "ratioTable" || one.kind === "numberGrid" || one.kind === "bar") && <RibbonGroup label={KIND_NAME[one.kind] ?? one.kind}>
-          <Menu panel label="Edit table" title="The cells, headings and options" button={<><Table2 size={16} /><span className="hidden lg:inline">{one.kind === "bar" ? "Edit bar model" : one.kind === "numberGrid" ? "Grid options" : "Edit table"}</span></>}>
+        {(one.kind === "board" || one.kind === "ratioTable" || one.kind === "numberGrid" || one.kind === "factorTree" || one.kind === "bar") && <RibbonGroup label={KIND_NAME[one.kind] ?? one.kind}>
+          <Menu panel label="Edit table" title="The cells, headings and options" button={<><Table2 size={16} /><span className="hidden lg:inline">{one.kind === "bar" ? "Edit bar model" : one.kind === "numberGrid" ? "Grid options" : one.kind === "factorTree" ? "Tree options" : "Edit table"}</span></>}>
             {() => <div className="p-2">
               {one.kind === "board" && <BoardProps el={one} set={(pt) => setEl(one.id, pt)} />}
               {one.kind === "ratioTable" && <RatioTableProps el={one} set={(pt) => setEl(one.id, pt)} />}
               {one.kind === "numberGrid" && <NumberGridProps el={one} set={(pt) => setEl(one.id, pt)} />}
+              {one.kind === "factorTree" && <FactorTreeProps el={one} set={(pt) => setEl(one.id, pt)} />}
               {one.kind === "bar" && <BarProps el={one} set={(pt) => setEl(one.id, pt)} />}
             </div>}
           </Menu>
         </RibbonGroup>}
-        {!sized && one.kind !== "shape" && one.kind !== "line" && one.kind !== "questions" && one.kind !== "practice" && one.kind !== "grid" && one.kind !== "depth" && one.kind !== "generator" && one.kind !== "worksheet" && one.kind !== "board" && one.kind !== "ratioTable" && one.kind !== "numberGrid" && one.kind !== "bar" && <RibbonGroup label={KIND_NAME[one.kind] ?? one.kind}>{hint(one.kind === "image" ? "Drag a corner to resize; Shift stretches it." : "Select it on the slide to change it.")}</RibbonGroup>}
+        {!sized && one.kind !== "shape" && one.kind !== "line" && one.kind !== "questions" && one.kind !== "practice" && one.kind !== "grid" && one.kind !== "depth" && one.kind !== "generator" && one.kind !== "worksheet" && one.kind !== "board" && one.kind !== "ratioTable" && one.kind !== "numberGrid" && one.kind !== "factorTree" && one.kind !== "bar" && <RibbonGroup label={KIND_NAME[one.kind] ?? one.kind}>{hint(one.kind === "image" ? "Drag a corner to resize; Shift stretches it." : "Select it on the slide to change it.")}</RibbonGroup>}
       </>
     );
   })();

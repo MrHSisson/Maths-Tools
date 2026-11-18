@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { GENERATOR_TOOLS } from "./generators";
 import { CANVAS_H, CANVAS_W, type DeckElement, type FillMode, type Slide } from "./types";
+import { TREE_REVEALS, autoTree, treeProblems, type TreeReveal } from "../shared/factorTree";
 import { BAR_TONES, barProblems, barUnits } from "../shared/barModel";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
@@ -125,6 +126,30 @@ export function NumberGridProps({ el, set }: { el: ElOf<"numberGrid">; set: (p: 
       <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>Sieve one click at a time (needs Filled in)</Check>
       <Label>Primes in the sieve</Label>
       <div className="flex gap-3">{[2, 3, 5, 7].map((p) => <label key={p} className="flex items-center gap-1 text-sm"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={stages.includes(p)} onChange={(e) => set({ stages: [2, 3, 5, 7].filter((q) => (q === p ? e.target.checked : stages.includes(q))) })} />{p}</label>)}</div>
+    </>
+  );
+}
+
+/** The factor tree: the number it starts from (a new tree splits off the smallest prime each time), how it starts, one split per click, the
+ *  clicks after the last split, and the two quiet reminders under it. A hand-made tree can be pasted as JSON. */
+export function FactorTreeProps({ el, set }: { el: ElOf<"factorTree">; set: (p: Partial<ElOf<"factorTree">>) => void }) {
+  const reveal = el.reveal ?? [];
+  const names: Record<TreeReveal, string> = { product: "The primes as a product", counts: "A tally of how many of each", index: "The index form" };
+  const toggle = (r: TreeReveal, on: boolean) => set({ reveal: TREE_REVEALS.filter((q) => (q === r ? on : reveal.includes(q))) });
+  const problems = treeProblems(el.tree);
+  return (
+    <>
+      <Label>Start number</Label>
+      <input type="number" min={2} max={999} className={input} value={el.tree.n} onChange={(e) => { const n = Math.round(Number(e.target.value)); if (n >= 2 && n <= 999) set({ tree: autoTree(n) }); }} />
+      <Label>Starts as</Label>
+      <FillButtons value={el.fill ?? "filled"} onChange={(fill) => set({ fill })} />
+      <p className="mt-1 text-xs text-slate-500">Filled in: the whole tree. Structure only: the start number, the numbers marked as given and "?" where the next ones go. Blank: the start number alone.</p>
+      <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>One split per click (needs Filled in)</Check>
+      <Label>Then, on later clicks</Label>
+      {TREE_REVEALS.map((r) => <Check key={r} checked={reveal.includes(r)} onChange={(on) => toggle(r, on)}>{names[r]}</Check>)}
+      <Check checked={!!el.strip} onChange={(strip) => set({ strip })}>Primes to 20 under the tree</Check>
+      <Check checked={!!el.rules} onChange={(rules) => set({ rules })}>Divisibility reminder under the tree</Check>
+      {problems.length > 0 && <p className="mt-2 text-xs font-semibold text-red-700">{problems[0]}</p>}
     </>
   );
 }

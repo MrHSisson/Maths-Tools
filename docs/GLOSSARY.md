@@ -151,6 +151,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Question layout** — Full-width, Full-width flipped, Workspace right or Workspace left, chosen in the editor for fixed question sets and live generators. Depth cards are standalone full-slide question/answer faces. Workspace layouts reveal steps beneath the question.
 - **Workspace options** — the small workspace menu containing visualiser start/stop and camera selection.
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.
+- **Factor tree** — the slide piece (`factorTree`) for prime factorisation: a number splits into two numbers until every branch ends in a circled prime; staged one split per click, then optionally the primes as a product, a tally and the index form. Circles use the number grid's prime colours.
 - **Number grid** — the 1 to 100 slide piece (`numberGrid`): tap to scribble in a prime's colour, finish a times table in one click, or show the sieve of Eratosthenes click by click; **Print grids** prints two plain grids per A4.
 - **Pen / writing** — the editor's Pen draws on a slide and is saved as one `ink` layer per slide; separately, the player's pen keeps its marks with each slide while the deck is open.
 - **Starter** — the 2 × 2 layout of four numbered boxes (`S.starter`), for writing or typing a starter into.

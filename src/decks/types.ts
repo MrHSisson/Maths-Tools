@@ -3,6 +3,7 @@ import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
 import type { BarModelData } from "../shared/barModel";
+import type { TreeNode, TreeReveal } from "../shared/factorTree";
 import type { AnyQuestion } from "../shared";
 import type { TextbookSheet } from "./textbookSheet";
 
@@ -91,6 +92,7 @@ export type DeckElement = Box & (
    *  and scribble on (the default), Blank an empty grid. `staged` brings the sieve in a click at a time: 1 crossed out, then each prime in
    *  `stages` (default 2, 3, 5, 7) with its times table scribbled. Taps in the player are live marks, not saved. */
   | { kind: "numberGrid"; fill?: FillMode; staged?: boolean; stages?: number[] }
+  | { kind: "factorTree"; tree: TreeNode; fill?: FillMode; staged?: boolean; reveal?: TreeReveal[]; strip?: boolean; rules?: boolean }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }
   | ({ kind: "questions"; items: CuratedQuestion[]; size?: number; fixed?: boolean } & QuestionDisplaySettings)

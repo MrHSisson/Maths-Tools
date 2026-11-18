@@ -260,7 +260,7 @@ function PlayerShow({ deck, onEdit, badge, backTo, phone }: PlayerProps & { phon
   const backward = useCallback(() => { if (beat > 0) setBeat(beat - 1); else if (index > 0) go(index - 1, slideSteps(deck.slides[index - 1])); }, [beat, go, index, deck.slides]);
 
   // the pieces with a fill state: boards, ratio tables and bar models share the one control
-  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar" || e.kind === "numberGrid"), [deck.slides, index]);
+  const boards = useMemo(() => deck.slides[index].els.filter((e) => e.kind === "board" || e.kind === "ratioTable" || e.kind === "bar" || e.kind === "numberGrid" || e.kind === "factorTree"), [deck.slides, index]);
   const fillNow: FillMode = boards.length ? fills[boards[0].id] ?? (boards[0] as { fill?: FillMode }).fill ?? "filled" : "filled";
   /** One control for every board on the slide, kept in the bar under the slide so it can never cover anything on it. */
   const setFill = useCallback((m: FillMode) => setFills((f) => ({ ...f, ...Object.fromEntries(boards.map((e) => [e.id, m])) })), [boards]);

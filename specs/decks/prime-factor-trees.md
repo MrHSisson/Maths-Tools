@@ -1,6 +1,6 @@
 # Lesson plan: Prime factorisation with factor trees (and index form)
 
-**Status:** plan agreed in chat, updated 2026-11-18 (nothing built yet) · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
+**Status:** plan agreed in chat, updated 2026-11-18 (the Factor tree slide piece is built; the deck is not) · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
 **Follows:** Harry's LCM and HCF lesson. **Banked as:** "Prime factorisation lesson (factor trees)" in `docs/TASKS.md`.
 **Class:** weak group; **weak on times tables**; **no calculators**. **They have been taught the divisibility rules but are not confident on them.**
 
@@ -214,7 +214,7 @@ Each has a claim to test, a named misconception on every wrong option, speakers 
 
 ## Steps
 
-1. **Build the Factor tree piece and its tests, as its own small merge to `main`** (needed before the deck can be pushed). *In progress.*
+1. **Build the Factor tree piece and its tests, as its own small merge to `main`** (needed before the deck can be pushed). *Built 2026-11-18 on branch `ccr-8fd397fb-lwfz38`; merge pending.*
 2. Write the sets from this plan and send you the table (rung, answer, trap, wrong-method result), recomputed by a different route.
 3. Add the four misconception tags.
 4. `npm run deck -- looks <script>`: the look card for you to approve.
