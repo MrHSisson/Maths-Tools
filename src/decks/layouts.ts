@@ -2,6 +2,7 @@
 // "Add slide" offers them, and the Slide library (/decks/library) shows each one with its sample content.
 // A layout only places ordinary elements: once made, every part of the slide can be moved, edited or deleted.
 import type { BarModelData } from "../shared/barModel";
+import { autoTree, type TreeNode, type TreeReveal } from "../shared/factorTree";
 import type { RatioTableSpec, BoardGrid, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
 
 export const INK = "#0f172a";
@@ -110,6 +111,14 @@ export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes",
     { kind: "numberGrid", x: 720, y: 50, w: 860, h: 796, fill, ...(staged ? { staged } : {}) },
   ]);
 
+/** A factor tree, built a split at a time (`staged`, Filled in) or to draw on (Structure only or Blank). `reveal` adds the clicks after
+ *  the last split: the primes as a product, a tally, the index form. The primes strip and the divisibility reminder sit under it. */
+export const factorTreeSlide = (id: string, title = "Factor tree", tree: TreeNode = autoTree(20), fill: FillMode = "filled", staged = true, reveal: TreeReveal[] = [], help = true) =>
+  make(id, "teach", title, [
+    text(70, 36, 1460, 100, title, 64, { bold: true }),
+    { kind: "factorTree", x: 70, y: 150, w: 1460, h: 720, tree, fill, ...(staged ? { staged } : {}), ...(reveal.length ? { reveal } : {}), ...(help ? { strip: true, rules: true } : {}) },
+  ]);
+
 /** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
 const RATIO_BAR: BarModelData = { parts: [], rows: [{ name: "Red", units: 3 }, { name: "Blue", units: 2 }], sideBrace: { label: "total: 5 parts" } };
 
@@ -209,6 +218,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "starter", label: "Starter (2 × 2)", family: "retrieval", use: "Four numbered boxes in a 2 × 2 grid for a starter: write in them with the Pen or type. Add a timer line along the bottom if the slide has one.", make: (id) => starterSlide(id) },
   { key: "number-grid", label: "Number grid (1 to 100)", family: "teach", use: "The 1 to 100 grid: tap to scribble in a prime's colour and finish a times table in one click, or the finished sieve built a click at a time. Printable.", make: (id) => numberGridSlide(id) },
+  { key: "factor-tree", label: "Factor tree", family: "teach", use: "A factor tree: each number splits in two until every branch ends in a circled prime; built a split at a time, with the primes as a product, a tally and the index form on later clicks. Filled in / Structure only / Blank.", make: (id) => factorTreeSlide(id) },
   { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },
   { key: "practice", group: "Questions", label: "Fixed question set", family: "practice", use: "Write a set of questions for this slide’s skill, with answers and generator-consistent working.", make: (id) => skillSlide(id) },

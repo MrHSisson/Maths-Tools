@@ -38,6 +38,17 @@ try {
     for (let i = 0; i < steps; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
     const items = s.els.find((e) => e.kind === "questions")?.items?.length ?? 0;
     const title = (s.title || s.id).slice(0, 38);
+    // a staged factor tree: half way through its clicks, then every click taken (the contact sheet shows the finished slide otherwise)
+    const treeEl = s.els.find((e) => e.kind === "factorTree" && e.staged);
+    if (treeEl) {
+      const splits = (t) => (t.kids ? 1 + splits(t.kids[0]) + splits(t.kids[1]) : 0);
+      const total = splits(treeEl.tree) + (treeEl.reveal?.length ?? 0), mid = Math.ceil(total / 2);
+      for (let i = 0; i < mid; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
+      await shot(`${n}. ${title}: click ${mid} of ${total}`);
+      for (let i = mid; i < total; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
+      await shot(`${n}. ${title}: all ${total} clicks`);
+      continue;
+    }
     if (!items) {
       await shot(`${n}. ${title}`);
       if (s.els.some((e) => e.kind === "grid" || e.kind === "worksheet") && (await press(page, /show answers/i))) await shot(`${n}. ${title}: answers shown`);
