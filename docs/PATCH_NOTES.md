@@ -29,6 +29,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-18 — Trig symmetry worksheet in the Textbook layout, and Textbook pagination by real height
+
+Branch `claude/epic-goldberg-2yb9q4`. Area: a new deck `trig-symmetry-radians` (src/decks/data), the shared worksheet layout, one shared helper, and `specs/decks/_check/trig-symmetry-build.py`.
+
+- **New printable worksheet** from Harry's Word worksheet "Trigonometric Symmetry & Periodicity in Radians": nine questions in three sections (symmetry around 0, π and 2π; around π/2 and 3π/2; extension) with a full answer key, as a pinned, hand-written worksheet in the **Textbook layout** (`layout: "list"`), and an answer sheet. It is laid out better than the Word version: the parts of each question sit in aligned columns, fractions are properly stacked (`π/2` over 2), and each section has its own heading. It prints on two A4 pages (Sections 1 and 2, then Section 3); the answer sheet matches.
+- **Every answer recomputed** by the build script from the actual sin, cos and tan functions, for several solutions of each given condition (for example both `x` with `sin x = 0.6`), so no answer depends on which `x` was picked; all nine match the worksheet's key.
+- **Textbook layout paginates by each question's own height.** It used to give every question the tallest one's height (and a slot for each section divider), which left pages part empty and pushed whole sections onto the next page. Rows are now packed by their measured height, with the section heading included in the measurement; sheets whose questions are all the same height paginate exactly as before (unit-tested), and a row of columns stays together. `computeWorksheetLayout` (list branch) and the print probe in `print.ts`.
+- `ansEq` no longer puts "= " in front of an answer made of lettered parts (`(a) 0.6, (b) …`) or a KaTeX table; a coordinate pair such as `(3, 4)` still gets it.
+- **Not done:** the deck is in the repo only; it has not been pushed to the shared (live) copy of the decks, which is a separate step (`npm run deck -- push trig-symmetry-radians`). It fails the checklist's one-page print check by design (two pages), and the slide's answer view shows the key small (three columns).
+
+Agent: Claude Code
+Notes: Planner Build Log not written yet.
+
 ## 2026-11-17 — Solving Trig Equations (A-level) and the grapher's angle axis
 
 Branch `claude/epic-goldberg-2yb9q4`. Area: new ToolShell tool `/solving-trig-equations` (Pure Mathematics), additive changes to `src/shared/grapher/`, spec `specs/solving-trig-equations.md` (now implemented).

@@ -190,13 +190,27 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
   // Pagination → page groupings of question indices.
   let pages: number[][] = [];
   if (isList) {
-    const listItems: number[] = [];
+    // Flow by each row's own height. A row is up to `cols` questions of one section and is as tall as its tallest (measured, with the
+    // section heading if the row opens a section); a row never splits across pages. (Every question used to take the tallest one's
+    // height, which left a page part empty whenever the questions differed in height. For questions of equal height nothing changes.)
+    const rows: { items: number[]; opensSection: boolean }[] = [];
     for (let li = 0; li < n; li++) {
-      if (hasSections && li > 0 && sectionIdx[li] !== sectionIdx[li - 1]) listItems.push(-1);
-      listItems.push(li);
+      const last = rows[rows.length - 1];
+      const sameSection = !!last && sectionIdx[li] === sectionIdx[last.items[0]];
+      if (last && sameSection && last.items.length < Math.max(1, sectionCols[li] ?? cols)) last.items.push(li);
+      else rows.push({ items: [li], opensSection: !!last && !sameSection });
     }
-    const itemsPerPage = listItemsPerCol * cols;
-    for (let lp = 0; lp < listItems.length; lp += itemsPerPage) pages.push(listItems.slice(lp, lp + itemsPerPage));
+    let page: number[] = [];
+    let used = 0;
+    for (const row of rows) {
+      const h = Math.max(...row.items.map((q) => probeHts[q] / pxPerMm)) + 2;
+      if (page.length > 0 && used + h + (hasSections && row.opensSection ? DIV_MM : 0) > usableH) { pages.push(page); page = []; used = 0; }
+      const divider = hasSections && row.opensSection && page.length > 0;       // no divider at the top of a page
+      if (divider) page.push(-1);
+      page.push(...row.items);
+      used += h + (divider ? DIV_MM : 0);
+    }
+    if (page.length > 0) pages.push(page);
     if (pages.length === 0) pages.push([]);
   } else if (isDiff) {
     pages = []; // differentiated layout paginates via numDiffPages

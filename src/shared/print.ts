@@ -147,8 +147,10 @@ export const handlePrint = (
     const probeW = (PAGE_W_MM - GAP_MM * (secCols - 1)) / secCols;
     // an answer sheet that asks for it is laid out from its answers (compact), not from the questions' heights
     const byAnswer = pMode === "answers" && opts.compactAnswers;
+    // a list question that opens a section is measured with its heading, so a page is never filled past what is drawn on it
+    const hdr = sectionHeadersArr[i];
     return layout === "list"
-      ? `<div class="list-item" id="probe-${i}" style="width:${probeW}mm">${byAnswer ? listAnswerOnlyToHtml(q, i) : listQuestionToHtml(q, i, false)}</div>`
+      ? `<div id="probe-${i}" style="width:${probeW}mm">${hdr ? `<div class="section-header">${hdr}</div>` : ""}<div class="list-item">${byAnswer ? listAnswerOnlyToHtml(q, i) : listQuestionToHtml(q, i, false)}</div></div>`
       : `<div class="q-inner" id="probe-${i}" style="width:${probeW}mm">${byAnswer ? answerOnlyToHtml(q, i) : questionToHtml(q, i, false)}</div>`;
   }).join("");
 

@@ -66,6 +66,36 @@ describe("computeWorksheetLayout — list", () => {
   });
 });
 
+describe("computeWorksheetLayout — list, mixed heights", () => {
+  const list = (heights: number[], over: Partial<WorksheetLayoutInput> = {}) => computeWorksheetLayout(base({
+    isList: true, cols: 1, totalQ: heights.length, heightsPx: heights,
+    sectionIdx: heights.map(() => 0), sectionCols: heights.map(() => 1), itemHasHeader: heights.map(() => false), ...over,
+  }));
+
+  it("packs each question at its own height, not the tallest one's", () => {
+    // rows cost 102, 32, 32, 32, 102, 32 (height + 2). They fill 102+32+32+32+102 = 300, then the last starts a second page.
+    // (At the tallest height, 102, only two would fit a 300mm page: three pages.)
+    expect(list([100, 30, 30, 30, 100, 30]).pages).toEqual([[0, 1, 2, 3, 4], [5]]);
+  });
+
+  it("gives the same pages as before when every question is the same height", () => {
+    expect(list(Array(7).fill(48)).pages).toEqual([[0, 1, 2, 3, 4, 5], [6]]);          // 50mm each: six to a 300mm page
+    expect(list(Array(7).fill(48), { cols: 2, sectionCols: Array(7).fill(2) }).pages).toEqual([[0, 1, 2, 3, 4, 5, 6]]);   // rows of two: 4 rows
+  });
+
+  it("puts a divider between sections, and none at the top of a page", () => {
+    const sec = (heights: number[], idx: number[]) => list(heights, { hasSections: true, sectionIdx: idx });
+    expect(sec([40, 40, 40, 40], [0, 0, 1, 1]).pages).toEqual([[0, 1, -1, 2, 3]]);
+    // 102 + 102 = 204, then a new section needs 4 + 102 = 106: past 300, so it starts page 2 without a divider
+    expect(sec([100, 100, 100, 100], [0, 0, 1, 1]).pages).toEqual([[0, 1], [2, 3]]);
+  });
+
+  it("keeps a row of columns together on one page", () => {
+    // two columns, rows of two: costs 102, 102, 102 → three rows would be 306 > 300, so the third row moves over whole
+    expect(list([100, 100, 100, 100, 100, 100], { cols: 2, sectionCols: Array(6).fill(2) }).pages).toEqual([[0, 1, 2, 3], [4, 5]]);
+  });
+});
+
 describe("computeWorksheetLayout — differentiated", () => {
   it("derives per-column rows and page count for a 3-level split", () => {
     // 9 questions over 3 levels → diffPerCol 3. needed small (50) so all 3 rows fit in one page.
