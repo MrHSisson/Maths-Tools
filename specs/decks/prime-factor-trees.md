@@ -1,6 +1,6 @@
 # Lesson plan: Prime factorisation with factor trees (and index form)
 
-**Status:** plan agreed in chat, revised 2026-11-18: **Harry draws every tree live on the board, so the deck holds the questions and answers, not tree pictures** · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
+**Status:** implemented as deck `prime-factor-trees` (29 slides, built 2026-11-18, not yet taught); plan agreed in chat, revised 2026-11-18: **Harry draws every tree live on the board, so the deck holds the questions and answers, not tree pictures** · **Deck id:** `prime-factor-trees` · **Strand:** Number · **Tool:** none (every question is authored; no generator)
 **Follows:** Harry's LCM and HCF lesson. **Banked as:** "Prime factorisation lesson (factor trees)" in `docs/TASKS.md`.
 **Class:** weak group; **weak on times tables**; **no calculators**. **They have been taught the divisibility rules but are not confident on them.**
 

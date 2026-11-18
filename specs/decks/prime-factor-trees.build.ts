@@ -62,7 +62,7 @@ function primeQ(id: string, n: number, expect: number[], o: { first?: number; fo
   checkPrimes(n, primes);
   const index = o.form === "index";
   const answer = index ? `$${n} = ${idxTex(tree)}$` : `$${n} = ${tex(primes)}$`;
-  const working = [`One way to draw it (yours may start differently):`, ...treeWorking(tree), `The primes at the ends: $${primes.join(", ")}$.`, `$${n} = ${tex(primes)}$`, ...(index ? [`In index form: $${n} = ${idxTex(tree)}$`] : [])];
+  const steps = treeWorking(tree), working = [`One way (yours may start differently): ${steps[0].charAt(0).toLowerCase()}${steps[0].slice(1)}`, ...steps.slice(1), `The primes at the ends: $${primes.join(", ")}$.`, `$${n} = ${tex(primes)}$`, ...(index ? [`In index form: $${n} = ${idxTex(tree)}$`] : [])];
   let lines: string[];
   if (o.book) {
     lines = [`$${n}$`];
@@ -160,7 +160,7 @@ const B2 = [
 // ---------- exit ticket ----------
 const exitItems: CuratedQuestion[] = [
   { ...primeQ(`${P}-x1`, 33, [3, 11]), question: ["Write $33$ as a product of primes."] },
-  { ...primeQ(`${P}-x2`, 60, [2, 2, 3, 5], { first: 5, form: "index" }), question: ["Write $60$ as a product of primes, in index form."] },
+  { ...primeQ(`${P}-x2`, 60, [2, 2, 3, 5], { first: 5, form: "index" }), question: ["Write $60$ as primes in index form."] },
   { ...indexQ(`${P}-x3`, [2, 2, 3, 3, 3], "2^{2} \\times 3^{3}"), title: "Index form of a product" },
 ];
 
@@ -254,7 +254,7 @@ export default () => ({
     S.divider(`${P}-d2`, "Section 2: Factor trees"),
     S.quick(`${P}-which`, "Which prime goes in first?", whichSet, 2, "Even: 2 goes in  ·  Ends in 0 or 5: 5 goes in  ·  Digits add to a 3 table number: 3 goes in"),
     draw20,
-    S.whiteboard(`${P}-wb-1`, "Your turn: write it as a product of primes", W1, "Three whiteboard questions: a count of the primes at the end, a smaller count, then nothing. You draw the tree; the answer is the product of primes.", { size: 64 }),
+    S.whiteboard(`${P}-wb-1`, "Your turn: write it as a product of primes", W1, "Three whiteboard questions: a count of the primes at the end, a smaller count, then nothing. You draw the tree; the answer is the product of primes."),
     S.discuss(`${P}-disc`, "Kofi starts $24$ with $3 \\times 8$. Ruby starts with $4 \\times 6$. Can they both be right?",
       "Yes. Different trees can start differently, but they always end in the same primes: $24 = 2 \\times 2 \\times 2 \\times 3$.",
       "Draw your own tree for $24$. Which primes do you end with?", "2 \\times 2 \\times 2 \\times 3"),
@@ -279,7 +279,7 @@ export default () => ({
       head: ["Product of primes", "Index form"], given: 1,
       rows: [["$18 = 2 \\times 3 \\times 3$", "$18 = 2 \\times 3^2$"], ["$24 = 2 \\times 2 \\times 2 \\times 3$", "$24 = 2^3 \\times 3$"]],
     }),
-    S.whiteboard(`${P}-wb-2`, "Your turn: write it in index form", W2, "Three whiteboard questions: a count of the primes and how many are different, a smaller count, then nothing. You draw the tree; the answer is the index form.", { size: 64 }),
+    S.whiteboard(`${P}-wb-2`, "Your turn: write it in index form", W2, "Three whiteboard questions: a count of the primes and how many are different, a smaller count, then nothing. You draw the tree; the answer is the index form."),
     depthSlide(`${P}-depth-1`, depth1),
     S.plainBook(`${P}-book-2`, B2, 3, "Copy into your book. Draw a tree and write each number in index form.", "Index form book work"),
     depthSlide(`${P}-depth-2`, depth2),
