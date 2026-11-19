@@ -194,6 +194,9 @@ const RANGE_CSS = `
 .uc-range:focus-visible{box-shadow:0 0 0 3px rgba(79,70,229,.3)}
 `;
 
+// The angle headline reserves its widest width (e.g. 360° = 11π/6) so the header never re-wraps while the angle plays.
+const HEADLINE_MIN_W: Record<string, number> = { deg: 130, rad: 230, both: 400 };
+
 export default function UnitCircle() {
   const { phone, portrait } = useLayoutMode();
   const stacked = phone || portrait;
@@ -526,7 +529,7 @@ export default function UnitCircle() {
   const hiddenNow = hide && !visibleAnswer(shown);
   const radNow = hiddenNow ? "?" : radLabel(shown);
   const badgeEl = (cls: string) => (
-    <div className={`${cls} min-h-[84px]`}>
+    <div className={`${cls} min-h-[84px]`} style={showHeadline ? { minWidth: HEADLINE_MIN_W[units], maxWidth: "100%" } : undefined}>
       {!showHeadline ? (
         <button onClick={() => setShowHeadline(true)} className="mt-1 min-h-[44px] px-4 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-sm font-semibold flex items-center gap-2"><Eye size={17} />Show angle</button>
       ) : (
