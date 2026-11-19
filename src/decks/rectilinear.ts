@@ -1,6 +1,6 @@
 import { aspectOf } from "../shared/shapes/Diagram";
 import { extras } from "../shared/questionExtras";
-import type { Drawing, Focus } from "../shared/shapes/drawing";
+import type { DEdge, Drawing, Focus } from "../shared/shapes/drawing";
 import { isRectilinearSpec, rectilinearPolygons, type RectilinearSpec } from "../../api/_rectilinear";
 import { buildCompound, chosenMissingSide } from "../tools/Geometry/perimeterArea/compound";
 import { toQuestion } from "../tools/Geometry/perimeterArea/build";
@@ -13,11 +13,10 @@ import { fromWorked } from "./questions";
 /** Chosen dimensions go through the same geometry, labelling and worked solution as the live tool. */
 export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   if (!isRectilinearSpec(spec)) throw new Error("The cut-out must fit inside the shape; use positive whole-number lengths.");
-  const { width: w, height: h, cutWidth: a, cutHeight: b, shape } = spec;
+  const { shape } = spec;
   const outlines = rectilinearPolygons(spec);
-  const expected = shape === "L" || shape === "U" || shape === "frame" ? w*h-a*b
-    : (shape === "comb" || shape === "N") ? w*h-2*a*b : shape === "cross" ? w*h-4*a*b
-    : shape === "T" ? w*(h-b)+(w-2*a)*b : shape === "stairs4" ? w*b+(w-a)*b+(w-2*a)*b+(w-3*a)*(h-3*b) : w*b+(w-a)*b+(w-2*a)*(h-2*b);
+  const polyArea = (poly: Pt[]) => Math.abs(poly.reduce((t, p, i) => t + p[0] * poly[(i + 1) % poly.length][1] - poly[(i + 1) % poly.length][0] * p[1], 0)) / 2;
+  const expected = outlines.slice(1).reduce((t, hole) => t - polyArea(hole), polyArea(outlines[0]));
   const rotated: Pt[][] = outlines.map(outline => outline.map(([x0, y0]) => {
     let x = spec.orientation >= 4 ? -x0 : x0, y = y0;
     for (let turn = 0; turn < spec.orientation % 4; turn++) [x, y] = [-y, x];
@@ -26,7 +25,7 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
   const bounds = boxOf(rotated);
   const polys = orient(rotated.map(poly => poly.map(([x, y]) => [x - bounds.x0, y - bounds.y0] as Pt)));
   const q = replaySeeded({ _seed: 1 } as unknown as AnyQuestion, () => toQuestion(buildCompound(polys, {
-    kind: shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
+    kind: shape === "I" ? "cross" : shape, level: "level1", ask: "area", mixed: false, showSplit: spec.scaffold !== "none", reduced: spec.reducedLabels, missing: spec.missingLength ? [chosenMissingSide(polys, spec.missingLength)] : [], subtract: spec.method === "subtract",
   })));
   if (!q) throw new Error("The rectilinear question could not be built.");
   if (Number(q.answer) !== expected) throw new Error("The shape's area does not match its dimensions.");
@@ -59,6 +58,34 @@ export function rectilinearQuestion(spec: RectilinearSpec): AnyQuestion {
     drawing.regions.forEach(r=>r.always=spec.scaffold !== "none" && r.id.startsWith("s"));drawing.helpers.forEach(h=>h.always=false);
     q.working=[{plain:"One valid rectangle partition is shown.",type:"mStep",label:"One valid partition:",latex:"\\text{Rectangles cover the shape exactly once}"}];
     focuses.splice(0,focuses.length,{regions:drawing.regions.filter(r=>r.id.startsWith("s")).map(r=>r.id)});
+  }
+  if (spec.insideLengths) {
+    // At a 270° corner the two lengths that meet there sit side by side in the same notch, so ONE of the pair is drawn inside the shape.
+    // Choose the fewest, longest ones, and never two that meet at a 90° corner (their inside labels would touch there).
+    const poly = drawing.polys[0], n = poly.length;
+    const sign = Math.sign(poly.reduce((t, p, i) => t + p[0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * p[1], 0));
+    const edgeOf = (a: Pt, b: Pt) => drawing.edges.find(e => e.kind === "plain" && !!e.label && ((e.a[0] === a[0] && e.a[1] === a[1] && e.b[0] === b[0] && e.b[1] === b[1]) || (e.a[0] === b[0] && e.a[1] === b[1] && e.b[0] === a[0] && e.b[1] === a[1])));
+    const length = (e: { a: Pt; b: Pt }) => Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]);
+    const needs: DEdge[][] = [], apart: DEdge[][] = [];
+    for (let i = 0; i < n; i++) {
+      const prev = poly[(i + n - 1) % n], v = poly[i], next = poly[(i + 1) % n];
+      const before = edgeOf(prev, v), after = edgeOf(v, next);
+      if (!before || !after) continue;                                   // a side with no label does not crowd its neighbour
+      const cross = (v[0] - prev[0]) * (next[1] - v[1]) - (v[1] - prev[1]) * (next[0] - v[0]);
+      (cross * sign < 0 ? needs : apart).push([before, after]);
+    }
+    const pool = [...new Set(needs.flat())];
+    if (pool.length <= 16) {
+      let best = -Infinity, pick = 0;
+      for (let mask = 0; mask < 1 << pool.length; mask++) {
+        const on = (e: DEdge) => !!(mask >> pool.indexOf(e) & 1);
+        if (!needs.every(([x, y]) => on(x) || on(y)) || apart.some(([x, y]) => pool.includes(x) && pool.includes(y) && on(x) && on(y))) continue;
+        let score = 0;
+        pool.forEach((e, k) => { if (mask >> k & 1) score += length(e) - 1000; });
+        if (score > best) { best = score; pick = mask; }
+      }
+      pool.forEach((e, k) => { if (pick >> k & 1) e.inside = true; });
+    }
   }
   extras(q)._aspect = aspectOf(drawing);
   return q;

@@ -38,3 +38,11 @@ All answers are recomputed independently from the exported polygons, component r
 Visible headers are separate text elements. Generic per-question captions are suppressed. Actual boundary arrows remain 10 CSS pixels from their own edges on the board. All independent boundary lengths remain labelled; only matching aligned spans are implied. No external missing-length tasks, internal-width arrows, floating pills, equality tabs or overall dimension frames.
 
 Build source: `year7-rectilinear-area.build.ts`. Export with `_check/year7-rectilinear-assets.cjs`, then `_check/year7-rectilinear-print.py --work <folder>`. The snapshot regression test checks grouped partition questions, T/L order, no premature internal arithmetic, worksheet scaffolds, fresh IDs and headers. The edge-gap browser check covers laptop, tablet and phone.
+
+## Update 2026-11-17 (the live deck is the master; this table is the current shape)
+
+- **Slide 4** now has three model/check pairs: an uneven three-step staircase, a cross, then a **capital I** (the stem is the overall width minus the two notches).
+- **Slide 5** is six fresh graded questions (staircases with unequal steps, a cross, a rotated cross, a capital I last). No four-step staircase in the lesson or worksheet.
+- **Staircases** can have steps of different sizes (`stepWidths` / `stepHeights`), and the shape `I` exists; both are in the live **Perimeter & Area** tool too (Level 2 draws capital I shapes; its staircases and crosses already had unequal sizes).
+- Where a 270° corner has two lengths side by side, one is drawn inside the shape (`insideLengths`) so labels never crowd.
+- **Worksheet** (three A4 pages made to print two to a sheet): A is T, L, T, L at different turns; B is a staircase with unequal steps, a cross, a capital I and a second staircase; C is the cut-outs (U, N, comb, frame). The first question of each page is a numbered-step scaffold.

@@ -45,6 +45,11 @@ export const MISCONCEPTIONS: Record<string, Misconception> = {
   "sharing-wrong-question": { label: "Answers a different question: the other share, or the value of one part", example: "gives one share when the total is asked" },
   "sharing-missed-part": { label: "In a three-part ratio, uses only two of the parts", example: "$\\pounds 90$ in $2 : 3 : 5$: $90 \\div 5 = 18$" },
   "sharing-unsimplified": { label: "Thinks a ratio must be simplified before it can be shared, or that simplifying changes the shares", example: "$6 : 9$ cannot be shared as it is" },
+  "primes-circle-non-prime": { label: "Circles a number that can still be split, so the tree stops too early", example: "$48 = 6 \\times 8$, both circled" },
+  "primes-repeat-once": { label: "Lists a repeated prime only once", example: "$12 = 2 \\times 3$" },
+  "primes-one-tree": { label: "Thinks a number has only one correct factor tree, so a different first split must be wrong", example: "$70 = 7 \\times 10$ is right, so $2 \\times 35$ is wrong" },
+  "primes-index-as-multiply": { label: "Reads the index as a multiplier instead of a count of repeats", example: "$5^3 = 15$" },
+  "primes-index-wrong-base": { label: "Puts the index on the wrong prime, or on every prime", example: "$2 \\times 3 \\times 3 \\times 3 = 2^3 \\times 3$" },
 };
 
 export const misconceptionLabel = (id: string): string => MISCONCEPTIONS[id]?.label ?? id;

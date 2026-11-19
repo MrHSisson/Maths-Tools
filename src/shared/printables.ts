@@ -196,3 +196,57 @@ export function diagramPracticeSheet(cells: { svg: string; answerSvg: string; pr
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
+
+/** What a shape question on a printed sheet is asking, so the sheet can head each page and lay it out. */
+export type ShapeSection = "partition" | "internal" | "area" | "cutout";
+interface ShapeCell { steps?: { title: string; lines: string[] }[]; svg: string; answerSvg: string; prompts: string[]; answer: string; working: string[]; section: ShapeSection }
+const SHAPE_SECTIONS: Record<ShapeSection, [string, string]> = {
+  partition: ["Split into rectangles", "Draw lines on each shape to split it into rectangles. You do not need to find any areas."],
+  area: ["Area by splitting", "Split each shape into rectangles, then find the total area."],
+  internal: ["Internal lengths, then area", "Work out any lengths that are not shown, then find the area of each shape."],
+  cutout: ["Remove the cut-outs", "Find the area of the whole rectangle, then take away the part (or parts) that are missing."],
+};
+
+/**
+ * Printed pages of shape questions, designed to be shrunk: Harry prints two A4 pages onto one sheet (each at about 70%), so every size here is
+ * set for the A4 page to be read at A5 (lengths in the pictures about 13pt, working lines 13pt, nothing smaller than 11pt).
+ * One page per kind of question (four questions to a page): the picture beside the working, or, for "draw your own split", two large pictures across.
+ */
+export function shapeWorksheet(cells: ShapeCell[], title: string, mode: "questions" | "answers" | "both"): string {
+  const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  // a run of underscores is a writing line: short ones sit in a sentence, long ones stretch to the edge of the column
+  const writing = (s: string) => esc(s).replace(/_{2,}/g, run => `<i class="blank${run.length >= 10 ? " long" : ""}"></i>`);
+  type Group = { section: ShapeSection; items: { c: ShapeCell; n: number }[] };
+  const groups: Group[] = [];
+  cells.forEach((c, i) => { const g = groups[groups.length - 1]; if (g && g.section === c.section && g.items.length < 4) g.items.push({ c, n: i + 1 }); else groups.push({ section: c.section, items: [{ c, n: i + 1 }] }); });
+  const pages = (answers: boolean) => groups.map((g, gi) => {
+    const [head, how] = SHAPE_SECTIONS[g.section], grid = g.section === "partition";
+    const body = g.items.map(({ c, n }) => {
+      const svg = answers ? c.answerSvg : c.svg;
+      if (grid) return `<article class="big"><b class="n">${n}</b><div class="pic">${svg}</div>${answers ? `<p class="note">One valid split is shown. Accept any split into rectangles that cover the shape exactly once.</p>` : ""}</article>`;
+      const last = c.prompts[c.prompts.length - 1] ?? "";
+      const final = /^(Area|Perimeter) = _+/.test(last) ? last : "";
+      const lines = answers ? [...c.working, c.answer] : c.prompts.filter(p => p !== final && !/^Show your method/.test(p));
+      const space = !answers && !lines.length && !c.steps;
+      if (!answers && c.steps) return `<article class="big scaf${c.steps.reduce((t, st) => t + st.lines.length, 0) <= 3 ? " short" : ""}"><b class="n">${n}</b><div class="pic fixed">${svg}</div><div class="work">${c.steps.map((st, k) => `<div class="step"><h3><i>${k + 1}</i>${esc(st.title)}</h3>${st.lines.map(t => `<p>${writing(t)}</p>`).join("")}</div>`).join("")}</div></article>`;
+      return `<article class="big${answers ? " key" : ""}"><b class="n">${n}</b><div class="pic fixed">${svg}</div><div class="work">${lines.map((t, k) => `<p${answers && k === lines.length - 1 ? ' class="final"' : ""}>${answers ? esc(t) : writing(t)}</p>`).join("")}${space ? '<div class="space"><span>Working</span></div>' : ""}${!answers && final ? `<p class="final">${writing(final)}</p>` : ""}</div></article>`;
+    }).join("");
+    return `<section class="page"><header><h1>${esc(title)}${answers ? " — worked answers" : ""}</h1>${answers ? "" : '<span class="name">Name <i></i></span>'}</header><div class="sec"><b>${String.fromCharCode(65 + gi)} · ${head}</b><span>${how}</span></div><div class="grid2">${body}</div></section>`;
+  }).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+  *{box-sizing:border-box} @page{size:A4 portrait;margin:0} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a}
+  .page{width:210mm;height:297mm;padding:11mm 13mm 9mm;break-after:page;display:flex;flex-direction:column;overflow:hidden} .page:last-child{break-after:auto}
+  header{display:flex;justify-content:space-between;align-items:baseline;height:9mm} h1{font-size:16pt;margin:0;font-weight:700;white-space:nowrap} .name{font-size:12.5pt;display:flex;align-items:baseline;gap:2mm} .name i{display:inline-block;width:40mm;border-bottom:.4mm solid #0f172a}
+  .sec{margin:2.5mm 0 3.5mm;padding:2.2mm 4mm;background:#eef2ff;border-left:1.6mm solid #4338ca;border-radius:1mm;display:flex;flex-direction:column;gap:.8mm} .sec b{font-size:15pt;color:#1e3a8a} .sec span{font-size:12.5pt;color:#334155}
+  .grid2{flex:1;min-height:0;display:grid;gap:3.5mm;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  article{position:relative;border:.35mm solid #94a3b8;border-radius:2.5mm;min-width:0;min-height:0;overflow:hidden;break-inside:avoid}
+  .big{display:flex;flex-direction:column}
+  .n{position:absolute;left:2.5mm;top:2mm;font-size:17pt;color:#1e3a8a;z-index:1} .pic{min-width:0;min-height:0;padding:1.5mm 2mm} .big .pic{flex:1} .big .pic.fixed{flex:0 0 74mm} .big.scaf .pic.fixed{flex:0 0 60mm} .big.scaf.short .pic.fixed{flex:0 0 70mm} .big.key .pic.fixed{flex:0 0 66mm} .pic svg{width:100%!important;height:100%!important;display:block}
+  .work{flex:1;padding:1mm 4mm 3mm 4mm;display:flex;flex-direction:column;min-width:0;min-height:0} .work p{margin:0 0 3.2mm;font-size:12.5pt;line-height:1.3;display:flex;align-items:flex-end;gap:1.2mm;flex-wrap:wrap}
+  .key .work{padding-top:0} .key .work p{font-size:11pt;line-height:1.28;margin-bottom:1.4mm;display:block} .key .work p.final{font-weight:700;color:#166534}
+  .blank{display:inline-block;width:9mm;height:5mm;border-bottom:.35mm solid #0f172a;flex:none} .blank.long{flex:1;min-width:30mm} .final{margin-top:auto!important;font-weight:700;font-size:14pt!important}
+  .space{flex:1;min-height:12mm;margin-bottom:3mm;border-radius:1.5mm;background:repeating-linear-gradient(transparent 0 7.4mm,#cbd5e1 7.4mm 7.8mm)} .space span{font-size:10.5pt;color:#94a3b8} .note{margin:0;padding:0 4mm 2.5mm;font-size:11.5pt;color:#166534}
+  .step{margin-bottom:1.6mm} .step h3{margin:0 0 1mm;font-size:11.5pt;color:#1e3a8a;display:flex;align-items:center;gap:1.8mm} .step h3 i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:5mm;height:5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-size:10.5pt;flex:none} .big .step p{margin:0 0 1.5mm 6.8mm;font-size:12pt}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
+}

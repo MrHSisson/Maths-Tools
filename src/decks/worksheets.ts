@@ -1,5 +1,6 @@
 import { rectilinearQuestion } from "./rectilinear";
 import { printRectilinearSheet } from "./rectilinearPrint";
+import { printTextbookSheet } from "./textbookSheet";
 import type { CuratedQuestion } from "./types";
 // Printable worksheets pinned to a lesson. A pinned worksheet is an ordinary book-activity element (`kind: "worksheet"`) with
 // `pin` set: it prints with the same layout engine as the tool pages' Worksheet (grid or list, columns, borders), on an A5
@@ -24,10 +25,11 @@ export const sheetSig = (el: Sheet) => JSON.stringify([el.tool, el.preset, el.co
 /** A question as it is kept and printed: what it shows and what it answers, without its worked solution. */
 const trim = (q: AnyQuestion): AnyQuestion => ({ ...q, working: [] }) as AnyQuestion;
 
-export const isFrozen = (el: Sheet) => !!el.authored || !!el.frozen && el.frozen.sig === sheetSig(el);
+export const isFrozen = (el: Sheet) => !!el.authored || !!el.textbook || !!el.frozen && el.frozen.sig === sheetSig(el);
 
 /** The sheet's questions: the frozen copy while it still applies, otherwise a fresh set from its seed. */
 export async function sheetQuestions(el: Sheet): Promise<AnyQuestion[]> {
+  if (el.textbook) return [];                       // a textbook sheet is drawn and printed from its own text, not from questions
   if (el.authored) return el.authored.map(q => { if (!q.rectilinear) throw new Error("An authored worksheet question has no shape."); return { ...rectilinearQuestion(q.rectilinear), key: `authored-${q.id}` }; });
   if (el.frozen && isFrozen(el)) return el.frozen.questions;
   return (await generateSet(el.tool, el.preset, el.count, el.seed ?? 1)).map(trim);
@@ -42,6 +44,7 @@ export async function freezeSheet(el: Sheet): Promise<FrozenSheet> {
 export async function printSheet(el: Sheet, mode: PrintMode): Promise<void> {
   const pin = el.pin;
   if (!pin) return;
+  if (el.textbook) { printTextbookSheet(el.textbook, mode); return; }
   if (el.authored) { printRectilinearSheet(el.authored, pin.title, mode, pin.paper ?? "A4"); return; }
   const [qs, cfg] = await Promise.all([sheetQuestions(el), loadConfig(el.tool)]);
   if (qs.some(q => "_diagram" in q)) { printRectilinearSheet(qs, pin.title, mode, pin.paper ?? "A4"); return; }

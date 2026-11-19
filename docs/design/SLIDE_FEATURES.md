@@ -13,9 +13,10 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Zoom (editor) | Pinch with two fingers, Ctrl + scroll or the buttons to make a box large enough to write in; 30% to 600%. |
 | Pen (writing) | Write or draw on a slide in the editor with a mouse, finger or stylus; saved with the slide. |
 | Number grid (1 to 100) | Tap to scribble in a prime's colour, finish a times table in one click, or the sieve of Eratosthenes click by click; printable. |
+| Factor tree | A number splits in two until every branch ends in a circled prime (in the number grid's prime colours); one split per click, then the primes as a product, a tally and the index form; Filled in / Structure only / Blank |
 | Ratio table · Bar model | The site's own pictures for ratio, fractions and proportion: a ratio table (rows, factors between them) or boxes as stacked rows (the ratio look, as in Ratio Sharing) or one coloured bar with braces; Filled in / Structure only / Blank, or built up one click at a time |
 | Fixed question set (Deliberate practice) | Hand-written questions with answers and working that match the tool's generator; shown Full-width, Workspace right or Workspace left |
-| Rectilinear shape question | Choose fixed dimensions for an L, T or staircase shape, split-and-add or remove cut-outs; the diagram and working stay together. |
+| Rectilinear shape question | Choose fixed dimensions for an L, T, staircase (steps can differ in size), cross or capital I shape, split-and-add or remove cut-outs; the diagram and working stay together. |
 | Live generator | The tool's generator on screen (labelled General practice): New question, answer, working step by step. The Rounding tool works here too (nearest, decimal places, significant figures) |
 | Worksheet | A worksheet to print (A5, with an answer sheet in the same boxes) and hand out; the slide shows its answers on a click. Up to three pinned per lesson, printed from File → Worksheets; authored rectilinear sheets add diagrams, fading scaffolds and working space on A4. |
 | Book activity | A numbered set of generated questions to copy into books, answers on demand |
@@ -24,6 +25,6 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Split discussion | Prompt, then key point, then question, then answer, one click each |
 | Blank | Anything else: text, maths, shapes, arrows, pictures (paste or drop in) |
 
-**Not yet:** the other pictures (place value table, number line, area model, algebra tiles, counters, prime factor tiles) as slide elements, a timer, match-up and sort. Until then, paste an image.
+**Not yet:** the other pictures (place value table, number line, area model, algebra tiles, counters) as slide elements, a timer, match-up and sort. Until then, paste an image.
 
 **Slide brief:** optional, one or two sentences on what the slide is for. Claude writes one where it chose the content without a plan; skip it otherwise.

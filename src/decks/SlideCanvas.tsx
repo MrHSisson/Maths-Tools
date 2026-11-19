@@ -19,10 +19,13 @@ import { QuestionSequence, QuestionText } from "./QuestionPresentation";
 import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
+import { blockCols, partLetter } from "./textbookSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
 import { InkLayer } from "./InkLayer";
 import { sieveSteps } from "../shared/numberGrid";
+import { treeSteps } from "../shared/factorTree";
+import { FactorTreeEl } from "./FactorTree";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
@@ -267,9 +270,9 @@ const BOOK_AUTO_MAX = 160;
 /** One cell of a book activity or a grid: the number, then the question, with its answer laid over it in the same box (so showing the
  *  answer never moves or resizes anything), divided from the next row by a hairline. A generated set and a hand-written one are drawn
  *  by this one component, so they always look alike. `qSize` is the question's drawn size; `extra` is for a control floating in the corner. */
-function BookCell({ num, qSize, answerSize, up, question, answer, onHold, title, extra, centre }: {
+function BookCell({ num, qSize, answerSize, up, question, answer, onHold, onNumber, title, extra, centre }: {
   centre?: boolean; num: number; qSize: number; answerSize: number; up: boolean; question: ReactNode; answer: ReactNode;
-  onHold?: (e: PointerEvent) => void; title?: string; extra?: ReactNode;
+  onHold?: (e: PointerEvent) => void; onNumber?: () => void; title?: string; extra?: ReactNode;
 }) {
   const hold = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number; pointer: number } | null>(null);
   const cancelHold = () => { if (hold.current) clearTimeout(hold.current.timer); hold.current = null; };
@@ -284,7 +287,11 @@ function BookCell({ num, qSize, answerSize, up, question, answer, onHold, title,
       onPointerMove={(e) => { const h = hold.current; if (h && (h.pointer !== e.pointerId || Math.hypot(e.clientX - h.x, e.clientY - h.y) > 8)) cancelHold(); }}
       onPointerLeave={cancelHold} onPointerUp={cancelHold} onPointerCancel={cancelHold} onContextMenu={(e) => { if (onHold) e.preventDefault(); }}
       title={title} style={{ position: "relative", display: "flex", alignItems: "center", gap: 18, borderBottom: "1px solid #e2e8f0", minWidth: 0, userSelect: "none" }}>
-      <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>
+      {/* in the player the number is a button: pressing it flips just this cell between its question and its answer */}
+      {onNumber
+        ? <button type="button" onClick={onNumber} aria-pressed={up} aria-label={`${up ? "Show the question" : "Show the answer"} for number ${num}`} data-cell-number
+            style={{ fontSize: qSize * 0.4, fontWeight: 500, color: up ? "#475569" : "#94a3b8", background: "transparent", border: `1px solid ${up ? "#94a3b8" : "#e2e8f0"}`, borderRadius: "50%", width: "1.8em", height: "1.8em", padding: 0, flexShrink: 0, cursor: "pointer", lineHeight: 1 }}>{num}</button>
+        : <span style={{ fontSize: qSize * 0.6, fontWeight: 600, color: "#94a3b8", width: "1.6em", flexShrink: 0 }}>{num}</span>}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", flex: 1, minWidth: 0 }}>
         <div data-part="q" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: qSize, color: "#0f172a", visibility: up ? "hidden" : "visible" }}>{question}</div>
         <div data-part="a" style={{ gridArea: "1 / 1", alignSelf: "center", justifySelf: centre ? "center" : "start", textAlign: centre ? "center" : undefined, width: `${BOOK_FILL * 100}%`, minWidth: 0, fontSize: answerSize, color: "#1e3a8a", fontWeight: 600, whiteSpace: "nowrap", visibility: up ? "visible" : "hidden" }}>{answer}</div>
@@ -375,7 +382,7 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
           const sh = shown[i], cell = shared && !prompt ? { ...sh, lines: sh.lines!.slice(1) } : sh;
           return (
             <BookCell key={q.key} centre={el.align === "center"} num={i + 1} qSize={size} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.key)}   // this cell's answer is up: the set's switch, flipped by a half-second hold on the cell
-              onHold={live ? (e) => tap(e, q.key) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
+              onHold={live ? (e) => tap(e, q.key) : undefined} onNumber={live ? () => flip(q.key) : undefined} title={live ? "Press the number to flip between the question and its answer" : undefined}
               question={<QuestionView q={cell} size={size} book centre={el.align === "center"} />} answer={<AnswerView q={sh} />}
               extra={live && !el.authored && <button type="button" aria-label={`Regenerate question ${i + 1}`} title="Regenerate this question" onClick={() => { void reroll(i); showTools(); }} onFocus={showTools} onPointerUp={(e) => e.stopPropagation()}
                 style={{ position: "absolute", top: 2, right: 0, width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: 12, border: "none", background: "transparent", color: "#64748b", opacity: tools ? 0.75 : 0, pointerEvents: tools ? "auto" : "none", transition: "opacity 0.4s ease", cursor: "pointer" }}><RefreshCw size={24} /></button>} />
@@ -391,6 +398,44 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
 }
 
 /** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
+/** A textbook-style sheet: each question's instruction, then its parts (a), (b), (c) ... in columns. `a` (or the button) shows the answers in the
+ *  same places, so showing them never changes the layout. Sized to fill the slide. */
+function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const tb = el.textbook!;
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
+  const size = Math.max(22, Math.min(56, Math.floor(el.h / (lines * 1.5))));
+  const answers = shown || forced;
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {tb.blocks.map((b, bi) => (
+          <div key={bi} style={{ marginBottom: size * 0.5 }}>
+            <div style={{ fontSize: size * 0.62, color: "#64748b", marginBottom: size * 0.2 }}><b>Question {bi + 1}:</b> {b.instruction}</div>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${blockCols(tb, b)}, 1fr)`, columnGap: 24, rowGap: size * 0.22 }}>
+              {b.parts.map((part, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "baseline", gap: size * 0.3, fontSize: size, whiteSpace: "nowrap", color: answers ? "#1e3a8a" : "#0f172a" }}>
+                  <span style={{ fontSize: size * 0.55, color: "#94a3b8", fontWeight: 600, minWidth: size * 1.1 }}>({partLetter(i)})</span>
+                  <InlineMath text={`$${answers ? b.answers[i] : part}$`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [shown, setShown] = useState(false);
@@ -553,7 +598,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div ref={gridRef} style={bookGridStyle(el.cols)}>
         {qs.map((q, i) => (
           <BookCell key={q.id} centre={el.align === "center"} num={i + 1} qSize={size * Q_SCALE} answerSize={answerSize} up={(answers || forceAnswers) !== flips.has(q.id)}
-            onHold={live ? (e) => tap(e, q.id) : undefined} title={live ? "Hold for half a second to flip between the question and its answer" : undefined}
+            onHold={live ? (e) => tap(e, q.id) : undefined} onNumber={live ? () => setFlips((f) => { const n = new Set(f); if (n.has(q.id)) n.delete(q.id); else n.add(q.id); return n; }) : undefined} title={live ? "Press the number to flip between the question and its answer" : undefined}
             question={q.rectilinear ? <ShapeQuestion drawing={extras(rectilinearQuestion(q.rectilinear))._diagram as Drawing} /> : instructionAndMaths(q.question) ? <QuestionView q={{ latex: "", lines: sharedInstruction ? q.question.slice(1) : q.question }} size={size * Q_SCALE} book centre={el.align === "center"} /> : <QuestionText lines={q.question} />}
             answer={<QuestionText lines={q.answer} />} />
         ))}
@@ -561,7 +606,7 @@ function GridEl({ el, live }: { el: Extract<DeckElement, { kind: "grid" }>; live
       <div style={{ marginTop: 12, fontSize: 26 }}>
         <B onClick={() => { setAnswers((v) => !v); setFlips(new Set()); }} style={slideButton}>
           {answers ? <EyeOff size={26} /> : <Eye size={26} />}{answers ? "Show questions" : "Show answers"}</B>
-        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Hold a row for half a second to show its answer</span>}
+        {live && <span style={{ marginLeft: 18, fontSize: 22, color: "#94a3b8" }}>Press a number to show its answer</span>}
       </div>
     </div>
   );
@@ -620,12 +665,13 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
+    case "factorTree": return <FactorTreeEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} fixed={el.fixed} reportId={el.id} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
   }
 }
 
@@ -659,4 +705,4 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, r
 export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
 
 /** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
-export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : 0);
+export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : el.kind === "factorTree" && el.staged ? treeSteps(el.tree, el.reveal) : 0);

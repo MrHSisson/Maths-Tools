@@ -3,7 +3,9 @@ import type { QuestionBrief } from "../../api/_questionBrief";
 import type { CuratedQuestion } from "../../api/_questions";
 export type { CuratedQuestion } from "../../api/_questions";
 import type { BarModelData } from "../shared/barModel";
+import type { TreeNode, TreeReveal } from "../shared/factorTree";
 import type { AnyQuestion } from "../shared";
+import type { TextbookSheet } from "./textbookSheet";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
@@ -90,6 +92,7 @@ export type DeckElement = Box & (
    *  and scribble on (the default), Blank an empty grid. `staged` brings the sieve in a click at a time: 1 crossed out, then each prime in
    *  `stages` (default 2, 3, 5, 7) with its times table scribbled. Taps in the player are live marks, not saved. */
   | { kind: "numberGrid"; fill?: FillMode; staged?: boolean; stages?: number[] }
+  | { kind: "factorTree"; tree: TreeNode; fill?: FillMode; staged?: boolean; reveal?: TreeReveal[]; strip?: boolean; rules?: boolean }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }
   | ({ kind: "questions"; items: CuratedQuestion[]; size?: number; fixed?: boolean } & QuestionDisplaySettings)
@@ -109,6 +112,8 @@ export type DeckElement = Box & (
       frozen?: FrozenSheet;
       /** Fixed authored geometry questions, with per-question print scaffolding. Never regenerated. */
       authored?: CuratedQuestion[];
+      /** A hand-written textbook-style sheet (numbered questions with lettered parts in columns, nothing to write in): shown on the slide and printed as written. Never regenerated. */
+      textbook?: TextbookSheet;
       /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
       view?: "key" }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */

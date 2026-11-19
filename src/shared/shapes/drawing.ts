@@ -5,7 +5,9 @@ import type { Box, Pt } from "./model";
 /** One boundary segment. `plain` edges show their `label` (an empty label shows none); `missing` and `find` edges show "?" until
  *  the working has found them, then their `value`; `hidden` edges show nothing until the working has found them, then their `value`
  *  (a side left unlabelled because the others give it away). */
-export interface DEdge { a: Pt; b: Pt; label: string; kind: "plain" | "missing" | "find" | "hidden"; value?: string; ticks?: number }
+export interface DEdge { a: Pt; b: Pt; label: string; kind: "plain" | "missing" | "find" | "hidden"; value?: string; ticks?: number;
+  /** Arrow-style diagrams only: draw this length on the inside of the shape (a notch edge), not out in the empty corner. */
+  inside?: boolean }
 /** A dashed line that is not part of the outline: a perpendicular height, a split, the rectangle round a shape. */
 export interface DHelper { id: string; a: Pt; b: Pt; label?: string; kind: "height" | "split" | "box" | "extend"; find?: boolean; value?: string; always?: boolean }
 /** A coloured area, drawn when it is `always` shown or when a step has it in focus. */

@@ -30,46 +30,58 @@ async function visitor() {
 try {
   // 1. Anyone: the Decks tab lists the published deck and the editor, and the deck plays read-only.
   let { page, errors } = await visitor();
-  await page.goto(base); await page.getByRole("button", { name: "Decks", exact: true }).click();
+  await page.goto(`${base}/deck-gallery`);
   await expect(page.getByLabel("Play Demo deck")).toBeVisible();
   await expect(page.getByText("A published lesson")).toHaveCount(0);            // the words wait behind the (i)
   await page.getByLabel("About Demo deck").click();
   await expect(page.getByText("A published lesson")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Deck editor" })).toHaveAttribute("title", "Needs the admin password");
-  await expect(page.locator("a[href=\"/decks/demo\"]").getByText("Hello published")).toBeVisible();   // the card shows the first slide
+  // signed out there are no editing controls at all, only a quiet Sign in
+  for (const name of ["Deck editor", "New deck", "Slide library", "Check for changes"]) await expect(page.getByRole("link", { name }).or(page.getByRole("button", { name }))).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.locator("a[href=\"/decks/demo\"]").getByText("Hello published").last()).toBeVisible();   // the card shows the first slide
   await page.getByLabel("Play Demo deck").click();
   await expect(page).toHaveURL(/\/decks\/demo$/);
-  await expect(page.getByText("Hello published")).toBeVisible();
+  await expect(page.getByText("Hello published").last()).toBeVisible();
   await expect(page.getByText("Published", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
-  await page.keyboard.press("ArrowRight"); await expect(page.getByText("Second slide")).toBeVisible();
+  await page.keyboard.press("ArrowRight"); await expect(page.getByText("Second slide").last()).toBeVisible();
   await page.goto(`${base}/decks/nothing-here`); await expect(page.getByText("This deck isn't published")).toBeVisible();
-  console.log("ok the Decks tab with a first-slide preview with the words behind an (i), an editor button, a published deck playing read-only, a missing one");
+  console.log("ok the Decks page with a first-slide preview with the words behind an (i), no editing controls, a published deck playing read-only, a missing one");
 
-  // 2. The editor, the deck list and the slide library all ask for the password.
-  for (const [path, heading] of [["/decks/demo?edit=1", "Open the deck editor"], ["/decks", "Open the deck editor"], ["/decks/library", "Open the slide library"]]) {
+  // 2. The editor and the slide library ask for the password; the old /decks address is the one Decks page, with no password and no editing controls.
+  for (const [path, heading] of [["/decks/demo?edit=1", "Open the deck editor"], ["/decks/library", "Open the slide library"]]) {
     await page.goto(base + path); await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
+  await page.goto(`${base}/decks`); await expect(page).toHaveURL(/\/deck-gallery$/); await expect(page.getByRole("button", { name: "New deck" })).toHaveCount(0);
+  // signing in on the page itself: a wrong password is refused
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Password").fill("wrong"); await page.getByRole("button", { name: "Sign in" }).last().click();
+  await expect(page.getByRole("alert")).toHaveText("That password isn't right.");
+  await page.goto(`${base}/deck-gallery`);
   await page.goto(`${base}/decks/demo?edit=1`);
   await page.getByLabel("Password").fill("wrong"); await page.getByRole("button", { name: "Open", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveText("That password isn't right.");
   await expect(page.getByLabel("Deck title")).toHaveCount(0);
-  console.log("ok the editor, list and library ask for the password; a wrong one is refused");
+  console.log("ok the editor and library ask for the password; the list is the Decks page; a wrong one is refused");
 
   // 3. With the password: the deck editor opens, a new deck can be made and published from the File menu.
-  await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Open", exact: true }).click();
-  await page.goto(`${base}/decks`); await expect(page.getByRole("heading", { name: "Deck editor" })).toBeVisible();
+  await page.goto(`${base}/deck-gallery`);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByLabel("Password").fill(password); await page.getByRole("button", { name: "Sign in" }).last().click();
+  await expect(page.getByRole("button", { name: "New deck" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Slide library" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await page.getByRole("button", { name: "New deck" }).click();
   await expect(page.getByLabel("Deck title")).toBeVisible();
   await page.getByRole("button", { name: "File", exact: true }).click();
   await page.getByRole("button", { name: "Publish this deck", exact: true }).click();
   await expect.poll(() => sent.some((b) => b.publish?.id?.startsWith("my-"))).toBe(true);
   expect(sent.find((b) => b.publish).publish.slides.length).toBe(1);
-  console.log("ok unlocked: the deck list, the editor and Publish this deck");
+  console.log("ok signed in on the Decks page: New deck, Slide library, the editor and Publish this deck");
 
   // 4. Locked again (the switch off): the player goes back to the published copy and has no Edit button.
   await page.evaluate(() => localStorage.setItem("mt-dev-mode", "0"));
-  await page.goto(`${base}/decks/demo`); await expect(page.getByText("Hello published")).toBeVisible();
+  await page.goto(`${base}/decks/demo`); await expect(page.getByText("Hello published").last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
   console.log("ok locked again: published copy only");

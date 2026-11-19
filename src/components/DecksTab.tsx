@@ -1,44 +1,96 @@
-import { Link } from 'react-router-dom';
-import { Lock, Pencil } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Pencil, Plus } from 'lucide-react';
 import { useDevMode } from '../devMode';
 import { usePhoneDevice } from '../shared/layoutMode';
 import { usePublishedIndex } from '../decks/published';
-import { allDecks } from '../decks/store';
-import { useSyncedDecks } from '../decks/useSyncedDecks';
+import { allDecks, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from '../decks/store';
+import { titleSlide } from '../decks/layouts';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+/** How long the signed-in list waits for the shared copies, so a deck's older title or preview is not shown and then swapped. */
+const LIVE_WAIT_MS = 4000;
 
-/** The Decks page's list: the published decks anyone can play, each shown as its first slide under its strand. With Developing tools
- *  on, the decks that are not published yet appear among them too (tagged), as the unfinished tools do. A button goes into the deck
- *  editor, which asks for the admin password. */
+/** The one Decks page's list (/deck-gallery), for everyone. Signed out: the published decks and nothing else, each shown as its first
+ *  slide under its category, with no editing controls at all. Signed in (the same password and switch as Developing tools): every deck,
+ *  published or not, each with an Edit pencil, plus New deck, the Slide library and a check for decks changed elsewhere. A phone only
+ *  previews a deck, so it never shows the editing controls. */
 export default function DecksTab() {
-  const published = usePublishedIndex();
   const unlocked = useDevMode();
-  useSyncedDecks(unlocked);   // decks are not bundled: ask the shared copy, then re-render with what this device holds
-  const phone = usePhoneDevice();   // a phone only previews a deck: no editor
+  const phone = usePhoneDevice();
+  return unlocked && !phone ? <EditableList /> : <PublishedList />;
+}
+
+/** What anyone sees: the published decks, newest first. */
+function PublishedList() {
+  const published = usePublishedIndex();
   const pub = published ?? {};
-  const fromPublished: GalleryDeck[] = Object.entries(pub).sort((a, b) => b[1].publishedAt.localeCompare(a[1].publishedAt))
+  const decks: GalleryDeck[] = Object.entries(pub).sort((a, b) => b[1].publishedAt.localeCompare(a[1].publishedAt))
     .map(([id, d]) => ({ id, title: d.title, summary: d.summary, strand: d.strand, pitch: d.pitch, slides: d.slides, preview: d.preview, notes: [`published ${dateOf(d.publishedAt)}`] }));
-  const unpublished: GalleryDeck[] = unlocked
-    ? allDecks().filter(({ deck }) => !pub[deck.id]).map(({ deck, mine }) => ({ id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, pitch: deck.pitch, slides: deck.slides.length, preview: deck.slides[0], badge: 'Not published', notes: ['not published', ...(mine ? ['your deck'] : [])] }))
-    : [];
-  const decks = [...fromPublished, ...unpublished];
   return (
     <div className="mt-8 mb-8">
-      <div className="mb-4 flex items-center gap-3">
-        <h2 className="flex items-center gap-2.5 text-lg sm:text-xl font-bold text-slate-900">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{unlocked ? 'Decks' : 'Published decks'}
-        </h2>
-        {!phone && <Link to="/decks" title={unlocked ? 'Open the deck editor' : 'Needs the admin password'}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50">
-          {unlocked ? <Pencil size={14} /> : <Lock size={14} />}Deck editor
-        </Link>}
-      </div>
+      <Heading>Published decks</Heading>
       {published === undefined && <p className="text-slate-500">Loading…</p>}
-      {published === null && !unlocked && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}
+      {published === null && <p className="text-slate-500">Published decks come from the website, so they can't be listed here.</p>}
       {published && decks.length === 0 && <p className="text-slate-500">Nothing is published yet.</p>}
-      {decks.length > 0 && <DeckSections decks={decks} admin={unlocked} />}
+      {decks.length > 0 && <DeckSections decks={decks} />}
     </div>
+  );
+}
+
+/** What Harry sees when signed in: every deck, with the editing controls. */
+function EditableList() {
+  const navigate = useNavigate();
+  const published = usePublishedIndex();
+  const [, refresh] = useState(0);
+  // The shared copies are the live ones: wait for them (a moment at most; offline, the device's copies are used).
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    let on = true;
+    const done = () => { if (on) { refresh((n) => n + 1); setSynced(true); } };
+    const stop = window.setTimeout(done, LIVE_WAIT_MS);
+    void syncFromCloud().catch(() => false).then(() => { window.clearTimeout(stop); done(); });
+    return () => { on = false; window.clearTimeout(stop); };
+  }, []);
+  // Nothing checks in the background (it would keep the database awake): this looks for decks changed elsewhere, only when pressed.
+  const [checking, setChecking] = useState<string | null>(null);
+  const check = async () => {
+    setChecking('Checking…');
+    const updated = await syncAllDecks();
+    refresh((n) => n + 1);
+    setChecking(updated === null ? 'Could not reach the shared copy' : updated.length ? `Updated: ${updated.join(', ')}` : 'All decks are up to date');
+  };
+  const create = () => {
+    const id = newDeckId();
+    saveDeck({ id, title: 'New deck', summary: '', slides: [titleSlide(`${id}-title`, 'New deck', '')] });
+    navigate(`/decks/${id}?edit=1`);
+  };
+  const decks: GalleryDeck[] = allDecks().map(({ deck, mine, edited }) => ({
+    id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, pitch: deck.pitch, slides: deck.slides.length, preview: deck.slides[0],
+    badge: published?.[deck.id] ? undefined : 'Not published',
+    notes: [published?.[deck.id] ? 'published' : 'not published', ...(mine ? ['your deck'] : []), ...(edited ? ['edited on this device'] : [])],
+    action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
+  }));
+  const button = 'rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50';
+  return (
+    <div className="mt-8 mb-8">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Heading inline>Decks</Heading>
+        {checking && <span className="ml-auto text-sm text-slate-500" role="status">{checking}</span>}
+        <button onClick={() => void check()} disabled={checking === 'Checking…'} title="Look for decks changed on another device or by Claude" className={`${checking ? '' : 'ml-auto '}${button} disabled:opacity-60`}>Check for changes</button>
+        <Link to="/decks/library" className={button}>Slide library</Link>
+        <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
+      </div>
+      {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : decks.length === 0 ? <p className="text-slate-500">No decks yet.</p> : <DeckSections decks={decks} admin />}
+    </div>
+  );
+}
+
+function Heading({ children, inline }: { children: string; inline?: boolean }) {
+  return (
+    <h2 className={`flex items-center gap-2.5 text-lg sm:text-xl font-bold text-slate-900 ${inline ? '' : 'mb-4'}`}>
+      <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />{children}
+    </h2>
   );
 }
