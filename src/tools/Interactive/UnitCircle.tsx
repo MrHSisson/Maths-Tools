@@ -116,14 +116,14 @@ function Rich({ s }: { s: string }) {
 }
 
 // ── Controls ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
-function Seg<T extends string>({ label, value, options, onChange }: { label?: string; value: T; options: { id: T; text: string }[]; onChange: (v: T) => void }) {
+function Seg<T extends string>({ label, value, options, onChange, compact }: { label?: string; value: T; options: { id: T; text: string }[]; onChange: (v: T) => void; compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       {label && <span className="text-xs font-semibold text-slate-500">{label}</span>}
       <div className="inline-flex rounded-xl bg-slate-100 p-1 gap-0.5">
         {options.map((o) => (
           <button key={o.id} onClick={() => onChange(o.id)} aria-pressed={value === o.id}
-            className={`min-h-[36px] px-3.5 rounded-lg text-sm font-semibold transition-all ${value === o.id ? "bg-white text-slate-900 shadow-card" : "text-slate-500 hover:text-slate-800"}`}>{o.text}</button>
+            className={`min-h-[36px] ${compact ? "px-2.5" : "px-3.5"} rounded-lg text-sm font-semibold transition-all ${value === o.id ? "bg-white text-slate-900 shadow-card" : "text-slate-500 hover:text-slate-800"}`}>{o.text}</button>
         ))}
       </div>
     </div>
@@ -193,6 +193,9 @@ const RANGE_CSS = `
 .uc-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid ${ACCENT};box-shadow:0 1px 4px rgba(15,23,42,.3)}
 .uc-range:focus-visible{box-shadow:0 0 0 3px rgba(79,70,229,.3)}
 `;
+
+// The angle headline reserves its widest width (e.g. 360° = 11π/6) so the header never re-wraps while the angle plays.
+const HEADLINE_MIN_W: Record<string, number> = { deg: 110, rad: 175, both: 195 };
 
 export default function UnitCircle() {
   const { phone, portrait } = useLayoutMode();
@@ -526,13 +529,13 @@ export default function UnitCircle() {
   const hiddenNow = hide && !visibleAnswer(shown);
   const radNow = hiddenNow ? "?" : radLabel(shown);
   const badgeEl = (cls: string) => (
-    <div className={`${cls} min-h-[84px]`}>
+    <div className={`${cls} min-h-[84px]`} style={showHeadline ? { minWidth: HEADLINE_MIN_W[units], maxWidth: "100%" } : undefined}>
       {!showHeadline ? (
         <button onClick={() => setShowHeadline(true)} className="mt-1 min-h-[44px] px-4 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 text-sm font-semibold flex items-center gap-2"><Eye size={17} />Show angle</button>
       ) : (
         <>
           <div className="flex items-start gap-2">
-            <div className="text-[40px] leading-none font-semibold text-slate-800 flex items-center gap-3 h-[48px] whitespace-nowrap">
+            <div className={`leading-none font-semibold text-slate-800 flex items-center h-[48px] whitespace-nowrap ${units === "both" ? "text-[26px] gap-1.5" : "text-[36px] gap-3"}`}>
               {units === "deg" && <span>{shown}°</span>}
               {units === "both" && <><span>{shown}°</span><span className="text-slate-300">=</span><span style={{ color: ACCENT }}><H t={radNow} /></span></>}
               {units === "rad" && <span className="inline-flex items-center" style={{ color: ACCENT }}><H t={radNow} /><span className="ml-2 text-[26px]">rad</span></span>}
@@ -614,18 +617,18 @@ export default function UnitCircle() {
     </div>
   );
 
-  const anglesSeg = <Seg value={units} onChange={setUnits} options={[{ id: "deg", text: "Degrees" }, { id: "rad", text: "Radians" }, { id: "both", text: "Both" }]} />;
+  const anglesSeg = <Seg compact value={units} onChange={setUnits} options={[{ id: "deg", text: "Deg" }, { id: "rad", text: "Rad" }, { id: "both", text: "Both" }]} />;
   const displayBtn = (
     <div className="relative" ref={optsRef}>
       <button onClick={() => setOptsOpen((o) => !o)} aria-expanded={optsOpen}
-        className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors ${optsOpen ? "bg-slate-200 text-slate-900" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
+        className={`min-h-[44px] px-3 rounded-xl text-sm font-semibold flex items-center gap-1 transition-colors ${optsOpen ? "bg-slate-200 text-slate-900" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
         Display <ChevronDown size={16} className={`transition-transform ${optsOpen ? "rotate-180" : ""}`} />
       </button>
       {optsOpen && displayPanel}
     </div>
   );
   const fnChips = <div className="flex items-center gap-2">{FNS.map((f) => <FnChip key={f} on={fns[f]} colour={COL[f]} onClick={() => setFns((st) => ({ ...st, [f]: !st[f] }))}>{f}</FnChip>)}</div>;
-  const circleHead = <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0")}<div className="flex items-center gap-2 flex-wrap">{anglesSeg}{displayBtn}</div></div>;
+  const circleHead = <div className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-x-3 gap-y-2 px-4 pt-3">{badgeEl("min-w-0")}<div className="flex items-center gap-2 flex-shrink-0">{anglesSeg}{displayBtn}</div></div>;
   const workingBtn = (
     <button onClick={() => setShowWorking((v) => !v)} aria-pressed={showWorking} title={showWorking ? "Hide the working and values" : "Show the working and values"}
       className={`min-h-[44px] px-4 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors ${showWorking ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>
