@@ -761,7 +761,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Banked 2026-11-15 at Harry's request. **Deck built 2026-11-18 and reworked the same day after Harry's first look (`prime-factor-trees`, 19 slides, on the shared copy; awaiting his next review).** Earlier:  the plan is `specs/decks/prime-factor-trees.md` (agreed with Harry; he draws the trees himself, so the deck is questions and answers only). A **Factor tree slide piece** was built on branch `ccr-8fd397fb-lwfz38` but this deck does not use it; still to do: the sets and the table for Harry, four misconception tags, the look card, the deck. Original note: A lesson on prime factorisation using factor trees: the Phase 3 sketch in `specs/decks/primes-and-divisibility.md` is the starting point, with the existing `factorTree` Teach scene and the prime factor tiles representation. Needs a lesson plan first (`docs/design/templates/`), then a deck; consider whether a Prime Factorisation tool follows. Links: `specs/decks/primes-and-divisibility.md`, `docs/pathways/decks.md`, `docs/design/LESSON_STYLE.md`."
+     "s": "Banked 2026-11-15 at Harry's request. **Deck built 2026-11-18 and reworked the same day after Harry's first look (`prime-factor-trees`, 19 slides, on the shared copy; merged in PR #141; awaiting his next review).** Earlier:  the plan is `specs/decks/prime-factor-trees.md` (agreed with Harry; he draws the trees himself, so the deck is questions and answers only). A **Factor tree slide piece** was built on branch `ccr-8fd397fb-lwfz38` but this deck does not use it; still to do: the sets and the table for Harry, four misconception tags, the look card, the deck. Original note: A lesson on prime factorisation using factor trees: the Phase 3 sketch in `specs/decks/primes-and-divisibility.md` is the starting point, with the existing `factorTree` Teach scene and the prime factor tiles representation. Needs a lesson plan first (`docs/design/templates/`), then a deck; consider whether a Prime Factorisation tool follows. Links: `specs/decks/primes-and-divisibility.md`, `docs/pathways/decks.md`, `docs/design/LESSON_STYLE.md`."
     }
    ]
   },
@@ -3260,6 +3260,21 @@
      "title": "Factor Theorem tool (Year 12 and Year 13)"
     }
    ]
+  },
+  "solving-trig-equations": {
+   "purpose": "Solve sin, cos and tan equations in a stated range, in degrees or radians, finding every solution, with a graph that builds up beside the working.",
+   "subTools": [
+    {
+     "name": "Solve",
+     "purpose": "Find every solution of a trig equation in a given range.",
+     "levels": [
+      "A trig function of θ equal to a value, in a stated range",
+      "A multiple of θ inside the function, so the range is widened first",
+      "A multiple of θ plus or minus a shift, so the range can start below zero"
+     ]
+    }
+   ],
+   "changes": []
   },
   "partial-fractions": {
    "purpose": "Split an algebraic fraction into partial fractions.",

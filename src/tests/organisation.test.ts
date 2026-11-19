@@ -67,6 +67,7 @@ const STANDALONE_BY_DESIGN = [
   "Interactive/GrapherLab",
   "Interactive/NegativeCounters",
   "Interactive/ParallelLinesInteractive",
+  "Interactive/UnitCircle",
   "Interactive/WordsBingo",
   "Interactive/WordsHangman",
   "Interactive/WordsPairs",

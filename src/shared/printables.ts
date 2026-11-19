@@ -19,12 +19,15 @@ export interface Printable {
   cell: string;
   columns: number;
   rows: number;
+  /** A sheet of different cells (three titled graphs) gives one per slot, in reading order; `cell` is then the first of them. */
+  cells?: string[];
 }
 
-/** Opens the sheet in a print window. The one print path for every printable. */
-export function printPrintable(p: Printable): void {
-  const cells = Array.from({ length: p.columns * p.rows }, () => `<div class="c">${p.cell}</div>`).join("");
-  openPrintWindow(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${p.title}</title><style>
+/** The print window's page for a sheet: A4 portrait, the cells on a grid. */
+export function printableHtml(p: Printable): string {
+  const list = p.cells ?? Array.from({ length: p.columns * p.rows }, () => p.cell);
+  const cells = list.map((c) => `<div class="c">${c}</div>`).join("");
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${p.title}</title><style>
   *{margin:0;padding:0;box-sizing:border-box}
   @page{size:A4 portrait;margin:12mm}
   body{font-family:"Segoe UI",Arial,sans-serif}
@@ -32,7 +35,12 @@ export function printPrintable(p: Printable): void {
   .page{width:186mm;height:273mm;display:grid;grid-template-columns:repeat(${p.columns},1fr);grid-template-rows:repeat(${p.rows},1fr);gap:3mm 6mm}
   .c{display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
   .c svg{width:100%;height:100%}
-</style></head><body><div class="page">${cells}</div></body></html>`, 400);
+</style></head><body><div class="page">${cells}</div></body></html>`;
+}
+
+/** Opens the sheet in a print window. The one print path for every printable. */
+export function printPrintable(p: Printable): void {
+  openPrintWindow(printableHtml(p), 400);
 }
 
 const INK = "#1e293b";
@@ -107,6 +115,55 @@ export function gridSheet(): Printable {
   }
   b += `<text x="${O + 2 * N * S + 22}" y="${O + N * S + 6}" font-size="22" font-style="italic" ${FONT}>x</text><text x="${O + N * S}" y="${O - 14}" font-size="22" font-style="italic" ${FONT}>y</text>`;
   return { label: "Print blank coordinate grids (A4)", hint: "Six per page, −10 to 10 on both axes", title: "Blank coordinate grids", cell: svg(SIZE, SIZE, b), columns: 2, rows: 3 };
+}
+
+/** Three blank graphs, one above the other: y = sin x, y = cos x and y = tan x, x from −π to 3π (in radians) and y from −2 to 2.
+ *  Gridlines every π/4 across (heavier at each π/2) and every 0.25 up (heavier at each whole number), with the axes numbered. */
+export function trigGraphSheet(): Printable {
+  const FONT_END = FONT.replace("middle", "end"), FONT_START = FONT.replace("middle", "start");   // FONT already sets the anchor, and a second one is ignored
+  const PW = 800, PH = 300, X0 = 84, Y0 = 46, W = X0 + PW + 34, H = Y0 + PH + 98;
+  const sx = (q: number) => X0 + ((q + 4) / 16) * PW;          // q counts quarter-π steps from −π (q = −4) to 3π (q = 12)
+  const sy = (y: number) => Y0 + ((2 - y) / 4) * PH;
+  const MINOR = "#e2e8f0", MED = "#cbd5e1";
+  const FS = 22;
+  const piLabel = (m: number): string => {                     // m half-π steps: 0, π/2, π, 3π/2 … and negatives
+    const x = sx(2 * m), yb = Y0 + PH + 40;
+    if (m === 0) return `<text x="${x}" y="${yb + 8}" font-size="${FS}" ${FONT}>0</text>`;
+    const n = Math.abs(m), sign = m < 0;
+    if (n % 2 === 0) {
+      const t = n / 2 === 1 ? "π" : `${n / 2}π`;
+      return `<text x="${x}" y="${yb + 8}" font-size="${FS}" ${FONT}>${sign ? "−" : ""}${t}</text>`;
+    }
+    const num = n === 1 ? "π" : `${n}π`, w = num.length * 13 + 6;
+    return (sign ? `<text x="${x - w / 2 - 9}" y="${yb + 8}" font-size="${FS}" ${FONT}>−</text>` : "")
+      + `<line x1="${x - w / 2}" y1="${yb}" x2="${x + w / 2}" y2="${yb}" stroke="${INK}" stroke-width="2"/>`
+      + `<text x="${x}" y="${yb - 5}" font-size="${FS}" ${FONT}>${num}</text><text x="${x}" y="${yb + 22}" font-size="${FS}" ${FONT}>2</text>`;
+  };
+  const graph = (title: string): string => {
+    let b = "";
+    for (let i = 0; i <= 16; i++) {                            // horizontal: every 0.25
+      const y = -2 + i * 0.25, whole = i % 4 === 0, half = i % 2 === 0;
+      b += `<line x1="${X0}" y1="${sy(y)}" x2="${X0 + PW}" y2="${sy(y)}" stroke="${whole ? GUIDE : half ? MED : MINOR}" stroke-width="${whole ? 1.6 : 1}"/>`;
+    }
+    for (let q = -4; q <= 12; q++) {                            // vertical: every π/4
+      const major = q % 2 === 0;
+      b += `<line x1="${sx(q)}" y1="${Y0}" x2="${sx(q)}" y2="${Y0 + PH}" stroke="${major ? GUIDE : MINOR}" stroke-width="${major ? 1.6 : 1}"/>`;
+    }
+    b += `<rect x="${X0}" y="${Y0}" width="${PW}" height="${PH}" fill="none" stroke="${INK}" stroke-width="2.5"/>`
+      + `<line x1="${X0}" y1="${sy(0)}" x2="${X0 + PW}" y2="${sy(0)}" stroke="${INK}" stroke-width="3.5"/>`
+      + `<line x1="${sx(0)}" y1="${Y0}" x2="${sx(0)}" y2="${Y0 + PH}" stroke="${INK}" stroke-width="3.5"/>`;
+    for (let i = 0; i <= 8; i++) {
+      const y = -2 + i * 0.5, t = (y < 0 ? "−" : "") + Math.abs(y);
+      b += `<text x="${X0 - 14}" y="${sy(y) + 7}" font-size="20" ${FONT_END}>${t}</text>`;
+    }
+    for (let m = -2; m <= 6; m++) b += `<line x1="${sx(2 * m)}" y1="${Y0 + PH}" x2="${sx(2 * m)}" y2="${Y0 + PH + 8}" stroke="${INK}" stroke-width="2"/>` + piLabel(m);
+    b += `<text x="${X0}" y="${Y0 - 14}" font-size="28" font-weight="700" ${FONT_START}>${title}</text>`
+      + `<text x="${X0 + PW + 14}" y="${sy(0) + 7}" font-size="22" font-style="italic" ${FONT}>x</text><text x="${sx(0) + 14}" y="${Y0 - 6}" font-size="22" font-style="italic" ${FONT}>y</text>`
+      + `<text x="${X0 + PW}" y="${H - 6}" font-size="17" fill="${GUIDE}" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">x in radians</text>`;
+    return svg(W, H, b);
+  };
+  const cells = ["y = sin x", "y = cos x", "y = tan x"].map(graph);
+  return { label: "Print blank trig graphs (A4)", hint: "sin, cos and tan, −π to 3π across and −2 to 2 up", title: "Blank sin, cos and tan graphs", cell: cells[0], cells, columns: 1, rows: 3 };
 }
 
 /** A plain 1 to 100 number grid in ten columns, two to a page: one to sieve, one to keep. The same layout the deck's Number grid draws,

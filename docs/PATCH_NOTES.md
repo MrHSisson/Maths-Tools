@@ -29,6 +29,48 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-18 — Unit Circle: symmetry and periodicity worksheet
+
+- The Unit Circle menu's Printables list now has a second sheet: an A4 worksheet on trigonometric symmetry and periodicity in radians (8 questions in three sections, parts in columns, stacked fractions), with its answers on the last page. It is a fixed page (`unitCircleSheets.ts`), opened in a print window like the blank graphs; every answer was checked numerically.
+
+## 2026-11-17 — Solving Trig Equations (A-level) and the grapher's angle axis
+
+Branch `claude/epic-goldberg-2yb9q4`. Area: new ToolShell tool `/solving-trig-equations` (Pure Mathematics), additive changes to `src/shared/grapher/`, spec `specs/solving-trig-equations.md` (now implemented).
+
+- **New tool.** Solve sin, cos and tan equations in a stated range, in **degrees or radians**, finding every solution. Level 1: a function of θ equal to a value. Level 2: a multiple of θ (the range is widened first). Level 3: a multiple of θ plus or minus a shift (the transformed range can start below zero). Question Options: functions, ranges, angle forms, **equation forms** (`2 sin θ + 2 = 1`, `1 − 2 sin θ = 2`), **angle unit**, **exact or calculator-decimal values**, and a switch to include 0 and ±1.
+- **Built backwards** from a chosen value, so every question has solutions in its range; answers come from the unrounded value and are rounded once at the end (1 d.p. degrees, 3 s.f. radians), and a question is rejected if the working's 2 d.p. / 4 d.p. figures would round to a different answer. Solutions sitting exactly on an end of the range are excluded unless "Include 0 and ±1" is on.
+- **Developing picture** (Worked Example): the real graph of the function, the dashed line y = k, tan's asymptotes, and each solution appearing as its step finds it, then labelled with its θ value (degrees or π fractions).
+- **Grapher extension (additive):** `xAxis: { unit: "deg" | "rad" }` for angle gridlines and π labels, `lockDomainY` to frame y exactly (tan), and `FOI.showLabel` to draw a label beside a dot. Existing grapher tools are unchanged; the shell smoke check passes for Equations of Lines, Simultaneous Equations (Substitution) and Mixed Strategies. Documented in `docs/reference/pictures.md`.
+- **Checks:** every sample in the brief (exact, rearranged, radians, decimal) matches; a 4,000-spec property test substitutes each solution back, checks it is in range and counts crossings on a fine grid so none are missed; KaTeX renders every question, step and fragment across all 16 unit × form × value-kind variants.
+- **Found along the way:** a lesson for option ids: ticks carry across levels by id, so a level that needs different defaults needs its own ids (Levels 2–3 have their own range ids).
+- **Deliberately not done:** a Whiteboard picture (Worked Example only), calibration (no Smart Progressor for this tool yet), and the dashboard notes for the two new tools.
+
+Agent: Claude Code
+Notes: Maths Tools — Build Log, “Claude Code — Unit Circle sandbox and Solving Trig Equations (17 Nov 2026)”, block `b_mwl8q23i6154d949`.
+
+## 2026-11-17 — Unit Circle sandbox
+
+Branch `claude/epic-goldberg-2yb9q4`. Area: new standalone sandbox `/unit-circle` (Interactive Tools → Sandboxes & explorers), its maths module and tests.
+
+- New **Unit Circle** tool for teaching radians. A unit circle drives live graphs of sin, cos and tan: drag the point (or the graph, the slider, or step between marked angles; Play sweeps once round in ten seconds).
+- Angles show in degrees, radians or both. The circle is marked with exact (cos θ, sin θ) coordinates at the multiples of 30°, of 45°, or both. The readout gives θ in degrees and radians, the working for degrees × π/180 and radians × 180/π, and exact and decimal sin, cos and tan.
+- Teaching aids: Hide answers (radian labels and coordinates hidden until the point is tapped), Build graph (curves drawn only up to the current angle) and Label graph points (exact values beside the marked points). On the circle, tan θ is drawn as the length cut off on the tangent line at (1, 0), with the asymptotes at 90° and 270° on the graph.
+- Exact values and conversions live in `unitCircleMath.ts` and are checked against decimals for all 16 marked angles in `src/tests/unitCircle.test.ts`.
+- Layout checked at laptop (1366×768), tablet landscape (1180×820) and phone (390×800). The Pen overlay stays available, so the circle can be annotated.
+- Second pass (decluttered, steadier): fixed graph scale (no rescale when tan is switched on), fixed-height readout so the graph never resizes as the angle changes, one-row controls with the less-used switches in a Display menu, and quieter labels (grey degrees, indigo radians, no legend or θ marker).
+- Third pass: Radians is a real mode (the angle badge, the working order and the labels all lead with radians; Display menu adds Multiples of π / Decimals). Exact coordinates moved off the circle into a popup over the point (hover any marked point to preview it; Hide answers shows ? until revealed). Cleaner circle styling.
+- Fourth pass (design uplift): one palette (cos green, sin blue, tan amber, shared by the circle, popup, graph and readout), one label size for every degree and radian label, consistent line weights, a segmented control and switch rows in the Display menu (marked angles, radians as π or decimals, Play speed, popup, graph labels, Build graph, Hide answers), a styled slider with progress, guide lines from each graph point to the axis, and the angle badge as its own row on phone and portrait tablet.
+- Fifth pass (inverse functions): a **View** control (Functions / Inverses / Reflection). Inverses plots sin⁻¹, cos⁻¹ and tan⁻¹ against their input, with the domain shaded and tan's asymptotes at ±90°; the point's value is the input, the output is the principal angle, and a ringed marker shows θ when it differs. Reflection draws the restricted function, its inverse and the line y = x on equal axes (radians), with the point and its mirror image. On the circle each inverse's half (sin⁻¹ and tan⁻¹ the right half, cos⁻¹ the top half) is a coloured band, and a ring plus chord shows the principal value against θ, which links straight to principal value and second solution in trig equations. The readout gives the range and `sin⁻¹(sin θ)`. Negative angles now read correctly in radians (−π/6).
+- Printable: the burger menu has a **Printables** section with **Print blank trig graphs (A4)**: sin, cos and tan on one page, −π to 3π across and −2 to 2 up, gridlines every π/4 and 0.25, axes numbered in π fractions, for drawing the curves once the class has built them. It is a new `trigGraphSheet()` in `src/shared/printables.ts` and goes through the shared print path; `Printable` gained an optional `cells` for a sheet of different cells (`printableHtml` builds the page and is tested).
+- Sixth pass (declutter, built for a projector): the same angle used to appear five times, so now it is the one large headline above the circle (`150° = 5π/6`). The circle has one large label per point (radians outside; degrees small just inside the rim when both are on, stepping aside when the point or a helper line passes through), a larger popup, and bigger marks and lines. The graph labels only the quarter turns and shows a tag for the current angle on the axis. The readout is one large conversion line (the direction follows the Angles setting) plus the values. The top bar is gone: Angles and Display sit on the circle card, View and the sin/cos/tan chips on the graph card, so each control is next to what it changes. Text sizes roughly doubled on the graph and readout, and the graph no longer changes size between views.
+- The angle now has its fixed side: a bold dark line from the centre out to 0°, so θ reads as the angle between that arm and the moving radius (the small 0° label sits just below it).
+- Removed the Inverses and Reflection views (not helpful in the lesson): the View control, both graphs, the circle's principal-range bands and the inverse readout are gone, along with their maths helpers. The working and values panel under the graph can now be hidden with a **Hide working / Show working** button on the graph card, so the page can be just the circle on the left and the graph on the right; the graph takes the freed space.
+- The angle headline in the top left has an eye button to hide it (a **Show angle** button takes its place, so nothing moves). The blue angle tag on the graph's axis is not drawn while the angle is playing (it was hard to read and distracting); the quarter-turn labels stay put and the tag comes back when it pauses. A short-lived idea to let the angle go negative or past 2π (an Angle range option) was tried and removed: it was not useful for the lesson.
+- Deliberately not done: no fixed bottom action bar on phone (playback sits under the circle), no question mode.
+
+Agent: Claude Code
+Notes: Maths Tools — Build Log, “Claude Code — Unit Circle sandbox and Solving Trig Equations (17 Nov 2026)”, block `b_mwl8q23i6154d949`.
+
 ## 2026-11-18 — One Decks page: the deck editor's list merged into the published decks page
 
 Branch `ccr-8fd397fb-lwfz38`. Area: `src/components/DecksPage.tsx`, `DecksTab.tsx`, `src/decks/DeckPage.tsx`, `Editor.tsx`, `scripts/publishedDecksSmoke.mjs`, `docs/reference/decks.md`.

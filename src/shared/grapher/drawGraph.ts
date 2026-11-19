@@ -108,6 +108,32 @@ interface DrawOptions {
   guides?: Guide[];
   /** Labelled line segments drawn over the curves and guides (triangle legs, rise / run). */
   segments?: Segment[];
+  /** Angle axis: x is in degrees or radians, with gridlines and labels at angle-friendly steps (30°, 45°, 90°… or π/6, π/4, π/2…). */
+  xAxis?: { unit: "deg" | "rad" };
+}
+
+const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
+
+/** x in radians as a multiple of π: 0, π/6, π, 3π/2, −π/4 … (x must be a multiple of π/12 to read as a fraction). */
+function piLabel(x: number): string {
+  const k = Math.round(x / (Math.PI / 12));
+  if (k === 0) return "0";
+  const g = gcd(k, 12);
+  const n = Math.abs(k) / g, d = 12 / g;
+  const top = n === 1 ? "π" : `${n}π`;
+  return `${k < 0 ? "−" : ""}${d === 1 ? top : `${top}/${d}`}`;
+}
+
+/** Angle-axis ticks: the smallest friendly step giving at least ~60px between labels. */
+function angleTicks(unit: "deg" | "rad", xMin: number, xMax: number, unitsPerPixel: number): { values: number[]; label: (x: number) => string } {
+  const steps = unit === "deg"
+    ? [5, 10, 15, 30, 45, 90, 180, 360, 720]
+    : [1, 2, 3, 4, 6, 12, 24, 48].map((k) => (k * Math.PI) / 12);
+  const want = unitsPerPixel * 60;
+  const step = steps.find((v) => v >= want) ?? steps[steps.length - 1];
+  const values: number[] = [];
+  for (let x = Math.ceil(xMin / step - 1e-9) * step; x <= xMax + step / 1e6; x += step) values.push(Math.abs(x) < step / 1e6 ? 0 : x);
+  return { values, label: unit === "deg" ? (x) => `${Math.round(x)}°` : piLabel };
 }
 
 /** Format a tick value without floating-point noise. */
@@ -151,15 +177,18 @@ export function drawGraph(
   const yTopMath = vp.centreY + (cssH / 2) * vp.unitsPerPixelY;
   const yBotMath = vp.centreY - (cssH / 2) * vp.unitsPerPixelY;
 
+  const aTicks = opts.xAxis ? angleTicks(opts.xAxis.unit, xMinMath, xMaxMath, vp.unitsPerPixelX) : null;
   const firstX = Math.ceil(xMinMath / stepX) * stepX;
   const firstY = Math.ceil(yBotMath / stepY) * stepY;
+
+  function xGrid(): number[] { const v: number[] = []; for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) v.push(x); return v; }
 
   // ── Minor + major gridlines ──
   ctx.lineWidth = 1;
   ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
   ctx.textBaseline = "top";
 
-  for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) {
+  for (const x of aTicks ? aTicks.values : xGrid()) {
     const px = sx(x);
     ctx.strokeStyle = Math.abs(x) < stepX / 1e6 ? st.gridMajor : st.gridMinor;
     ctx.beginPath();
@@ -263,9 +292,9 @@ export function drawGraph(
     };
 
     const xTickY = Math.min(cssH - 14, Math.max(2, axisY + 4));
-    for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) {
+    for (const x of aTicks ? aTicks.values : xGrid()) {
       if (Math.abs(x) < stepX / 1e6) continue;
-      label(fmtTick(x, stepX), sx(x), xTickY, "center", "top");
+      label(aTicks ? aTicks.label(x) : fmtTick(x, stepX), sx(x), xTickY, "center", "top");
     }
     // When the y-axis sits at the left edge, put its labels just to the RIGHT of
     // the axis (inside the plot) instead of clipping them off the left.
@@ -435,6 +464,28 @@ export function drawGraph(
         ctx.strokeStyle = st.background;
         ctx.lineWidth = 1.5;
         ctx.stroke();
+      }
+      if (f.showLabel && f.label) {
+        // A small label pill above the dot (below it when the dot is near the top edge).
+        ctx.save();
+        ctx.font = "600 12px ui-sans-serif, system-ui, sans-serif";
+        const tw = ctx.measureText(f.label).width;
+        const bw = tw + 10, bh = 20;
+        const below = py < bh + 14;
+        const lx = Math.max(bw / 2 + 2, Math.min(cssW - bw / 2 - 2, px));
+        const ly = below ? py + 16 + bh / 2 : py - 16 - bh / 2;
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.strokeStyle = st.foi;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.roundRect(lx - bw / 2, ly - bh / 2, bw, bh, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = st.foi;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(f.label, lx, ly + 0.5);
+        ctx.restore();
       }
     }
   }

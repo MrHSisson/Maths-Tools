@@ -37,6 +37,8 @@ export interface GrapherConfig {
   /** Clamp the plotted / framed range. `lockDomain` frames x exactly to it. */
   domain?: { xMin?: number; xMax?: number; yMin?: number; yMax?: number };
   lockDomain?: boolean;
+  /** With `domain.yMin` / `domain.yMax` set, frame y to exactly that range (for curves with asymptotes). */
+  lockDomainY?: boolean;
   /** Rename the axes, e.g. { x: "p", y: "E(payoff)" }. */
   axisLabels?: { x?: string; y?: string };
   /** Extra / override features to frame and mark (required for custom curves). */
@@ -56,6 +58,8 @@ export interface GrapherConfig {
   lockAspect?: boolean;
   /** Draw-style overrides (colours). */
   style?: Partial<DrawStyle>;
+  /** Angle axis: x is in degrees or radians; gridlines and labels land on 30°/45°/90° or π/6, π/4, π/2… */
+  xAxis?: { unit: "deg" | "rad" };
 }
 
 /** One plotted curve in a multi-line graph (simultaneous equations, mixed strategies…). */
@@ -200,6 +204,7 @@ function GraphCanvas({
     const { w, h } = cssSize();
     drawGraph(ctx, w, h, viewportRef.current, curves, paintFois, {
       axisLabels: config.axisLabels,
+      xAxis: config.xAxis,
       showFois: config.showFois ?? true,
       style: config.style,
       domain: config.domain,
@@ -242,6 +247,7 @@ function GraphCanvas({
     viewportRef.current = computeFrame(fois, curves.map((c) => c.spec), w, h, {
       domain: config.domain,
       lockDomain: config.lockDomain,
+      lockDomainY: config.lockDomainY,
       padding: config.padding,
       lockAspect: config.lockAspect ?? hasCircle,
     });
