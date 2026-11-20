@@ -14,9 +14,27 @@ const BANK_KEY = "mt-deck-bank";
 const read = <T,>(key: string, fallback: T): T => {
   try { const s = localStorage.getItem(key); return s ? (JSON.parse(s) as T) : fallback; } catch { return fallback; }
 };
-/** Returns false when the device refuses (storage full, private window). */
+const trySet = (key: string, json: string): boolean => { try { localStorage.setItem(key, json); return true; } catch { return false; } };
+const keysWith = (prefix: string): string[] => {
+  const out: string[] = [];
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith(prefix)) out.push(k); } } catch { /* ignore */ }
+  return out;
+};
+const drop = (keys: string[]) => { for (const k of keys) { try { localStorage.removeItem(k); } catch { /* ignore */ } } };
+/** Returns false when the device refuses (storage full, private window). When it is full, space is freed and the write retried: first the
+ *  saved versions of the other decks, then their base copies, then this deck's own older versions. The deck itself is never dropped. */
 const write = (key: string, value: unknown): boolean => {
-  try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+  let json: string;
+  try { json = JSON.stringify(value); } catch { return false; }
+  if (trySet(key, json)) return true;
+  const own = (k: string) => k.endsWith(`:${key.slice(key.indexOf(":") + 1)}`) && key.includes(":");
+  const steps: (() => string[])[] = [
+    () => keysWith("mt-deck-history:").filter((k) => k !== key && !own(k)),
+    () => keysWith("mt-deck-base:").filter((k) => k !== key && !own(k)),
+    () => keysWith("mt-deck-history:").filter((k) => k !== key),
+  ];
+  for (const step of steps) { const keys = step(); if (!keys.length) continue; drop(keys); if (trySet(key, json)) return true; }
+  return false;
 };
 
 /** Every deck this device holds: the listed ones plus any saved copy (a deck once bundled and edited here has a copy but no list entry). */
@@ -122,14 +140,15 @@ export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(
  *  changed (so a page can re-read), or false when sharing is not available. */
 export const syncFromCloud = async (onlyId?: string): Promise<boolean> => (await syncDecks(onlyId))?.changed ?? false;
 
-/** The deck list's "Check for changes" button: every deck. Resolves to the titles of the decks that were updated, or null when sharing is not available. */
-export const syncAllDecks = async (): Promise<string[] | null> => (await syncDecks())?.updated ?? null;
+/** The deck list's "Check for changes" button: every deck. Resolves to the titles of the decks that were updated and of those that could not be
+ *  kept on this device (storage full), or null when sharing is not available. */
+export const syncAllDecks = async (): Promise<{ updated: string[]; failed: string[] } | null> => { const r = await syncDecks(); return r ? { updated: r.updated, failed: r.failed } : null; };
 
-async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: string[] } | null> {
+async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: string[]; failed: string[] } | null> {
   const snap = await fetchIndex();
   if (!snap) return null;
   let changed = false;
-  const updated: string[] = [];
+  const updated: string[] = [], failed: string[] = [];
   const mine = myQuestions();
   // New library entries are immutable copies with unique ids. Keep unsent local copies on reconnect.
   const merged = { ...snap.questions, ...mine };
@@ -139,8 +158,10 @@ async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: 
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
     if (local?.updatedAt && local.updatedAt >= entry.updatedAt) continue;
     const deck = await fetchDeck(id);
-    if (deck) { if (local) saveVersion(local, "Before an update from another device"); saveDeck(deck, false); changed = true; updated.push(deck.title); }
+    if (!deck) continue;
+    if (local) saveVersion(local, "Before an update from another device");
+    if (saveDeck(deck, false)) { changed = true; updated.push(deck.title); } else failed.push(deck.title);   // storage full even after freeing space: say so, never "Updated"
   }
-  return { changed, updated };
+  return { changed, updated, failed };
 }
 export const newQuestionId = () => `my-q-${Date.now().toString(36)}`;

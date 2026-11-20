@@ -57,9 +57,11 @@ function EditableList() {
   const [checking, setChecking] = useState<string | null>(null);
   const check = async () => {
     setChecking('Checking…');
-    const updated = await syncAllDecks();
+    const r = await syncAllDecks();
     refresh((n) => n + 1);
-    setChecking(updated === null ? 'Could not reach the shared copy' : updated.length ? `Updated: ${updated.join(', ')}` : 'All decks are up to date');
+    setChecking(r === null ? 'Could not reach the shared copy'
+      : r.failed.length ? `Storage full: could not keep ${r.failed.join(', ')} on this device${r.updated.length ? `. Updated: ${r.updated.join(', ')}` : ''}`
+      : r.updated.length ? `Updated: ${r.updated.join(', ')}` : 'All decks are up to date');
   };
   const create = () => {
     const id = newDeckId();

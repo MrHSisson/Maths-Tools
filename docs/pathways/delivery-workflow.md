@@ -1,5 +1,5 @@
 # Faster builds, smaller merges and a steadier deck workflow
-- **Status:** idea
+- **Status:** building
 - **Updated:** 2026-11-20
 
 ## Intention
@@ -21,11 +21,13 @@ The aim: small chunks that each merge in minutes, checks that run only what a ch
 - **Docs cost.** `CLAUDE.md` 40 KB + `AGENTS.md` 24 KB are read every session (about 16,000 tokens); `docs/reference/decks.md` is 81 KB; `PATCH_NOTES.md` is 270 KB.
 - **Tools added.** Plugins CI Optimizer, token-usage and Claude Education Skills Library; the Wolfram connector. (Eedi was considered and is left out for now: it cannot be connected yet.)
 
+**2026-11-20, C2 built (branch `claude/great-heisenberg-5a3nko`):** `write()` in `src/decks/store.ts` frees space (other decks' saved versions, then their base copies, then this deck's older versions) and retries; `syncDecks` no longer counts a failed device save as updated, and the Decks page says "Storage full: could not keep …". Tests in `src/tests/deckSync.test.ts`. Not done: the Editor's own save message already said "storage is full" and is unchanged; C3 (store less) is the lasting fix, since eviction only buys room.
+
 ## Next steps
 In the order to do them. Each is its own small branch and merge; the letters group the work (A tests and CI, B merge flow, C decks, D tokens, E quality).
 
 **First: stop decks silently failing, then make builds quicker**
-1. **C2. Storage safety net (small).** When a deck cannot be saved on the device: free space by dropping history and base copies of other decks, retry, and say "Storage full" if it still fails, instead of reporting "Updated".
+1. ~~**C2. Storage safety net (small).**~~ **Done 2026-11-20** (see Progress). When a deck cannot be saved on the device: free space by dropping history and base copies of other decks, retry, and say "Storage full" if it still fails, instead of reporting "Updated".
 2. **A1. Test areas and CI path filters.** Group tests by area (Decision, generators and shell, decks and the deck API, CS, docs only) and run only the groups whose files changed; type check and lint always run; a full run once a night and on request. Keep a plain list of which paths trigger which group, in the repo.
 3. **A2. Make the Critical Path generator build valid networks by design** instead of rejecting thousands: force the required features (an arrow that skips a column, a near-critical activity, the right number of critical paths) while building. Target under 50 ms a problem. The existing checks must still pass unchanged; compare the distribution of questions before and after so variety does not shrink. This is the real fix for Decision test time.
 4. **A3. Shrink the Decision tests safely.** After A2, trim the multiplied sampling (for example `seedReplay` seeds) only where coverage is not lost.

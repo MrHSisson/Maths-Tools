@@ -84,9 +84,9 @@ describe("Check for changes across all decks", () => {
     saveDeck(stamp("two", "Two", "2026-11-01T10:00:00.000Z"), false);
     vi.mocked(cloud.fetchIndex).mockResolvedValue(index({ one: "2026-11-01T10:00:00.000Z", two: "2026-11-02T10:00:00.000Z", three: "2026-11-02T10:00:00.000Z" }) as never);
     vi.mocked(cloud.fetchDeck).mockImplementation((async (id: string) => stamp(id, `${id} (newer)`, "2026-11-02T10:00:00.000Z")) as never);
-    expect(await syncAllDecks()).toEqual(["two (newer)", "three (newer)"]);          // "one" was already current; "three" is new to this device
+    expect((await syncAllDecks())?.updated).toEqual(["two (newer)", "three (newer)"]);          // "one" was already current; "three" is new to this device
     expect(loadDeck("two")?.title).toBe("two (newer)");
-    expect(await syncAllDecks()).toEqual([]);                                         // nothing newer now
+    expect((await syncAllDecks())?.updated).toEqual([]);                                         // nothing newer now
   });
 
   it("says so (null) when the shared copy cannot be reached", async () => {
@@ -95,3 +95,36 @@ describe("Check for changes across all decks", () => {
   });
 });
 
+
+describe("a full device", () => {
+  const LIMIT = 4000;
+  const used = () => [...memory.entries()].reduce((n, [k, v]) => n + k.length + v.length, 0);
+  beforeEach(() => {
+    memory.clear();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => memory.get(k) ?? null,
+      setItem: (k: string, v: string) => { if (used() - (memory.get(k)?.length ?? 0) + v.length > LIMIT) throw new Error("QuotaExceededError"); memory.set(k, v); },
+      removeItem: (k: string) => memory.delete(k), clear: () => memory.clear(), key: (i: number) => [...memory.keys()][i] ?? null, get length() { return memory.size; },
+    });
+  });
+  const filler = (n: number) => "x".repeat(n);
+
+  it("frees the history and base copies of other decks, then keeps the save", () => {
+    memory.set("mt-deck-history:other", filler(1800));
+    memory.set("mt-deck-base:other", filler(1800));
+    expect(saveDeck(deck("a", "c", { id: "my-sync" }), false)).toBe(true);
+    expect(memory.has("mt-deck-history:other")).toBe(false);
+    expect(loadDeck("my-sync")?.title).toBe("D");
+  });
+
+  it("never drops another deck itself, and says it failed when nothing more can be freed", async () => {
+    memory.set("mt-deck:other", filler(3900));
+    expect(saveDeck(deck("a", "c"), false)).toBe(false);
+    expect(memory.has("mt-deck:other")).toBe(true);
+    vi.mocked(cloud.fetchIndex).mockResolvedValue({ index: { "my-sync": { updatedAt: "2026-11-02T10:00:00.000Z" } }, questions: {} } as never);
+    vi.mocked(cloud.fetchDeck).mockResolvedValue(deck("a", "c", { title: "Big", updatedAt: "2026-11-02T10:00:00.000Z" }) as never);
+    const r = await syncAllDecks();
+    expect(r?.failed).toEqual(["Big"]);
+    expect(r?.updated).toEqual([]);
+  });
+});
