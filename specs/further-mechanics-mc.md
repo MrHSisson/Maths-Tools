@@ -6,6 +6,8 @@
 
 **Specification statements:** MC1 to MC7 (`specs/exam/spec/aqa-mechanics.md`). The AS and A2 split falls inside MC1 and MC7 (no Fd cos θ and no resolving at AS), so it is a setting, not a separate set of tools (section 4.5).
 
+**Out of scope:** exam-style questions (section 8).
+
 **Companion documents:**
 - `docs/architecture/MECHANICS_DIAGRAMS_PLAN.md`: how every picture is drawn (read before any sub-tool that needs a diagram).
 - `specs/dimensional-analysis.md` and `src/tools/FurtherMechanics/DimensionalAnalysis.tsx`: the pilot of this route, built on `DecisionShell`. **Read both before writing any code**; they show how a Further Mechanics tool is structured, how the options and exam chains work and how the tests re-derive every answer.
@@ -28,7 +30,7 @@ The textbook exercises are the **source of the skill list and the difficulty lad
 ### 2.1 Settled in the design chat (2026-11-20)
 
 - **Four tools, fifteen sub-tools** (section 3), not one tool per exam question type. Variety comes from **levels and Question Options (QO)**, so each sub-tool can give hundreds of different questions.
-- **Skills first, exam chains second.** Phase 1 is the skill sub-tools; phase 2 is exam-style chains built from them with a mark scheme, as for Dimensional Analysis and the Decision tools.
+- **Skills only.** This programme builds the skill sub-tools and nothing exam-style. Exam-style chains are a **separate later pass, built from actual past-paper questions** (Harry, 2026-11-20); the question styles in the corpus file that come from the textbook's mixed practice are used here only to find single skills, never to generate exam questions.
 - **Proofs, classification and "state your assumptions" items are not generators.** They become Depth cards or deck slides (section 7).
 - **Diagrams are a first-class deliverable**, drawn by one shared system (`docs/architecture/MECHANICS_DIAGRAMS_PLAN.md`).
 - **Count correction.** In chat I called this "thirteen sub-tools". The four-tool table I gave summed to fourteen; the full style mapping needs a separate **Work and Gravity** sub-tool (the textbook teaches mgh as its own idea), so the honest count is **fifteen**. Two sub-tools (Work-Energy, Elastic Energy Problems) are wide and may split when built (section 9).
@@ -390,7 +392,6 @@ Conventions: **g = 9.8** unless stated; answers to 3 s.f.; the `Units Given` opt
 | Tool files | 4 | `src/tools/FurtherMechanics/` |
 | `.about.ts` words | one per tool: tool purpose, each sub-tool's purpose, one line per level, an explainer per option group (R11) | alongside each tool |
 | Registry entries and hub wiring | 4 + `mechanicsSpec.ts` | `src/registry.ts`, `mechanicsSpec.ts` |
-| Exam chains | phase 2 (section 8) | `src/shared/mechanics/examChains.ts` |
 | Depth and deck items | section 7 | `src/` Depth banks, `specs/depth/`, `specs/decks/` |
 | Tests | re-derivation, acceptance, guards, diagrams, Course | `src/tests/` |
 | Docs | FEATURES (`npm run facts`), PATCH_NOTES, pathway progress, the tools dashboard notes | `docs/` |
@@ -411,14 +412,9 @@ Rule R44 (never three Depth slides back to back in a deck) and the deck checklis
 
 ---
 
-## 8. Phase 2: exam-style chains
+## 8. Exam-style questions: out of scope here
 
-Once the skill sub-tools are built and trusted, the exam chains put them together as the papers do, on the Dimensional Analysis and Decision pattern (`src/shared/decision/dimExam.ts`, `flowParts.ts`).
-
-- **A parts library.** Each chain is a list of lettered parts; each part is one of the sub-tool question builders with the marks it carries and a mark scheme (B1, M1, A1 as the papers write them).
-- **A corpus.** The past-paper questions in this textbook (the "Show that" and AQA-numbered ones) are tagged as chains of parts in `specs/corpus/mechanics-mc-chains.md`, as `specs/corpus/network-flows.md` does, so the chain generators match what the papers ask; the legacy AQA M2 papers are the deeper bank (see `mechanicsSpec.ts`).
-- **A first set of chains,** each drawn from the mixed practice shapes: a fall or slide (KE → PE → KE → speed, S42), a pump (S54), a car with resistance kv (S86), a string dropped (S105, "show that v² = …", then maximum extension, then maximum speed), a rough-surface string in stages (S107), a bungee jump, power up a hill, the two-particle hole question (S104).
-- **"Show that" parts** carry the target value in the question and the working proves it: a switch already named in section 5 (`Show That`).
+Exam-style chains (lettered parts, marks, a mark scheme) are **not part of this programme**. They will be a separate pass, built from **actual past-paper questions** tagged as chains of parts in a corpus (the pattern of `specs/corpus/network-flows.md` and `src/shared/decision/dimExam.ts`), after the skill sub-tools exist. Nothing in sections 3 to 7 generates one. The skill sub-tools are built so that a later chain can call them as parts, but no chain machinery, parts library or mark scheme is built now. The one thing built here that serves both is the diagram system.
 
 ---
 
@@ -436,8 +432,7 @@ Each stage ends with something Harry can look at. Nothing goes live until the go
 | 5 | Tool 4 Power: `avgpower`, `forcespeed`, `powerslope`, `motion`; D5, D6, D13 | the power working |
 | 6 | Tool 3 Elastic: `hooke`, `epe`, `elastic`; D7 to D10 | whether `elastic` should split |
 | 7 | Depth and deck items (section 7) | the cards |
-| 8 | exam chains (section 8) and the corpus | the chains |
-| 9 | context glyphs (cars, cyclists, trains), polish, calibration, the phone / tablet / laptop check, go-live | the go-live decision |
+| 8 | context glyphs (cars, cyclists, trains), polish, calibration, the phone / tablet / laptop check, go-live | the go-live decision |
 
 **Sizing.** The core library and the diagram foundation are the largest single pieces; each tool after that is a smaller, repeatable build, because the generators sit on the same library and the same renderer. The diagrams are the biggest risk to the timetable (see their plan, section 9).
 
@@ -450,7 +445,7 @@ Each stage ends with something Harry can look at. Nothing goes live until the go
 - **The decisions of 2.2.** D1 to D7 need Harry's answer before stage 2.
 - **Diagram quality and cost** (the diagrams plan, section 9): the largest unknown.
 - **Question pools.** Each sub-tool must clear 30 different questions per level at default options (R2). The contexts and the equations-first generation make that easy for the numerical tools; the checks are for the narrow ones (`epe` has only two levels; `motion` is two).
-- **The textbook's numbers and wording are not reproduced** here or in any generator. Where a paper-style question is wanted in the exam chains, it is rebuilt from a style, never copied.
+- **The textbook's numbers and wording are not reproduced** here or in any generator. Where a paper-style question is wanted in the later exam pass, it is rebuilt from a style, never copied.
 - **AS/A2 boundaries** come from `specs/exam/spec/aqa-mechanics.md`; the textbook's **A** marker identifies A2 content. Where the two differ, the spec wins; confirm each flag in the corpus file before stage 3.
 - **The MC4 and MC6 evidence** is a single textbook section and the mixed practice; if a spec statement needs a style the textbook never shows (for example MC4 with a spring in a vertical equilibrium with two masses), the style list is extended before the sub-tool is built.
 - **Further Mechanics chapters MB, MD, ME** reuse this machinery (units, the scene model, the written-working picture); nothing here is MC-specific except the formulae and the sub-tools.

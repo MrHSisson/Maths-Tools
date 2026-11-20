@@ -1,6 +1,6 @@
 # Mechanics diagrams — architecture plan
 
-**Status:** draft (2026-11-20), for Harry to review before any build. Written from the 109 question styles in `specs/corpus/mechanics-mc-question-styles.md`.
+**Status:** draft (2026-11-20); the foundation (stage 1) is being built, in new files only, with no question generators. Written from the 109 question styles in `specs/corpus/mechanics-mc-question-styles.md`.
 
 **Read when:** building or extending any Further Mechanics tool that shows a picture of a body, a surface, a string or spring, a force or a graph. The tools that need it are listed in `specs/further-mechanics-mc.md`. Read `docs/reference/pictures.md` first (the eight core representations, the shape model, how diagram tools print).
 
@@ -124,7 +124,7 @@ Every arrow has a text label as well as its colour and style, and a black and wh
 - **Question:** the scene with its givens and the unknown as `?`.
 - **Worked example:** the same scene built up by `reveal`, one thing per step, beside the written working; the answer lands on the picture last.
 - **Whiteboard and worksheet:** the scene at the sizes in the table; printed through the shared diagram print, with a printed mark scheme drawing the answer values on it.
-- **Exam style:** each lettered part may name a template and a reveal stage; parts that continue the story keep the same scene and add to it.
+- **Exam style (a later, separate pass from actual past papers):** a lettered part could name a template and a reveal stage, and parts that continue the story keep the same scene and add to it. Nothing for this is built now.
 - **Decks and Depth:** the same scene can be embedded in a slide (see `docs/reference/decks.md`); a deck authors a scene from the same builders.
 
 The question stores its scene (`_diagram`, `extras(q)._diagram`) so the print and the step views read the same object, and the diagram is **derived from the numbers by the template builder**, never stored twice (rule R5): change the mass and the label changes.
