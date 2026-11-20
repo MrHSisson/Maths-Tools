@@ -1,11 +1,11 @@
 Strand: Maths
 
-## 2026-11-20 — Ratio Manipulation: 1 : n and n : 1 questions no longer fall back to "simplest form"
+## 2026-11-20 — A generator that fails now and then is asked again; Ratio Manipulation's fall-backs are marked
 
 Branch `claude/great-heisenberg-5a3nko`. Area: `src/tools/Proportion/ratioSimplifying.ts`, `src/tests/ratioManipulation.test.ts`.
 
-- **A rare wrong question fixed.** When a worksheet asked for "Write the ratio in the form 1 : n" or "n : 1" with whole numbers, the generator drew random ratios and gave up after 300 tries; at Level 2 (whose parts are narrow) that happened about once in 10,000 questions and the question silently became "Simplify the ratio" instead. It was also why `ratioManipulation.test.ts` failed now and then in CI. The generator now lists every ratio that can be asked and draws one, so the question is always the kind asked, with the same chance for each ratio as before (measured: 0 misses in 160,000 questions, from about 1 in 8,000 at Level 2). Level 3 (three parts) is unchanged.
-- **A rule for the next flaky test.** Measure how often the generator gives up (`FALLBACK_RATES=1 npx vitest run src/tests/fallbackRates.test.ts`): about 1 in 1,000 or rarer, leave it; 1 in 100 or more, use an authored reserve of fixed questions instead of a fall-back. Measured across all of Ratio Manipulation (36 option settings, 20,000 questions each, before this fix): no fall-back seen except the Level 2 1 : n and n : 1 case at about 1 in 10,000, so none of it needs a reserve. Recorded in `AGENTS.md`.
+- **The rule.** A generator that fails less than 1 time in 100 is simply asked again: `makeUniqueQ` (every ToolShell tool) now draws again, up to three more times, when a generator throws or returns its fixed fall-back marked `_fallback: true`, and only then keeps the fall-back or throws the last error (so a real fault is still named). At 1 in 100 or more the plan is an authored fall-back bank, and for a generator that fails most of the time a very large authored set or a generator built to pass. Written in `AGENTS.md` and `docs/reference/questions-and-working.md`; `src/tests/fallbackRates.test.ts` (run with `FALLBACK_RATES=1`) measures how often a generator falls back.
+- **Ratio Manipulation.** Its fall-backs (Simplifying, Equivalent Ratios, Fraction to Ratio) are marked, so the rare case where Level 2 "1 : n" or "n : 1" gave up (about 1 in 10,000 questions, which showed as "Simplify the ratio" and made `ratioManipulation.test.ts` fail now and then) is redrawn instead of reaching the sheet. Measured over all 36 option settings (20,000 questions each): nothing else falls back, so no reserve bank is needed. The generator's own drawing is unchanged.
 
 Agent: Claude Code
 Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

@@ -14,6 +14,9 @@
 import type { QOSnapshot } from "./types";
 
 export interface QuestionExtras {
+  // ── Set by a generator ─────────────────────────────────────────────
+  /** This is the generator's fixed fall-back: it could not draw what was asked. The shell draws again (up to three more times) before it keeps one. */
+  _fallback?: boolean;
   // ── Set by the shell ──────────────────────────────────────────────────────────────
   /** The generator seed the question was drawn from (`generateSeeded`) — lets a display-only option replay it. */
   _seed?: number;

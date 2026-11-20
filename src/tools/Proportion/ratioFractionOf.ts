@@ -4,6 +4,7 @@
 import {
   step, mStep, tStep, randInt, pick, gcd, resolveMultiSelectValues, maskUnmetOptions,
   type DifficultyLevel, type WordedQuestion, type WorkingStep, type ToolMultiSelect, type ToolVariable, type BarModelData,
+  withExtras,
 } from "../../shared";
 
 // ── Question Options ──────────────────────────────────────────────────────────
@@ -265,5 +266,5 @@ export const genRatioToFraction = (level: DifficultyLevel, variables: Record<str
   }
   // unreachable with valid options; a plain Level 1 question keeps the generator total
   const a = randInt(2, 12), b = randInt(2, 12), T = a + b, g = gcd(a, T);
-  return { kind: "worded", lines: [`red : blue = ${rs(a, b)}`, "What fraction of the beads are red?"], answer: `${a / g}/${T / g}`, answerLatex: frac(a / g, T / g), working: [step(`${a} + ${b} = ${T}`, `Total parts = ${T}`), mStep("Red =", frac(a, T))], key: `rtf-fallback-${a}-${b}`, difficulty: level };
+  return withExtras({ kind: "worded", lines: [`red : blue = ${rs(a, b)}`, "What fraction of the beads are red?"], answer: `${a / g}/${T / g}`, answerLatex: frac(a / g, T / g), working: [step(`${a} + ${b} = ${T}`, `Total parts = ${T}`), mStep("Red =", frac(a, T))], key: `rtf-fallback-${a}-${b}`, difficulty: level }, { _fallback: true });
 };

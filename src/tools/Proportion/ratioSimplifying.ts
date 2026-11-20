@@ -3,6 +3,7 @@
 import {
   mStep, rStepBuild, randInt, pick, pickActive, gcd, gcdAll, lcm, resolveMultiSelectValues, maskUnmetOptions,
   type DifficultyLevel, type WordedQuestion, type WorkingStep, type ToolMultiSelect,
+  withExtras,
 } from "../../shared";
 
 export const SIMPLIFY_TYPES: ToolMultiSelect = {
@@ -126,29 +127,21 @@ const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): 
   // 1 : n and n : 1 need the larger part to be a decimal of the smaller, so they draw from a wider range of parts: from 1 to 5 alone they would nearly always give 1 : 1.5
   const hi = ask !== "simplest" && !threePart ? (level === "level1" ? 9 : 12) : hi0;
   const terminating = [1, 2, 4, 5, 8];
-  const fits = (simple: number[], f: number) => simple.every((x) => x * f >= minPart && x * f <= maxPart);
-  if (!threePart) {
-    // Every pair that can be asked is listed, then one is drawn: the same chance for each as drawing at random and rejecting, but a question of the kind asked is certain.
-    // (Drawing and rejecting 300 times missed now and then for n : 1 at Level 2, whose parts are narrow, and fell back to a "simplest form" question.)
-    const options: { simple: number[]; f: number }[] = [];
-    for (let a = lo; a <= hi; a++) for (let b = lo; b <= hi; b++) {
-      if (gcdAll([a, b]) !== 1) continue;
+  for (let i = 0; i < 300; i++) {
+    const simple = Array.from({ length: threePart ? 3 : 2 }, () => randInt(lo, hi));
+    if (gcdAll(simple) !== 1) continue;
+    const [a, b] = simple;
+    if (!threePart) {
       if (ask === "oneToN" && !(a >= 2 && terminating.includes(a) && b > a)) continue;
       if (ask === "nToOne" && !(b >= 2 && terminating.includes(b) && a > b)) continue;
-      for (const f of hcfs) if (fits([a, b], f)) options.push({ simple: [a, b], f });
     }
-    if (options.length) { const { simple, f } = pick(options); return wholeQuestion(simple.map((x) => x * f), ask, method, level); }
-  } else {
-    for (let i = 0; i < 300; i++) {
-      const simple = Array.from({ length: 3 }, () => randInt(lo, hi));
-      if (gcdAll(simple) !== 1) continue;
-      const f = pick([...hcfs]);
-      if (!fits(simple, f)) continue;
-      return wholeQuestion(simple.map((x) => x * f), ask, method, level);
-    }
+    const f = pick([...hcfs]);
+    const parts = simple.map((x) => x * f);
+    if (parts.some((x) => x < minPart || x > maxPart)) continue;
+    return wholeQuestion(parts, ask, method, level);
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
-  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Different units ───────────────────────────────────────────────────────────
@@ -182,7 +175,7 @@ const genUnits = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestio
     const working = table(`Convert ${A} ${u.big} to ${X} ${u.small}, so both parts are in ${u.small}`, rows, ops);
     return make(PROMPT_SIMPLEST, shown, rLatex(...answer), working, `rs-units-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50], method), `rs-units-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50], method), `rs-units-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Decimals ──────────────────────────────────────────────────────────────────
@@ -205,7 +198,7 @@ const genDecimals = (level: DifficultyLevel, method: SimplifyMethod): WordedQues
     const working = table("Write the ratio", [cells, ...chain.rows], [`\\times ${scale}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(s1, s2), working, `rs-decimals-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", table("Write the ratio", [["0.6", "0.9"], ["6", "9"], ["2", "3"]], ["\\times 10", "\\div 3"]), `rs-decimals-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", table("Write the ratio", [["0.6", "0.9"], ["6", "9"], ["2", "3"]], ["\\times 10", "\\div 3"]), `rs-decimals-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Fractions ─────────────────────────────────────────────────────────────────
@@ -229,7 +222,7 @@ const genFractions = (level: DifficultyLevel, method: SimplifyMethod): WordedQue
     const working = table("Write the ratio", [[frac(n1, d1), frac(n2, d2)], ...chain.rows], [`\\times ${L}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(p[0] / g, p[1] / g), working, `rs-fractions-${level}-${n1}_${d1}-${n2}_${d2}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", table("Write the ratio", [[frac(1, 2), frac(3, 4)], ["2", "3"]], ["\\times 4"]), `rs-fractions-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", table("Write the ratio", [[frac(1, 2), frac(3, 4)], ["2", "3"]], ["\\times 4"]), `rs-fractions-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Letters ───────────────────────────────────────────────────────────────────

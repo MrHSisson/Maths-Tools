@@ -3,6 +3,7 @@
 import {
   mStep, tStep, randInt, pickActive, gcd, rStepSolve, resolveMultiSelectValues,
   type DifficultyLevel, type WordedQuestion, type WorkingStep, type ToolMultiSelect,
+  withExtras,
 } from "../../shared";
 
 export const EQ_ASKED: ToolMultiSelect = {
@@ -73,10 +74,10 @@ const genPick = (): WordedQuestion => {
       difficulty: "level1",
     };
   }
-  return {
+  return withExtras({
     kind: "worded", lines: ["Which of these ratios is equivalent to $2 : 5$?", "A) $8 : 20$", "B) $8 : 11$", "C) $8 : 5$", "D) $20 : 8$"],
     answer: "A (8 : 20)", working: [mStep("Answer:", "8 : 20")], key: `eq-l1-fallback-${idOf()}`, difficulty: "level1",
-  };
+  }, { _fallback: true });
 };
 
 // ── Levels 2 and 3: missing value, worked on a ratio table ────────────────────
@@ -110,7 +111,7 @@ const genScale = (msv: Record<string, boolean>): WordedQuestion => {
       ? missing([k * a, k * b], [a, b], [[k * a, k * b], [a, b]], [`\\div ${k}`], askFirst, key, "level2")
       : missing([a, b], [k * a, k * b], [[a, b], [k * a, k * b]], [`\\times ${k}`], askFirst, key, "level2");
   }
-  return missing([2, 5], [4, 10], [[2, 5], [4, 10]], ["\\times 2"], false, `eq-l2-fallback-${idOf()}`, "level2");
+  return withExtras(missing([2, 5], [4, 10], [[2, 5], [4, 10]], ["\\times 2"], false, `eq-l2-fallback-${idOf()}`, "level2"), { _fallback: true });
 };
 
 const genSimplifyThenScale = (msv: Record<string, boolean>): WordedQuestion => {
@@ -125,7 +126,7 @@ const genSimplifyThenScale = (msv: Record<string, boolean>): WordedQuestion => {
     const key = `eq-l3-${a}-${b}-${g}-${m}-${askFirst ? "first" : "second"}-${idOf()}`;
     return missing([g * a, g * b], [m * a, m * b], [[g * a, g * b], [a, b], [m * a, m * b]], [`\\div ${g}`, `\\times ${m}`], askFirst, key, "level3");
   }
-  return missing([4, 10], [6, 15], [[4, 10], [2, 5], [6, 15]], ["\\div 2", "\\times 3"], false, `eq-l3-fallback-${idOf()}`, "level3");
+  return withExtras(missing([4, 10], [6, 15], [[4, 10], [2, 5], [6, 15]], ["\\div 2", "\\times 3"], false, `eq-l3-fallback-${idOf()}`, "level3"), { _fallback: true });
 };
 
 export const genEquivalent = (level: DifficultyLevel, msv: Record<string, boolean>): WordedQuestion =>
