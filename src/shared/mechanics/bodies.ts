@@ -3,10 +3,10 @@
 import { add, dir, mul, type Body, type Pt } from "./scene";
 
 export const PARTICLE_R = 7;
-export const BLOCK_W = 64;
+const BLOCK_W = 64;
 export const BLOCK_H = 48;
 
-export interface BodyFrame { w: number; h: number }
+interface BodyFrame { w: number; h: number }
 export const bodySize = (b: Body): BodyFrame =>
   b.kind === "particle" ? { w: PARTICLE_R * 2, h: PARTICLE_R * 2 } : { w: b.w ?? BLOCK_W, h: b.h ?? BLOCK_H };
 
@@ -16,7 +16,7 @@ export function bodyPoint(b: Body, x: number, y: number): Pt {
   return add(b.at, add(mul(dir(rot), x), mul(dir(rot + 90), y)));
 }
 
-export interface BodyAnchors { centre: Pt; base: Pt; front: Pt; back: Pt; top: Pt }
+interface BodyAnchors { centre: Pt; base: Pt; front: Pt; back: Pt; top: Pt }
 export function bodyAnchors(b: Body): BodyAnchors {
   const { w, h } = bodySize(b);
   return {

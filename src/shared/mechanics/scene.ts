@@ -144,7 +144,7 @@ export function mirrorScene(s: Scene): Scene {
 }
 
 /** Every point an element occupies that must lie inside the picture (used by the validator). */
-export function elementPoints(e: SceneElement): Pt[] {
+function elementPoints(e: SceneElement): Pt[] {
   switch (e.type) {
     case "surface": case "line": return [e.a, e.b];
     case "body": return [e.at];
