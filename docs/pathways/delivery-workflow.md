@@ -84,7 +84,7 @@ In the order to do them. Each is its own small branch and merge; the letters gro
 20. ~~**E1. Spot-check A-level generators with Wolfram**~~ **Done 2026-11-20.** (Solving Trig Equations first) as an independent second opinion to the repo's own checks.
 21. **E3. Education Skills Library:** use it for lesson planning ideas (worked-example fading, practice sequencing, error analysis); keep it off by default if it adds noticeable startup tokens.
 
-**Needs from Harry:** E3 (switch the Education Skills Library plugin off by default; it adds about 130 skill names to every session's startup); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5).
+**Needs from Harry:** (E3 is decided: leave the Education Skills Library plugin on, 2026-11-20; it adds about 130 skill names to every session's startup, probably a small cost; it is synced from the claude.ai account, so a session cannot switch it); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5).
 
 ## Where to read more
 `.github/workflows/ci.yml`, `src/tests/` (the Decision files named above), `src/shared/decision/cpa.ts` (`candidate`, `acceptable`, `generateCpa`), `AGENTS.md` ("Decks Harry edits", "Pushing a deck", "Deck data format"), `docs/reference/decks.md` ("Deck data and the live server") and `docs/reference/decks-building.md` ("Sharing one deck between Harry and Claude"), `docs/TASKS.md`, `src/decks/store.ts`, `src/decks/cloud.ts`, `api/decks.ts`, `api/_decks.ts`.

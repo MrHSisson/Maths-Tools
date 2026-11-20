@@ -1278,7 +1278,7 @@
       },
       {
        "t": "p",
-       "s": "**Needs from Harry:** E3 (switch the Education Skills Library plugin off by default; it adds about 130 skill names to every session's startup); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5)."
+       "s": "**Needs from Harry:** (E3 is decided: leave the Education Skills Library plugin on, 2026-11-20; it adds about 130 skill names to every session's startup, probably a small cost; it is synced from the claude.ai account, so a session cannot switch it); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5)."
       }
      ]
     },
