@@ -13,7 +13,7 @@ export async function serveDeck(target, id, deck) {
     const stamp = "2099-01-01T00:00:00.000Z";
     const body = new URL(r.request().url()).searchParams.get("id")
       ? { ...deck, updatedAt: stamp }
-      : { index: { decks: { [id]: { updatedAt: stamp } } }, questions: { questions: {} } };
+      : { index: { decks: { [id]: { updatedAt: stamp } } } };
     return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
   });
 }

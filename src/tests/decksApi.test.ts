@@ -1,6 +1,6 @@
 // The pure half of /api/decks (api/_decks.ts): what a device may send, and the index of shared decks.
 import { describe, it, expect } from "vitest";
-import { MAX_DECK_BYTES, checkDeck, checkQuestion, emptyIndex, emptyPublished, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId } from "../../api/_decks";
+import { MAX_DECK_BYTES, checkDeck, emptyIndex, emptyPublished, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId } from "../../api/_decks";
 
 describe("shared decks API", () => {
   it("accepts a deck with an id, a title and slides; refuses anything else", () => {
@@ -29,10 +29,8 @@ describe("shared decks API", () => {
     expect(indexWith(emptyIndex(), { id: "b", title: "B", summary: "", slides: [] }, "", "now").decks.b.updatedAt).toBe("now");
     expect(indexWithout(i, "a").decks).toEqual({});
   });
-  it("checks ids and questions", () => {
+  it("checks ids", () => {
     expect([validId("est-01"), validId("my-q-1"), validId("../x"), validId("")]).toEqual([true, true, false, false]);
-    expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2", working: [] })?.id).toBe("my-q-1");
-    expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2" })).toBeNull();
   });
   it("publishing keeps a frozen, stamped copy and lists it; unpublishing removes it", () => {
     const checked = checkDeck({ id: "est", title: "Estimation", summary: "S", slides: [{ id: "a", els: [] }, { id: "b", els: [] }], tool: "estimation" });

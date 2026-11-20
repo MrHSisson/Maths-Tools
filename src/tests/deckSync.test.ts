@@ -5,7 +5,7 @@ import type { DeckDef } from "../decks/types";
 const sent: { deck: DeckDef; base?: DeckDef }[] = [];
 let handler: ((r: { sent: DeckDef; merged?: DeckDef }) => void) | null = null;
 vi.mock("../decks/cloud", () => ({
-  fetchIndex: vi.fn(), fetchDeck: vi.fn(), pushQuestion: vi.fn(), pushRemoveDeck: vi.fn(),
+  fetchIndex: vi.fn(), fetchDeck: vi.fn(), pushRemoveDeck: vi.fn(),
   pushDeck: (deck: DeckDef, base?: DeckDef) => { sent.push({ deck, base }); },
   setSyncHandler: (fn: typeof handler) => { handler = fn; },
 }));
@@ -73,7 +73,7 @@ describe("shared editing on this device", () => {
 
 describe("Check for changes across all decks", () => {
   const stamp = (id: string, title: string, updatedAt: string) => ({ ...deck("a", "c", { id, title, updatedAt }) });
-  const index = (entries: Record<string, string>) => ({ index: Object.fromEntries(Object.entries(entries).map(([id, updatedAt]) => [id, { title: id, summary: "", slides: 2, updatedBy: "x", updatedAt }])), questions: {} });
+  const index = (entries: Record<string, string>) => ({ index: Object.fromEntries(Object.entries(entries).map(([id, updatedAt]) => [id, { title: id, summary: "", slides: 2, updatedBy: "x", updatedAt }])) });
   beforeEach(() => {
     memory.clear();
     vi.stubGlobal("localStorage", { getItem: (k: string) => memory.get(k) ?? null, setItem: (k: string, v: string) => memory.set(k, v), removeItem: (k: string) => memory.delete(k), clear: () => memory.clear(), key: (i: number) => [...memory.keys()][i] ?? null, get length() { return memory.size; } });
@@ -102,7 +102,7 @@ describe("Check for changes across all decks", () => {
   });
 
   it("lists a deck from the shared list with its summary, and lays this device's newer copy over it", async () => {
-    vi.mocked(cloud.fetchIndex).mockResolvedValue({ index: { a: { title: "Shared A", summary: "", slides: 3, updatedAt: "2026-11-02T10:00:00.000Z", updatedBy: "Harry", tool: "indices", families: { teach: 3 }, preview: { id: "p" } }, b: { title: "Shared B", summary: "", slides: 1, updatedAt: "2026-11-01T10:00:00.000Z", updatedBy: "Harry" } }, questions: {} } as never);
+    vi.mocked(cloud.fetchIndex).mockResolvedValue({ index: { a: { title: "Shared A", summary: "", slides: 3, updatedAt: "2026-11-02T10:00:00.000Z", updatedBy: "Harry", tool: "indices", families: { teach: 3 }, preview: { id: "p" } }, b: { title: "Shared B", summary: "", slides: 1, updatedAt: "2026-11-01T10:00:00.000Z", updatedBy: "Harry" } } } as never);
     saveDeck(stamp("b", "Local B", "2026-11-03T10:00:00.000Z"), false);                // this device's copy is newer than the shared one
     await syncAllDecks();
     const by = Object.fromEntries(deckSummaries().map((d) => [d.id, d]));
@@ -169,7 +169,7 @@ describe("a full device", () => {
     memory.set("mt-deck:other", filler(1400));
     expect(saveDeck(deck("a", filler(3000), { updatedAt: "2026-11-01T10:00:00.000Z" }), false)).toBe(false);   // too big to fit
     expect(memory.has("mt-deck:other")).toBe(true);
-    vi.mocked(cloud.fetchIndex).mockResolvedValue({ index: { "my-sync": { title: "Big", summary: "", slides: 2, updatedBy: "x", updatedAt: "2026-11-02T10:00:00.000Z" } }, questions: {} } as never);
+    vi.mocked(cloud.fetchIndex).mockResolvedValue({ index: { "my-sync": { title: "Big", summary: "", slides: 2, updatedBy: "x", updatedAt: "2026-11-02T10:00:00.000Z" } } } as never);
     vi.mocked(cloud.fetchDeck).mockResolvedValue(deck("a", filler(3000), { title: "Big", updatedAt: "2026-11-02T10:00:00.000Z" }) as never);
     const r = await syncAllDecks();
     expect(r?.failed).toEqual(["Big"]);

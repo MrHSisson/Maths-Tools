@@ -1,21 +1,17 @@
 import { isQuestionDisplaySettings } from "./_questionDisplay.js";
 import { isQuestionBrief } from "./_questionBrief.js";
-import { classifyQuestion, isCuratedQuestion } from "./_questions.js";
+import { classifyQuestion } from "./_questions.js";
 // Shared decks — the pure half of /api/decks: checking what a teacher sends, and keeping the index of decks.
-// A deck lives in its own private blob (decks/<id>.json); the index (decks-index.json) lists them, and the teacher's
-// own and edited questions live in one blob (deck-questions.json). Kept free of @vercel/blob so it can be tested.
+// A deck lives in its own row of the shared database; the list (index) is read from those rows. Kept free of the database client so it can be tested.
 
 export const MAX_DECK_BYTES = 4_000_000;          // under the 4.5 MB request limit; pictures are the usual reason to hit it
-const MAX_QUESTION_BYTES = 20_000;
 
 /** One line of the deck list. Besides the title and counts it carries what a list needs to draw a deck without loading it: where it is filed,
  *  which tool it belongs to, how many slides of each kind, and its first slide (when that is small). A device opens a deck to get the rest. */
 export interface DeckIndexEntry { title: string; summary: string; slides: number; updatedAt: string; updatedBy: string; strand?: string; pitch?: string; tool?: string; toolPath?: string; families?: Record<string, number>; preview?: unknown }
 export interface DeckIndex { version: 1; decks: Record<string, DeckIndexEntry> }
-export interface QuestionStore { version: 1; questions: Record<string, unknown> }
 
 export const emptyIndex = (): DeckIndex => ({ version: 1, decks: {} });
-export const emptyQuestions = (): QuestionStore => ({ version: 1, questions: {} });
 
 export const validId = (id: unknown): id is string => typeof id === "string" && /^[a-z0-9-]{1,80}$/.test(id);
 export const deckPath = (id: string) => `decks/${id}.json`;
@@ -123,14 +119,4 @@ export function historyWith(h: DeckHistory, entry: HistoryEntry, max = MAX_SNAPS
   const all = [...h.entries.filter((e) => e.key !== entry.key), entry];
   const dropped = all.slice(0, Math.max(0, all.length - max)).map((e) => e.key);
   return { history: { version: 1, entries: all.slice(all.length - Math.min(max, all.length)) }, dropped };
-}
-
-/** A question must have an id, its maths and an answer; anything larger than a question could be is refused. */
-export function checkQuestion(input: unknown): { id: string; q: Record<string, unknown> } | null {
-  if (!input || typeof input !== "object") return null;
-  const q = input as Record<string, unknown>;
-  if (q.version === 2) return isCuratedQuestion(q) && new TextEncoder().encode(JSON.stringify(q)).length <= MAX_QUESTION_BYTES ? { id: q.id, q } : null;
-  if (!validId(q.id) || typeof q.latex !== "string" || typeof q.answer !== "string" || !Array.isArray(q.working)) return null;
-  if (JSON.stringify(q).length > MAX_QUESTION_BYTES) return null;
-  return { id: q.id, q };
 }

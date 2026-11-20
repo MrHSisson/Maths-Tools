@@ -2,12 +2,12 @@
 // @vercel/blob dependency if nothing else uses it, once the move is confirmed.
 //   POST /api/migrate-decks            {dryRun?: true, ids?: ["deck-id", …]}   needs  x-admin-key: <ADMIN_KEY>
 // `ids` limits the decks (and their history) to those, so a big store can be moved in pieces if one call runs out of time (vercel.json allows 60 s).
-// Safe to run again: a deck is written only if the database has none or an older one, and history, published copies and questions are upserts.
+// Safe to run again: a deck is written only if the database has none or an older one, and history and published copies are upserts.
 // Nothing in Blob is changed or deleted. The answer lists what was found and what was written, so the counts can be compared by eye.
 import { get } from "@vercel/blob";
 import { getDb, ensureSchema } from "./_db.js";
-import { addSnapshot, importDeck, putPublished, putQuestion } from "./_deckStore.js";
-import { MAX_SNAPSHOTS, publishedBody, type DeckHistory, type DeckIndex, type PublishedIndex, type QuestionStore } from "./_decks.js";
+import { addSnapshot, importDeck, putPublished } from "./_deckStore.js";
+import { MAX_SNAPSHOTS, publishedBody, type DeckHistory, type DeckIndex, type PublishedIndex } from "./_decks.js";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body, null, 1), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { dryRun?: boolean; ids?: string[] };
   const dry = body.dryRun === true;
   const db = getDb(); await ensureSchema(db);
-  const report = { dryRun: dry, decks: { found: 0, written: 0, skippedNewer: 0, missing: [] as string[] }, history: { found: 0 }, published: { found: 0, written: 0, missing: [] as string[] }, questions: { found: 0 } };
+  const report = { dryRun: dry, decks: { found: 0, written: 0, skippedNewer: 0, missing: [] as string[] }, history: { found: 0 }, published: { found: 0, written: 0, missing: [] as string[] } };
 
   const index = await readBlob<DeckIndex>("decks-index.json");
   for (const [id, entry] of Object.entries(index?.decks ?? {})) {
@@ -60,7 +60,5 @@ export async function POST(req: Request) {
     if (!dry) { await putPublished(db, { id, title: String(copy.title ?? ""), summary: typeof copy.summary === "string" ? copy.summary : "", strand: typeof copy.strand === "string" ? copy.strand : undefined, slides: copy.slides }, publishedBody(JSON.stringify(copy), at), at); report.published.written++; }
   }
 
-  const questions = await readBlob<QuestionStore>("deck-questions.json");
-  for (const [id, q] of Object.entries(questions?.questions ?? {})) { report.questions.found++; if (!dry) await putQuestion(db, id, q); }
   return json(report);
 }

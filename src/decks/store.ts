@@ -3,14 +3,13 @@
 // (syncFromCloud). Every read is guarded, so a private window or full storage just means nothing is kept here.
 import { mergeDecks, sameDeck } from "../../api/_deckMerge";
 import type { DeckIndexEntry } from "../../api/_decks";
-import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck, setSyncHandler } from "./cloud";
+import { fetchDeck, fetchIndex, pushDeck, pushRemoveDeck, setSyncHandler } from "./cloud";
 import { BANK } from "./index";
 import { normaliseDeck } from "./normalise";
 import type { LibraryQuestion, DeckDef, Pitch, Slide } from "./types";
 
 const DECK_KEY = (id: string) => `mt-deck:${id}`;
 const MINE_KEY = "mt-decks-mine";
-const BANK_KEY = "mt-deck-bank";
 
 const read = <T,>(key: string, fallback: T): T => {
   try { const s = localStorage.getItem(key); return s ? (JSON.parse(s) as T) : fallback; } catch { return fallback; }
@@ -194,13 +193,11 @@ function trimDevice(keep: string) {
 export const newDeckId = () => `my-${Date.now().toString(36)}`;
 
 // ── Questions ──
-/** The teacher's questions: new ones, and their edited copies of built ones (same id). */
-const myQuestions = (): Record<string, LibraryQuestion> => read<Record<string, LibraryQuestion>>(BANK_KEY, {});
-export const bankQuestion = (id: string): LibraryQuestion | undefined => myQuestions()[id] ?? BANK.find((b) => b.id === id);
-export const saveQuestion = (q: LibraryQuestion): boolean => { const ok = write(BANK_KEY, { ...myQuestions(), [q.id]: q }); if (ok) pushQuestion(q); return ok; };
+/** A built-in bank question by id (old decks refer to questions this way; new decks hold their questions inside the slide). */
+export const bankQuestion = (id: string): LibraryQuestion | undefined => BANK.find((b) => b.id === id);
 
 // ── Pulling from the teacher's other devices ──
-/** Brings in every shared deck newer than this device's copy, and the shared questions. Resolves to whether anything
+/** Brings in the shared copy of a deck this device holds (or the one asked for) when it is newer. Resolves to whether anything
  *  changed (so a page can re-read), or false when sharing is not available. */
 export const syncFromCloud = async (onlyId?: string): Promise<boolean> => (await syncDecks(onlyId))?.changed ?? false;
 
@@ -215,10 +212,6 @@ async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: 
   if (onlyId) touch(onlyId);
   let changed = false;
   const updated: string[] = [], failed: string[] = [];
-  const mine = myQuestions();
-  // New library entries are immutable copies with unique ids. Keep unsent local copies on reconnect.
-  const merged = { ...snap.questions, ...mine };
-  if (JSON.stringify(merged) !== JSON.stringify(mine)) { write(BANK_KEY, merged); changed = true; }
   for (const [id, entry] of Object.entries(snap.index)) {
     if (onlyId ? id !== onlyId : !holds(id)) continue;       // opening one deck fetches it; a whole-list check only refreshes the decks this device already holds
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
@@ -231,4 +224,3 @@ async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: 
   trimDevice(onlyId ?? "");
   return { changed, updated, failed };
 }
-export const newQuestionId = () => `my-q-${Date.now().toString(36)}`;

@@ -1,4 +1,4 @@
-// The one-off Blob → Postgres import (api/migrate-decks.ts): copies decks, history, published copies and questions; safe to run twice; never overwrites a newer edit.
+// The one-off Blob → Postgres import (api/migrate-decks.ts): copies decks, history and published copies; safe to run twice; never overwrites a newer edit.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const blobs = new Map<string, unknown>();
@@ -25,23 +25,21 @@ describe("importing the Blob store into Postgres", () => {
     blobs.set("history/a/2026-10-31T10-00-00-000Z.json", deck("a", "A old", "2026-10-30T10:00:00.000Z"));
     blobs.set("published-index.json", { version: 1, decks: { a: { title: "A", summary: "S", slides: 2, publishedAt: "2026-11-02T10:00:00.000Z" } } });
     blobs.set("published/a.json", { ...deck("a", "A", "2026-11-01T10:00:00.000Z"), publishedAt: "2026-11-02T10:00:00.000Z" });
-    blobs.set("deck-questions.json", { version: 1, questions: { "my-q-1": { id: "my-q-1", latex: "1", answer: "1", working: [] } } });
   });
 
   it("needs the admin key", async () => { expect((await run({}, "wrong")).status).toBe(401); });
 
   it("a dry run reports what it would copy and writes nothing", async () => {
     const r = await (await run({ dryRun: true })).json();
-    expect(r).toMatchObject({ dryRun: true, decks: { found: 2, written: 0, missing: ["gone"] }, history: { found: 1 }, published: { found: 1 }, questions: { found: 1 } });
+    expect(r).toMatchObject({ dryRun: true, decks: { found: 2, written: 0, missing: ["gone"] }, history: { found: 1 }, published: { found: 1 } });
     expect((await (await get()).json()).index.decks).toEqual({});
   });
 
   it("copies everything, in the shape the app reads", async () => {
     const r = await (await run()).json();
-    expect(r).toMatchObject({ decks: { found: 2, written: 1, missing: ["gone"] }, history: { found: 1 }, published: { found: 1, written: 1 }, questions: { found: 1 } });
+    expect(r).toMatchObject({ decks: { found: 2, written: 1, missing: ["gone"] }, history: { found: 1 }, published: { found: 1, written: 1 } });
     const all = await (await get()).json();
     expect(all.index.decks.a).toMatchObject({ title: "A", summary: "S", slides: 2, updatedAt: "2026-11-01T10:00:00.000Z", updatedBy: "Harry", preview: { id: "a" } });
-    expect(Object.keys(all.questions.questions)).toEqual(["my-q-1"]);
     expect((await (await get("?history=a")).json()).entries).toHaveLength(1);
     const pub = await (await get("?published", null)).json();
     expect(pub.decks.a).toMatchObject({ title: "A", slides: 2, publishedAt: "2026-11-02T10:00:00.000Z", preview: { id: "a" } });

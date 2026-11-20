@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isCuratedQuestion } from "../../api/_questions";
-import { checkDeck, checkQuestion } from "../../api/_decks";
+import { checkDeck } from "../../api/_decks";
 import { BANK } from "../decks";
 import { DECKS } from "./snapshotDecks";
 import { copyQuestion, fromBank, fromDepth, materializeDeck, newQuestion, readyProblems } from "../decks/questions";
@@ -73,7 +73,7 @@ describe("question validation", () => {
   it("accepts all four formats and draft content through the sharing API", () => {
     const q = base();
     const forms: CuratedQuestion[] = [q, { ...q, format: "choice", options: [{ text: "$4$", correct: true, reasoning: "" }, { text: "$5$", correct: false, reasoning: "Miscounted" }] }, { ...q, format: "claims", claims: [{ name: "A", text: "$2+2=4$" }], options: [] }, { ...q, format: "error", lines: ["2+2=5"], wrongLine: 0 }];
-    for (const form of forms) { expect(isCuratedQuestion(form)).toBe(true); expect(checkQuestion(form)?.id).toBe(q.id); }
+    for (const form of forms) { expect(isCuratedQuestion(form)).toBe(true); expect(checkDeck({ id: "test", title: "Test", slides: [{ els: [{ kind: "questions", items: [form] }] }] })).not.toHaveProperty("error"); }
   });
   it("keeps incomplete diagnostic drafts without claiming they are ready", () => {
     const draft = { ...base(), format: "choice" as const, options: [] };
@@ -83,13 +83,11 @@ describe("question validation", () => {
     const diagnostic = fromDepth("estimation", ESTIMATION_DEPTH[0]);
     expect(diagnostic.status).toBe(readyProblems(diagnostic).length ? "draft" : "ready");
   });
-  it("rejects corrupt nested question payloads while accepting legacy questions", () => {
-    expect(checkQuestion({ id: "old", latex: "1+1", answer: "2", working: [] })).toBeTruthy();
+  it("rejects corrupt nested question payloads", () => {
     for (const malformed of [{ ...base(), question: 123 }, { ...base(), status: "ready", format: "choice", options: [] }, { ...base(), format: "error", lines: ["2+2=5"], wrongLine: 9 }, { ...base(), visual: { render: "function" } }]) {
-      expect(checkQuestion(malformed)).toBeNull();
+      expect(isCuratedQuestion(malformed)).toBe(false);
       expect("error" in checkDeck({ id: "test", title: "Test", slides: [{ els: [{ kind: "questions", items: [malformed] }] }] })).toBe(true);
     }
-    expect(checkQuestion({ ...base(), rationale: "x".repeat(20001) })).toBeNull();
   });
   it("keeps empty practice drafts incomplete without requiring guidance", () => {
     expect(readyProblems(newQuestion())).toContain("Add the student-facing question.");

@@ -1,7 +1,7 @@
-// The database half of /api/decks: every read and write of decks, version history, published copies and questions. It takes a Db, so
+// The database half of /api/decks: every read and write of decks, version history, published copies. It takes a Db, so
 // the handler (api/decks.ts) and the tests use the same code. The pure rules (what may be sent, when to snapshot) stay in _decks.ts.
 import type { Db } from "./_db.js";
-import { emptyPublished, publishedWith, type DeckIndex, type DeckIndexEntry, type HistoryEntry, type PublishedEntry, type PublishedIndex, type QuestionStore } from "./_decks.js";
+import { emptyPublished, publishedWith, type DeckIndex, type DeckIndexEntry, type HistoryEntry, type PublishedEntry, type PublishedIndex } from "./_decks.js";
 
 type Row = Record<string, unknown>;
 const j = (v: unknown) => JSON.stringify(v);
@@ -104,19 +104,6 @@ export async function putPublished(db: Db, deck: { id: string; title: string; su
 }
 
 export const removePublished = (db: Db, id: string) => db.query(`DELETE FROM maths.published_decks WHERE id = $1`, [id]);
-
-// ── The shared question library ──
-
-export async function listQuestions(db: Db): Promise<QuestionStore> {
-  const rows = await db.query<Row>(`SELECT id, data FROM maths.questions`);
-  const questions: Record<string, unknown> = {};
-  for (const r of rows) questions[r.id as string] = r.data;
-  return { version: 1, questions };
-}
-
-export const putQuestion = (db: Db, id: string, q: unknown) =>
-  db.query(`INSERT INTO maths.questions (id, data) VALUES ($1,$2::jsonb) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`, [id, j(q)]);
-export const removeQuestion = (db: Db, id: string) => db.query(`DELETE FROM maths.questions WHERE id = $1`, [id]);
 
 // ── One-off import from the old Blob store (api/migrate-decks.ts) ──
 

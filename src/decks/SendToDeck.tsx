@@ -9,7 +9,7 @@ import { generatorSlide, titleSlide, whiteboardSlide, worksheetSlide } from "./l
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { copyQuestion, fromBank, materializeDeck } from "./questions";
 import { fromGenerated } from "./SlideCanvas";
-import { bankQuestion, deckSummaries, ensureDeck, newDeckId, newQuestionId, saveDeck } from "./store";
+import { bankQuestion, deckSummaries, ensureDeck, newDeckId, saveDeck } from "./store";
 import type { BankQuestion, CuratedQuestion, GeneratorPreset, QuestionSlideDraft, Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     if (!tool) return;
     if (what === "question" && shown.drawing) return;
     if (what === "question" && !captured) {
-      const q: BankQuestion = { id: newQuestionId(), tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
+      const q: BankQuestion = { id: `my-q-${Date.now().toString(36)}`, tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
         answer: shown.suffix ? `${shown.answer}\\text{ ${shown.suffix}}` : shown.answer, working: shown.working };
       setCapture([copyQuestion(fromBank(q))]); return;
     }

@@ -1,10 +1,9 @@
-// GET  /api/decks                         → { index, questions }: every shared deck's summary, and the shared questions
+// GET  /api/decks                         → { index }: every shared deck's summary (title, filing, tool, slides by kind, first slide)
 // GET  /api/decks?id=<id>                 → one deck
 // POST /api/decks {deck, base?, by}       → save a deck. With `base` (the version the saver started from) the save is MERGED into the stored deck
 //                                           by slide and element (api/_deckMerge.ts), so two people can edit one deck; the response then carries
 //                                           `merged: true` and the merged `deck`. Without `base` the deck replaces the stored one.
 // POST /api/decks {remove: <id>}          → delete a deck (its version history is kept)
-// POST /api/decks {question}              → save one question; {removeQuestion: <id>} → drop one
 // GET  /api/decks?history=<id>            → { entries }: the shared version history of a deck, newest first (snapshots kept automatically)
 // GET  /api/decks?history=<id>&key=<key>  → one snapshot (a deck), to restore from; the client restores it as an ordinary save
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next; cached for a minute)
@@ -18,9 +17,9 @@
 // version has not moved (retried if another save got in first), so two devices never overwrite each other.
 import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
-import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, listQuestions, newestSnapshotAt, putPublished, putQuestion, readDeck, removeDeck, removePublished, removeQuestion, writeDeck } from "./_deckStore.js";
+import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, newestSnapshotAt, putPublished, readDeck, removeDeck, removePublished, writeDeck } from "./_deckStore.js";
 import { applyOp, listCategories, parseOp, unfileDeck } from "./_categories.js";
-import { MAX_SNAPSHOTS, checkDeck, checkQuestion, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
+import { MAX_SNAPSHOTS, checkDeck, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
 // The two published reads are public and identical for everyone, so the CDN may keep them briefly; everything else is private and never cached.
@@ -82,8 +81,7 @@ export async function GET(req: Request) {
     const value = await getDeck(db, id);
     return value ? json(value) : json({ error: "Not found" }, 404);
   }
-  const [index, questions] = await Promise.all([listIndex(db), listQuestions(db)]);
-  return json({ index, questions });
+  return json({ index: await listIndex(db) });
 }
 
 export async function POST(req: Request) {
@@ -143,17 +141,6 @@ export async function POST(req: Request) {
     if (!validId(body.remove)) return json({ error: "Bad id" }, 400);
     await removeDeck(db, body.remove);
     await unfileDeck(db, body.remove);
-    return json({ removed: true });
-  }
-  if ("question" in body) {
-    const q = checkQuestion(body.question);
-    if (!q) return json({ error: "The question is invalid or exceeds the 20 KB library limit. Keep the draft in your deck or shorten it." }, 400);
-    await putQuestion(db, q.id, q.q);
-    return json({ saved: true });
-  }
-  if ("removeQuestion" in body) {
-    if (!validId(body.removeQuestion)) return json({ error: "Bad id" }, 400);
-    await removeQuestion(db, body.removeQuestion);
     return json({ removed: true });
   }
   return json({ error: "Nothing to do" }, 400);

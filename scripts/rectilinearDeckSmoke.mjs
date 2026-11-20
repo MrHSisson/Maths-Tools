@@ -26,7 +26,7 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
         data = { ok: true, deck };
       } else if (url.searchParams.has("published")) data = { decks: {} };
       else if (url.searchParams.has("id")) data = deck;
-      else data = { index: { decks: deck ? { [deck.id]: { updatedAt: deck.updatedAt } } : {} }, questions: { questions: {} } };
+      else data = { index: { decks: deck ? { [deck.id]: { updatedAt: deck.updatedAt } } : {} } };
       await route.fulfill({ json: data });
     });
     const p = await context.newPage();
