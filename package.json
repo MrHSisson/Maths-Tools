@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs",
+    "prebuild": "node scripts/toolFacts.mjs --write && node scripts/patchNotes.mjs && node scripts/adminDocs.mjs",
+    "prepare": "node scripts/gitSetup.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -24,7 +25,7 @@
     "smoke:depth-art": "node scripts/depthArtworkSmoke.mjs",
     "deck": "node scripts/deck.mjs",
     "new-tool": "node scripts/new-tool.mjs",
-    "facts": "node scripts/toolFacts.mjs --write && node scripts/adminDocs.mjs",
+    "facts": "node scripts/toolFacts.mjs --write && node scripts/patchNotes.mjs && node scripts/adminDocs.mjs",
     "smoke:rectilinear-deck": "node scripts/rectilinearDeckSmoke.mjs"
   },
   "dependencies": {

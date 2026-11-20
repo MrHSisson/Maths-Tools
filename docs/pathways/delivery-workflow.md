@@ -32,6 +32,8 @@ The aim: small chunks that each merge in minutes, checks that run only what a ch
 - **A5.** `ci.yml` is now `select` (which tests), `build` (type check, build, lint), `tests` (four shards) and `shell-smoke` (only when needed). Push to `main` compares with the commit before it; the nightly and manual full runs run everything; a newer push to a pull request cancels the older run. **Not yet run on GitHub** (CI only runs on a pull request or `main`), so the first pull request must be watched.
 - **A6.** Baseline read from the real runs: the test step took about 19 minutes on the runner (about 5 on a laptop; the runner has two cores), install about 1 minute, build and lint about 1.5, the smoke job about 2. The only two recent failures (2026-11-17) were `cpa.test.ts` timing out at 60 s. Full local suite after A2 to A5: 157 files, 240 s on the clock (645 s of work, down from about 965 s). **To do once a pull request has run:** read the new run's per-job times and compare.
 
+**2026-11-20, B1, B2 and B4 written (same branch):** `AGENTS.md` now has the small-chunk rule (layers: shared piece, tool behind a flag, deck content, the switch; kickoffs ask for one chunk) and the parallel-sessions rule (one worktree and branch each; the Handoff note is the claim list). Patch notes are one file per session in `docs/patch-notes/` (`_base.md` holds the introduction and every earlier entry); `scripts/patchNotes.mjs` builds `docs/PATCH_NOTES.md` from them (run by `npm run facts` and before every build; `src/tests/patchNotes.test.ts` fails if it is stale or a session file lacks its strand, `Agent:` or `Notes:` line). Generated files (`toolFacts.json`, `adminDocs.json`, `PATCH_NOTES.md`) have `merge=regenerate` in `.gitattributes`, and `npm install` sets that merge rule (`scripts/gitSetup.mjs`, the `prepare` script) to keep our copy, so a merge shows no conflict in them; run `npm run facts` after it. **B3 not done: needs Harry** (see Needs from Harry).
+
 ## Next steps
 In the order to do them. Each is its own small branch and merge; the letters group the work (A tests and CI, B merge flow, C decks, D tokens, E quality).
 
@@ -45,10 +47,10 @@ In the order to do them. Each is its own small branch and merge; the letters gro
 7. **A6. Run CI Optimizer's timings** on the real runs to confirm the savings. Baseline recorded 2026-11-20; the after-numbers need a pull request to have run the new CI.
 
 **Then: a merge flow for many branches**
-8. **B1. Small-chunk rule** in `AGENTS.md` and the kickoff: each merge leaves `main` working but need not be a finished tool. Layers: shared piece with its test, then the tool behind `enabled: false` or Developing-tools mode, then deck content, then the switch that makes it live. Merge a chunk as soon as it is green; the next chunk starts from the new `main`.
-9. **B2. Stop the common conflicts.** A patch-notes file per session instead of one shared file (a script builds the combined view); generated files rebuilt automatically, never merged by hand.
+8. ~~**B1. Small-chunk rule**~~ **Done 2026-11-20.** in `AGENTS.md` and the kickoff: each merge leaves `main` working but need not be a finished tool. Layers: shared piece with its test, then the tool behind `enabled: false` or Developing-tools mode, then deck content, then the switch that makes it live. Merge a chunk as soon as it is green; the next chunk starts from the new `main`.
+9. ~~**B2. Stop the common conflicts.**~~ **Done 2026-11-20.** A patch-notes file per session instead of one shared file (a script builds the combined view); generated files rebuilt automatically, never merged by hand.
 10. **B3. Merge queue or auto-merge.** Check what the GitHub plan allows. If a merge queue is available use it; if not, auto-merge plus an automatic "update branch".
-11. **B4. Parallel sessions.** One worktree and branch per session (Claude chats and Codex), with the Handoff note as the claim list, so two sessions never take the same area.
+11. ~~**B4. Parallel sessions.**~~ **Done 2026-11-20.** One worktree and branch per session (Claude chats and Codex), with the Handoff note as the claim list, so two sessions never take the same area.
 
 **Then: a steadier deck workflow**
 12. **C1. Fix stale docs.** `docs/TASKS.md` (the deck-preview task) still describes Vercel Blob; storage is Neon, and previews share the production database. (The task now points here; fix its text when C4 is done.)
@@ -66,7 +68,7 @@ In the order to do them. Each is its own small branch and merge; the letters gro
 20. **E1. Spot-check A-level generators with Wolfram** (Solving Trig Equations first) as an independent second opinion to the repo's own checks.
 21. **E3. Education Skills Library:** use it for lesson planning ideas (worked-example fading, practice sequencing, error analysis); keep it off by default if it adds noticeable startup tokens.
 
-**Needs from Harry:** the Vercel steps in C6 (only if C6 is done); check the GitHub plan for B3; approve the `.claude/settings.json` change in C5.
+**Needs from Harry:** B3 (merge queue or auto-merge): in the repository's Settings, tell me whether "Allow auto-merge" is on and whether a branch rule on `main` requires the `build` and `tests` checks; a merge queue is only offered to organisation-owned repositories (this one is owned by a person, so I expect it is not available) and an automatic "update branch" by a workflow would not start CI without a personal access token, so I have not built either; the Vercel steps in C6 (only if C6 is done); check the GitHub plan for B3; approve the `.claude/settings.json` change in C5.
 
 ## Where to read more
 `.github/workflows/ci.yml`, `src/tests/` (the Decision files named above), `src/shared/decision/cpa.ts` (`candidate`, `acceptable`, `generateCpa`), `AGENTS.md` ("Decks Harry edits", "Pushing a deck", "Deck data format"), `docs/reference/decks.md` ("Deck data and the live server", "Sharing one deck between Harry and Claude"), `docs/TASKS.md`, `src/decks/store.ts`, `src/decks/cloud.ts`, `api/decks.ts`, `api/_decks.ts`.
