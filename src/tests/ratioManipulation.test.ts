@@ -89,6 +89,13 @@ describe("Simplifying", () => {
     }
   });
 
+  it("1 : n and n : 1 always give the kind of question asked, never the fall-back to simplest form (it used to, about one run in a hundred, at Level 2)", () => {
+    for (const level of ["level1", "level2"] as DifficultyLevel[]) for (const ask of ["oneToN", "nToOne"]) for (let i = 0; i < 1500; i++) {
+      const q = gen("simplifying", level, { ...only("wholeNumbers"), simplest: false, oneToN: false, nToOne: false, [ask]: true });
+      expect(q.lines[0]).toBe(ask === "oneToN" ? "Write the ratio in the form 1 : n:" : "Write the ratio in the form n : 1:");
+    }
+  });
+
   it("1 : n is ignored unless whole numbers are ticked", () => {
     const q = gen("simplifying", "level1", { ...only("decimals"), simplest: false, oneToN: true });
     expect(q.lines[0]).toBe("Simplify the ratio:");

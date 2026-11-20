@@ -126,18 +126,26 @@ const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): 
   // 1 : n and n : 1 need the larger part to be a decimal of the smaller, so they draw from a wider range of parts: from 1 to 5 alone they would nearly always give 1 : 1.5
   const hi = ask !== "simplest" && !threePart ? (level === "level1" ? 9 : 12) : hi0;
   const terminating = [1, 2, 4, 5, 8];
-  for (let i = 0; i < 300; i++) {
-    const simple = Array.from({ length: threePart ? 3 : 2 }, () => randInt(lo, hi));
-    if (gcdAll(simple) !== 1) continue;
-    const [a, b] = simple;
-    if (!threePart) {
+  const fits = (simple: number[], f: number) => simple.every((x) => x * f >= minPart && x * f <= maxPart);
+  if (!threePart) {
+    // Every pair that can be asked is listed, then one is drawn: the same chance for each as drawing at random and rejecting, but a question of the kind asked is certain.
+    // (Drawing and rejecting 300 times missed now and then for n : 1 at Level 2, whose parts are narrow, and fell back to a "simplest form" question.)
+    const options: { simple: number[]; f: number }[] = [];
+    for (let a = lo; a <= hi; a++) for (let b = lo; b <= hi; b++) {
+      if (gcdAll([a, b]) !== 1) continue;
       if (ask === "oneToN" && !(a >= 2 && terminating.includes(a) && b > a)) continue;
       if (ask === "nToOne" && !(b >= 2 && terminating.includes(b) && a > b)) continue;
+      for (const f of hcfs) if (fits([a, b], f)) options.push({ simple: [a, b], f });
     }
-    const f = pick([...hcfs]);
-    const parts = simple.map((x) => x * f);
-    if (parts.some((x) => x < minPart || x > maxPart)) continue;
-    return wholeQuestion(parts, ask, method, level);
+    if (options.length) { const { simple, f } = pick(options); return wholeQuestion(simple.map((x) => x * f), ask, method, level); }
+  } else {
+    for (let i = 0; i < 300; i++) {
+      const simple = Array.from({ length: 3 }, () => randInt(lo, hi));
+      if (gcdAll(simple) !== 1) continue;
+      const f = pick([...hcfs]);
+      if (!fits(simple, f)) continue;
+      return wholeQuestion(simple.map((x) => x * f), ask, method, level);
+    }
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
   return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level);
