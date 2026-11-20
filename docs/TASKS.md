@@ -13,6 +13,7 @@ Nothing at the moment.
 ## Open
 
 ### Decks: see and push deck changes before they are merged (previews, a bypass secret, a tolerant server)
+**Superseded 2026-11-20 by the pathway `docs/pathways/delivery-workflow.md` (chunks C4 and C6). Note: storage is now Neon, not Blob, and previews share the production database, so the "second Blob store" step below no longer applies.**
 Banked 2026-11-17 at Harry's request. **Why:** deck data lives in Vercel Blob on the live server, which validates every question with the code on `main`. So a deck that uses something new (a shape, a field) is refused until the code is merged, and a branch's preview deployment is behind the Vercel login, so Claude cannot push to it or check it. Harry then cannot see the work. **Do, in order:**
 1. **Merge code before content.** Code that changes the deck data format (`api/_rectilinear.ts`, validators, the renderers) goes to `main` in its own small merge; the deck content is pushed straight after. Add this rule to `AGENTS.md`.
 2. **Harry (about five minutes, in the Vercel dashboard):** project `maths-tools` → Settings → Deployment Protection → *Protection Bypass for Automation* → add a secret (give it to Claude through the secure credential form, never in chat). Then Storage → create a second Blob store and connect it to **Preview only** (Production keeps the current store), so a preview never writes to the live decks. Check first whether previews currently share the production store; if they do, pushing from a preview changes the live deck.
