@@ -10,4 +10,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `src/shared/decision/cpa.ts`, `sr
 - Not done: Level 3 resource levelling questions are still slow (about 0.8 s each); fixing it means redesigning how they are built.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

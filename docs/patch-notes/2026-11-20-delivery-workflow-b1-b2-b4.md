@@ -10,4 +10,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `AGENTS.md`, `docs/patch-notes/`,
 - Not done: the merge queue or auto-merge (B3) needs a check of the repository settings by Harry.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

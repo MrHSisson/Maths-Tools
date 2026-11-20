@@ -9,4 +9,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `src/decks/store.ts`, `src/compon
 - Tests: a device with a small quota (space freed and the save kept; nothing left to free reports the failure and names the deck).
 
 Agent: Claude Code
-Notes: Build Log block "Delivery workflow, C2 storage safety net (Claude Code)" (planner not yet written, see the pathway's Next steps).
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

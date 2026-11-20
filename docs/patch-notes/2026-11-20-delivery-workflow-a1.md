@@ -10,4 +10,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `.github/workflows/ci.yml`, `scri
 - Not yet: a change to any tool still runs the "tools" area, which includes `seedReplay`'s slow Decision half (A2/A3); `main` still re-runs everything after a pull request (A5).
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

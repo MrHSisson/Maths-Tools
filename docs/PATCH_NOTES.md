@@ -40,7 +40,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `CLAUDE.md`, `docs/reference/` (n
 - **Solving Trig Equations spot-checked in Wolfram:** 12 generated questions across all three levels, in degrees and radians, matched an independent `Solve` over the stated range.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-20 — Delivery workflow, step C2: decks and a full device
 
@@ -51,7 +51,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `src/decks/store.ts`, `src/compon
 - Tests: a device with a small quota (space freed and the save kept; nothing left to free reports the failure and names the deck).
 
 Agent: Claude Code
-Notes: Build Log block "Delivery workflow, C2 storage safety net (Claude Code)" (planner not yet written, see the pathway's Next steps).
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-20 — Delivery workflow, steps C1, C3 and C4: decks before their code, and a small device
 
@@ -63,7 +63,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `api/_decks.ts`, `api/_questions.
 - Not done: allow rules so a deck push needs no prompt (C5) and a separate preview database with a bypass secret (C6) both need Harry.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-20 — Delivery workflow, steps B1, B2 and B4: small chunks and fewer merge conflicts
 
@@ -75,7 +75,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `AGENTS.md`, `docs/patch-notes/`,
 - Not done: the merge queue or auto-merge (B3) needs a check of the repository settings by Harry.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-20 — Delivery workflow, steps A2 to A5: faster Decision tests and CI
 
@@ -87,7 +87,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `src/shared/decision/cpa.ts`, `sr
 - Not done: Level 3 resource levelling questions are still slow (about 0.8 s each); fixing it means redesigning how they are built.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-20 — Delivery workflow, step A1: test areas and CI path filters
 
@@ -99,7 +99,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `.github/workflows/ci.yml`, `scri
 - Not yet: a change to any tool still runs the "tools" area, which includes `seedReplay`'s slow Decision half (A2/A3); `main` still re-runs everything after a pull request (A5).
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
 
 ## 2026-11-18 — Unit Circle: symmetry and periodicity worksheet
 

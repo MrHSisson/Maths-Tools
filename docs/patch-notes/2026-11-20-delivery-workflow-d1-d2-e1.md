@@ -9,4 +9,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `CLAUDE.md`, `docs/reference/` (n
 - **Solving Trig Equations spot-checked in Wolfram:** 12 generated questions across all three levels, in degrees and radians, matched an independent `Solve` over the stated range.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).

@@ -10,4 +10,4 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `api/_decks.ts`, `api/_questions.
 - Not done: allow rules so a deck push needs no prompt (C5) and a separate preview database with a bypass secret (C6) both need Harry.
 
 Agent: Claude Code
-Notes: Build Log block not yet written.
+Notes: Build Log block "2026-11-20 — Delivery workflow: faster builds, smaller merges, a steadier deck workflow (Claude Code)" (tag agent:claude-code).
