@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  LABEL_SIZE, MechDiagram, MechPicture, buildElasticHorizontal, buildElasticVertical, buildHorizontal, buildIncline, buildInclineString, buildInOrder, buildProfile, buildPulley, buildTwoStrings, buildVertical, displayStep, layoutScene, lblText, mirrorScene, partsAt, stageParts, stepCount, validateScene,
+  LABEL_SIZE, MechDiagram, MechPicture, buildElasticHorizontal, buildElasticVertical, buildHorizontal, buildEnergyBars, buildForceDiagram, buildForceDisplacement, buildHole, buildIncline, buildInclineString, buildInOrder, buildProfile, buildPulley, buildSpeedTime, buildTwoStrings, buildVertical, displayStep, layoutScene, lblText, mirrorScene, partsAt, stageParts, stepCount, validateScene,
   type DiagramDisplay, type DiagramSize, type ElasticHorizontalParams, type ElasticVerticalParams, type HorizontalParams, type InclineParams, type Scene, type VerticalParams,
 } from "../shared/mechanics";
 import { seededRandom } from "./seededRandom";
@@ -184,6 +184,94 @@ function pulleyParams(r: () => number) {
   };
 }
 
+function forceDisplacementParams(r: () => number) {
+  return {
+    shape: pickFrom(r, ["constant", "linear", "decreasing", "quadratic", "sqrt", "sine", "reciprocal"] as const),
+    from: 0.05 + r() * 0.3, to: 0.5 + r() * 0.4,
+    xTitle: chance(r, 0.8) ? { text: pickFrom(r, ["x (m)", "x"] as const) } : undefined,
+    yTitle: chance(r, 0.8) ? { text: pickFrom(r, ["F (N)", "F"] as const) } : undefined,
+    curveLabel: chance(r, 0.6) ? { text: pickFrom(r, ["8x + 15", "kx²", "2√x"] as const) } : undefined,
+    x1: chance(r, 0.8) ? { text: pickFrom(r, ["x₁", "2.0", "1.0"] as const) } : undefined,
+    x2: chance(r, 0.8) ? { text: pickFrom(r, ["x₂", "5.0", "2.0"] as const), ask: chance(r, 0.2) ? "a" : undefined } : undefined,
+    f1: chance(r, 0.3) ? { text: "31" } : undefined, f2: chance(r, 0.3) ? { text: "55" } : undefined,
+    areaLabel: chance(r, 0.6) ? { text: pickFrom(r, ["work done", "W"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    shade: chance(r, 0.85),
+  };
+}
+
+function speedTimeParams(r: () => number) {
+  const shape = pickFrom(r, ["trapezium", "triangle", "accelerating", "steps"] as const);
+  const n = shape === "trapezium" ? 3 : shape === "triangle" ? 2 : shape === "steps" ? 5 : 1;
+  return {
+    shape,
+    times: Array.from({ length: n }, (_, i) => ({ text: pickFrom(r, [`t${"₁₂₃₄₅"[i]}`, `${30 + 40 * i} s`] as const) })).filter(() => chance(r, 0.85)),
+    speed: chance(r, 0.7) ? { text: pickFrom(r, ["15", "v"] as const) } : undefined,
+    curveLabel: chance(r, 0.3) ? { text: "v" } : undefined,
+  };
+}
+
+function energyBarsParams(r: () => number) {
+  const n = 2 + Math.floor(r() * 3);
+  const total = 0.7 + r() * 0.3;
+  const conserved = chance(r, 0.6);
+  return {
+    conserved,
+    legend: chance(r, 0.8),
+    columns: Array.from({ length: n }, (_, i) => {
+      const frac = n === 1 ? 0 : i / (n - 1);
+      const gpe = total * (1 - frac) * (chance(r, 0.9) ? 1 : 0.5);
+      const ke = conserved ? total - gpe : total * frac * 0.9;
+      return { name: { text: pickFrom(r, [`${"ABCD"[i]}`, ["start", "middle", "end", "top"][i]] as const) }, gpe: gpe > 0.02 ? gpe : undefined, ke: ke > 0.02 ? ke : undefined, epe: chance(r, 0.2) ? 0.1 + r() * 0.2 : undefined, work: !conserved && chance(r, 0.4) ? 0.1 + r() * 0.15 : undefined };
+    }),
+  };
+}
+
+function forceDiagramParams(r: () => number) {
+  const kinds = ["weight", "normal", "driving", "resistance", "tension", "applied", "friction"] as const;
+  const n = 2 + Math.floor(r() * 3);
+  const start = r() * 360;
+  const chosen = new Set<(typeof kinds)[number]>();
+  while (chosen.size < n) chosen.add(pickFrom(r, kinds));
+  const list = [...chosen];
+  const forces = list.map((kind, i) => ({ kind, angle: kind === "weight" ? 270 : (start + (360 / n) * i + (r() - 0.5) * 16) % 360, label: chance(r, 0.9) ? { text: pickFrom(r, ["T", "20 N", "mg", "R"] as const) } : undefined }));
+  // keep any two arrows at least 40 degrees apart (a weight at 270 included)
+  const sep = (a: number, b: number) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+  const ok = forces.every((f, i) => forces.every((g, j) => i === j || sep(f.angle, g.angle) >= 40));
+  const use = ok ? forces : [{ kind: "weight" as const, angle: 270, label: { text: "mg" } }, { kind: "normal" as const, angle: 90, label: { text: "R" } }];
+  const resolveIdx = use.findIndex((f) => f.kind !== "weight" && f.kind !== "normal");
+  const axis = pickFrom(r, [0, 20, 30] as const);
+  return {
+    forces: use,
+    axisAngle: resolveIdx >= 0 && chance(r, 0.7) ? axis : undefined,
+    resolve: resolveIdx >= 0 && chance(r, 0.5) ? { force: resolveIdx, along: { text: "F cos θ" }, across: { text: "F sin θ" } } : undefined,
+    body: chance(r, 0.4) ? { text: "m" } : undefined,
+  };
+}
+
+function holeParams(r: () => number) {
+  return {
+    kind: pickFrom(r, ["elastic", "string"] as const),
+    massA: chance(r, 0.8) ? { text: pickFrom(r, ["8 kg", "A", "m"] as const) } : undefined,
+    massB: chance(r, 0.8) ? { text: pickFrom(r, ["3 kg", "B"] as const) } : undefined,
+    distanceA: chance(r, 0.8) ? { text: pickFrom(r, ["3.5 m", "d"] as const) } : undefined,
+    depthB: chance(r, 0.8) ? { text: pickFrom(r, ["2 m", "h"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    friction: chance(r, 0.6) ? { text: pickFrom(r, ["μR", "31.4 N"] as const) } : undefined,
+    weightB: chance(r, 0.6) ? { text: "3g N" } : undefined,
+    tension: chance(r, 0.4) ? { text: "T" } : undefined,
+    names: { a: chance(r, 0.5) ? "A" : undefined, b: chance(r, 0.5) ? "B" : undefined, hole: chance(r, 0.4) ? "O" : undefined },
+    mirror: chance(r, 0.5),
+  };
+}
+
+/** How many labels an element should have placed: its own label, a marker's name, a graph's titles, marks, curve and area labels, a bar chart's column names and legend. */
+function wantedLabels(e: Scene["elements"][number], showAnswer: boolean): number {
+  const has = (l?: { text: string; ask?: string }) => (l && lblText(l, showAnswer) ? 1 : 0);
+  if (e.type === "marker") return 1;
+  if (e.type === "graph") return has(e.xTitle) + has(e.yTitle) + has(e.curveLabel) + has(e.area?.label) + (e.marks ?? []).reduce((n, m) => n + has(m.label), 0);
+  if (e.type === "bars") return e.columns.reduce((n, c) => n + has(c.name), 0) + (e.legend ? 4 : 0);
+  return "label" in e ? has(e.label) : 0;
+}
+
 const TEMPLATES: { name: string; build: (r: () => number) => Scene }[] = [
   { name: "horizontal", build: (r) => buildHorizontal(horizontalParams(r)) },
   { name: "vertical", build: (r) => buildVertical(verticalParams(r)) },
@@ -192,6 +280,11 @@ const TEMPLATES: { name: string; build: (r: () => number) => Scene }[] = [
   { name: "two-strings", build: (r) => buildTwoStrings(twoStringsParams(r)) },
   { name: "profile", build: (r) => buildProfile(profileParams(r)) },
   { name: "pulley", build: (r) => buildPulley(pulleyParams(r)) },
+  { name: "force-displacement", build: (r) => buildForceDisplacement(forceDisplacementParams(r)) },
+  { name: "speed-time", build: (r) => buildSpeedTime(speedTimeParams(r)) },
+  { name: "energy-bars", build: (r) => buildEnergyBars(energyBarsParams(r)) },
+  { name: "force-diagram", build: (r) => buildForceDiagram(forceDiagramParams(r)) },
+  { name: "hole", build: (r) => buildHole(holeParams(r)) },
   { name: "elastic-horizontal", build: (r) => buildElasticHorizontal(elasticHorizontalParams(r)) },
   { name: "elastic-vertical", build: (r) => buildElasticVertical(elasticVerticalParams(r)) },
 ];
@@ -209,7 +302,7 @@ describe("mechanics diagrams: every template", () => {
         if (bad.length) problems.push(`#${i} scene: ${bad.join("; ")}`);
         for (const size of SIZES) for (const showAnswer of [false, true]) {
           const lay = layoutScene(scene, { showAnswer, fontSize: LABEL_SIZE[size] });
-          const wanted = lay.visible.filter((e) => ("label" in e && lblText(e.label, showAnswer)) || e.type === "marker").length;
+          const wanted = lay.visible.reduce((n, e) => n + wantedLabels(e, showAnswer), 0);
           if (lay.labels.length !== wanted) problems.push(`#${i} ${size}: ${lay.labels.length} labels placed, ${wanted} wanted`);
           if (lay.unplaced.length) problems.push(`#${i} ${size} answer=${showAnswer}: unplaced ${lay.unplaced.join(",")} ${JSON.stringify(lay.labels.filter((l) => lay.unplaced.some((u) => u.startsWith(l.id))).map((l) => l.rect))} ${JSON.stringify(scene.elements.filter((e) => e.type === "body"))}`);
           if (lay.clashes.length) problems.push(`#${i} ${size}: labels on a line: ${lay.clashes.join(",")} ${lay.clashes.map((id) => { const lb = lay.labels.find((x) => x.id === id); return lb ? JSON.stringify(lb.rect) + JSON.stringify(lay.obstacles.filter((o) => Math.abs(o.x1 - lb.rect.x) < 200 && Math.abs(o.y1 - lb.rect.y) < 200).map((o) => [Math.round(o.x1), Math.round(o.y1), Math.round(o.x2), Math.round(o.y2)])) : ""; }).join(" ")}`);
@@ -338,6 +431,12 @@ describe("mechanics diagrams: every template", () => {
       "two-strings": buildTwoStrings({ kind: "elastic", position: 0.42, mass: { text: "2.0 kg" }, ab: { text: "2.0 m" }, lengthA: { text: "1.5 m" }, lengthB: { text: "0.90 m" }, angleA: { text: "α" }, angleB: { text: "β" }, tensionA: { text: "T_A" }, tensionB: { text: "T_B" }, weight: { text: "2g N" }, names: { a: "A", b: "B", p: "P" } }),
       "cyclist-profile": buildProfile({ startRel: 1, endRel: 0.35, startHeight: { text: "35 m" }, endHeight: { text: "10 m" }, distance: { text: "500 m" }, body: true, bodyLabel: { text: "62 kg" }, names: { start: "A", end: "B" } }),
       "pulley-lift": buildPulley({ load: { text: "1.5 kg" }, tension: { text: "18 N" }, weight: { text: "1.5g N" }, height: { text: "h", ask: "?" }, speed: { text: "v" } }),
+      "force-graph": buildForceDisplacement({ shape: "linear", from: 0.2, to: 0.75, xTitle: { text: "x (m)" }, yTitle: { text: "F (N)" }, curveLabel: { text: "8x + 15" }, x1: { text: "2" }, x2: { text: "5" }, areaLabel: { text: "work done", ask: "W = ?" } }),
+      "speed-graph": buildSpeedTime({ shape: "trapezium", times: [{ text: "30" }, { text: "150" }, { text: "175" }], speed: { text: "15" } }),
+      "bars-conserved": buildEnergyBars({ conserved: true, columns: [{ name: { text: "start" }, gpe: 0.8, ke: 0.2 }, { name: { text: "middle" }, gpe: 0.4, ke: 0.6 }, { name: { text: "end" }, ke: 1 }] }),
+      "bars-work": buildEnergyBars({ columns: [{ name: { text: "A" }, ke: 0.3 }, { name: { text: "B" }, gpe: 0.5, ke: 0.15, work: 0.2 }] }),
+      "force-diagram": buildForceDiagram({ forces: [{ kind: "weight", angle: 270, label: { text: "mg" } }, { kind: "normal", angle: 120, label: { text: "R" } }, { kind: "driving", angle: 30, label: { text: "T" } }, { kind: "resistance", angle: 210, label: { text: "R" } }], axisAngle: 30, resolve: { force: 0, along: { text: "mg sin 30°" }, across: { text: "mg cos 30°" } }, angleMark: { from: 0, to: 30, label: { text: "30°" } }, body: { text: "m" } }),
+      "hole-table": buildHole({ massA: { text: "8 kg" }, massB: { text: "3 kg" }, distanceA: { text: "3.5 m" }, depthB: { text: "2 m" }, friction: { text: "μR" }, weightB: { text: "3g N" }, names: { a: "A", b: "B", hole: "O" } }),
       "dropped-crate": buildVertical({ body: "block", start: { rel: 1, height: { text: "12 m" }, moving: "down", name: "A" }, end: { rel: 0, speed: { text: "v", ask: "?" }, moving: "down", name: "B" }, drop: { text: "12 m" }, bodyLabel: { text: "50 kg" } }),
     };
     mkdirSync(dir!, { recursive: true });

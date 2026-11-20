@@ -108,7 +108,32 @@ export interface Pulley extends Base {
   at: Pt; r: number;
 }
 
-export type SceneElement = Surface | Body | Force | Dim | Arc | Marker | Line | Spring | Pulley;
+/** A graph in a plot box: axes with titles, a curve (in plot units, 0 to 1 both ways, y up), tick marks with guide lines, and an optional shaded area under the curve. */
+export interface Graph extends Base {
+  type: "graph";
+  x: number; y: number; w: number; h: number;
+  xTitle?: Lbl; yTitle?: Lbl;
+  curve: Pt[];
+  curveLabel?: Lbl;
+  /** A mark on an axis at `at` (0 to 1) with a label; `guide` draws a dashed line from the curve to the axis. */
+  marks?: { axis: "x" | "y"; at: number; label: Lbl; guide?: boolean }[];
+  /** The area under the curve between two x positions, shaded, with an optional label inside it. */
+  area?: { from: number; to: number; label?: Lbl };
+}
+
+/** Energy as stacked bars, one column per state: gravitational potential, elastic potential and kinetic energy, plus work added or removed. Each height is a fraction (0 to 1) of the tallest column. */
+export interface BarColumn { name: Lbl; gpe?: number; epe?: number; ke?: number; work?: number }
+export interface Bars extends Base {
+  type: "bars";
+  x: number; y: number; w: number; h: number;
+  columns: BarColumn[];
+  /** A dashed line across at the height of the first column's total: what stays the same when only gravity (and the spring) do work. */
+  conserved?: boolean;
+  /** The legend naming what each colour is (KE, GPE, EPE, work). */
+  legend?: boolean;
+}
+
+export type SceneElement = Surface | Body | Force | Dim | Arc | Marker | Line | Spring | Pulley | Graph | Bars;
 
 /** A named part of a picture. `given` parts are what a question that supplies its diagram shows straight away; the others (a resolved component, a new label) are added by the working. */
 export interface ScenePart { id: string; label: string; given: boolean }
@@ -216,6 +241,7 @@ export function mirrorScene(s: Scene): Scene {
         case "line": return { ...e, a: f(e.a), b: f(e.b) };
         case "spring": return { ...e, a: f(e.a), b: f(e.b) };
         case "pulley": return { ...e, at: f(e.at) };
+        case "graph": case "bars": return e;   // a graph or a bar chart is not flipped: its axes always read left to right
       }
     }),
   };
@@ -232,6 +258,7 @@ function elementPoints(e: SceneElement): Pt[] {
     case "marker": return [e.at];
     case "spring": return [e.a, e.b];
     case "pulley": return [e.at];
+    case "graph": case "bars": return [{ x: e.x, y: e.y }, { x: e.x + e.w, y: e.y + e.h }];
   }
 }
 

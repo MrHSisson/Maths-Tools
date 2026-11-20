@@ -4,6 +4,7 @@
 // the solver steers around. The renderer never drops a label: a scene that cannot place one reports it (`unplaced`).
 import { placePills, segHitsRect, type PillIn, type Rect, type Seg, type Scene as PlaceScene } from "../shapes/labels";
 import { bodyAnchors, bodyOutline, bodyPoint, bodySize } from "./bodies";
+import { barRects, curveAt, graphAxes, graphPoint, areaPolygon } from "./chartGeom";
 import { springSegments } from "./elastics";
 import { add, dir, leftNormal, lblText, mul, visibleAt, type Dim, type Lbl, type Pt, type Scene, type SceneElement } from "./scene";
 
@@ -24,6 +25,8 @@ export interface PlacedLabel {
   /** Where a leader line starts, if the label stands off from what it names (a leader is drawn only when this is not at the label). */
   lx: number; ly: number;
   hasLeader: boolean;
+  /** The label this text came from, so the text can change with `showAnswer` while the place stays put. */
+  lbl?: Lbl;
 }
 
 export interface Layout {
@@ -60,17 +63,17 @@ function placeAll(scene: Scene, fontSize: number): Placement {
 
   const shape: Seg[] = [];
   const helpers: Seg[] = [];
-  const fixed: { id: string; text: string; rect: Rect; lx: number; ly: number; hasLeader: boolean }[] = [];
-  const free: { id: string; text: string; item: PillIn }[] = [];
+  const fixed: { id: string; text: string; rect: Rect; lx: number; ly: number; hasLeader: boolean; lbl?: Lbl }[] = [];
+  const free: { id: string; text: string; item: PillIn; lbl?: Lbl }[] = [];
   const markers: Extract<SceneElement, { type: "marker" }>[] = [];
   const pillH = fontSize * 1.25;
   const pad = 6;
 
-  const fixedAt = (id: string, text: string, at: Pt) =>
-    fixed.push({ id, text, rect: { x: at.x, y: at.y, w: textWidth(text, fontSize) + pad, h: pillH }, lx: at.x, ly: at.y, hasLeader: false });
-  const freeOn = (id: string, text: string, a: Pt, b: Pt) => {
+  const fixedAt = (id: string, text: string, at: Pt, lbl?: Lbl) =>
+    fixed.push({ id, text, rect: { x: at.x, y: at.y, w: textWidth(text, fontSize) + pad, h: pillH }, lx: at.x, ly: at.y, hasLeader: false, lbl });
+  const freeOn = (id: string, text: string, a: Pt, b: Pt, lbl?: Lbl) => {
     const n = leftNormal(a, b);
-    free.push({ id, text, item: { ax: a.x, ay: a.y, bx: b.x, by: b.y, nx: n.x, ny: n.y, w: textWidth(text, fontSize) + pad, h: pillH, free: true } });
+    free.push({ id, text, lbl, item: { ax: a.x, ay: a.y, bx: b.x, by: b.y, nx: n.x, ny: n.y, w: textWidth(text, fontSize) + pad, h: pillH, free: true } });
   };
 
   for (const e of scene.elements) {
@@ -88,7 +91,7 @@ function placeAll(scene: Scene, fontSize: number): Placement {
       case "spring": {
         for (const [p, q] of springSegments(e)) shape.push(segOf(p, q));
         const t = placedText(e.label);
-        if (t) freeOn(e.id, t, e.a, e.b);
+        if (t) freeOn(e.id, t, e.a, e.b, e.label);
         break;
       }
       case "pulley": {
@@ -102,10 +105,10 @@ function placeAll(scene: Scene, fontSize: number): Placement {
         if (t) {
           const an = bodyAnchors(e), { w } = bodySize(e);
           // inside the upper part of a block, clear of the weight arrow that starts at its centre
-          if (e.kind === "block" && !e.rot && textWidth(t, fontSize) + pad <= w && pillH <= bodySize(e).h / 2) fixedAt(e.id, t, add(an.centre, { x: 0, y: -12 }));
+          if (e.kind === "block" && !e.rot && textWidth(t, fontSize) + pad <= w && pillH <= bodySize(e).h / 2) fixedAt(e.id, t, add(an.centre, { x: 0, y: -12 }), e.label);
           else {
             // too big to sit inside (or a particle): a pill that hugs the top edge and goes wherever there is room
-            freeOn(e.id, t, bodyPoint(e, -w / 2, bodySize(e).h), bodyPoint(e, w / 2, bodySize(e).h));
+            freeOn(e.id, t, bodyPoint(e, -w / 2, bodySize(e).h), bodyPoint(e, w / 2, bodySize(e).h), e.label);
           }
         }
         break;
@@ -117,8 +120,8 @@ function placeAll(scene: Scene, fontSize: number): Placement {
         if (e.witness) { helpers.push(segOf(e.a, l.a), segOf(e.b, l.b)); }
         const t = placedText(e.label);
         if (t) {
-          if (Math.abs(l.b.x - l.a.x) >= Math.abs(l.b.y - l.a.y)) fixedAt(e.id, t, { x: (l.a.x + l.b.x) / 2, y: (l.a.y + l.b.y) / 2 });
-          else freeOn(e.id, t, l.a, l.b);   // a vertical dimension: the text stands beside the line, on whichever side has room
+          if (Math.abs(l.b.x - l.a.x) >= Math.abs(l.b.y - l.a.y)) fixedAt(e.id, t, { x: (l.a.x + l.b.x) / 2, y: (l.a.y + l.b.y) / 2 }, e.label);
+          else freeOn(e.id, t, l.a, l.b, e.label);   // a vertical dimension: the text stands beside the line, on whichever side has room
         }
         break;
       }
@@ -133,8 +136,56 @@ function placeAll(scene: Scene, fontSize: number): Placement {
           // the pill's normal is the side of the chord facing away from the vertex
           const n = leftNormal(p0, p1);
           const flip = n.x * out.x + n.y * out.y < 0;
-          freeOn(e.id, t, flip ? p1 : p0, flip ? p0 : p1);
+          freeOn(e.id, t, flip ? p1 : p0, flip ? p0 : p1, e.label);
         }
+        break;
+      }
+      case "graph": {
+        const ax = graphAxes(e);
+        shape.push(segOf(...ax.x), segOf(...ax.y));
+        for (let i = 1; i < e.curve.length; i++) shape.push(segOf(graphPoint(e, e.curve[i - 1]), graphPoint(e, e.curve[i])));
+        const sub = (key: string, l: Lbl | undefined, at: Pt) => { const t = placedText(l); if (t) fixedAt(`${e.id}:${key}`, t, at, l); };
+        // the axis titles stand beyond the arrowheads; the curve's label stands just past its end
+        sub("x", e.xTitle, { x: ax.x[1].x + 8 + textWidth(placedText(e.xTitle) ?? "", fontSize) / 2 + pad / 2, y: ax.x[1].y });
+        sub("y", e.yTitle, { x: ax.y[1].x + textWidth(placedText(e.yTitle) ?? "", fontSize) / 2 + 2, y: ax.y[1].y - pillH * 0.7 - 4 });
+        // marks on an axis: where two would overlap, the later one steps along one row so both stay readable
+        for (const axis of ["x", "y"] as const) {
+          const list = (e.marks ?? []).map((m, i) => ({ m, i })).filter((q) => q.m.axis === axis).sort((p, q) => p.m.at - q.m.at);
+          let prev: Rect | undefined;
+          for (const { m, i } of list) {
+            const t = placedText(m.label);
+            if (!t) continue;
+            const along = axis === "x" ? graphPoint(e, { x: m.at, y: 0 }) : graphPoint(e, { x: 0, y: m.at });
+            const w = textWidth(t, fontSize) + pad;
+            const at = axis === "x" ? { x: along.x, y: along.y + pillH * 0.75 + 6 } : { x: along.x - w / 2 - 10, y: along.y };
+            if (prev && Math.abs(at.x - prev.x) < (w + prev.w) / 2 + 2 && Math.abs(at.y - prev.y) < (pillH + prev.h) / 2) {
+              if (axis === "x") at.y = prev.y + pillH + 3; else at.y = prev.y - pillH - 3;
+            }
+            fixedAt(`${e.id}:m${i}`, t, at, m.label);
+            prev = { x: at.x, y: at.y, w, h: pillH };
+          }
+        }
+        for (const m of e.marks ?? []) if (m.guide) {
+          if (m.axis === "x") helpers.push(segOf(graphPoint(e, { x: m.at, y: 0 }), graphPoint(e, { x: m.at, y: curveAt(e, m.at) })));
+          else helpers.push(segOf(graphPoint(e, { x: 0, y: m.at }), graphPoint(e, { x: 1, y: m.at })));
+        }
+        if (e.area) {
+          const poly = areaPolygon(e);
+          // inside the shaded area, in the strip just above the axis where no curve can reach
+          const t = placedText(e.area.label);
+          if (t && poly.length) fixedAt(`${e.id}:area`, t, { x: (poly[0].x + poly[poly.length - 1].x) / 2, y: poly[0].y - pillH * 0.75 - 4 }, e.area.label);
+        }
+        const last = e.curve[e.curve.length - 1];
+        const ct = placedText(e.curveLabel);
+        if (ct && last) { const p = graphPoint(e, last); fixedAt(`${e.id}:curve`, ct, { x: p.x + 10 + textWidth(ct, fontSize) / 2, y: p.y - (p.y > e.y + e.h - pillH ? pillH * 0.9 : 0) }, e.curveLabel); }
+        break;
+      }
+      case "bars": {
+        const g = barRects(e);
+        shape.push(segOf({ x: e.x, y: g.base }, { x: e.x + e.w, y: g.base }));
+        for (const r of g.rects) shape.push(...polySegs([{ x: r.x, y: r.y }, { x: r.x + r.w, y: r.y }, { x: r.x + r.w, y: r.y + r.h }, { x: r.x, y: r.y + r.h }]));
+        e.columns.forEach((c, i) => { const t = placedText(c.name); if (t) fixedAt(`${e.id}:c${i}`, t, { x: g.colX[i], y: g.base + pillH * 0.75 + 4 }, c.name); });
+        if (e.legend) ["GPE", "EPE", "KE", "Work"].forEach((name, i) => fixedAt(`${e.id}:leg${i}`, name, { x: e.x + e.w - 68 + textWidth(name, fontSize) / 2, y: e.y + 12 + i * 31 }));
         break;
       }
       case "marker": markers.push(e); break;
@@ -160,7 +211,7 @@ function placeAll(scene: Scene, fontSize: number): Placement {
   for (const e of scene.elements) {
     if (e.type !== "force") continue;
     const t = placedText(e.label);
-    if (t) freeOn(e.id, t, e.from, e.to);
+    if (t) freeOn(e.id, t, e.from, e.to, e.label);
   }
 
   const sc: PlaceScene = {
@@ -170,13 +221,13 @@ function placeAll(scene: Scene, fontSize: number): Placement {
     reach: 10, cramp: 3,
     inside: () => false,
   };
-  const labels: PlacedLabel[] = fixed.map((f) => ({ id: f.id, text: f.text, x: f.rect.x, y: f.rect.y, rect: f.rect, lx: f.lx, ly: f.ly, hasLeader: false }));
+  const labels: PlacedLabel[] = fixed.map((f) => ({ id: f.id, text: f.text, x: f.rect.x, y: f.rect.y, rect: f.rect, lx: f.lx, ly: f.ly, hasLeader: false, lbl: f.lbl }));
   if (free.length) {
     const spots = placePills(free.map((f) => f.item), sc);
     free.forEach((f, i) => {
       const o = spots[i];
       const rect = { x: o.x, y: o.y, w: f.item.w, h: f.item.h };
-      labels.push({ id: f.id, text: f.text, x: o.x, y: o.y, rect, lx: o.lx, ly: o.ly, hasLeader: Math.hypot(o.x - o.lx, o.y - o.ly) > f.item.h * 1.4 });
+      labels.push({ id: f.id, text: f.text, x: o.x, y: o.y, rect, lx: o.lx, ly: o.ly, hasLeader: Math.hypot(o.x - o.lx, o.y - o.ly) > f.item.h * 1.4, lbl: f.lbl });
     });
   }
 
@@ -195,8 +246,9 @@ function placeAll(scene: Scene, fontSize: number): Placement {
   }
   // and a label may not sit on a solid line (a dimension's own label is meant to break its line, so dimensions are not checked)
   const owners = new Map(scene.elements.map((e) => [e.id, e]));
+  const ownerOf = (id: string) => owners.get(id.split(":")[0]);
   // (the label of a dashed component may touch the weight arrow on a steep slope, where the two nearly coincide, so components are not checked either)
-  const exempt = (id: string) => { const o = owners.get(id); return o?.type === "dim" || (o?.type === "force" && o.kind === "component"); };
+  const exempt = (id: string) => { const o = ownerOf(id); return o?.type === "dim" || (o?.type === "force" && o.kind === "component"); };
   const clashes = labels.filter((lb) => !exempt(lb.id) && shape.some((s) => segHitsRect(s, lb.rect, -2))).map((lb) => lb.id);
   const placement: Placement = { labels, unplaced, clashes, obstacles: shape, guides: helpers, owners };
   byScene.set(fontSize, placement);
@@ -216,10 +268,9 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
   }
   const visible = scene.elements.filter((e) => visibleAt(e, step));
   const shown = new Set(visible.map((e) => e.id));
-  const labels = all.labels.filter((l) => shown.has(l.id)).map((l) => {
-    const owner = all.owners.get(l.id);
-    const t = owner && "label" in owner ? lblText(owner.label, showAnswer) : undefined;
-    return t != null && owner?.type !== "marker" ? { ...l, text: t } : l;
+  const labels = all.labels.filter((l) => shown.has(l.id.split(":")[0])).map((l) => {
+    const t = l.lbl ? lblText(l.lbl, showAnswer) : undefined;
+    return t != null ? { ...l, text: t } : l;
   });
   return { fontSize, visible, labels, unplaced: all.unplaced, clashes: all.clashes, obstacles: all.obstacles, guides: all.guides };
 }

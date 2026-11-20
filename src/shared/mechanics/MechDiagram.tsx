@@ -4,7 +4,7 @@
 import { useMemo, type ReactElement } from "react";
 import { layoutScene } from "./labelling";
 import { LABEL_SIZE, type DiagramSize } from "./palette";
-import { ArcEl, Band, BodyEl, DimEl, ForceEl, LabelEl, MarkerEl, PulleyEl, SpringEl, SurfaceEl } from "./draw";
+import { ArcEl, BarsEl, Band, BodyEl, DimEl, ForceEl, GraphEl, LabelEl, MarkerEl, PulleyEl, SpringEl, SurfaceEl } from "./draw";
 import { dimLine } from "./labelling";
 import { displayStep, type DiagramDisplay, type DiagramView, type Scene, type SceneElement } from "./scene";
 
@@ -50,6 +50,8 @@ export default function MechDiagram({ scene, showAnswer = false, step, qIndex, s
       ))}
       {by("body").filter((e) => e.ghost).map((e) => <BodyEl key={e.id} b={e} dim={dimmed(e)} />)}
       {by("body").filter((e) => !e.ghost).map((e) => <BodyEl key={e.id} b={e} dim={dimmed(e)} />)}
+      {by("graph").map((e) => <GraphEl key={e.id} g={e} dim={dimmed(e)} />)}
+      {by("bars").map((e) => <BarsEl key={e.id} b={e} dim={dimmed(e)} />)}
       {by("spring").map((e) => <SpringEl key={e.id} s={e} dim={dimmed(e)} hot={hot(e)} />)}
       {by("pulley").map((e) => <PulleyEl key={e.id} p={e} dim={dimmed(e)} />)}
       {by("dim").map((e) => <g key={e.id}>{hot(e) && <Band a={dimLine(e).a} b={dimLine(e).b} />}<DimEl d={e} dim={dimmed(e)} /></g>)}
@@ -57,7 +59,7 @@ export default function MechDiagram({ scene, showAnswer = false, step, qIndex, s
       {by("force").map((e) => <g key={e.id}>{hot(e) && <Band a={e.from} b={e.to} />}<ForceEl f={e} dim={dimmed(e)} /></g>)}
       {by("marker").map((e) => <MarkerEl key={e.id} m={e} dim={dimmed(e)} />)}
       {layout.labels.map((l) => {
-        const owner = byId.get(l.id);
+        const owner = byId.get(l.id.split(":")[0]);
         const dim = owner ? dimmed(owner) : false;
         return (
           <g key={`lbl-${l.id}`} opacity={dim ? 0.45 : 1}>
