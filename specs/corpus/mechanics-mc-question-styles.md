@@ -6,7 +6,7 @@
 
 **Rules.** Shapes only: do not copy textbook wording or numbers into the repo. One row per style. `Home` is a sub-tool name, or `UNHOMED` while no sub-tool covers it. When several UNHOMED rows share a skill, propose a sub-tool in the "Candidate sub-tools" section and tell Harry.
 
-**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS) and Ch 5 Section 1 (WE5.1 to 5.3, Exercise 5A; MC5) and Ch 5 Section 2 (WE5.4 to 5.11, Proof 1, Work It Out 5.1, Exercise 5B; MC4 and MC6).
+**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS) and Ch 5 Section 1 (WE5.1 to 5.3, Exercise 5A; MC5) and Ch 5 Section 2 (WE5.4 to 5.11, Proof 1, Work It Out 5.1, Exercise 5B; MC4 and MC6), Mixed Practice 1 (AS chapter, MP1), Ch 5 Section 4 (A2 problem solving: WE5.16 to 5.20, Exercise 5D) and Mixed Practice 5 (A2, MP5). MP1 and MP5 include AQA past-paper questions 2008 to 2015, so they are already part chains.
 
 **AS or A2.** MC1 at AS has no Fd cos θ (see `specs/exam/spec/aqa-mechanics.md`). Rows marked A2 are the cos θ layer.
 
@@ -103,10 +103,34 @@
 | S83 | Sphere resting on a vertical spring: show the modulus from the equilibrium compression, then compress further and find the maximum speed (complete the square, maximum at equilibrium) | CUP1 WE5.11 | MC4 + MC6 | AS | UNHOMED (MC4 candidate: T) |
 | S84 | Prove the work done extending a string from x1 to x2 by integrating the tension; show it equals the change in tension times the mean extension | CUP1 Proof 1, 5B Q18 | MC6 | AS | UNHOMED (Depth or deck card, not a generator) |
 | S85 | Choose the correct energy equation for a string falling from rest (spot the wrong ones) | CUP1 Work It Out 5.1 | MC6 | AS | UNHOMED (Depth or deck card, not a generator) |
+| S86 | Resistance kv: max speed gives the max power (P = kv²), then the acceleration at a lower speed at full power (P/v − kv = ma); or show the max power is a value | CUP1 MP1 Q10, MP5 Q16a-b, Q18a-b | MC7 | AS | UNHOMED (MC7 candidate: L) |
+| S87 | Train of an engine and several carriages, each with its own constant resistance: total resistance, speed in km/h to m/s, maximum power | CUP1 MP1 Q11 | MC7 | AS | UNHOMED (MC7 candidate: J) |
+| S88 | Prove the work-energy relation Fs = ½m(v² − u²) from F = ma and v² = u² + 2as | CUP1 MP1 Q15 | MC3 | AS | UNHOMED (Depth or deck card, not a generator) |
+| S89 | Displacement given as a function of time: differentiate for the velocity and the acceleration, then F = ma, then power = Fv at a given time | CUP1 MP1 Q16 | MC7 (+ calculus) | AS | UNHOMED (MC7 candidate: N2, power from motion data) |
+| S90 | Read the speed and acceleration from a speed–time graph, then the engine's power (F = R + ma, then Fv) at a time when accelerating, at constant speed, and the brakes' power when slowing | CUP1 MP1 Q17 | MC7 | AS | UNHOMED (MC7 candidate: N2, power from motion data) |
+| S91 | Mass hung from two strings fixed to two points on a level, different moduli or natural lengths: angles by the cosine rule, resolve horizontally and vertically, tensions, then the moduli | CUP1 WE5.16, 5D Q7 | MC4 (+ resolving) | A2 | UNHOMED (MC4 candidate: X) |
+| S92 | Elastic string on a rough slope, particle released from the fixed end: the extension at rest (gravity − friction − EPE = 0, a quadratic); find μ from the distance; will it stay at rest (compare tension with weight component and friction); acceleration as it starts back | CUP1 WE5.17, 5D Q8, MP5 Q8 | MC4 + MC6 (+ MC1) | A2 | UNHOMED (MC6 candidate: V) |
+| S93 | Particle on a string down a smooth slope from the fixed end: the equilibrium extension (mg sin α = T), the distance from O, and the maximum speed by conservation of energy | CUP1 WE5.18 | MC4 + MC6 | A2 | UNHOMED (MC6 candidate: V) |
+| S94 | Power at constant speed on a slope: tractive force = resistance ± the weight component (mg sin θ), find the speed (km/h), the power, or the greatest steady speed, up or down the hill | CUP1 WE5.19, 5D Q9b, MP5 Q15, Q17 | MC7 (+ resolving) | A2 | UNHOMED (MC7 candidate: U) |
+| S95 | Constant power up or down a slope from rest: work by the engine = resistance work + KE + PE, then time = work ÷ power | CUP1 WE5.20, 5D Q5 | MC7 (+ MC1, MC2, MC3) | A2 | UNHOMED (MC7 candidate: U) |
+| S96 | Force at an angle on level ground: the work done (F cos θ × d), then the power (work ÷ time) | CUP1 5D Q1, MP5 Q2 | MC1 + MC7 | A2 | UNHOMED (3 Force at an Angle, with a power option) |
+| S97 | Pulled up a slope by a strap at an angle, with resistance: the increase in KE; then released, rolls back: the speed after a distance | CUP1 5D Q2 | MC1 + MC2 + MC3 | A2 | UNHOMED (5 Several Forces, level 3) |
+| S98 | Projected up a rough slope, comes to rest after a distance with a known resistance: find the angle of the plane (inverse sin) | CUP1 5D Q3 | MC2 + MC3 | A2 | UNHOMED (MC3 candidate: D) |
+| S99 | Projected up a smooth slope: the speed after a given distance, and how far before it stops | CUP1 5D Q4 (and WE5.15) | MC2 + MC3 | A2 | UNHOMED (MC3 candidate: D) |
+| S100 | Projected up a rough slope and comes back: the speed on returning to the start (resistance acts over twice the distance, net PE is zero) | CUP1 5D Q6 | MC1 + MC3 | A2 | UNHOMED (MC3 candidate: D) |
+| S101 | Resistance kv on a slope: show k from a state at constant speed, then the maximum speed at a higher power (a quadratic in v); or the max speed up or down a hill with sin θ given | CUP1 5D Q10, MP5 Q16c, Q18c | MC7 (+ resolving) | A2 | UNHOMED (MC7 candidate: U) |
+| S102 | String on a rough horizontal surface (or a table): EPE at the start, then the speed when the string becomes slack, with a friction coefficient (EPE − μmg × distance = KE) | CUP1 MP5 Q5 | MC6 (+ MC1) | A2 | UNHOMED (MC6 candidate: V) |
+| S103 | String on a smooth slope, pulled down and released: the EPE, the speed when the string becomes slack (EPE → KE + PE), then show the particle does not reach the fixed point | CUP1 MP5 Q6 (AQA 2008) | MC6 + MC2 | A2 | UNHOMED (MC6 candidate: V) |
+| S104 | Two particles joined by an elastic string through a smooth hole, one on a rough table and one hanging: show the initial movement of each (compare tension with friction and weight), the initial EPE, then the distance moved at rest with friction | CUP1 MP5 Q9 (AQA 2013) | MC4 + MC6 | A2 | UNHOMED (exam-style chain only) |
+| S105 | Bungee jumper: derive v² as a function of the distance fallen for x ≥ the natural length (show that), say why it fails below it, then the maximum extension (v = 0) and the maximum speed (a = 0, then v) | CUP1 MP5 Q10 (AQA 2015) | MC6 + MC2 | A2 | UNHOMED (MC6 candidate: W) |
+| S106 | Vertical string: the equilibrium extension, the EPE when pulled to a point, then the position where the speed first reaches a given value, or where it first comes to rest, or show v² = ax − bx² | CUP1 MP5 Q11, Q13 (AQA 2013, 2008) | MC4 + MC6 + MC2 | A2 | UNHOMED (MC6 candidate: W) |
+| S107 | String on a rough horizontal surface, several stages: EPE at A, the friction force, show it does not stay at rest at B, the distance BC with the string slack, then the total distance travelled | CUP1 MP5 Q12 (AQA 2012) | MC6 (+ MC1) | A2 | UNHOMED (MC6 candidate: V) |
+| S108 | A horizontal elastic rope bringing a mass to rest where the rope is slack at first: EPE at a distance, the stopping distance with no resistance, then with a constant resistance | CUP1 MP5 Q14 (AQA 2011) | MC6 (+ MC1) | A2 | UNHOMED (MC6 candidate: V) |
+| S109 | Power gives the tractive force, then up a slope with a given acceleration: T − R − mg sin θ = ma, find the angle θ | CUP1 MP5 Q19 (AQA 2015) | MC7 (+ resolving) | A2 | UNHOMED (MC7 candidate: U) |
 
 ## Unhomed styles
 
-S21 to S85: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
+S21 to S109: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
 
 ## Candidate sub-tools (MC3)
 
@@ -153,6 +177,21 @@ Proposed from S21 to S38, to be agreed with Harry before any brief:
 - **Not generators** (S84, S85): the proof, and the "which equation is right?" check. They fit a Depth card or a deck slide.
 
 **Overlap with the other energy tools.** S, and T's maximum-speed case, are the same method as MC2/MC3 conservation, with EPE as a third term. If the energy Method option is built, it should allow an elastic term from the start, not be added later.
+
+## Further candidate sub-tools (mixed practice and A2 problem solving)
+
+- **U. Power on a Slope (A2)**: constant speed, the greatest steady speed, the time at constant power, or the angle, using mg sin θ (S94, S95, S101, S109).
+- **N2. Power from Motion Data**: power from a speed–time graph or from s(t) by differentiating (S89, S90). Needs a graph picture.
+- **V. Elastic Strings on Slopes and Surfaces (A2)**: friction, slopes, multi-stage motion on a rough horizontal surface or a rope (S92, S93, S102, S103, S107, S108).
+- **W. Vertical Strings and Bungee**: the position where the speed is given, the maximum extension and speed, deriving v² (S105, S106, with S79, S80, S82).
+- **X. Two Strings in Equilibrium (A2)**: resolving with two strings to two points (S91, with S74).
+- **Exam-style chain only**: S104 (two particles through a hole), which chains too many skills to build a single-skill sub-tool from.
+- **Not generators**: S88 (proof), with S84 and S85.
+- **Added to existing sub-tools**: S96 (with Force at an Angle, a power option), S97 (Several Forces, level 3), S98 to S100 (work-energy with gravity, candidate D), S87 (J), S86 (L).
+
+## Repeat appearances (the style already existed)
+
+MP1 Q1 to Q4 and MP5 Q3 repeat S42/S23 (a fall or slide, KE, PE lost, then speed); MP1 Q5 repeats S61 (find k); MP1 Q6 repeats S51; MP1 Q7 repeats S54; MP1 Q8 repeats S38; MP1 Q9 repeats S37; MP1 Q12 repeats S57/S58; MP1 Q13 chains S56 with S31; MP1 Q14 repeats S29; MP5 Q1 repeats S18/S23; MP5 Q2 repeats S11; MP5 Q4 repeats S65; MP5 Q5b repeats S78; MP5 Q7 repeats S68; Ex 5D Q7 repeats S91. Counting the repeats shows which styles the exams (and mixed practice) keep returning to: S42, S61, S54, S51, S37, S38.
 
 ## Open questions
 
