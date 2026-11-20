@@ -17,6 +17,10 @@ describe("elements this version of the site cannot draw", () => {
     expect(needsNewerCode(el({ kind: "questions", items: [q()], presentation: "whiteboard" }))).toBe(false);
     expect(needsNewerCode(el({ kind: "text", text: "Hi", size: 40 }))).toBe(false);
   });
+  it("malformed content is not newer code: it draws as it always did", () => {
+    expect(needsNewerCode(el({ kind: "questions", items: [q({ id: "Bad Id" })] }))).toBe(false);
+    expect(needsNewerCode(el({ kind: "questions", items: [q({ question: 7 })] }))).toBe(false);
+  });
   it("a worksheet shape from a later version needs newer code", () => {
     const rect = { version: 2, shape: "L" };
     expect(needsNewerCode(el({ kind: "worksheet", authored: [q({ tool: "perimeter-and-area", rectilinear: rect })] }))).toBe(true);

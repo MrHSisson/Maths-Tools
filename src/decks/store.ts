@@ -22,16 +22,25 @@ const keysWith = (prefix: string): string[] => {
   return out;
 };
 const drop = (keys: string[]) => { for (const k of keys) { try { localStorage.removeItem(k); } catch { /* ignore */ } } };
-/** Returns false when the device refuses (storage full, private window). When it is full, space is freed and the write retried: first the
- *  saved versions of the other decks, then their base copies, then this deck's own older versions. The deck itself is never dropped. */
+/** A base copy is safe to drop when it is not holding unsent work: there is none, or this device's deck is the same as it (so it can be fetched again). */
+const baseDroppable = (baseKey: string): boolean => {
+  const id = baseKey.slice("mt-deck-base:".length);
+  const base = read<DeckDef | undefined>(baseKey, undefined), local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
+  return !base || !local || sameDeck(base as never, local as never);
+};
+/** Returns false when the device refuses (storage full, private window). When it is full and the write is a deck (or its versions or base), space is
+ *  freed and the write retried: first the saved versions of the other decks, then the base copies of other decks that hold no unsent work, then this
+ *  deck's own older versions. The deck itself is never dropped, and a small bookkeeping write (a timestamp, the list of decks) frees nothing. */
 const write = (key: string, value: unknown): boolean => {
   let json: string;
   try { json = JSON.stringify(value); } catch { return false; }
   if (trySet(key, json)) return true;
-  const own = (k: string) => k.endsWith(`:${key.slice(key.indexOf(":") + 1)}`) && key.includes(":");
+  if (!/^mt-deck(-base|-history)?:/.test(key)) return false;
+  const own = key.slice(key.indexOf(":") + 1);
+  const other = (k: string) => k !== key && k.slice(k.indexOf(":") + 1) !== own;
   const steps: (() => string[])[] = [
-    () => keysWith("mt-deck-history:").filter((k) => k !== key && !own(k)),
-    () => keysWith("mt-deck-base:").filter((k) => k !== key && !own(k)),
+    () => keysWith("mt-deck-history:").filter(other),
+    () => keysWith("mt-deck-base:").filter(other).filter(baseDroppable),
     () => keysWith("mt-deck-history:").filter((k) => k !== key),
   ];
   for (const step of steps) { const keys = step(); if (!keys.length) continue; drop(keys); if (trySet(key, json)) return true; }
@@ -171,7 +180,11 @@ function trimDevice(keep: string) {
   const over = all.length - KEEP_LOCAL;
   if (over <= 0) return;
   const used = read<Record<string, number>>(USED_KEY, {});
-  const safe = held.filter((id) => { const e = lastIndex![id], l = read<DeckDef | undefined>(DECK_KEY(id), undefined); return !!e && !!l && (l.updatedAt ?? "") <= e.updatedAt; });
+  // safe = the shared copy is at least as new AND this device's copy is the same as the base it last agreed with the shared copy (no unsent edit; an unknown base is not safe)
+  const safe = held.filter((id) => {
+    const e = lastIndex![id], l = read<DeckDef | undefined>(DECK_KEY(id), undefined), b = read<DeckDef | undefined>(BASE_KEY(id), undefined);
+    return !!e && !!l && !!b && (l.updatedAt ?? "") <= e.updatedAt && sameDeck(b as never, l as never);
+  });
   const drop = safe.sort((a, b) => (used[a] ?? 0) - (used[b] ?? 0)).slice(0, over);
   if (!drop.length) return;
   drop.forEach((id) => { try { for (const k of [DECK_KEY(id), BASE_KEY(id), HIST_KEY(id)]) localStorage.removeItem(k); } catch { /* ignore */ } seen.delete(id); });

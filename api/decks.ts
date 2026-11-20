@@ -124,6 +124,7 @@ export async function POST(req: Request) {
   if ("publish" in body) {
     const checked = checkDeck(body.publish);
     if ("error" in checked) return json({ error: checked.error }, checked.status);
+    if (checked.unchecked.length) return json({ error: `This deck uses things this version of the site cannot draw yet (${checked.unchecked.join("; ")}). Merge the code for them, then publish.` }, 409);
     const entry = await putPublished(db, checked.deck, publishedBody(checked.body, now), now);
     return json({ published: true, entry });
   }

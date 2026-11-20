@@ -16,6 +16,15 @@ const get = (q = "", key: string | null = "k") => GET(new Request(`http://x/api/
 describe("decks in Postgres", () => {
   beforeEach(async () => { await db.reset(); });
 
+  it("refuses to publish a deck that uses something the site cannot draw yet, and says what", async () => {
+    const future = { version: 2, id: "f-1", title: "T", tool: "perimeter-and-area", level: "level1", purpose: "practice", question: ["Q"], answer: ["A"], explanation: ["E"], rationale: "", expectedErrors: [], followUp: "", status: "ready", format: "open", rectilinear: { version: 2, shape: "L" } };
+    const d = { id: "fut", title: "F", summary: "", slides: [{ id: "s", els: [{ id: "e", kind: "worksheet", authored: [future] }] }] };
+    expect((await post({ deck: d, by: "Claude" })).status).toBe(200);                    // saving is fine
+    const res = await post({ publish: d });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/cannot draw yet/);
+  });
+
   it("lists every deck's summary (with its first slide, no other slides) and the shared questions, in the shape the app reads", async () => {
     await post({ deck: deck("one", "First"), by: "Harry" });
     await post({ deck: deck("two", "Second"), by: "Claude" });

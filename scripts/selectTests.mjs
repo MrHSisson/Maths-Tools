@@ -11,12 +11,15 @@ const force = process.env.FORCE_ALL === "true" || /^0+$/.test(base ?? "");
 let result;
 if (force || !base) result = "all";
 else {
-  const changed = execSync(`git diff --name-only ${base}...HEAD`, { encoding: "utf8" }).split("\n").filter(Boolean);
-  result = changed.length === 0 ? "none" : areasForChange(changed);
+  let changed = null;
+  try { changed = execSync(`git diff --name-only ${base}...HEAD`, { encoding: "utf8" }).split("\n").filter(Boolean); } catch { /* the base is gone (a force-push, a shallow clone): run everything */ }
+  result = changed === null ? "all" : changed.length === 0 ? "none" : areasForChange(changed);
 }
 let run, files = [];
+if (result === "none") { run = "none"; }
 const smoke = result === "all" || (Array.isArray(result) && result.some((a) => ["tools", "decision", "cs"].includes(a)));
-if (result === "all") run = "all";
+if (result === "none") { /* nothing changed */ }
+else if (result === "all") run = "all";
 else {
   const areas = new Set(result);
   files = readdirSync("src/tests").filter((n) => n.endsWith(".test.ts") && areas.has(areaOfTest(n))).map((n) => `src/tests/${n}`);

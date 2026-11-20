@@ -51,7 +51,7 @@ export function checkDeck(input: unknown): { deck: { id: string; title: string; 
     for (const el of (slide as { els: Record<string, unknown>[] }).els) {
       if (el?.authored !== undefined) {
         const kinds = Array.isArray(el.authored) ? el.authored.map((q) => ({ q: q as { status?: unknown; rectilinear?: unknown }, c: classifyQuestion(q) })) : [];
-        if (el.kind !== "worksheet" || !kinds.length || kinds.length > 60 || !kinds.every(({ q, c }) => c !== "invalid" && q.status === "ready" && (c === "unfamiliar" || q.rectilinear))) return { error: "An authored worksheet contains invalid shape questions", status: 400 };
+        if (el.kind !== "worksheet" || !kinds.length || kinds.length > 60 || !kinds.every(({ q, c }) => c !== "invalid" && q.status === "ready" && !!q.rectilinear)) return { error: "An authored worksheet contains invalid shape questions", status: 400 };
         if (kinds.some(({ c }) => c === "unfamiliar")) note("a worksheet shape question uses something this version of the site does not know yet");
       }
       if ((el?.kind === "generator" || el?.kind === "questions") && !isQuestionDisplaySettings(el)) return { error: "A question slide layout is invalid", status: 400 };

@@ -113,13 +113,15 @@ describe("Check for changes across all decks", () => {
   it("keeps only the most recently used decks on the device, and never drops one with unsent changes", async () => {
     const ids = Array.from({ length: 11 }, (_, i) => `d${String(i).padStart(2, "0")}`);
     for (const id of ids) saveDeck(stamp(id, id, "2026-11-01T10:00:00.000Z"), false);      // 11 held; the earliest saved were used least recently
-    saveDeck(stamp("d00", "d00 edited here", "2026-11-05T10:00:00.000Z"), false);          // d00 has a newer copy than the shared one: unsent work
+    saveDeck(stamp("d00", "d00 edited here", "2026-11-05T10:00:00.000Z"));                  // d00 was edited here and not yet sent: its base is the earlier copy
     vi.mocked(cloud.fetchIndex).mockResolvedValue(index(Object.fromEntries(ids.map((id) => [id, "2026-11-01T10:00:00.000Z"]))) as never);
     vi.mocked(cloud.fetchDeck).mockClear();
     await syncAllDecks();
     const held = ids.filter((id) => loadDeck(id));
     expect(held.length).toBe(8);
     expect(held).toContain("d00");                                                       // unsent work is never dropped, however long ago it was used
+    // and a deck whose updatedAt looks old but whose content differs from what it last agreed with the shared copy is not dropped either
+    expect(held.filter((id) => id !== "d00" && id !== "d10").length).toBe(6);
     expect(held).toContain("d10");                                                       // the most recent stays
     expect(deckSummaries().map((d) => d.id)).toHaveLength(11);                            // all eleven are still listed
   });
@@ -150,6 +152,16 @@ describe("a full device", () => {
     expect(saveDeck(deck("a", "c", { id: "my-sync" }), false)).toBe(true);
     expect(memory.has("mt-deck-history:other")).toBe(false);
     expect(loadDeck("my-sync")?.title).toBe("D");
+  });
+
+  it("a base copy holding unsent work is never dropped to make room", () => {
+    saveDeck(deck("a", "c", { id: "x1", updatedAt: "2026-11-01T10:00:00.000Z" }), false);
+    saveDeck(deck("edited", "c", { id: "x1" }));                                         // x1 edited here, not yet sent: its base differs from the deck
+    memory.set("mt-deck-history:x2", filler(10));
+    memory.set("mt-fill", filler(LIMIT - used() - 5));                                   // storage is now nearly full
+    expect(saveDeck(deck("a", "c", { id: "x3", title: "x".repeat(300) }), false)).toBe(false);   // more than the old history can make room for
+    expect(memory.has("mt-deck-history:x2")).toBe(false);                                // other decks' history was freed first
+    expect(memory.has("mt-deck-base:x1")).toBe(true);                                    // but the base of the deck with unsent edits was not
   });
 
   it("never drops another deck itself, and says it failed when nothing more can be freed", async () => {

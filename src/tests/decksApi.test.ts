@@ -79,6 +79,13 @@ describe("a deck can be saved before the code that draws it is merged", () => {
     expect(checkDeck(deck({ authored: [q({ ...known, shape: "spiral" }, { question: 7 })] }))).toHaveProperty("error");
     expect(checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", items: [q(known, { rectilinear: undefined, format: "choice", options: [] })] }] }] })).toHaveProperty("error");
   });
+  it("treats only a later whole-number version as newer, needs the shape present on a worksheet, and will not publish what the site cannot draw", () => {
+    for (const version of [0, -3, 1.5]) expect(checkDeck(deck({ authored: [q({ ...known, version })] }))).toHaveProperty("error");
+    expect(checkDeck(deck({ authored: [q(known, { rectilinear: undefined, format: "matching" })] }))).toHaveProperty("error");   // an unfamiliar question with no shape is not a shape question
+    const kept = checkDeck(deck({ authored: [q({ ...known, shape: "spiral" })] }));
+    expect(kept).not.toHaveProperty("error");
+    expect((kept as { unchecked: string[] }).unchecked.length).toBeGreaterThan(0);
+  });
   it("a deck with nothing unfamiliar lists nothing", () => {
     expect((checkDeck(deck({ authored: [q(known)] })) as { unchecked: string[] }).unchecked).toEqual([]);
   });

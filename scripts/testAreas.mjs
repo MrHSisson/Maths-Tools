@@ -8,9 +8,9 @@
 /** Test files by area. Patterns are tested against the file name, e.g. "cpaExam.test.ts". */
 export const TEST_AREAS = {
   decision: /^(decision.*|cpa.*|criticalPathOptions|flow(?!chart).*|superFlow|dim|mst|routeInspection|tsp.*|levellingMethod|workerLabels|graphBank)\.test\.ts$/,
-  decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|ratioDeckQuestions|printFrame|printBasket)\.test\.ts$/,
+  decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
-  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|fileSizes|aboutTool)\.test\.ts$/,
+  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas)\.test\.ts$/,
   // everything else: question generators, the tool shell, and the checks that look across every tool (generators, seedReplay, organisation…)
   tools: /.*/,
 };
@@ -23,10 +23,11 @@ export const areaOfTest = (name) => AREA_ORDER.find((a) => TEST_AREAS[a].test(na
 export const PATH_RULES = [
   [/^specs\/.*\.ts$/, ["decks"]],                      // deck build scripts
   [/^(docs\/|specs\/|.*\.md$|src\/generated\/|\.claude\/)/, ["docs"]],
-  [/^src\/shared\/decision\/|^src\/tools\/Decision\//, ["decision", "tools"]],
-  [/^src\/shared\/cs\/|^src\/tools\/(ComputerScience|Binary)\//, ["cs", "tools"]],
+  // the "docs" area also holds the checks that read every tool's source (option labels, About files, registry ids), so any tool change runs it
+  [/^src\/shared\/decision\/|^src\/tools\/Decision\//, ["decision", "tools", "docs"]],
+  [/^src\/shared\/cs\/|^src\/tools\/(ComputerScience|Binary)\//, ["cs", "tools", "docs"]],
   [/^(src\/decks\/|api\/|src\/components\/Deck|scripts\/deck)/, ["decks"]],
-  [/^src\/tools\//, ["tools"]],
+  [/^src\/tools\//, ["tools", "docs"]],
   [/^src\/tests\/[^/]+\.test\.ts$/, null],           // a changed test file runs its own area (see areasForChange)
   [/^src\/(shared|admin|components|pages)\/|^src\/[^/]+\.(ts|tsx|css)$|^(package(-lock)?\.json|vite\.config\.ts|tsconfig.*|eslint.*|\.github\/|scripts\/(testAreas|selectTests)|src\/tests\/)/, ["all"]],
 ];

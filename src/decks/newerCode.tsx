@@ -7,13 +7,13 @@ import type { DeckElement } from "./types";
 const NEWER_CODE_MESSAGE = "This needs a newer version of the site; it will appear once its code is merged.";
 
 const cache = new WeakMap<object, boolean>();
-/** Does this element use something this version of the site cannot read (a question format or a shape it has not been taught)? */
+/** Does this element use something only a newer version of the site can read (a question format or a shape it has not been taught)? Content that is simply malformed is not this: it draws as it always did. */
 export function needsNewerCode(el: DeckElement): boolean {
   let known = cache.get(el);
   if (known === undefined) {
     const e = el as unknown as { items?: unknown; authored?: unknown };
-    known = (Array.isArray(e.items) && e.items.some((q) => classifyQuestion(q) !== "ok"))
-      || (Array.isArray(e.authored) && e.authored.some((q) => classifyQuestion(q) !== "ok"));
+    known = (Array.isArray(e.items) && e.items.some((q) => classifyQuestion(q) === "unfamiliar"))
+      || (Array.isArray(e.authored) && e.authored.some((q) => classifyQuestion(q) === "unfamiliar"));
     cache.set(el, known);
   }
   return known;
