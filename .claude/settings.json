@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run deck -- pull:*)",
+      "Bash(npm run deck -- push:*)",
+      "Bash(npm run deck -- check:*)",
+      "Bash(npm run deck -- list:*)",
+      "Bash(npm run deck -- backup:*)",
+      "Bash(npm run deck -- verify:*)",
+      "Bash(npm run deck -- review:*)",
+      "Bash(npm run deck -- looks:*)",
+      "Bash(npm run deck -- diff:*)",
+      "Bash(npm run deck -- sheet:*)",
+      "Bash(npm run deck -- build:*)",
+      "Bash(npm run deck -- new:*)",
+      "Bash(npm run deck -- preflight:*)",
+      "Bash(npm run deck -- builders:*)",
+      "Bash(npm run deck -- categories:*)"
+    ],
+    "ask": [
+      "Bash(npm run deck -- publish:*)",
+      "Bash(npm run deck -- unpublish:*)",
+      "Bash(npm run deck -- delete:*)",
+      "Bash(npm run deck -- file:*)",
+      "Bash(npm run deck -- push * --replace-whole*)"
+    ]
+  }
+}
