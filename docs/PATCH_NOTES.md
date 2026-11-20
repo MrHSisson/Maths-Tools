@@ -47,6 +47,7 @@ Branch `claude/great-heisenberg-5a3nko`. Area: `scripts/testAreas.mjs`, `scripts
 
 - **Decision tests are five areas, not one:** Critical Path, Network Flows, the small graph topics, mechanics (Dimensional Analysis) and the checks that span the Decision shell; the old "tools" area is the checks that run over every tool plus each tool's own tests. A change to one topic runs that topic and the shared checks, a change to the Decision shell itself still runs every topic. A mechanics change now runs about 70 seconds of tests instead of about 10 minutes.
 - **A hole closed:** a change under `src/tools/FurtherMechanics/` used to skip the Dimensional Analysis tests. A test now checks it.
+- **The all-tool checks run for only the changed tools.** When a change touches only tool files (a tool or its About words), the checks that loop over every tool (generator smoke, seeded replay, recent questions, option tabs, display-only options) run for just those tools: 3 seconds instead of 27 for the five of them. A helper in a tool folder, shared code or a changed cross-tool test still runs them for every tool.
 - **Reviewed for further splitting:** a separate mechanics or Critical Path shell would not save more than this, so it was not done. The candidates for later (running the all-tool checks for only the changed tool, and splitting Network Flows' layout tests from its solver tests) are in the pathway.
 
 Agent: Claude Code

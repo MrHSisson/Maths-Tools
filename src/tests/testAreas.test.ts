@@ -2,7 +2,7 @@
 import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain script, no types
-import { AREA_ORDER, areaOfTest, areasForChange } from "../../scripts/testAreas.mjs";
+import { AREA_ORDER, areaOfTest, areasForChange, toolFilter } from "../../scripts/testAreas.mjs";
 
 const sorted = (x: string[] | "all") => (x === "all" ? x : [...x].sort());
 const files = readdirSync("src/tests").filter((n) => n.endsWith(".test.ts"));
@@ -15,7 +15,7 @@ describe("test areas", () => {
   it("keeps the slow Decision tests out of a change that cannot affect them", () => {
     expect(areasForChange(["src/decks/store.ts"])).toEqual(["decks"]);
     expect(areasForChange(["docs/TASKS.md", "src/generated/adminDocs.json"])).toEqual(["docs"]);
-    expect(sorted(areasForChange(["src/tools/Algebra/Indices.tsx"]))).toEqual(["cross", "docs", "tools"]);   // cross and docs hold the checks that read every tool
+    expect(sorted(areasForChange(["src/tools/Number/Indices.tsx"]))).toEqual(["cross", "docs", "tools"]);   // cross and docs hold the checks that read every tool
   });
   it("a mechanics change runs the mechanics tests, not Critical Path or Network Flows", () => {
     for (const f of ["src/tools/FurtherMechanics/DimensionalAnalysis.tsx", "src/shared/decision/dimSolve.ts", "src/shared/decision/DimWorking.tsx", "src/shared/mechanics/scene.ts"]) {
@@ -46,5 +46,19 @@ describe("test areas", () => {
   it("a changed test file runs its own area", () => {
     expect(areasForChange(["src/tests/cpaExam.test.ts"])).toEqual(["cpa"]);
     expect(areasForChange(["src/tests/dim.test.ts"])).toEqual(["mechanics"]);
+  });
+  it("the all-tool checks run for only the changed tools when that is all a change touches", () => {
+    const indices = "src/tools/Number/Indices.tsx", rounding = "src/tools/Number/Rounding.tsx";
+    expect(toolFilter([indices])).toEqual([indices]);
+    expect(toolFilter([indices, "src/tools/Number/Indices.about.ts"])).toEqual([indices]);       // the tool's own words count as the tool
+    expect(toolFilter([rounding, indices, "docs/TASKS.md", "src/decks/store.ts"])).toEqual([indices, rounding]);   // docs and deck files do not need the all-tool checks
+    expect(toolFilter(["src/tools/Decision/CriticalPath.tsx"])).toEqual(["src/tools/Decision/CriticalPath.tsx"]);
+  });
+  it("and for every tool when anything else needs them", () => {
+    expect(toolFilter(["src/tools/Number/Indices.tsx", "src/shared/helpers.ts"])).toBeNull();          // shared code
+    expect(toolFilter(["src/tools/Proportion/ratioSimplifying.ts"])).toBeNull();                         // a helper in a tool folder: which tool uses it is not known
+    expect(toolFilter(["src/shared/decision/cpa.ts"])).toBeNull();
+    expect(toolFilter(["src/tests/seedReplay.test.ts"])).toBeNull();                                      // the check itself changed
+    expect(toolFilter(["docs/TASKS.md"])).toBeNull();                                                      // no tool file at all
   });
 });

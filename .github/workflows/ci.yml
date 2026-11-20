@@ -29,6 +29,7 @@ jobs:
       run: ${{ steps.pick.outputs.run }}
       files: ${{ steps.pick.outputs.files }}
       smoke: ${{ steps.pick.outputs.smoke }}
+      toolfiles: ${{ steps.pick.outputs.toolfiles }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,6 +81,8 @@ jobs:
         run: npx vitest run --shard=${{ matrix.shard }}/4
       - name: Tests (the areas this change touches), shard ${{ matrix.shard }} of 4
         if: needs.select.outputs.run == 'files'
+        env:
+          TOOL_FILES: ${{ needs.select.outputs.toolfiles }}      # the checks that run over every tool run over only the tools this change touched (empty: every tool)
         run: npx vitest run --shard=${{ matrix.shard }}/4 --passWithNoTests ${{ needs.select.outputs.files }}
 
   # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.

@@ -1,4 +1,5 @@
 // The plain list of test areas: which test files belong to which area, and which changed paths trigger which area.
+import { readFileSync } from "node:fs";
 // Used by scripts/selectTests.mjs (CI) and checked by src/tests/testAreas.test.ts. Edit the lists here, nothing else.
 //
 // Every test file belongs to exactly one area (the first pattern that matches; "tools" is the default for anything unlisted).
@@ -50,6 +51,30 @@ export const PATH_RULES = [
   [/^src\/tests\/[^/]+\.test\.ts$/, null],           // a changed test file runs its own area (see areasForChange)
   [/^src\/(shared|admin|components|pages)\/|^src\/[^/]+\.(ts|tsx|css)$|^(package(-lock)?\.json|vite\.config\.ts|tsconfig.*|eslint.*|\.github\/|scripts\/(testAreas|selectTests)|src\/tests\/)/, ["all"]],
 ];
+
+/** The tool file a changed path stands for (the tool itself or its About words), or null for any other file. Read from the generated tool facts. */
+const toolFiles = () => new Set(JSON.parse(readFileSync("src/generated/toolFacts.json", "utf8")).tools.map((t) => t.file));
+export const toolEntryOf = (file) => { const all = toolFiles(); if (all.has(file)) return file; const own = file.replace(/\.about\.ts$/, ".tsx"); return own !== file && all.has(own) ? own : null; };
+
+/**
+ * The checks in the `cross` area run over every tool. When the only things in a change that need them are tool files (a tool, or its About words),
+ * they need to run for those tools alone: this returns their paths. It returns null (run them for every tool) when anything else needs them
+ * (a shared file, a helper in a tool folder, a changed cross-tool test) or when no tool file is involved.
+ */
+export function toolFilter(changed) {
+  const found = new Set();
+  for (const f of changed) {
+    const rule = PATH_RULES.find(([re]) => re.test(f));
+    if (!rule) return null;
+    const [, areas] = rule;
+    const needsCross = areas === null ? areaOfTest(f.split("/").pop()) === "cross" : areas.includes("all") || areas.includes("cross");
+    if (!needsCross) continue;
+    const tool = areas === null ? null : toolEntryOf(f);
+    if (!tool) return null;
+    found.add(tool);
+  }
+  return found.size ? [...found].sort() : null;
+}
 
 /** The areas to run for a list of changed files, or "all". */
 export function areasForChange(files) {
