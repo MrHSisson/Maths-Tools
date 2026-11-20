@@ -1,6 +1,6 @@
 # Flashcards: Further Maths, starting with Mechanics MC (Work, Energy and Power) — design and the first card set
 
-**Status:** draft (2026-11-20). A student asked for flashcards; Harry wants a revamp of the Computer Science cards for Further Maths: key formulas, equations, properties. Nothing is built. This file holds the design and the first card set (68 cards plus 8 diagram cards), written from the textbook chapter while it was in the conversation. **The card wording is original: facts and formulae only, never the textbook's sentences.**
+**Status:** draft (2026-11-20). A student asked for flashcards; Harry wants a revamp of the Computer Science cards for Further Maths: key formulas, equations, properties. Nothing is built. This file holds the design and the first card set (67 cards plus 8 diagram cards), written from the textbook chapter while it was in the conversation. **The card wording is original: facts and formulae only, never the textbook's sentences.**
 
 **Spec statements covered:** MC1 to MC7 (`specs/exam/spec/aqa-mechanics.md`). AS or A2 is a flag on each card (A2 cards are the cos θ, resolving, slope and vector ones), the same Course idea as the MC tools (`specs/further-mechanics-mc.md` §4.5).
 
@@ -180,7 +180,7 @@ Level: AS unless marked **A2**. **R** = also shown reversed. `$…$` is KaTeX. T
 | gen-si | units | AS | Convert: tonne, gram, centimetre, kilometre | $1\ \text{tonne}=1000\ \text{kg}$; $1\ \text{g}=0.001\ \text{kg}$; $1\ \text{cm}=0.01\ \text{m}$; $1\ \text{km}=1000\ \text{m}$ |
 | gen-energy-power | units | AS | The units of energy and of power | Energy: joule (J). Power: watt (W) |
 
-**Count:** 68 cards (11 + 4 + 7 + 9 + 13 + 13 + 8 + 2, with the A2 ones flagged), of which about 30 are reversible formula and value cards, so the student meets roughly 100 prompts.
+**Count:** 67 cards (11 + 4 + 7 + 9 + 13 + 13 + 8 + 2, with the A2 ones flagged), of which 14 are reversible formula cards, so the student meets about 80 prompts.
 
 ## 6. Diagram cards (when the cards can show a picture)
 
