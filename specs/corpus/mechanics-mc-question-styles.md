@@ -6,7 +6,7 @@
 
 **Rules.** Shapes only: do not copy textbook wording or numbers into the repo. One row per style. `Home` is a sub-tool name, or `UNHOMED` while no sub-tool covers it. When several UNHOMED rows share a skill, propose a sub-tool in the "Candidate sub-tools" section and tell Harry.
 
-**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS).
+**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS) and Ch 5 Section 1 (WE5.1 to 5.3, Exercise 5A; MC5).
 
 **AS or A2.** MC1 at AS has no Fd cos θ (see `specs/exam/spec/aqa-mechanics.md`). Rows marked A2 are the cos θ layer.
 
@@ -81,10 +81,16 @@
 | S61 | Resistance proportional to a power of the speed (kv^½ or kv^(3/2)): find k from one state, then the maximum power or maximum speed, or show k is a value | CUP1 WE1.19, 1D Q13 | MC7 | AS | UNHOMED (MC7 candidate: L) |
 | S62 | Rocket at constant power, no resistance: the time for a speed change (power × t = change in KE), then the acceleration at a given speed | CUP1 1D Q14 | MC7 (+ MC3) | AS | UNHOMED (MC7 candidate: I / K) |
 | S63 | Constant speed at maximum power, displacement as an i, j vector: tractive force from power ÷ speed, then work done over the displacement | CUP1 1D Q7 | MC7 (+ MC1) | A2 | UNHOMED (MC7 candidate: M) |
+| S64 | Integrate a given f(x) between limits to find work done: linear, polynomial, square root, cos and sin² (limits in π) | CUP1 WE5.1, 5A Q1 | MC5 | AS | UNHOMED (MC5 candidate: N) |
+| S65 | Constant driving force against a resistance that varies with x (x²/8, 2x, √x): work by each, then the speed by the work-energy principle, from rest | CUP1 WE5.2, 5A Q4, Q5 | MC5 (+ MC3) | AS | UNHOMED (MC5 candidate: O) |
+| S66 | Resistance directly proportional to distance (kx or kx²), work between two points given: find k, and its units | CUP1 WE5.3, 5A Q2 | MC5 | AS | UNHOMED (MC5 candidate: N) |
+| S67 | Force of the form 1/(2x), work given as ln 4: find the upper limit exactly | CUP1 5A Q3 | MC5 | AS | UNHOMED (MC5 candidate: N) |
+| S68 | Braking force constant plus a resistance proportional to x, speed in km/h, mass in tonnes: find the stopping distance (a quadratic in x) | CUP1 5A Q6 | MC5 (+ MC3) | AS | UNHOMED (MC5 candidate: O) |
+| S69 | Driving force and resistance both functions of x: derive the work after X metres, then use a numerical method to find X for a given speed (a cubic) | CUP1 5A Q7 | MC5 (+ MC3) | AS | UNHOMED (MC5 candidate: O) |
 
 ## Unhomed styles
 
-S21 to S63: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
+S21 to S69: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
 
 ## Candidate sub-tools (MC3)
 
@@ -113,6 +119,13 @@ Proposed from S21 to S38, to be agreed with Harry before any brief:
 - **M. Power with vectors (A2)**: S63.
 
 **What this section shows.** MC7 questions chain a work or energy calculation inside a power question (S51, S52, S54, S62 hold MC1, MC2 or MC3 inside). Keeping I to M single-skill means the energy part is given or is one plain step. MC7 A2 (resolving, power on a slope) has not been seen yet.
+
+## Candidate sub-tools (MC5 variable force, from Section 1)
+
+- **N. Work Done by a Variable Force**: integrate f(x) between limits; find a constant k or a limit from the work done (S64, S66, S67).
+- **O. Variable Force and Work-Energy**: a driving force against a variable resistance, then the speed or the distance by work done = change in KE (S65, S68, S69).
+
+**Numbering check.** The spec table (`specs/exam/spec/aqa-mechanics.md`) has MC4 Hooke's law, MC5 variable force, MC6 elastic PE, MC7 power. So MC4 and MC6 (the elastic strings and springs sections) are the two still to come, not MC5/MC6 as I said in chat.
 
 ## Open questions
 
