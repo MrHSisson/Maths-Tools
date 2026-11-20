@@ -24,6 +24,8 @@ npm run deck -- review <id>           # AFTER building: contact sheets of every 
 
 **Tests must not fail by chance.** A test that asserts a statistic over random draws ("at most 3% bad", "spread over the bands") wraps its draws in `withSeededRandom(seed, …)` (`src/tests/seededRandom.ts`) so it is a fixed regression sample; `vite.config.ts` gives every test 60 s (CI has two busy cores) and retries a failing test twice on CI only. A red CI that passes on a rerun is a bug to fix, not to rerun.
 
+**A test or generator that fails now and then: measure before changing anything (decided 2026-11-20).** Find how often the generator gives up and returns its fall-back (or breaks the rule): count the fall-back questions over about 20,000 draws per option setting (`src/tests/fallbackRates.test.ts`, run with `FALLBACK_RATES=1`). **About 1 in 1,000 or rarer: leave the generator alone** (seed the test, as above). **1 in 100 or more: replace the fall-back with an authored reserve** (a bank of fixed, checked questions or inputs of the kind asked, drawn when generation fails, never an error shown to a teacher, each entry tested against the same rules as a generated question). **Between 1 in 1,000 and 1 in 100: Harry decides; say what the measurement was.** The reserve mechanism is built when the first generator needs it, not before.
+
 A session is not finished until build, tests and lint pass. Prefer cheap checks (tsc, tests, DOM assertions) to reading screenshots back; take a screenshot only for real layout judgement. Check phone, tablet and laptop sizes for anything visual (see `CLAUDE.md`).
 
 ## Branches and merging
