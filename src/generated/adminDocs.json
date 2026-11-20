@@ -1207,7 +1207,7 @@
         "**A3.** The `levellingMethod` \"Short's second try\" sample went from 30 to 12 runs (seeded, so a fixed sample).",
         "**A4.** The cost of `flowLayout` is `layoutNetwork` (97%), not the checks. The suite is now four files (`flowLayout*.test.ts` over the shared `flowLayoutKit.ts`), all 19 tests kept, 110 s → 44 s on the clock. Speeding `layoutNetwork` itself was tried (a bounding-box shortcut) and gave about 15%, so it was left out.",
         "**A5.** `ci.yml` is now `select` (which tests), `build` (type check, build, lint), `tests` (four shards) and `shell-smoke` (only when needed). Push to `main` compares with the commit before it; the nightly and manual full runs run everything; a newer push to a pull request cancels the older run. **Not yet run on GitHub** (CI only runs on a pull request or `main`), so the first pull request must be watched.",
-        "**A6.** Baseline read from the real runs: the test step took about 19 minutes on the runner (about 5 on a laptop; the runner has two cores), install about 1 minute, build and lint about 1.5, the smoke job about 2. The only two recent failures (2026-11-17) were `cpa.test.ts` timing out at 60 s. Full local suite after A2 to A5: 157 files, 240 s on the clock (645 s of work, down from about 965 s). **To do once a pull request has run:** read the new run's per-job times and compare."
+        "**A6.** Baseline read from the real runs: the test step took about 19 minutes on the runner (about 5 on a laptop; the runner has two cores), install about 1 minute, build and lint about 1.5, the smoke job about 2. The only two recent failures (2026-11-17) were `cpa.test.ts` timing out at 60 s. Full local suite after A2 to A5: 157 files, 240 s on the clock (645 s of work, down from about 965 s). **After (2026-11-20, pull request 146, every run was a full run because the branch changes shared code):** a full run takes 3.6 to 5.3 minutes on GitHub (the slowest of four test shards 1.8 to 2.7 minutes, but 4.9 minutes in the last run; install about 40 to 55 seconds a job; `select` 12 to 20 seconds; build and lint 1.5 to 2 minutes; smoke about 2 minutes, once 5 minutes 48 seconds when the browser download was slow), against 10 to 17 minutes before (the test step alone was 19 minutes on `main`). Path filtering and the `main` push comparison have not been seen running on GitHub yet (they need a change that is not 'run everything'). The shards are uneven (about 2 minutes against about 5): vitest splits by file, not by time."
        ]
       },
       {
@@ -1282,7 +1282,7 @@
       },
       {
        "t": "p",
-       "s": "**Needs from Harry:** (E3 is decided: leave the Education Skills Library plugin on, 2026-11-20; it adds about 130 skill names to every session's startup, probably a small cost; it is synced from the claude.ai account, so a session cannot switch it); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5)."
+       "s": "**Still open (rounding off):** balance the four test shards by recorded duration (the slowest shard sets the wall-clock time); cache the Playwright browser for the smoke job; run the `cross` checks for only a Decision topic's tools when only that topic's shared files change; Level 3 resource levelling questions take about 0.8 s each (about 300 networks are tried per question kept); the 0.1% to 1% band of the flaky-generator rule is Harry's call each time. **Needs from Harry:** (E3 is decided: leave the Education Skills Library plugin on, 2026-11-20; it adds about 130 skill names to every session's startup, probably a small cost; it is synced from the claude.ai account, so a session cannot switch it); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5)."
       }
      ]
     },
@@ -2296,7 +2296,20 @@
      ]
     }
    ],
-   "changes": []
+   "changes": [
+    {
+     "date": "2026-11-17",
+     "title": "Year 7 rectilinear area: fresh slide 5, lengths inside at 270° corners, a worksheet made to print two to a sheet"
+    },
+    {
+     "date": "2026-11-17",
+     "title": "Standard Form lesson 1: plan and first deck build"
+    },
+    {
+     "date": "2026-11-15",
+     "title": "Standard Form: four sub-tools, all levels built (Dev only)"
+    }
+   ]
   },
   "powers-of-ten": {
    "purpose": "Multiply and divide by powers of 10 using a place value grid.",
@@ -2360,6 +2373,10 @@
    ],
    "changes": [
     {
+     "date": "2026-11-03",
+     "title": "Decks get their own page; deck cards full width on a phone; dashboard review"
+    },
+    {
      "date": "2026-10-29",
      "title": "Estimation deck rebuilt for Year 9; seven new Estimation Depth cards"
     },
@@ -2374,10 +2391,6 @@
     {
      "date": "2026-10-06",
      "title": "Ink overlay and the Rounding Depth bank go live"
-    },
-    {
-     "date": "2026-10-05",
-     "title": "Rounding: Depth bank (dev-gated)"
     }
    ]
   },
@@ -2405,20 +2418,24 @@
    ],
    "changes": [
     {
+     "date": "2026-11-04",
+     "title": "Never three Depth slides in a row; Estimation decimals reordered"
+    },
+    {
+     "date": "2026-11-04",
+     "title": "Estimation Level 2: decimals below 1 and hundredths"
+    },
+    {
+     "date": "2026-11-03",
+     "title": "Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands"
+    },
+    {
+     "date": "2026-11-02",
+     "title": "Decks: text size can be set by hand on every element; Estimation moves to 3 × 4 book work and Fraction + Term"
+    },
+    {
      "date": "2026-10-29",
      "title": "Estimation deck: fractions book activity; slide collisions fixed"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "Estimation: division answers spread across the times tables; one rounding set in the deck"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "Estimation deck rebuilt for Year 9; seven new Estimation Depth cards"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Decks: whole lessons on their own page, with a slide editor (Estimation first)"
     }
    ]
   },
@@ -2485,6 +2502,10 @@
    ],
    "changes": [
     {
+     "date": "2026-11-03",
+     "title": "Estimation split and Order of Operations, book work cells, print slides, sieve, pen dots, deck strands"
+    },
+    {
      "date": "2026-10-28",
      "title": "CI on main was red: a rare Order of Operations mistake question"
     },
@@ -2499,10 +2520,6 @@
     {
      "date": "2026-10-07",
      "title": "Order of Operations: working written like a board; pyramid says \"&\""
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Order of Operations: the pyramid stops implying an order; six Depth items on \"add first\""
     }
    ]
   },
@@ -2797,7 +2814,12 @@
      ]
     }
    ],
-   "changes": []
+   "changes": [
+    {
+     "date": "2026-11-09",
+     "title": "Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed"
+    }
+   ]
   },
   "completing-the-square": {
    "purpose": "Write quadratics in completed-square form, and use it to solve them and find turning points.",
@@ -2982,6 +3004,18 @@
    ],
    "changes": [
     {
+     "date": "2026-11-20",
+     "title": "A generator that fails now and then is asked again; Ratio Manipulation's fall-backs are marked"
+    },
+    {
+     "date": "2026-11-03",
+     "title": "Decks get their own page; deck cards full width on a phone; dashboard review"
+    },
+    {
+     "date": "2026-10-31",
+     "title": "Ratio Manipulation Depth bank; Fraction to Ratio and Forming Ratios shared with the deck builder"
+    },
+    {
      "date": "2026-10-26",
      "title": "Ratio Manipulation: Simplifying Ratios merged in, new Equivalent Ratios tab"
     }
@@ -3028,6 +3062,10 @@
     }
    ],
    "changes": [
+    {
+     "date": "2026-11-15",
+     "title": "Ratio Sharing: three parts, contexts, a check step, a Depth bank; the Sharing in a Ratio deck"
+    },
     {
      "date": "2026-10-26",
      "title": "Question underscore fields typed; Question Option labels on one vocabulary"
@@ -3304,6 +3342,10 @@
    ],
    "changes": [
     {
+     "date": "2026-11-10",
+     "title": "Rectilinear Shapes: reduced labels only omit implied lengths"
+    },
+    {
      "date": "2026-10-28",
      "title": "Whiteboard: answer replaces the question, content fits the box; scalene triangles in Perimeter & Area"
     },
@@ -3356,6 +3398,18 @@
     {
      "date": "2026-10-03",
      "title": "Negative counters (shared representation + sandbox)"
+    }
+   ]
+  },
+  "unit-circle": {
+   "changes": [
+    {
+     "date": "2026-11-18",
+     "title": "Unit Circle: symmetry and periodicity worksheet"
+    },
+    {
+     "date": "2026-11-17",
+     "title": "Unit Circle sandbox"
     }
    ]
   },
@@ -3437,7 +3491,12 @@
      ]
     }
    ],
-   "changes": []
+   "changes": [
+    {
+     "date": "2026-11-17",
+     "title": "Solving Trig Equations (A-level) and the grapher's angle axis"
+    }
+   ]
   },
   "partial-fractions": {
    "purpose": "Split an algebraic fraction into partial fractions.",
@@ -3583,6 +3642,14 @@
     }
    ]
   },
+  "minimum-spanning-tree": {
+   "changes": [
+    {
+     "date": "2026-11-13",
+     "title": "Decision shell: a problem no longer needs a network"
+    }
+   ]
+  },
   "travelling-salesperson": {
    "changes": [
     {
@@ -3626,24 +3693,24 @@
   "critical-path": {
    "changes": [
     {
-     "date": "2026-10-18",
-     "title": "Critical Path Analysis goes live"
+     "date": "2026-11-13",
+     "title": "Decision shell: a problem no longer needs a network"
     },
     {
-     "date": "2026-10-18",
-     "title": "Critical Path Analysis: topic chooser with pictures (dev-gated)"
+     "date": "2026-11-12",
+     "title": "Resource levelling: Write it up removed, list of options is a tab"
     },
     {
-     "date": "2026-10-18",
-     "title": "Critical Path Analysis: exam-style questions (AS and A-level, dev-gated)"
+     "date": "2026-11-12",
+     "title": "Resource levelling: Level 3 Question size"
     },
     {
-     "date": "2026-10-18",
-     "title": "Critical Path Analysis: the current-spec gaps closed (dev-gated)"
+     "date": "2026-11-10",
+     "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
     },
     {
-     "date": "2026-10-17",
-     "title": "Critical Path Analysis: A-level Which to shorten (dev-gated) — the last A-level tab"
+     "date": "2026-11-10",
+     "title": "Critical Path: a Backward pass sub-tool"
     }
    ]
   },
@@ -3685,6 +3752,18 @@
     }
    ],
    "changes": []
+  },
+  "dimensional-analysis": {
+   "changes": [
+    {
+     "date": "2026-11-14",
+     "title": "Dimensional Analysis: a four-way audit and its fixes"
+    },
+    {
+     "date": "2026-11-13",
+     "title": "Dimensional Analysis (Further Mechanics MA): skill tools, exam-style chains and the written working"
+    }
+   ]
   },
   "embedded-systems": {
    "changes": [
@@ -3822,6 +3901,10 @@
    ],
    "changes": [
     {
+     "date": "2026-11-09",
+     "title": "Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed"
+    },
+    {
      "date": "2026-10-26",
      "title": "File Sizes goes live; tools with no fate settled; Decision exam-style questions become a prong"
     },
@@ -3848,6 +3931,54 @@
     {
      "date": "2026-10-25",
      "title": "Admin tidy, the level (i) on every tool, options keep your question"
+    }
+   ]
+  },
+  "name-wheel": {
+   "changes": [
+    {
+     "date": "2026-11-07",
+     "title": "Balloons rise when the wheel picks a name"
+    },
+    {
+     "date": "2026-11-07",
+     "title": "Confetti when a name is revealed (Name Wheel, Advent Calendar)"
+    },
+    {
+     "date": "2026-11-07",
+     "title": "Name Wheel: settings hidden from the board"
+    },
+    {
+     "date": "2026-11-06",
+     "title": "Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page"
+    },
+    {
+     "date": "2026-11-06",
+     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
+    }
+   ]
+  },
+  "advent-calendar": {
+   "changes": [
+    {
+     "date": "2026-11-09",
+     "title": "Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed"
+    },
+    {
+     "date": "2026-11-08",
+     "title": "Advent Calendar: 24 doors, a name per door, full screen, password; histogram print grid, print basket Reload, \"Show N − 1 is not enough\""
+    },
+    {
+     "date": "2026-11-07",
+     "title": "Confetti when a name is revealed (Name Wheel, Advent Calendar)"
+    },
+    {
+     "date": "2026-11-07",
+     "title": "Advent Calendar: big reveal and doors that open on their date"
+    },
+    {
+     "date": "2026-11-06",
+     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
     }
    ]
   }
