@@ -40,7 +40,7 @@ describe("importing the Blob store into Postgres", () => {
     const r = await (await run()).json();
     expect(r).toMatchObject({ decks: { found: 2, written: 1, missing: ["gone"] }, history: { found: 1 }, published: { found: 1, written: 1 }, questions: { found: 1 } });
     const all = await (await get()).json();
-    expect(all.index.decks.a).toEqual({ title: "A", summary: "S", slides: 2, updatedAt: "2026-11-01T10:00:00.000Z", updatedBy: "Harry" });
+    expect(all.index.decks.a).toMatchObject({ title: "A", summary: "S", slides: 2, updatedAt: "2026-11-01T10:00:00.000Z", updatedBy: "Harry", preview: { id: "a" } });
     expect(Object.keys(all.questions.questions)).toEqual(["my-q-1"]);
     expect((await (await get("?history=a")).json()).entries).toHaveLength(1);
     const pub = await (await get("?published", null)).json();

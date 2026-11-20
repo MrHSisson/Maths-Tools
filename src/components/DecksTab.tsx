@@ -4,7 +4,7 @@ import { Pencil, Plus } from 'lucide-react';
 import { useDevMode } from '../devMode';
 import { usePhoneDevice } from '../shared/layoutMode';
 import { usePublishedIndex } from '../decks/published';
-import { allDecks, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from '../decks/store';
+import { deckSummaries, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from '../decks/store';
 import { titleSlide } from '../decks/layouts';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
 
@@ -68,11 +68,11 @@ function EditableList() {
     saveDeck({ id, title: 'New deck', summary: '', slides: [titleSlide(`${id}-title`, 'New deck', '')] });
     navigate(`/decks/${id}?edit=1`);
   };
-  const decks: GalleryDeck[] = allDecks().map(({ deck, mine, edited }) => ({
-    id: deck.id, title: deck.title, summary: deck.summary, strand: deck.strand, pitch: deck.pitch, slides: deck.slides.length, preview: deck.slides[0],
-    badge: published?.[deck.id] ? undefined : 'Not published',
-    notes: [published?.[deck.id] ? 'published' : 'not published', ...(mine ? ['your deck'] : []), ...(edited ? ['edited on this device'] : [])],
-    action: <Link to={`/decks/${deck.id}?edit=1`} aria-label={`Edit ${deck.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
+  const decks: GalleryDeck[] = deckSummaries().map((d) => ({
+    id: d.id, title: d.title, summary: d.summary, strand: d.strand, pitch: d.pitch, slides: d.slides, preview: d.preview,
+    badge: published?.[d.id] ? undefined : 'Not published',
+    notes: [published?.[d.id] ? 'published' : 'not published', 'your deck', ...(d.edited ? ['edited on this device'] : [])],
+    action: <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
   }));
   const button = 'rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50';
   return (

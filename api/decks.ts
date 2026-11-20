@@ -118,7 +118,8 @@ export async function POST(req: Request) {
     if (!saved) return json({ error: "Could not save — please try again" }, 409);
     await snapshotBefore(db, id, previous, saved.deck, now);
     const entry = { title: saved.summary.title.slice(0, 200), summary: saved.summary.summary.slice(0, 500), slides: saved.summary.slides.length, updatedAt: saved.summary.updatedAt ?? now, updatedBy: by };
-    return json({ saved: true, entry, merged: saved.merged, conflicts: saved.conflicts, ...(saved.merged ? { deck: saved.deck } : {}) });
+    const unchecked = (() => { const c = checkDeck(saved.deck); return "unchecked" in c ? c.unchecked : []; })();
+    return json({ saved: true, entry, merged: saved.merged, conflicts: saved.conflicts, unchecked, ...(saved.merged ? { deck: saved.deck } : {}) });
   }
   if ("publish" in body) {
     const checked = checkDeck(body.publish);

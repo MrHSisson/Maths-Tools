@@ -2,10 +2,11 @@
 // copy per deck under its own id). Decks are not bundled into the app, so a deck a device has never synced is not listed until it does
 // (syncFromCloud). Every read is guarded, so a private window or full storage just means nothing is kept here.
 import { mergeDecks, sameDeck } from "../../api/_deckMerge";
+import type { DeckIndexEntry } from "../../api/_decks";
 import { fetchDeck, fetchIndex, pushDeck, pushQuestion, pushRemoveDeck, setSyncHandler } from "./cloud";
 import { BANK } from "./index";
 import { normaliseDeck } from "./normalise";
-import type { LibraryQuestion, DeckDef } from "./types";
+import type { LibraryQuestion, DeckDef, Pitch, Slide } from "./types";
 
 const DECK_KEY = (id: string) => `mt-deck:${id}`;
 const MINE_KEY = "mt-decks-mine";
@@ -38,6 +39,7 @@ const write = (key: string, value: unknown): boolean => {
 };
 
 /** Every deck this device holds: the listed ones plus any saved copy (a deck once bundled and edited here has a copy but no list entry). */
+const holds = (id: string): boolean => { try { return localStorage.getItem(DECK_KEY(id)) !== null; } catch { return false; } };
 const myDeckIds = (): string[] => {
   const ids = new Set(read<string[]>(MINE_KEY, []));
   try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith("mt-deck:")) ids.add(k.slice("mt-deck:".length)); } } catch { /* ignore */ }
@@ -88,6 +90,7 @@ setSyncHandler(({ sent, merged }) => {
 export const saveDeck = (deck: DeckDef, share = true): boolean => {
   const stamped = share ? { ...deck, updatedAt: new Date().toISOString() } : deck;
   const ok = write(DECK_KEY(deck.id), stamped);
+  if (ok) touch(deck.id);
   if (ok && share) autoVersion(stamped);
   if (ok && !read<string[]>(MINE_KEY, []).includes(deck.id)) write(MINE_KEY, [...read<string[]>(MINE_KEY, []), deck.id]);
   if (share) {
@@ -121,11 +124,59 @@ export const deleteDeck = (id: string) => {
   pushRemoveDeck(id);
 };
 
+/** The decks this device holds whole (not every deck: see `deckSummaries`). */
 export const allDecks = (): { deck: DeckDef; mine: boolean; edited: boolean }[] =>
   myDeckIds().flatMap((id) => { const d = loadDeck(id); return d ? [{ deck: d, mine: true, edited: false }] : []; });
 
-/** The decks this device holds for a tool's page. */
-export const decksForPath = (path: string): DeckDef[] => allDecks().map((x) => x.deck).filter((d) => d.toolPath === path);
+// ── The deck list: summaries, not decks ──
+// The shared copy's list (title, where filed, tool, slides by kind, first slide) is all a list needs, so the device does not download every
+// deck (together they are megabytes, and a full device once stopped decks being saved). A deck is fetched when it is opened, and the device keeps
+// only the few opened or saved most recently (`trimDevice`).
+let lastIndex: Record<string, DeckIndexEntry> | null = null;
+
+export interface DeckSummary { id: string; title: string; summary: string; strand?: string; pitch?: Pitch; tool?: string; toolPath?: string; slides: number; families: Record<string, number>; updatedAt?: string; preview?: Slide; /** this device holds the whole deck */ held: boolean; edited: boolean }
+
+const familiesOf = (d: DeckDef): Record<string, number> => { const out: Record<string, number> = {}; for (const s of d.slides) if (s.family) out[s.family] = (out[s.family] ?? 0) + 1; return out; };
+
+/** Every deck there is: the shared list (when it has been read this visit) with this device's copies laid over it where they are newer or not shared yet. */
+export const deckSummaries = (): DeckSummary[] => {
+  const out = new Map<string, DeckSummary>();
+  for (const [id, e] of Object.entries(lastIndex ?? {})) out.set(id, { id, title: e.title, summary: e.summary, strand: e.strand, pitch: e.pitch as Pitch | undefined, tool: e.tool, toolPath: e.toolPath, slides: e.slides, families: e.families ?? {}, updatedAt: e.updatedAt, preview: e.preview as Slide | undefined, held: false, edited: false });
+  for (const id of myDeckIds()) {
+    const d = loadDeck(id);
+    if (!d) continue;
+    const shared = out.get(id);
+    if (shared && d.updatedAt && d.updatedAt < (shared.updatedAt ?? "")) { shared.held = true; continue; }      // the shared copy is newer: list that
+    out.set(id, { id, title: d.title, summary: d.summary, strand: d.strand, pitch: d.pitch, tool: d.tool, toolPath: d.toolPath, slides: d.slides.length, families: familiesOf(d), updatedAt: d.updatedAt, preview: d.slides[0], held: true, edited: false });
+  }
+  return [...out.values()];
+};
+
+/** The decks for a tool's page (listed in its menu). */
+export const decksForPath = (path: string): DeckSummary[] => deckSummaries().filter((d) => d.toolPath === path);
+
+/** The deck whole: this device's copy, or the shared one fetched now. Undefined when it cannot be had (offline, or it does not exist). */
+export const ensureDeck = async (id: string): Promise<DeckDef | undefined> => loadDeck(id) ?? (await syncFromCloud(id), loadDeck(id));
+
+// ── Keeping the device small ──
+const USED_KEY = "mt-deck-used";
+const KEEP_LOCAL = 8;
+const touch = (id: string) => { write(USED_KEY, { ...read<Record<string, number>>(USED_KEY, {}), [id]: Date.now() }); };
+
+/** Drops the copies of the least recently used decks beyond KEEP_LOCAL (with their saved versions and base), never `keep`, and only a deck the shared copy has at least as new, so no unsent work is lost. */
+function trimDevice(keep: string) {
+  if (!lastIndex) return;
+  const all = myDeckIds();
+  const held = all.filter((id) => id !== keep);
+  const over = all.length - KEEP_LOCAL;
+  if (over <= 0) return;
+  const used = read<Record<string, number>>(USED_KEY, {});
+  const safe = held.filter((id) => { const e = lastIndex![id], l = read<DeckDef | undefined>(DECK_KEY(id), undefined); return !!e && !!l && (l.updatedAt ?? "") <= e.updatedAt; });
+  const drop = safe.sort((a, b) => (used[a] ?? 0) - (used[b] ?? 0)).slice(0, over);
+  if (!drop.length) return;
+  drop.forEach((id) => { try { for (const k of [DECK_KEY(id), BASE_KEY(id), HIST_KEY(id)]) localStorage.removeItem(k); } catch { /* ignore */ } seen.delete(id); });
+  write(MINE_KEY, read<string[]>(MINE_KEY, []).filter((x) => !drop.includes(x)));
+}
 
 export const newDeckId = () => `my-${Date.now().toString(36)}`;
 
@@ -147,6 +198,8 @@ export const syncAllDecks = async (): Promise<{ updated: string[]; failed: strin
 async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: string[]; failed: string[] } | null> {
   const snap = await fetchIndex();
   if (!snap) return null;
+  lastIndex = snap.index;
+  if (onlyId) touch(onlyId);
   let changed = false;
   const updated: string[] = [], failed: string[] = [];
   const mine = myQuestions();
@@ -154,7 +207,7 @@ async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: 
   const merged = { ...snap.questions, ...mine };
   if (JSON.stringify(merged) !== JSON.stringify(mine)) { write(BANK_KEY, merged); changed = true; }
   for (const [id, entry] of Object.entries(snap.index)) {
-    if (onlyId && id !== onlyId) continue;
+    if (onlyId ? id !== onlyId : !holds(id)) continue;       // opening one deck fetches it; a whole-list check only refreshes the decks this device already holds
     const local = read<DeckDef | undefined>(DECK_KEY(id), undefined);
     if (local?.updatedAt && local.updatedAt >= entry.updatedAt) continue;
     const deck = await fetchDeck(id);
@@ -162,6 +215,7 @@ async function syncDecks(onlyId?: string): Promise<{ changed: boolean; updated: 
     if (local) saveVersion(local, "Before an update from another device");
     if (saveDeck(deck, false)) { changed = true; updated.push(deck.title); } else failed.push(deck.title);   // storage full even after freeing space: say so, never "Updated"
   }
+  trimDevice(onlyId ?? "");
   return { changed, updated, failed };
 }
 export const newQuestionId = () => `my-q-${Date.now().toString(36)}`;

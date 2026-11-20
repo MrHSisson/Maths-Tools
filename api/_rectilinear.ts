@@ -17,6 +17,9 @@ export interface RectilinearSpec {
   stepWidths?: number[]; stepHeights?: number[];
 }
 const stepsOf = (shape: string) => shape === "stairs4" ? 3 : shape === "stairs3" ? 2 : 0;
+export const RECTILINEAR_SHAPES = ["L", "T", "stairs3", "stairs4", "cross", "I", "U", "N", "comb", "frame"];
+/** A spec this code does not know how to read yet: a later version, or a shape it has not been taught. (A known shape with bad numbers is not this: it is invalid.) */
+export const isNewerRectilinear = (value: unknown): boolean => !!value && typeof value === "object" && !Array.isArray(value) && (typeof (value as { version?: unknown }).version === "number" && (value as { version: number }).version !== 1 || ((value as { version?: unknown }).version === 1 && typeof (value as { shape?: unknown }).shape === "string" && !RECTILINEAR_SHAPES.includes((value as { shape: string }).shape)));
 export function isRectilinearSpec(value: unknown): value is RectilinearSpec {
   if (!value || typeof value !== "object") return false;
   const s = value as RectilinearSpec;

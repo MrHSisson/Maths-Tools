@@ -1,4 +1,4 @@
-import { isCuratedQuestion } from "../../api/_questions";
+import { classifyQuestion, isCuratedQuestion } from "../../api/_questions";
 import { rectilinearQuestion } from "./rectilinear";
 import { textbookProblems } from "./textbookSheet";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
@@ -123,13 +123,14 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       const items = questionsOf(el);
       for (const q of items) {
         const label = `${where}, question ${q.id}`;
+        if (classifyQuestion(q as unknown) === "unfamiliar") { warnings.push(`${label}: uses something only newer code understands (the shared service keeps it; the site shows "This needs a newer version of the site" until that code is merged)`); continue; }
         if (questionIds.has(q.id)) problems.push(`${label}: question id used twice`); questionIds.add(q.id);
         for (const s of questionStrings(q)) checkMaths(label, s);
         if (q.status === "draft") warnings.push(`${label}: still a draft`);
         else for (const p of readyProblems(q)) problems.push(`${label}: ${p}`);
         // what the shared service checks on a push: a question it would reject stops the build, not the push
         const asSent: unknown = q;           // the guard narrows to `never` when it fails, so look at the id through a plain type
-        if (!isCuratedQuestion(asSent)) problems.push(`${label}: the shared service would reject this question${/^[a-z0-9-]{1,80}$/.test(q.id) ? "" : ` (its id "${q.id}" must be lowercase letters, digits and hyphens, at most 80)`}`);
+        if (classifyQuestion(asSent) === "invalid") problems.push(`${label}: the shared service would reject this question${/^[a-z0-9-]{1,80}$/.test(q.id) ? "" : ` (its id "${q.id}" must be lowercase letters, digits and hyphens, at most 80)`}`);
         if (isDepthQuestion(q)) { depthCards.push({ where: label, q }); continue; }
         [...q.question, q.title].forEach((s) => numbersIn(s).forEach((n) => used.add(n)));
         asks.push({ label, nums: numbersIn(q.title) });
@@ -149,6 +150,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       }
       if (el.kind === "worksheet" && el.authored) {
         for (const q of el.authored) {
+          if (classifyQuestion(q) === "unfamiliar") { warnings.push(`${where}: a worksheet shape uses something only newer code understands (shown as a placeholder until that code is merged)`); continue; }
           if (!isCuratedQuestion(q) || !q.rectilinear || q.status !== "ready") { problems.push(`${where}: unfinished or invalid worksheet shape`); continue; }
           const expected = rectilinearQuestion(q.rectilinear).answer;
           if (q.rectilinear.task !== "partition" && q.answer.join(" ") !== `$${expected}$ cm²`) problems.push(`${where}: the worksheet answer does not match its shape dimensions`);

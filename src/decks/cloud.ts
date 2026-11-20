@@ -3,6 +3,7 @@
 // reachable (the local dev server, no network), everything keeps working on the device and the status says so.
 import { useSyncExternalStore } from "react";
 import { DEV_PASSWORD } from "../devAccess";
+import type { DeckIndexEntry } from "../../api/_decks";
 import type { LibraryQuestion, DeckDef } from "./types";
 
 const URL_ = "/api/decks";
@@ -42,7 +43,7 @@ export function pushDeck(deck: DeckDef, base?: DeckDef) {
 export const pushRemoveDeck = (id: string) => { window.clearTimeout(timers.get(id)); timers.delete(id); void post({ remove: id }); };
 export const pushQuestion = (q: LibraryQuestion) => void post({ question: q });
 
-interface CloudSnapshot { index: Record<string, { updatedAt: string }>; questions: Record<string, LibraryQuestion> }
+interface CloudSnapshot { index: Record<string, DeckIndexEntry>; questions: Record<string, LibraryQuestion> }
 export async function fetchIndex(): Promise<CloudSnapshot | null> {
   try {
     const res = await fetch(URL_, { headers });

@@ -8,11 +8,21 @@ const j = (v: unknown) => JSON.stringify(v);
 
 // ── Working decks ──
 
-/** Every deck's summary, as the index blob used to hold it (the title, summary and counts live in their own columns, so this reads no deck bodies). */
+const MAX_LIST_PREVIEW_CHARS = 30_000;                 // a title slide is a few hundred; a big picture on it is left out of the list
+
+/** Every deck's summary for the deck list: the columns, plus where it is filed, its tool, its slides by kind and its first slide (read from the stored deck, so the list needs no second request per deck). */
 export async function listIndex(db: Db): Promise<DeckIndex> {
-  const rows = await db.query<Row>(`SELECT id, title, summary, slides, updated_at, updated_by FROM maths.decks`);
+  const rows = await db.query<Row>(`SELECT id, title, summary, slides, updated_at, updated_by,
+      data->>'strand' AS strand, data->>'pitch' AS pitch, data->>'tool' AS tool, data->>'toolPath' AS tool_path,
+      CASE WHEN length((data->'slides'->0)::text) <= ${MAX_LIST_PREVIEW_CHARS} THEN data->'slides'->0 END AS preview,
+      (SELECT jsonb_object_agg(f, n) FROM (SELECT s->>'family' AS f, count(*) AS n FROM jsonb_array_elements(data->'slides') AS s WHERE s->>'family' IS NOT NULL GROUP BY 1) t) AS families
+    FROM maths.decks`);
   const decks: Record<string, DeckIndexEntry> = {};
-  for (const r of rows) decks[r.id as string] = { title: r.title as string, summary: r.summary as string, slides: r.slides as number, updatedAt: r.updated_at as string, updatedBy: r.updated_by as string };
+  for (const r of rows) decks[r.id as string] = {
+    title: r.title as string, summary: r.summary as string, slides: r.slides as number, updatedAt: r.updated_at as string, updatedBy: r.updated_by as string,
+    ...(r.strand ? { strand: r.strand as string } : {}), ...(r.pitch ? { pitch: r.pitch as string } : {}), ...(r.tool ? { tool: r.tool as string } : {}), ...(r.tool_path ? { toolPath: r.tool_path as string } : {}),
+    ...(r.families ? { families: r.families as Record<string, number> } : {}), ...(r.preview ? { preview: r.preview } : {}),
+  };
   return { version: 1, decks };
 }
 

@@ -49,3 +49,37 @@ describe("shared decks API", () => {
     expect(publishedWithout(index, "est").decks).toEqual({});
   });
 });
+
+describe("a deck can be saved before the code that draws it is merged", () => {
+  // a rectilinear question as a later version of the site might send it: a shape and a version this code has not been taught
+  const q = (rectilinear: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+    version: 2, id: "future-1", title: "Area", tool: "perimeter-and-area", level: "level1", purpose: "practice", question: ["Find the area."], answer: ["$42$ cm²"], explanation: ["$6 \\times 7 = 42$"],
+    rationale: "", expectedErrors: [], followUp: "", status: "ready", format: "open", rectilinear, ...extra,
+  });
+  const known = { version: 1, shape: "L", width: 8, height: 6, cutWidth: 3, cutHeight: 2, method: "split", orientation: 0, reducedLabels: true, scaffold: "full" };
+  const deck = (el: Record<string, unknown>) => ({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "worksheet", ...el }] }] });
+
+  it("keeps a question with an unknown shape or version, and lists it", () => {
+    for (const spec of [{ ...known, shape: "spiral" }, { ...known, version: 2 }]) {
+      const r = checkDeck(deck({ authored: [q(spec)] }));
+      expect(r).not.toHaveProperty("error");
+      expect((r as { unchecked: string[] }).unchecked[0]).toMatch(/slide 1/);
+    }
+  });
+  it("keeps a question with a format a newer site adds", () => {
+    const r = checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", items: [q({ ...known }, { rectilinear: undefined, format: "matching" })] }] }] });
+    expect(r).not.toHaveProperty("error");
+    expect((r as { unchecked: string[] }).unchecked).toHaveLength(1);
+  });
+  it("still refuses a layout name it does not know (a typo should not slip through)", () => {
+    expect(checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", presentation: "carousel", items: [q(known)] }] }] })).toHaveProperty("error");
+  });
+  it("still refuses a malformed question, a known shape with bad numbers, and a known format that is incomplete", () => {
+    expect(checkDeck(deck({ authored: [q({ ...known, cutHeight: -1 })] }))).toHaveProperty("error");
+    expect(checkDeck(deck({ authored: [q({ ...known, shape: "spiral" }, { question: 7 })] }))).toHaveProperty("error");
+    expect(checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", items: [q(known, { rectilinear: undefined, format: "choice", options: [] })] }] }] })).toHaveProperty("error");
+  });
+  it("a deck with nothing unfamiliar lists nothing", () => {
+    expect((checkDeck(deck({ authored: [q(known)] })) as { unchecked: string[] }).unchecked).toEqual([]);
+  });
+});

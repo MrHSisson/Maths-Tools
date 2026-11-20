@@ -16,15 +16,15 @@ const get = (q = "", key: string | null = "k") => GET(new Request(`http://x/api/
 describe("decks in Postgres", () => {
   beforeEach(async () => { await db.reset(); });
 
-  it("lists every deck's summary (no bodies) and the shared questions, in the shape the app reads", async () => {
+  it("lists every deck's summary (with its first slide, no other slides) and the shared questions, in the shape the app reads", async () => {
     await post({ deck: deck("one", "First"), by: "Harry" });
     await post({ deck: deck("two", "Second"), by: "Claude" });
     const q = { id: "my-q-1", latex: "1+1", answer: "2", working: [] };
     await post({ question: q });
     const res = await (await get()).json();
     expect(res.index).toEqual({ version: 1, decks: {
-      one: { title: "First", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Harry" },
-      two: { title: "Second", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Claude" },
+      one: { title: "First", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Harry", families: { teach: 2 }, preview: slide("a") },
+      two: { title: "Second", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Claude", families: { teach: 2 }, preview: slide("a") },
     } });
     expect(res.questions).toEqual({ version: 1, questions: { "my-q-1": q } });
     expect((await (await get("?id=one")).json()).title).toBe("First");
