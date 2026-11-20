@@ -7,11 +7,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  LABEL_SIZE, MechDiagram, MechPicture, buildElasticHorizontal, buildElasticVertical, buildHorizontal, buildInOrder, buildVertical, displayStep, layoutScene, lblText, mirrorScene, partsAt, stageParts, stepCount, validateScene,
-  type DiagramDisplay, type DiagramSize, type ElasticHorizontalParams, type ElasticVerticalParams, type HorizontalParams, type Scene, type VerticalParams,
+  LABEL_SIZE, MechDiagram, MechPicture, buildElasticHorizontal, buildElasticVertical, buildHorizontal, buildIncline, buildInclineString, buildInOrder, buildProfile, buildPulley, buildTwoStrings, buildVertical, displayStep, layoutScene, lblText, mirrorScene, partsAt, stageParts, stepCount, validateScene,
+  type DiagramDisplay, type DiagramSize, type ElasticHorizontalParams, type ElasticVerticalParams, type HorizontalParams, type InclineParams, type Scene, type VerticalParams,
 } from "../shared/mechanics";
 import { seededRandom } from "./seededRandom";
-import { segHitsRect } from "../shared/shapes/labels";
 
 type Display = DiagramDisplay;
 const SIZES = Object.keys(LABEL_SIZE) as DiagramSize[];
@@ -20,17 +19,51 @@ const chance = (r: () => number, p: number) => r() < p;
 
 function horizontalParams(r: () => number): HorizontalParams {
   const forces: HorizontalParams["forces"] = [];
-  if (chance(r, 0.8)) forces.push({ kind: pickFrom(r, ["driving", "applied"] as const), label: { text: `${Math.round(20 + r() * 480)} N`, ask: chance(r, 0.2) ? "F" : undefined } });
+  const angledAt = chance(r, 0.35);
+  if (!angledAt && chance(r, 0.8)) forces.push({ kind: pickFrom(r, ["driving", "applied"] as const), label: { text: `${Math.round(20 + r() * 480)} N`, ask: chance(r, 0.2) ? "F" : undefined } });
   if (chance(r, 0.7)) forces.push({ kind: pickFrom(r, ["resistance", "friction"] as const), label: { text: `${Math.round(5 + r() * 90)} N` } });
-  if (chance(r, 0.25)) forces.push({ kind: "resistance", label: { text: "R₂" } });
+  if (!angledAt && chance(r, 0.25)) forces.push({ kind: "resistance", label: { text: "R₂" } });
   return {
     body: pickFrom(r, ["block", "particle"] as const),
     forces,
     weightAndNormal: chance(r, 0.7) ? { weight: chance(r, 0.5) ? { text: `${Math.round(10 + r() * 90)}g N` } : undefined } : false,
     distance: chance(r, 0.7) ? { label: { text: `${Math.round(5 + r() * 900) / 10} m`, ask: chance(r, 0.25) ? "d" : undefined }, from: chance(r, 0.5) ? "A" : undefined, to: chance(r, 0.5) ? "B" : undefined } : undefined,
-    velocity: chance(r, 0.4) ? { text: `${Math.round(1 + r() * 25)} m s⁻¹` } : undefined,
+    velocity: !angledAt && chance(r, 0.4) ? { text: `${Math.round(1 + r() * 25)} m s⁻¹` } : undefined,
     bodyLabel: chance(r, 0.5) ? { text: `${Math.round(5 + r() * 200)} kg` } : undefined,
     rough: chance(r, 0.5),
+    angled: angledAt ? {
+      label: { text: pickFrom(r, ["F", "25 N", "T"] as const) },
+      angle: 10 + r() * 60,
+      angleLabel: { text: pickFrom(r, ["θ", "20°", "35°"] as const), ask: chance(r, 0.2) ? "?" : undefined },
+      push: chance(r, 0.4),
+      components: chance(r, 0.6) ? { along: { text: "F cos θ" }, across: { text: "F sin θ" } } : undefined,
+    } : undefined,
+    mirror: chance(r, 0.5),
+  };
+}
+
+function inclineParams(r: () => number): InclineParams {
+  // The two pictures a slope question uses are drawn separately, as in the textbooks: a work picture (the distance moved, the height, the length, the speed)
+  // and a force picture (weight, normal reaction, the weight's components, an angled force). At most one force up the slope and one down it.
+  const forcePicture = chance(r, 0.5);
+  const forces: InclineParams["forces"] = [];
+  const angledAt = forcePicture && chance(r, 0.3);
+  if (!angledAt && chance(r, 0.6)) forces.push({ kind: pickFrom(r, ["driving", "applied", "tension"] as const), label: { text: `${Math.round(20 + r() * 300)} N` } });
+  if (chance(r, 0.6)) forces.push({ kind: pickFrom(r, ["resistance", "friction"] as const), label: { text: `${Math.round(5 + r() * 90)} N`, ask: chance(r, 0.15) ? "R" : undefined } });
+  return {
+    angle: 8 + r() * 58,
+    angleLabel: chance(r, 0.8) ? { text: pickFrom(r, ["α", "15°", "30°"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    body: pickFrom(r, ["block", "particle"] as const),
+    bodyLabel: chance(r, 0.5) ? { text: pickFrom(r, ["m", "3.0 kg", "2.1 kg"] as const) } : undefined,
+    forces,
+    angled: angledAt ? { label: { text: "30 N" }, angleFromSlope: 15 + r() * 40, angleLabel: { text: "θ" } } : undefined,
+    weight: forcePicture ? (chance(r, 0.5) ? true : { text: "20g N" }) : undefined,
+    normal: forcePicture ? true : undefined,
+    components: forcePicture && chance(r, 0.6) ? { along: { text: "mg sin α" }, across: { text: "mg cos α" } } : undefined,
+    velocity: !forcePicture && chance(r, 0.4) ? { text: "v" } : undefined,
+    distance: !forcePicture && chance(r, 0.7) ? { label: { text: pickFrom(r, ["50 m", "d", "3.5 m"] as const), ask: chance(r, 0.2) ? "?" : undefined }, from: chance(r, 0.5) ? "A" : undefined, to: chance(r, 0.5) ? "B" : undefined } : undefined,
+    height: !forcePicture && chance(r, 0.7) ? { text: pickFrom(r, ["h", "2.2 m", "25 m"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    length: !forcePicture && chance(r, 0.3) ? { text: pickFrom(r, ["x", "3.5 m"] as const) } : undefined,
     mirror: chance(r, 0.5),
   };
 }
@@ -91,9 +124,74 @@ function elasticVerticalParams(r: () => number): ElasticVerticalParams {
   };
 }
 
+function inclineStringParams(r: () => number) {
+  return {
+    kind: pickFrom(r, ["spring", "elastic"] as const),
+    angle: 12 + r() * 44,
+    angleLabel: chance(r, 0.7) ? { text: pickFrom(r, ["30°", "α"] as const) } : undefined,
+    state: pickFrom(r, ["natural", "extended", "extended"] as const),
+    stretch: 0.3 + r() * 0.4,
+    body: pickFrom(r, ["block", "particle"] as const),
+    bodyLabel: chance(r, 0.5) ? { text: pickFrom(r, ["m", "6 kg", "0.5 kg"] as const) } : undefined,
+    natural: chance(r, 0.8) ? { text: pickFrom(r, ["l", "0.8 m", "4 m"] as const) } : undefined,
+    extension: chance(r, 0.7) ? { text: pickFrom(r, ["x", "e"] as const), ask: chance(r, 0.3) ? "?" : undefined } : undefined,
+    length: chance(r, 0.3) ? { text: pickFrom(r, ["l + x", "5.5 m"] as const) } : undefined,
+    names: { fixed: chance(r, 0.5) ? "A" : undefined, natural: chance(r, 0.4) ? "B" : undefined, free: chance(r, 0.4) ? "C" : undefined },
+    mirror: chance(r, 0.5),
+  };
+}
+
+function twoStringsParams(r: () => number) {
+  return {
+    kind: pickFrom(r, ["elastic", "string"] as const),
+    position: 0.3 + r() * 0.4,
+    mass: chance(r, 0.5) ? { text: pickFrom(r, ["2 kg", "m"] as const) } : undefined,
+    ab: chance(r, 0.7) ? { text: pickFrom(r, ["2.0 m", "d"] as const) } : undefined,
+    lengthA: chance(r, 0.6) ? { text: pickFrom(r, ["1.5 m", "l₁"] as const) } : undefined,
+    lengthB: chance(r, 0.6) ? { text: pickFrom(r, ["0.90 m", "l₂"] as const) } : undefined,
+    angleA: chance(r, 0.6) ? { text: pickFrom(r, ["α", "25°"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    angleB: chance(r, 0.6) ? { text: pickFrom(r, ["β", "45°"] as const) } : undefined,
+    tensionA: chance(r, 0.4) ? { text: "T_A" } : undefined,
+    tensionB: chance(r, 0.4) ? { text: "T_B" } : undefined,
+    weight: chance(r, 0.5) ? { text: "2g N" } : undefined,
+    names: { a: chance(r, 0.6) ? "A" : undefined, b: chance(r, 0.6) ? "B" : undefined, p: chance(r, 0.5) ? "P" : undefined },
+    mirror: chance(r, 0.5),
+  };
+}
+
+function profileParams(r: () => number) {
+  return {
+    startRel: 0.6 + r() * 0.4,
+    endRel: 0.25 + r() * 0.4,
+    startHeight: chance(r, 0.8) ? { text: pickFrom(r, ["35 m", "h₁"] as const) } : undefined,
+    endHeight: chance(r, 0.8) ? { text: pickFrom(r, ["10 m", "h₂"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    distance: chance(r, 0.7) ? { text: pickFrom(r, ["500 m", "d"] as const) } : undefined,
+    body: chance(r, 0.6),
+    bodyLabel: chance(r, 0.4) ? { text: "62 kg" } : undefined,
+    names: { start: chance(r, 0.5) ? "A" : undefined, end: chance(r, 0.5) ? "B" : undefined },
+    mirror: chance(r, 0.5),
+  };
+}
+
+function pulleyParams(r: () => number) {
+  return {
+    load: chance(r, 0.8) ? { text: pickFrom(r, ["1.5 kg", "m"] as const) } : undefined,
+    tension: chance(r, 0.7) ? { text: pickFrom(r, ["18 N", "T"] as const) } : undefined,
+    weight: chance(r, 0.5) ? { text: "mg" } : undefined,
+    height: chance(r, 0.7) ? { text: pickFrom(r, ["h", "2.0 m"] as const), ask: chance(r, 0.2) ? "?" : undefined } : undefined,
+    speed: chance(r, 0.4) ? { text: "v" } : undefined,
+    mirror: chance(r, 0.5),
+  };
+}
+
 const TEMPLATES: { name: string; build: (r: () => number) => Scene }[] = [
   { name: "horizontal", build: (r) => buildHorizontal(horizontalParams(r)) },
   { name: "vertical", build: (r) => buildVertical(verticalParams(r)) },
+  { name: "incline", build: (r) => buildIncline(inclineParams(r)) },
+  { name: "incline-string", build: (r) => buildInclineString(inclineStringParams(r)) },
+  { name: "two-strings", build: (r) => buildTwoStrings(twoStringsParams(r)) },
+  { name: "profile", build: (r) => buildProfile(profileParams(r)) },
+  { name: "pulley", build: (r) => buildPulley(pulleyParams(r)) },
   { name: "elastic-horizontal", build: (r) => buildElasticHorizontal(elasticHorizontalParams(r)) },
   { name: "elastic-vertical", build: (r) => buildElasticVertical(elasticVerticalParams(r)) },
 ];
@@ -114,13 +212,7 @@ describe("mechanics diagrams: every template", () => {
           const wanted = lay.visible.filter((e) => ("label" in e && lblText(e.label, showAnswer)) || e.type === "marker").length;
           if (lay.labels.length !== wanted) problems.push(`#${i} ${size}: ${lay.labels.length} labels placed, ${wanted} wanted`);
           if (lay.unplaced.length) problems.push(`#${i} ${size} answer=${showAnswer}: unplaced ${lay.unplaced.join(",")} ${JSON.stringify(lay.labels.filter((l) => lay.unplaced.some((u) => u.startsWith(l.id))).map((l) => l.rect))} ${JSON.stringify(scene.elements.filter((e) => e.type === "body"))}`);
-          // a force label must not sit on any line (a dimension's own label is meant to break its line; a marker name sits clear by construction)
-          for (const l of lay.labels) {
-            const owner = lay.visible.find((e) => e.id === l.id);
-            if (!owner || owner.type === "dim") continue;
-            const hit = lay.obstacles.find((s) => segHitsRect(s, l.rect, -2));
-            if (hit) problems.push(`#${i} ${size}: label ${l.id} ("${l.text}") sits on a line ${JSON.stringify(l.rect)} ${JSON.stringify(hit)}`);
-          }
+          if (lay.clashes.length) problems.push(`#${i} ${size}: labels on a line: ${lay.clashes.join(",")} ${lay.clashes.map((id) => { const lb = lay.labels.find((x) => x.id === id); return lb ? JSON.stringify(lb.rect) + JSON.stringify(lay.obstacles.filter((o) => Math.abs(o.x1 - lb.rect.x) < 200 && Math.abs(o.y1 - lb.rect.y) < 200).map((o) => [Math.round(o.x1), Math.round(o.y1), Math.round(o.x2), Math.round(o.y2)])) : ""; }).join(" ")}`);
         }
         const html = renderToStaticMarkup(createElement(MechDiagram, { scene, qIndex: 3, size: "board" }));
         if (/NaN|undefined|Infinity/.test(html)) problems.push(`#${i} html has a bad number`);
@@ -139,7 +231,9 @@ describe("mechanics diagrams: every template", () => {
     for (const t of TEMPLATES) for (let i = 0; i < 50; i++) {
       const s = t.build(r);
       const twice = mirrorScene(mirrorScene(s));
-      expect(JSON.stringify(twice)).toEqual(JSON.stringify(s));
+      // flipping twice may move a coordinate by the last digit of a float, so compare to six decimal places
+      const round = (_k: string, v: unknown) => (typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v);
+      expect(JSON.stringify(twice, round)).toEqual(JSON.stringify(s, round));
       expect(validateScene(mirrorScene(s))).toEqual([]);
     }
   });
@@ -234,6 +328,16 @@ describe("mechanics diagrams: every template", () => {
       "elastic-table": buildElasticHorizontal({ kind: "elastic", state: "extended", stretch: 0.4, body: "particle", natural: { text: "l" }, extension: { text: "x", ask: "?" }, length: { text: "l + x" }, force: { text: "F" }, names: { fixed: "O", free: "P" } }),
       "string-hanging": buildElasticVertical({ kind: "elastic", states: [{ ext: 0, ghost: true, name: "A" }, { ext: 0.4, name: "B", weight: { text: "mg" }, tension: { text: "T" } }], mass: { text: "m" }, body: "particle", natural: { text: "l" }, extension: { text: "x", ask: "?" }, fixed: "O" }),
       "string-drop": buildElasticVertical({ kind: "elastic", states: [{ ext: 0, ghost: true, name: "A", speed: { text: "u" } }, { ext: 0.35, name: "B", speed: { text: "v" } }, { ext: 0.8, name: "C" }], body: "particle", natural: { text: "0.8 m" }, extension: { text: "x" }, dimState: 2, modulus: { text: "λ" }, fixed: "O" }),
+      "rope-pull": buildHorizontal({ body: "block", weightAndNormal: false, bodyLabel: { text: "m" }, distance: { label: { text: "85 m" } }, angled: { label: { text: "50 N" }, angle: 30, angleLabel: { text: "30°" }, components: { along: { text: "50 cos 30°" }, across: { text: "50 sin 30°" } } } }),
+      "push-angle": buildHorizontal({ body: "block", weightAndNormal: { weight: { text: "mg" } }, bodyLabel: { text: "m" }, angled: { label: { text: "F" }, angle: 35, angleLabel: { text: "θ" }, push: true, components: { along: { text: "F cos θ" }, across: { text: "F sin θ" } } } }),
+      "slope-forces": buildIncline({ angle: 25, angleLabel: { text: "25°" }, body: "block", bodyLabel: { text: "3.0 kg" }, forces: [{ kind: "driving", label: { text: "30 N" } }, { kind: "friction", label: { text: "8 N" } }], weight: true, normal: true, velocity: { text: "v" } }),
+      "slope-height": buildIncline({ angle: 18, angleLabel: { text: "α" }, body: "particle", distance: { label: { text: "50 m" }, from: "A", to: "B" }, height: { text: "h", ask: "?" }, bodyLabel: { text: "28 kg" } }),
+      "slope-resolve": buildIncline({ angle: 30, angleLabel: { text: "30°" }, body: "block", bodyLabel: { text: "m" }, weight: true, normal: true, components: { along: { text: "mg sin 30°" }, across: { text: "mg cos 30°" } }, mirror: true }),
+      "slope-strap": buildIncline({ angle: 10, angleLabel: { text: "10°" }, body: "block", bodyLabel: { text: "2.5 kg" }, angled: { label: { text: "7.5 N" }, angleFromSlope: 20, angleLabel: { text: "20°" } }, forces: [{ kind: "resistance", label: { text: "2.5 N" } }], distance: { label: { text: "10 m" } } }),
+      "slope-string": buildInclineString({ kind: "elastic", angle: 30, angleLabel: { text: "30°" }, state: "extended", stretch: 0.5, body: "particle", natural: { text: "0.8 m" }, extension: { text: "x" }, names: { fixed: "A", natural: "B", free: "C" } }),
+      "two-strings": buildTwoStrings({ kind: "elastic", position: 0.42, mass: { text: "2.0 kg" }, ab: { text: "2.0 m" }, lengthA: { text: "1.5 m" }, lengthB: { text: "0.90 m" }, angleA: { text: "α" }, angleB: { text: "β" }, tensionA: { text: "T_A" }, tensionB: { text: "T_B" }, weight: { text: "2g N" }, names: { a: "A", b: "B", p: "P" } }),
+      "cyclist-profile": buildProfile({ startRel: 1, endRel: 0.35, startHeight: { text: "35 m" }, endHeight: { text: "10 m" }, distance: { text: "500 m" }, body: true, bodyLabel: { text: "62 kg" }, names: { start: "A", end: "B" } }),
+      "pulley-lift": buildPulley({ load: { text: "1.5 kg" }, tension: { text: "18 N" }, weight: { text: "1.5g N" }, height: { text: "h", ask: "?" }, speed: { text: "v" } }),
       "dropped-crate": buildVertical({ body: "block", start: { rel: 1, height: { text: "12 m" }, moving: "down", name: "A" }, end: { rel: 0, speed: { text: "v", ask: "?" }, moving: "down", name: "B" }, drop: { text: "12 m" }, bodyLabel: { text: "50 kg" } }),
     };
     mkdirSync(dir!, { recursive: true });

@@ -164,7 +164,15 @@ export function buildInOrder(scene: Scene, order: (string | string[])[]): Scene 
 
 /** Tag every element with its part from a rule on its id, and set the scene's list of parts. Templates call this last. */
 export function withParts(scene: Scene, parts: ScenePart[], partOf: (id: string) => string): Scene {
-  return { ...scene, parts, elements: scene.elements.map((e) => ({ ...e, part: e.part ?? partOf(e.id) })) };
+  const notGiven = new Set(parts.filter((p) => !p.given).map((p) => p.id));
+  return {
+    ...scene, parts,
+    // a part the working adds (not given with the question) is held back until the first working step unless a tool stages it later
+    elements: scene.elements.map((e) => {
+      const part = e.part ?? partOf(e.id);
+      return { ...e, part, reveal: e.reveal ?? (notGiven.has(part) ? 1 : undefined) };
+    }),
+  };
 }
 
 /** The number of working steps the picture needs to show everything. */

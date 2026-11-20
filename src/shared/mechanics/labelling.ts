@@ -2,10 +2,10 @@
 // things a renderer needs: what is visible, the obstacles, and a spot for each label. It reuses the Perimeter & Area placement solver
 // (shared/shapes/labels.ts) instead of a second one: a force's label is a "free" pill that hugs its arrow, everything else is a fixed rectangle
 // the solver steers around. The renderer never drops a label: a scene that cannot place one reports it (`unplaced`).
-import { placePills, type PillIn, type Rect, type Seg, type Scene as PlaceScene } from "../shapes/labels";
+import { placePills, segHitsRect, type PillIn, type Rect, type Seg, type Scene as PlaceScene } from "../shapes/labels";
 import { bodyAnchors, bodyOutline, bodyPoint, bodySize } from "./bodies";
 import { springSegments } from "./elastics";
-import { add, dir, leftNormal, lblText, mul, visibleAt, type Arc, type Dim, type Lbl, type Pt, type Scene, type SceneElement } from "./scene";
+import { add, dir, leftNormal, lblText, mul, visibleAt, type Dim, type Lbl, type Pt, type Scene, type SceneElement } from "./scene";
 
 export const dimLine = (d: Dim): { a: Pt; b: Pt } => {
   const n = leftNormal(d.a, d.b), o = d.offset ?? 0;
@@ -27,10 +27,14 @@ export interface PlacedLabel {
 }
 
 export interface Layout {
+  /** The label size actually used: the size asked for, or a little smaller when the labels would not all fit cleanly at that size. */
+  fontSize: number;
   visible: SceneElement[];
   labels: PlacedLabel[];
-  /** Ids of labels that overlap something after placement (should be empty; a test asserts it). */
+  /** Ids of labels that overlap another label or run off the picture even at the smallest size tried (should be empty; a test asserts it). */
   unplaced: string[];
+  /** Ids of labels that sit on a solid line even at the smallest size tried (should be empty; a test asserts it). */
+  clashes: string[];
   /** Solid lines (surfaces, outlines, arrows, dimension lines): a label must not sit on these. */
   obstacles: Seg[];
   /** Dashed level lines and the stand-ins for hatching: a label avoids them if it can. */
@@ -40,17 +44,11 @@ export interface Layout {
 const segOf = (a: Pt, b: Pt): Seg => ({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
 const polySegs = (pts: Pt[]): Seg[] => pts.map((p, i) => segOf(p, pts[(i + 1) % pts.length]));
 
-/** Where an arc's label sits: beyond the arc, on its bisector. */
-const arcLabelPoint = (a: Arc, gap: number): Pt => {
-  let to = a.to; if (to < a.from) to += 360;
-  return add(a.at, mul(dir((a.from + to) / 2), a.r + gap));
-};
-
 /** The text a label is placed for: the longer of its value and its placeholder, so it does not move when the answer is shown. */
 const placedText = (l: Lbl | undefined): string | undefined =>
   l == null ? undefined : l.ask != null && l.ask.length > l.text.length ? l.ask : l.text;
 
-interface Placement { labels: PlacedLabel[]; unplaced: string[]; obstacles: Seg[]; guides: Seg[]; owners: Map<string, SceneElement> }
+interface Placement { labels: PlacedLabel[]; unplaced: string[]; clashes: string[]; obstacles: Seg[]; guides: Seg[]; owners: Map<string, SceneElement> }
 const cache = new WeakMap<Scene, Map<number, Placement>>();
 
 /** Place every label of the WHOLE scene once (per size), whatever step is showing, so a label never jumps as the picture is built part by part. */
@@ -64,6 +62,7 @@ function placeAll(scene: Scene, fontSize: number): Placement {
   const helpers: Seg[] = [];
   const fixed: { id: string; text: string; rect: Rect; lx: number; ly: number; hasLeader: boolean }[] = [];
   const free: { id: string; text: string; item: PillIn }[] = [];
+  const markers: Extract<SceneElement, { type: "marker" }>[] = [];
   const pillH = fontSize * 1.25;
   const pad = 6;
 
@@ -103,7 +102,7 @@ function placeAll(scene: Scene, fontSize: number): Placement {
         if (t) {
           const an = bodyAnchors(e), { w } = bodySize(e);
           // inside the upper part of a block, clear of the weight arrow that starts at its centre
-          if (e.kind === "block" && textWidth(t, fontSize) + pad <= w && pillH <= bodySize(e).h / 2) fixedAt(e.id, t, add(an.centre, { x: 0, y: -12 }));
+          if (e.kind === "block" && !e.rot && textWidth(t, fontSize) + pad <= w && pillH <= bodySize(e).h / 2) fixedAt(e.id, t, add(an.centre, { x: 0, y: -12 }));
           else {
             // too big to sit inside (or a particle): a pill that hugs the top edge and goes wherever there is room
             freeOn(e.id, t, bodyPoint(e, -w / 2, bodySize(e).h), bodyPoint(e, w / 2, bodySize(e).h));
@@ -124,12 +123,37 @@ function placeAll(scene: Scene, fontSize: number): Placement {
         break;
       }
       case "arc": {
+        // an angle's label is steered by the same solver as a force's: it hugs the chord of the arc, on whichever side (or beyond whichever end) is clear
         const t = placedText(e.label);
-        if (t) fixedAt(e.id, t, arcLabelPoint(e, fontSize * 0.55 + textWidth(t, fontSize) / 2));
+        if (t) {
+          let to = e.to; if (to < e.from) to += 360;
+          const p0 = add(e.at, mul(dir(e.from), e.r)), p1 = add(e.at, mul(dir(to), e.r));
+          const mid = add(e.at, mul(dir((e.from + to) / 2), e.r));
+          const out = { x: mid.x - e.at.x, y: mid.y - e.at.y };
+          // the pill's normal is the side of the chord facing away from the vertex
+          const n = leftNormal(p0, p1);
+          const flip = n.x * out.x + n.y * out.y < 0;
+          freeOn(e.id, t, flip ? p1 : p0, flip ? p0 : p1);
+        }
         break;
       }
-      case "marker": fixedAt(e.id, e.name, add(e.at, mul(dir(e.dir ?? 135), e.dist ?? fontSize * 0.9))); break;
+      case "marker": markers.push(e); break;
     }
+  }
+
+  // a name stands where its marker says (`dir`, `dist`), unless that spot is taken by a solid line or another label, when the solver finds it a clear one
+  for (const e of markers) {
+    const at = add(e.at, mul(dir(e.dir ?? 135), e.dist ?? fontSize * 0.9));
+    const rect: Rect = { x: at.x, y: at.y, w: textWidth(e.name, fontSize) + pad, h: pillH };
+    const inside = rect.x - rect.w / 2 >= 0 && rect.y - rect.h / 2 >= 0 && rect.x + rect.w / 2 <= scene.w && rect.y + rect.h / 2 <= scene.h;
+    const clear = inside && !shape.some((s) => segHitsRect(s, rect, 1)) && !fixed.some((f) => Math.abs(f.rect.x - rect.x) < (f.rect.w + rect.w) / 2 && Math.abs(f.rect.y - rect.y) < (f.rect.h + rect.h) / 2);
+    if (clear) { fixed.push({ id: e.id, text: e.name, rect, lx: at.x, ly: at.y, hasLeader: false }); continue; }
+    const d = dir(e.dir ?? 135), far = add(e.at, mul(d, e.dist ?? fontSize * 0.9));
+    // the solver gets a short segment at right angles to the preferred direction, so no dimension line can be taken for "the same line"
+    const n = { x: -d.y, y: d.x };
+    const a0 = add(far, mul(n, -6)), a1 = add(far, mul(n, 6));
+    const nn = leftNormal(a0, a1);
+    free.push({ id: e.id, text: e.name, item: { ax: a0.x, ay: a0.y, bx: a1.x, by: a1.y, nx: nn.x, ny: nn.y, w: rect.w, h: rect.h, free: true } });
   }
 
   // forces last, so every fixed rectangle is known before their labels are steered around it
@@ -169,15 +193,27 @@ function placeAll(scene: Scene, fontSize: number): Placement {
     }
     if (bad) unplaced.push(`${labels[i].id} (${bad})`);
   }
-  const placement: Placement = { labels, unplaced, obstacles: shape, guides: helpers, owners: new Map(scene.elements.map((e) => [e.id, e])) };
+  // and a label may not sit on a solid line (a dimension's own label is meant to break its line, so dimensions are not checked)
+  const owners = new Map(scene.elements.map((e) => [e.id, e]));
+  // (the label of a dashed component may touch the weight arrow on a steep slope, where the two nearly coincide, so components are not checked either)
+  const exempt = (id: string) => { const o = owners.get(id); return o?.type === "dim" || (o?.type === "force" && o.kind === "component"); };
+  const clashes = labels.filter((lb) => !exempt(lb.id) && shape.some((s) => segHitsRect(s, lb.rect, -2))).map((lb) => lb.id);
+  const placement: Placement = { labels, unplaced, clashes, obstacles: shape, guides: helpers, owners };
   byScene.set(fontSize, placement);
   return placement;
 }
 
-/** What to draw at a step: the elements on show and the label for each (placed once for the whole scene, so nothing moves as parts are added). */
+/** What to draw at a step: the elements on show and the label for each (placed once for the whole scene, so nothing moves as parts are added). If the labels do not
+ *  all fit cleanly at the size asked for, the text steps down a little (to 88%, 78%, then 68%) until they do: a label is made smaller, never dropped or left on a line. */
 export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: boolean; fontSize: number }): Layout {
-  const { step, showAnswer = false, fontSize } = opts;
-  const all = placeAll(scene, fontSize);
+  const { step, showAnswer = false } = opts;
+  let fontSize = opts.fontSize;
+  let all = placeAll(scene, fontSize);
+  for (const k of [0.88, 0.78, 0.68]) {
+    if (!all.unplaced.length && !all.clashes.length) break;
+    fontSize = opts.fontSize * k;
+    all = placeAll(scene, fontSize);
+  }
   const visible = scene.elements.filter((e) => visibleAt(e, step));
   const shown = new Set(visible.map((e) => e.id));
   const labels = all.labels.filter((l) => shown.has(l.id)).map((l) => {
@@ -185,5 +221,5 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
     const t = owner && "label" in owner ? lblText(owner.label, showAnswer) : undefined;
     return t != null && owner?.type !== "marker" ? { ...l, text: t } : l;
   });
-  return { visible, labels, unplaced: all.unplaced, obstacles: all.obstacles, guides: all.guides };
+  return { fontSize, visible, labels, unplaced: all.unplaced, clashes: all.clashes, obstacles: all.obstacles, guides: all.guides };
 }

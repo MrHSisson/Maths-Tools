@@ -26,8 +26,9 @@ const isFocused = (e: SceneElement, focus?: string[]): boolean =>
   !focus || focus.length === 0 || focus.includes(e.id) || (e.focus ?? []).some((t) => focus.includes(t));
 
 export default function MechDiagram({ scene, showAnswer = false, step, qIndex, size = "board", focus, emphasise = true }: MechDiagramProps): ReactElement {
-  const fontSize = LABEL_SIZE[size];
-  const layout = useMemo(() => layoutScene(scene, { step, showAnswer, fontSize }), [scene, step, showAnswer, fontSize]);
+  const asked = LABEL_SIZE[size];
+  const layout = useMemo(() => layoutScene(scene, { step, showAnswer, fontSize: asked }), [scene, step, showAnswer, asked]);
+  const fontSize = layout.fontSize;
   const dimmed = (e: SceneElement) => !isFocused(e, focus);
   const dimLabelIds = new Set(layout.visible.filter((e) => e.type === "dim").map((e) => e.id));
   const by = <T extends SceneElement["type"]>(t: T) => layout.visible.filter((e): e is Extract<SceneElement, { type: T }> => e.type === t);

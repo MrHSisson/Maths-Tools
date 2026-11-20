@@ -2,7 +2,7 @@
 // and an optional velocity arrow. The picture of "a force acts along the line of motion": work = force × distance, power = force × speed.
 // Docs: docs/architecture/MECHANICS_DIAGRAMS_PLAN.md §2 (D1). The builder takes labels, never numbers: the caller formats them.
 import { blockWidthFor, bodyAnchors } from "../bodies";
-import { add, mirrorScene, withParts, type Force, type ForceKind, type Lbl, type Scene, type SceneElement } from "../scene";
+import { add, dir, mirrorScene, mul, rad, sub, withParts, type Force, type ForceKind, type Lbl, type Scene, type SceneElement } from "../scene";
 
 export interface HorizontalForce {
   kind: Extract<ForceKind, "driving" | "resistance" | "applied" | "friction" | "tension">;
@@ -17,6 +17,18 @@ export interface HorizontalParams {
   weightAndNormal?: { weight?: Lbl; normal?: Lbl } | false;
   /** The distance moved: the body at the start, a faint copy at the finish, and a dimension line below the ground. */
   distance?: { label: Lbl; from?: string; to?: string };
+  /** A force at an angle to the motion (a rope pulling up and forward, or a push down and forward), with its resolved components and the angle. D2 of the plan. */
+  angled?: {
+    label?: Lbl;
+    /** The angle to the horizontal, in degrees. Drawn true, clamped to 22 to 70. */
+    angle?: number;
+    /** The label of the angle (θ, 30°). */
+    angleLabel?: Lbl;
+    /** A push (down and forward onto the top of the body) instead of a pull (up and forward from its front). */
+    push?: boolean;
+    /** Dashed components along the ground and across it, with their labels (F cos θ, F sin θ). */
+    components?: { along?: Lbl; across?: Lbl };
+  };
   /** A velocity arrow above the body. */
   velocity?: Lbl;
   /** Text on the body (a mass). */
@@ -28,10 +40,13 @@ export interface HorizontalParams {
   alt?: string;
 }
 
-const W = 540, H = 264;
+const W0 = 540, H = 270;
 const GROUND_Y = 168;
 
 export function buildHorizontal(p: HorizontalParams = {}): Scene {
+  // a push comes in from up and behind the body, so it needs room on the left for its components and their labels
+  const room = p.angled?.push ? 70 : 0;
+  const W = W0 + room;
   const els: SceneElement[] = [];
   const kind = p.body ?? "block";
 
@@ -40,8 +55,8 @@ export function buildHorizontal(p: HorizontalParams = {}): Scene {
   const w = kind === "block" ? blockWidthFor(p.bodyLabel) : undefined;
   // the back face stays put whatever the width, so the room behind it for a force and its label is always the same
   const hw = (w ?? 14) / 2;
-  const startX = (p.distance ? 150 : 210) + hw;
-  const endX = 360 + hw;
+  const startX = (p.distance ? 150 : 210) + hw + room;
+  const endX = 360 + hw + room;
   const start: SceneElement = { type: "body", id: "body", kind, at: { x: startX, y: GROUND_Y }, label: p.bodyLabel, w };
   const an = bodyAnchors(start as Extract<SceneElement, { type: "body" }>);
   if (p.distance) {
@@ -62,6 +77,24 @@ export function buildHorizontal(p: HorizontalParams = {}): Scene {
       : { type: "force", id: `f-${f.kind}-${back}`, kind: f.kind, from: { x: an.back.x, y: mid - back * 22 }, to: { x: an.back.x - L, y: mid - back * 22 }, label: f.label };
     if (forward) fwd++; else back++;
     els.push(force);
+  }
+
+  if (p.angled) {
+    const a = p.angled;
+    const th = Math.max(22, Math.min(70, a.angle ?? 30));
+    const Lf = 104;
+    const d = dir(a.push ? -th : th);
+    // a pull leaves the top of the front face (so its horizontal component has room beneath it for its label); a push comes down onto the top-back corner, so it starts up and behind and its tip is the corner
+    const corner = { x: an.back.x, y: an.top.y };
+    const origin = a.push ? sub(corner, mul(d, Lf)) : { x: an.front.x, y: an.top.y };
+    els.push({ type: "force", id: "f-angled", kind: a.push ? "applied" : "tension", from: origin, to: add(origin, mul(d, Lf)), label: a.label });
+    if (a.components) {
+      const along = add(origin, { x: Lf * Math.cos(rad(th)), y: 0 });
+      const across = add(origin, { x: 0, y: (a.push ? 1 : -1) * Lf * Math.sin(rad(th)) });
+      els.push({ type: "force", id: "f-along", kind: "component", tone: a.push ? "applied" : "tension", from: origin, to: along, label: a.components.along });
+      els.push({ type: "force", id: "f-across", kind: "component", tone: a.push ? "applied" : "tension", from: origin, to: across, label: a.components.across });
+    }
+    els.push({ type: "arc", id: "arc-angled", at: origin, r: 46, from: a.push ? 360 - th : 0, to: a.push ? 360 : th, label: a.angleLabel });
   }
 
   if (p.weightAndNormal !== false) {
@@ -90,9 +123,10 @@ export function buildHorizontal(p: HorizontalParams = {}): Scene {
       { id: "setting", label: "the ground and the body", given: true },
       { id: "motion", label: "the motion", given: true },
       { id: "forces", label: "the forces", given: true },
+      { id: "components", label: "the angle and the resolved components", given: !!p.angled && !p.angled.components },
       { id: "measure", label: "the distance moved", given: true },
     ],
-    (id) => (id === "ground" || id.startsWith("body") ? "setting" : id === "f-velocity" ? "motion" : id.startsWith("f-") ? "forces" : "measure"),
+    (id) => (id === "ground" || id.startsWith("body") ? "setting" : id === "f-velocity" ? "motion" : id === "f-along" || id === "f-across" || id === "arc-angled" ? "components" : id.startsWith("f-") ? "forces" : "measure"),
   );
   return p.mirror ? mirrorScene(scene) : scene;
 }
