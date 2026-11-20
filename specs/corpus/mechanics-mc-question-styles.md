@@ -6,7 +6,7 @@
 
 **Rules.** Shapes only: do not copy textbook wording or numbers into the repo. One row per style. `Home` is a sub-tool name, or `UNHOMED` while no sub-tool covers it. When several UNHOMED rows share a skill, propose a sub-tool in the "Candidate sub-tools" section and tell Harry.
 
-**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) and Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B).
+**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) and Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C).
 
 **AS or A2.** MC1 at AS has no Fd cos θ (see `specs/exam/spec/aqa-mechanics.md`). Rows marked A2 are the cos θ layer.
 
@@ -56,10 +56,22 @@
 | S36 | Braking force needed: mass in tonnes, speeds in km/h, distance and a known resistance | CUP1 1B Q8 | MC3 | AS | UNHOMED (MC3 candidate: C) |
 | S37 | Slope with length and vertical drop, starting from rest, final speed given: find the resistance | CUP1 1B Q9 | MC2 + MC3 | AS | UNHOMED (MC3 candidate: D) |
 | S38 | Up a hill: driving force, friction, distance along the road, vertical rise, starting speed: find the final speed | CUP1 1B Q10 | MC2 + MC3 | AS | UNHOMED (MC3 candidate: D) |
+| S39 | Increase in PE when a mass is raised; also loss of PE for a mass in tonnes with g = 10 | CUP1 1C Q1, Q2 | MC2 | AS | UNHOMED (MC2 candidate: F) |
+| S40 | PE gained given: find the height climbed | CUP1 1C Q3 | MC2 | AS | UNHOMED (MC2 candidate: F) |
+| S41 | PE lost given and the height in cm: find the mass | CUP1 1C Q4 | MC2 | AS | UNHOMED (MC2 candidate: F) |
+| S42 | Projectile or fall, no resistance, as a chain of parts: initial KE, PE lost, KE at the bottom, then speed (mass in grams) | CUP1 1C Q5, Q7 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: G) |
+| S43 | As S42 for a diver, plus a part asking for the modelling assumptions (no calculation) | CUP1 1C Q6 | MC2 + MC3 | AS | UNHOMED (G; part d is a Depth or deck card) |
+| S44 | Thrown upward, no external force: speed after rising a given height, then the maximum height (all KE becomes PE) | CUP1 WE1.11 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: G) |
+| S45 | Projected down a smooth chute with a starting speed and a vertical drop: PE loss, then speed at the bottom | CUP1 1C Q9 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: G) |
+| S46 | Slide with change in height and the speed at the bottom from rest: work done against resistance (GPE1 + KE1 = GPE2 + KE2 + work against resistance) | CUP1 1C Q8 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: H) |
+| S47 | Sledge down a track (length and vertical drop, both speeds): the average resistance | CUP1 1C Q10 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: H) |
+| S48 | Tension in a string over a pulley and a speed change: find the height gained (the unknown height is in the work and the PE) | CUP1 WE1.12 | MC2 + MC3 | AS | UNHOMED (MC2 candidate: H) |
+| S49 | Rest to rest over several stages (a descent, a flat, a climb): total work by the rider, then the average driving force | CUP1 WE1.13 | MC1 + MC2 + MC3 | AS | UNHOMED (MC2 candidate: H) |
+| S50 | Up a hill from rest: increase in KE, increase in PE, then with resistance and the work by the rider find the distance | CUP1 1C Q11 | MC1 + MC2 + MC3 | AS | UNHOMED (MC2 candidate: H) |
 
 ## Unhomed styles
 
-S21 to S38: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
+S21 to S50: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
 
 ## Candidate sub-tools (MC3)
 
@@ -71,7 +83,16 @@ Proposed from S21 to S38, to be agreed with Harry before any brief:
 - **D. Work-energy with gravity**: slopes and falls, by distance along the slope or by height; find speed, distance or resistance (S22, S23, S24, S34, S37, S38).
 - **E. KE with vectors (A2)**: velocities as i, j vectors (S29).
 
+## Candidate sub-tools (MC2, from Section 3)
+
+- **F. Gravitational PE**: find the PE change, the height or the mass; conversions (S39 to S41, with S16 to S20).
+- **G. Conservation of mechanical energy**: only gravity acts, find the speed, the KE, the PE or the maximum height (S42 to S45, with S34).
+- **H. Energy with driving and resistive forces**: the full equation GPE1 + KE1 + work by driving forces − work against resistances = GPE2 + KE2; find a speed, a force, a distance or a height (S46 to S50, with S37, S38).
+
+**Overlap with MC3.** MC3 candidate D (S22, S23, S24, S34, S37, S38) and MC2 candidates G and H are the same physical question solved by two methods: work done by gravity as a force (MC3), or GPE with conservation of energy (MC2). The book says so itself ("you do not need to include work done by gravity"). Rather than two near-identical tools, one could build D, G and H once, with a Method option (work by gravity, or GPE and KE).
+
 ## Open questions
 
 - Does the PE wording on a slope (S16, S17, S18, S20) belong to MC1 sub-tool 4 or to an MC2 tool? The textbook puts it in the same exercise as Fd cos θ.
 - Do the MC2 PE questions (S16 to S20) and the gravity-and-KE chains (S34, S37, S38) belong in separate MC2 and MC3 tools, or in one Work and Energy tool?
+- Should energy questions with gravity be one set of sub-tools with a Method option (work-energy, or GPE and KE), instead of separate MC2 and MC3 versions?
