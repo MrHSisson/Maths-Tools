@@ -4,18 +4,35 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error plain script, no types
 import { AREA_ORDER, areaOfTest, areasForChange } from "../../scripts/testAreas.mjs";
 
+const sorted = (x: string[] | "all") => (x === "all" ? x : [...x].sort());
+const files = readdirSync("src/tests").filter((n) => n.endsWith(".test.ts"));
+const filesIn = (areas: string[]) => files.filter((n) => areas.includes(areaOfTest(n)));
+
 describe("test areas", () => {
-  const files = readdirSync("src/tests").filter((n) => n.endsWith(".test.ts"));
   it("puts every test file in a known area", () => {
     for (const n of files) expect(AREA_ORDER, n).toContain(areaOfTest(n));
   });
   it("keeps the slow Decision tests out of a change that cannot affect them", () => {
     expect(areasForChange(["src/decks/store.ts"])).toEqual(["decks"]);
     expect(areasForChange(["docs/TASKS.md", "src/generated/adminDocs.json"])).toEqual(["docs"]);
-    expect(areasForChange(["src/tools/Algebra/Indices.tsx"]).sort()).toEqual(["docs", "tools"]);   // docs holds the checks that read every tool (labels, About files)
+    expect(sorted(areasForChange(["src/tools/Algebra/Indices.tsx"]))).toEqual(["cross", "docs", "tools"]);   // cross and docs hold the checks that read every tool
   });
-  it("runs the Decision area (and the cross-tool checks) for a Decision change", () => {
-    expect(areasForChange(["src/shared/decision/cpa.ts"]).sort()).toEqual(["decision", "docs", "tools"]);
+  it("a mechanics change runs the mechanics tests, not Critical Path or Network Flows", () => {
+    for (const f of ["src/tools/FurtherMechanics/DimensionalAnalysis.tsx", "src/shared/decision/dimSolve.ts", "src/shared/decision/DimWorking.tsx", "src/shared/mechanics/scene.ts"]) {
+      const r = areasForChange([f]) as string[];
+      expect(sorted(r), f).toEqual(["cross", "decision", "docs", "mechanics"]);
+      const run = filesIn(r);
+      expect(run, f).toContain("dim.test.ts");                                   // the hole: these used to be skipped for a change under FurtherMechanics
+      expect(run, f).toContain("mechanicsPairings.test.ts");
+      expect(run.some((n) => /^(cpa|flow)/.test(n)), f).toBe(false);
+    }
+  });
+  it("each Decision topic runs its own tests plus the shell-wide ones, and a shell change runs them all", () => {
+    expect(sorted(areasForChange(["src/shared/decision/cpa.ts"]))).toEqual(["cpa", "cross", "decision", "docs"]);
+    expect(sorted(areasForChange(["src/shared/decision/flowGeometry.ts"]))).toEqual(["cross", "decision", "docs", "flow"]);
+    expect(sorted(areasForChange(["src/tools/Decision/TravellingSalesperson.tsx"]))).toEqual(["cross", "decision", "docs", "graphs"]);
+    expect(sorted(areasForChange(["src/shared/decision/DecisionShell.tsx"]))).toEqual(["cpa", "cross", "decision", "docs", "flow", "graphs", "mechanics"]);
+    expect(filesIn(areasForChange(["src/shared/decision/cpa.ts"]) as string[])).toContain("levellingMethod.test.ts");
   });
   it("runs everything for shared code, config, the registry or an unknown path", () => {
     for (const f of ["src/shared/helpers.ts", "src/registry.ts", "package.json", ".github/workflows/ci.yml", "somewhere/else.txt"]) expect(areasForChange([f]), f).toBe("all");
@@ -27,6 +44,7 @@ describe("test areas", () => {
     expect(areasForChange(["src/decks/newerCode.tsx"])).toEqual(["decks"]);
   });
   it("a changed test file runs its own area", () => {
-    expect(areasForChange(["src/tests/cpaExam.test.ts"])).toEqual(["decision"]);
+    expect(areasForChange(["src/tests/cpaExam.test.ts"])).toEqual(["cpa"]);
+    expect(areasForChange(["src/tests/dim.test.ts"])).toEqual(["mechanics"]);
   });
 });

@@ -17,7 +17,7 @@ else {
 }
 let run, files = [];
 if (result === "none") { run = "none"; }
-const smoke = result === "all" || (Array.isArray(result) && result.some((a) => ["tools", "decision", "cs"].includes(a)));
+const smoke = result === "all" || (Array.isArray(result) && result.some((a) => !["docs", "decks"].includes(a)));
 if (result === "none") { /* nothing changed */ }
 else if (result === "all") run = "all";
 else {
