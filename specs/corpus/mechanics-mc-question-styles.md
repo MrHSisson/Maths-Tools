@@ -6,7 +6,7 @@
 
 **Rules.** Shapes only: do not copy textbook wording or numbers into the repo. One row per style. `Home` is a sub-tool name, or `UNHOMED` while no sub-tool covers it. When several UNHOMED rows share a skill, propose a sub-tool in the "Candidate sub-tools" section and tell Harry.
 
-**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS) and Ch 5 Section 1 (WE5.1 to 5.3, Exercise 5A; MC5).
+**Sources.** `CUP1` = Cambridge A Level Further Maths for AQA, Mechanics Student Book Year 1/AS: Ch 1 Section 1 (worked examples WE1.x, Exercise 1A) and Ch 5 Section 3 (WE5.12 to 5.15, Exercise 5C) Ch 1 Section 2 (WE1.6 to 1.10, Exercise 1B) Ch 1 Section 3 (WE1.11 to 1.13, Exercise 1C) and Ch 1 Section 4 (WE1.14 to 1.19, Exercise 1D; MC7 AS) and Ch 5 Section 1 (WE5.1 to 5.3, Exercise 5A; MC5) and Ch 5 Section 2 (WE5.4 to 5.11, Proof 1, Work It Out 5.1, Exercise 5B; MC4 and MC6).
 
 **AS or A2.** MC1 at AS has no Fd cos θ (see `specs/exam/spec/aqa-mechanics.md`). Rows marked A2 are the cos θ layer.
 
@@ -87,10 +87,26 @@
 | S67 | Force of the form 1/(2x), work given as ln 4: find the upper limit exactly | CUP1 5A Q3 | MC5 | AS | UNHOMED (MC5 candidate: N) |
 | S68 | Braking force constant plus a resistance proportional to x, speed in km/h, mass in tonnes: find the stopping distance (a quadratic in x) | CUP1 5A Q6 | MC5 (+ MC3) | AS | UNHOMED (MC5 candidate: O) |
 | S69 | Driving force and resistance both functions of x: derive the work after X metres, then use a numerical method to find X for a given speed (a cubic) | CUP1 5A Q7 | MC5 (+ MC3) | AS | UNHOMED (MC5 candidate: O) |
+| S70 | Tension or thrust in a string or spring from its natural length, modulus and a stretched or compressed length (T = λx/l) | CUP1 5B Q1, Q2 | MC4 | AS | UNHOMED (MC4 candidate: P) |
+| S71 | Tension and extension given: find the stiffness k, then the modulus λ | CUP1 5B Q3 | MC4 | AS | UNHOMED (MC4 candidate: P) |
+| S72 | Spring pushed or pulled by a horizontal force in equilibrium: find the compression or extension, or find the force from a given compression | CUP1 WE5.4, 5B Q4, Q7, Q8 | MC4 | AS | UNHOMED (MC4 candidate: P) |
+| S73 | Object hanging in equilibrium from a vertical string: find the extension from the mass, or find k (as a multiple of g) and λ from the equilibrium length; mass in grams | CUP1 WE5.5, 5B Q5, Q6 | MC4 | AS | UNHOMED (MC4 candidate: Q) |
+| S74 | Two parallel strings holding a mass in equilibrium: the total distance below the support (T1 + T2 = mg, extension = D − l for each) | CUP1 WE5.7, 5B Q16 | MC4 | AS | UNHOMED (MC4 candidate: Q) |
+| S75 | Work done stretching or compressing between two lengths (λ/2l)(x2² − x1²); watch the difference of squares, not the square of the difference | CUP1 WE5.8, 5B Q10 | MC6 | AS | UNHOMED (MC6 candidate: R) |
+| S76 | Work or EPE given, find the modulus (lengths stretched) or find the compressed length | CUP1 5B Q11, Q12 | MC6 | AS | UNHOMED (MC6 candidate: R) |
+| S77 | EPE stored in a spring compressed to a given length | CUP1 5B Q9 | MC6 | AS | UNHOMED (MC6 candidate: R) |
+| S78 | Spring on a smooth table, released: EPE at the start (cm to metres), then the speed at the natural length or at a given distance (EPE1 = KE + EPE2) | CUP1 WE5.9, 5B Q17 | MC6 (+ MC3) | AS | UNHOMED (MC6 candidate: S) |
+| S79 | Mass dropped from the fixed end (string slack): the maximum extension by conservation of energy, a quadratic in x | CUP1 WE5.10a, 5B Q13, Q14a | MC6 (+ MC2) | AS | UNHOMED (MC6 candidate: S) |
+| S80 | Mass held below the fixed point with the string already stretched, released: the distance from O when it comes to rest | CUP1 5B Q15 | MC6 (+ MC2) | AS | UNHOMED (MC6 candidate: S) |
+| S81 | Acceleration at the lowest point (T − mg = ma with T from Hooke's law), giving its direction | CUP1 WE5.10b, 5B Q14b | MC4 (+ F = ma) | AS | UNHOMED (MC4 candidate: T) |
+| S82 | Falling on a string from the support: the extension when the speed is greatest (a = 0, so T = mg) and the distance below the support | CUP1 WE5.6 | MC4 | AS | UNHOMED (MC4 candidate: T) |
+| S83 | Sphere resting on a vertical spring: show the modulus from the equilibrium compression, then compress further and find the maximum speed (complete the square, maximum at equilibrium) | CUP1 WE5.11 | MC4 + MC6 | AS | UNHOMED (MC4 candidate: T) |
+| S84 | Prove the work done extending a string from x1 to x2 by integrating the tension; show it equals the change in tension times the mean extension | CUP1 Proof 1, 5B Q18 | MC6 | AS | UNHOMED (Depth or deck card, not a generator) |
+| S85 | Choose the correct energy equation for a string falling from rest (spot the wrong ones) | CUP1 Work It Out 5.1 | MC6 | AS | UNHOMED (Depth or deck card, not a generator) |
 
 ## Unhomed styles
 
-S21 to S69: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
+S21 to S85: every style that applies kinetic energy or the work-energy principle (MC3, with MC1 and MC2 inside the chain). The textbook's Section 2 (Exercise 1B) now gives these clean single-skill sources.
 
 ## Candidate sub-tools (MC3)
 
@@ -125,7 +141,18 @@ Proposed from S21 to S38, to be agreed with Harry before any brief:
 - **N. Work Done by a Variable Force**: integrate f(x) between limits; find a constant k or a limit from the work done (S64, S66, S67).
 - **O. Variable Force and Work-Energy**: a driving force against a variable resistance, then the speed or the distance by work done = change in KE (S65, S68, S69).
 
-**Numbering check.** The spec table (`specs/exam/spec/aqa-mechanics.md`) has MC4 Hooke's law, MC5 variable force, MC6 elastic PE, MC7 power. So MC4 and MC6 (the elastic strings and springs sections) are the two still to come, not MC5/MC6 as I said in chat.
+**Numbering check.** The spec table (`specs/exam/spec/aqa-mechanics.md`) has MC4 Hooke's law, MC5 variable force, MC6 elastic PE, MC7 power. MC4 and MC6 sit together in one textbook section (Ch 5 Section 2).
+
+## Candidate sub-tools (MC4 Hooke's law and MC6 elastic PE, from Ch 5 Section 2)
+
+- **P. Hooke's Law**: find the tension or thrust, the extension or compression, k or λ, from the data given (S70 to S72).
+- **Q. Hooke's Law in Equilibrium**: a hanging mass, or two parallel strings (S73, S74).
+- **R. Elastic Potential Energy**: find the EPE or the work between two lengths, or find λ or a length from them (S75 to S77).
+- **S. Conservation of Energy with Elastic**: a spring released on a table, a mass dropped on a string, or held and released; find the speed, the maximum extension or where it stops (S78 to S80).
+- **T. Motion on a String or Spring**: acceleration at the lowest point, the position of greatest speed, and the maximum speed of a mass on a spring (S81 to S83).
+- **Not generators** (S84, S85): the proof, and the "which equation is right?" check. They fit a Depth card or a deck slide.
+
+**Overlap with the other energy tools.** S, and T's maximum-speed case, are the same method as MC2/MC3 conservation, with EPE as a third term. If the energy Method option is built, it should allow an elastic term from the start, not be added later.
 
 ## Open questions
 
