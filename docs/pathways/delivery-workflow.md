@@ -65,7 +65,7 @@ In the order to do them. Each is its own small branch and merge; the letters gro
 **Then: a merge flow for many branches**
 8. ~~**B1. Small-chunk rule**~~ **Done 2026-11-20.** in `AGENTS.md` and the kickoff: each merge leaves `main` working but need not be a finished tool. Layers: shared piece with its test, then the tool behind `enabled: false` or Developing-tools mode, then deck content, then the switch that makes it live. Merge a chunk as soon as it is green; the next chunk starts from the new `main`.
 9. ~~**B2. Stop the common conflicts.**~~ **Done 2026-11-20.** A patch-notes file per session instead of one shared file (a script builds the combined view); generated files rebuilt automatically, never merged by hand.
-10. **B3. Merge queue or auto-merge.** Check what the GitHub plan allows. If a merge queue is available use it; if not, auto-merge plus an automatic "update branch".
+10. ~~**B3. Merge queue or auto-merge.**~~ **Decided 2026-11-20: no merge queue and no auto-merge. Harry decides each merge; the session says when it thinks a branch is ready to merge (green checks, docs in, nothing half-done).** Check what the GitHub plan allows. If a merge queue is available use it; if not, auto-merge plus an automatic "update branch".
 11. ~~**B4. Parallel sessions.**~~ **Done 2026-11-20.** One worktree and branch per session (Claude chats and Codex), with the Handoff note as the claim list, so two sessions never take the same area.
 
 **Then: a steadier deck workflow**
@@ -84,7 +84,7 @@ In the order to do them. Each is its own small branch and merge; the letters gro
 20. ~~**E1. Spot-check A-level generators with Wolfram**~~ **Done 2026-11-20.** (Solving Trig Equations first) as an independent second opinion to the repo's own checks.
 21. **E3. Education Skills Library:** use it for lesson planning ideas (worked-example fading, practice sequencing, error analysis); keep it off by default if it adds noticeable startup tokens.
 
-**Needs from Harry:** E3 (switch the Education Skills Library plugin off by default; it adds about 130 skill names to every session's startup); B3 (merge queue or auto-merge): in the repository's Settings, tell me whether "Allow auto-merge" is on and whether a branch rule on `main` requires the `build` and `tests` checks; a merge queue is only offered to organisation-owned repositories (this one is owned by a person, so I expect it is not available) and an automatic "update branch" by a workflow would not start CI without a personal access token, so I have not built either; the Vercel steps in C6 (only if C6 is done); check the GitHub plan for B3; approve the `.claude/settings.json` change in C5.
+**Needs from Harry:** E3 (switch the Education Skills Library plugin off by default; it adds about 130 skill names to every session's startup); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); the Vercel steps in C6 (only if C6 is done); check the GitHub plan for B3; approve the `.claude/settings.json` change in C5.
 
 ## Where to read more
 `.github/workflows/ci.yml`, `src/tests/` (the Decision files named above), `src/shared/decision/cpa.ts` (`candidate`, `acceptable`, `generateCpa`), `AGENTS.md` ("Decks Harry edits", "Pushing a deck", "Deck data format"), `docs/reference/decks.md` ("Deck data and the live server") and `docs/reference/decks-building.md` ("Sharing one deck between Harry and Claude"), `docs/TASKS.md`, `src/decks/store.ts`, `src/decks/cloud.ts`, `api/decks.ts`, `api/_decks.ts`.
