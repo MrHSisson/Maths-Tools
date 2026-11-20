@@ -1,5 +1,8 @@
 name: CI
 
+# What runs: type check, build and lint always. Tests run only for the areas the change touches (lists in scripts/testAreas.mjs), split over
+# several runners. A pull request is compared with its base branch; a push to main with the commit before it (so main does not re-run
+# everything a pull request already passed). The nightly run and a manual run with "full" ticked run everything.
 on:
   push:
     branches: [main]
@@ -14,63 +17,87 @@ on:
         type: boolean
         default: true
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # a newer push to a pull request replaces the run still going (main and nightly runs always finish)
 
+jobs:
+  # Decides which tests and checks this change needs.
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.pick.outputs.run }}
+      files: ${{ steps.pick.outputs.files }}
+      smoke: ${{ steps.pick.outputs.smoke }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Which tests this change can break (the lists are in scripts/testAreas.mjs). Pushes to main, the nightly run and a manual
-      # run with "full" ticked run everything; a pull request runs only the areas its changed files touch.
       - name: Choose the tests
-        id: tests
+        id: pick
         env:
-          FORCE_ALL: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.full) }}
-        run: node scripts/selectTests.mjs "origin/${{ github.base_ref || 'main' }}"
+          FORCE_ALL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event_name == 'push' && github.event.before || 'origin/main' }}
+        run: node scripts/selectTests.mjs "$BASE"
 
-      - name: Type check + build
-        run: npm run build
-
-      - name: Lint (React hooks rules)
-        run: npm run lint
-
-      - name: Tests (all)
-        if: steps.tests.outputs.run == 'all'
-        run: npm test
-
-      - name: Tests (the areas this change touches)
-        if: steps.tests.outputs.run == 'files'
-        run: npx vitest run ${{ steps.tests.outputs.files }}
-
-  # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
-  shell-smoke:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
       - name: Install dependencies
         run: npm ci
+      - name: Type check + build
+        run: npm run build
+      - name: Lint (React hooks rules)
+        run: npm run lint
 
+  # The chosen tests, split into four runners (vitest hands each its share of the files).
+  tests:
+    needs: select
+    if: needs.select.outputs.run != 'none'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Tests (all), shard ${{ matrix.shard }} of 4
+        if: needs.select.outputs.run == 'all'
+        run: npx vitest run --shard=${{ matrix.shard }}/4
+      - name: Tests (the areas this change touches), shard ${{ matrix.shard }} of 4
+        if: needs.select.outputs.run == 'files'
+        run: npx vitest run --shard=${{ matrix.shard }}/4 --passWithNoTests ${{ needs.select.outputs.files }}
+
+  # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
+  shell-smoke:
+    needs: select
+    if: needs.select.outputs.smoke == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
       - name: Install a browser for the smoke check
         run: |
           npm install --no-save playwright@1.63.0
           npx playwright install --with-deps chromium
-
       - name: Shell smoke check
         run: npm run smoke:shell

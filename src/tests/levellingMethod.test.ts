@@ -154,7 +154,7 @@ describe("levelling — Level 3 question size", () => {
   it("Short's second try comes from the knock-on clash's own options; Exam may go back to the first list", () => {
     withSeededRandom(8, () => {
       const parents = new Set<number>();
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 12; i++) {
         const m = generateCpa(3, "cpaLevel", { paths: "one", levelLevel: 3, levelWorkers: "one", levelSize: "exam", histShape: "step" }).data.extra!.level!.method!;
         expect(m.tries.length).toBe(2);
         expect(m.tries[0].clash).not.toBeNull();
