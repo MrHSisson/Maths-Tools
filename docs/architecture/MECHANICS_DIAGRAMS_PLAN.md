@@ -151,6 +151,31 @@ The diagram work is staged so each stage unblocks a tool, and none is built ahea
 
 A reasonable first review point: **after stage 1, show Harry the D1 and D4 scenes at the three sizes, in print, before anything else is drawn.** The look is decided there, once.
 
+## 8b. What is built so far (2026-11-20, `src/shared/mechanics/`, no question generators)
+
+**Templates built:** D1 horizontal motion, D4 vertical motion, D7 spring or elastic string on a horizontal table, D8 spring or elastic string hanging (one to three positions). Not yet: D2, D3, D5, D6, D9 to D15.
+
+**Elements:** surfaces (ground, wall, ceiling, datum), bodies (block, particle, faint ghost copies), force arrows, dimension lines, angle arcs, named points, level lines, **springs and strings** (a coil for a spring, a plain blue line for an elastic string, a plain dark line for a string, and a `slack` curve for a string that is not taut) and pulleys.
+
+**Adding a picture by parts (a developing picture).** Every element belongs to a named *part* (`part`), and the scene lists its parts in natural build order (`parts`): for the horizontal template "the ground and the body", "the motion", "the forces", "the distance moved". A tool decides when each part appears:
+
+```ts
+const scene = buildInOrder(buildHorizontal(params), ["setting", "measure", "forces"]); // one part per working step
+<MechDiagram scene={scene} step={k} />                                                  // the first k parts; the newest has a warm band
+```
+
+`stageParts(scene, { forces: 3 })` sets the step of chosen parts only, `stepCount(scene)` says how many steps the picture needs, and `partsAt(scene, k)` says what is on show (for a caption such as "now add the forces"). Labels are **placed once for the whole picture**, so nothing moves as parts are added.
+
+**Whether the diagram is given.** One rule, `displayStep(display, view)`, wrapped by the `MechPicture` component:
+
+| `display` | With the question | At working step k | With the answer |
+|---|---|---|---|
+| `given` (the question supplies its diagram) | the picture (parts at step 0; a part the working adds, such as a resolved component, is held back) | the picture plus the parts added by step k | all of it, answer values shown |
+| `build` (no diagram given: it is drawn up as the working goes on) | nothing | the parts added by step k | all of it |
+| `hidden` (a words-only question) | nothing | nothing | nothing |
+
+A tool sets `display` from its Question Option, so the same question can be a diagram question or a words question.
+
 ## 9. Risks and open decisions
 
 - **Glyph quality.** Hand-drawn SVG pictograms of cars, cyclists and trains can look amateur. Mitigation: the default is the exam convention (a block or a dot), glyphs are options, and each glyph is a small simple silhouette in one stroke colour. Harry decides whether the glyphs are worth the effort after seeing D1.

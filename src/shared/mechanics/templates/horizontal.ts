@@ -2,7 +2,7 @@
 // and an optional velocity arrow. The picture of "a force acts along the line of motion": work = force × distance, power = force × speed.
 // Docs: docs/architecture/MECHANICS_DIAGRAMS_PLAN.md §2 (D1). The builder takes labels, never numbers: the caller formats them.
 import { blockWidthFor, bodyAnchors } from "../bodies";
-import { add, mirrorScene, type Force, type ForceKind, type Lbl, type Scene, type SceneElement } from "../scene";
+import { add, mirrorScene, withParts, type Force, type ForceKind, type Lbl, type Scene, type SceneElement } from "../scene";
 
 export interface HorizontalForce {
   kind: Extract<ForceKind, "driving" | "resistance" | "applied" | "friction" | "tension">;
@@ -84,6 +84,15 @@ export function buildHorizontal(p: HorizontalParams = {}): Scene {
     if (d.to) els.push({ type: "marker", id: "m-to", at: { x: endX + half, y: GROUND_Y + 34 }, name: d.to, dir: 0, hideDot: true });
   }
 
-  const scene: Scene = { w: W, h: H, elements: els, alt: p.alt ?? "A body on level ground with the forces acting along its line of motion." };
+  const scene = withParts(
+    { w: W, h: H, elements: els, alt: p.alt ?? "A body on level ground with the forces acting along its line of motion." },
+    [
+      { id: "setting", label: "the ground and the body", given: true },
+      { id: "motion", label: "the motion", given: true },
+      { id: "forces", label: "the forces", given: true },
+      { id: "measure", label: "the distance moved", given: true },
+    ],
+    (id) => (id === "ground" || id.startsWith("body") ? "setting" : id === "f-velocity" ? "motion" : id.startsWith("f-") ? "forces" : "measure"),
+  );
   return p.mirror ? mirrorScene(scene) : scene;
 }

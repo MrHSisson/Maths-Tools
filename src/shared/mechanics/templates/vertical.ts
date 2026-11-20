@@ -2,7 +2,7 @@
 // as dimension lines on the left, and the starting and final speeds as arrows beside each position. The picture of "gravity does work through a height":
 // work done by gravity, GPE, KE and conservation of energy. Docs: docs/architecture/MECHANICS_DIAGRAMS_PLAN.md §2 (D4).
 import { BLOCK_H, PARTICLE_R, blockWidthFor, bodyAnchors } from "../bodies";
-import { add, mirrorScene, type Lbl, type Scene, type SceneElement } from "../scene";
+import { add, mirrorScene, withParts, type Lbl, type Scene, type SceneElement } from "../scene";
 
 export interface VerticalPosition {
   /** Height above the ground as a fraction of the full height (0 is the ground). Pictorial only: it is clamped so the two heights stay readable. */
@@ -93,6 +93,15 @@ export function buildVertical(p: VerticalParams): Scene {
   if (t1) els.push({ type: "marker", id: "m-start", at: a1.centre, name: t1, dir: 90, dist: nameDist, hideDot: true });
   if (bEnd && p.end?.name) els.push({ type: "marker", id: "m-end", at: bodyAnchors(bEnd).centre, name: p.end.name, dir: 90, dist: nameDist, hideDot: true });
 
-  const scene: Scene = { w: W, h: H, elements: els, alt: p.alt ?? "A body at a height above the ground, with its speed and the heights marked." };
+  const scene = withParts(
+    { w: W, h: H, elements: els, alt: p.alt ?? "A body at a height above the ground, with its speed and the heights marked." },
+    [
+      { id: "setting", label: "the ground and the body", given: true },
+      { id: "heights", label: "the heights", given: true },
+      { id: "speeds", label: "the speeds", given: true },
+      { id: "forces", label: "the weight", given: true },
+    ],
+    (id) => (id === "ground" || id.startsWith("body") || id.startsWith("m-") ? "setting" : id.startsWith("speed") ? "speeds" : id === "f-weight" ? "forces" : "heights"),
+  );
   return p.mirror ? mirrorScene(scene) : scene;
 }

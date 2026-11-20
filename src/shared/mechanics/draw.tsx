@@ -1,9 +1,10 @@
 // Mechanics diagrams: drawing each kind of element as SVG. Pure functions from an element (and the layout's decisions) to JSX; no state.
 import type { ReactElement } from "react";
 import { bodyAnchors, bodyOutline, PARTICLE_R } from "./bodies";
+import { coilPoints, slackControl } from "./elastics";
 import { dimLine } from "./labelling";
 import { FORCE_STYLES, HALO, INK, INK_SOFT } from "./palette";
-import { add, dir, leftNormal, mul, rad, sub, unit, type Arc, type Body, type Dim, type Force, type Marker, type Pt, type Surface } from "./scene";
+import { add, dir, leftNormal, mul, rad, sub, unit, type Arc, type Body, type Dim, type Force, type Marker, type Pt, type Pulley, type Spring, type Surface } from "./scene";
 
 const f1 = (n: number): string => (Math.round(n * 10) / 10).toString();
 const pts = (p: Pt[]): string => p.map((q) => `${f1(q.x)},${f1(q.y)}`).join(" ");
@@ -117,4 +118,41 @@ export function LabelEl({ x, y, text, size, backing, w, h }: { x: number; y: num
       <text x={f1(x)} y={f1(y)} dy="0.35em" textAnchor="middle" fontSize={size} fill={INK} stroke={HALO} strokeWidth={4} strokeLinejoin="round" paintOrder="stroke" style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>{text}</text>
     </g>
   );
+}
+
+/** What has just been added: a soft warm band behind it, so a worked example shows where the new part went. */
+const HOT = "#fde68a";
+
+export function SpringEl({ s, dim, hot }: { s: Spring; dim: boolean; hot: boolean }): ReactElement {
+  const colour = s.kind === "elastic" ? FORCE_STYLES.tension.colour : s.kind === "string" ? INK : INK;
+  const width = s.kind === "string" ? 1.8 : 2.2;
+  let d: string;
+  if (s.slack) {
+    const c = slackControl(s.a, s.b);
+    d = `M${f1(s.a.x)} ${f1(s.a.y)} Q${f1(c.x)} ${f1(c.y)} ${f1(s.b.x)} ${f1(s.b.y)}`;
+  } else if (s.kind === "spring") {
+    d = "M" + pts(coilPoints(s.a, s.b, s.coils)).replace(/ /g, " L");
+  } else {
+    d = `M${f1(s.a.x)} ${f1(s.a.y)} L${f1(s.b.x)} ${f1(s.b.y)}`;
+  }
+  return (
+    <g opacity={dim ? 0.4 : 1}>
+      {hot && <path d={d} fill="none" stroke={HOT} strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />}
+      <path d={d} fill="none" stroke={colour} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+export function PulleyEl({ p, dim }: { p: Pulley; dim: boolean }): ReactElement {
+  return (
+    <g opacity={dim ? 0.4 : 1}>
+      <circle cx={f1(p.at.x)} cy={f1(p.at.y)} r={p.r} fill="#f1f5f9" stroke={INK} strokeWidth={2.4} />
+      <circle cx={f1(p.at.x)} cy={f1(p.at.y)} r={2.6} fill={INK} />
+    </g>
+  );
+}
+
+/** A soft band behind any straight element that has just been added. */
+export function Band({ a, b }: { a: Pt; b: Pt }): ReactElement {
+  return <line x1={f1(a.x)} y1={f1(a.y)} x2={f1(b.x)} y2={f1(b.y)} stroke={HOT} strokeWidth={9} strokeLinecap="round" />;
 }

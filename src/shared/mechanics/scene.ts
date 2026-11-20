@@ -12,8 +12,10 @@ export type ForceKind =
 interface Base {
   /** Stable name, so a working step can light it (`focus`) and a test can find it. */
   id: string;
-  /** The working step at which it appears; undefined means always. A worked example builds the picture one step at a time. */
+  /** The working step at which it appears; undefined (or 0) means it is there from the start. A worked example builds the picture one step at a time. */
   reveal?: number;
+  /** Which named part of the picture it belongs to (`Scene.parts`), so a tool adds a picture by parts: "the setting", then "the forces", then "the distance". */
+  part?: string;
   /** Names a step's `Focus` can light. */
   focus?: string[];
 }
@@ -89,12 +91,34 @@ export interface Line extends Base {
   style?: "solid" | "dashed" | "thin";
 }
 
-export type SceneElement = Surface | Body | Force | Dim | Arc | Marker | Line;
+/** A spring, an elastic string, a plain string or a rope from `a` (usually the fixed end) to `b`. A spring is drawn as coils, an elastic string as a plain
+ *  line in the tension colour, a plain string thin and dark. `slack` draws it hanging loose (a string that is not taut). */
+export interface Spring extends Base {
+  type: "spring";
+  kind: "spring" | "elastic" | "string";
+  a: Pt; b: Pt;
+  slack?: boolean;
+  coils?: number;
+  label?: Lbl;
+}
+
+/** A pulley: a wheel at `at` with radius `r` on a fixed support (the support is a separate surface or line). */
+export interface Pulley extends Base {
+  type: "pulley";
+  at: Pt; r: number;
+}
+
+export type SceneElement = Surface | Body | Force | Dim | Arc | Marker | Line | Spring | Pulley;
+
+/** A named part of a picture. `given` parts are what a question that supplies its diagram shows straight away; the others (a resolved component, a new label) are added by the working. */
+export interface ScenePart { id: string; label: string; given: boolean }
 
 export interface Scene {
   /** The viewBox. */
   w: number; h: number;
   elements: SceneElement[];
+  /** The parts, in the order a picture is naturally built (the setting, then the motion, the forces, the measurements). */
+  parts?: ScenePart[];
   /** A short text for screen readers, built from the numbers. */
   alt?: string;
 }
@@ -104,6 +128,50 @@ export const lblText = (l: Lbl | undefined, showAnswer: boolean): string | undef
 
 /** Is the element on show at this step? `step` undefined means the whole picture. */
 export const visibleAt = (e: Base, step?: number): boolean => step == null || e.reveal == null || e.reveal <= step;
+
+// ── adding a picture by parts, and when it shows ─────────────────────────────────────────────────────────────────────
+
+/** Does the question show its diagram straight away (`given`), draw it up from nothing as the working goes on (`build`), or never have one (`hidden`)? */
+export type DiagramDisplay = "given" | "build" | "hidden";
+/** Where the picture is being shown: with the question, at a working step (`shown` = how many steps are showing), or at the end with the answer. */
+export type DiagramView = { stage: "question" } | { stage: "working"; shown: number } | { stage: "answer" };
+
+/** The `step` to hand `MechDiagram`: `null` means draw nothing, `undefined` means the whole picture, a number reveals elements up to that step. The one place the
+ *  rule lives, so every tool shows its diagram the same way. */
+export function displayStep(display: DiagramDisplay, view: DiagramView): number | null | undefined {
+  if (display === "hidden") return null;
+  switch (view.stage) {
+    case "answer": return undefined;
+    case "question": return display === "given" ? 0 : null;
+    case "working": return display === "given" ? view.shown : view.shown <= 0 ? null : view.shown;
+  }
+}
+
+/** A copy of the scene with each listed part appearing at the given working step (a part not listed keeps its step). */
+export function stageParts(scene: Scene, steps: Record<string, number>): Scene {
+  return { ...scene, elements: scene.elements.map((e) => (e.part != null && steps[e.part] != null ? { ...e, reveal: steps[e.part] } : e)) };
+}
+
+/** A copy of the scene built up from nothing, one part at a time in the order given: the first listed appears at step 1, the next at step 2, and so on.
+ *  Several parts in one inner array appear together. Parts not listed come last. */
+export function buildInOrder(scene: Scene, order: (string | string[])[]): Scene {
+  const steps: Record<string, number> = {};
+  order.forEach((g, i) => (Array.isArray(g) ? g : [g]).forEach((p) => { steps[p] = i + 1; }));
+  const rest = (scene.parts ?? []).map((p) => p.id).filter((id) => steps[id] == null);
+  rest.forEach((id) => { steps[id] = order.length + 1; });
+  return stageParts(scene, steps);
+}
+
+/** Tag every element with its part from a rule on its id, and set the scene's list of parts. Templates call this last. */
+export function withParts(scene: Scene, parts: ScenePart[], partOf: (id: string) => string): Scene {
+  return { ...scene, parts, elements: scene.elements.map((e) => ({ ...e, part: e.part ?? partOf(e.id) })) };
+}
+
+/** The number of working steps the picture needs to show everything. */
+export const stepCount = (scene: Scene): number => scene.elements.reduce((m, e) => Math.max(m, e.reveal ?? 0), 0);
+
+/** Which parts are on show at a step (for a tool to caption what has just been added). */
+export const partsAt = (scene: Scene, step?: number): string[] => [...new Set(scene.elements.filter((e) => e.part != null && visibleAt(e, step)).map((e) => e.part as string))];
 
 // ── plane geometry helpers ───────────────────────────────────────────────────────────────────────────────────────
 export const rad = (deg: number): number => (deg * Math.PI) / 180;
@@ -138,6 +206,8 @@ export function mirrorScene(s: Scene): Scene {
         case "arc": return { ...e, at: f(e.at), from: flipDeg(e.to), to: flipDeg(e.from) };
         case "marker": return { ...e, at: f(e.at), dir: e.dir == null ? undefined : flipDeg(e.dir) };
         case "line": return { ...e, a: f(e.a), b: f(e.b) };
+        case "spring": return { ...e, a: f(e.a), b: f(e.b) };
+        case "pulley": return { ...e, at: f(e.at) };
       }
     }),
   };
@@ -152,6 +222,8 @@ function elementPoints(e: SceneElement): Pt[] {
     case "dim": return [e.a, e.b];
     case "arc": return [e.at];
     case "marker": return [e.at];
+    case "spring": return [e.a, e.b];
+    case "pulley": return [e.at];
   }
 }
 

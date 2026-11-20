@@ -4,7 +4,8 @@
 // the solver steers around. The renderer never drops a label: a scene that cannot place one reports it (`unplaced`).
 import { placePills, type PillIn, type Rect, type Seg, type Scene as PlaceScene } from "../shapes/labels";
 import { bodyAnchors, bodyOutline, bodyPoint, bodySize } from "./bodies";
-import { add, dir, leftNormal, lblText, mul, visibleAt, type Arc, type Dim, type Pt, type Scene, type SceneElement } from "./scene";
+import { springSegments } from "./elastics";
+import { add, dir, leftNormal, lblText, mul, visibleAt, type Arc, type Dim, type Lbl, type Pt, type Scene, type SceneElement } from "./scene";
 
 export const dimLine = (d: Dim): { a: Pt; b: Pt } => {
   const n = leftNormal(d.a, d.b), o = d.offset ?? 0;
@@ -45,9 +46,20 @@ const arcLabelPoint = (a: Arc, gap: number): Pt => {
   return add(a.at, mul(dir((a.from + to) / 2), a.r + gap));
 };
 
-export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: boolean; fontSize: number }): Layout {
-  const { step, showAnswer = false, fontSize } = opts;
-  const visible = scene.elements.filter((e) => visibleAt(e, step));
+/** The text a label is placed for: the longer of its value and its placeholder, so it does not move when the answer is shown. */
+const placedText = (l: Lbl | undefined): string | undefined =>
+  l == null ? undefined : l.ask != null && l.ask.length > l.text.length ? l.ask : l.text;
+
+interface Placement { labels: PlacedLabel[]; unplaced: string[]; obstacles: Seg[]; guides: Seg[]; owners: Map<string, SceneElement> }
+const cache = new WeakMap<Scene, Map<number, Placement>>();
+
+/** Place every label of the WHOLE scene once (per size), whatever step is showing, so a label never jumps as the picture is built part by part. */
+function placeAll(scene: Scene, fontSize: number): Placement {
+  const byScene = cache.get(scene) ?? new Map<number, Placement>();
+  cache.set(scene, byScene);
+  const hit = byScene.get(fontSize);
+  if (hit) return hit;
+
   const shape: Seg[] = [];
   const helpers: Seg[] = [];
   const fixed: { id: string; text: string; rect: Rect; lx: number; ly: number; hasLeader: boolean }[] = [];
@@ -57,8 +69,12 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
 
   const fixedAt = (id: string, text: string, at: Pt) =>
     fixed.push({ id, text, rect: { x: at.x, y: at.y, w: textWidth(text, fontSize) + pad, h: pillH }, lx: at.x, ly: at.y, hasLeader: false });
+  const freeOn = (id: string, text: string, a: Pt, b: Pt) => {
+    const n = leftNormal(a, b);
+    free.push({ id, text, item: { ax: a.x, ay: a.y, bx: b.x, by: b.y, nx: n.x, ny: n.y, w: textWidth(text, fontSize) + pad, h: pillH, free: true } });
+  };
 
-  for (const e of visible) {
+  for (const e of scene.elements) {
     switch (e.type) {
       case "surface": {
         shape.push(segOf(e.a, e.b));
@@ -70,18 +86,27 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
         break;
       }
       case "line": (e.style === "dashed" || e.style === "thin" ? helpers : shape).push(segOf(e.a, e.b)); break;
+      case "spring": {
+        for (const [p, q] of springSegments(e)) shape.push(segOf(p, q));
+        const t = placedText(e.label);
+        if (t) freeOn(e.id, t, e.a, e.b);
+        break;
+      }
+      case "pulley": {
+        const pts = Array.from({ length: 10 }, (_, i) => add(e.at, mul(dir((i / 10) * 360), e.r)));
+        shape.push(...polySegs(pts));
+        break;
+      }
       case "body": {
         (e.ghost ? helpers : shape).push(...polySegs(bodyOutline(e)));
-        const t = lblText(e.label, showAnswer);
+        const t = placedText(e.label);
         if (t) {
           const an = bodyAnchors(e), { w } = bodySize(e);
           // inside the upper part of a block, clear of the weight arrow that starts at its centre
           if (e.kind === "block" && textWidth(t, fontSize) + pad <= w && pillH <= bodySize(e).h / 2) fixedAt(e.id, t, add(an.centre, { x: 0, y: -12 }));
           else {
             // too big to sit inside (or a particle): a pill that hugs the top edge and goes wherever there is room
-            const left = bodyPoint(e, -w / 2, bodySize(e).h), right = bodyPoint(e, w / 2, bodySize(e).h);
-            const n = leftNormal(left, right);
-            free.push({ id: e.id, text: t, item: { ax: left.x, ay: left.y, bx: right.x, by: right.y, nx: n.x, ny: n.y, w: textWidth(t, fontSize) + pad, h: pillH, free: true } });
+            freeOn(e.id, t, bodyPoint(e, -w / 2, bodySize(e).h), bodyPoint(e, w / 2, bodySize(e).h));
           }
         }
         break;
@@ -91,37 +116,27 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
         const l = dimLine(e);
         shape.push(segOf(l.a, l.b));
         if (e.witness) { helpers.push(segOf(e.a, l.a), segOf(e.b, l.b)); }
-        const t = lblText(e.label, showAnswer);
+        const t = placedText(e.label);
         if (t) {
           if (Math.abs(l.b.x - l.a.x) >= Math.abs(l.b.y - l.a.y)) fixedAt(e.id, t, { x: (l.a.x + l.b.x) / 2, y: (l.a.y + l.b.y) / 2 });
-          else {
-            // a vertical dimension: the text cannot break the line sensibly, so it stands beside it, on whichever side has room
-            const n = leftNormal(l.a, l.b);
-            free.push({ id: e.id, text: t, item: { ax: l.a.x, ay: l.a.y, bx: l.b.x, by: l.b.y, nx: n.x, ny: n.y, w: textWidth(t, fontSize) + pad, h: pillH, free: true } });
-          }
+          else freeOn(e.id, t, l.a, l.b);   // a vertical dimension: the text stands beside the line, on whichever side has room
         }
         break;
       }
       case "arc": {
-        const t = lblText(e.label, showAnswer);
+        const t = placedText(e.label);
         if (t) fixedAt(e.id, t, arcLabelPoint(e, fontSize * 0.55 + textWidth(t, fontSize) / 2));
         break;
       }
-      case "marker": {
-        const at = add(e.at, mul(dir(e.dir ?? 135), e.dist ?? fontSize * 0.9));
-        fixedAt(e.id, e.name, at);
-        break;
-      }
+      case "marker": fixedAt(e.id, e.name, add(e.at, mul(dir(e.dir ?? 135), e.dist ?? fontSize * 0.9))); break;
     }
   }
 
   // forces last, so every fixed rectangle is known before their labels are steered around it
-  for (const e of visible) {
+  for (const e of scene.elements) {
     if (e.type !== "force") continue;
-    const t = lblText(e.label, showAnswer);
-    if (!t) continue;
-    const n = leftNormal(e.from, e.to);
-    free.push({ id: e.id, text: t, item: { ax: e.from.x, ay: e.from.y, bx: e.to.x, by: e.to.y, nx: n.x, ny: n.y, w: textWidth(t, fontSize) + pad, h: pillH, free: true } });
+    const t = placedText(e.label);
+    if (t) freeOn(e.id, t, e.from, e.to);
   }
 
   const sc: PlaceScene = {
@@ -143,17 +158,32 @@ export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: bo
 
   // honest check: a label may not overlap another label or run off the picture; report it instead of hiding it
   const unplaced: string[] = [];
-  const all = labels;
-  for (let i = 0; i < all.length; i++) {
-    const r = all[i].rect;
+  for (let i = 0; i < labels.length; i++) {
+    const r = labels[i].rect;
     const off = r.x - r.w / 2 < 0 || r.y - r.h / 2 < 0 || r.x + r.w / 2 > scene.w || r.y + r.h / 2 > scene.h;
-    let hit = off ? "off the picture" : "";
-    for (let j = 0; j < all.length && !hit; j++) {
+    let bad = off ? "off the picture" : "";
+    for (let j = 0; j < labels.length && !bad; j++) {
       if (i === j) continue;
-      const q = all[j].rect;
-      if (Math.abs(r.x - q.x) < (r.w + q.w) / 2 && Math.abs(r.y - q.y) < (r.h + q.h) / 2) hit = `overlaps ${all[j].id}`;
+      const q = labels[j].rect;
+      if (Math.abs(r.x - q.x) < (r.w + q.w) / 2 && Math.abs(r.y - q.y) < (r.h + q.h) / 2) bad = `overlaps ${labels[j].id}`;
     }
-    if (hit) unplaced.push(`${all[i].id} (${hit})`);
+    if (bad) unplaced.push(`${labels[i].id} (${bad})`);
   }
-  return { visible, labels, unplaced, obstacles: shape, guides: helpers };
+  const placement: Placement = { labels, unplaced, obstacles: shape, guides: helpers, owners: new Map(scene.elements.map((e) => [e.id, e])) };
+  byScene.set(fontSize, placement);
+  return placement;
+}
+
+/** What to draw at a step: the elements on show and the label for each (placed once for the whole scene, so nothing moves as parts are added). */
+export function layoutScene(scene: Scene, opts: { step?: number; showAnswer?: boolean; fontSize: number }): Layout {
+  const { step, showAnswer = false, fontSize } = opts;
+  const all = placeAll(scene, fontSize);
+  const visible = scene.elements.filter((e) => visibleAt(e, step));
+  const shown = new Set(visible.map((e) => e.id));
+  const labels = all.labels.filter((l) => shown.has(l.id)).map((l) => {
+    const owner = all.owners.get(l.id);
+    const t = owner && "label" in owner ? lblText(owner.label, showAnswer) : undefined;
+    return t != null && owner?.type !== "marker" ? { ...l, text: t } : l;
+  });
+  return { visible, labels, unplaced: all.unplaced, obstacles: all.obstacles, guides: all.guides };
 }

@@ -1,13 +1,17 @@
 // Mechanics diagrams: the public surface. Import from "../../shared/mechanics" only; nothing outside this folder reaches into its files.
-export { default as MechDiagram } from "./MechDiagram";
-export type { MechDiagramProps } from "./MechDiagram";
+export { default as MechDiagram, MechPicture } from "./MechDiagram";
+export type { MechDiagramProps, MechPictureProps } from "./MechDiagram";
 export { layoutScene, textWidth } from "./labelling";
 export type { Layout, PlacedLabel } from "./labelling";
 export { FORCE_STYLES, LABEL_SIZE } from "./palette";
 export type { DiagramSize, ForceStyle } from "./palette";
-export { mirrorScene, validateScene, lblText, visibleAt } from "./scene";
-export type { Scene, SceneElement, Force, ForceKind, Dim, Arc, Body, Marker, Surface, Line, Lbl, Pt } from "./scene";
+export { mirrorScene, validateScene, lblText, visibleAt, displayStep, stageParts, buildInOrder, stepCount, partsAt, withParts } from "./scene";
+export type { Scene, SceneElement, ScenePart, DiagramDisplay, DiagramView, Force, ForceKind, Dim, Arc, Body, Marker, Surface, Line, Spring, Pulley, Lbl, Pt } from "./scene";
 export { buildHorizontal } from "./templates/horizontal";
 export type { HorizontalParams, HorizontalForce } from "./templates/horizontal";
 export { buildVertical } from "./templates/vertical";
 export type { VerticalParams, VerticalPosition } from "./templates/vertical";
+export { buildElasticHorizontal } from "./templates/elasticHorizontal";
+export type { ElasticHorizontalParams } from "./templates/elasticHorizontal";
+export { buildElasticVertical } from "./templates/elasticVertical";
+export type { ElasticVerticalParams, VerticalStringState } from "./templates/elasticVertical";
