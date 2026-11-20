@@ -20,6 +20,8 @@ npm run deck -- looks <script>        # BEFORE building a deck: the look card (o
 npm run deck -- review <id>           # AFTER building: contact sheets of every slide with all clicks revealed; look at every one
 ```
 
+**Which tests CI runs.** A pull request runs type check, build and lint always, and only the test areas its changed files touch (Decision Maths, decks and the deck API, Computer Science, docs, and "tools": generators, the shell and the checks across every tool). Pushes to `main`, a nightly run and a manual run (Actions → CI → Run workflow, "full" ticked) run everything. The plain list of which test files and which paths belong to which area is `scripts/testAreas.mjs` (a test fails if a test file is in no area); a path it does not know, or shared code, the registry or config, runs everything. To see what your branch would run: `node scripts/selectTests.mjs origin/main`. Run a whole area locally with `npx vitest run <files>` using that list.
+
 **Tests must not fail by chance.** A test that asserts a statistic over random draws ("at most 3% bad", "spread over the bands") wraps its draws in `withSeededRandom(seed, …)` (`src/tests/seededRandom.ts`) so it is a fixed regression sample; `vite.config.ts` gives every test 60 s (CI has two busy cores) and retries a failing test twice on CI only. A red CI that passes on a rerun is a bug to fix, not to rerun.
 
 A session is not finished until build, tests and lint pass. Prefer cheap checks (tsc, tests, DOM assertions) to reading screenshots back; take a screenshot only for real layout judgement. Check phone, tablet and laptop sizes for anything visual (see `CLAUDE.md`).

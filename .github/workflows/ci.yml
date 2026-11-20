@@ -5,6 +5,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "17 2 * * *"        # a full run every night, whatever changed
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run every test, not just the areas the change touches"
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -12,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -21,14 +31,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Which tests this change can break (the lists are in scripts/testAreas.mjs). Pushes to main, the nightly run and a manual
+      # run with "full" ticked run everything; a pull request runs only the areas its changed files touch.
+      - name: Choose the tests
+        id: tests
+        env:
+          FORCE_ALL: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.full) }}
+        run: node scripts/selectTests.mjs "origin/${{ github.base_ref || 'main' }}"
+
       - name: Type check + build
         run: npm run build
 
       - name: Lint (React hooks rules)
         run: npm run lint
 
-      - name: Generator smoke tests
+      - name: Tests (all)
+        if: steps.tests.outputs.run == 'all'
         run: npm test
+
+      - name: Tests (the areas this change touches)
+        if: steps.tests.outputs.run == 'files'
+        run: npx vitest run ${{ steps.tests.outputs.files }}
 
   # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
   shell-smoke:
