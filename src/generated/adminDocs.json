@@ -807,6 +807,36 @@
  "tasks": [
   {
    "status": "Open",
+   "title": "Mechanics tools: print a saved question with its picture",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Work Done and Energy do not set `skillSheet`, so a question saved with the pin cannot be printed, and the Decision shell's print draws pictures only for Dimensional Analysis. Make the saved-question basket print a mechanics question with its diagram and a worked answer. Links: `src/tools/FurtherMechanics/WorkDone.tsx`, `Energy.tsx`, `src/shared/decision/DecisionShell.tsx`, `src/shared/decision/printBasket.ts`, `docs/pathways/further-mechanics.md`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Further Mechanics hub: tidy-ups",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Remove the legacy tags and the \"How the legacy map was checked\" panel; rename the tools' own \"Any exam question\" tiles to \"Exam-style questions\"; let a sub-tool that serves two statements (kinetic and potential energy, conservation of energy serve both MC2 and MC3) show under both (the pairing test places each sub-tool once). Links: `src/tools/FurtherMechanics/mechanicsSpec.ts`, `FurtherMechanics.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/mechanicsPairings.test.ts`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Dashboard Review for the Further Mechanics tools",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Set the Review status and notes on the Tools dashboard for Flashcards, Work Done and Energy once Harry has looked at them (none is set yet), then the go-live check for Work Done and Energy: a real phone, tablet and printer check, then remove `enabled: false`. Links: `/admin`, `docs/pathways/further-mechanics.md`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
    "title": "Standard Form: finish the tool and take it live",
    "blocks": [
     {
@@ -1449,6 +1479,7 @@
        "t": "ul",
        "items": [
         "**Harry's review of Work Done and Energy**, including confirming decisions D1 to D7 of `specs/further-mechanics-mc.md` (built on the recommended answers), a real phone / tablet check and the dashboard Review status, then go-live (remove `enabled: false`).",
+        "**Small known roughnesses.** The angle diagram's `F cos θ` and `F sin θ` labels sit oddly at small angles (the generator only draws 10° and above); the Several Forces picture of a road that falls swaps the A and B names on the rising-slope template to fake the direction (see the comment in `workDone/several.ts`); kinetic-energy-only questions in Energy have no picture (display `hidden`). A proper falling-slope option and a velocity-and-body picture would fix these.",
         "**Gaps inside the built tools.** Work Done: the slope setting of Several Forces (S97), the cubic stopping-point question (S69), a stopping-distance ask. Energy: the pulley case, A2 friction on a slope and projection up a rough slope, energy-bar pictures as the working picture (D14). Both: printing (these two tools do not set `skillSheet`, so a saved question cannot be printed yet, and the shell's print draws pictures only for Dimensional Analysis), calibration of the level ladders (R25, R26), the Depth and Teach material (the brief's section 7).",
         "**The remaining MC tools:** Power (MC7: average power, force and speed, slopes at A2, from motion data), then Elastic strings and springs (MC4, MC6). The corpus (`specs/corpus/mechanics-mc-question-styles.md`) and the brief (§5.9 onwards) say what each holds.",
         "**Exam-style questions for MC**, a separate pass built from the real past papers (not started).",
@@ -1514,6 +1545,63 @@
       {
        "t": "p",
        "s": "`docs/reference/options-and-calibration.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "linear-programming",
+   "title": "Linear Programming (Decision Maths, chapter DD)",
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-11-21",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Question generators for AQA 7366 / 7367 section DD: formulating a constrained optimisation problem (DD1), solving it graphically (DD2), the simplex algorithm with slack variables (DD3, A-level) and interpreting a tableau (DD4, A-level). Built like the Mechanics tools: single-skill sub-tools on `DecisionShell`, an independent re-derivation of every answer, exam-style questions as a separate later pass from real past papers. DF6 (a game as a linear programme) is planned with the game theory chapter."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-21. Researched and planned, nothing built. `specs/linear-programming.md` is the draft brief (the specification, what the research found, six proposed sub-tools, equations-first generation with exact fractions, tests, build order, an intake checklist and seven decisions for Harry); `specs/corpus/linear-programming-styles.md` is the empty list of question styles to fill from the textbook chapters Harry is sending. AQA's examiner reports were read only as search fragments."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Harry sends the textbook chapters; fill the corpus and the checklist in section 9 of the brief (tableau layout, which region is shaded, the minimising method, whether only ≤ constraints reach the simplex), then make the brief `Status: ready`.",
+        "Harry answers the decisions in section 10 (one tool or two, the drawing convention, scope of the simplex, integer solutions).",
+        "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working.",
+        "Build in small merges: the maths core (`lp.ts`: exact rationals, vertex enumeration, lattice search, simplex) with its tests; the region picture and the graphical sub-tools; the tableau picture and the simplex sub-tools; the hub pairing and go-live.",
+        "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`specs/linear-programming.md`, `specs/corpus/linear-programming-styles.md`, `specs/exam/spec/aqa-discrete.md`, `docs/architecture/DECISION_SHELL_PLAN.md`, `specs/further-mechanics-mc.md` (the model brief)."
       }
      ]
     }
