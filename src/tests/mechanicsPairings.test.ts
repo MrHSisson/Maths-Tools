@@ -8,6 +8,7 @@ type Sub = { key: string; label: string; when: { key: string; values: string[] }
 const MODS: Record<string, any> = {
   "dimensional-analysis": await import("../tools/FurtherMechanics/DimensionalAnalysis"),
   "work-done": await import("../tools/FurtherMechanics/WorkDone"),
+  "energy": await import("../tools/FurtherMechanics/Energy"),
 };
 const subsOf = (tool: string): Sub[] => MODS[tool].__seed.subTools.map((s: Sub) => ({ ...s, when: s.when ?? [] }));
 const everyRef = (): MechSubRef[] => [...Object.values(MECHANICS_PAIRINGS).flat(), ...Object.values(MECHANICS_GROUPS).flatMap((gs) => gs.flatMap((g) => g.links)), ...Object.values(MECHANICS_EXAM).map((e) => e.ref)];

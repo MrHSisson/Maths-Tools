@@ -1305,7 +1305,7 @@
   {
    "id": "further-mechanics",
    "title": "Further Mechanics (AQA 7367 MA–ME)",
-   "status": "building (Dimensional Analysis is live; Work Done is built, behind Developing-tools mode)",
+   "status": "building (Dimensional Analysis is live; Work Done and Energy are built, behind Developing-tools mode)",
    "measure": "",
    "updated": "2026-11-21",
    "sections": [
@@ -1330,6 +1330,7 @@
       {
        "t": "ul",
        "items": [
+        "2026-11-21. **Energy (MC2, MC3) built, behind Developing-tools mode** (`/energy`): Kinetic and Potential Energy, Work-Energy Principle, Conservation of Energy, on `DecisionShell` with the mechanics diagrams. Acceptance examples reproduced and every answer closed against its energy equation in `src/tests/energy.test.ts`. Not done: the pulley case, A2 friction on a slope, energy-bar pictures. Next tool: Power (MC7), then Elastic strings and springs (MC4, MC6).",
         "2026-11-21. **Work Done (MC1, MC5) built, behind Developing-tools mode** (`/work-done`): five sub-tools (Force and Distance, Work and Gravity, Force at an Angle (A2), Several Forces, Variable Force) on `DecisionShell`, drawn with the mechanics diagram system and written working; the hub's MC1 and MC5 buttons now point at it. Every acceptance example of the brief is reproduced and every answer re-derived in `src/tests/workDone.test.ts`. Not done: the S97 slope setting and the S69 cubic, a stopping-distance ask, Harry's go-live review. Next tool: Energy (MC2, MC3, MC6 conservation and work-energy).",
         "2026-11-21. **Flashcards are live in the hub** (Revision): `/further-maths-flashcards`, the Work, Energy and Power set, in four decks (Formulas, Definitions, Implications, Common mistakes) with three piles shown on each, a card that turns over and two ratings (Not yet, Got it); piles kept on the device. The mechanics diagram system (fifteen templates) is built in `src/shared/mechanics/` but no tool uses it yet.",
         "2026-11-20. **Work, Energy and Power (MC) planned, nothing built.** 109 question styles from the textbook and its AQA past-paper questions are tagged by skill in `specs/corpus/mechanics-mc-question-styles.md`; `specs/further-mechanics-mc.md` is the draft programme brief (four tools, fifteen sub-tools, the shared mechanics library, the AS / A2 Course setting, exam chains as phase 2) and `docs/architecture/MECHANICS_DIAGRAMS_PLAN.md` plans the diagram system (one scene model, fifteen templates). Seven decisions are waiting for Harry (brief, section 2.2).",
@@ -1339,7 +1340,7 @@
         "The Gemini legacy map was checked against the AQA M1 to M3 combined papers. M1 to M3 hold up with a few changes (vertical circles, variable-force work and centres of mass by integration are in M2, not M4; impulse is in M3). Nothing assigned to M4 or M5 could be checked.",
         "2026-11-13. **Dimensional Analysis (MA) is built** as the pilot of the whole route, on `DecisionShell` with the written working as its picture (the page a student would write, building a line at a time beside the steps that explain it) (`DecisionProblem.network` is now optional, so a non-network tool carries its own data field): three skill tools (Find the dimensions, Check consistency, Find the powers; the last runs in letters, with named quantities or in ~19 worded situations) and six exam-style chains plus a mixed one, with tests that re-derive every answer independently. Still Developing-tools only (`enabled: false`). Brief: `specs/dimensional-analysis.md`. The hub page now shows the chapter's tool, its exam card and its practice chips (the same layout as Decision Maths).",
         "2026-11-14. **Dimensional Analysis audited four ways and fixed** (accuracy, structure and design, ease of use, pitch): given quantities are never asked, g is always tagged, dimensionless things are stated, angle and trig are questions, builds fold into one step with a chevron, exam mark splits follow the papers, named and cannot-work powers questions come from real situations, ten more situations, trig consistency formulas, 40px touch targets and keyboard steps. On a phone it is one open scrolling page; the Decision diagram tools got a clean full-screen working view. Still `enabled: false`: it needs a look on a real phone and printer, then Harry's decision. Shell question settled: **`DecisionShell`**, with the written working as the picture and `renderSolution` for the phone page.",
-        "Work Done is the only other chapter tool so far."
+        "Work Done and Energy are the only other chapter tools so far."
        ]
       }
      ]

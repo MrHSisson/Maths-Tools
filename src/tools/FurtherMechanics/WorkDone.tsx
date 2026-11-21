@@ -1,4 +1,4 @@
-import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
+import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type MechProblemData, type DiagramDisplay } from "../../shared/mechanics";
 import { generateFd } from "./workDone/fd";
@@ -42,20 +42,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   else if (sub === "several") m = generateSeveral(level, { situation: opt(o, "sevSituation", "two"), units, g, context, display, course });
   else if (sub === "variable") m = generateVariable(level, { forms: opt(o, "varForms", "poly,power"), ask: opt(o, "varAsk", "work"), format: opt(o, "varFormat", "decimal"), display, course });
   else m = generateFd(level, { ask: opt(o, "fdAsk", "work"), units, force: opt(o, "fdForce", "with"), format: opt(o, "format", "j"), context, display, course });
-  return { kind: `work-${sub}`, level, mech: m, prompt: m.prompt, answer: { text: m.answer.text }, matrixMode: "off" } as unknown as DecisionProblem;
-}
-
-/** the working as beats: each step adds its lines under the ones before, the picture builds with the step, and a last beat shows the answer */
-function solve(p: DecisionProblem): SolveStep[] {
-  const m = p.mech!;
-  const lines: string[] = [];
-  const out: SolveStep[] = m.steps.map((s, k) => {
-    lines.push(...s.lines);
-    return { caption: s.caption, edgeStates: {}, mechView: { stage: "working", shown: k + 1, lines: [...lines], fresh: s.lines.length } };
-  });
-  lines.push("", `\\textbf{Answer:}\\ ${m.answer.tex}`);
-  out.push({ caption: "The answer", edgeStates: {}, mechView: { stage: "answer", shown: m.steps.length + 1, lines: [...lines], fresh: 2 } });
-  return out;
+  return mechProblem(m, `work-${sub}`);
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => <MechCanvas data={p.mech!} view={step?.mechView} />;
@@ -141,7 +128,7 @@ export default function App() {
   return (
     <DecisionShell
       generate={generate}
-      solve={solve}
+      solve={solveMech}
       renderCanvas={renderCanvas}
       config={{
         pageTitle: "Work Done",

@@ -132,15 +132,19 @@ export const CHECK_NOTES = {
 export interface MechSubRef { tool: string; sub: string; label: string; /** a tool with a Skills / Exam style switch says which (Dimensional Analysis); others leave it out */ practice?: "skills" | "exam"; /** beyond AS: shown on the A2 row */ a2?: boolean }
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
 const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
+const en = (sub: string, label: string): MechSubRef => ({ tool: "energy", sub, label });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy"] };
 
 /** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   MA1: [da("dims", "Find the dimensions"), da("consistent", "Check consistency")],
   MA2: [da("powers", "Find the powers")],
   MC1: [wd("fd", "Force and distance"), wd("grav", "Work and gravity"), wd("several", "Several forces"), wd("angle", "Force at an angle", true)],
+  // kinetic and potential energy and conservation practise both MC2 and MC3; each sub-tool is placed once, under the first statement it serves
+  MC2: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy")],
+  MC3: [en("workenergy", "Work-energy principle")],
   MC5: [wd("variable", "Variable force")],
 };
 
@@ -162,8 +166,6 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
   MB2: [{ label: "Restitution and impacts" }],
   MB3: [{ label: "Impulse and momentum" }],
   MB4: [{ label: "Impulse of a variable force" }],
-  MC2: [{ label: "Kinetic and potential energy" }, { label: "Conservation of energy" }],
-  MC3: [{ label: "Kinetic and potential energy" }, { label: "Work-energy principle" }, { label: "Conservation of energy" }],
   MC4: [{ label: "Hooke's law" }],
   MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
   MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],

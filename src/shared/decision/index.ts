@@ -65,3 +65,4 @@ export type {
   DecisionProblemExport,
 } from "./types";
 export { netOf } from "./types";
+export { mechProblem, solveMech } from "./mechSolve";
