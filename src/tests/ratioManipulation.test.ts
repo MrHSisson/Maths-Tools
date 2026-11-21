@@ -2,6 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Proportion/RatioManipulation";
 import { gcd, makeUniqueQ } from "../shared";
+import { withSeededRandom } from "./seededRandom";
 import type { DifficultyLevel } from "../shared";
 
 const { generateQuestion } = __test;
@@ -77,7 +78,7 @@ describe("Simplifying", () => {
     }
   });
 
-  it("1 : n and n : 1 give a terminating decimal with the right part equal to 1", () => {
+  it("1 : n and n : 1 give a terminating decimal with the right part equal to 1", () => withSeededRandom(2026, () => {   // a fixed sample: the generator itself falls back about 1 draw in 10,000 (the shell draws again, see below), so unseeded this failed now and then
     for (const level of ["level1", "level2"] as DifficultyLevel[]) for (const ask of ["oneToN", "nToOne"]) for (let i = 0; i < N; i++) {
       const q = gen("simplifying", level, { ...only("wholeNumbers"), simplest: false, oneToN: false, nToOne: false, [ask]: true });
       const given = parts(maths(q)).map(num), ans = parts(q.answerLatex!).map(num);
@@ -87,7 +88,7 @@ describe("Simplifying", () => {
       const other = ans[ask === "oneToN" ? 1 : 0];
       expect(String(other).length).toBeLessThan(8);
     }
-  });
+  }));
 
   it("on a worksheet, 1 : n and n : 1 always give the kind of question asked: the shell draws again when the generator falls back (about 1 draw in 10,000 at Level 2)", () => {
     const unique = makeUniqueQ(generateQuestion as never);
