@@ -117,8 +117,8 @@ function readPatchEntries() {
   const files = ["docs/PATCH_NOTES.md", "docs/history/PATCH_NOTES_2026-10.md"].filter(f => existsSync(join(ROOT, f)));
   const out = [];
   for (const f of files) {
-    for (const part of readFileSync(join(ROOT, f), "utf8").split(/\n(?=### )/)) {
-      const m = part.match(/^### (\d{4}-\d\d-\d\d)(?: \(\d+\))?(?: [—-] )?([^\n]*)/);
+    for (const part of readFileSync(join(ROOT, f), "utf8").split(/\n(?=#{2,3} \d{4}-)/)) {
+      const m = part.match(/^#{2,3} (\d{4}-\d\d-\d\d)(?: \(\d+\))?(?: [—-] )?([^\n]*)/);
       if (m) out.push({ date: m[1], title: m[2].trim(), text: part });
     }
   }

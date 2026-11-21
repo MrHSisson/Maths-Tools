@@ -1,4 +1,4 @@
-// /api/decks on Postgres: listing, deleting, published copies (public and cached), the question library, and what a save writes to the index columns.
+// /api/decks on Postgres: listing, deleting, published copies (public and cached), and what a save writes to the index columns.
 import { beforeEach, describe, expect, it } from "vitest";
 import { setDb } from "../../api/_db";
 import { makeTestDb } from "./testDb";
@@ -16,17 +16,24 @@ const get = (q = "", key: string | null = "k") => GET(new Request(`http://x/api/
 describe("decks in Postgres", () => {
   beforeEach(async () => { await db.reset(); });
 
-  it("lists every deck's summary (no bodies) and the shared questions, in the shape the app reads", async () => {
+  it("refuses to publish a deck that uses something the site cannot draw yet, and says what", async () => {
+    const future = { version: 2, id: "f-1", title: "T", tool: "perimeter-and-area", level: "level1", purpose: "practice", question: ["Q"], answer: ["A"], explanation: ["E"], rationale: "", expectedErrors: [], followUp: "", status: "ready", format: "open", rectilinear: { version: 2, shape: "L" } };
+    const d = { id: "fut", title: "F", summary: "", slides: [{ id: "s", els: [{ id: "e", kind: "worksheet", authored: [future] }] }] };
+    expect((await post({ deck: d, by: "Claude" })).status).toBe(200);                    // saving is fine
+    const res = await post({ publish: d });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/cannot draw yet/);
+  });
+
+  it("lists every deck's summary (with its first slide, no other slides), in the shape the app reads", async () => {
     await post({ deck: deck("one", "First"), by: "Harry" });
     await post({ deck: deck("two", "Second"), by: "Claude" });
-    const q = { id: "my-q-1", latex: "1+1", answer: "2", working: [] };
-    await post({ question: q });
     const res = await (await get()).json();
     expect(res.index).toEqual({ version: 1, decks: {
-      one: { title: "First", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Harry" },
-      two: { title: "Second", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Claude" },
+      one: { title: "First", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Harry", families: { teach: 2 }, preview: slide("a") },
+      two: { title: "Second", summary: "S", slides: 2, updatedAt: "2026-11-11T10:00:00.000Z", updatedBy: "Claude", families: { teach: 2 }, preview: slide("a") },
     } });
-    expect(res.questions).toEqual({ version: 1, questions: { "my-q-1": q } });
+    expect(res).not.toHaveProperty("questions");                                         // the shared question library is gone: the list is only decks
     expect((await (await get("?id=one")).json()).title).toBe("First");
     expect((await get("?id=nope")).status).toBe(404);
   });
@@ -86,13 +93,10 @@ describe("decks in Postgres", () => {
     expect((await (await get("?published", null)).json()).decks).toEqual({});
   });
 
-  it("the private reads and every write need the admin key; the questions can be dropped", async () => {
+  it("the private reads and every write need the admin key; a question write is no longer a thing", async () => {
     expect((await get("", null)).status).toBe(401);
     expect((await post({ deck: deck("x") }, "wrong")).status).toBe(401);
-    await post({ question: { id: "my-q-2", latex: "2+2", answer: "4", working: [] } });
-    await post({ removeQuestion: "my-q-2" });
-    expect((await (await get()).json()).questions.questions).toEqual({});
-    expect((await post({ question: { id: "my-q-3" } })).status).toBe(400);
+    expect((await post({ question: { id: "my-q-2", latex: "2+2", answer: "4", working: [] } })).status).toBe(400);   // the shared question library was removed
     expect((await post({ nothing: true })).status).toBe(400);
   });
 });

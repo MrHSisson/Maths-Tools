@@ -3,6 +3,7 @@ import { generateSeeded, replaySeeded } from "../shared/seededGenerate";
 import { normalizeMultiSelect } from "../shared/helpers";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
+import { filtered, pickTools } from "./toolFilter";
 
 // A `displayOnly` option promises the shell it only changes how the SAME question is shown: replaying the question from its
 // seed with the option flipped must give the same answer. (A dropdown may reword the answer, so it only has to replay.)
@@ -10,7 +11,7 @@ describe("display-only options", () => {
   it("keep the same question when flipped and replayed from the seed", async () => {
     const problems: string[] = [];
     let checked = 0;
-    for (const [p, load] of Object.entries(loaders)) {
+    for (const [p, load] of pickTools(Object.entries(loaders))) {
       const t = ((await load()) as any).__test;
       if (!t?.TOOL_CONFIG || !t.generateQuestion) continue;
       for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) {
@@ -43,7 +44,7 @@ describe("display-only options", () => {
         }
       }
     }
-    expect(checked).toBeGreaterThan(50);
+    if (!filtered) expect(checked).toBeGreaterThan(50);
     expect([...new Set(problems)]).toEqual([]);
   }, 120000);
 });

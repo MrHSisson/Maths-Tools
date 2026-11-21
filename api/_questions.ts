@@ -1,4 +1,4 @@
-import { isRectilinearSpec, type RectilinearSpec } from "./_rectilinear.js";
+import { isNewerRectilinear, isRectilinearSpec, type RectilinearSpec } from "./_rectilinear.js";
 // Serializable authored questions. Shared by the browser and the API; never import React or src here.
 type QuestionBase = {
   version: 2; id: string; title: string; tool: string; level: "level1" | "level2" | "level3";
@@ -44,4 +44,19 @@ export function isCuratedQuestion(q: unknown): q is CuratedQuestion {
   if (q.status === "ready" && q.format === "claims" && (q.claims as { name: string; text: string }[]).some((c) => !c.name.trim() || !c.text.trim())) return false;
   if (q.status === "ready" && q.format === "error" && (!(q.lines as string[]).length || (q.lines as string[]).some((s) => !s.trim()))) return false;
   return ["open", "choice", "claims", "error"].includes(q.format as string);
+}
+
+/**
+ * "ok": this code understands the question. "unfamiliar": it fails only because of a value a newer version of the site adds (a question format
+ * it has not been taught, a later or unknown rectilinear shape), so the shared service keeps it and the deck draws a placeholder until the code
+ * that understands it is merged. "invalid": anything else wrong with it (a field of the wrong type, a known format that is incomplete…).
+ */
+export function classifyQuestion(q: unknown): "ok" | "unfamiliar" | "invalid" {
+  if (isCuratedQuestion(q)) return "ok";
+  if (!record(q)) return "invalid";
+  const copy: Record<string, unknown> = { ...q };
+  let changed = false;
+  if (typeof q.format === "string" && !["open", "choice", "claims", "error"].includes(q.format)) { copy.format = "open"; changed = true; }
+  if (isNewerRectilinear(q.rectilinear)) { delete copy.rectilinear; changed = true; }
+  return changed && isCuratedQuestion(copy) ? "unfamiliar" : "invalid";
 }

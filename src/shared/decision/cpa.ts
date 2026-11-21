@@ -169,26 +169,33 @@ function segsCross(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
   return o1 * o2 < -1e-9 && o3 * o4 < -1e-9;
 }
 
-function geometry(all: CpaActivity[], cols: string[][]): CpaLayout {
-  const colOf: Record<string, number> = {};
-  cols.forEach((c, i) => c.forEach((id) => (colOf[id] = i)));
+type CpaEdgeRef = { id: string; from: string; to: string };
+
+/** Boxes, arrows and the arrow crossings for an order of the columns (no framing yet; that is a plain shift and cannot change a crossing). */
+/** `bound`: give up (null) once the crossings reach it, for a search that only wants a strictly better order. */
+function arrange(edgeRefs: CpaEdgeRef[], cols: string[][], bound = Infinity) {
   const boxes: Record<string, CpaBox> = {};
+  const list: CpaBox[] = [];
+  let minY = Infinity, maxY = -Infinity;
   cols.forEach((c, ci) => {
     c.forEach((id, r) => {
-      boxes[id] = { id, x: PAD + ci * (BOX_W + GAP_X), y: (r - (c.length - 1) / 2) * (BOX_H + GAP_Y), w: BOX_W, h: BOX_H, col: ci };
+      const y = (r - (c.length - 1) / 2) * (BOX_H + GAP_Y);
+      const box = { id, x: PAD + ci * (BOX_W + GAP_X), y, w: BOX_W, h: BOX_H, col: ci };
+      boxes[id] = box; list.push(box);
+      if (y < minY) minY = y;
+      if (y + BOX_H > maxY) maxY = y + BOX_H;
     });
   });
-  const minY = Math.min(...Object.values(boxes).map((b) => b.y));
-  const maxY = Math.max(...Object.values(boxes).map((b) => b.y + b.h));
-  Object.values(boxes).forEach((b) => (b.y -= minY));
+  for (const b of list) b.y -= minY;
   const bodyTop = 0, bodyBottom = maxY - minY;
   const lane = { above: 0, below: 0 };
   const edges: CpaEdgeGeo[] = [];
-  for (const e of cpaEdges(all)) {
+  for (const e of edgeRefs) {
     const u = boxes[e.from], v = boxes[e.to];
     const a: Pt = [u.x + u.w, u.y + u.h / 2], b: Pt = [v.x, v.y + v.h / 2];
-    const between = Object.values(boxes).filter((x) => x.col > u.col && x.col < v.col);
-    if (!between.some((x) => segHitsRect(a, b, x))) { edges.push({ ...e, pts: [a, b], routed: false }); continue; }
+    let blocked = false;
+    for (const x of list) if (x.col > u.col && x.col < v.col && segHitsRect(a, b, x)) { blocked = true; break; }
+    if (!blocked) { edges.push({ ...e, pts: [a, b], routed: false }); continue; }
     // goes round: out of the box, along a channel above or below every box, then in
     const above = (a[1] + b[1]) / 2 < (bodyTop + bodyBottom) / 2;
     const k = above ? lane.above++ : lane.below++;
@@ -201,12 +208,17 @@ function geometry(all: CpaActivity[], cols: string[][]): CpaLayout {
     if (p.from === q.from || p.to === q.to || p.from === q.to || p.to === q.from) continue;
     let hit = false;
     for (let s = 0; s + 1 < p.pts.length && !hit; s++) for (let t = 0; t + 1 < q.pts.length && !hit; t++) if (segsCross(p.pts[s], p.pts[s + 1], q.pts[t], q.pts[t + 1])) hit = true;
-    if (hit) crossings++;
+    if (hit && ++crossings >= bound) return null;
   }
-  // frame everything actually drawn (boxes and the channels the routed arrows run along), with a margin
-  const ys = [...Object.values(boxes).flatMap((b) => [b.y, b.y + b.h]), ...edges.flatMap((e) => e.pts.map((p) => p[1]))];
+  return { boxes, list, edges, crossings };
+}
+
+/** Frames what `arrange` made (the boxes and the channels the routed arrows run along), with a margin. */
+function frame(a: NonNullable<ReturnType<typeof arrange>>, cols: string[][]): CpaLayout {
+  const { boxes, list, edges, crossings } = a;
+  const ys = [...list.flatMap((b) => [b.y, b.y + b.h]), ...edges.flatMap((e) => e.pts.map((p) => p[1]))];
   const shift = PAD - Math.min(...ys);
-  Object.values(boxes).forEach((b) => (b.y += shift));
+  list.forEach((b) => (b.y += shift));
   edges.forEach((e) => e.pts.forEach((p) => (p[1] += shift)));
   const lastCol = cols.length - 1;
   const width = PAD * 2 + lastCol * (BOX_W + GAP_X) + BOX_W;
@@ -235,18 +247,19 @@ export function layoutCpa(acts: CpaActivity[]): CpaLayout {
     });
     cols[ci].forEach((id, r) => (rowOf[id] = r));
   }
-  let best = geometry(all, cols);
+  const edgeRefs = cpaEdges(all);
+  let best = arrange(edgeRefs, cols)!;
   for (let sweep = 0; sweep < 2 && best.crossings > 0; sweep++) {
     for (let ci = 1; ci < cols.length - 1; ci++) {
       if (cols[ci].length < 2) continue;
       for (const order of perms(cols[ci])) {
         const trial = cols.map((c, i) => (i === ci ? order : c));
-        const g = geometry(all, trial);
-        if (g.crossings < best.crossings) { best = g; cols[ci] = order; }
+        const g = arrange(edgeRefs, trial, best.crossings);
+        if (g && g.crossings < best.crossings) { best = g; cols[ci] = order; }
       }
     }
   }
-  return best;
+  return frame(best, cols);
 }
 
 /** Layout problems a CI check can assert are zero: boxes overlapping, or an arrow passing through a box that is not one of its ends. */
@@ -885,17 +898,57 @@ function reduce(acts: CpaActivity[]): CpaActivity[] {
   return acts.map((a) => ({ ...a, preds: a.preds.filter((p) => !a.preds.some((q) => q !== p && reach(q, p))) }));
 }
 
-function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
+/** Does some arrow skip a column (its two ends are two or more levels apart)? The same test `acceptable` applies. */
+const hasSkipArrow = (acts: CpaActivity[]): boolean => {
+  const depth = depthOf(fullGraph(acts));
+  return acts.some((a) => a.preds.some((p) => depth[a.id] - depth[p] >= 2));
+};
+
+/**
+ * A random network of the level's shape. It is built to be likely to pass `acceptable`, which still has the last word on every rule:
+ *  - sinks: an activity left with nothing after it before the last column is given a successor when there would be more than three arrows
+ *    into End or a first activity would stand alone (a sink in the middle is otherwise left as it falls);
+ *  - `forceSkip`: one activity is given a predecessor two or more columns back that no other predecessor already implies, so an arrow that
+ *    skips a column survives `reduce` (left to chance, only about one network in ten had one, and Level 3 needs one).
+ */
+function candidate(level: CpaLevel, range: [number, number], forceSkip = false): CpaActivity[] {
   const shape = SHAPES[level][randInt(0, SHAPES[level].length - 1)];
   const colOf: number[] = [];
   shape.forEach((n, c) => { for (let i = 0; i < n; i++) colOf.push(c); });
   const ids = colOf.map((_, i) => LETTERS[i]);
+  // Level 3: the arrows between two neighbouring columns follow a random staircase (every box in both columns is joined, none crosses), so most
+  // networks are tidy before the optional extra and skipping arrows go in; Levels 1 and 2 are built as they always were.
+  const stair: Record<string, string[]> = {};
+  if (level === 3) {
+    for (let c = 1; c < shape.length; c++) {
+      const prev = ids.filter((_, j) => colOf[j] === c - 1), cur = ids.filter((_, j) => colOf[j] === c);
+      let i = 0, j = 0;
+      (stair[cur[0]] ??= []).push(prev[0]);
+      while (i < prev.length - 1 || j < cur.length - 1) {
+        const r = randInt(0, 2);
+        if (i === prev.length - 1) j++; else if (j === cur.length - 1) i++; else if (r === 0) i++; else if (r === 1) j++; else { i++; j++; }
+        (stair[cur[j]] ??= []).push(prev[i]);
+      }
+    }
+  }
   const acts: CpaActivity[] = ids.map((id, i) => {
     const c = colOf[i];
     const preds: string[] = [];
-    if (c > 0) {
+    if (c > 0 && level === 3) {
+      preds.push(...new Set(stair[id]));
+      if (Math.random() < 0.5) {
+        const near = Math.random() < 0.8;
+        const pool = ids.filter((_, j) => (near ? colOf[j] === c - 1 : colOf[j] < c) && !preds.includes(ids[j]));
+        if (pool.length) preds.push(pool[randInt(0, pool.length - 1)]);
+      }
+      preds.sort();
+    } else if (c > 0) {
       const prev = ids.filter((_, j) => colOf[j] === c - 1);
-      preds.push(prev[randInt(0, prev.length - 1)]);
+      // mostly from the box level with this one in the column before (arrows that do not cross), sometimes from any
+      const mine = ids.filter((_, j) => colOf[j] === c), at = mine.indexOf(id);
+      const level_ = Math.round((at * (prev.length - 1)) / Math.max(mine.length - 1, 1));
+      const pickNear = () => prev[Math.min(prev.length - 1, Math.max(0, level_ + randInt(-1, 1)))];
+      preds.push(Math.random() < 0.85 ? pickNear() : prev[randInt(0, prev.length - 1)]);
       const extra = level === 1 ? 0.3 : 0.5;
       if (Math.random() < extra) {
         // mostly from the column just before (short, tidy arrows); only now and then from further back
@@ -912,6 +965,38 @@ function candidate(level: CpaLevel, range: [number, number]): CpaActivity[] {
     }
     return { id, duration: randInt(range[0], range[1]), preds };
   });
+  const last = shape.length - 1;
+  const byId = new Map(acts.map((a) => [a.id, a]));
+  // sinks that are not in the last column: only a problem when there are more than three ends or one is also a start
+  for (let guard = 0; guard < 8; guard++) {
+    const hasSucc = new Set(acts.flatMap((a) => a.preds));
+    const sinks = acts.filter((a) => !hasSucc.has(a.id));
+    const early = sinks.filter((a) => colOf[ids.indexOf(a.id)] < last && (sinks.length > 3 || colOf[ids.indexOf(a.id)] === 0));
+    if (!early.length) break;
+    const s = early[randInt(0, early.length - 1)];
+    const next = acts.filter((a) => colOf[ids.indexOf(a.id)] === colOf[ids.indexOf(s.id)] + 1);
+    const t = next[randInt(0, next.length - 1)];
+    t.preds = [...t.preds, s.id].sort();
+  }
+  if (forceSkip) {
+    const ancestors = (id: string, seen = new Set<string>()): Set<string> => { for (const p of byId.get(id)!.preds) if (!seen.has(p)) { seen.add(p); ancestors(p, seen); } return seen; };
+    const reduced = reduce(acts);
+    if (!hasSkipArrow(reduced)) {
+      for (let k = 0; k < 4; k++) {
+        const a = acts.filter((x) => colOf[ids.indexOf(x.id)] >= 2);
+        const target = a[randInt(0, a.length - 1)];
+        const back = acts.filter((x) => colOf[ids.indexOf(x.id)] <= colOf[ids.indexOf(target.id)] - 2 && !target.preds.includes(x.id));
+        if (!back.length) continue;
+        const p = back[randInt(0, back.length - 1)];
+        const before = target.preds;
+        // keep the new arrow from being implied: drop the predecessors that already follow p
+        const keep = before.filter((q) => !ancestors(q).has(p.id) && q !== p.id);
+        target.preds = [...(keep.length ? keep : []), p.id].sort();
+        if (hasSkipArrow(reduce(acts))) break;
+        target.preds = before;
+      }
+    }
+  }
   return reduce(acts);
 }
 
@@ -940,6 +1025,31 @@ function acceptable(acts: CpaActivity[], level: CpaLevel, paths: CpaPathsChoice,
   if (layout.crossings > CROSS_CAP[level] + slack || layoutIssues(layout).length) return null;
   if (layout.edges.filter((e) => e.routed).length > ROUTED_CAP[level] + slack) return null; // an arrow that has to go round the boxes: none at Level 1
   return layout;
+}
+
+/** A network with several critical paths, made to have one: an activity on some of them but not all is lengthened by 1, so the others stop being critical. Gives back the network as it is if that cannot be done. */
+function singleCritical(acts: CpaActivity[], max: number): CpaActivity[] {
+  let cur = acts;
+  for (let k = 0; k < 3; k++) {
+    const { criticalPaths } = referenceCpa(cur);
+    if (criticalPaths.length <= 1) return cur;
+    const options = cur.filter((a) => a.duration < max && criticalPaths.some((p) => p.includes(a.id)) && !criticalPaths.every((p) => p.includes(a.id)));
+    if (!options.length) return cur;
+    const x = options[randInt(0, options.length - 1)];
+    cur = cur.map((a) => (a.id === x.id ? { ...a, duration: a.duration + 1 } : a));
+  }
+  return cur;
+}
+
+/** Level 3 needs a near-critical activity (a float of 1 or 2): if there is none, one with more float is lengthened until it has 1 or 2 left. The project time and the critical paths do not change. */
+function addNearCritical(acts: CpaActivity[], max: number): CpaActivity[] {
+  const t = cpaTimes(acts);
+  if (acts.some((a) => t.float[a.id] > 0 && t.float[a.id] <= 2)) return acts;
+  const left = Math.random() < 0.5 ? 1 : 2;
+  const options = acts.filter((a) => t.float[a.id] > 2 && a.duration + t.float[a.id] - left <= max);
+  if (!options.length) return acts;
+  const x = options[randInt(0, options.length - 1)];
+  return acts.map((a) => (a.id === x.id ? { ...a, duration: a.duration + t.float[x.id] - left } : a));
 }
 
 /** Make a non-critical activity critical by adding its float to its duration: the project time is unchanged and there is now another critical path. */
@@ -1105,10 +1215,12 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   const wantThree = level === 1 && !opts.fixed && Math.random() < 0.4;
   // keep the tidiest of several acceptable networks, rather than the first
   for (let attempt = 0; attempt < 4000 && found < (kind === "cpaLevel" && opts.levelLevel ? 3 : 8); attempt++) {
-    let c: CpaActivity[] | null = candidate(level, range);
+    let c: CpaActivity[] | null = candidate(level, range, level === 3 || !!opts.skip);
     // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
+    else if (paths === "one") c = singleCritical(c, range[1]);   // built to have one critical path rather than thrown away for having several
     if (!c) continue;
+    if (level === 3) c = addNearCritical(c, range[1]);   // built to have a near-critical activity rather than thrown away for lacking one
     if (wantThree && !c.some(a => a.preds.length === 3)) continue;
     if (opts.singleEnd && c.filter((a) => !c.some((b) => b.preds.includes(a.id))).length !== 1) continue;
     const l = acceptable(c, level, paths, attempt < 1500 ? 0 : attempt < 3000 ? 1 : 2, !!opts.skip, pre);

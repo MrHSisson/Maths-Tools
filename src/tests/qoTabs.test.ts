@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { qoLayout, QO_TABS_ABOVE } from "../shared/components/QOPopovers";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
+import { pickTools } from "./toolFilter";
 const TABS = ["questions", "numbers", "method", "display"];
 
 // Every option group says which tab of the popover it sits on (Questions · Numbers · Method · Display), so groups are listed in one
@@ -10,7 +11,7 @@ const TABS = ["questions", "numbers", "method", "display"];
 describe("options popover tabs", () => {
   it("every group has a known tab, and every level above 8 choices gets tabs", async () => {
     const bad: string[] = [];
-    for (const [p, load] of Object.entries(loaders)) {
+    for (const [p, load] of pickTools(Object.entries(loaders))) {
       const t = ((await load()) as any).__test;
       if (!t?.TOOL_CONFIG?.tools) continue;
       for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) {

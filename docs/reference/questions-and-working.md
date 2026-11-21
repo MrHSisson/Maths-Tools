@@ -209,3 +209,7 @@ The dotted-underline, clickable rendering only appears when Developing-tools mod
 - **`\text{}` in steps**: never use `\text{}` inside `step()` or `mStep()` — use `tStep()` for prose <!-- R7 -->
 
 ---
+
+## When a generator cannot draw what was asked (`drawAgain`, `_fallback`)
+
+A generator that tries a bounded number of random draws and then gives up returns a fixed fall-back question: mark it `withExtras(q, { _fallback: true })`. `makeUniqueQ` draws again (up to three more times) when a generator throws or returns a marked fall-back, so a failure that happens less than about 1 time in 100 never reaches a worksheet; if every draw fails, the fall-back is kept (or the last error thrown, so the shell still names a real fault). Measure how often a generator falls back with `src/tests/fallbackRates.test.ts`; the policy for 1 in 100 or more (an authored fall-back bank) is in `AGENTS.md`. <!-- ref -->

@@ -1,6 +1,6 @@
 // The pure half of /api/decks (api/_decks.ts): what a device may send, and the index of shared decks.
 import { describe, it, expect } from "vitest";
-import { MAX_DECK_BYTES, checkDeck, checkQuestion, emptyIndex, emptyPublished, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId } from "../../api/_decks";
+import { MAX_DECK_BYTES, checkDeck, emptyIndex, emptyPublished, indexWith, indexWithout, publishedBody, publishedPath, publishedWith, publishedWithout, validId } from "../../api/_decks";
 
 describe("shared decks API", () => {
   it("accepts a deck with an id, a title and slides; refuses anything else", () => {
@@ -29,10 +29,8 @@ describe("shared decks API", () => {
     expect(indexWith(emptyIndex(), { id: "b", title: "B", summary: "", slides: [] }, "", "now").decks.b.updatedAt).toBe("now");
     expect(indexWithout(i, "a").decks).toEqual({});
   });
-  it("checks ids and questions", () => {
+  it("checks ids", () => {
     expect([validId("est-01"), validId("my-q-1"), validId("../x"), validId("")]).toEqual([true, true, false, false]);
-    expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2", working: [] })?.id).toBe("my-q-1");
-    expect(checkQuestion({ id: "my-q-1", latex: "1+1", answer: "2" })).toBeNull();
   });
   it("publishing keeps a frozen, stamped copy and lists it; unpublishing removes it", () => {
     const checked = checkDeck({ id: "est", title: "Estimation", summary: "S", slides: [{ id: "a", els: [] }, { id: "b", els: [] }], tool: "estimation" });
@@ -47,5 +45,46 @@ describe("shared decks API", () => {
     expect(huge.decks.big.preview).toBeUndefined();     // a heavy first slide stays out of the listing
     expect(publishedWith(index, { ...checked.deck, title: "Estimation 2" }, "later").decks.est).toMatchObject({ title: "Estimation 2", publishedAt: "later" });
     expect(publishedWithout(index, "est").decks).toEqual({});
+  });
+});
+
+describe("a deck can be saved before the code that draws it is merged", () => {
+  // a rectilinear question as a later version of the site might send it: a shape and a version this code has not been taught
+  const q = (rectilinear: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+    version: 2, id: "future-1", title: "Area", tool: "perimeter-and-area", level: "level1", purpose: "practice", question: ["Find the area."], answer: ["$42$ cm²"], explanation: ["$6 \\times 7 = 42$"],
+    rationale: "", expectedErrors: [], followUp: "", status: "ready", format: "open", rectilinear, ...extra,
+  });
+  const known = { version: 1, shape: "L", width: 8, height: 6, cutWidth: 3, cutHeight: 2, method: "split", orientation: 0, reducedLabels: true, scaffold: "full" };
+  const deck = (el: Record<string, unknown>) => ({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "worksheet", ...el }] }] });
+
+  it("keeps a question with an unknown shape or version, and lists it", () => {
+    for (const spec of [{ ...known, shape: "spiral" }, { ...known, version: 2 }]) {
+      const r = checkDeck(deck({ authored: [q(spec)] }));
+      expect(r).not.toHaveProperty("error");
+      expect((r as { unchecked: string[] }).unchecked[0]).toMatch(/slide 1/);
+    }
+  });
+  it("keeps a question with a format a newer site adds", () => {
+    const r = checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", items: [q({ ...known }, { rectilinear: undefined, format: "matching" })] }] }] });
+    expect(r).not.toHaveProperty("error");
+    expect((r as { unchecked: string[] }).unchecked).toHaveLength(1);
+  });
+  it("still refuses a layout name it does not know (a typo should not slip through)", () => {
+    expect(checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", presentation: "carousel", items: [q(known)] }] }] })).toHaveProperty("error");
+  });
+  it("still refuses a malformed question, a known shape with bad numbers, and a known format that is incomplete", () => {
+    expect(checkDeck(deck({ authored: [q({ ...known, cutHeight: -1 })] }))).toHaveProperty("error");
+    expect(checkDeck(deck({ authored: [q({ ...known, shape: "spiral" }, { question: 7 })] }))).toHaveProperty("error");
+    expect(checkDeck({ id: "future", title: "T", summary: "", slides: [{ id: "s1", els: [{ id: "e1", kind: "questions", items: [q(known, { rectilinear: undefined, format: "choice", options: [] })] }] }] })).toHaveProperty("error");
+  });
+  it("treats only a later whole-number version as newer, needs the shape present on a worksheet, and will not publish what the site cannot draw", () => {
+    for (const version of [0, -3, 1.5]) expect(checkDeck(deck({ authored: [q({ ...known, version })] }))).toHaveProperty("error");
+    expect(checkDeck(deck({ authored: [q(known, { rectilinear: undefined, format: "matching" })] }))).toHaveProperty("error");   // an unfamiliar question with no shape is not a shape question
+    const kept = checkDeck(deck({ authored: [q({ ...known, shape: "spiral" })] }));
+    expect(kept).not.toHaveProperty("error");
+    expect((kept as { unchecked: string[] }).unchecked.length).toBeGreaterThan(0);
+  });
+  it("a deck with nothing unfamiliar lists nothing", () => {
+    expect((checkDeck(deck({ authored: [q(known)] })) as { unchecked: string[] }).unchecked).toEqual([]);
   });
 });

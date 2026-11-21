@@ -12,16 +12,6 @@ Nothing at the moment.
 
 ## Open
 
-### Decks: see and push deck changes before they are merged (previews, a bypass secret, a tolerant server)
-**Superseded 2026-11-20 by the pathway `docs/pathways/delivery-workflow.md` (chunks C4 and C6). Note: storage is now Neon, not Blob, and previews share the production database, so the "second Blob store" step below no longer applies.**
-Banked 2026-11-17 at Harry's request. **Why:** deck data lives in Vercel Blob on the live server, which validates every question with the code on `main`. So a deck that uses something new (a shape, a field) is refused until the code is merged, and a branch's preview deployment is behind the Vercel login, so Claude cannot push to it or check it. Harry then cannot see the work. **Do, in order:**
-1. **Merge code before content.** Code that changes the deck data format (`api/_rectilinear.ts`, validators, the renderers) goes to `main` in its own small merge; the deck content is pushed straight after. Add this rule to `AGENTS.md`.
-2. **Harry (about five minutes, in the Vercel dashboard):** project `maths-tools` → Settings → Deployment Protection → *Protection Bypass for Automation* → add a secret (give it to Claude through the secure credential form, never in chat). Then Storage → create a second Blob store and connect it to **Preview only** (Production keeps the current store), so a preview never writes to the live decks. Check first whether previews currently share the production store; if they do, pushing from a preview changes the live deck.
-3. **Claude:** make `scripts/deck.mjs` send the bypass secret (`x-vercel-protection-bypass`) when `DECKS_URL` is a preview; copy the live decks into the preview store once (`backup` writes them into the repo); make `push` refuse to write to the live store from a branch with unmerged deck code and push to the preview instead (today it only warns).
-4. **Claude:** make the server tolerant: `api/_rectilinear.ts` / `api/_decks.ts` accept unfamiliar optional fields and shapes after a dimension sanity check, and the app shows "needs the latest version" for a question it cannot draw instead of crashing the slide. Tests for both. (This only helps once merged; it does not fix an unmerged branch.)
-5. Document the setup (store split, secret name, how to push to a preview) in `docs/reference/decks.md` and `docs/design/DECK_BUILD_CHECKLIST.md`.
-**Done 2026-11-17:** the rectilinear branch was merged (PR #139) and the deck pushed once the deploy finished, so the capital I, unequal steps and the new worksheet are on the live deck. Steps 1–5 above are still open.
-Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Standard Form: finish the tool and take it live
 Banked 2026-11-15 at Harry's request. The tool (`/standard-form`, four sub-tools: Converting, Multiplying & Dividing, Adding & Subtracting, Comparing & Ordering) is built and **went live on 2026-11-17 at Harry's request** (no longer dev-gated; the review below is still open). Still to build or decide: a spec file `specs/standard-form.md` and the "About this tool" review; a Depth bank (the "which of these is in standard form?" multiple choice and the misconception options belong there, not in the generator); a Teach deck and lesson; calibration; a phone and tablet check of the Converting picture (a 3-digit coefficient with a large power is about 12 columns wide); whether calculator-style coefficients (Multiplying & Dividing) should be on by default; whether the place value shift picture (digits slide a column, the power rolls by 1) should also be used on Multiplying & Dividing when the coefficient is adjusted, and on Adding & Subtracting when a term is matched; a printable blank place value grid; and an optional play button that runs the whole slide on its own. Review notes go on the tool's dashboard note.
@@ -51,6 +41,10 @@ Each tool is reviewed when we reach it; the record is that tool's dashboard note
 Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`).
 
 ## Done (recent)
+
+### Decks: see new deck content before its code is merged
+Done 2026-11-21 on branch `claude/great-heisenberg-5a3nko` (pull request 146), takes effect when merged and deployed. The deck server now keeps a question that needs newer code (a new question format or rectilinear shape or version), the site shows "This needs a newer version of the site" for it, and a branch preview (same storage) draws it properly; a deck with such content cannot be published. A separate preview database and bypass secret were judged not needed; `.claude/settings.json` allows the routine deck commands (whether a push still prompts is to be confirmed after the merge). Tracked in `docs/pathways/delivery-workflow.md`.
+Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Critical Path: a backward pass of its own
 Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3.

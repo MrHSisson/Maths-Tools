@@ -81,3 +81,26 @@ describe("saving a deck that someone else has also changed", () => {
     expect([d.slides[0].els[0].text, d.slides[2].els[0].text]).toEqual(["Harry's later words", "Claude's words"]);
   });
 });
+
+describe("the deck list carries what it needs to draw a deck without loading it", () => {
+  beforeEach(async () => { await db.reset(); writesBeforeConflict = 0; });
+  const list = async () => ((await (await GET(new Request("http://x/api/decks", { headers: { "x-admin-key": "k" } }))).json()) as { index: { decks: Record<string, Record<string, unknown>> } }).index.decks;
+
+  it("lists where a deck is filed, its tool, its slides by kind and its first slide", async () => {
+    const deck = { ...base, id: "d", strand: "Number", pitch: "middle", tool: "indices", toolPath: "/indices", slides: [slide("a", "a"), { ...slide("b", "b"), family: "practice" }, slide("c", "c")] };
+    await post({ deck, by: "Harry" });
+    const e = (await list()).d;
+    expect(e).toMatchObject({ title: "D", slides: 3, strand: "Number", pitch: "middle", tool: "indices", toolPath: "/indices", families: { teach: 2, practice: 1 } });
+    expect((e.preview as { id: string }).id).toBe("a");
+  });
+  it("leaves a very large first slide out of the list", async () => {
+    const big = { ...slide("a", "x".repeat(40_000)) };
+    await post({ deck: { ...base, slides: [big, slide("b", "b")] }, by: "Harry" });
+    expect((await list()).d.preview).toBeUndefined();
+  });
+  it("a deck with none of the optional fields lists only what it has", async () => {
+    await post({ deck: base, by: "Harry" });
+    const e = (await list()).d;
+    expect(e.strand).toBeUndefined(); expect(e.tool).toBeUndefined(); expect(e.families).toEqual({ teach: 3 });
+  });
+});
