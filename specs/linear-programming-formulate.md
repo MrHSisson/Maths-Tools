@@ -17,7 +17,7 @@ Sources: textbook chapter 4 section 1 and Exercise 4A (corpus rows L01 to L09, L
 
 | | Level 1: direct | Level 2: indirect |
 |---|---|---|
-| **`constraint`** | **Resource use** (`10x + 15y ≤ 300`) and **direct comparisons** (a multiple of a variable or of several combined; a difference; a bound; a total). Whole-number coefficients that can be read straight off the sentence. | **Percentages** (of one variable, of several combined, of the total, "p% more than"), **ratios**, and **either-or limits** (`x/60 + y/45 ≤ 1`, rate and time, three or four products). |
+| **`constraint`** | **Resource use** (`10x + 15y ≤ 300`) and **direct comparisons** (a multiple of a variable or of several combined; a difference; a bound; a total). Whole-number coefficients that can be read straight off the sentence. | **Percentages** (of one variable, of several combined, of the total, "p% more than"), **ratios**, **blends and averages** (the mix must be at least 30% olive oil), **decimal amounts per item**, and **either-or limits** (`x/60 + y/45 ≤ 1`, rate and time, three or four products). |
 | **`problem`** | variables, **objective `P = …` (profit per item given)**, resource limits and direct comparisons, non-negativity | adds the Level 2 styles, and price minus cost, pack variables, unit conversions, a table, "integers", a remainder to substitute out, "exactly half" |
 
 Corpus styles: `constraint` L1 L02 L04 L05 L09(wording) L11 · L2 L03 L05 L07 and new styles (sections 3 and 4). `problem` L1 L01 L02 L05 · L2 L03 L06 to L08 L12 L13 L14a. **Test and spot** (L09, N7: which point is feasible; which of three formulations is right) is a later third sub-tool (section 10).
@@ -48,7 +48,9 @@ To tidy: multiply by `q` (clearing the fraction), move everything to the left, c
 
 Other direct styles outside the rule: a difference ("x exceeds y by at least 5": `x − y ≥ 5`); a bound ("at most 40 of x": `x ≤ 40`); a total ("no more than 50 in all": `x + y ≤ 50`); a percentage of a fixed total ("x supplies at most 20% of the 2500 calories, 80 each": `80x ≤ 500`, a plain number).
 
-**Integer coefficients, always.** The generator picks `m` from a pool whose reduced form keeps the coefficients small: multiples 2, 3, 4, 3/2, 5/2; percentages 10, 20, 25, 30, 40, 50, 60, 75, 80 (and 20, 25, 50 "more than"). It rejects a draw whose tidy coefficients exceed 20 (Level 1: 9). A test asserts, for every constraint of every kind: all coefficients integers, `gcd = 1`, leading coefficient positive.
+**Three extensions from the second textbook (Chapter 14).** (1) `m` may be a fraction as well as a percentage, and may apply to *each* variable: "each plant gets at least one third of the run time" is the pair `x ≥ (1/3)(x + y)` and `y ≥ (1/3)(x + y)`, tidy `2x − y ≥ 0` and `2y − x ≥ 0`. (2) `A` may be several variables on the left with `m` below 1: "at least one adult to every two children" (adults `x + y`, children `z`) is `x + y ≥ z/2` → `2x + 2y − z ≥ 0`; "at least one senior staff member to every trainee" is `x ≥ y`. (3) "Each": "no more than 15 of either type" is a pair of bounds.
+
+**Integer coefficients, always.** The generator picks `m` from a pool whose reduced form keeps the coefficients small: multiples 2, 3, 4, 3/2, 5/2, 1/2, 1/3 ("one for every two"); percentages 10, 20, 25, 30, 40, 50, 60, 75, 80 (and 20, 25, 50 "more than"). It rejects a draw whose tidy coefficients exceed 20 (Level 1: 9). A test asserts, for every constraint of every kind: all coefficients integers, `gcd = 1`, leading coefficient positive.
 
 **The check that is taught (the book's own):** try a number. "If y = 15 and z = 5, then x is at least 40" tells a student whether it is `x ≥ 2(y + z)` or `y + z ≥ 2x`. The reversal is the named slip. For a total: "x is 40% of the total, so x is 40% of x + y + z, not of y + z" is the second named slip (the pair "of y" against "of the total").
 
@@ -59,13 +61,15 @@ Other direct styles outside the rule: a difference ("x exceeds y by at least 5":
 ## 3. `constraint` — Level 1: direct
 
 - **Resource use:** items use a limited resource: `ax + by (+ cz + dw) ≤ c`, or `≥` for a minimum to be met ("each X supplies 10 units, each Y 15, at least 300 needed"). Whole numbers, coefficients 2 to 20, round totals, matching units, "if only X is made" gives a whole number of items. Working: "X uses 10 each, so x of them use 10x. Y uses 15 each, so y use 15y. Together at most 300: `10x + 15y ≤ 300`." Slip: the coefficients written the wrong way round; the check: "if only X is made, 10x ≤ 300, so x ≤ 30".
-- **Direct comparisons:** the multiples of section 2 with whole-number `m` (and 3/2, 5/2), A one variable and B one variable or several combined (with 3 or 4 variables); a difference; a bound; a total. Operators at least, at most and exactly.
+- **Direct comparisons:** the multiples of section 2 with whole-number `m` (and 3/2, 5/2), A one variable and B one variable or several combined (with 3 or 4 variables); a difference; a bound (and "at most 15 of each type", a pair); a total (at most, at least or exactly: "each packet holds exactly 60"). Operators at least, at most and exactly.
 - **Constraints Asked** (option): **One** constraint, or **Two** (two of the same level's styles; the bridge to `problem`).
 
 ## 4. `constraint` — Level 2: indirect
 
 - **Percentages:** of one variable ("x is 40% of y"), of several combined ("40% of y and z combined"), of the total ("at least 40% of the total"), "p% more than" or "p% less than" (`x = 1.2y`, `x = 0.8y`), a range ("between 20% and 30% of the total": a pair). The working shows the decimal or fraction, the substitution and the tidying line by line, including the bracket for the total (`x ≥ 0.4(x + y + z)` → `x ≥ 0.4x + 0.4y + 0.4z` → `0.6x ≥ 0.4y + 0.4z` → multiply by 5 → `3x ≥ 2y + 2z`).
 - **Ratios:** "the ratio of x to y is at least 2 : 3" → `3x − 2y ≥ 0` (cross-multiplying); "x : y : z = 1 : 2 : 3" gives a pair.
+- **Decimal and percentage amounts per item:** "1 kg of Standard uses 0.8 kg of oats and 1 kg of De Luxe 0.6 kg; 3000 kg in stock": `0.8x + 0.6y ≤ 3000` → multiply by 5 → `4x + 3y ≤ 15000`. Three variables: `0.6x + y + 0.4z ≤ 35` → `3x + 5y + 2z ≤ 175`; `0.75x + 0.75y + 0.5z ≤ 40` → `3x + 3y + 2z ≤ 160`. The working shows the multiplier (the smallest that makes every coefficient whole) and that the right-hand side scales with it; the tidy right-hand side is a whole number by construction. Percentage amounts ("a drink that is 40% alcohol, at most 30 ml of alcohol": `0.4w + 0.12g ≤ 30` → `10w + 3g ≤ 750`) are the same style.
+- **Blends and averages** (new from the second textbook): items each contain a known *proportion* of something (oil that is 50% olive, a drink that is 40% alcohol, an investment paying 5%), and the **mix** must contain at least, or at most, a given *share* of it. The share is of the whole mix, so the total is in the denominator: with proportions `c₁`, `c₂` and required share `p`, `c₁x + c₂y ⟨op⟩ p(x + y)` → `(c₁ − p)x + (c₂ − p)y ⟨op⟩ 0` → clear decimals, lowest terms, leading coefficient positive (flipping the operator when multiplying by −1). Hand-checked: oil A 50% olive and B 20%, blend at least 30% olive: `0.5x + 0.2y ≥ 0.3(x + y)` → `0.2x − 0.1y ≥ 0` → `2x − y ≥ 0`; a bond paying 5% and a share paying 10%, at least 8% overall: `−0.03x + 0.02y ≥ 0` → `3x − 2y ≤ 0`; whisky 40% and ginger wine 12% alcohol, at least 20% alcohol: `5w − 2g ≥ 0`. **Slips named:** using the share of one item only (`0.5x ≥ 0.3(x + y)`); forgetting the total (`0.5x + 0.2y ≥ 0.3`); mixing up the amount of the component with its share. **The check:** try a mix: 10 of each gives 35% olive, at least 30%, so `(10, 10)` must satisfy `2x − y ≥ 0` (it gives 10 ✓).
 - **Either-or limits** (Harry's case; the book has one example and no exercise), below.
 
 ### 4.1 The mathematics
@@ -123,7 +127,7 @@ The whole model: **variables** (the noun and units), **objective** (`P = …`, a
 | Level | Constraints | Objective and variables | Textbook |
 |---|---|---|---|
 | 1 | resource limits and direct comparisons, two to four variables | **`P = …` from a profit per item**, maximise | WE4.1, Ex4A 4 |
-| 2 | adds percentages, ratios, either-or limits, ≥ | profit is price minus cost (the slip is to use the price); a pack variable (a tray of six: six times the item's profit); unit conversions; "integers"; the data as a table; a **remainder** substituted out (the book's turf, giving a constant in the objective); "exactly half" relations; with 3 variables, using up all the time to remove one | WE4.3 to 4.6, Ex4A 5, MP3, MP9, MP11b |
+| 2 | adds percentages, ratios, blends, decimal amounts, either-or limits, ≥, and fixed totals ("each packet holds exactly 60") | profit is price minus cost (the slip is to use the price); a pack variable (a tray of six: six times the item's profit); unit conversions (pence to pounds, kg to g, tonnes) and per-packet scaling (800 kg of stock for 1600 packets is 500 g a packet); a single-variable objective ("as much in bonds as possible"); "integers"; the data as a table; a **remainder** substituted out (the book's turf, giving a constant in the objective); "exactly half" relations; with 3 variables, using up all the time to remove one | WE4.3 to 4.6, Ex4A 5, MP3, MP9, MP11b |
 
 **The remainder:** a total `T` split over the uses; the last use is `T − x − y` (never defined as a variable); its non-negativity gives `x + y ≤ T`; the objective is written with the substitution (4x + 5y + 3(40 − x − y) = 120 − x + 2y). Nothing in `problem` is new maths, only assembly, so the generator reuses the rules of `constraint`.
 
@@ -139,6 +143,8 @@ A generator never writes the words first. For each constraint it picks the **int
 
 - **Resource use:** coefficients and amount whole, the amount round, at least one "if only this item is made" answer a whole number of items.
 - **Relationships:** pick `A`, `B` (disjoint, or `B` = the total), `m` from the pools of section 2, the operator; the tidy form by the clearing rule; reject over the coefficient bound. With **Variables = Two** the "combined" styles are not offered (they need three) and the generator falls back to single-variable ones (R23).
+- **Blends:** proportions from multiples of 10% (at least two different), required share a multiple of 5% strictly between them, so the region is non-empty; tidy coefficients at most 20.
+- **Decimal amounts:** per-item amounts with one or two decimal places (0.2, 0.25, 0.4, 0.6, 0.75, 0.8); the multiplier is the smallest that clears them.
 - **Either-or:** pick the capacities from a pool of natural numbers (12, 15, 16, 18, 20, 24, 25, 30, 32, 36, 40, 45, 48, 50, 60, 72, 75, 80, 90, 100, 120, 150), all different; `g = gcd`, coefficients `L/a`, `L/b`, right-hand side `L`. Reject a coefficient above 9 (two or three products) or 12 (four), or a right-hand side above 1500. For rate and time pick `T` from 2, 3, 4, 5, 6, 8, 10 hours; for time per item the minutes per item are `60/a`, `60/b`, rejected unless a "nice" fraction (1, 2, 3/2, 4/3, 5/2…).
 - **`problem`:** assemble from the same generators, then check with `lp.ts` that the region is non-empty, bounded where it must be, and the optimum is at one vertex (so the model can be reused by the graphical tool). This needs an LP solver for three and four variables, which `lp.ts` has anyway for the simplex.
 - **Story:** a context that supports the style; the sentence is a template filled from the same numbers.
@@ -148,9 +154,9 @@ A generator never writes the words first. For each constraint it picks the **int
 | Option | Where | Values | Effect |
 |---|---|---|---|
 | Variables | both, both levels | Two; Three; Four (default Two) | changes the numbers: throws away |
-| Constraint Styles | `constraint` | Level 1: Resource Use; Comparisons. Level 2: Percentages; Ratios; Either-Or (several ticked; each question draws one) | changes the numbers |
+| Constraint Styles | `constraint` | Level 1: Resource Use; Comparisons. Level 2: Percentages; Ratios; Blends; Decimal Amounts; Either-Or (several ticked; each question draws one) | changes the numbers |
 | Constraints Asked | `constraint` | One; Two | changes what is asked: throws away |
-| Operator | `constraint` Comparisons and Percentages | At Least; At Most; Exactly (several ticked) | changes the numbers |
+| Operator | `constraint` Comparisons and Percentages | At Least; At Most; Exactly; More Than / Fewer Than (strict; decision 8) (several ticked) | changes the numbers |
 | Percentages Of | `constraint` Level 2 | One Variable; Several Combined; The Total (several ticked; Combined and Total need three variables) | changes the numbers |
 | Capacity Given As | Either-Or | Most You Could Make; Rate And Time; Time Per Item; Share Of A Requirement (exclusive pool) | changes the numbers |
 | Capacity Method | Either-Or | Fractions Of Capacity; Common Units; Both | display only |
@@ -183,6 +189,7 @@ interface Model { vars: Var[]; sense: "max" | "min"; obj: Fr[]; objConst: Fr; co
 **Tests:**
 - **Meaning agrees with algebra:** `holds` against the canonical inequality at every lattice point 0 to 30 (two variables), 0 to 12 (three) and 0 to 8 (four), and at the intercepts, for thousands of draws per sub-tool, level and variable count. `holds` is the independent route: each rule states its meaning as a plain predicate on the original sentence's numbers (for a percentage: the share computed as a fraction of the group's sum; for either-or: the capacity share from `a`, `b`), a different formula from the canonical coefficients.
 - **Whole-number form:** every constraint has integer coefficients, `gcd = 1`, leading coefficient positive, within the level's bound.
+- **Blends:** `holds` computes the actual share of the actual mix (the component's amount divided by the amount of the mix), a different formula from the tidy coefficients; the origin (an empty mix) is excluded from the comparison because its share is undefined, and the tidy form holds there trivially.
 - **Either-or:** intercepts on the line; fraction form equals the whole-number form at every tested point; rate, time-per-item and most-you-could-make forms agree for the same `a`, `b`, `T`.
 - **Wording:** every number in the model is in the sentence and the reverse (a regex over generated text); the operator word is always present; no unreplaced template slot.
 - **Acceptance examples:** 3 and 4.6 and the book's worked examples 4.1, 4.3, 4.4, 4.5, 4.6 reproduced line by line.
@@ -196,7 +203,7 @@ interface Model { vars: Var[]; sense: "max" | "min"; obj: Fr[]; objConst: Fr; co
 | F0 | `lp.ts`: exact fractions, `Model`, `Constraint`, the clearing rule, lowest terms, `holds`; tests | nothing (library only) |
 | F1 | `lpGen.ts` resource use and direct comparisons (all variable counts and operators); the stepper `LpWorking`; the `constraint` sub-tool on `DecisionShell`, **Level 1**; About words; tests | `enabled: false` (`levels: ["level1"]`) |
 | F2 | **Level 2, either-or limits** (Harry's priority): the four forms, three and four products, the check, the slips | `enabled: false` |
-| F3 | Level 2, percentages and ratios | `enabled: false` (Level 2 complete) |
+| F3 | Level 2, percentages, ratios, blends and decimal amounts | `enabled: false` (Level 2 complete) |
 | F4 | `problem` Level 1 (with `P = …`); the contexts shared with F1 to F3 | `enabled: false` |
 | F5 | `problem` Level 2 (price minus cost, packs, units, table, integers, remainder, "exactly half"); calibration; phone, tablet and laptop check | `enabled: false` |
 | F6 | the Decision hub's DD chapter card; spec status; go-live | the switch |
@@ -213,3 +220,5 @@ Either-or is built before percentages and ratios because it is the skill the boo
 5. The bar model for capacity: yes, or leave it plain?
 6. Either-or answer: fraction form, whole-number form, or either? Recommended: either accepted, both shown.
 7. Four variables is beyond what the book sets (it uses two or three, and `w, x, y, z` only in the simplex): keep it as a stretch option, default Two?
+8. **Strict inequalities** ("more than three times", "fewer than 15"): the first textbook has one ("more than three times the tea") and the second says a strict boundary is drawn dotted. Include "More Than / Fewer Than" as an operator, written `>` and `<` (the model solution notes the boundary is not included, and for whole items `x > 15` means `x ≥ 16`)? Recommended: yes, as an option off by default; the graphical tool then draws the dotted line.
+9. **Blends and averages** (the investor, the whisky mac, the oil blend) are a distinct, harder style than percentages of a total; they sit in Level 2 with the percentages (recommended), or a harder tier of their own?

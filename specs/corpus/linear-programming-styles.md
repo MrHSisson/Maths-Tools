@@ -78,3 +78,27 @@
 - Both AQA questions in the chapter are multi-part chains: formulate or tableau → iterate → interpret, with the working asked for at each stage; 2015 is a graph chain (constraints, change of constraint, draw, objective, optimum); 2016 is a three-variable simplex chain.
 - The textbook itself names these error patterns (use them as misconceptions in working): graph gradients wrong when plotting a line; taking an approximate vertex off a graph; assuming the integer optimum is next to the optimal vertex; wrong pivot element (shows as a negative RHS); reading values from the objective row instead of the final column; sign errors when writing the objective row; forgetting to negate when minimising.
 - Past papers 7366 and 7367 Paper 3D and legacy D1 and D2 to be added.
+
+## Second textbook: Chapter 14 "Linear programming and game theory 1" (T14), section 14.1 only (2026-11-21)
+
+The game theory half is ignored. T14 = worked examples 1 to 5 and Exercises 14.1A, 14.1B. Rows added; the first-textbook rows are unchanged.
+
+| ID | Style (shape only) | Source | Stmt | AS/A2 | Home |
+|---|---|---|---|---|---|
+| L60 | Per-item amounts given as decimals (kg per kg, hours per chair) with a stock or hours available; tidied to whole numbers by a multiplier; two or three variables | T14 Ex1, Ex4 | DD1 | AS | constraint L2 (Decimal Amounts) |
+| L61 | Upper limits on sales or demand for each item ("can sell at most …"), and a minimum order for each ("at least … litres of each") | T14 Ex1, Ex5 | DD1 | AS | constraint L1 (bounds) |
+| L62 | "Each must get at least a third of the whole" for each variable: a pair of share constraints of the total | T14 Ex2 | DD1 | AS | constraint L2 (fractions, pair) |
+| L63 | "At least one A to every k B" where A is one or several variables, and "at least one X to every Y" (a fraction below 1) | T14 Ex1B 6 | DD1 | AS | constraint L1 (multiples, m below 1) |
+| L64 | Blend: each source has known percentages of components; the mix must have at least p% of one component (share of the whole mix) | T14 Ex5 | DD1 | AS | constraint L2 (Blends) |
+| L65 | Average or concentration over the mix: investments with interest rates, overall at least 8%; drinks with alcohol percentages, at least 20% alcohol | T14 Ex1B 2, 4 | DD1 | AS | constraint L2 (Blends) |
+| L66 | Amount of a component in the mix at most or at least a quantity (at most 30 ml of alcohol; at least 100 ml of liquid in all) | T14 Ex1B 2 | DD1 | AS | constraint L2 (Decimal Amounts) and L1 (total) |
+| L67 | A fixed total with an equality (each packet contains exactly 60 chews; 50 places filled), and a bound on each type ("no more than 30 of each type") | T14 Ex1B 6, 7 | DD1 | AS | constraint L1 (exactly, each); problem L2 |
+| L68 | Per-packet scaling: stock of an ingredient shared over N packets so the per-packet amount is stock ÷ N, with grams and kilograms | T14 Ex1B 7 | DD1 | AS | problem L2 (units) |
+| L69 | Capacity of vehicles against people carried (a car carries 5, a minibus 12, 80 to carry), and a limit on drivers capping the number of vehicles | T14 Ex1B 1 | DD1 | AS | problem L1 or L2 (resource ≥, total bound) |
+| L70 | Variables are running times at rates per hour ("process 4 tonnes of paper per hour") with a consignment to process: a requirement ≥ | T14 Ex2 | DD1 | AS | constraint L1 (resource ≥), a context with time variables |
+| L71 | Objective: cost minimised; profit in pence per item written in pounds; a single-variable objective ("investment in bonds as great as possible") | T14 Ex1, Ex1B 4 | DD1 | AS | problem |
+| L72 | "Half of the sales are type C" turns three variables into two (`z = x + y`), the objective and all constraints rewritten by substitution; also "50 places, rewrite to minimise C = 8x + 3y + 600" | T14 Ex4b, Ex1B 6b | DD1 | AS | problem L2 (confirms L06, L08, L12) |
+| L73 | A fixed total of land or money is split between two uses, with "no more than 25 in all" and "more than 15 of either type" | T14 Ex1B 5, 4 | DD1 | AS | constraint L1; problem L1 |
+| L74 | Strict wording ("more than", "fewer than") and the dotted-boundary convention for < and > | T14 note; T4 Ex4A 1 | DD1, DD2 | AS | constraint (Operator option); graphical (dotted line) |
+| L75 | Graphical: given a formulation (with lower bounds like x ≥ 10), draw the feasible region and one position of the objective line, then find the optimum; check the integer points near the vertex satisfy every constraint (not obvious from the graph) | T14 Ex1A 2, Ex1B 5, Ex4 | DD2 | AS | graphical `region`, `optimise`, `integer` |
+| L76 | Graphical edge case: objective line parallel to a boundary, so every point on the boundary is optimal | T14 summary | DD2 | AS | graphical (`range`, later) |
