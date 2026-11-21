@@ -20,12 +20,12 @@ Each sits under the Decision hub's DD chapter card (its `toolIds` is empty today
 
 ### Tool 1: Formulating Linear Programmes (DD1)
 
-Two sub-tools, two levels each, two to four variables (revised 2026-11-21: the first plan had seven sub-tools, which split one skill, translating a sentence into an inequality, by constraint type, when the exam sets them mixed). The level of the first sub-tool is how direct the constraint is.
+Two sub-tools, three levels each, two to four variables, strict inequalities throughout (revised 2026-11-21: the first plan had seven sub-tools, which split one skill, translating a sentence into an inequality, by constraint type, when the exam sets them mixed). Level 1 translation, Level 2 proportion, Level 3 modelling.
 
-| Sub-tool | Skill | Level 1: direct | Level 2: indirect | Styles |
-|---|---|---|---|---|
-| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use (10x + 15y ≤ 300); comparisons (x at least twice y and z combined); differences, bounds, totals | percentages (of a variable, of several combined, of the total); ratios; blends and averages; decimal amounts per item; either-or limits (x/60 + y/45 ≤ 1) | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5, L60 to L67, L70, L73, L74 |
-| `problem` Formulate a problem | variables, objective `P = …`, all constraints, non-negativity, integers, mixed | the Level 1 styles with `P = …` | adds the Level 2 styles, price minus cost, packs, units, table, a remainder, "exactly half" | L01, L02, L05 to L08, L12, L13, L14a, L68, L69, L71, L72 |
+| Sub-tool | Skill | Level 1: direct | Level 2: proportions | Level 3: models | Styles |
+|---|---|---|---|---|---|
+| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use (10x + 15y ≤ 300); comparisons (x at least twice y and z combined); differences, bounds, totals; all five operators | percentages (of a variable, combined, the total); fractions and "each"; ratios; decimal amounts per item | blends and averages; either-or limits (x/60 + y/45 ≤ 1) | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5, L60 to L67, L70, L73, L74 |
+| `problem` Formulate a problem | variables, objective `P = …`, all constraints, non-negativity, integers, mixed | the Level 1 styles with `P = …` | adds Level 2 styles, price minus cost, packs, units, per-packet scaling, fixed totals, table | adds Level 3 styles, a remainder, "exactly half", three variables reduced | L01, L02, L05 to L08, L12, L13, L14a, L68, L69, L71, L72 |
 
 Every constraint is written with whole-number coefficients in lowest terms. A third sub-tool, **Test and spot** (L09; N7: which point is feasible, which of three formulations is right), is a later addition.
 
@@ -33,7 +33,7 @@ Every constraint is written with whole-number coefficients in lowest terms. A th
 
 | Sub-tool | Skill | Styles | Notes |
 |---|---|---|---|
-| `region` Feasible region | draw the lines, shade out (or shade in) and find the exact vertices | L10, L20, L21, L22 | the Shading option; vertices exact, fractions |
+| `region` Feasible region | draw the lines (a strict boundary dotted, a non-strict one continuous), shade out (or shade in) and find the exact vertices | L10, L20, L21, L22 | the Shading option; vertices exact, fractions |
 | `optimise` Optimise | vertex table or sliding objective line, maximise and minimise | L23 to L27, L31 | decimals and fractions in the coefficients; a given diagram |
 | `integer` Integer solutions | the true integer optimum, and the trap | L28, L29, L13b to d | grid of lattice points or the table of greatest y for each x |
 | `range` Changing the objective (later) | the values of k where the optimal vertex changes; the edge case | L30 | UNHOMED in the corpus; do after the first three |
