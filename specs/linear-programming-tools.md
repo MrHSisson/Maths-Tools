@@ -24,7 +24,7 @@ Two sub-tools, three levels each, two to four variables, strict inequalities thr
 
 | Sub-tool | Skill | Level 1: direct | Level 2: proportions | Level 3: models | Styles |
 |---|---|---|---|---|---|
-| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use (10x + 15y ≤ 300); comparisons (x at least twice y and z combined); differences, bounds, totals; all five operators | percentages (of a variable, combined, the total); fractions and "each"; ratios; decimal amounts per item | blends and averages; either-or limits (x/60 + y/45 ≤ 1) | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5, L60 to L67, L70, L73, L74 |
+| `constraint` Write a constraint | exactly one constraint from a short situation (no objective) | resource use (10x + 15y ≤ 300); comparisons (x at least twice y and z combined); differences, bounds, totals; all five operators | percentages (of a variable, combined, the total); fractions and "each"; ratios; decimal amounts per item | blends and averages; either-or limits (x/60 + y/45 ≤ 1) | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5, L60 to L67, L70, L73, L74 |
 | `problem` Formulate a problem | variables, objective `P = …`, all constraints, non-negativity, integers, mixed | the Level 1 styles with `P = …` | adds Level 2 styles, price minus cost, packs, units, per-packet scaling, fixed totals, table | adds Level 3 styles, a remainder, "exactly half", three variables reduced | L01, L02, L05 to L08, L12, L13, L14a, L68, L69, L71, L72 |
 
 Every constraint is written with whole-number coefficients in lowest terms. A third sub-tool, **Test and spot** (L09; N7: which point is feasible, which of three formulations is right), is a later addition.

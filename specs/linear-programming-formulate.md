@@ -1,10 +1,10 @@
 # Formulating Linear Programmes (DD1) — brief
 
-**Status:** draft, revised 2026-11-21 (two sub-tools, three levels each; first drafted with seven sub-tools, cut to two levels, then back to three once every constraint type was counted). The first build of the Linear Programming family (`specs/linear-programming-tools.md`). Not `ready` until Harry answers section 11. Nothing is built.
+**Status:** draft, revised 2026-11-21 (two sub-tools, three levels each; first drafted with seven sub-tools, cut to two levels, then back to three once every constraint type was counted). The first build of the Linear Programming family (`specs/linear-programming-tools.md`). The `constraint` sub-tool (F0 to F4) becomes `ready` when Harry answers the five items in section 11; `problem` stays draft until its own pass. Nothing is built.
 
 **What this is.** A tool, `lp-formulate`, on `DecisionShell` (own data field `lp`, written working, no network), with **two sub-tools, each with three levels**:
 
-1. **Write a constraint** (`constraint`): a short situation, and the student writes one constraint (or a small set). **Level 1: direct** (resource use and direct comparisons). **Level 2: proportions** (percentages, fractions, ratios, decimal amounts). **Level 3: models** (blends and averages, either-or limits).
+1. **Write a constraint** (`constraint`): a short situation, and the student writes **exactly one constraint** (no objective: `P = …` belongs to `problem` only; the variables are named in the question, so the student only writes the inequality). **Level 1: direct** (resource use and direct comparisons). **Level 2: proportions** (percentages, fractions, ratios, decimal amounts). **Level 3: models** (blends and averages, either-or limits).
 2. **Formulate a problem** (`problem`): the whole thing, mixed, as the exam sets it: variables, the objective (`P = …`), every constraint, non-negativity, integers. Each level adds the styles of the same level of `constraint`, and the extras.
 
 A student learns each style on its own (sub-tool 1), then meets them mixed (sub-tool 2). The answer is the **model solution shown by the stepper**; the student is not marked on typed input. **The number of variables is controllable, 2 to 4** (option Variables, default Two). **Every constraint is shown, and answered, with whole-number coefficients in lowest terms.**
@@ -64,7 +64,7 @@ Other direct styles outside the rule: a difference ("x exceeds y by at least 5":
 
 - **Resource use:** items use a limited resource: `ax + by (+ cz + dw) ≤ c`, or `≥` for a minimum to be met ("each X supplies 10 units, each Y 15, at least 300 needed"). Whole numbers, coefficients 2 to 20, round totals, matching units, "if only X is made" gives a whole number of items. Working: "X uses 10 each, so x of them use 10x. Y uses 15 each, so y use 15y. Together at most 300: `10x + 15y ≤ 300`." Slip: the coefficients written the wrong way round; the check: "if only X is made, 10x ≤ 300, so x ≤ 30".
 - **Direct comparisons:** the multiples of section 2 with whole-number `m` (and 3/2, 5/2, 1/2, 1/3), A one variable and B one variable or several combined (with 3 or 4 variables); a difference; a bound (and "at most 15 of each type", a pair); a total (at most, at least or exactly: "each packet holds exactly 60"). All five operators (at least, at most, exactly, more than, fewer than).
-- **Constraints Asked** (option): **One** constraint, or **Two** (two of the same level's styles; the bridge to `problem`).
+- **One constraint per question, always** (decided 2026-11-21). The styles that make a pair (a range of percentages, "each" gets a share, "at most 15 of either type", "x : y : z") are asked one constraint at a time ("write the constraint for plant A", "write the constraint for the upper limit"); `problem` uses the pairs whole.
 
 ## 4. `constraint` — Level 2: proportions, and Level 3: models
 
@@ -157,9 +157,8 @@ A generator never writes the words first. For each constraint it picks the **int
 
 | Option | Where | Values | Effect |
 |---|---|---|---|
-| Variables | both, all levels | Two; Three; Four (default Two) | changes the numbers: throws away |
-| Constraint Styles | `constraint` | Level 1: Resource Use; Comparisons. Level 2: Percentages; Ratios; Decimal Amounts. Level 3: Blends; Either-Or (several ticked; each question draws one) | changes the numbers |
-| Constraints Asked | `constraint` | One; Two | changes what is asked: throws away |
+| Variables | both, all levels | Two; Three; Four (a multi-select: tick any of them, at least one; default Two; each question draws one of the ticked counts) | changes the numbers: throws away |
+| Constraint Styles | `constraint` | Level 1: Resource Use; Comparisons. Level 2: Percentages; Ratios; Decimal Amounts. Level 3: Blends; Either-Or (a multi-select; each question draws one of the ticked styles; a style that cannot be written with the ticked variable counts, such as "combined" with Two, is skipped, and at least one ticked style is always usable) | changes the numbers |
 | Percentages Of | `constraint` Level 2 (percentages) | One Variable; Several Combined; The Total (several ticked; Combined and Total need three variables) | changes the numbers |
 | Capacity Given As | `constraint` Level 3 (either-or) | Most You Could Make; Rate And Time; Time Per Item; Share Of A Requirement (exclusive pool) | changes the numbers |
 | Capacity Method | Level 3 (either-or) | Fractions Of Capacity; Common Units; Both | display only |
@@ -217,14 +216,15 @@ interface Model { vars: Var[]; sense: "max" | "min"; obj: Fr[]; objConst: Fr; co
 
 Either-or is built before Level 2 because it is the skill the book has no exercise for; swap F2 and F3 if Harry prefers. `src/registry.ts`, `src/shared/index.ts` and the hub files are shared: each edit is minimal and in its own chunk.
 
-## 11. Decisions for Harry
+## 11. Decided, and what is needed before the build
 
-1. Three tools or one (`specs/linear-programming-tools.md`, section 5).
-2. **Is the objective only in `problem`** (Level 1 has `P = …`), or should `constraint` also be able to ask for it (an "Ask For: Constraint | Objective | Both")? Recommended: only in `problem`.
-3. Build order: Level 1, then Level 3 either-or, then Level 2, then blends (recommended), or the order of the levels?
-4. Default Capacity Method: Fractions Of Capacity (recommended, it is what Harry described), or Both?
-5. The bar model for capacity: yes, or leave it plain?
-6. Either-or answer: fraction form, whole-number form, or either? Recommended: either accepted, both shown.
-7. Four variables is beyond what the book sets (it uses two or three, and `w, x, y, z` only in the simplex): keep it as a stretch option, default Two?
-8. **Decided 2026-11-21 (no question): strict inequalities throughout, with no option;** the wording picks the operator and the graphical tool draws dotted boundaries.
-9. **Three levels in both sub-tools** (the count in section 1): Level 1 translation, Level 2 proportion, Level 3 modelling (blends and either-or). Recommended: yes.
+**Decided (Harry, 2026-11-21):** the model solution is enough (no typed answers); two sub-tools, three levels each, the level set by the style of constraint; `constraint` asks for exactly one constraint and no objective (`P = …` is in `problem` only); Variables is a multi-select of Two, Three and Four; Constraint Styles is a multi-select; strict inequalities throughout, no option; percentages and blends are in Levels 2 and 3 as in section 1.
+
+**Needed before F0 to F2** (the `constraint` sub-tool; a yes, or a change, to each):
+1. **Tool count.** Three tools (Formulating, Graphical, Simplex; recommended) or one with all sub-tools. Only affects the registry entry and hub card, not F0 to F2, so the build can start on a yes to the rest.
+2. **Registry entry.** Name "Formulating Linear Programmes", path `/lp-formulate`, `hub: 'decision-overview'`, `enabled: false` until go-live. Yes?
+3. **The question names the variables.** Each question says "let x be the number of loaves, y the number of cakes" (with units), and the student writes only the constraint. Yes? (The alternative, the student defines the variables too, is the `problem` sub-tool's Level 1.)
+4. **Default option settings:** Variables Two ticked; Constraint Styles all ticked at each level; Capacity Method Fractions Of Capacity; Answer Format Both (the fraction form and the whole-number form shown). Yes?
+5. **Branch.** This branch has only the plan documents. Keep building on it (F0 next), or merge the documents to `main` first and start F0 on a fresh branch from `main` (`AGENTS.md`: small chunks, merged early)? Harry decides each merge.
+
+**Can wait** (decided when the part is built): the bar model for capacity (F2); the `problem` sub-tool options (F5); Test and spot (later); exam-style chains (later).
