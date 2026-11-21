@@ -167,24 +167,27 @@ function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) 
 /** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the ones in the AS course are one row ("Practise")
  *  and the ones that go beyond AS a second row labelled A2. A statement that is A2 throughout (`a2Only`) has one row, since the statement itself is marked A2. */
 function LinkRow({ links, label, a2Only, planning }: { links?: SpecLink[]; label?: string; a2Only?: boolean; planning: boolean }) {
+  const { phone } = useLayoutMode();
   const shown = (links ?? []).filter(l => planning || l.live || l.provisional);
   if (!shown.length) return null;
   const asLinks = a2Only ? shown : shown.filter(l => l.as);
   const a2Links = a2Only ? [] : shown.filter(l => !l.as);
+  // on a phone every button is the full width of the card, one above the other, at a touch-sized height; elsewhere they sit side by side
+  const size = phone ? "min-h-[44px] w-full px-3.5" : "px-2.5 py-1";
   const chip = (l: SpecLink) => l.provisional ? (
     <span key={l.label} aria-disabled="true" title="Planned, not built yet"
-      className="inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-2.5 py-1 text-sm font-semibold text-slate-400">
+      className={`inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400 ${size}`}>
       {l.label}
     </span>
   ) : (
     <a key={l.href} href={l.href}
-      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50">
-      {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+      className={`inline-flex items-center justify-between gap-1 rounded-lg border border-slate-200 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50 ${size}`}>
+      <span>{l.label}</span>{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
     </a>
   );
   const row = (name: string | undefined, ls: SpecLink[]) => ls.length > 0 && (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {name && <span className="mr-0.5 shrink-0 text-xs sm:w-[7.5rem] font-semibold uppercase tracking-wide text-slate-400">{name}</span>}
+    <div className={phone ? "flex flex-col gap-1.5" : "flex flex-wrap items-center gap-1.5"}>
+      {name && <span className={`shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400 ${phone ? "mt-0.5" : "mr-0.5 sm:w-[7.5rem]"}`}>{name}</span>}
       {ls.map(chip)}
     </div>
   );
@@ -313,9 +316,9 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
             )}
 
             {shownTools(chapter.tools, planning).length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className={phone ? "mt-5 flex flex-col gap-2" : "mt-5 flex flex-wrap gap-2"}>
                 {shownTools(chapter.tools, planning).map(t => (
-                  <a key={t.path} href={t.path} className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+                  <a key={t.path} href={t.path} className={`inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white hover:bg-blue-800 ${phone ? "min-h-[48px] justify-between" : "py-2.5"}`}>
                     Open {t.name}
                     {planning && !t.live && <span className={`${tag} bg-amber-100 text-amber-900`}>Dev</span>}
                     <ChevronRight size={16} />
