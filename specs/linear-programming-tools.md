@@ -8,7 +8,7 @@ The brief recommended one Linear Programming tool with six sub-tools. Having rea
 
 | Tool | Textbook | Statements | Course | Why separate |
 |---|---|---|---|---|
-| **Formulating Linear Programmes** (`lp-formulate`) | section 1, Ex 4A | DD1 | AS, A2 | the biggest skill set (seven sub-tools), no graph needed, and it can merge and go live on its own |
+| **Formulating Linear Programmes** (`lp-formulate`) | section 1, Ex 4A | DD1 | AS, A2 | the biggest skill set (two sub-tools), no graph needed, and it can merge and go live on its own |
 | **Graphical Linear Programming** (`lp-graphical`) | section 2, Ex 4B | DD2 | AS, A2 | needs the region picture; all exact vertex arithmetic |
 | **The Simplex Algorithm** (`lp-simplex`) | section 3, Ex 4C | DD3, DD4 | A2 only | needs the tableau picture; hidden whole at AS rather than by an option |
 
@@ -20,15 +20,14 @@ Each sits under the Decision hub's DD chapter card (its `toolIds` is empty today
 
 ### Tool 1: Formulating Linear Programmes (DD1)
 
-| Sub-tool | Skill (one sentence) | Styles | Notes |
-|---|---|---|---|
-| `objective` Variables and objective | define the variables with units, write the objective and say maximise or minimise | L01; L13 (pack units); part of L02 | profit is price minus cost; a variable that counts packs, not items |
-| `resources` Resource limits | write a "uses per item, amount available" constraint | L02, L04 | units conversion; data as a table |
-| `capacity` Either-or limits | "at most 60 of A or 45 of B" becomes x/60 + y/45 ≤ 1, then 3x + 4y ≤ 180 | L03; N1 to N5 (the styles in the Formulating brief) | the first priority of Harry's; the book has one example and no exercise |
-| `relations` Relationships | "at least twice as many", percentages, ratios, "no more than" | L05, L07, L11 | the reversed-inequality error; test a number |
-| `remainder` Totals and remainders | the unused part of a total becomes a variable eliminated by substitution | L06, L08, L12b | objective gains a constant; three variables reduced to two |
-| `model` Full formulation | the whole problem: variables, objective, every constraint, non-negativity and integers | L01 to L08, L12a, L13a, L14a, N6 | the chain Harry's students meet; built last, from the parts above |
-| `check` Test and spot | is this point feasible; which of three formulations is right and what is wrong with the others | L09; N7 (the Work it out 4.1 shape, for formulations) | the misconceptions made visible |
+Two sub-tools (revised 2026-11-21: the first plan had seven, which split one skill, translating a sentence into an inequality, by constraint type, when the exam sets them mixed). The level of the first sub-tool is the style of constraint.
+
+| Sub-tool | Skill | Level 1 | Level 2 | Level 3 | Styles |
+|---|---|---|---|---|---|
+| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use: 10x + 15y ≤ 300 | comparisons and percentages | either-or limits: x/60 + y/45 ≤ 1 | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5 |
+| `problem` Formulate a problem | variables, objective, all constraints, non-negativity, integers, mixed | resource limits only | adds comparisons, percentages, price minus cost, packs, units, table | adds either-or, a remainder, three variables | L01, L02, L05 to L08, L12, L13, L14a |
+
+A third sub-tool, **Test and spot** (L09; N7: which point is feasible, which of three formulations is right), is a later addition.
 
 ### Tool 2: Graphical Linear Programming (DD2)
 

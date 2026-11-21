@@ -1581,7 +1581,7 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-21 (later still). Planned the tools: `specs/linear-programming-tools.md` matches every corpus style to a sub-tool and proposes three tools (Formulating, Graphical, Simplex) instead of one; `specs/linear-programming-formulate.md` is the in-depth draft brief for the first build, Formulating (seven sub-tools, with the either-or \"at most 60 of one or 45 of another\" limit giving x/60 + y/45 ≤ 1 worked through, its options, levels, generation, tests and build chunks F0 to F5). Corrected the corpus: three-variable formulation and the 2015 chain are AS, not A2."
+        "2026-11-21 (later still). Planned the tools: `specs/linear-programming-tools.md` matches every corpus style to a sub-tool and proposes three tools (Formulating, Graphical, Simplex) instead of one; `specs/linear-programming-formulate.md` is the in-depth draft brief for the first build, Formulating (first drafted with seven sub-tools, then cut to two the same day: `constraint`, with one level per constraint style (resource use, comparisons and percentages, either-or), and `problem`, the whole formulation; with the either-or \"at most 60 of one or 45 of another\" limit giving x/60 + y/45 ≤ 1 worked through, its options, levels, generation, tests and build chunks F0 to F5). Corrected the corpus: three-variable formulation and the 2015 chain are AS, not A2."
        ]
       }
      ]
