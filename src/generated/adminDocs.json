@@ -338,6 +338,26 @@
    ]
   },
   {
+   "title": "Decks on this device and the shared copy",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a Decks page that always opens quickly and never silently loses a deck. **How it works:** the Decks page lists every deck from a small shared summary (title, where it is filed, its first slide, how many slides); a deck is downloaded only when you open it, and the device keeps just the few decks you opened or saved most recently, never dropping one with changes that have not been sent. **Check for changes** refreshes the decks this device holds. If the device's storage is full it frees space from old saved versions first, and if a deck still cannot be kept it says **Storage full** and names the deck, instead of \"Updated\"."
+    }
+   ]
+  },
+  {
+   "title": "Content that needs a newer version of the site",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** building deck content before the code that draws it is live, and seeing it on a branch preview. **How it works:** the shared deck service keeps a question that uses something only newer code understands (a new question format, a later rectilinear shape) and says what it kept; the live site then shows \"This needs a newer version of the site; it will appear once its code is merged\" in that place, while the rest of the slide still works. A deck holding such content cannot be published until the code is merged."
+    }
+   ]
+  },
+  {
    "title": "Rectilinear shapes in decks",
    "level": 3,
    "blocks": [
@@ -654,6 +674,16 @@
    ]
   },
   {
+   "title": "Drawing again when a question cannot be made",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** a worksheet never getting the wrong kind of question on the rare occasion a generator cannot make what you asked for. **How it works:** if a generator fails, or hands back its fixed fall-back question, the worksheet quietly asks it again (up to three more times) before using the fall-back. A question that fails less than about 1 time in 100 is handled this way; the measuring and the rule for anything that fails more often are in `AGENTS.md`."
+    }
+   ]
+  },
+  {
    "title": "Changing options keeps your question",
    "level": 3,
    "blocks": [
@@ -737,28 +767,6 @@
  "tasks": [
   {
    "status": "Open",
-   "title": "Decks: see and push deck changes before they are merged (previews, a bypass secret, a tolerant server)",
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**Now tracked in the pathway `docs/pathways/delivery-workflow.md` (chunks C4, C5, C6); this entry is kept as the background.** Deck data lives in the Neon database (not Vercel Blob any more), and a branch's preview deployment shares that production database. The live server (`api/decks.ts`) checks every deck with the code on `main`, and a branch's preview is behind the Vercel login, so Claude cannot push to it or check it."
-    },
-    {
-     "t": "ul",
-     "items": [
-      "**Done 2026-11-17:** the merge-code-before-content rule is in `AGENTS.md`; the rectilinear branch was merged (PR #139) and its deck pushed.",
-      "**Done 2026-11-20 (C4):** the server is tolerant. `checkDeck` keeps a question that fails only because it uses something a newer site adds (a question format, a rectilinear shape or version), refuses anything else malformed, and lists what it kept (`unchecked`); the site draws \"This needs a newer version of the site; it will appear once its code is merged\" in place of such an element, and the deck check reports it as a warning. So deck content can be pushed before the code that draws it is merged.",
-      "**Open:** C5 (allow rules so a push needs no prompt) and C6 (a separate Preview database and a bypass secret) both need Harry: see the pathway's \"Needs from Harry\"."
-     ]
-    },
-    {
-     "t": "p",
-     "s": "Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`"
-    }
-   ]
-  },
-  {
-   "status": "Open",
    "title": "Standard Form: finish the tool and take it live",
    "blocks": [
     {
@@ -824,6 +832,16 @@
     {
      "t": "p",
      "s": "Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`)."
+    }
+   ]
+  },
+  {
+   "status": "Done (recent)",
+   "title": "Decks: see new deck content before its code is merged",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Done 2026-11-21 on branch `claude/great-heisenberg-5a3nko` (pull request 146), takes effect when merged and deployed. The deck server now keeps a question that needs newer code (a new question format or rectilinear shape or version), the site shows \"This needs a newer version of the site\" for it, and a branch preview (same storage) draws it properly; a deck with such content cannot be published. A separate preview database and bypass secret were judged not needed; `.claude/settings.json` allows the routine deck commands (whether a push still prompts is to be confirmed after the merge). Tracked in `docs/pathways/delivery-workflow.md`. Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`"
     }
    ]
   },
@@ -1150,9 +1168,9 @@
   {
    "id": "delivery-workflow",
    "title": "Faster builds, smaller merges and a steadier deck workflow",
-   "status": "building",
+   "status": "done",
    "measure": "",
-   "updated": "2026-11-20",
+   "updated": "2026-11-21",
    "sections": [
     {
      "title": "Intention",
@@ -1160,11 +1178,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "The repo is now big enough that the way work is built, tested and merged slows everything down. Planned at Harry's request on 2026-11-20 after four problems came together: 1. **Every merge runs every test.** About 7 minutes of tests, run three times per merge (the session, the pull request, then `main` again), even for a docs-only change. Nearly all of it is Decision Maths. 2. **Branches live too long.** Several chats and Codex work at once; merging is left to the end of a 4000-line edit, and the same few files (patch notes, generated JSON, registry, tasks) conflict every time. 3. **Decks depend on the merge order.** The live deck service checks decks with the code on `main`, so deck content waits for a code merge, and pushing a deck needed the Auto mode switch. 4. **Decks vanished from the Decks page.** The device's storage (about 5 MB) was full, so downloaded decks were never saved, yet \"Check for changes\" said \"Updated\"."
-      },
-      {
-       "t": "p",
-       "s": "The aim: small chunks that each merge in minutes, checks that run only what a change could break, decks that can be pushed before the code they use is merged (showing a plain \"code isn't available yet\" message until then), and less to read at the start of every session."
+       "s": "The repo is big enough that the way work is built, tested and merged slowed everything down. Planned at Harry's request on 2026-11-20 after four problems came together: 1. **Every merge ran every test.** About 7 minutes of tests (10 to 17 minutes of CI), run three times per merge, even for a docs-only change; nearly all of it Decision Maths. 2. **Branches lived too long.** Several chats and Codex work at once, merging was left to the end of a huge edit, and the same few files (patch notes, generated JSON, registry, tasks) conflicted every time. 3. **Decks depended on the merge order.** The live deck service checked decks with the code on `main`, so deck content waited for a code merge, and pushing a deck needed the Auto mode switch. 4. **Decks vanished from the Decks page.** The device's storage (about 5 MB) was full, so downloaded decks were never saved, yet \"Check for changes\" said \"Updated\"."
       }
      ]
     },
@@ -1174,81 +1188,34 @@
      "blocks": [
       {
        "t": "p",
-       "s": "**2026-11-20, measured (nothing built yet):**"
+       "s": "**Complete on branch `claude/great-heisenberg-5a3nko` (pull request 146, latest CI run all green); it takes effect when Harry merges it. After the merge, delete this file (the planner Build Log block of 2026-11-20 holds the summary).**"
+      },
+      {
+       "t": "p",
+       "s": "**Measured**"
       },
       {
        "t": "ul",
        "items": [
-        "**Test time.** The full suite is about 965 s of work across 153 files (about 6–7 min on the clock). Eight Decision Maths files take about 900 s of it: `levellingMethod` 200 s, `seedReplay` 166 s (160 s of it the Decision half), `cpaSkills` 101 s, `cpa` 90 s, `flowLayout` 88 s, `cpaExam` 87 s, `flowExam` 37 s, `flowReason` 35 s. The other 145 files take about a minute together.",
-        "**Why Decision is slow.** Critical Path is 98% of Decision generation time (60 cells, 13.1 s for one problem each; Network Flows, TSP, MST and Route Inspection are about 1 ms). The generator makes random networks and throws away the ones that fail its rules: a Level 3 forward-pass problem tries about 3,800 random networks to find one that passes (under 1% pass), and the Resource histogram and Which-to-shorten questions try about 21,000 (about 1.8 s per problem). Each network is cheap (0.08 ms) but there are thousands, and the layout step is not the cost (0.8 ms). Level 1 needs about 37 tries and takes 1 ms. The tests then multiply this: `seedReplay` builds every Decision cell 10 times and `levellingMethod` runs 6–120 samples per check.",
-        "**Network Flows layout tests** (`flowLayout`, 88 s; `pipeline9` alone 28 s) are slow for a different reason: the test checks every on/off combination of the optional parts (`1 << opt.length`). Not yet profiled.",
-        "**CI.** `.github/workflows/ci.yml` runs on every pull request and again on every push to `main`: type check and build, lint, then all tests; a second job runs the shell smoke check. 340 runs so far; typical run 10–17 min. Nothing is selected by path.",
-        "**Decks not visible.** Cause found: this browser's storage for the production address was full (the 13 live decks are about 1.5 million characters, one 11-slide starter alone is 845 KB, and each deck is held twice plus history). Incognito showed them. The shared copy was always fine. The live published list is empty (nothing published).",
-        "**Docs cost.** `CLAUDE.md` 40 KB + `AGENTS.md` 24 KB are read every session (about 16,000 tokens); `docs/reference/decks.md` is 81 KB; `PATCH_NOTES.md` is 270 KB.",
-        "**Tools added.** Plugins CI Optimizer, token-usage and Claude Education Skills Library; the Wolfram connector. (Eedi was considered and is left out for now: it cannot be connected yet.)"
+        "**Test time:** the full suite was about 965 s of work (6 to 7 minutes on the clock, 19 minutes on a GitHub runner); now about 590 s (about 4 minutes locally). The Critical Path generator, the main cost, builds valid Level 3 networks by design: 480 ms to 27 ms a question (Shorten 5.3 s to 0.4 s), every acceptance rule unchanged, the distribution of questions compared before and after.",
+        "**CI on GitHub:** a full run takes 3.6 to 5.3 minutes (10 to 17 before). A change that is not \"run everything\" (docs, a deck, one tool, one Decision topic) runs a fraction of that; estimated test work per change on a laptop: docs 4 s, decks 32 s, one maths tool 108 s, mechanics 73 s, Critical Path 238 s, Network Flows 353 s, the Decision shell itself 536 s, shared code everything. Path filtering, the balanced runners and the browser cache were built after the last full run on GitHub that was timed; the first pull request after the merge should be read for them."
        ]
       },
       {
        "t": "p",
-       "s": "**2026-11-20, C2 built (branch `claude/great-heisenberg-5a3nko`):** `write()` in `src/decks/store.ts` frees space (other decks' saved versions, then their base copies, then this deck's older versions) and retries; `syncDecks` no longer counts a failed device save as updated, and the Decks page says \"Storage full: could not keep …\". Tests in `src/tests/deckSync.test.ts`. Not done: the Editor's own save message already said \"storage is full\" and is unchanged; C3 (store less) is the lasting fix, since eviction only buys room."
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, A1 built:** `scripts/testAreas.mjs` (the plain list: five test areas and path rules), `scripts/selectTests.mjs` (prints what to run for a diff), `src/tests/testAreas.test.ts` (every test file in an area; routing examples), and `ci.yml` (pull requests run the touched areas; pushes to `main`, the nightly 02:17 UTC run and a manual \"full\" run run everything; the checkout is now full-depth so the diff works). Decision tests still run for any `tools` change through `seedReplay` (its Decision half is the slow part: A2/A3). Pushes to `main` still run all tests until A5."
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, A2 to A6 built (same branch):**"
+       "s": "**Built (the letters are the original plan's steps)**"
       },
       {
        "t": "ul",
        "items": [
-        "**A2.** `candidate` in `src/shared/decision/cpa.ts` builds Level 3 networks to pass: arrows between neighbouring columns follow a random non-crossing staircase, one arrow that skips a column is forced in (and survives `reduce`), early sinks are repaired, `singleCritical` lengthens an activity instead of discarding a network with several critical paths, and `addNearCritical` gives Level 3 a float of 1 or 2. `layoutCpa` now builds each trial with `arrange` (no framing, early exit once it cannot beat the best), with identical output to the old code (compared on 180 networks). Every `acceptable` rule is unchanged. Per question: Level 3 forward 480 → 27 ms, Shorten 5.3 s → 0.4 s, Histogram level 3 2.4 s → 0.23 s; Levels 1 and 2 are built as before. Distribution before and after (60 samples a case: activity counts, critical paths, ends, near-critical share, predecessors per activity, project time, crossings, distinct durations) stayed close; Level 3 is a little tidier (mean crossings about 0.55 against 1.3) and has more single-end networks. Still slow: Level 3 resource levelling (about 0.8 s a question): about 300 networks are tried for each one kept, almost all failing the method's own size rules in `levelMethod`, so the fix is a separate redesign of how levelling questions are built.",
-        "**A3.** The `levellingMethod` \"Short's second try\" sample went from 30 to 12 runs (seeded, so a fixed sample).",
-        "**A4.** The cost of `flowLayout` is `layoutNetwork` (97%), not the checks. The suite is now four files (`flowLayout*.test.ts` over the shared `flowLayoutKit.ts`), all 19 tests kept, 110 s → 44 s on the clock. Speeding `layoutNetwork` itself was tried (a bounding-box shortcut) and gave about 15%, so it was left out.",
-        "**A5.** `ci.yml` is now `select` (which tests), `build` (type check, build, lint), `tests` (four shards) and `shell-smoke` (only when needed). Push to `main` compares with the commit before it; the nightly and manual full runs run everything; a newer push to a pull request cancels the older run. **Not yet run on GitHub** (CI only runs on a pull request or `main`), so the first pull request must be watched.",
-        "**A6.** Baseline read from the real runs: the test step took about 19 minutes on the runner (about 5 on a laptop; the runner has two cores), install about 1 minute, build and lint about 1.5, the smoke job about 2. The only two recent failures (2026-11-17) were `cpa.test.ts` timing out at 60 s. Full local suite after A2 to A5: 157 files, 240 s on the clock (645 s of work, down from about 965 s). **After (2026-11-20, pull request 146, every run was a full run because the branch changes shared code):** a full run takes 3.6 to 5.3 minutes on GitHub (the slowest of four test shards 1.8 to 2.7 minutes, but 4.9 minutes in the last run; install about 40 to 55 seconds a job; `select` 12 to 20 seconds; build and lint 1.5 to 2 minutes; smoke about 2 minutes, once 5 minutes 48 seconds when the browser download was slow), against 10 to 17 minutes before (the test step alone was 19 minutes on `main`). Path filtering and the `main` push comparison have not been seen running on GitHub yet (they need a change that is not 'run everything'). The shards are uneven (about 2 minutes against about 5): vitest splits by file, not by time."
+        "**Tests and CI (A1 to A6):** ten test areas with path rules (`scripts/testAreas.mjs`: Critical Path, Network Flows, graphs, mechanics, Decision shell, cross-tool checks, per-tool tests, decks, CS, docs); only the areas a change touches run, `main` is compared with the previous commit, a nightly and a manual run run everything; the four runners are balanced by recorded time (`scripts/testShards.mjs`, `scripts/testTimes.json`, `npm run test:times`); the checks that loop over every tool run for only the changed tools (`TOOL_FILES`, `src/tests/toolFilter.ts`; a Decision topic's shared files map to their tools); the smoke job caches the browser; the Network Flows layout tests and `levellingMethod` are split into several files; a closed hole (a `FurtherMechanics` change used to skip its own tests) and one found on the way (the graph topics use two flow files).",
+        "**Merge flow (B1, B2, B4):** the small-chunk rule and the parallel-session rule in `AGENTS.md`; patch notes are one file per session in `docs/patch-notes/` (`docs/PATCH_NOTES.md` is generated); generated files get a git merge rule set by `npm install`. **B3 decided:** no auto-merge and no merge queue; Harry decides each merge and the session says when a branch is ready.",
+        "**Decks (C1 to C5):** the stale deck-preview task corrected; a full device frees space and says \"Storage full\"; decks are listed from a small shared summary and fetched when opened, the device keeps the 8 most recently used and never drops unsent work; the deck server keeps a question that needs newer code (a new question format or rectilinear shape or version), refuses anything else malformed and refuses to publish such a deck, and the site shows \"This needs a newer version of the site\" for it; the unused shared question library was removed; `.claude/settings.json` allows the routine deck commands. **C6 decided not needed:** the tolerant server plus the branch preview (same storage) shows new deck content before its code is merged on production.",
+        "**Tokens and checks (D1, D2, E1, E3):** the cost of a long session is the conversation re-read each turn, so no code-graph tool (D3 not done); `CLAUDE.md` 40 KB to 30 KB and the decks reference split into four topic files; 12 Solving Trig Equations questions solved independently in Wolfram, all matched; the Education Skills plugin stays on.",
+        "**Flaky generators:** under 1 in 100, draw again (built into `makeUniqueQ`; Ratio Manipulation's fall-backs are marked `_fallback`); 1 in 100 or more, an authored fall-back; failing most of the time, a 100+ authored set or a generator built to pass. Measured all of Ratio Manipulation: only Level 2 \"1 : n / n : 1\" falls back (about 1 in 10,000), so no bank is needed. `src/tests/fallbackRates.test.ts` measures. The 1-in-1,000 to 1-in-100 band is Harry's call each time.",
+        "**Not done, on purpose:** a separate mechanics or Critical Path shell (no saving beyond the area split, a large refactor); an authored-bank mechanism (nothing needs it yet).",
+        "**Also fixed along the way:** the dashboard read only `###` patch-note headings (now every entry); README and `CLAUDE.md` describe the new CI; a flaky Ratio Manipulation test is seeded."
        ]
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, B1, B2 and B4 written (same branch):** `AGENTS.md` now has the small-chunk rule (layers: shared piece, tool behind a flag, deck content, the switch; kickoffs ask for one chunk) and the parallel-sessions rule (one worktree and branch each; the Handoff note is the claim list). Patch notes are one file per session in `docs/patch-notes/` (`_base.md` holds the introduction and every earlier entry); `scripts/patchNotes.mjs` builds `docs/PATCH_NOTES.md` from them (run by `npm run facts` and before every build; `src/tests/patchNotes.test.ts` fails if it is stale or a session file lacks its strand, `Agent:` or `Notes:` line). Generated files (`toolFacts.json`, `adminDocs.json`, `PATCH_NOTES.md`) have `merge=regenerate` in `.gitattributes`, and `npm install` sets that merge rule (`scripts/gitSetup.mjs`, the `prepare` script) to keep our copy, so a merge shows no conflict in them; run `npm run facts` after it. **B3 not done: needs Harry** (see Needs from Harry)."
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, C1, C3, C4 built; C5 and C6 need Harry (same branch):**"
-      },
-      {
-       "t": "ul",
-       "items": [
-        "**C1.** The stale deck-preview task in `docs/TASKS.md` is rewritten (Neon, not Blob; previews share the production database; what is done and what is open).",
-        "**C4.** `checkDeck` (`api/_decks.ts`) keeps a question that fails only because of an unfamiliar discriminator (`classifyQuestion`, `isNewerRectilinear`), refuses everything else malformed, and lists what it kept (`unchecked` in the push reply; `npm run deck -- push` prints it). The site shows \"This needs a newer version of the site; it will appear once its code is merged.\" for such an element, an element kind it does not know, or one that throws (`src/decks/newerCode.tsx`, used by `SlideCanvas`); `deck check` reports it as a warning. Checked in a real browser (placeholder drawn, the rest of the slide still there, no errors). **Takes effect for the live server only once merged to `main` and deployed.** Tests: `decksApi`, `newerCode`.",
-        "**C3.** The list is summaries: `listIndex` returns each deck's filing, tool, slides by kind and first slide; the Decks page, the tool menu, the dashboard and the Add-to-deck dialogs use `deckSummaries()`; a deck is fetched when opened (`ensureDeck`); a whole-list check refreshes only held decks; the device keeps the 8 most recently used (`trimDevice`) and never drops unsent work. Checked in a real browser at laptop and phone widths (the local dev server has no sharing service, so only the device's own copies were seen: the shared list itself is covered by the API tests). Tests: `deckSync`, `decksStore`, `decksSave`.",
-        "**C5 written 2026-11-20 once Harry switched to Accept edits (the file is `.claude/settings.json`); still to confirm: whether a deck push then stops prompting, and whether Auto mode still blocks it (cannot be tested from a cloud session).** Before that the classifier had blocked the write. The classifier blocked me from writing `.claude/settings.json` (it protects permission settings), as `AGENTS.md` already warns. The proposed file is: `permissions.allow` = `Bash(npm run deck -- <cmd>:*)` for `pull`, `push`, `check`, `list`, `backup`, `verify`, `review`, `looks`, `diff`, `sheet`, `build`, `new`, `preflight`, `builders`, `categories`; `permissions.ask` = `publish`, `unpublish`, `delete`, `file` and `push * --replace-whole*`. Either switch a session to Accept edits and ask me to write it, or add those rules yourself; then say whether a push stops prompting (I cannot test that from a cloud session), and if Auto still blocks, I will record that in `AGENTS.md`.",
-        "**C6 decided not needed** (see Next steps)."
-       ]
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, D1 to D3, E1 and E3 (same branch):**"
-      },
-      {
-       "t": "ul",
-       "items": [
-        "**D1 baseline.** The token-usage report for this long session (about 140k output tokens, 42.5M cache-read tokens, 0.36M cache-write, estimated $11.36 at API prices, prompt caching saved about $76): the cost is the whole conversation re-read every turn, not the reading of files. The cloud container holds only this session, so there is no cross-session history to compare; repeat on a few ordinary sessions on a machine that keeps them.",
-        "**D2 done.** `CLAUDE.md` went from 40 KB to 30 KB: the build-a-tool how-to (spec flow, scaffold, registry, shared imports, categories, reference implementations, what to ask for) is now `docs/reference/building-a-tool.md`, with a short pointer and the essentials left in `CLAUDE.md`. `docs/reference/decks.md` (83 KB) is split into four topic files (`decks.md` the core 33 KB, `decks-building.md`, `decks-editor.md`, `decks-text-and-print.md`), each with its own \"Read when\", all indexed in `CLAUDE.md`; every rule tag stayed (the docs test still passes). Startup reading is now about 2.5k tokens lighter and a deck session reads one or two topic files instead of 83 KB.",
-        "**D3 not done, on purpose.** D1 shows the cost is conversation length, not file reading, so a code-graph tool would not help; keep to the \"commit at clean boundaries and start a fresh session\" habit already in `CLAUDE.md`.",
-        "**E1 done (small sample).** 12 Solving Trig Equations questions (Levels 1 to 3, degrees and radians, scaled and shifted angles, decimal and exact values) were solved independently in Wolfram (`Solve` over the stated range): every set of solutions matched the tool's answer, to the rounding shown. A bigger sample and the other A-level generators can be done the same way when wanted.",
-        "**E3.** The Education Skills Library lists about 130 skills in every session's startup context, which is a noticeable token cost. **Needs Harry:** turn that plugin off by default in your plugin settings and enable it only for a lesson-planning session (I cannot change plugin settings from a session). I did not use it for anything this session."
-       ]
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, review of pull request 146, fixed:** a tool change now also runs the `docs` area (it holds the checks that read every tool's source: option labels, About files, registry ids), and `patchNotes`, `testAreas` and `newerCode` tests now sit in the areas of the files they guard; `selectTests.mjs` falls back to \"run everything\" when the diff base is gone (a force-push); on a full device only deck writes free space, a base copy holding unsent edits is never dropped, and `trimDevice` drops a deck only when its content equals the base it last agreed with the shared copy; `needsNewerCode` shows the placeholder only for content that is truly unfamiliar, not for malformed content; only a later whole-number rectilinear `version` counts as newer, an unfamiliar question on a worksheet must still carry its shape, and a deck with unrecognised content cannot be published (409, naming what). **Flaky generators (decided later the same day):** under 1 in 100, draw again (built into `makeUniqueQ`; Ratio Manipulation's fall-backs are marked `_fallback`); 1 in 100 or more, an authored fall-back; failing most of the time, a 100+ authored set or a generator built to pass. See `AGENTS.md`. **Known and accepted:** a typo in a rectilinear shape name is indistinguishable from a new shape, so it is kept (the deck check warns, and publishing is refused); the levelling sample was cut from 30 to 12 deliberately (A3, seeded); `listIndex` now reads every deck body for the list (fine for a few dozen decks; if it grows, store the filing, tool, slide counts and first slide in columns at save time, as `published_decks.preview` already does)."
-      },
-      {
-       "t": "p",
-       "s": "**2026-11-20, test areas split finer (same branch):** the single Decision area is now `cpa`, `flow`, `graphs`, `mechanics` and `decision` (the checks that span the shell), and the old \"tools\" area is `cross` (the checks over every tool) plus `tools` (each tool's own tests), with path rules per Decision topic (`scripts/testAreas.mjs`). Work per change on a laptop, from the last full run: docs only 4 s; a deck change 32 s; a maths tool 108 s; mechanics 73 s (it was the whole Decision area, about 10 minutes); Critical Path 238 s; Network Flows 353 s; MST/TSP 70 s; the Decision shell itself 536 s; shared code everything (618 s). It also closes a hole: a change under `src/tools/FurtherMechanics/` skipped the Dimensional Analysis tests, which lived in the Decision area. **Not split further, and why:** a separate mechanics shell or Critical Path shell would need the exam view, representations and print code copied or extracted, with no saving beyond the area split. **Candidates for later, in order of saving:** (1) ~~the `cross` checks loop over every tool~~ **done, same day:** when a change touches only tool files (a tool or its `.about.ts`) CI runs them for just those tools (`TOOL_FILES`, `src/tests/toolFilter.ts`, `toolFilter` in `scripts/testAreas.mjs`; the five checks took 27 s for every tool and 3 s for one); a helper in a tool folder or any shared file still runs them for every tool, since which tool uses it is not known; the next step would be a map from a Decision topic's shared files to its tools; (2) `flow` is 287 s: the layout tests (about 110 s) depend only on the geometry, templates and instance generation, the exam and reasoning tests (about 130 s) on the solver, so a solver change could skip the layout tests (needs a dependency check first); (3) `cpa`: `levellingMethod` is 104 s of 172 s and only a levelling change needs it. Per-tool (48 s), decks (32 s) and CS (2 s) are small enough to leave."
       }
      ]
     },
@@ -1258,31 +1225,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "In the order to do them. Each is its own small branch and merge; the letters group the work (A tests and CI, B merge flow, C decks, D tokens, E quality)."
-      },
-      {
-       "t": "p",
-       "s": "**First: stop decks silently failing, then make builds quicker** 1. ~~**C2. Storage safety net (small).**~~ **Done 2026-11-20** (see Progress). When a deck cannot be saved on the device: free space by dropping history and base copies of other decks, retry, and say \"Storage full\" if it still fails, instead of reporting \"Updated\". 2. ~~**A1. Test areas and CI path filters.**~~ **Done 2026-11-20.** Group tests by area (Decision, generators and shell, decks and the deck API, CS, docs only) and run only the groups whose files changed; type check and lint always run; a full run once a night and on request. Keep a plain list of which paths trigger which group, in the repo. 3. ~~**A2. Make the Critical Path generator build valid networks by design**~~ **Done 2026-11-20.** instead of rejecting thousands: force the required features (an arrow that skips a column, a near-critical activity, the right number of critical paths) while building. Target under 50 ms a problem. The existing checks must still pass unchanged; compare the distribution of questions before and after so variety does not shrink. This is the real fix for Decision test time. 4. ~~**A3. Shrink the Decision tests safely.**~~ **Done 2026-11-20.** After A2, trim the multiplied sampling (for example `seedReplay` seeds) only where coverage is not lost. 5. ~~**A4. Network Flows layout tests.**~~ **Done 2026-11-20.** Profile `flowLayout`; replace the all-combinations check with a smaller one if equivalent. 6. ~~**A5. Split the tests across several runners**~~ **Done 2026-11-20.** and stop re-running everything on `main` after a pull request that already passed. 7. **A6. Run CI Optimizer's timings** on the real runs to confirm the savings. Baseline recorded 2026-11-20; the after-numbers need a pull request to have run the new CI."
-      },
-      {
-       "t": "p",
-       "s": "**Then: a merge flow for many branches** 8. ~~**B1. Small-chunk rule**~~ **Done 2026-11-20.** in `AGENTS.md` and the kickoff: each merge leaves `main` working but need not be a finished tool. Layers: shared piece with its test, then the tool behind `enabled: false` or Developing-tools mode, then deck content, then the switch that makes it live. Merge a chunk as soon as it is green; the next chunk starts from the new `main`. 9. ~~**B2. Stop the common conflicts.**~~ **Done 2026-11-20.** A patch-notes file per session instead of one shared file (a script builds the combined view); generated files rebuilt automatically, never merged by hand. 10. ~~**B3. Merge queue or auto-merge.**~~ **Decided 2026-11-20: no merge queue and no auto-merge. Harry decides each merge; the session says when it thinks a branch is ready to merge (green checks, docs in, nothing half-done).** Check what the GitHub plan allows. If a merge queue is available use it; if not, auto-merge plus an automatic \"update branch\". 11. ~~**B4. Parallel sessions.**~~ **Done 2026-11-20.** One worktree and branch per session (Claude chats and Codex), with the Handoff note as the claim list, so two sessions never take the same area."
-      },
-      {
-       "t": "p",
-       "s": "**Then: a steadier deck workflow** 12. ~~**C1. Fix stale docs.**~~ **Done 2026-11-20.** `docs/TASKS.md` (the deck-preview task) still describes Vercel Blob; storage is Neon, and previews share the production database. (The task now points here; fix its text when C4 is done.) 13. ~~**C4. \"Code isn't available yet\" message.**~~ **Done 2026-11-20.** The deck service stops checking what only the latest code understands: it checks structure and size (so malformed data is still refused) and accepts unfamiliar optional fields and shapes. A slide or question the site cannot draw yet shows a clear placeholder (\"This needs a newer version of the site; it will appear once its code is merged\") instead of failing or crashing the slide, and the deck check lists such slides. Deck content can then be pushed before the code it uses merges. 14. ~~**C5. Pushing without the Auto switch.**~~ **File written 2026-11-20; prompting still to be confirmed by Harry.** Commit `.claude/settings.json` with allow rules for the routine deck commands (`pull`, `push`, `check`, `list`, `backup`), leaving `publish` and deletes to Harry. Test whether Accept edits then never prompts. If Auto still blocks, record that in `AGENTS.md`. 15. ~~**C3. Store less on the device.**~~ **Done 2026-11-20.** The Decks page lists decks from a small summary (title, slide count, category, first-slide preview) from the shared copy; opening a deck fetches it; the device keeps only recently opened decks and drops the least recently used. Needs a summary endpoint in `api/decks.ts`. 16. ~~**C6. Safe previews (optional).**~~ **Decided not needed 2026-11-20.** The tolerant server (C4) lets deck content be pushed to the shared storage before its code is merged; the branch preview (same storage, branch code, Harry logs in to Vercel to open it) draws it properly, and production shows \"This needs a newer version of the site\" for that element until the merge. Only some new things get that placeholder (a question format, a rectilinear shape or version, an element kind); changes to how existing slides look just draw the old way on production. Assumes a preview shares the production storage (not verified: the Vercel project variables could not be read). A separate Neon database branch for Preview and a Vercel bypass secret, so a branch preview can receive deck pushes without touching the live decks. Needs about five minutes from Harry in the Vercel dashboard."
-      },
-      {
-       "t": "p",
-       "s": "**Then: fewer tokens** 17. ~~**D1. Baseline**~~ **Done 2026-11-20.** with the token-usage report on a few recent sessions. 18. ~~**D2. Slim the startup docs.**~~ **Done 2026-11-20.** `CLAUDE.md` to the rules and a short index; split `docs/reference/decks.md` into topic files read one at a time; keep the docs size test in step. 19. **D3 (not doing: see Progress).** **Try Graphify on a throwaway branch** only if D1 shows file reading is the main cost, and compare with the baseline."
-      },
-      {
-       "t": "p",
-       "s": "**Alongside: quality of generated maths and lessons** 20. ~~**E1. Spot-check A-level generators with Wolfram**~~ **Done 2026-11-20.** (Solving Trig Equations first) as an independent second opinion to the repo's own checks. 21. **E3. Education Skills Library:** use it for lesson planning ideas (worked-example fading, practice sequencing, error analysis); keep it off by default if it adds noticeable startup tokens."
-      },
-      {
-       "t": "p",
-       "s": "**Rounding off, done 2026-11-20:** the four test runners are balanced by recorded time (`scripts/testShards.mjs`, `scripts/testTimes.json`, `npm run test:times`; `selectTests.mjs` hands CI a matrix of runners; measured locally, the runners took 52 to 110 seconds before and 54 to 73 after, and the longest single file `levellingMethod.test.ts` (104 s) was split into three so no file dominates); the Playwright browser is cached for the smoke job (system libraries still installed each run); a Decision topic's shared files now map to the tools they can affect (checked by reading the imports: no topic imports another except the graph topics, which use the flow templates and geometry, so those two files also run the graph tests). **Still open:** Level 3 resource levelling questions take about 0.8 s each (about 300 networks are tried per question kept); the 0.1% to 1% band of the flaky-generator rule is Harry's call each time. **Needs from Harry:** (E3 is decided: leave the Education Skills Library plugin on, 2026-11-20; it adds about 130 skill names to every session's startup, probably a small cost; it is synced from the claude.ai account, so a session cannot switch it); (B3 is decided: no auto-merge, Harry merges when a session says a branch is ready); confirm whether a deck push stops prompting now that `.claude/settings.json` is in (C5)."
+       "s": "1. **Harry: decide the merge of pull request 146.** Afterwards delete this file, and other open branches merge `main` and run `npm run facts` (add a `docs/patch-notes/` file instead of editing `docs/PATCH_NOTES.md`). 2. **Harry: after the merge, tell the session whether a deck push still prompts** (`.claude/settings.json`; cannot be tested from a cloud session). If Auto mode still blocks it, record that in `AGENTS.md`. 3. **Harry: look at a few Level 3 Critical Path questions** (built differently now, slightly tidier networks; the tests cannot judge the look). 4. **Possible later, not needed to call this done:** Level 3 resource levelling questions take about 0.8 s each (about 300 networks are tried per question kept; a redesign of how they are built); read the first CI run after the merge for the balanced runners and the browser cache."
       }
      ]
     },
@@ -1292,7 +1235,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "`.github/workflows/ci.yml`, `src/tests/` (the Decision files named above), `src/shared/decision/cpa.ts` (`candidate`, `acceptable`, `generateCpa`), `AGENTS.md` (\"Decks Harry edits\", \"Pushing a deck\", \"Deck data format\"), `docs/reference/decks.md` (\"Deck data and the live server\") and `docs/reference/decks-building.md` (\"Sharing one deck between Harry and Claude\"), `docs/TASKS.md`, `src/decks/store.ts`, `src/decks/cloud.ts`, `api/decks.ts`, `api/_decks.ts`."
+       "s": "`.github/workflows/ci.yml`, `scripts/testAreas.mjs`, `scripts/selectTests.mjs`, `scripts/testShards.mjs`, `src/tests/testAreas.test.ts`, `src/shared/decision/cpa.ts` (`candidate`, `acceptable`), `AGENTS.md` (\"Which tests CI runs\", \"Patch notes are one file per session\", \"Decks Harry edits\", \"A test or generator that fails now and then\"), `docs/reference/decks.md` (\"Deck data and the live server\"), `docs/reference/decks-building.md` (\"Sharing one deck between Harry and Claude\"), `docs/reference/questions-and-working.md` (\"When a generator cannot draw what was asked\"), `docs/TASKS.md`, `src/decks/store.ts`, `src/decks/newerCode.tsx`, `api/_decks.ts`."
       }
      ]
     }

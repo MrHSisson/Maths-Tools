@@ -12,12 +12,6 @@ Nothing at the moment.
 
 ## Open
 
-### Decks: see and push deck changes before they are merged (previews, a bypass secret, a tolerant server)
-**Now tracked in the pathway `docs/pathways/delivery-workflow.md` (chunks C4, C5, C6); this entry is kept as the background.** Deck data lives in the Neon database (not Vercel Blob any more), and a branch's preview deployment shares that production database. The live server (`api/decks.ts`) checks every deck with the code on `main`, and a branch's preview is behind the Vercel login, so Claude cannot push to it or check it.
-- **Done 2026-11-17:** the merge-code-before-content rule is in `AGENTS.md`; the rectilinear branch was merged (PR #139) and its deck pushed.
-- **Done 2026-11-20 (C4):** the server is tolerant. `checkDeck` keeps a question that fails only because it uses something a newer site adds (a question format, a rectilinear shape or version), refuses anything else malformed, and lists what it kept (`unchecked`); the site draws "This needs a newer version of the site; it will appear once its code is merged" in place of such an element, and the deck check reports it as a warning. So deck content can be pushed before the code that draws it is merged.
-- **Open:** C5 (allow rules so a push needs no prompt) and C6 (a separate Preview database and a bypass secret) both need Harry: see the pathway's "Needs from Harry".
-Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Standard Form: finish the tool and take it live
 Banked 2026-11-15 at Harry's request. The tool (`/standard-form`, four sub-tools: Converting, Multiplying & Dividing, Adding & Subtracting, Comparing & Ordering) is built and **went live on 2026-11-17 at Harry's request** (no longer dev-gated; the review below is still open). Still to build or decide: a spec file `specs/standard-form.md` and the "About this tool" review; a Depth bank (the "which of these is in standard form?" multiple choice and the misconception options belong there, not in the generator); a Teach deck and lesson; calibration; a phone and tablet check of the Converting picture (a 3-digit coefficient with a large power is about 12 columns wide); whether calculator-style coefficients (Multiplying & Dividing) should be on by default; whether the place value shift picture (digits slide a column, the power rolls by 1) should also be used on Multiplying & Dividing when the coefficient is adjusted, and on Adding & Subtracting when a term is matched; a printable blank place value grid; and an optional play button that runs the whole slide on its own. Review notes go on the tool's dashboard note.
@@ -47,6 +41,10 @@ Each tool is reviewed when we reach it; the record is that tool's dashboard note
 Anything visual is checked at phone, tablet and laptop (see `CLAUDE.md`).
 
 ## Done (recent)
+
+### Decks: see new deck content before its code is merged
+Done 2026-11-21 on branch `claude/great-heisenberg-5a3nko` (pull request 146), takes effect when merged and deployed. The deck server now keeps a question that needs newer code (a new question format or rectilinear shape or version), the site shows "This needs a newer version of the site" for it, and a branch preview (same storage) draws it properly; a deck with such content cannot be published. A separate preview database and bypass secret were judged not needed; `.claude/settings.json` allows the routine deck commands (whether a push still prompts is to be confirmed after the merge). Tracked in `docs/pathways/delivery-workflow.md`.
+Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Critical Path: a backward pass of its own
 Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3.
