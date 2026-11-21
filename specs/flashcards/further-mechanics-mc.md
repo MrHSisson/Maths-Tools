@@ -1,6 +1,6 @@
 # Flashcards: Further Maths, starting with Mechanics MC (Work, Energy and Power) — design and the first card set
 
-**Status:** draft (2026-11-20). A student asked for flashcards; Harry wants a revamp of the Computer Science cards for Further Maths: key formulas, equations, properties. Nothing is built. This file holds the design and the first card set (67 cards plus 8 diagram cards), written from the textbook chapter while it was in the conversation. **The card wording is original: facts and formulae only, never the textbook's sentences.**
+**Status:** implemented (2026-11-21), except printing the cards and the chapters after MC. Harry approved it for the Further Mechanics hub with the recommended answers to the open questions (facts and short conditions only; per-device boxes; printing later). Live at `/further-maths-flashcards`. A student asked for flashcards; Harry wants a revamp of the Computer Science cards for Further Maths: key formulas, equations, properties. This file holds the design and the first card set (67 cards plus 8 diagram cards), written from the textbook chapter while it was in the conversation. **The card wording is original: facts and formulae only, never the textbook's sentences.**
 
 **Spec statements covered:** MC1 to MC7 (`specs/exam/spec/aqa-mechanics.md`). AS or A2 is a flag on each card (A2 cards are the cos θ, resolving, slope and vector ones), the same Course idea as the MC tools (`specs/further-mechanics-mc.md` §4.5).
 

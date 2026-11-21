@@ -58,6 +58,7 @@ const STANDALONE_BY_DESIGN = [
   "Decision/RouteInspection",
   "Decision/TravellingSalesperson",
   "FurtherMechanics/DimensionalAnalysis",
+  "FurtherMechanics/Flashcards",
   "FurtherMechanics/FurtherMechanics",
   "Generators/FunctionalSkillsGenerator",
   "Generators/MultiplicationGenerator",

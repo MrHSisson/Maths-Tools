@@ -24,6 +24,12 @@ const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
   exam: MECHANICS_EXAM[c.id] ? (l => (l[0] ? { text: MECHANICS_EXAM[c.id].text, link: l[0] } : undefined))(linkOf(MECHANICS_EXAM[c.id].ref)) : undefined,
 }));
 
+// revision tools that belong to the whole option, not to one chapter: listed under the chapters on the hub (a visitor sees only the live ones)
+const REVISION = ["further-maths-flashcards"].flatMap((id) => {
+  const t = ALL_TOOLS.find((x) => x.id === id);
+  return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];
+});
+
 export default function FurtherMechanics() {
   return (
     <SpecLanding
@@ -35,6 +41,7 @@ export default function FurtherMechanics() {
       generalResources={GENERAL_RESOURCES}
       papers={{ heading: "Older papers and question banks", intro: "The legacy AQA mechanics papers have a much deeper bank than the current spec.", cardText: "AQA M1–M3 papers and the checked legacy map" }}
       check={CHECK_NOTES}
+      workspace={{ heading: "Revision", tools: REVISION }}
     />
   );
 }

@@ -154,6 +154,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'further-mechanics', path: '/further-mechanics', name: 'Further Mechanics', description: 'AQA 7367 mechanics (MA–ME), chapter by chapter: the specification statements and the question generators that cover them.', load: () => import('./tools/FurtherMechanics/FurtherMechanics') },
       { hub: 'further-mechanics', id: 'dimensional-analysis', path: '/dimensional-analysis', name: 'Dimensional Analysis', description: 'Find the dimensions of quantities and constants, check a formula is dimensionally consistent, and predict a formula by equating the powers of M, L and T (AQA 7367 MA) — skill practice and exam-style questions', load: () => import('./tools/FurtherMechanics/DimensionalAnalysis') },
+      { hub: 'further-mechanics', id: 'further-maths-flashcards', path: '/further-maths-flashcards', name: 'Flashcards', description: 'Key formulas, units, conditions, methods and common mistakes as flip cards with self-rating that brings the hard ones back sooner; Work, Energy and Power (AQA 7367 MC1–MC7) to start with.', load: () => import('./tools/FurtherMechanics/Flashcards') },
     ],
   },
   {

@@ -29,6 +29,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-21 — Further Mechanics: flashcards, and the mechanics diagram system
+
+- **Flashcards (live in the Further Mechanics hub, under Revision).** A shared study screen (`src/shared/flashcards/`) for any Further Maths topic: filter by statement, course, card kind and session length; flip, then rate Not yet / Nearly / Got it; a three-box schedule brings the hard cards back; formula cards also come round back to front; the ratings are kept on the device only. The first set is Work, Energy and Power (MC1 to MC7): 67 text cards in our own words plus 8 diagram cards (`src/flashcards/mechanicsMC.ts`). Tests check every card's KaTeX, ids, statements and pictures, and the schedule. Route `/further-maths-flashcards`. Plan: `specs/flashcards/further-mechanics-mc.md`. Printing the cards is not built.
+- **Mechanics diagram system (`src/shared/mechanics/`, not yet used by any tool).** One scene model and renderer with fifteen templates: horizontal motion (and a force at an angle), incline, vertical motion, path profile, pulley, spring or string on a table, hanging, along a slope, two strings, connected particles, force–displacement and speed–time graphs, energy bars and a force diagram. A picture builds up part by part; a question can give its diagram, build it as the working goes on, or have none; labels are placed by one solver and the text steps down rather than collide. 200 random scenes per template are tested at three sizes. Plan: `docs/architecture/MECHANICS_DIAGRAMS_PLAN.md`.
+- **Work, Energy and Power planned, nothing built.** 109 question styles tagged by skill (`specs/corpus/mechanics-mc-question-styles.md`) and a draft programme brief (`specs/further-mechanics-mc.md`): four tools, fifteen sub-tools; seven decisions are waiting for Harry. Exam-style questions are a separate later pass from past papers.
+- Agent: Claude Code
+- Notes: planner Build Log, "Further Mechanics: flashcards and the diagram system (Claude Code)", branch `claude/laughing-wright-lanp0q`.
+
 ## 2026-11-18 — Unit Circle: symmetry and periodicity worksheet
 
 - The Unit Circle menu's Printables list now has a second sheet: an A4 worksheet on trigonometric symmetry and periodicity in radians (8 questions in three sections, parts in columns, stacked fractions), with its answers on the last page. It is a fixed page (`unitCircleSheets.ts`), opened in a print window like the blank graphs; every answer was checked numerically.
