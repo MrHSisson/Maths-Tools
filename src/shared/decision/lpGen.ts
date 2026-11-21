@@ -30,7 +30,7 @@ type LpInfo =
   | { kind: "ratio"; form: "ratio" | "every" | "share"; a: number[]; b: number[]; m: Fr }
   | { kind: "decimal"; a: number[]; den: number; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
   | { kind: "blend"; contents: Fr[]; share: Fr; comp: string; invest: boolean }
-  | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[] }
+  | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[]; integers?: boolean; price?: number[]; cost?: number[] }
   | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {
@@ -123,7 +123,7 @@ export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs">, var
 
 /** a context, variables and (for a resource) the resource and operators already chosen: a `problem` question builds several constraints on one set of variables */
 export interface Fix { ctx: Context; vars: Var[]; sing: string[]; res?: Resource; ops?: Op[] }
-const opFrom = (fx: Fix | undefined, otherwise: () => Op): Op => (fx?.ops ? pick(fx.ops) : otherwise());
+export const opFrom = (fx: Fix | undefined, otherwise: () => Op): Op => (fx?.ops ? pick(fx.ops) : otherwise());
 
 // ── Level 1: resource use ────────────────────────────────────────────────────
 /** a round amount, at least one of the coefficients dividing it (so "if only this item is made" is a whole number of items) */

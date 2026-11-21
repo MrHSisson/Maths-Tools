@@ -256,6 +256,8 @@ function finalStep(d: LpProblemData, c: Constraint, syms: string[], step: Add): 
   }
 }
 
+/** "5x + 8y" for a caption */
+const objText = (obj: readonly number[], syms: readonly string[]): string => obj.map((k, i) => `${k === 1 ? "" : k}${syms[i]}`).join(" + ");
 /** plain text for a caption: 3, −2, 5/2 */
 const plainFr = (f: Fr): string => `${f[0] < 0 ? "−" : ""}${Math.abs(f[0])}${f[1] === 1 ? "" : `/${f[1]}`}`;
 /** "0.5x − 3y" in plain text */
@@ -492,7 +494,9 @@ function solveProblem(d: LpProblemData): SolveStep[] {
 
   const objRows: LpRow[] = [
     { k: "head", t: "Objective" },
-    ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${info.sing[i]} ${max ? "makes a profit of" : "costs"} £${info.obj[i]}, so $${v.sym}$ ${v.noun} ${max ? "make" : "cost"} $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.` })),
+    ...d.vars.map((v, i): LpRow => ({ k: "words", t: info.price && info.cost
+      ? `Each ${info.sing[i]} makes a profit of £${info.price[i]} − £${info.cost[i]} = £${info.obj[i]}, so $${v.sym}$ ${v.noun} make $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.`
+      : `Each ${info.sing[i]} ${max ? "makes a profit of" : "costs"} £${info.obj[i]}, so $${v.sym}$ ${v.noun} ${max ? "make" : "cost"} $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.` })),
     { k: "tex", t: `${info.name} = ${sum}` },
     { k: "words", t: `We want to ${max ? "maximise" : "minimise"} $${info.name}$.` },
   ];
@@ -501,6 +505,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
 
   const lines: string[] = [];
   const slips: string[] = [];
+  if (info.price) slips.push(`Objective. Common slip: using the selling prices, not the profits (price minus cost): ${info.name} = ${objText(info.price, syms)}.`);
   info.parts.forEach((part, j) => {
     const all0 = solveLp({ kind: part.kind, level: part.level, lp: part, prompt: "", answer: { text: "" }, matrixMode: "off" });
     const slipStep = all0[all0.length - 1].phase === "Common slip" ? all0[all0.length - 1] : undefined;
@@ -520,7 +525,12 @@ function solveProblem(d: LpProblemData): SolveStep[] {
 
   const nonneg = `${syms.map((s) => `${s} \\ge 0`).join(",\\ ")}`;
   base = [...base, { k: "words", t: "Numbers of items cannot be negative:" }, { k: "tex", t: nonneg }];
-  push("Finally, the numbers of items cannot be negative: each variable is at least 0.", base, 2, "Non-negativity");
+  push("The numbers of items cannot be negative: each variable is at least 0.", base, 2, "Non-negativity");
+  const intRow: LpRow = { k: "words", t: `${syms.map((s) => `$${s}$`).join(", ")} ${syms.length > 1 ? "are" : "is"} whole numbers, so they are integers.` };
+  if (info.integers) {
+    base = [...base, intRow];
+    push("Only whole numbers of items can be made, so the variables must be integers.", base, 1, "Integers");
+  }
 
   const model: LpRow[] = [
     { k: "head", t: "The linear programme" },
@@ -528,6 +538,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     { k: "words", t: "subject to:" },
     ...lines.map((t): LpRow => ({ k: "tex", t })),
     { k: "result", t: nonneg },
+    ...(info.integers ? [intRow] : []),
   ];
   push("That is the model, in the usual layout: the objective, then the constraints, then non-negativity. Any consistent choice of letters is correct.", [...vars, ...model], model.length, "The model");
   if (slips.length) push(`Common slips. ${slips.join(" ")}`, [...vars, ...model], 0, "Common slips");

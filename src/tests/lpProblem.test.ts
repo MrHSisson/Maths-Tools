@@ -6,6 +6,7 @@ import katex from "katex";
 import { fr, type Fr } from "../shared/decision/dim";
 import { OPS, bestVertices, isTidy, vertices } from "../shared/decision/lp";
 import { constraintOf, type LpProblemData } from "../shared/decision/lpGen";
+import { decStr } from "../shared/decision/lpGenL23";
 import { generateProblem } from "../shared/decision/lpProblem";
 import { constraintTex, solveLp } from "../shared/decision/lpSolve";
 import type { DecisionProblem } from "../shared/decision/types";
@@ -55,13 +56,13 @@ describe("the working of a hand-made model", () => {
 });
 
 describe("random draws (seeded)", () => {
-  for (const n of [2, 3, 4]) {
-    it(`${n} variables, both objectives: a non-empty region, a single best corner, wording that names no variable, working that renders`, () => {
-      seeded(6100 + n);
+  for (const level of [1, 2]) for (const n of [2, 3, 4]) {
+    it(`Level ${level}, ${n} variables, both objectives: a non-empty region, a single best corner, wording that names no variable, working that renders`, () => {
+      seeded(6100 + n + level * 10);
       const senses = new Set<string>();
       const counts = new Set<number>();
-      for (let i = 0; i < 200; i++) {
-        const q = generateProblem(1, { vars: [n], objective: ["max", "min"] });
+      for (let i = 0; i < 120; i++) {
+        const q = generateProblem(level, { vars: [n], objective: ["max", "min"], integers: true });
         const d = q.data;
         const info = d.info as Extract<LpProblemData["info"], { kind: "problem" }>;
         senses.add(info.sense);
@@ -69,7 +70,7 @@ describe("random draws (seeded)", () => {
         expect(d.vars).toHaveLength(n);
         expect(info.parts.length).toBeGreaterThanOrEqual(2);
         const cons = info.parts.map((p) => constraintOf(p.spec));
-        for (const c of cons) { expect(isTidy(c)).toBe(true); expect(c.rhs[1]).toBe(1); expect(c.op).toMatch(/^[≤≥]$/); }
+        for (const c of cons) { expect(isTidy(c)).toBe(true); expect(c.rhs[1]).toBe(1); expect(c.op).toMatch(level === 1 ? /^[≤≥]$/ : /^[≤≥=]$/); }
         expect(OPS).toContain(d.op);
 
         // the model: a non-empty region and a single best corner (exact), the best corner is a plan that does something
@@ -99,13 +100,17 @@ describe("random draws (seeded)", () => {
         // the wording: no variable letter or $ at all (the student assigns them), every number of the model is there
         expect(q.prompt).not.toContain("$");
         expect(q.prompt).not.toMatch(/undefined|NaN|\[object|\$\{/);
-        for (const v of info.obj) expect(q.prompt).toContain(`£${v}`);
+        if (info.price && info.cost) for (let k = 0; k < n; k++) { expect(q.prompt).toContain(`£${info.price[k]} and costs £${info.cost[k]}`); expect(info.price[k] - info.cost[k]).toBe(info.obj[k]); }
+        else for (const v of info.obj) expect(q.prompt).toContain(`£${v}`);
+        if (level === 1) { expect(info.price).toBeUndefined(); expect(info.integers).toBeFalsy(); } else expect(q.prompt).toContain("Only whole numbers of items can be made.");
         expect(q.prompt).toContain(info.sense === "max" ? "maximise the profit" : "minimise the cost");
         for (const part of info.parts) {
           const pi = part.info;
           if (pi.kind === "resource") { for (const a of pi.per) expect(inPrompt(q.prompt, a)).toBe(true); expect(inPrompt(q.prompt, pi.amount)).toBe(true); }
           else if (pi.kind === "difference") expect(inPrompt(q.prompt, pi.k)).toBe(true);
           else if (pi.kind === "bound" || pi.kind === "total") expect(inPrompt(q.prompt, pi.N)).toBe(true);
+          else if (pi.kind === "percent") expect(q.prompt).toContain(`${pi.p}%`);
+          else if (pi.kind === "decimal") { for (const v of pi.a) expect(q.prompt).toContain(decStr(fr(v, pi.den))); expect(inPrompt(q.prompt, pi.amount)).toBe(true); }
         }
         expect(q.answerText).toContain(info.sense === "max" ? "Maximise" : "Minimise");
 
@@ -126,6 +131,8 @@ describe("random draws (seeded)", () => {
         for (const c of cons) expect(last).toContain(constraintTex(c, syms));
         expect(last).toContain(syms.map((s) => `${s} \\ge 0`).join(",\\ "));
         expect(last.join("\n")).toContain(`${info.name} = `);
+        if (level === 2) expect(last.some((t) => t.includes("integers"))).toBe(true);
+        if (info.price) expect(steps[steps.length - 1].caption).toContain("using the selling prices");
         expect(steps.slice(0, -1).some((st) => st.caption.startsWith("Common slips"))).toBe(false);
       }
       expect([...senses].sort()).toEqual(["max", "min"]);

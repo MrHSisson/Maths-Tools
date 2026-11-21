@@ -5,7 +5,7 @@
 import { type Fr, fr, ZERO } from "./dim";
 import { type Constraint, type Op, type Var, gcdInt, lcmInt } from "./lp";
 import {
-  type LpGenOptions, type LpKind, type LpProblemData, type LpQuestion, type LpSpec, CONTEXTS, AMOUNTS, ri, pick, weighted, shuffled, cap, list, pickOp, pickVars, letDef,
+  type Fix, type LpGenOptions, type LpKind, type LpProblemData, type LpQuestion, type LpSpec, CONTEXTS, AMOUNTS, opFrom, ri, pick, weighted, shuffled, cap, list, pickOp, pickVars, letDef,
   opWord, constraintOf, constraintText, generateLevel1,
 } from "./lpGen";
 
@@ -31,16 +31,16 @@ export interface LpGenOptionsFull extends LpGenOptions {
 
 // ── Level 2: percentages ─────────────────────────────────────────────────────
 const P_OF = [10, 20, 25, 30, 40, 50, 60, 75, 80];
-function genPercent(n: number, forms: string[]): Gen {
+export function genPercent(n: number, forms: string[], fx?: Fix): Gen {
   for (let tries = 0; tries < 60; tries++) {
-    const ctx = pick(CONTEXTS);
-    const { vars } = pickVars(ctx, n);
+    const ctx = fx?.ctx ?? pick(CONTEXTS);
+    const { vars } = fx ?? pickVars(ctx, n);
     const allowed = forms.filter((f) => (f === "combined" ? n >= 3 : true));
     const f = pick(allowed.length ? allowed : ["one"]);
     const form = f === "morless" ? pick(["more", "less"] as const) : (f as "one" | "combined" | "total");
     const a = ri(0, n - 1);
     const others = shuffled(range(n).filter((i) => i !== a));
-    const op = pickOp();
+    const op = opFrom(fx, pickOp);
     let b: number[], p: number, m: Fr;
     if (form === "combined") { b = others.slice(0, ri(2, Math.min(3, n - 1))).sort((x, y) => x - y); p = pick(P_OF); m = fr(p, 100); }
     else if (form === "total") { b = range(n); p = pick(P_OF); m = fr(p, 100); }
@@ -62,17 +62,17 @@ function genPercent(n: number, forms: string[]): Gen {
     else slip = { spec: { ...spec, a: b, b: [a] }, what: "the percentage taken of the wrong quantity" };
     return { prompt, data: { kind: "percent", vars, op, spec, slip, info: { kind: "percent", form, a: [a], b, m, p } } };
   }
-  return genPercent(2, ["one"]);
+  return genPercent(2, ["one"], fx);
 }
 
 // ── Level 2: ratios, "one for every", and shares of the total ────────────────
 const RATIOS: Array<[number, number]> = [[1, 2], [2, 3], [3, 4], [1, 3], [3, 2], [2, 5], [5, 2], [3, 5], [4, 3], [5, 3], [1, 4]];
 const SHARES: Array<[Fr, string]> = [[fr(1, 2), "half"], [fr(1, 3), "one third"], [fr(1, 4), "one quarter"], [fr(2, 3), "two thirds"], [fr(3, 4), "three quarters"], [fr(1, 5), "one fifth"], [fr(2, 5), "two fifths"], [fr(3, 5), "three fifths"]];
 const KWORD: Record<number, string> = { 2: "two", 3: "three", 4: "four" };
-function genRatio(n: number): Gen {
-  const ctx = pick(CONTEXTS);
-  const { vars } = pickVars(ctx, n);
-  const op = pickOp();
+export function genRatio(n: number, fx?: Fix): Gen {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const { vars } = fx ?? pickVars(ctx, n);
+  const op = opFrom(fx, pickOp);
   const form = weighted<"ratio" | "every" | "share">([["ratio", 4], ["every", 3], ["share", 3]]);
   const all = vars.map((v) => v.noun);
   const names = (xs: number[]): string => list(xs.map((i) => vars[i].noun));
@@ -99,12 +99,12 @@ function genRatio(n: number): Gen {
 }
 
 // ── Level 2: decimal amounts per item ────────────────────────────────────────
-function genDecimal(n: number): Gen {
+export function genDecimal(n: number, fx?: Fix): Gen {
   const ctxs = CONTEXTS.filter((c) => c.resources.some((r) => r.decOnly));
   for (let tries = 0; tries < 80; tries++) {
-    const ctx = pick(ctxs);
-    const res = pick(ctx.resources.filter((r) => r.decOnly));
-    const { vars, sing } = pickVars(ctx, n);
+    const ctx = fx?.ctx ?? pick(ctxs);
+    const res = fx?.res ?? pick(ctx.resources.filter((r) => r.decOnly));
+    const { vars, sing } = fx ?? pickVars(ctx, n);
     const den = pick([2, 4, 5, 10]);
     const a = Array.from({ length: n }, () => ri(1, Math.min(20, 3 * den)));
     if (new Set(a).size < 2 || a.every((v) => v % den === 0)) continue;
@@ -112,7 +112,7 @@ function genDecimal(n: number): Gen {
     const ok = AMOUNTS.filter((N) => N >= 40 && (N * den) % g === 0 && a.some((v) => (N * den) % v === 0) && N * den <= 30000);
     if (!ok.length) continue;
     const amount = pick(ok);
-    const op = weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]);
+    const op = opFrom(fx, () => weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]));
     const per = a.map((v) => fr(v, den));
     const tail = (f: Fr, first: boolean): string => `${decStr(f)} ${res.unit}${first ? ` of ${res.of}` : ""}`;
     const each = sing.map((s, i) => `each ${s} ${res.verb} ${tail(per[i], i === 0)}`);
@@ -122,7 +122,7 @@ function genDecimal(n: number): Gen {
     const slip: LpSpec = { t: "linear", coeffs: a.map((v) => fr(v)), op, rhs: fr(amount), kind: "resource" };
     return { prompt, data: { kind: "decimal", vars, op, spec, slip: { spec: slip, what: "multiplying the coefficients to clear the decimals but not the right-hand side" }, info: { kind: "decimal", a, den, amount, unit: res.unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing } } };
   }
-  return genDecimal(2);
+  return genDecimal(2, fx);
 }
 
 // ── Level 3: blends and averages ─────────────────────────────────────────────
