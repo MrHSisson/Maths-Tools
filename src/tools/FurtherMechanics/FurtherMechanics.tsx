@@ -7,10 +7,10 @@ import { CHAPTERS, GENERAL_RESOURCES, CHECK_NOTES, MECHANICS_TOOLS, MECHANICS_PA
 // so whether one is live is never typed here. Open to everyone (`public`), as Decision Maths is: the live generators first, then the statements; the planning
 // material (legacy papers, notes, tools still in development) stays in Developing-tools mode.
 
-/** a sub-tool as a link that opens its tool on that sub-tool and kind of practice (every Mechanics tool so far is AS) */
+/** a sub-tool as a link that opens its tool on that sub-tool (and kind of practice, for a tool that has the switch) */
 const linkOf = (r: MechSubRef): SpecLink[] => {
   const t = ALL_TOOLS.find((x) => x.id === r.tool);
-  return t ? [{ label: r.label, href: `${t.path}?tool=${r.sub}&o_practice=${r.practice}`, live: t.enabled !== false, as: true }] : [];
+  return t ? [{ label: r.label, href: `${t.path}?tool=${r.sub}${r.practice ? `&o_practice=${r.practice}` : ""}`, live: t.enabled !== false, as: !r.a2 }] : [];
 };
 
 const chapters: SpecChapter[] = CHAPTERS.map((c) => ({

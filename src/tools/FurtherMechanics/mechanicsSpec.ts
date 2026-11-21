@@ -129,16 +129,19 @@ export const CHECK_NOTES = {
 // ── The tools built for each chapter, and which of their sub-tools practise which statement ───────────────────────────────────────────────────
 // The page reads each tool's name, address and whether it is live from the registry (FurtherMechanics.tsx), so none of that is typed here.
 // Every sub-tool of a tool is placed exactly once (src/tests/mechanicsPairings.test.ts), as for the Decision hub.
-export interface MechSubRef { tool: string; sub: string; label: string; practice: "skills" | "exam" }
+export interface MechSubRef { tool: string; sub: string; label: string; /** a tool with a Skills / Exam style switch says which (Dimensional Analysis); others leave it out */ practice?: "skills" | "exam"; /** beyond AS: shown on the A2 row */ a2?: boolean }
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
+const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done"] };
 
-/** the sub-tools that practise each statement (every one of them is AS) */
+/** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   MA1: [da("dims", "Find the dimensions"), da("consistent", "Check consistency")],
   MA2: [da("powers", "Find the powers")],
+  MC1: [wd("fd", "Force and distance"), wd("grav", "Work and gravity"), wd("several", "Several forces"), wd("angle", "Force at an angle", true)],
+  MC5: [wd("variable", "Variable force")],
 };
 
 /** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
@@ -159,11 +162,9 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
   MB2: [{ label: "Restitution and impacts" }],
   MB3: [{ label: "Impulse and momentum" }],
   MB4: [{ label: "Impulse of a variable force" }],
-  MC1: [{ label: "Force and distance" }, { label: "Work and gravity" }, { label: "Several forces" }, { label: "Force at an angle", a2: true }],
   MC2: [{ label: "Kinetic and potential energy" }, { label: "Conservation of energy" }],
   MC3: [{ label: "Kinetic and potential energy" }, { label: "Work-energy principle" }, { label: "Conservation of energy" }],
   MC4: [{ label: "Hooke's law" }],
-  MC5: [{ label: "Variable force" }],
   MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
   MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],
   MD1: [{ label: "Angular speed, speed and acceleration" }],
