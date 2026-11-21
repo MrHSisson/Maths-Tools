@@ -1,5 +1,5 @@
 // Flashcards: what comes up next. A three-box Leitner scheme kept per card and direction. The student's own rating after each card sets its box directly
-// (Not yet → box 1, Nearly → box 2, Got it → box 3) and the box sets when it is due again. Pure functions, no storage: store.ts keeps the memory on the device.
+// Not yet puts a card back in box 1; Got it moves it up one box (a new card goes to box 2), and the box sets when it is due again. Pure functions, no storage: store.ts keeps the memory on the device.
 import type { Card, Prompt, Rating } from "./types";
 
 export const DAY = 86_400_000;
@@ -9,11 +9,9 @@ const INTERVAL = [0, 0, 2 * DAY, 7 * DAY];
 interface CardState { box: 1 | 2 | 3; due: number; seen: number }
 export type Memory = Record<string, CardState>;
 
-const BOX: Record<Rating, 1 | 2 | 3> = { again: 1, nearly: 2, got: 3 };
-
 /** The memory after the student rates a prompt at time `now`. */
 export function rate(mem: Memory, key: string, rating: Rating, now: number): Memory {
-  const box = BOX[rating];
+  const box: 1 | 2 | 3 = rating === "again" ? 1 : (Math.min(3, (mem[key]?.box ?? 1) + 1) as 2 | 3);
   return { ...mem, [key]: { box, due: now + INTERVAL[box], seen: (mem[key]?.seen ?? 0) + 1 } };
 }
 
@@ -58,7 +56,7 @@ export function buildSession(keys: string[], mem: Memory, now: number, size: num
   return rest.slice(0, size);
 }
 
-/** The statements a session went worst on: how many of each statement's prompts were rated Not yet or Nearly, worst first. */
+/** The statements a session went worst on: how many of each statement's prompts were rated Not yet, worst first. */
 export function weakestStatements(results: { statement: string; rating: Rating }[]): { statement: string; missed: number; of: number }[] {
   const by = new Map<string, { missed: number; of: number }>();
   for (const r of results) {

@@ -2,8 +2,11 @@
 // meets (the prompts) are a card and a direction. Design and the first card set: specs/flashcards/further-mechanics-mc.md.
 import type { Scene } from "../mechanics";
 
-/** What a card asks: a formula to recall, a unit or value, when something applies, which method to use, a trap to avoid, or a picture to read. */
-export type CardKind = "formula" | "units" | "condition" | "method" | "trap" | "diagram";
+/** The header a card carries, so a student knows what is being asked: a definition to state, a formula to recall, a result to derive, a property, a unit or value, a method, a common error, or a diagram to read. */
+export type CardKind = "definition" | "formula" | "derive" | "property" | "unit" | "method" | "error" | "diagram";
+
+/** Essential cards are the results and facts to know; derived cards ask for something that can be worked out from them (good practice, but not something to memorise). */
+type CardTier = "essential" | "derived";
 
 export interface Card {
   /** Stable name, such as "mc3-ke"; also the key of the card's memory on the student's device, so never reuse or rename one. */
@@ -13,6 +16,7 @@ export interface Card {
   /** A2 for the cards that need cos θ, resolving, slopes or vectors; AS for the rest. */
   course: "AS" | "A2";
   kind: CardKind;
+  tier: CardTier;
   /** Text with maths between $…$ (KaTeX). */
   front: string;
   back: string;
@@ -40,4 +44,5 @@ export interface CardSet {
   cards: Card[];
 }
 
-export type Rating = "again" | "nearly" | "got";
+/** How the student judged themselves: not yet, or got it. */
+export type Rating = "again" | "got";

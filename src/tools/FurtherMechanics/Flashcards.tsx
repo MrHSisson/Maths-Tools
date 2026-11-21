@@ -10,8 +10,9 @@ import { MECHANICS_MC } from "../../flashcards/mechanicsMC";
 // a second set is added. Design and card list: specs/flashcards/further-mechanics-mc.md.
 
 const ABOUT =
-  "Short cards for the key formulas, units, conditions, methods and common mistakes in Work, Energy and Power (AQA 7367, MC1 to MC7). Flip a card, then rate yourself: Not yet, Nearly or Got it. " +
-  "The cards you find hard come back sooner. Formula cards also come round back to front, and some cards show a diagram. Your ratings stay on this device only.";
+  "Short cards for the key definitions, formulas, properties, units, methods and common mistakes in Work, Energy and Power (AQA 7367, MC1 to MC7). Each card has a header that says what is asked. " +
+  "Essential cards are the results to know; derivation cards ask you to work something out from them, which is good practice but not for memorising. Turn a card over, then say whether you got it: " +
+  "the ones you did not get come back sooner. Formula and definition cards also come round back to front, and some cards show a diagram. Your ratings stay on this device only.";
 
 export default function App() {
   const { phone } = useLayoutMode();

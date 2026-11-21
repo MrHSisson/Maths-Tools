@@ -6,13 +6,15 @@ export interface Prefs {
   /** The statements chosen (empty means all of them). */
   statements: string[];
   course: "AS" | "all";
+  /** Essential cards only, or essential and derived. */
+  tier: "essential" | "all";
   kinds: string[];
   bothWays: boolean;
   /** How many prompts in a session; null is every one. */
   size: number | null;
 }
 
-export const DEFAULT_PREFS: Prefs = { statements: [], course: "all", kinds: [], bothWays: true, size: 10 };
+export const DEFAULT_PREFS: Prefs = { statements: [], course: "all", tier: "essential", kinds: [], bothWays: true, size: 10 };
 
 const key = (setId: string, part: "memory" | "prefs") => `fm-flashcards:v1:${setId}:${part}`;
 
@@ -40,6 +42,7 @@ export function loadPrefs(setId: string): Prefs {
   return {
     statements: Array.isArray(p.statements) ? p.statements.filter((s): s is string => typeof s === "string") : [],
     course: p.course === "AS" ? "AS" : "all",
+    tier: p.tier === "all" ? "all" : "essential",
     kinds: Array.isArray(p.kinds) ? p.kinds.filter((s): s is string => typeof s === "string") : [],
     bothWays: p.bothWays !== false,
     size: p.size === null ? null : typeof p.size === "number" && p.size > 0 ? p.size : 10,

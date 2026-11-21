@@ -20,7 +20,8 @@ describe("the Mechanics MC card set", () => {
       ids.add(c.id);
       expect(statements.has(c.statement), `${c.id}: statement ${c.statement}`).toBe(true);
       expect(["AS", "A2"]).toContain(c.course);
-      expect(["formula", "units", "condition", "method", "trap", "diagram"]).toContain(c.kind);
+      expect(["definition", "formula", "derive", "property", "unit", "method", "error", "diagram"]).toContain(c.kind);
+      expect(["essential", "derived"]).toContain(c.tier);
       expect(c.front.trim().length).toBeGreaterThan(5);
       expect(c.back.trim().length).toBeGreaterThan(3);
     }
@@ -42,12 +43,27 @@ describe("the Mechanics MC card set", () => {
     }
   });
 
-  it("gives a reverse only to cards that are not diagrams, and a picture to every diagram card", () => {
+  it("gives a reverse only to formula and definition cards, and a picture to every diagram card", () => {
     for (const c of cards) {
       if (c.kind === "diagram") { expect(c.picture, c.id).toBeDefined(); expect(c.reverse).toBeFalsy(); }
       else expect(c.picture).toBeUndefined();
+      if (c.reverse) expect(["formula", "definition"], `${c.id} reverses`).toContain(c.kind);
     }
     expect(cards.filter((c) => c.reverse).length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("separates what is essential from what is derived: every Derive card is derived, and the essentials are a smaller, core set", () => {
+    for (const c of cards.filter((x) => x.kind === "derive")) expect(c.tier, c.id).toBe("derived");
+    const essential = cards.filter((c) => c.tier === "essential").length, derived = cards.length - essential;
+    expect(derived).toBeGreaterThanOrEqual(10);
+    expect(essential).toBeGreaterThan(derived);
+    expect(essential).toBeLessThanOrEqual(55);
+    // every statement still has essential cards, so "essentials only" never leaves a statement empty
+    for (const s of MECHANICS_MC.statements) expect(cards.some((c) => c.statement === s.code && c.tier === "essential"), s.code).toBe(true);
+  });
+
+  it("starts a Derive card's front with what is to be found, not a bare statement (the header says what is asked)", () => {
+    for (const c of cards.filter((x) => x.kind === "derive" || x.kind === "method")) expect(c.front.length, c.id).toBeGreaterThan(20);
   });
 
   it("draws each diagram card cleanly at the size it is shown, with the answer hidden and shown", () => {
@@ -69,11 +85,14 @@ describe("the Mechanics MC card set", () => {
 describe("the Leitner schedule", () => {
   const T = 1_000_000_000_000;
 
-  it("sets the box from the rating and the due time from the box", () => {
+  it("moves a card up a box each time it is got and back to box 1 when it is not, and sets the due time from the box", () => {
     let m: Memory = {};
     m = rate(m, "a", "again", T); expect(m.a).toEqual({ box: 1, due: T, seen: 1 });
-    m = rate(m, "a", "nearly", T); expect(m.a).toEqual({ box: 2, due: T + 2 * DAY, seen: 2 });
+    m = rate(m, "a", "got", T); expect(m.a).toEqual({ box: 2, due: T + 2 * DAY, seen: 2 });
     m = rate(m, "a", "got", T); expect(m.a).toEqual({ box: 3, due: T + 7 * DAY, seen: 3 });
+    m = rate(m, "a", "got", T); expect(m.a.box).toBe(3);
+    expect(rate({}, "n", "got", T).n.box).toBe(2);          // a new card that is got starts in box 2
+    expect(rate(m, "a", "again", T).a.box).toBe(1);
     expect(standing(m, "a", T + DAY)).toBe("waiting");
     expect(standing(m, "a", T + 8 * DAY)).toBe("due");
     expect(standing(m, "never", T)).toBe("new");
@@ -83,7 +102,7 @@ describe("the Leitner schedule", () => {
   it("builds a session of what is being learnt, then what is due, then new prompts, cut to the size", () => {
     let m: Memory = {};
     m = rate(m, "learn", "again", T);
-    m = rate(m, "due", "got", T - 10 * DAY);
+    m = rate(rate(m, "due", "got", T - 10 * DAY), "due", "got", T - 10 * DAY);
     m = rate(m, "wait", "got", T);
     const keys = ["new1", "new2", "wait", "due", "learn"];
     const s = buildSession(keys, m, T, 3, seededRandom(1));
@@ -109,7 +128,7 @@ describe("the Leitner schedule", () => {
   it("names the statements a session went worst on", () => {
     const w = weakestStatements([
       { statement: "MC3", rating: "again" }, { statement: "MC3", rating: "got" }, { statement: "MC7", rating: "got" },
-      { statement: "MC1", rating: "again" }, { statement: "MC1", rating: "nearly" },
+      { statement: "MC1", rating: "again" }, { statement: "MC1", rating: "again" },
     ]);
     expect(w.map((x) => x.statement)).toEqual(["MC1", "MC3"]);
     expect(w[0]).toEqual({ statement: "MC1", missed: 2, of: 2 });
@@ -130,7 +149,7 @@ describe("the stored memory and settings", () => {
     withStorage({}, () => {
       const mem: Memory = { x: { box: 2, due: 5, seen: 3 } };
       saveMemory("s", mem); expect(loadMemory("s")).toEqual(mem);
-      savePrefs("s", { ...DEFAULT_PREFS, statements: ["MC3"], course: "AS", size: null }); expect(loadPrefs("s")).toMatchObject({ statements: ["MC3"], course: "AS", size: null });
+      savePrefs("s", { ...DEFAULT_PREFS, statements: ["MC3"], course: "AS", tier: "all", size: null }); expect(loadPrefs("s")).toMatchObject({ statements: ["MC3"], course: "AS", tier: "all", size: null });
     });
   });
 
