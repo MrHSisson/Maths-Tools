@@ -13,8 +13,8 @@ import { readFileSync } from "node:fs";
 
 /** Test files by area. Patterns are tested against the file name, e.g. "cpaExam.test.ts". */
 export const TEST_AREAS = {
-  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas)\.test\.ts$/,
-  cpa: /^(cpa.*|criticalPathOptions|levellingMethod|workerLabels)\.test\.ts$/,
+  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas|testShards)\.test\.ts$/,
+  cpa: /^(cpa.*|criticalPathOptions|levelling.*|workerLabels)\.test\.ts$/,
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
   mechanics: /^(dim|mechanics.*)\.test\.ts$/,
@@ -40,6 +40,8 @@ export const PATH_RULES = [
   [/^specs\/.*\.ts$/, ["decks"]],                      // deck build scripts
   [/^(docs\/|specs\/|.*\.md$|src\/generated\/|\.claude\/)/, ["docs"]],
   [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)|^src\/tools\/Decision\/CriticalPath/, topic("cpa")],
+  // the graph topics build on two flow files (graphBank uses the flow templates and geometry), so a change to those runs the graph tests too
+  [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [...topic("flow"), "graphs"]],
   [/^src\/shared\/decision\/(flow|FlowTileArt|cutCurve)|^src\/tools\/Decision\/NetworkFlows/, topic("flow")],
   [/^src\/shared\/decision\/(mst|tsp|routeInspection|graphBank)|^src\/tools\/Decision\/(MinimumSpanningTree|TravellingSalesperson|RouteInspection)/, topic("graphs")],
   [/^src\/shared\/decision\/(dim|DimWorking)|^src\/tools\/FurtherMechanics\/|^src\/shared\/mechanics\//, topic("mechanics")],
@@ -52,6 +54,21 @@ export const PATH_RULES = [
   [/^src\/(shared|admin|components|pages)\/|^src\/[^/]+\.(ts|tsx|css)$|^(package(-lock)?\.json|vite\.config\.ts|tsconfig.*|eslint.*|\.github\/|scripts\/(testAreas|selectTests)|src\/tests\/)/, ["all"]],
 ];
 
+// Which tools a changed file under src/shared/decision/ can affect (for the cross-tool checks). Checked by reading the imports: no Decision topic imports
+// another except the graph topics, which use the flow templates and geometry; the Decision tools reach their topic through the shell, and only
+// Dimensional Analysis (mechanics) imports the dim files directly.
+const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx";
+const TOPIC_TOOLS = [
+  [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)/, [CPA]],
+  [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [FLOW, MST, TSP, ROUTE]],
+  [/^src\/shared\/decision\/(flow|FlowTileArt|cutCurve)/, [FLOW]],
+  [/^src\/shared\/decision\/mst/, [MST]],
+  [/^src\/shared\/decision\/tsp/, [TSP]],
+  [/^src\/shared\/decision\/routeInspection/, [ROUTE]],
+  [/^src\/shared\/decision\/graphBank/, [MST, TSP, ROUTE]],
+  [/^src\/shared\/decision\/(dim|DimWorking)/, [DIM]],
+];
+
 /** The tool file a changed path stands for (the tool itself or its About words), or null for any other file. Read from the generated tool facts. */
 const toolFiles = () => new Set(JSON.parse(readFileSync("src/generated/toolFacts.json", "utf8")).tools.map((t) => t.file));
 export const toolEntryOf = (file) => { const all = toolFiles(); if (all.has(file)) return file; const own = file.replace(/\.about\.ts$/, ".tsx"); return own !== file && all.has(own) ? own : null; };
@@ -59,7 +76,8 @@ export const toolEntryOf = (file) => { const all = toolFiles(); if (all.has(file
 /**
  * The checks in the `cross` area run over every tool. When the only things in a change that need them are tool files (a tool, or its About words),
  * they need to run for those tools alone: this returns their paths. It returns null (run them for every tool) when anything else needs them
- * (a shared file, a helper in a tool folder, a changed cross-tool test) or when no tool file is involved.
+ * (a shared file outside the Decision folder, a helper in a tool folder, a changed cross-tool test) or when no tool file is involved. A file under
+ * src/shared/decision/ maps to the Decision tools it can affect (TOPIC_TOOLS below).
  */
 export function toolFilter(changed) {
   const found = new Set();
@@ -69,6 +87,9 @@ export function toolFilter(changed) {
     const [, areas] = rule;
     const needsCross = areas === null ? areaOfTest(f.split("/").pop()) === "cross" : areas.includes("all") || areas.includes("cross");
     if (!needsCross) continue;
+    const topicTools = TOPIC_TOOLS.find(([re]) => re.test(f))?.[1];
+    if (topicTools) { topicTools.forEach((t) => found.add(t)); continue; }
+    if (/^src\/shared\/decision\//.test(f)) { [...toolFiles()].filter((t) => /^src\/tools\/(Decision|FurtherMechanics)\//.test(t)).forEach((t) => found.add(t)); continue; }   // the shell itself: every Decision and mechanics tool
     const tool = areas === null ? null : toolEntryOf(f);
     if (!tool) return null;
     found.add(tool);

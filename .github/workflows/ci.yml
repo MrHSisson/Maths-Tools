@@ -27,9 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.pick.outputs.run }}
-      files: ${{ steps.pick.outputs.files }}
       smoke: ${{ steps.pick.outputs.smoke }}
       toolfiles: ${{ steps.pick.outputs.toolfiles }}
+      matrix: ${{ steps.pick.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,15 +59,14 @@ jobs:
       - name: Lint (React hooks rules)
         run: npm run lint
 
-  # The chosen tests, split into four runners (vitest hands each its share of the files).
+  # The chosen tests, split into four runners.
   tests:
     needs: select
     if: needs.select.outputs.run != 'none'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}      # one runner per share of the files, from scripts/selectTests.mjs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -76,14 +75,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Tests (all), shard ${{ matrix.shard }} of 4
-        if: needs.select.outputs.run == 'all'
-        run: npx vitest run --shard=${{ matrix.shard }}/4
-      - name: Tests (the areas this change touches), shard ${{ matrix.shard }} of 4
-        if: needs.select.outputs.run == 'files'
+      # the files are shared out so the four runners finish together (by recorded time, scripts/testTimes.json); passed through the environment, never into the command text
+      - name: Tests, runner ${{ matrix.shard }}
         env:
+          SHARD_FILES: ${{ matrix.files }}
           TOOL_FILES: ${{ needs.select.outputs.toolfiles }}      # the checks that run over every tool run over only the tools this change touched (empty: every tool)
-        run: npx vitest run --shard=${{ matrix.shard }}/4 --passWithNoTests ${{ needs.select.outputs.files }}
+        run: npx vitest run $SHARD_FILES
 
   # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
   shell-smoke:
@@ -98,9 +95,20 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Install a browser for the smoke check
-        run: |
-          npm install --no-save playwright@1.63.0
-          npx playwright install --with-deps chromium
+      - name: Install the browser library for the smoke check
+        run: npm install --no-save playwright@1.63.0
+      # the browser itself is kept between runs (downloading it took 5 minutes 48 seconds once); its system libraries are installed every time
+      - name: Cache the browser
+        id: browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium-${{ runner.os }}
+      - name: Install the browser
+        if: steps.browser.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install the browser's system libraries
+        if: steps.browser.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - name: Shell smoke check
         run: npm run smoke:shell

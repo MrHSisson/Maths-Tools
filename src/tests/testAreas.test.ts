@@ -29,7 +29,7 @@ describe("test areas", () => {
   });
   it("each Decision topic runs its own tests plus the shell-wide ones, and a shell change runs them all", () => {
     expect(sorted(areasForChange(["src/shared/decision/cpa.ts"]))).toEqual(["cpa", "cross", "decision", "docs"]);
-    expect(sorted(areasForChange(["src/shared/decision/flowGeometry.ts"]))).toEqual(["cross", "decision", "docs", "flow"]);
+    expect(sorted(areasForChange(["src/shared/decision/flowGeometry.ts"]))).toEqual(["cross", "decision", "docs", "flow", "graphs"]);   // the graph topics use the flow geometry
     expect(sorted(areasForChange(["src/tools/Decision/TravellingSalesperson.tsx"]))).toEqual(["cross", "decision", "docs", "graphs"]);
     expect(sorted(areasForChange(["src/shared/decision/DecisionShell.tsx"]))).toEqual(["cpa", "cross", "decision", "docs", "flow", "graphs", "mechanics"]);
     expect(filesIn(areasForChange(["src/shared/decision/cpa.ts"]) as string[])).toContain("levellingMethod.test.ts");
@@ -54,10 +54,22 @@ describe("test areas", () => {
     expect(toolFilter([rounding, indices, "docs/TASKS.md", "src/decks/store.ts"])).toEqual([indices, rounding]);   // docs and deck files do not need the all-tool checks
     expect(toolFilter(["src/tools/Decision/CriticalPath.tsx"])).toEqual(["src/tools/Decision/CriticalPath.tsx"]);
   });
+  it("a Decision topic's files map to the Decision tools they can affect", () => {
+    const T = "src/tools/Decision/";
+    expect(toolFilter(["src/shared/decision/cpaSolve.ts"])).toEqual([T + "CriticalPath.tsx"]);
+    expect(toolFilter(["src/shared/decision/flowSolve.ts"])).toEqual([T + "NetworkFlows.tsx"]);
+    expect(toolFilter(["src/shared/decision/dimSolve.ts"])).toEqual(["src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]);
+    // the graph tools build on two flow files, so those run the graph tools and the graph tests as well
+    expect(toolFilter(["src/shared/decision/flowGeometry.ts"])).toEqual([T + "MinimumSpanningTree.tsx", T + "NetworkFlows.tsx", T + "RouteInspection.tsx", T + "TravellingSalesperson.tsx"]);
+    expect(sorted(areasForChange(["src/shared/decision/flowTemplates.ts"]))).toEqual(["cross", "decision", "docs", "flow", "graphs"]);
+    // the shell itself: every Decision and mechanics tool (and every Decision topic's tests)
+    const shell = toolFilter(["src/shared/decision/DecisionShell.tsx"]) as string[];
+    expect(shell).toEqual(expect.arrayContaining([T + "CriticalPath.tsx", T + "NetworkFlows.tsx", "src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]));
+    expect(shell.every((t) => /^src\/tools\/(Decision|FurtherMechanics)\//.test(t))).toBe(true);
+  });
   it("and for every tool when anything else needs them", () => {
     expect(toolFilter(["src/tools/Number/Indices.tsx", "src/shared/helpers.ts"])).toBeNull();          // shared code
     expect(toolFilter(["src/tools/Proportion/ratioSimplifying.ts"])).toBeNull();                         // a helper in a tool folder: which tool uses it is not known
-    expect(toolFilter(["src/shared/decision/cpa.ts"])).toBeNull();
     expect(toolFilter(["src/tests/seedReplay.test.ts"])).toBeNull();                                      // the check itself changed
     expect(toolFilter(["docs/TASKS.md"])).toBeNull();                                                      // no tool file at all
   });

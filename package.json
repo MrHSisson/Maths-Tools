@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint src --max-warnings 0",
+    "test:times": "node scripts/recordTestTimes.mjs",
     "smoke:shell": "node scripts/shellSmoke.mjs",
     "smoke:questions": "node scripts/questionsSmoke.mjs",
     "smoke:solutions": "node scripts/solutionSmoke.mjs",
