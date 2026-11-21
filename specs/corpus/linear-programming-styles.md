@@ -6,6 +6,8 @@
 
 **Rules.** Shapes only. One row per style. `Home` is a sub-tool key (`formulate`, `region`, `optimise`, `setup`, `pivot`, `interpret`) or `UNHOMED` while none covers it; when several UNHOMED rows share a skill, propose a sub-tool.
 
+**Correction, 2026-11-21.** Section 1 of the chapter and Mixed practice 11 carry no A-level marker, so three-variable formulation (L08) and the 2015 chain (L12, L33) are AS content. Only section 3 and the Y2-marked Mixed practice questions are A2.
+
 **Sources.**
 - **T4**: the textbook, chapter 4 Linear programming (WE = worked example, Ex = exercise question, MP = Mixed practice question). Y2 marks A-level only content (section 3 and the Y2 MP questions); sections 1 and 2 are AS and A-level.
 - **AQA**: two Mixed practice questions are marked as AQA past-paper questions (2015, 2016): shapes recorded below as chain patterns for the later exam-style pass.
@@ -21,11 +23,11 @@
 | L05 | "At least" and "at least twice as" relations between two quantities (one of them a lower bound, one a ratio) | T4 WE4.4 | DD1 | AS | formulate |
 | L06 | A remainder variable eliminated by substitution (the third use of the total is the total minus the other two), so the objective is written in two variables with a constant | T4 WE4.4 (turf cost); WE4.6b (sleep time) | DD1 | AS | formulate |
 | L07 | Percentage constraints on shares of a total (a range of percent of calories; a minimum percent of study time), turned into linear inequalities | T4 WE4.5, WE4.6 | DD1 | AS | formulate |
-| L08 | Three-variable formulation, then the same problem reduced to two variables by using up all the time | T4 WE4.6a,b | DD1 | A2 | formulate |
+| L08 | Three-variable formulation, then the same problem reduced to two variables by using up all the time | T4 WE4.6a,b | DD1 | AS | formulate |
 | L09 | Choose which of four points is feasible given a word constraint ("more than three times") | T4 Ex4A 1 | DD1 | AS | formulate |
 | L10 | Decide which of four points is NOT in a feasible region given its inequalities | T4 Ex4A 2 | DD2 | AS | region |
 | L11 | Write constraints on two variables as inequalities from a short wordy list ("non-negative", "at most", "no more than three times") | T4 MP3 | DD1 | AS | formulate |
-| L12 | A problem with a unit change (tonnes against kilograms), several ingredients, a "must make at least" and an extra condition ("exactly half is …") that turns a three-variable set into two variables; show the constraints become the given list | AQA 2015 in T4 MP11a,b | DD1 | A2 | formulate |
+| L12 | A problem with a unit change (tonnes against kilograms), several ingredients, a "must make at least" and an extra condition ("exactly half is …") that turns a three-variable set into two variables; show the constraints become the given list | AQA 2015 in T4 MP11a,b | DD1 | AS | formulate |
 | L13 | Whole-number packs (loaves and trays of six buns): define variables so the objective is linear in the pack count, then solve and say why the real profit might be lower than the model's | T4 MP9 | DD1, DD2 | AS | formulate, optimise |
 | L14 | A problem set up in a recognisable earlier worked context and re-run with changed numbers (the study-and-sleep problem, solved by simplex) | T4 Ex4C 10 | DD1, DD3 | A2 | formulate, setup |
 
@@ -46,7 +48,7 @@
 | L30 | The objective's coefficient is a parameter k: for what range of k does the optimal vertex change; the value of k where an edge becomes optimal (more than one optimal vertex) | T4 WE4.7b; Ex4B 6; MP7 | DD2 | AS | UNHOMED (propose a later `range` sub-tool, or an extension of `optimise`) |
 | L31 | A constraint or the objective is changed and the problem is re-solved (new vertices, new optimum) | T4 WE4.7c | DD2 | AS | optimise |
 | L32 | Redundant constraints: name them from a formulation and explain algebraically why they do not matter; for what values of a parameter a constraint is redundant; find the vertices in terms of that parameter | T4 Ex4A 7, 8 | DD2 | AS | UNHOMED (propose a `region` extension or a later `redundant` sub-tool) |
-| L33 | Full AQA-style chain: write four constraints, show the changed set, draw them on given axes and label the region R, write the objective in two variables, find the best point by an objective line, state the profit and the amount of each product | AQA 2015 in T4 MP11 | DD2 | A2 | exam-style pass (later) |
+| L33 | Full AQA-style chain: write four constraints, show the changed set, draw them on given axes and label the region R, write the objective in two variables, find the best point by an objective line, state the profit and the amount of each product | AQA 2015 in T4 MP11 | DD2 | AS | exam-style pass (later) |
 
 ## Simplex (DD3, DD4; A-level only)
 
