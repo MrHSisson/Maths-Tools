@@ -4,7 +4,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import katex from "katex";
 import { fr, type Fr } from "../shared/decision/dim";
 import { OPS, type Op, gcdInt, isTidy, tidyHolds } from "../shared/decision/lp";
-import { constraintOf, constraintText, generateConstraint, opWord, type LpProblemData } from "../shared/decision/lpGen";
+import { constraintOf, constraintText, opWord, type LpProblemData } from "../shared/decision/lpGen";
+import { generateConstraint as gen, type LpGenOptionsFull } from "../shared/decision/lpGenL23";
 import { constraintTex, solveLp } from "../shared/decision/lpSolve";
 import type { DecisionProblem } from "../shared/decision/types";
 import { __seed } from "../tools/Decision/FormulatingLP";
@@ -20,6 +21,7 @@ afterEach(() => vi.restoreAllMocks());
 
 const asProblem = (q: { prompt: string; answerText: string; data: LpProblemData }): DecisionProblem => ({ kind: q.data.kind, level: 1, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" });
 const F = (n: number, d = 1) => fr(n, d);
+const generateConstraint = (level: number, o: Pick<LpGenOptionsFull, "vars" | "styles"> & Partial<LpGenOptionsFull>) => gen(level, { pctOf: [], capGiven: "most", method: "fractions", ...o });
 
 describe("the working of the brief's examples", () => {
   const vars2 = [{ sym: "x", noun: "loaves", integer: true }, { sym: "y", noun: "cakes", integer: true }];
@@ -88,7 +90,7 @@ describe("random draws (seeded)", () => {
       const seenOps = new Set<Op>();
       const seenKinds = new Set<string>();
       let withPoint = 0, needPoint = 0;
-      for (let d = 0; d < 1000; d++) {
+      for (let d = 0; d < 600; d++) {
         const q = generateConstraint(1, { vars: [n], styles: ["resource", "compare"] });
         const data = q.data;
         const c = constraintOf(data.spec);

@@ -32,7 +32,7 @@ export function opHolds(l: Fr, op: Op, r: Fr): boolean {
 
 // ── Integer helpers ──────────────────────────────────────────────────────────
 export const gcdInt = (a: number, b: number): number => (b ? gcdInt(b, a % b) : Math.abs(a));
-const lcmInt = (a: number, b: number): number => (a === 0 || b === 0 ? 0 : Math.abs(a * b) / gcdInt(a, b));
+export const lcmInt = (a: number, b: number): number => (a === 0 || b === 0 ? 0 : Math.abs(a * b) / gcdInt(a, b));
 const norm = (a: Fr): Fr => (a[0] === 0 ? ZERO : a); // no −0, so toEqual and Object.is agree
 
 // ── Types (brief section 9) ──────────────────────────────────────────────────

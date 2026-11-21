@@ -1,7 +1,7 @@
 import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import LpCanvas, { LpSolution } from "../../shared/decision/LpWorking";
-import { generateConstraint } from "../../shared/decision/lpGen";
+import { generateConstraint } from "../../shared/decision/lpGenL23";
 import { solveLp } from "../../shared/decision/lpSolve";
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@ import { solveLp } from "../../shared/decision/lpSolve";
 // ═════════════════════════════════════════════════════════════════════════════════════════════
 
 const SUB_TOOLS = [
-  { key: "constraint", label: "Write a constraint", levels: 1, blurb: "One constraint from a short situation" },
+  { key: "constraint", label: "Write a constraint", levels: 3, blurb: "One constraint from a short situation" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
@@ -20,8 +20,10 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const vars = ticked(o.lpVars, "2").map(Number).filter((n) => n >= 2 && n <= 4);
-  const styles = ticked(o.lpStyles, "resource,compare");
-  const q = generateConstraint(level, { vars, styles });
+  const styles = ticked(o.lpStyles, level === 1 ? "resource,compare" : level === 2 ? "percent,ratio,decimal" : "blend,eitherOr");
+  const pctOf = ticked(o.lpPctOf, "one,combined,total,morless");
+  const method = o.lpMethod === "units" || o.lpMethod === "both" ? o.lpMethod : "fractions";
+  const q = generateConstraint(level, { vars, styles, pctOf, capGiven: o.lpCapGiven || "most", method });
   return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
 
@@ -37,9 +39,32 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "2", label: "Two", sub: "x and y" }, { value: "3", label: "Three", sub: "x, y and z" }, { value: "4", label: "Four", sub: "w, x, y and z" }],
   },
   {
-    key: "lpStyles", label: "Constraint Styles", info: "Which kinds of constraint to ask for. Resource use is a limit on something the items use up or supply; comparisons relate the amounts to each other (a multiple, a difference, a bound or a total).",
-    forSubTools: ["constraint"], multi: true, defaultFor: () => "resource,compare",
-    choices: [{ value: "resource", label: "Resource Use", sub: "10x + 15y ≤ 300" }, { value: "compare", label: "Comparisons", sub: "x ≥ 2y" }],
+    key: "lpStyles", label: "Constraint Styles", info: "Which kinds of constraint to ask for. A question draws one of the ticked kinds, so a teacher can drill one style at a time or mix them all.",
+    forSubTools: ["constraint"], multi: true, defaultFor: (lv: number) => (lv === 1 ? "resource,compare" : lv === 2 ? "percent,ratio,decimal" : "blend,eitherOr"),
+    choices: [
+      { value: "resource", forLevels: [1], label: "Resource Use", sub: "10x + 15y ≤ 300" },
+      { value: "compare", forLevels: [1], label: "Comparisons", sub: "x ≥ 2y" },
+      { value: "percent", forLevels: [2], label: "Percentages", sub: "x is 40% of y" },
+      { value: "ratio", forLevels: [2], label: "Ratios And Shares", sub: "x : y, one for every two" },
+      { value: "decimal", forLevels: [2], label: "Decimal Amounts", sub: "0.4x + 0.6y ≤ 30" },
+      { value: "blend", forLevels: [3], label: "Blends", sub: "At least 30% olive oil" },
+      { value: "eitherOr", forLevels: [3], label: "Either-Or Limits", sub: "x/60 + y/45 ≤ 1" },
+    ],
+  },
+  {
+    key: "lpPctOf", label: "Percentages Of", info: "What the percentage is taken of. Several variables combined need three or more variables; they are skipped when only two are ticked.",
+    forSubTools: ["constraint"], forLevels: [2], multi: true, defaultFor: () => "one,combined,total,morless",
+    choices: [{ value: "one", label: "One Variable" }, { value: "combined", label: "Several Combined" }, { value: "total", label: "The Total" }, { value: "morless", label: "More Or Less Than", sub: "20% more than y" }],
+  },
+  {
+    key: "lpCapGiven", label: "Capacity Given As", info: "How the shared limit is put into words: it changes what the student must read and convert before the same kind of constraint can be written.",
+    forSubTools: ["constraint"], forLevels: [3], defaultFor: () => "most",
+    choices: [{ value: "most", label: "Most You Could Make", sub: "60 loaves or 45 cakes" }, { value: "rate", label: "Rate And Time", sub: "60 an hour, 8 hours" }, { value: "perItem", label: "Time Per Item", sub: "1 minute, 4/3 minutes" }, { value: "requirement", label: "Share Of A Requirement", sub: "1/60 each, at least 1" }],
+  },
+  {
+    key: "lpMethod", label: "Capacity Method", info: "How the working builds the either-or constraint: as fractions of the capacity, or by supposing a common number of units. It changes only the working, never the numbers.",
+    forSubTools: ["constraint"], forLevels: [3], displayOnly: true, tab: "method", defaultFor: () => "fractions",
+    choices: [{ value: "fractions", label: "Fractions Of Capacity" }, { value: "units", label: "Common Units" }, { value: "both", label: "Both" }],
   },
 ];
 
@@ -60,7 +85,7 @@ export default function App() {
         skillSheet: true,
         noSandbox: true,
         levelLabels: {
-          constraint: ["Resource use and direct comparisons"],
+          constraint: ["Resource use and direct comparisons", "Percentages, ratios and decimal amounts", "Blends and either-or limits"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

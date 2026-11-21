@@ -3,16 +3,21 @@
 // from the same numbers, so the wording and the model cannot disagree. Everything a question needs later (the working, the check, the tests) is
 // plain data in `LpProblemData`: no functions, so a seed rebuilds the same question. Level 1 only so far (resource use and direct comparisons).
 import { type Fr, fr, ZERO } from "./dim";
-import { type Constraint, type ConstraintKind, type Op, type Var, flipOp, gcdInt, linear, relationship } from "./lp";
+import { type Constraint, type ConstraintKind, type Op, type Var, blend, eitherOr, flipOp, gcdInt, linear, relationship } from "./lp";
 
 // ── The question's data ──────────────────────────────────────────────────────
-type LpKind = "resource" | "multiple" | "difference" | "bound" | "total";
+export type LpKind = "resource" | "multiple" | "difference" | "bound" | "total" | "percent" | "ratio" | "decimal" | "blend" | "eitherOr";
 /** the rule behind a constraint, from the sentence's own numbers (rebuilt with `constraintOf`) */
-type LpSpec =
+export type LpSpec =
   | { t: "linear"; coeffs: Fr[]; op: Op; rhs: Fr; kind: ConstraintKind }
-  | { t: "rel"; n: number; a: number[]; b: number[]; m: Fr; op: Op; kind: ConstraintKind };
+  | { t: "rel"; n: number; a: number[]; b: number[]; m: Fr; op: Op; kind: ConstraintKind }
+  | { t: "blend"; contents: Fr[]; share: Fr; op: Op }
+  | { t: "either"; caps: Fr[]; amount: Fr; op: Op };
 export const constraintOf = (s: LpSpec, source = ""): Constraint =>
-  s.t === "linear" ? linear(s.coeffs, s.op, s.rhs, s.kind, source) : relationship({ n: s.n, a: s.a, b: s.b, m: s.m, op: s.op, kind: s.kind, source });
+  s.t === "linear" ? linear(s.coeffs, s.op, s.rhs, s.kind, source)
+    : s.t === "rel" ? relationship({ n: s.n, a: s.a, b: s.b, m: s.m, op: s.op, kind: s.kind, source })
+      : s.t === "blend" ? blend({ contents: s.contents, share: s.share, op: s.op, source })
+        : eitherOr({ caps: s.caps, amount: s.amount, op: s.op, source });
 
 /** what the working needs to say about each kind */
 type LpInfo =
@@ -20,7 +25,12 @@ type LpInfo =
   | { kind: "multiple"; a: number; b: number[]; m: Fr }
   | { kind: "difference"; a: number; b: number; k: number }
   | { kind: "bound"; i: number; N: number; each: boolean }
-  | { kind: "total"; N: number };
+  | { kind: "total"; N: number }
+  | { kind: "percent"; form: "one" | "combined" | "total" | "more" | "less"; a: number[]; b: number[]; m: Fr; p: number }
+  | { kind: "ratio"; form: "ratio" | "every" | "share"; a: number[]; b: number[]; m: Fr }
+  | { kind: "decimal"; a: number[]; den: number; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
+  | { kind: "blend"; contents: Fr[]; share: Fr; comp: string; invest: boolean }
+  | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {
   kind: LpKind;
@@ -34,26 +44,28 @@ export interface LpProblemData {
   info: LpInfo;
   /** a point that fits the words, which the slip does not allow (the "try a number" check) */
   point?: number[];
+  /** false when the check point does NOT fit the words but the slip would allow it (default true: it fits, and the slip refuses it) */
+  pointFits?: boolean;
 }
-interface LpQuestion { prompt: string; answerText: string; data: LpProblemData }
+export interface LpQuestion { prompt: string; answerText: string; data: LpProblemData }
 
 // ── Small helpers (all randomness is Math.random: a seed rebuilds the question) ─
-const ri = (lo: number, hi: number): number => lo + Math.floor(Math.random() * (hi - lo + 1));
-const pick = <T,>(xs: readonly T[]): T => xs[ri(0, xs.length - 1)];
-function weighted<T>(xs: ReadonlyArray<readonly [T, number]>): T {
+export const ri = (lo: number, hi: number): number => lo + Math.floor(Math.random() * (hi - lo + 1));
+export const pick = <T,>(xs: readonly T[]): T => xs[ri(0, xs.length - 1)];
+export function weighted<T>(xs: ReadonlyArray<readonly [T, number]>): T {
   let r = Math.random() * xs.reduce((s, [, w]) => s + w, 0);
   for (const [x, w] of xs) { r -= w; if (r < 0) return x; }
   return xs[xs.length - 1][0];
 }
-function shuffled<T>(xs: readonly T[]): T[] {
+export function shuffled<T>(xs: readonly T[]): T[] {
   const a = [...xs];
   for (let i = a.length - 1; i > 0; i--) { const j = ri(0, i); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
-const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+export const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 const lpSyms = (n: number): string[] => (n === 4 ? ["w", "x", "y", "z"] : n === 3 ? ["x", "y", "z"] : ["x", "y"]);
 /** "a, b and c" */
-const list = (xs: string[]): string => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+export const list = (xs: string[]): string => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 /** an integer for the page: 1 440 as 1{,}440 for KaTeX */
 export const texN = (n: number): string => (Math.abs(n) >= 1000 ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "{,}") : String(n));
 
@@ -62,35 +74,35 @@ export function opWord(op: Op, count = true): string {
   return { "≤": "at most", "≥": "at least", "=": "exactly", "<": count ? "fewer than" : "less than", ">": "more than" }[op];
 }
 /** three constraints in four are non-strict, strict ones are common enough to be learnt (brief section 2) */
-const pickOp = (): Op => weighted<Op>([["≤", 3], ["≥", 3], ["=", 0.5], ["<", 0.75], [">", 0.75]]);
+export const pickOp = (): Op => weighted<Op>([["≤", 3], ["≥", 3], ["=", 0.5], ["<", 0.75], [">", 0.75]]);
 
 // ── Contexts: a setting, items with plural nouns, and the resources they use or supply ─
-interface Resource { topic: string; unit: string; of: string; verb: string; label: string; mode: "use" | "supply" }
-interface Context { id: string; intro: (items: string[]) => string; did: string; items: Array<{ plural: string; singular: string }>; resources: Resource[] }
-const CONTEXTS: Context[] = [
-  { id: "bakery", intro: (i) => `A bakery makes ${list(i)}.`, did: "made", items: [{ plural: "loaves", singular: "loaf" }, { plural: "cakes", singular: "cake" }, { plural: "pies", singular: "pie" }, { plural: "buns", singular: "bun" }],
-    resources: [{ topic: "oven time", unit: "minutes", of: "oven time", verb: "uses", label: "oven time used", mode: "use" }, { topic: "preparation time", unit: "minutes", of: "preparation time", verb: "needs", label: "preparation time needed", mode: "use" }] },
-  { id: "print", intro: (i) => `A print shop produces ${list(i)}.`, did: "printed", items: [{ plural: "posters", singular: "poster" }, { plural: "leaflets", singular: "leaflet" }, { plural: "flyers", singular: "flyer" }, { plural: "cards", singular: "card" }],
-    resources: [{ topic: "printing time", unit: "minutes", of: "printing time", verb: "needs", label: "printing time needed", mode: "use" }, { topic: "paper", unit: "sheets", of: "paper", verb: "uses", label: "paper used", mode: "use" }] },
-  { id: "workshop", intro: (i) => `A workshop makes ${list(i)}.`, did: "made", items: [{ plural: "chairs", singular: "chair" }, { plural: "tables", singular: "table" }, { plural: "stools", singular: "stool" }, { plural: "shelves", singular: "shelf" }],
-    resources: [{ topic: "timber", unit: "metres", of: "timber", verb: "uses", label: "timber used", mode: "use" }, { topic: "labour", unit: "hours", of: "labour", verb: "needs", label: "labour needed", mode: "use" }] },
-  { id: "cafe", intro: (i) => `A café prepares ${list(i)} for its lunch deals.`, did: "prepared", items: [{ plural: "sandwiches", singular: "sandwich" }, { plural: "wraps", singular: "wrap" }, { plural: "salads", singular: "salad" }, { plural: "soups", singular: "soup" }],
-    resources: [{ topic: "preparation time", unit: "minutes", of: "preparation time", verb: "takes", label: "preparation time needed", mode: "use" }] },
-  { id: "stall", intro: (i) => `A craft stall sells ${list(i)}.`, did: "made", items: [{ plural: "candles", singular: "candle" }, { plural: "soaps", singular: "soap" }, { plural: "mugs", singular: "mug" }, { plural: "bags", singular: "bag" }],
-    resources: [{ topic: "making time", unit: "minutes", of: "making time", verb: "needs", label: "making time needed", mode: "use" }, { topic: "packaging", unit: "boxes", of: "packaging", verb: "uses", label: "packaging used", mode: "use" }] },
+export interface Resource { topic: string; unit: string; of: string; verb: string; label: string; mode: "use" | "supply"; decOnly?: boolean }
+export interface Context { id: string; intro: (items: string[]) => string; did: string; items: Array<{ plural: string; singular: string }>; resources: Resource[]; device?: { noun: string; verb: string } }
+export const CONTEXTS: Context[] = [
+  { id: "bakery", device: { noun: "oven", verb: "bake" }, intro: (i) => `A bakery makes ${list(i)}.`, did: "made", items: [{ plural: "loaves", singular: "loaf" }, { plural: "cakes", singular: "cake" }, { plural: "pies", singular: "pie" }, { plural: "buns", singular: "bun" }],
+    resources: [{ topic: "oven time", unit: "minutes", of: "oven time", verb: "uses", label: "oven time used", mode: "use" }, { topic: "preparation time", unit: "minutes", of: "preparation time", verb: "needs", label: "preparation time needed", mode: "use" }, { topic: "flour", unit: "kg", of: "flour", verb: "uses", label: "flour used", mode: "use", decOnly: true }] },
+  { id: "print", device: { noun: "press", verb: "print" }, intro: (i) => `A print shop produces ${list(i)}.`, did: "printed", items: [{ plural: "posters", singular: "poster" }, { plural: "leaflets", singular: "leaflet" }, { plural: "flyers", singular: "flyer" }, { plural: "cards", singular: "card" }],
+    resources: [{ topic: "printing time", unit: "minutes", of: "printing time", verb: "needs", label: "printing time needed", mode: "use" }, { topic: "paper", unit: "sheets", of: "paper", verb: "uses", label: "paper used", mode: "use" }, { topic: "ink", unit: "litres", of: "ink", verb: "uses", label: "ink used", mode: "use", decOnly: true }] },
+  { id: "workshop", device: { noun: "machine", verb: "make" }, intro: (i) => `A workshop makes ${list(i)}.`, did: "made", items: [{ plural: "chairs", singular: "chair" }, { plural: "tables", singular: "table" }, { plural: "stools", singular: "stool" }, { plural: "shelves", singular: "shelf" }],
+    resources: [{ topic: "timber", unit: "metres", of: "timber", verb: "uses", label: "timber used", mode: "use" }, { topic: "labour", unit: "hours", of: "labour", verb: "needs", label: "labour needed", mode: "use" }, { topic: "paint", unit: "litres", of: "paint", verb: "uses", label: "paint used", mode: "use", decOnly: true }] },
+  { id: "cafe", device: { noun: "kitchen", verb: "prepare" }, intro: (i) => `A café prepares ${list(i)} for its lunch deals.`, did: "prepared", items: [{ plural: "sandwiches", singular: "sandwich" }, { plural: "wraps", singular: "wrap" }, { plural: "salads", singular: "salad" }, { plural: "soups", singular: "soup" }],
+    resources: [{ topic: "preparation time", unit: "minutes", of: "preparation time", verb: "takes", label: "preparation time needed", mode: "use" }, { topic: "cheese", unit: "kg", of: "cheese", verb: "uses", label: "cheese used", mode: "use", decOnly: true }] },
+  { id: "stall", device: { noun: "workshop", verb: "make" }, intro: (i) => `A craft stall sells ${list(i)}.`, did: "made", items: [{ plural: "candles", singular: "candle" }, { plural: "soaps", singular: "soap" }, { plural: "mugs", singular: "mug" }, { plural: "bags", singular: "bag" }],
+    resources: [{ topic: "making time", unit: "minutes", of: "making time", verb: "needs", label: "making time needed", mode: "use" }, { topic: "packaging", unit: "boxes", of: "packaging", verb: "uses", label: "packaging used", mode: "use" }, { topic: "wax", unit: "kg", of: "wax", verb: "uses", label: "wax used", mode: "use", decOnly: true }] },
   { id: "diet", intro: (i) => `A dietician plans a meal from ${list(i)}.`, did: "served", items: [{ plural: "bowls of rice", singular: "bowl of rice" }, { plural: "bowls of lentils", singular: "bowl of lentils" }, { plural: "bowls of soup", singular: "bowl of soup" }, { plural: "bowls of pasta", singular: "bowl of pasta" }],
     resources: [{ topic: "protein", unit: "grams", of: "protein", verb: "supplies", label: "protein supplied", mode: "supply" }, { topic: "iron", unit: "milligrams", of: "iron", verb: "supplies", label: "iron supplied", mode: "supply" }] },
 ];
 
 /** the variables for a question: n items of one context, in a random order, lettered x, y (z, w) */
-function pickVars(ctx: Context, n: number): { vars: Var[]; sing: string[] } {
+export function pickVars(ctx: Context, n: number): { vars: Var[]; sing: string[] } {
   const chosen = shuffled(ctx.items).slice(0, n);
   const syms = lpSyms(n);
   return { vars: chosen.map((it, i) => ({ sym: syms[i], noun: it.plural, integer: true })), sing: chosen.map((it) => it.singular) };
 }
-const letDef = (vars: Var[], did: string): string => {
+export const letDef = (vars: Var[], did: string): string => {
   const parts = vars.map((v, i) => (i === 0 ? `$${v.sym}$ be the number of ${v.noun}` : `$${v.sym}$ the number of ${v.noun}`));
-  return `Let ${list(parts)} ${did}.`;
+  return `Let ${list(parts)}${did ? ` ${did}` : ""}.`;
 };
 
 // ── Writing a constraint: "3x + 4y ≤ 180" ────────────────────────────────────
@@ -110,7 +122,7 @@ export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs">, var
 
 // ── Level 1: resource use ────────────────────────────────────────────────────
 /** a round amount, at least one of the coefficients dividing it (so "if only this item is made" is a whole number of items) */
-const AMOUNTS = [30, 40, 48, 50, 60, 72, 80, 90, 100, 120, 144, 150, 160, 180, 200, 240, 250, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200, 1440, 1500];
+export const AMOUNTS = [30, 40, 48, 50, 60, 72, 80, 90, 100, 120, 144, 150, 160, 180, 200, 240, 250, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200, 1440, 1500];
 function resourceNumbers(n: number): { per: number[]; amount: number } {
   for (let tries = 0; tries < 60; tries++) {
     const per = Array.from({ length: n }, () => ri(n === 2 ? 2 : 1, n === 2 ? 20 : 12));
@@ -124,7 +136,7 @@ function resourceNumbers(n: number): { per: number[]; amount: number } {
 }
 function genResource(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
   const ctx = pick(CONTEXTS);
-  const res = pick(ctx.resources);
+  const res = pick(ctx.resources.filter((r) => !r.decOnly));
   const { vars, sing } = pickVars(ctx, n);
   const { per, amount } = resourceNumbers(n);
   const op = res.mode === "use" ? weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]) : weighted<Op>([["≥", 6], [">", 1.5], ["=", 1]]);
@@ -218,14 +230,14 @@ function checkPoint(c: Constraint, slip: Constraint, n: number, scale: number): 
 }
 
 // ── The generator ────────────────────────────────────────────────────────────
-interface LpGenOptions {
+export interface LpGenOptions {
   /** the numbers of variables that may be used (2 to 4); a question draws one of them */
   vars: number[];
   /** "resource" and "compare" at Level 1; a question draws one of them */
   styles: string[];
 }
 /** The "Write a constraint" question at Level 1 (the other levels are later chunks). */
-export function generateConstraint(level: number, o: LpGenOptions): LpQuestion {
+export function generateLevel1(level: number, o: LpGenOptions): LpQuestion {
   const n = pick(o.vars.length ? o.vars : [2]);
   const style = pick(o.styles.length ? o.styles : ["resource", "compare"]);
   let g: { prompt: string; data: Omit<LpProblemData, "level" | "point"> };
