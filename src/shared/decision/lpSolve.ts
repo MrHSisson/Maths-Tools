@@ -4,7 +4,7 @@
 import type { LpRow, SolveStep, DecisionProblem } from "./types";
 import { type Fr, fr, fmul, fsub, fdiv } from "./dim";
 import { type Constraint, type Op, gcdInt, lcmInt, intercept } from "./lp";
-import { type LpProblemData, constraintOf, texN } from "./lpGen";
+import { type LpProblemData, constraintOf, constraintText, texN } from "./lpGen";
 import { decStr, isFinite10 } from "./lpGenL23";
 
 const OPTEX: Record<Op, string> = { "≤": "\\le", "≥": "\\ge", "=": "=", "<": "<", ">": ">" };
@@ -235,6 +235,8 @@ function finalStep(d: LpProblemData, c: Constraint, syms: string[], step: Add): 
   if (d.op === "<" || d.op === ">") {
     rows.push({ k: "note", t: `The sign stays strict: points on the boundary are not allowed.${c.coeffs.filter((f) => f[0] !== 0).length === 1 ? ` For whole numbers, $${syms[c.coeffs.findIndex((f) => f[0] !== 0)]} ${opTex(c.op)} ${texN(c.rhs[0])}$ also means $${syms[c.coeffs.findIndex((f) => f[0] !== 0)]} ${c.op === ">" ? "\\ge" : "\\le"} ${texN(c.rhs[0] + (c.op === ">" ? 1 : -1))}$.` : ""}` });
   }
+  step("That is the constraint: whole-number coefficients in lowest terms, the first coefficient positive.", rows, "The constraint");
+  // the common slip is a step of its own, said in the caption (plain text): it adds nothing to the page
   if (d.slip) {
     const s = constraintOf(d.slip.spec);
     let why = "";
@@ -242,17 +244,31 @@ function finalStep(d: LpProblemData, c: Constraint, syms: string[], step: Add): 
       // the "if only one kind is made" check: the limit on one letter, correct and slipped
       const differs = (j: number): boolean => { const r = intercept(s, j), q = intercept(c, j); return !!r && !!q && r[0] * q[1] !== q[0] * r[1]; };
       const i = c.coeffs.findIndex((f, j) => f[0] !== 0 && c.rhs[0] % f[0] === 0 && differs(j));
-      if (i >= 0) why = ` Check it: with only ${d.vars[i].noun} it gives $${syms[i]} ${opTex(s.op)} ${frTex(intercept(s, i)!)}$, not $${frTex(intercept(c, i)!)}$.`;
+      if (i >= 0) why = ` Check it: with only ${d.vars[i].noun} it gives ${syms[i]} ${s.op} ${plainFr(intercept(s, i)!)}, not ${plainFr(intercept(c, i)!)}.`;
     } else if (d.point) {
       const sp = substTex(s.coeffs.map((f) => f[0]), d.point);
-      why = ` At the check point it gives $${sp.text} = ${sp.value}$, and $${sp.value} ${opTex(s.op)} ${texN(s.rhs[0] / s.rhs[1])}$ is ${d.pointFits === false ? "true, so it would wrongly allow a point that the words rule out" : "false, so it does not fit the words"}.`;
+      why = ` At the check point (${assign(syms, d.point).replace(/,\\ /g, ", ")}) it gives ${sp.text.replace(/-/g, "−")} = ${String(sp.value).replace("-", "−")}, and ${String(sp.value).replace("-", "−")} ${s.op} ${plainFr(s.rhs)} is ${d.pointFits === false ? "true, so it would wrongly allow a point that the words rule out" : "false, so it does not fit the words"}.`;
     }
-    // a slip is shown as a student would write it: a linear one with its own numbers (15x + 10y ≤ 300), not tidied
+    // a slip as a student would write it: a linear one with its own numbers (15x + 10y ≤ 300), not tidied
     const sp = d.slip.spec;
-    const shown = sp.t === "linear" ? `${exprFr(sp.coeffs, syms, "dec")} ${opTex(sp.op)} ${coefTex(sp.rhs, "dec")}` : constraintTex(s, syms);
-    rows.push({ k: "slip", t: `Common slip: ${d.slip.what}, $${shown}$.${why}` });
+    const shown = sp.t === "linear" ? `${plainExpr(sp.coeffs, syms)} ${sp.op} ${plainFr(sp.rhs)}` : constraintText(s, d.vars);
+    step(`Common slip: ${d.slip.what}, ${shown}.${why}`, [], "Common slip");
   }
-  step("That is the constraint: whole-number coefficients in lowest terms, the first coefficient positive.", rows, "The constraint");
+}
+
+/** plain text for a caption: 3, −2, 5/2 */
+const plainFr = (f: Fr): string => `${f[0] < 0 ? "−" : ""}${Math.abs(f[0])}${f[1] === 1 ? "" : `/${f[1]}`}`;
+/** "0.5x − 3y" in plain text */
+function plainExpr(coeffs: readonly Fr[], syms: readonly string[]): string {
+  let t = "";
+  coeffs.forEach((f, i) => {
+    if (f[0] === 0) return;
+    const one = Math.abs(f[0]) === 1 && f[1] === 1;
+    const mag = isFinite10([Math.abs(f[0]), f[1]]) ? decStr([Math.abs(f[0]), f[1]]) : `${Math.abs(f[0])}/${f[1]}`;
+    const body = `${one ? "" : mag}${syms[i]}`;
+    t += t === "" ? (f[0] < 0 ? "−" : "") + body : ` ${f[0] < 0 ? "−" : "+"} ${body}`;
+  });
+  return t || "0";
 }
 
 // ── fractions and decimals in the working ────────────────────────────────────
@@ -484,18 +500,18 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   push(`The objective is the ${max ? "profit" : "cost"}: add up what each kind of item ${max ? "makes" : "costs"}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
 
   const lines: string[] = [];
-  const slips: LpRow[] = [];
+  const slips: string[] = [];
   info.parts.forEach((part, j) => {
-    const steps = solveLp({ kind: part.kind, level: part.level, lp: part, prompt: "", answer: { text: "" }, matrixMode: "off" });
+    const all0 = solveLp({ kind: part.kind, level: part.level, lp: part, prompt: "", answer: { text: "" }, matrixMode: "off" });
+    const slipStep = all0[all0.length - 1].phase === "Common slip" ? all0[all0.length - 1] : undefined;
+    const steps = slipStep ? all0.slice(0, -1) : all0;
+    if (slipStep) slips.push(`Constraint ${j + 1}. ${slipStep.caption}`);
     const skip = steps[0].lpView!.rows.length; // the part's own "variables" rows are already on the page
     const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
     steps.slice(1).forEach((st, k) => {
       const v = st.lpView!;
-      const isLast = k === steps.length - 2;
-      const all = v.rows.slice(skip);
-      const rows = all.filter((r) => r.k !== "slip");
-      push(`Constraint ${j + 1}. ${st.caption}`, [...base, head, ...rows], Math.min(rows.length, v.fresh! - (all.length - rows.length)) + (k === 0 ? 1 : 0), st.phase);
-      if (isLast) all.filter((r) => r.k === "slip").forEach((r) => slips.push({ k: "slip", t: `Constraint ${j + 1}. ${r.t}` }));
+      const rows = v.rows.slice(skip);
+      push(`Constraint ${j + 1}. ${st.caption}`, [...base, head, ...rows], v.fresh! + (k === 0 ? 1 : 0), st.phase);
     });
     const line = constraintTex(constraintOf(part.spec), syms);
     lines.push(line);
@@ -512,8 +528,8 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     { k: "words", t: "subject to:" },
     ...lines.map((t): LpRow => ({ k: "tex", t })),
     { k: "result", t: nonneg },
-    ...slips,
   ];
   push("That is the model, in the usual layout: the objective, then the constraints, then non-negativity. Any consistent choice of letters is correct.", [...vars, ...model], model.length, "The model");
+  if (slips.length) push(`Common slips. ${slips.join(" ")}`, [...vars, ...model], 0, "Common slips");
   return out;
 }

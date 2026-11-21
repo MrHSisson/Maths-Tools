@@ -59,8 +59,8 @@ describe("worked examples (brief 2, 4 and 4.6)", () => {
     expect(rows).toContain("0.8x + 0.6y \\le 3{,}000");
     expect(rows).toContain("4x + 3y \\le 15{,}000");
     expect(rows.join("\n")).toContain("$x \\le 3{,}750$");
-    const last = solveLp(asProblem(d)).pop()!.lpView!.rows.find((r) => r.k === "slip")!.t;
-    expect(last).toContain("4x + 3y \\le 3{,}000");
+    const last = solveLp(asProblem(d)).pop()!.caption;
+    expect(last).toContain("4x + 3y ≤ 3000");
   });
   it("blends: oil 50% and 20% olive, at least 30%: 2x − y ≥ 0, and a mix of 10 of each gives 35%", () => {
     const d: LpProblemData = { kind: "blend", level: 3, vars: V("x", "y"), op: "≥", spec: { t: "blend", contents: [F(1, 2), F(1, 5)], share: F(3, 10), op: "≥" }, info: { kind: "blend", contents: [F(1, 2), F(1, 5)], share: F(3, 10), comp: "olive oil", invest: false }, point: [10, 10] };
@@ -236,8 +236,10 @@ describe("random draws, Levels 2 and 3 (seeded)", () => {
           const texRows = rows.filter((r) => r.k === "tex").map((r) => r.t);
           // working that ends on a line of TeX ends on the tidy constraint (either-or by common units writes it as its last tex row too)
           expect(texRows[texRows.length - 1]).toBe(result);
-          expect(steps.slice(0, -1).some((st) => st.lpView!.rows.some((r) => r.k === "slip"))).toBe(false);
-          if (d.slip) expect(rows.some((r) => r.k === "slip")).toBe(true);
+          expect(steps.slice(0, -1).some((st) => st.caption.startsWith("Common slip"))).toBe(false);
+          if (d.slip) expect(steps[steps.length - 1].caption).toMatch(/^Common slip/);
+          // the slip is said in a caption, in plain text, and adds nothing to the page
+          if (d.slip) { expect(steps[steps.length - 1].caption).not.toContain("$"); expect(steps[steps.length - 1].lpView!.fresh).toBe(0); }
         }
         if (level === 2) {
           expect([...kinds].sort()).toEqual(["decimal", "percent", "ratio"]);

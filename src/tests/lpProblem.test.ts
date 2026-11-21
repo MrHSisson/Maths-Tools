@@ -39,8 +39,10 @@ describe("the working of a hand-made model", () => {
     const last = steps[steps.length - 1].lpView!.rows;
     expect(last.map((r) => r.t)).toEqual(expect.arrayContaining(["Maximise $P = 5x + 8y$", "subject to:", "2x + 3y \\le 60", "x - 2y \\ge 0", "x \\ge 0,\\ y \\ge 0"]));
     // the common slips are shown only on the last step
-    expect(steps.slice(0, -1).some((s) => s.lpView!.rows.some((r) => r.k === "slip"))).toBe(false);
-    expect(last.some((r) => r.k === "slip")).toBe(true);
+    expect(steps.slice(0, -1).some((s) => s.caption.startsWith("Common slips"))).toBe(false);
+    expect(steps[steps.length - 1].caption).toContain("Common slips");
+    expect(steps[steps.length - 1].caption).toContain("15x + 10y ≤ 300");
+    expect(steps[steps.length - 1].lpView!.fresh).toBe(0);
   });
   it("the corner points of that model, exactly: (0, 0), (30, 0), (120/7, 60/7), and 1080/7 is the most", () => {
     const cons = [constraintOf(oven.spec), constraintOf(ratio.spec)];
@@ -124,7 +126,7 @@ describe("random draws (seeded)", () => {
         for (const c of cons) expect(last).toContain(constraintTex(c, syms));
         expect(last).toContain(syms.map((s) => `${s} \\ge 0`).join(",\\ "));
         expect(last.join("\n")).toContain(`${info.name} = `);
-        expect(steps.slice(0, -1).some((st) => st.lpView!.rows.some((r) => r.k === "slip"))).toBe(false);
+        expect(steps.slice(0, -1).some((st) => st.caption.startsWith("Common slips"))).toBe(false);
       }
       expect([...senses].sort()).toEqual(["max", "min"]);
       expect(counts.has(2)).toBe(true);

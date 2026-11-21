@@ -73,8 +73,8 @@ interface DimViewState {
 }
 
 /** Linear Programming: the page a student would write, row by row. head = a small heading; words = a sentence (maths between $…$); tex = a line of working;
- *  result = the line to be boxed (the constraint); note = a small grey aside; slip = the common slip (shown with the answer); gap = a space. The last `fresh` rows are what this step added. */
-export interface LpRow { k: "head" | "words" | "tex" | "result" | "note" | "slip" | "gap"; t: string }
+ *  result = the line to be boxed (the constraint); note = a small grey aside; gap = a space. (The common slip is not a row: it is the caption of the last step.) The last `fresh` rows are what this step added. */
+export interface LpRow { k: "head" | "words" | "tex" | "result" | "note" | "gap"; t: string }
 export interface LpViewState {
   rows: LpRow[];
   fresh?: number;

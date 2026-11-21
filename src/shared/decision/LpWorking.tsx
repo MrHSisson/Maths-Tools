@@ -29,7 +29,6 @@ function Row({ r, fresh, big }: { r: LpRow; fresh: boolean; big: boolean }) {
   if (r.k === "head") return <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: "0.62em", fontWeight: 700, color: GIVEN, paddingTop: 4 }}><Prose text={r.t} /></div>;
   if (r.k === "words") return <div style={{ color: colour, fontSize: "0.85em", lineHeight: 1.45 }}><Prose text={r.t} /></div>;
   if (r.k === "note") return <div style={{ color: fresh ? NEW : GIVEN, fontSize: "0.72em", lineHeight: 1.4 }}><Prose text={r.t} /></div>;
-  if (r.k === "slip") return <div style={{ color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "0.3em 0.6em", fontSize: "0.72em", lineHeight: 1.4 }}><Prose text={r.t} /></div>;
   if (r.k === "result") return <div style={{ color: colour, border: `2px solid ${colour}`, borderRadius: 8, padding: "0.25em 0.7em", fontSize: "1.1em", fontWeight: 600 }}><Tex t={r.t} /></div>;
   return <div style={{ color: colour, fontSize: big ? "1.05em" : "1em" }}><Tex t={r.t} /></div>;
 }

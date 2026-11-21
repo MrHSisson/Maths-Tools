@@ -39,9 +39,9 @@ describe("the working of the brief's examples", () => {
     expect(all.join("\n")).toContain("$x \\le 30$");
     const last = steps[steps.length - 1].lpView!.rows;
     expect(last.find((r) => r.k === "result")!.t).toBe("2x + 3y \\le 60");
-    expect(last.find((r) => r.k === "slip")!.t).toContain("15x + 10y \\le 300");
+    expect(steps[steps.length - 1].caption).toContain("15x + 10y ≤ 300");
     // the slip is never shown before the answer
-    expect(steps.slice(0, -1).some((s) => s.lpView!.rows.some((r) => r.k === "slip"))).toBe(false);
+    expect(steps.slice(0, -1).some((s) => s.caption.startsWith("Common slip"))).toBe(false);
   });
   it("x at least twice y and z combined: x ≥ 2(y + z), then x ≥ 2y + 2z, then x − 2y − 2z ≥ 0", () => {
     const vars3 = [...vars2, { sym: "z", noun: "pies", integer: true }];
@@ -152,14 +152,14 @@ describe("random draws (seeded)", () => {
           expect(st.caption.length).toBeGreaterThan(0);
           for (const r of st.lpView!.rows) {
             expect(r.t).not.toContain("\\text");
-            const segs = r.k === "words" || r.k === "head" || r.k === "note" || r.k === "slip" ? r.t.split(/(\$[^$]+\$)/g).filter((_, i) => i % 2 === 1).map((s) => s.slice(1, -1)) : [r.t];
+            const segs = r.k === "words" || r.k === "head" || r.k === "note" ? r.t.split(/(\$[^$]+\$)/g).filter((_, i) => i % 2 === 1).map((s) => s.slice(1, -1)) : [r.t];
             for (const tex of segs) expect(() => katex.renderToString(tex, { throwOnError: true })).not.toThrow();
           }
         }
         const last = steps[steps.length - 1].lpView!.rows;
         expect(last.find((r) => r.k === "result")!.t).toBe(constraintTex(c, data.vars.map((v) => v.sym)));
-        if (data.slip && data.kind !== "resource" && data.point) expect(last.some((r) => r.k === "slip")).toBe(true);
-        expect(steps.slice(0, -1).some((st) => st.lpView!.rows.some((r) => r.k === "slip"))).toBe(false);
+        if (data.slip && data.kind !== "resource" && data.point) expect(steps[steps.length - 1].caption).toMatch(/^Common slip/);
+        expect(steps.slice(0, -1).some((st) => st.caption.startsWith("Common slip"))).toBe(false);
       }
       // comparisons give all five operators, resource use both ways round, and every kind turns up
       expect([...seenOps].sort()).toEqual([...OPS].sort());
