@@ -22,6 +22,6 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
 
 ## Where to read more
-The two textbook chapters the plan was built from (copyright, so not in this public repo) are in Harry's private Google Drive folder "Maths Tools — textbook sources (private)" (https://drive.google.com/drive/folders/1CQsBoy8UF0L7Bcj6KqSktgIvQL-4aJeL): Chapter 4 "Linear programming" and Chapter 14 "Linear programming and game theory 1" (read the first 13 pages of Chapter 14 only: the rest is game theory). Read them with the Google Drive connector only when asked; the corpus and the briefs hold what was taken from them. Never commit them (`.gitignore` already keeps exam-board papers out for the same reason).
+The two textbook chapters the plan was built from are copyright, so they are not in this public repo: they are in Harry's private Google Drive (Textbooks folder; the list of sources and links is `specs/sources.md`): Chapter 4 "Linear programming" and Chapter 14 "Linear programming and game theory 1" (read section 14.1 only, pages 1 to 13). Read them only when asked; the corpus and the briefs hold what was taken from them. Never commit them.
 
 `specs/linear-programming.md`, `specs/linear-programming-tools.md`, `specs/linear-programming-formulate.md`, `specs/corpus/linear-programming-styles.md`, `specs/exam/spec/aqa-discrete.md`, `docs/architecture/DECISION_SHELL_PLAN.md`, `specs/further-mechanics-mc.md` (the model brief).

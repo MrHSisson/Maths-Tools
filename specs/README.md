@@ -15,6 +15,8 @@ Code**. Five kinds of build, each with its own template and home:
 Maths-tool briefs sit at the root of this folder (as `<tool-id>.md`), together with a few cross-cutting briefs for the Decision tools (`flow-*.md`, `cpa-*.md`); the other
 kinds sit in the typed subfolders above. Two further folders are not builds: `exam/` (specification content and past-paper topic reports, from `../docs/design/templates/EXAM_TOPIC_REPORT_TEMPLATE.md`) and `corpus/` (paper questions tagged as part chains).
 
+**Sources.** The copyrighted material briefs are built from (textbook chapters, past papers, mark schemes) is kept in Harry's private Google Drive, never in this public repo; `sources.md` says where, and what has already been taken from each.
+
 ## Lifecycle
 
 | Status | Meaning |
