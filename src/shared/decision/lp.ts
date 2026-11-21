@@ -37,7 +37,7 @@ const norm = (a: Fr): Fr => (a[0] === 0 ? ZERO : a); // no −0, so toEqual and 
 
 // ── Types (brief section 9) ──────────────────────────────────────────────────
 export interface Var { sym: string; noun: string; units?: string; integer: boolean }
-type ConstraintKind = "resource" | "multiple" | "percent" | "ratio" | "bound" | "capacity" | "remainder";
+export type ConstraintKind = "resource" | "multiple" | "percent" | "ratio" | "bound" | "capacity" | "remainder";
 export interface Constraint {
   /** canonical: whole numbers, lowest terms, leading coefficient positive */
   coeffs: Fr[];

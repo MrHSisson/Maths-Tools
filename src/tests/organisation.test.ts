@@ -52,6 +52,7 @@ const MIGRATION_BACKLOG: string[] = [];
 const STANDALONE_BY_DESIGN = [
   "Binary/BinaryCounting",
   "Decision/CriticalPath",
+  "Decision/FormulatingLP",
   "Decision/DecisionOverview",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",

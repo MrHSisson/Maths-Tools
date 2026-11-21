@@ -1589,7 +1589,8 @@
        "t": "ul",
        "items": [
         "2026-11-21 (end of the planning session). Decisions settled with Harry: three tools; `constraint` (one constraint, whole-number answers, three levels, multi-select variables 2 to 4 and styles, strict inequalities throughout) is `ready` for F0 to F4; `problem` (student assigns the variables) stays draft. Plan documents merged to `main`; nothing built.",
-        "2026-11-21 (F0 built). `src/shared/decision/lp.ts` and `src/tests/lp.test.ts`: exact fractions, `Var` / `Constraint` / `Model`, the tidy rule, the relationship, blend and either-or rules, `holds` written independently of the coefficients, checked over seeded random draws at every lattice point. Library only: no tool, no registry entry. The tidy form divides by the common factor of the coefficients and the right-hand side (`80x ≤ 500` is `4x ≤ 25`); generators keep right-hand sides whole so coefficient gcd is 1."
+        "2026-11-21 (F0 built). `src/shared/decision/lp.ts` and `src/tests/lp.test.ts`: exact fractions, `Var` / `Constraint` / `Model`, the tidy rule, the relationship, blend and either-or rules, `holds` written independently of the coefficients, checked over seeded random draws at every lattice point. Library only: no tool, no registry entry. The tidy form divides by the common factor of the coefficients and the right-hand side (`80x ≤ 500` is `4x ≤ 25`); generators keep right-hand sides whole so coefficient gcd is 1.",
+        "2026-11-21 (F1 built, not live). The `constraint` sub-tool at Level 1 on `DecisionShell`: `lpGen.ts` (resource use and direct comparisons, 2 to 4 variables, all five operators, six contexts), `lpSolve.ts` (the written working: translate, tidy, check, the constraint, the common slip with the answer), `LpWorking.tsx` (the picture), `src/tools/Decision/FormulatingLP.tsx` (`/lp-formulate`, `enabled: false`), seeded tests. Options Variables and Constraint Styles. Checked at phone, tablet and laptop width."
        ]
       }
      ]
@@ -1601,8 +1602,8 @@
       {
        "t": "ul",
        "items": [
-        "**F1** (next): `lpGen.ts`, resource use and direct comparisons, the stepper, the `constraint` sub-tool at Level 1 (F0, `lp.ts`, is built).",
-        "Then F2 (Level 3 either-or), F3 (Level 2), F4 (Level 3 blends); then the `problem` sub-tool (F5 to F7) and go-live (F8). Each merges on its own.",
+        "**F2** (next): Level 3 either-or limits (the four forms, three and four products, the check, the slips; the Capacity Given As and Capacity Method options). F0 (`lp.ts`) and F1 (the Level 1 sub-tool) are built.",
+        "Then F3 (Level 2), F4 (Level 3 blends); then the `problem` sub-tool (F5 to F7) and go-live (F8). Each merges on its own.",
         "Write briefs for the Graphical and Simplex tools from `specs/linear-programming-tools.md` and the corpus before they are built (the Simplex tableau layout is in section 9a of `specs/linear-programming.md`).",
         "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).",
         "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
@@ -3845,6 +3846,14 @@
     }
    ],
    "changes": []
+  },
+  "lp-formulate": {
+   "changes": [
+    {
+     "date": "2026-11-21",
+     "title": "Formulating Linear Programmes: \"Write a constraint\", Level 1 (chunk F1), not live"
+    }
+   ]
   },
   "dimensional-analysis": {
    "changes": [
