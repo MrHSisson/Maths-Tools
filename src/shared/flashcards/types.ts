@@ -2,11 +2,8 @@
 // meets (the prompts) are a card and a direction. Design and the first card set: specs/flashcards/further-mechanics-mc.md.
 import type { Scene } from "../mechanics";
 
-/** The header a card carries, so a student knows what is being asked: a definition to state, a formula to recall, a result to derive, a property, a unit or value, a method, a common error, or a diagram to read. */
-export type CardKind = "definition" | "formula" | "derive" | "property" | "unit" | "method" | "error" | "diagram";
-
-/** Essential cards are the results and facts to know; derived cards ask for something that can be worked out from them (good practice, but not something to memorise). */
-type CardTier = "essential" | "derived";
+/** What a card asks of the student, and the group it belongs to when they choose what to revise: a formula to state, a definition to give, what a situation implies, or a common mistake to avoid. */
+export type CardKind = "formula" | "definition" | "implication" | "mistake";
 
 export interface Card {
   /** Stable name, such as "mc3-ke"; also the key of the card's memory on the student's device, so never reuse or rename one. */
@@ -16,12 +13,13 @@ export interface Card {
   /** A2 for the cards that need cos θ, resolving, slopes or vectors; AS for the rest. */
   course: "AS" | "A2";
   kind: CardKind;
-  tier: CardTier;
   /** Text with maths between $…$ (KaTeX). */
   front: string;
   back: string;
-  /** Also shown back to front (a formula card: the formula is the prompt and its name the answer). */
+  /** Also shown back to front: the formula or definition is the prompt and its `name` the answer. Only formula and definition cards have one. */
   reverse?: boolean;
+  /** The short name of what the card is about ("Kinetic energy"), the answer when the card is shown back to front. Required when `reverse` is set. */
+  name?: string;
   /** A mechanics diagram. `on` says which faces show it; labels written with an `ask` show their placeholder on the front and their value on the back. */
   picture?: { scene: Scene; on: "front" | "back" | "both" };
   /** One line of "why", shown under the answer. */

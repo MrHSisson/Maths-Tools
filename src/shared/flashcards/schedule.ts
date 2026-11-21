@@ -40,6 +40,13 @@ export function tally(keys: string[], mem: Memory, now: number): Record<Standing
   return t;
 }
 
+/** How many prompts are in each pile: never seen, or in box 1 (learning), box 2 (getting there) or box 3 (secure). */
+export function piles(keys: string[], mem: Memory): { new: number; learning: number; getting: number; secure: number } {
+  const p = { new: 0, learning: 0, getting: 0, secure: 0 };
+  for (const k of keys) { const b = mem[k]?.box; if (!b) p.new++; else if (b === 1) p.learning++; else if (b === 2) p.getting++; else p.secure++; }
+  return p;
+}
+
 const shuffled = <T,>(xs: T[], rand: () => number): T[] => {
   const a = [...xs];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }

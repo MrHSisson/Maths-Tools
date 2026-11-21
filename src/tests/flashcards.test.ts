@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import katex from "katex";
 import { MECHANICS_MC } from "../flashcards/mechanicsMC";
-import { buildSession, DAY, promptsOf, rate, standing, tally, weakestStatements, type Memory } from "../shared/flashcards/schedule";
+import { buildSession, DAY, piles, promptsOf, rate, standing, tally, weakestStatements, type Memory } from "../shared/flashcards/schedule";
 import { DEFAULT_PREFS, loadMemory, loadPrefs, saveMemory, savePrefs } from "../shared/flashcards/store";
 import { layoutScene, validateScene } from "../shared/mechanics";
 import { seededRandom } from "./seededRandom";
@@ -20,8 +20,7 @@ describe("the Mechanics MC card set", () => {
       ids.add(c.id);
       expect(statements.has(c.statement), `${c.id}: statement ${c.statement}`).toBe(true);
       expect(["AS", "A2"]).toContain(c.course);
-      expect(["definition", "formula", "derive", "property", "unit", "method", "error", "diagram"]).toContain(c.kind);
-      expect(["essential", "derived"]).toContain(c.tier);
+      expect(["formula", "definition", "implication", "mistake"]).toContain(c.kind);
       expect(c.front.trim().length).toBeGreaterThan(5);
       expect(c.back.trim().length).toBeGreaterThan(3);
     }
@@ -43,27 +42,30 @@ describe("the Mechanics MC card set", () => {
     }
   });
 
-  it("gives a reverse only to formula and definition cards, and a picture to every diagram card", () => {
+  it("gives a reverse only to formula and definition cards, each with the name that is its answer back to front", () => {
     for (const c of cards) {
-      if (c.kind === "diagram") { expect(c.picture, c.id).toBeDefined(); expect(c.reverse).toBeFalsy(); }
-      else expect(c.picture).toBeUndefined();
-      if (c.reverse) expect(["formula", "definition"], `${c.id} reverses`).toContain(c.kind);
+      if (c.reverse) { expect(["formula", "definition"], `${c.id} reverses`).toContain(c.kind); expect((c.name ?? "").length, `${c.id} needs a name`).toBeGreaterThan(5); }
+      else expect(c.name, `${c.id} has a name but no reverse`).toBeUndefined();
     }
     expect(cards.filter((c) => c.reverse).length).toBeGreaterThanOrEqual(10);
   });
 
-  it("separates what is essential from what is derived: every Derive card is derived, and the essentials are a smaller, core set", () => {
-    for (const c of cards.filter((x) => x.kind === "derive")) expect(c.tier, c.id).toBe("derived");
-    const essential = cards.filter((c) => c.tier === "essential").length, derived = cards.length - essential;
-    expect(derived).toBeGreaterThanOrEqual(10);
-    expect(essential).toBeGreaterThan(derived);
-    expect(essential).toBeLessThanOrEqual(55);
-    // every statement still has essential cards, so "essentials only" never leaves a statement empty
-    for (const s of MECHANICS_MC.statements) expect(cards.some((c) => c.statement === s.code && c.tier === "essential"), s.code).toBe(true);
+  it("groups the cards into the four things a student revises by, each with enough cards to be worth a deck", () => {
+    for (const kind of ["formula", "definition", "implication", "mistake"] as const) expect(cards.filter((c) => c.kind === kind).length, kind).toBeGreaterThanOrEqual(8);
+    // the cards a student meets in one deck are few enough to revise in a sitting
+    for (const kind of ["formula", "definition", "implication", "mistake"] as const) expect(cards.filter((c) => c.kind === kind).length, kind).toBeLessThanOrEqual(30);
+    expect(cards.filter((c) => c.picture).length).toBeGreaterThanOrEqual(6);
   });
 
-  it("starts a Derive card's front with what is to be found, not a bare statement (the header says what is asked)", () => {
-    for (const c of cards.filter((x) => x.kind === "derive" || x.kind === "method")) expect(c.front.length, c.id).toBeGreaterThan(20);
+  it("words every front as a clear prompt, so the back is never a surprise", () => {
+    for (const c of cards) {
+      expect(c.front.length, `${c.id} is too blunt`).toBeGreaterThan(15);
+      expect(/[.?]$/.test(c.front.trim()), `${c.id}: a front ends as a sentence`).toBe(true);
+      if (c.kind === "mistake") expect(c.front, c.id).toMatch(/^What is the common mistake/);
+      if (c.kind === "implication") expect(c.front, c.id).toMatch(/\?$/);
+      if (c.kind === "formula") expect(c.front, c.id).toMatch(/^(State|How do you|Resolve|What height)/);
+      if (c.kind === "definition") expect(c.front, c.id).toMatch(/^(Define|What|Which|Distinguish|Name)/);
+    }
   });
 
   it("draws each diagram card cleanly at the size it is shown, with the answer hidden and shown", () => {
@@ -125,6 +127,12 @@ describe("the Leitner schedule", () => {
     expect(t.new).toBe(keys.length);
   });
 
+  it("counts the prompts in each pile", () => {
+    let m: Memory = {};
+    m = rate(m, "a", "again", T); m = rate(m, "b", "got", T); m = rate(rate(m, "c", "got", T), "c", "got", T);
+    expect(piles(["a", "b", "c", "d"], m)).toEqual({ new: 1, learning: 1, getting: 1, secure: 1 });
+  });
+
   it("names the statements a session went worst on", () => {
     const w = weakestStatements([
       { statement: "MC3", rating: "again" }, { statement: "MC3", rating: "got" }, { statement: "MC7", rating: "got" },
@@ -149,7 +157,7 @@ describe("the stored memory and settings", () => {
     withStorage({}, () => {
       const mem: Memory = { x: { box: 2, due: 5, seen: 3 } };
       saveMemory("s", mem); expect(loadMemory("s")).toEqual(mem);
-      savePrefs("s", { ...DEFAULT_PREFS, statements: ["MC3"], course: "AS", tier: "all", size: null }); expect(loadPrefs("s")).toMatchObject({ statements: ["MC3"], course: "AS", tier: "all", size: null });
+      savePrefs("s", { ...DEFAULT_PREFS, statements: ["MC3"], course: "AS", size: null }); expect(loadPrefs("s")).toMatchObject({ statements: ["MC3"], course: "AS", size: null });
     });
   });
 
