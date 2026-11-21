@@ -1,18 +1,28 @@
-// The database half of /api/decks: every read and write of decks, version history, published copies and questions. It takes a Db, so
+// The database half of /api/decks: every read and write of decks, version history, published copies. It takes a Db, so
 // the handler (api/decks.ts) and the tests use the same code. The pure rules (what may be sent, when to snapshot) stay in _decks.ts.
 import type { Db } from "./_db.js";
-import { emptyPublished, publishedWith, type DeckIndex, type DeckIndexEntry, type HistoryEntry, type PublishedEntry, type PublishedIndex, type QuestionStore } from "./_decks.js";
+import { emptyPublished, publishedWith, type DeckIndex, type DeckIndexEntry, type HistoryEntry, type PublishedEntry, type PublishedIndex } from "./_decks.js";
 
 type Row = Record<string, unknown>;
 const j = (v: unknown) => JSON.stringify(v);
 
 // ── Working decks ──
 
-/** Every deck's summary, as the index blob used to hold it (the title, summary and counts live in their own columns, so this reads no deck bodies). */
+const MAX_LIST_PREVIEW_CHARS = 30_000;                 // a title slide is a few hundred; a big picture on it is left out of the list
+
+/** Every deck's summary for the deck list: the columns, plus where it is filed, its tool, its slides by kind and its first slide (read from the stored deck, so the list needs no second request per deck). */
 export async function listIndex(db: Db): Promise<DeckIndex> {
-  const rows = await db.query<Row>(`SELECT id, title, summary, slides, updated_at, updated_by FROM maths.decks`);
+  const rows = await db.query<Row>(`SELECT id, title, summary, slides, updated_at, updated_by,
+      data->>'strand' AS strand, data->>'pitch' AS pitch, data->>'tool' AS tool, data->>'toolPath' AS tool_path,
+      CASE WHEN length((data->'slides'->0)::text) <= ${MAX_LIST_PREVIEW_CHARS} THEN data->'slides'->0 END AS preview,
+      (SELECT jsonb_object_agg(f, n) FROM (SELECT s->>'family' AS f, count(*) AS n FROM jsonb_array_elements(data->'slides') AS s WHERE s->>'family' IS NOT NULL GROUP BY 1) t) AS families
+    FROM maths.decks`);
   const decks: Record<string, DeckIndexEntry> = {};
-  for (const r of rows) decks[r.id as string] = { title: r.title as string, summary: r.summary as string, slides: r.slides as number, updatedAt: r.updated_at as string, updatedBy: r.updated_by as string };
+  for (const r of rows) decks[r.id as string] = {
+    title: r.title as string, summary: r.summary as string, slides: r.slides as number, updatedAt: r.updated_at as string, updatedBy: r.updated_by as string,
+    ...(r.strand ? { strand: r.strand as string } : {}), ...(r.pitch ? { pitch: r.pitch as string } : {}), ...(r.tool ? { tool: r.tool as string } : {}), ...(r.tool_path ? { toolPath: r.tool_path as string } : {}),
+    ...(r.families ? { families: r.families as Record<string, number> } : {}), ...(r.preview ? { preview: r.preview } : {}),
+  };
   return { version: 1, decks };
 }
 
@@ -94,19 +104,6 @@ export async function putPublished(db: Db, deck: { id: string; title: string; su
 }
 
 export const removePublished = (db: Db, id: string) => db.query(`DELETE FROM maths.published_decks WHERE id = $1`, [id]);
-
-// ── The shared question library ──
-
-export async function listQuestions(db: Db): Promise<QuestionStore> {
-  const rows = await db.query<Row>(`SELECT id, data FROM maths.questions`);
-  const questions: Record<string, unknown> = {};
-  for (const r of rows) questions[r.id as string] = r.data;
-  return { version: 1, questions };
-}
-
-export const putQuestion = (db: Db, id: string, q: unknown) =>
-  db.query(`INSERT INTO maths.questions (id, data) VALUES ($1,$2::jsonb) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`, [id, j(q)]);
-export const removeQuestion = (db: Db, id: string) => db.query(`DELETE FROM maths.questions WHERE id = $1`, [id]);
 
 // ── One-off import from the old Blob store (api/migrate-decks.ts) ──
 

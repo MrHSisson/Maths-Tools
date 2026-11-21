@@ -9,7 +9,7 @@ import { generatorSlide, titleSlide, whiteboardSlide, worksheetSlide } from "./l
 import { QuestionWorkspace } from "./QuestionWorkspace";
 import { copyQuestion, fromBank, materializeDeck } from "./questions";
 import { fromGenerated } from "./SlideCanvas";
-import { allDecks, bankQuestion, loadDeck, newDeckId, newQuestionId, saveDeck } from "./store";
+import { bankQuestion, deckSummaries, ensureDeck, newDeckId, saveDeck } from "./store";
 import type { BankQuestion, CuratedQuestion, GeneratorPreset, QuestionSlideDraft, Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,12 +30,13 @@ type What = "whiteboard" | "generator" | "book" | "question";
 export default function SendToDeck({ path, sub, level, variables, dropdown, multiSelect, question, onClose }: SendToDeckProps) {
   const tool = ALL_TOOLS.find((t) => t.path === path);
   const wired = !!tool && supportsGeneratorSubtool(tool.id, sub);
-  const decks = useMemo(() => allDecks(), []);
-  const [target, setTarget] = useState<string>(decks.find((d) => d.deck.tool === tool?.id)?.deck.id ?? decks[0]?.deck.id ?? "new");
+  const decks = useMemo(() => deckSummaries(), []);
+  const [target, setTarget] = useState<string>(decks.find((d) => d.tool === tool?.id)?.id ?? decks[0]?.id ?? "new");
   const [what, setWhat] = useState<What>("generator");
   const [tag] = useState("");
   const [capture, setCapture] = useState<CuratedQuestion[] | null>(null);
   const [done, setDone] = useState<{ id: string; title: string; at: number } | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   const shown = fromGenerated(question);
   const preset: GeneratorPreset = { sub, level: level as GeneratorPreset["level"], variables, dropdown: dropdown || undefined, multiSelect };
   const lv = `Level ${level.slice(-1)}`;
@@ -44,11 +45,13 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     if (!tool) return;
     if (what === "question" && shown.drawing) return;
     if (what === "question" && !captured) {
-      const q: BankQuestion = { id: newQuestionId(), tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
+      const q: BankQuestion = { id: `my-q-${Date.now().toString(36)}`, tool: tool.id, level: preset.level, tag, latex: shown.latex, lines: shown.lines,
         answer: shown.suffix ? `${shown.answer}\\text{ ${shown.suffix}}` : shown.answer, working: shown.working };
       setCapture([copyQuestion(fromBank(q))]); return;
     }
-    let deck = target === "new" ? null : loadDeck(target);
+    let deck = target === "new" ? null : await ensureDeck(target);
+    if (target !== "new" && !deck) { setProblem("That deck could not be fetched just now (are you offline?). Nothing was added."); return; }      // do not quietly start a new deck instead
+    setProblem(null);
     if (!deck) { const id = newDeckId(); deck = { id, title: `${tool.name} deck`, summary: "", tool: tool.id, toolPath: tool.path, slides: [titleSlide(`${id}-title`, tool.name, "")] }; }
     const sid = `${deck.id}-${Date.now().toString(36)}`;
     let slide: Slide;
@@ -69,7 +72,7 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
     </label>
   );
 
-  if (capture) return <QuestionWorkspace start={capture} context={{ title: `${tool!.name}: fixed questions` }} identity={`${decks.find((d) => d.deck.id === target)?.deck.title ?? "New deck"} / capture:${question.key}`} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items, context, display) => { add(items, context, display); setCapture(null); }} />;
+  if (capture) return <QuestionWorkspace start={capture} context={{ title: `${tool!.name}: fixed questions` }} identity={`${decks.find((d) => d.id === target)?.title ?? "New deck"} / capture:${question.key}`} tool={tool!.id} draftKey={`capture:${question.key}`} onClose={() => setCapture(null)} onApply={(items, context, display) => { add(items, context, display); setCapture(null); }} />;
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-900/40 p-4" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -106,9 +109,10 @@ export default function SendToDeck({ path, sub, level, variables, dropdown, mult
             )}
             <label className="mt-3 block text-xs font-semibold text-slate-500">Add to the end of</label>
             <select value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
-              {decks.map(({ deck }) => <option key={deck.id} value={deck.id}>{deck.title}</option>)}
+              {decks.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
               <option value="new">A new deck</option>
             </select>
+            {problem && <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{problem}</p>}
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
               <button onClick={() => add()} className="rounded-xl bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">Add slide</button>

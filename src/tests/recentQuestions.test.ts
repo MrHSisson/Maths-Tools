@@ -116,11 +116,12 @@ describe("makeUniqueQ: a worksheet repeat is decided by content, not by the key"
 // The real generators: whenever a tool's pool is large (many different questions at its default options), a run of New Question
 // presses never repeats one of the last 15.
 const loaders = import.meta.glob("../tools/**/*.tsx");
+import { filtered, pickTools } from "./toolFilter";
 describe("real generators", () => {
   it("every tool with a large question pool shows no repeat within the last 15", async () => {
     const failures: string[] = [];
     let checked = 0;
-    for (const [path, load] of Object.entries(loaders)) {
+    for (const [path, load] of pickTools(Object.entries(loaders))) {
       const mod = (await load().catch(() => ({}))) as { __test?: { TOOL_CONFIG: any; generateQuestion: any; levels?: string[] } };
       const t = mod.__test;
       if (!t?.TOOL_CONFIG || !t.generateQuestion) continue;
@@ -143,7 +144,7 @@ describe("real generators", () => {
         }
       }
     }
-    expect(checked, "expected to check many tool levels").toBeGreaterThan(40);
+    if (!filtered) expect(checked, "expected to check many tool levels").toBeGreaterThan(40);
     expect(failures).toEqual([]);
   }, 300_000);
 });
@@ -153,7 +154,7 @@ describe("real generators", () => {
 describe("worksheet pools", () => {
   it("every tool level fills a 30-question sheet with different questions", async () => {
     const failures: string[] = [];
-    for (const [path, load] of Object.entries(loaders)) {
+    for (const [path, load] of pickTools(Object.entries(loaders))) {
       const mod = (await load().catch(() => ({}))) as { __test?: { TOOL_CONFIG: any; generateQuestion: any; levels?: string[] } };
       const t = mod.__test;
       if (!t?.TOOL_CONFIG || !t.generateQuestion) continue;

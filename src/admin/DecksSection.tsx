@@ -1,21 +1,21 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import { allDecks } from "../decks/store";
+import { deckSummaries, type DeckSummary } from "../decks/store";
 import { useSyncedDecks } from "../decks/useSyncedDecks";
 import { usePublishedIndex } from "../decks/published";
 import { useCategories } from "../decks/categories";
 import { menuOptions, pathOf, placeOf } from "../decks/categoryTree";
-import { FAMILY_STYLE, type DeckDef, type DeckFamily } from "../decks/types";
+import { FAMILY_STYLE, type DeckFamily } from "../decks/types";
 import { TOOLS } from "./facts";
 import { Drawer, PageHead, Status, panel } from "./ui";
 
 const FAMILIES = Object.keys(FAMILY_STYLE) as DeckFamily[];
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
-interface Row { deck: DeckDef; mine: boolean; edited: boolean; publishedAt?: string }
+interface Row { deck: DeckSummary; mine: boolean; edited: boolean; publishedAt?: string }
 
-const familyCounts = (d: DeckDef) => FAMILIES.map(f => ({ f, n: d.slides.filter(s => s.family === f).length })).filter(x => x.n > 0);
+const familyCounts = (d: DeckSummary) => FAMILIES.map(f => ({ f, n: d.families[f] ?? 0 })).filter(x => x.n > 0);
 
 /** Every deck at a glance: category, slides by kind, the tool it belongs to and whether it is published. Read from the decks themselves, never typed. */
 export function DecksSection() {
@@ -24,11 +24,11 @@ export function DecksSection() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");            // "all", "none" (not filed) or a category id (a strand takes its topics with it)
   const { data: cats } = useCategories(true);
-  const placeId = (d: DeckDef) => (cats ? placeOf({ id: d.id, strand: d.strand }, cats) : null);
+  const placeId = (d: DeckSummary) => (cats ? placeOf({ id: d.id, strand: d.strand }, cats) : null);
   const [state, setState] = useState<"all" | "published" | "not">("all");
   const [open, setOpen] = useState<string | null>(null);
 
-  const rows: Row[] = useMemo(() => allDecks().map(x => ({ ...x, publishedAt: published?.[x.deck.id]?.publishedAt })), [published, synced]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: synced changes when the shared decks have been read into this device
+  const rows: Row[] = useMemo(() => deckSummaries().map(deck => ({ deck, mine: true, edited: deck.edited, publishedAt: published?.[deck.id]?.publishedAt })), [published, synced]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: synced changes when the shared decks have been read into this device
   const shown = rows.filter(r => {
     if (category !== "all") {
       const at = placeId(r.deck), parent = cats?.categories.find(c => c.id === at)?.parent;
@@ -69,7 +69,7 @@ export function DecksSection() {
               <button onClick={() => setOpen(r.deck.id)} className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50">
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-900">{r.deck.title}</div>
-                  <div className="text-xs text-slate-500">{[pathOf(placeId(r.deck), cats), toolName(r.deck.tool), `${r.deck.slides.length} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
+                  <div className="text-xs text-slate-500">{[pathOf(placeId(r.deck), cats), toolName(r.deck.tool), `${r.deck.slides} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
                 </div>
                 <Status colour={r.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={r.publishedAt ? `Published ${dateOf(r.publishedAt)}` : "Not published"} />
               </button>
@@ -90,7 +90,7 @@ export function DecksSection() {
             <dl className="grid grid-cols-[7rem_1fr] gap-y-1.5">
               <dt className="text-slate-500">Id</dt><dd><code>{sel.deck.id}</code></dd>
               <dt className="text-slate-500">Tool</dt><dd>{toolName(sel.deck.tool) ?? "None"}</dd>
-              <dt className="text-slate-500">Slides</dt><dd>{sel.deck.slides.length}</dd>
+              <dt className="text-slate-500">Slides</dt><dd>{sel.deck.slides}</dd>
               <dt className="text-slate-500">Last saved</dt><dd>{sel.deck.updatedAt ? dateOf(sel.deck.updatedAt) : "Built in"}{sel.edited ? " (edited on this device)" : ""}</dd>
             </dl>
             <div>

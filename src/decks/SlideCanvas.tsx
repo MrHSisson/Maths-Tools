@@ -30,6 +30,7 @@ import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
 import { bankQuestion } from "./store";
+import { ElementBoundary, NewerCodePlaceholder, needsNewerCode } from "./newerCode";
 import { CANVAS_H, CANVAS_W, FAMILY_STYLE, type BoardGrid, type DeckElement, type FillMode, type Slide } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -641,7 +642,13 @@ function LineEl({ el }: { el: Extract<DeckElement, { kind: "line" }> }) {
   );
 }
 
-function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; stage: number }) {
+/** What one element draws. One this version of the site cannot read, or that fails to draw, shows a placeholder (see newerCode.tsx). */
+function ElementView(props: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; stage: number }) {
+  if (needsNewerCode(props.el)) return <NewerCodePlaceholder />;
+  return <ElementBoundary resetKey={props.el}><ElementViewInner {...props} /></ElementBoundary>;
+}
+
+function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckElement; live: boolean; depthSlide?: boolean; fill?: FillMode; stage: number }) {
   switch (el.kind) {
     case "text":
       return <TextEl el={el} />;
@@ -672,6 +679,7 @@ function ElementView({ el, live, fill, depthSlide, stage }: { el: DeckElement; l
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
     case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    default: return <NewerCodePlaceholder />;      // an element kind a newer version of the site adds
   }
 }
 

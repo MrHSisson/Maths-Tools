@@ -1,53 +1,114 @@
 name: CI
 
+# What runs: type check, build and lint always. Tests run only for the areas the change touches (lists in scripts/testAreas.mjs), split over
+# several runners. A pull request is compared with its base branch; a push to main with the commit before it (so main does not re-run
+# everything a pull request already passed). The nightly run and a manual run with "full" ticked run everything.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "17 2 * * *"        # a full run every night, whatever changed
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run every test, not just the areas the change touches"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # a newer push to a pull request replaces the run still going (main and nightly runs always finish)
 
 jobs:
-  build:
+  # Decides which tests and checks this change needs.
+  select:
     runs-on: ubuntu-latest
-
+    outputs:
+      run: ${{ steps.pick.outputs.run }}
+      smoke: ${{ steps.pick.outputs.smoke }}
+      toolfiles: ${{ steps.pick.outputs.toolfiles }}
+      matrix: ${{ steps.pick.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Choose the tests
+        id: pick
+        env:
+          FORCE_ALL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event_name == 'push' && github.event.before || 'origin/main' }}
+        run: node scripts/selectTests.mjs "$BASE"
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Type check + build
         run: npm run build
-
       - name: Lint (React hooks rules)
         run: npm run lint
 
-      - name: Generator smoke tests
-        run: npm test
-
-  # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
-  shell-smoke:
+  # The chosen tests, split into four runners.
+  tests:
+    needs: select
+    if: needs.select.outputs.run != 'none'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}      # one runner per share of the files, from scripts/selectTests.mjs
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
       - name: Install dependencies
         run: npm ci
+      # the files are shared out so the four runners finish together (by recorded time, scripts/testTimes.json); passed through the environment, never into the command text
+      - name: Tests, runner ${{ matrix.shard }}
+        env:
+          SHARD_FILES: ${{ matrix.files }}
+          TOOL_FILES: ${{ needs.select.outputs.toolfiles }}      # the checks that run over every tool run over only the tools this change touched (empty: every tool)
+        run: npx vitest run $SHARD_FILES
 
-      - name: Install a browser for the smoke check
-        run: |
-          npm install --no-save playwright@1.63.0
-          npx playwright install --with-deps chromium
-
+  # Opens every screen of the tool shell in a real browser and fails naming any screen that reports a fault.
+  shell-smoke:
+    needs: select
+    if: needs.select.outputs.smoke == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install the browser library for the smoke check
+        run: npm install --no-save playwright@1.63.0
+      # the browser itself is kept between runs (downloading it took 5 minutes 48 seconds once); its system libraries are installed every time
+      - name: Cache the browser
+        id: browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium-${{ runner.os }}
+      - name: Install the browser
+        if: steps.browser.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install the browser's system libraries
+        if: steps.browser.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - name: Shell smoke check
         run: npm run smoke:shell

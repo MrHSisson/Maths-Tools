@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { generateFromSeed } from "../shared/seededGenerate";
 import { normalizeMultiSelect } from "../shared/helpers";
+import { filtered, pickTools } from "./toolFilter";
 
 const toolLoaders = import.meta.glob("../tools/**/*.tsx");
 const decisionLoaders = import.meta.glob("../tools/Decision/*.tsx");
@@ -16,7 +17,7 @@ const same = (gen: () => object, seed: number) => JSON.stringify(generateFromSee
 describe("seed replay", () => {
   it("every Maths tool question rebuilds exactly from its seed", async () => {
     const problems: string[] = [];
-    for (const [p, load] of Object.entries(toolLoaders)) {
+    for (const [p, load] of pickTools(Object.entries(toolLoaders))) {
       const t = ((await load()) as any).__test;
       if (!t?.TOOL_CONFIG || !t.generateQuestion) continue;
       for (const [k, e] of Object.entries<any>(t.TOOL_CONFIG.tools)) {
@@ -38,7 +39,7 @@ describe("seed replay", () => {
   it("every Decision tool problem rebuilds exactly from its seed", async () => {
     const problems: string[] = [];
     let cells = 0;
-    for (const [p, load] of Object.entries(decisionLoaders)) {
+    for (const [p, load] of pickTools(Object.entries(decisionLoaders))) {
       const m: any = await load();
       const cases: { gen: (level: number, ctx: any) => object; ctx: any; levels: number[] }[] = [];
       if (m.__problem) for (const s of m.__problem.subTools ?? []) cases.push({ gen: m.__problem.generate, ctx: typeof s === "string" ? { subTool: s, options: {} } : s, levels: m.__problem.levels ?? [1] });
@@ -48,7 +49,7 @@ describe("seed replay", () => {
         for (const seed of SEEDS) if (!same(() => c.gen(level, c.ctx), seed)) { problems.push(`${p.split("/").pop()} ${c.ctx.subTool} L${level}`); break; }
       }
     }
-    expect(cells).toBeGreaterThan(50);
+    if (!filtered) expect(cells).toBeGreaterThan(50);
     expect(problems).toEqual([]);
   }, 300_000);
 });

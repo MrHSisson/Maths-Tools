@@ -1,0 +1,4 @@
+# Generated files are never merged by hand: a merge keeps our copy and `npm run facts` rebuilds them (git config is set by `npm install`, scripts/gitSetup.mjs).
+src/generated/toolFacts.json merge=regenerate
+src/generated/adminDocs.json merge=regenerate
+docs/PATCH_NOTES.md merge=regenerate

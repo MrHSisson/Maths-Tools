@@ -3,6 +3,7 @@
 import {
   mStep, rStepBuild, randInt, pick, pickActive, gcd, gcdAll, lcm, resolveMultiSelectValues, maskUnmetOptions,
   type DifficultyLevel, type WordedQuestion, type WorkingStep, type ToolMultiSelect,
+  withExtras,
 } from "../../shared";
 
 export const SIMPLIFY_TYPES: ToolMultiSelect = {
@@ -140,7 +141,7 @@ const genWhole = (level: DifficultyLevel, ask: AskFor, method: SimplifyMethod): 
     return wholeQuestion(parts, ask, method, level);
   }
   const parts = threePart ? [12, 18, 24] : [6, 9];
-  return make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, rLatex(...parts), threePart ? "2 : 3 : 4" : "2 : 3", chainTable("Write the ratio", parts.map(String), parts, method), `rs-whole-fallback-${level}-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Different units ───────────────────────────────────────────────────────────
@@ -174,7 +175,7 @@ const genUnits = (level: DifficultyLevel, method: SimplifyMethod): WordedQuestio
     const working = table(`Convert ${A} ${u.big} to ${X} ${u.small}, so both parts are in ${u.small}`, rows, ops);
     return make(PROMPT_SIMPLEST, shown, rLatex(...answer), working, `rs-units-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50], method), `rs-units-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, "2\\,\\mathrm{m} : 50\\,\\mathrm{cm}", "4 : 1", chainTable("Convert 2 m to 200 cm, so both parts are in cm", ["200", "50"], [200, 50], method), `rs-units-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Decimals ──────────────────────────────────────────────────────────────────
@@ -197,7 +198,7 @@ const genDecimals = (level: DifficultyLevel, method: SimplifyMethod): WordedQues
     const working = table("Write the ratio", [cells, ...chain.rows], [`\\times ${scale}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(s1, s2), working, `rs-decimals-${level}-${shown}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", table("Write the ratio", [["0.6", "0.9"], ["6", "9"], ["2", "3"]], ["\\times 10", "\\div 3"]), `rs-decimals-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, "0.6 : 0.9", "2 : 3", table("Write the ratio", [["0.6", "0.9"], ["6", "9"], ["2", "3"]], ["\\times 10", "\\div 3"]), `rs-decimals-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Fractions ─────────────────────────────────────────────────────────────────
@@ -221,7 +222,7 @@ const genFractions = (level: DifficultyLevel, method: SimplifyMethod): WordedQue
     const working = table("Write the ratio", [[frac(n1, d1), frac(n2, d2)], ...chain.rows], [`\\times ${L}`, ...chain.ops]);
     return make(PROMPT_SIMPLEST, shown, rLatex(p[0] / g, p[1] / g), working, `rs-fractions-${level}-${n1}_${d1}-${n2}_${d2}-${idOf()}`, level);
   }
-  return make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", table("Write the ratio", [[frac(1, 2), frac(3, 4)], ["2", "3"]], ["\\times 4"]), `rs-fractions-fallback-${idOf()}`, level);
+  return withExtras(make(PROMPT_SIMPLEST, `${frac(1, 2)} : ${frac(3, 4)}`, "2 : 3", table("Write the ratio", [[frac(1, 2), frac(3, 4)], ["2", "3"]], ["\\times 4"]), `rs-fractions-fallback-${idOf()}`, level), { _fallback: true });
 };
 
 // ── Letters ───────────────────────────────────────────────────────────────────

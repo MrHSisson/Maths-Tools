@@ -20,7 +20,7 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 | `CLAUDE.md` | The rules — conventions, the Rules checklist, how to build a tool. Start here. The shared-API reference is in `docs/reference/`. |
 | `docs/TASKS.md` | Smaller to-dos: checks, consistency fixes, one-off jobs. |
 | `docs/pathways/` | The larger developments, one file each: intention, progress, next steps. |
-| `docs/PATCH_NOTES.md` · `docs/history/` | Session-by-session history (Maths / CS), newest first; `docs/history/` holds the older months. |
+| `docs/PATCH_NOTES.md` (built from `docs/patch-notes/`, one file per session) · `docs/history/` | Session-by-session history (Maths / CS), newest first; `docs/history/` holds the older months. |
 | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
 | `docs/GLOSSARY.md` | Canonical name for every element. |
 | `docs/BACKBENCH.md` | Paused work (the Skills library). |
@@ -44,14 +44,14 @@ Deployed at: [maths-tools-phi.vercel.app](https://maths-tools-phi.vercel.app)
 | Tests | Vitest (`npm test`) |
 | Shared tool notes | Vercel Blob behind `api/tool-notes.ts` |
 | Deployment | Vercel |
-| CI | GitHub Actions (`.github/workflows/ci.yml`: `npm run build` and `npm test`) |
+| CI | GitHub Actions (`.github/workflows/ci.yml`: build and lint, then the tests the change touches in four shards, and a shell smoke check) |
 
 ---
 
 ## Project Structure
 
 ```
-├── .github/workflows/ci.yml   # CI — type-check, build and run the tests on every push and pull request to main
+├── .github/workflows/ci.yml   # CI — type-check, build, lint and the tests the change touches, on every pull request and push to main
 ├── api/                       # Vercel functions (tool notes for the Tools dashboard)
 ├── docs/                      # Plans, history, architecture, design notes (see the table above)
 ├── scripts/                   # new-tool scaffold, toolFacts and adminDocs generators
@@ -133,7 +133,7 @@ npm run preview   # Preview the production build locally
 
 ## CI / Deployment
 
-**CI** runs on every push and pull request to `main` via `.github/workflows/ci.yml`: it installs with `npm ci`, runs `npm run build` and then `npm test`. A red tick means a
+**CI** runs on every pull request and every push to `main` (and nightly) via `.github/workflows/ci.yml`: type check, build and lint always, then only the test areas the change touches, split over four runners, plus a browser smoke check when it matters (the lists are in `scripts/testAreas.mjs`; `AGENTS.md` explains them; the nightly and a manual run run everything). A red tick means a
 TypeScript error, a broken build or a failing test — do not merge until it is green.
 
 **Deployment** is handled by Vercel on every push to `main`. `vercel.json` has a catch-all rewrite so that React Router's client-side routes work on direct URL access.

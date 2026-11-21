@@ -216,6 +216,18 @@ export const ansEq = (answer: string): string => (/=|\\underline\{/.test(answer)
 
 const KEY_PREFIX = "key:";
 
+/** Failing less than about 1 time in 100 is handled by drawing again: a generator that throws, or hands back its fixed fall-back (`_fallback`), is asked
+ *  again, up to three more times. If every draw fails the last result stands (the fall-back question) or the last error is thrown, so the shell still names a real fault. */
+const REDRAWS = 3;
+export const drawAgain = <Q extends object>(draw: () => Q): Q => {
+  for (let i = 0; ; i++) {
+    try {
+      const q = draw();
+      if (!(q as { _fallback?: boolean })._fallback || i >= REDRAWS) return q;
+    } catch (e) { if (i >= REDRAWS) throw e; }
+  }
+};
+
 // Wraps a generateQuestion function with the standard retry-until-unique loop.
 // ToolShell uses this automatically when a tool doesn't supply its own
 // generateUniqueQ — new tools only need to write generateQuestion.
@@ -240,7 +252,7 @@ export const makeUniqueQ = <Q extends { key: string }, L extends string = string
 ): Q => {
   let q: Q;
   let attempts = 0;
-  do { q = generate(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
+  do { q = drawAgain(() => generate(tool, level, variables, dropdownValue, multiSelectValues)); attempts++; }
   while (isUsed(usedKeys, q) && attempts < 100);
   // The key still names a worksheet cell (React identity, flips), so it must differ from every other cell's even when the content does
   // not collide: a coarse hand-made key on a different question is renamed, never a reason to refuse the question.

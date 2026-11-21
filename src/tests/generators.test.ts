@@ -106,9 +106,10 @@ const renderOk = (label: string, latex: string, ctx: string) => {
 // Discover opted-in tools. Modules must import cleanly under node — if a
 // legacy tool ever breaks discovery, exclude its path here with a comment.
 const moduleLoaders = import.meta.glob("../tools/**/*.tsx");
+import { filtered, pickTools } from "./toolFilter";
 const optedIn: [string, ToolTestExport][] = [];
 const importFailures: [string, unknown][] = [];
-for (const [path, load] of Object.entries(moduleLoaders)) {
+for (const [path, load] of pickTools(Object.entries(moduleLoaders))) {
   try {
     const mod = (await load()) as { __test?: ToolTestExport };
     if (mod.__test) optedIn.push([path, mod.__test]);
@@ -123,7 +124,7 @@ describe("tool module discovery", () => {
     expect(msgs).toEqual([]);
   });
   it("finds at least one tool exposing __test", () => {
-    expect(optedIn.length).toBeGreaterThan(0);
+    if (!filtered) expect(optedIn.length).toBeGreaterThan(0);
   });
 });
 

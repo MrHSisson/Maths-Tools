@@ -138,6 +138,7 @@ if (cmd === "list") {
     writeFileSync(file(id), JSON.stringify(snapshot, null, 1) + "\n");
   }
   console.log(`pushed ${id}: ${final.slides.length} slides${out.merged ? ` (merged with changes saved since the pull; ${out.conflicts?.length ? `${out.conflicts.length} clash${out.conflicts.length > 1 ? "es" : ""} resolved in Harry's favour: ${out.conflicts.slice(0, 8).join(", ")}` : "no clashes"})` : ""}`);
+  if (out.unchecked?.length) console.log(`kept, but this version of the site cannot read ${out.unchecked.length} thing${out.unchecked.length > 1 ? "s" : ""} yet (the deck shows "This needs a newer version of the site" there until the code that draws it is merged):\n  ${out.unchecked.join("\n  ")}`);
   skewWarning();
 } else if ((cmd === "publish" || cmd === "unpublish") && id) {
   const { base, headers } = remote();

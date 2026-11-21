@@ -68,10 +68,6 @@ const SCHEMA = [
      key text PRIMARY KEY,
      value text NOT NULL
    )`,
-  `CREATE TABLE IF NOT EXISTS maths.questions (
-     id text PRIMARY KEY,
-     data jsonb NOT NULL
-   )`,
 ];
 
 let schemaReady = new WeakMap<Db, Promise<void>>();
