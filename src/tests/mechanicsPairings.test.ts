@@ -2,7 +2,7 @@
 // so these tests keep it honest: every pairing names a sub-tool the tool really has, with the name the tool gives it and the kind of practice it shows,
 // and every sub-tool of the tool is placed in exactly one place (a statement, the exam card or a group), so a new one cannot be forgotten or listed twice.
 import { describe, it, expect } from "vitest";
-import { CHAPTERS, MECHANICS_PAIRINGS, MECHANICS_GROUPS, MECHANICS_EXAM, MECHANICS_TOOLS, type MechSubRef } from "../tools/FurtherMechanics/mechanicsSpec";
+import { CHAPTERS, MECHANICS_PAIRINGS, MECHANICS_PLANNED, MECHANICS_GROUPS, MECHANICS_EXAM, MECHANICS_TOOLS, type MechSubRef } from "../tools/FurtherMechanics/mechanicsSpec";
 
 type Sub = { key: string; label: string; when: { key: string; values: string[] }[] };
 const mod: any = await import("../tools/FurtherMechanics/DimensionalAnalysis");
@@ -32,5 +32,19 @@ describe("Further Mechanics pairings", () => {
     const placed = all().map((x) => x.sub);
     expect(SUBS.map((s) => s.key).filter((k) => !placed.includes(k))).toEqual([]);
     expect(placed.filter((k, i) => placed.indexOf(k) !== i)).toEqual([]);
+  });
+
+  it("plans (greyed-out) sub-tools only for real statements, never twice on one statement, and A2 ones only where the course goes beyond AS", () => {
+    const stmts = new Map(CHAPTERS.flatMap((c) => c.statements.map((s) => [s.ref, s] as const)));
+    for (const [ref, list] of Object.entries(MECHANICS_PLANNED)) {
+      expect(stmts.has(ref), `${ref} is a statement`).toBe(true);
+      expect(new Set(list.map((p) => p.label)).size, `${ref} lists a sub-tool twice`).toBe(list.length);
+      // a statement that is A2 throughout has only A2 sub-tools
+      if (!stmts.get(ref)!.as) for (const p of list) expect(p.a2, `${ref}: ${p.label}`).toBe(true);
+    }
+    // chapter MA is built, so nothing is planned for it
+    expect(Object.keys(MECHANICS_PLANNED).filter((r) => r.startsWith("MA"))).toEqual([]);
+    // every statement of the chapters still to be built has something planned
+    for (const c of CHAPTERS.filter((c) => c.id !== "MA")) for (const s of c.statements) expect(MECHANICS_PLANNED[s.ref], `${s.ref} has a planned sub-tool`).toBeDefined();
   });
 });

@@ -1,6 +1,6 @@
 import { SpecLanding, type SpecChapter, type SpecLink } from "../../shared/components/SpecLanding";
 import { ALL_TOOLS } from "../../registry";
-import { CHAPTERS, GENERAL_RESOURCES, CHECK_NOTES, MECHANICS_TOOLS, MECHANICS_PAIRINGS, MECHANICS_GROUPS, MECHANICS_EXAM, type MechSubRef } from "./mechanicsSpec";
+import { CHAPTERS, GENERAL_RESOURCES, CHECK_NOTES, MECHANICS_TOOLS, MECHANICS_PAIRINGS, MECHANICS_PLANNED, MECHANICS_GROUPS, MECHANICS_EXAM, type MechSubRef } from "./mechanicsSpec";
 
 // Further Mechanics: the landing page for the AQA 7367 mechanics option (MA–ME). The look and behaviour are the shared
 // SpecLanding page (the same as Decision Maths); this file supplies the words and reads each chapter's tools from the registry,
@@ -15,7 +15,14 @@ const linkOf = (r: MechSubRef): SpecLink[] => {
 
 const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
   ...c,
-  statements: c.statements.map((s) => ({ ...s, links: [...(s.links ?? []), ...(MECHANICS_PAIRINGS[s.ref] ?? []).flatMap(linkOf)] })),
+  statements: c.statements.map((s) => ({
+    ...s,
+    links: [
+      ...(s.links ?? []), ...(MECHANICS_PAIRINGS[s.ref] ?? []).flatMap(linkOf),
+      // sub-tools still to be built: greyed out, so a teacher can see what is coming
+      ...(MECHANICS_PLANNED[s.ref] ?? []).map((p): SpecLink => ({ label: p.label, href: "", live: false, as: !p.a2, provisional: true })),
+    ],
+  })),
   tools: [...c.tools, ...(MECHANICS_TOOLS[c.id] ?? []).flatMap((id) => {
     const t = ALL_TOOLS.find((x) => x.id === id);
     return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];

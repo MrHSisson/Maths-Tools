@@ -480,6 +480,16 @@
    ]
   },
   {
+   "title": "Further Mechanics hub: planned sub-tools",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** showing a teacher what is coming. **How it works:** under each specification statement of the chapters not yet built, the sub-tools planned for it appear as greyed-out buttons that do not open anything; a statement with an A2 layer shows it in brackets after the statement. **Where:** Further Mechanics hub, chapters MB to ME."
+    }
+   ]
+  },
+  {
    "title": "Dimensional Analysis (Further Mechanics MA, in development)",
    "level": 3,
    "blocks": [

@@ -152,6 +152,34 @@ export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?:
   }],
 };
 
+/** Sub-tools planned for each statement but not built: shown greyed out on the hub so a teacher can see what is coming (the plan is specs/further-mechanics-mc.md for MC and
+ *  docs/pathways/further-mechanics.md for the other chapters). `a2` marks one that exists only at A2. Chapter MA is built, so it has none. */
+export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]> = {
+  MB1: [{ label: "Conservation of momentum" }],
+  MB2: [{ label: "Restitution and impacts" }],
+  MB3: [{ label: "Impulse and momentum" }],
+  MB4: [{ label: "Impulse of a variable force" }],
+  MC1: [{ label: "Force and distance" }, { label: "Work and gravity" }, { label: "Several forces" }, { label: "Force at an angle", a2: true }],
+  MC2: [{ label: "Kinetic and potential energy" }, { label: "Conservation of energy" }],
+  MC3: [{ label: "Kinetic and potential energy" }, { label: "Work-energy principle" }, { label: "Conservation of energy" }],
+  MC4: [{ label: "Hooke's law" }],
+  MC5: [{ label: "Variable force" }],
+  MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
+  MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],
+  MD1: [{ label: "Angular speed, speed and acceleration" }],
+  MD2: [{ label: "Angular speed, speed and acceleration" }],
+  MD3: [{ label: "Angular speed, speed and acceleration" }],
+  MD4: [{ label: "Vectors in circular motion", a2: true }],
+  MD5: [{ label: "Conical pendulum", a2: true }],
+  MD6: [{ label: "Vertical circles", a2: true }],
+  ME1: [{ label: "Particles and composite bodies", a2: true }],
+  ME2: [{ label: "Particles and composite bodies", a2: true }],
+  ME3: [{ label: "Centres of mass by integration", a2: true }],
+  ME4: [{ label: "Centres of mass by integration", a2: true }],
+  ME5: [{ label: "Sliding and toppling", a2: true }],
+  ME6: [{ label: "Equilibrium, moments and couples", a2: true }],
+};
+
 /** a chapter's exam-style practice: the one mixed question its page opens from the exam card */
 export const MECHANICS_EXAM: Record<string, { text: string; ref: MechSubRef }> = {
   MA: { text: "A short multi-part question in the style of the paper: state or show dimensions, check a formula, or find the powers in a model.", ref: da("exAny", "Any exam question", "exam") },

@@ -1727,7 +1727,7 @@
    "kind": "workshop",
    "shell": "Standalone",
    "subTools": null,
-   "lines": 48,
+   "lines": 55,
    "depth": false,
    "teach": false,
    "lessons": false,
