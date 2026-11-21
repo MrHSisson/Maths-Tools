@@ -9,7 +9,7 @@
 **Correction, 2026-11-21.** Section 1 of the chapter and Mixed practice 11 carry no A-level marker, so three-variable formulation (L08) and the 2015 chain (L12, L33) are AS content. Only section 3 and the Y2-marked Mixed practice questions are A2.
 
 **Sources.**
-- **T4**: the textbook, chapter 4 Linear programming (WE = worked example, Ex = exercise question, MP = Mixed practice question). Y2 marks A-level only content (section 3 and the Y2 MP questions); sections 1 and 2 are AS and A-level.
+- **T4**: the Cambridge textbook (A-Level Further Mathematics for AQA Discrete Student Book, Year 1 & 2), chapter 4 Linear programming (WE = worked example, Ex = exercise question, MP = Mixed practice question). Y2 marks A-level only content (section 3 and the Y2 MP questions); sections 1 and 2 are AS and A-level.
 - **AQA**: two Mixed practice questions are marked as AQA past-paper questions (2015, 2016): shapes recorded below as chain patterns for the later exam-style pass.
 
 ## Formulate (DD1)
@@ -79,7 +79,7 @@
 - The textbook itself names these error patterns (use them as misconceptions in working): graph gradients wrong when plotting a line; taking an approximate vertex off a graph; assuming the integer optimum is next to the optimal vertex; wrong pivot element (shows as a negative RHS); reading values from the objective row instead of the final column; sign errors when writing the objective row; forgetting to negate when minimising.
 - Past papers 7366 and 7367 Paper 3D and legacy D1 and D2 to be added.
 
-## Second textbook: Chapter 14 "Linear programming and game theory 1" (T14), section 14.1 only (2026-11-21)
+## Second textbook: Oxford, Further Mathematics (AS & A-Level), Chapter 14 "Linear programming and game theory 1" (T14), section 14.1 only (2026-11-21)
 
 The game theory half is ignored. T14 = worked examples 1 to 5 and Exercises 14.1A, 14.1B. Rows added; the first-textbook rows are unchanged.
 

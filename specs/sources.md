@@ -13,7 +13,7 @@
 | Past papers | exam-board question papers | https://drive.google.com/drive/folders/1I7VV-gal_emiqZB2M3ntxMdhHG-2ami3 |
 | Mark schemes and examiner reports | mark schemes and examiner reports | https://drive.google.com/drive/folders/10RE7Lmu3VH2Mf9EVQYwj2qA_dQ7xPZPG |
 
-**Naming.** Topic or tool short code, then the source, then what it is: `LP · Textbook A · Ch 4 Linear programming.pdf`; for papers `Board · Paper · Year · Series` (for example `AQA · 7367-3D · 2023 · June`). Textbooks are lettered A, B, … by topic until a publisher and title are recorded here.
+**Naming.** Topic or tool short code, then the source, then what it is: `LP · Cambridge AQA Discrete Y1 & 2 · Ch 4 Linear programming.pdf`; for papers `Board · Paper · Year · Series` (for example `AQA · 7367-3D · 2023 · June`). Textbooks are named by publisher and a short title, with the full title in the table below.
 
 **Adding a source.** Only when a build needs it. Harry drops the file in (the connector will not take an upload over about 3 MB), the session renames it to the pattern and adds a row below.
 
@@ -21,9 +21,9 @@
 
 | Source | Drive file | Used for | Taken from it (in the repo) |
 |---|---|---|---|
-| **LP · Textbook A** · Ch 4 "Linear programming" (Further Maths, Decision; sections 1 to 3, Exercises 4A to 4C, Work it out 4.1, Mixed practice 4, two AQA past-paper questions) | Textbooks: `LP · Textbook A · Ch 4 Linear programming.pdf` | Linear Programming, all three tools | `specs/corpus/linear-programming-styles.md` rows L01 to L57; `specs/linear-programming.md` section 9a (conventions, simplex layout, acceptance examples); `specs/linear-programming-formulate.md` |
-| **LP · Textbook B** · Ch 14 "Linear programming and game theory 1" (read section 14.1 only, pages 1 to 13; the rest is game theory) | Textbooks: `LP · Textbook B · Ch 14 Linear programming and game theory 1.pdf` | Linear Programming: the constraint types the first book lacked (blends, decimals, fractions, "each") | corpus rows L60 to L76; `specs/linear-programming-formulate.md` sections 2 and 4 |
+| **Cambridge, "A-Level Further Mathematics for AQA Discrete Student Book (Year 1 & 2)"** · Ch 4 "Linear programming" (Further Maths, Decision; sections 1 to 3, Exercises 4A to 4C, Work it out 4.1, Mixed practice 4, two AQA past-paper questions) | Textbooks: `LP · Cambridge AQA Discrete Y1 & 2 · Ch 4 Linear programming.pdf` | Linear Programming, all three tools | `specs/corpus/linear-programming-styles.md` rows L01 to L57; `specs/linear-programming.md` section 9a (conventions, simplex layout, acceptance examples); `specs/linear-programming-formulate.md` |
+| **Oxford, "Further Mathematics (AS & A-Level)"** · Ch 14 "Linear programming and game theory 1" (read section 14.1 only, pages 1 to 13; the rest is game theory) | Textbooks: `LP · Oxford Further Maths AS & A-Level · Ch 14 Linear programming and game theory 1.pdf` | Linear Programming: the constraint types the first book lacked (blends, decimals, fractions, "each") | corpus rows L60 to L76; `specs/linear-programming-formulate.md` sections 2 and 4 |
 | Past papers | none uploaded yet | the exam-style passes (Decision, Mechanics) | local copies are kept in the git-ignored `specs/exam/sources/`; none yet in Drive |
 | Mark schemes and examiner reports | none uploaded yet | the Linear Programming misconceptions (AQA 7367/3D June 2023 and June 2025 examiner reports, still unread in full) | |
 
-Textbook publisher and title: not yet recorded; add them here when Harry says.
+In the corpus and the briefs these are "T4" (the Cambridge chapter, also called the first textbook) and "T14" (the Oxford chapter, the second textbook).
