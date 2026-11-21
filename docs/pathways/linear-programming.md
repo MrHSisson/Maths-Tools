@@ -1,5 +1,5 @@
 # Linear Programming (Decision Maths, chapter DD)
-- **Status:** idea
+- **Status:** building
 - **Updated:** 2026-11-21
 
 ## Intention
@@ -13,10 +13,11 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 - 2026-11-21 (second textbook). Chapter 14 (LP half only) read for missed constraint types; corpus rows L60 to L76 added and the Formulating brief extended: blends and averages, decimal amounts per item, fractions and "each" pairs, "one for every k", fixed-total equalities, per-packet scaling, a single-variable objective, strict wording (decision 8).
 
 - 2026-11-21 (end of the planning session). Decisions settled with Harry: three tools; `constraint` (one constraint, whole-number answers, three levels, multi-select variables 2 to 4 and styles, strict inequalities throughout) is `ready` for F0 to F4; `problem` (student assigns the variables) stays draft. Plan documents merged to `main`; nothing built.
+- 2026-11-21 (F0 built). `src/shared/decision/lp.ts` and `src/tests/lp.test.ts`: exact fractions, `Var` / `Constraint` / `Model`, the tidy rule, the relationship, blend and either-or rules, `holds` written independently of the coefficients, checked over seeded random draws at every lattice point. Library only: no tool, no registry entry. The tidy form divides by the common factor of the coefficients and the right-hand side (`80x ≤ 500` is `4x ≤ 25`); generators keep right-hand sides whole so coefficient gcd is 1.
 
 ## Next steps
-- **F0** (next, one small chunk): `src/shared/decision/lp.ts`, the maths core with its tests: exact fractions, the `Constraint` and `Model` types, the clearing rule (whole numbers, lowest terms, leading coefficient positive, operator flipped on a negation), strict operators, and `holds`. Library only, nothing in the registry. See section 9 and chunk F0 of `specs/linear-programming-formulate.md`.
-- Then F1 (resource use and direct comparisons, the stepper, the `constraint` sub-tool at Level 1), F2 (Level 3 either-or), F3 (Level 2), F4 (Level 3 blends); then the `problem` sub-tool (F5 to F7) and go-live (F8). Each merges on its own.
+- **F1** (next): `lpGen.ts`, resource use and direct comparisons, the stepper, the `constraint` sub-tool at Level 1 (F0, `lp.ts`, is built).
+- Then F2 (Level 3 either-or), F3 (Level 2), F4 (Level 3 blends); then the `problem` sub-tool (F5 to F7) and go-live (F8). Each merges on its own.
 - Write briefs for the Graphical and Simplex tools from `specs/linear-programming-tools.md` and the corpus before they are built (the Simplex tableau layout is in section 9a of `specs/linear-programming.md`).
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
