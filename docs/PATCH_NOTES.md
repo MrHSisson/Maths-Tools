@@ -45,6 +45,19 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpGen.ts`, `lpSo
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: Write a constraint, Level 1 (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 
+## 2026-11-21 — Linear Programming: the plan for the Simplex tool (documents only)
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `specs/linear-programming-simplex.md` (new), `specs/corpus/linear-programming-styles.md` (rows L77 to L87), `specs/sources.md`, `specs/linear-programming-tools.md`, `docs/pathways/linear-programming.md`, `scripts/lpSimplexNumbersStudy.py` (new). No code in the app, nothing teachers see.
+
+- **The plan.** `specs/linear-programming-simplex.md` plans the Simplex tool (DD3, DD4, A2) as four sub-tools (set up, pivot, solve, interpret) with a tableau picture, built in chunks S0 to S6, with eight decisions for Harry. It is written from the first textbook and the Oxford chapter 30 Harry attached (read in full: the simplex section, both exercises, the four worked examples, the games section, the summary and the Assessment).
+- **Worry 1, horrific numbers: measured, then designed out.** Every tableau entry's denominator divides the determinant of the basis the algorithm is in, so pivots on 5, 7 and 11 breed fractions. 480 000 random exact runs: with coefficients 1 to 8 only about 3% of problems keep every denominator in every tableau at 5 or below (under 1% at 3); sparse small coefficients (0 to 5) help most. The method: **design the optimum first** (a whole optimal point, which constraints bind, a whole dual), build the objective and right-hand sides from it, run the real algorithm, and keep the problem only if every tableau meets a per-level niceness budget (denominators ≤ 3, 5, 6; iterations; entry size; no ties). That keeps 23% to 39% of draws at denominators ≤ 5 (up to 32% at ≤ 3 with the smallest coefficients), with the optimum always whole. A stricter "every minor small" idea was tried and rejected. Tests will measure the numbers of every generated problem and compare their distribution with the books' profile.
+- **Worry 2, the style of answer.** The model answer is the page a student writes, in the order a mark scheme pays: standard form and the slack names, the tableau, the pivot with θ-values and the reason, each iteration with its row operations written, the optimality sentence, every variable (slacks too) and P read from the value column, and the statement in context with the slack's meaning in the story's units. The two books differ in layout (a Basic variable column and a Row column against neither), slack letters and mixed numbers, so those are display options. Stock wording and the named slips are listed.
+- **Corpus and sources.** Rows L77 to L87 (a non-standard start by pivoting on a negative entry, lower-bound substitution, equalities, decimal tables with simplification, "is it practical", reading a tableau, the reverse, error analysis, mark-style short parts, naming slack, games as LPs) and a sources row for the Oxford chapter 30 (not committed; not yet in Drive).
+- **Deliberately not done:** any code; the Graphical brief; the examiner reports; the `problem` brief confirmation; moving the Oxford chapter into Drive.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: the Simplex plan (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
 ## 2026-11-21 — Formulating Linear Programmes: strict inequalities in problems, the rest of "Formulate a problem" Level 2, and Level 3 (chunks F6 and F7), not live
 
 Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpProblem.ts` (rewritten), `lpGen.ts`, `lpGenL23.ts`, `lpSolve.ts`, `LpWorking.tsx`, `src/tools/Decision/FormulatingLP.tsx`, `src/tests/lpProblem.test.ts`, the brief's status line and the pathway.
