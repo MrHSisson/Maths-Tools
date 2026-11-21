@@ -1,13 +1,13 @@
 # Formulating Linear Programmes (DD1) — brief
 
-**Status:** draft, revised 2026-11-21 (two sub-tools, three levels each; first drafted with seven sub-tools, cut to two levels, then back to three once every constraint type was counted). The first build of the Linear Programming family (`specs/linear-programming-tools.md`). The `constraint` sub-tool (F0 to F4) becomes `ready` when Harry answers the five items in section 11; `problem` stays draft until its own pass. Nothing is built.
+**Status:** the `constraint` sub-tool is **`ready`** (chunks F0 to F4, decided 2026-11-21); the `problem` sub-tool stays **draft** until its own pass (F5 to F7). Two sub-tools, three levels each. The first build of the Linear Programming family (`specs/linear-programming-tools.md`). Nothing is built.
 
 **What this is.** A tool, `lp-formulate`, on `DecisionShell` (own data field `lp`, written working, no network), with **two sub-tools, each with three levels**:
 
 1. **Write a constraint** (`constraint`): a short situation, and the student writes **exactly one constraint** (no objective: `P = …` belongs to `problem` only; the variables are named in the question, so the student only writes the inequality). **Level 1: direct** (resource use and direct comparisons). **Level 2: proportions** (percentages, fractions, ratios, decimal amounts). **Level 3: models** (blends and averages, either-or limits).
 2. **Formulate a problem** (`problem`): the whole thing, mixed, as the exam sets it: variables, the objective (`P = …`), every constraint, non-negativity, integers. Each level adds the styles of the same level of `constraint`, and the extras.
 
-A student learns each style on its own (sub-tool 1), then meets them mixed (sub-tool 2). The answer is the **model solution shown by the stepper**; the student is not marked on typed input. **The number of variables is controllable, 2 to 4** (option Variables, default Two). **Every constraint is shown, and answered, with whole-number coefficients in lowest terms.**
+A student learns each style on its own (sub-tool 1), then meets them mixed (sub-tool 2). The answer is the **model solution shown by the stepper**; the student is not marked on typed input. **The number of variables is controllable, 2 to 4** (option Variables, default Two). **Every answer is a whole-number constraint (whole-number coefficients, lowest terms), in every sub-tool and every level, with no option to change it.** Fractions and decimals appear only in the working (`x/60 + y/45 ≤ 1` is a step, `3x + 4y ≤ 180` is the answer).
 
 Sources: textbook chapter 4 section 1 and Exercise 4A (corpus rows L01 to L09, L11 to L14), the AQA specification DD1, and Harry's cases: `10x + 15y ≤ 300`; "x should be twice y and z combined"; "x should be 40 percent of y (or of y and z combined, or of the total)"; the either-or limit "at most 60 of one and 45 of another" giving `x/60 + y/45 ≤ 1`.
 
@@ -125,7 +125,7 @@ Multiply by `L = lcm(a, b)`; with `g = gcd(a, b)`: `(b/g) x + (a/g) y ≤ ab/g`,
 
 ## 5. `problem` — Formulate a problem
 
-The whole model: **variables** (the noun and units), **objective** (`P = …`, and maximise or minimise), **constraints**, **non-negativity**, **integers** where the items are whole; laid out as the book does ("Maximise P = …", "subject to:", one constraint per line).
+In `problem` the question does **not** name the variables: the student **assigns them** (first step of the answer: "let x = the number of loaves, y = the number of cakes", with units). Any consistent assignment is correct; the model solution uses the order the items first appear. The whole model: **variables** (the noun and units), **objective** (`P = …`, and maximise or minimise), **constraints**, **non-negativity**, **integers** where the items are whole; laid out as the book does ("Maximise P = …", "subject to:", one constraint per line).
 
 | Level | Constraints | Objective and variables | Textbook |
 |---|---|---|---|
@@ -165,7 +165,6 @@ A generator never writes the words first. For each constraint it picks the **int
 | Objective | `problem` | Maximise Profit; Minimise Cost; Either | changes the numbers |
 | Integers | `problem` | Say So; Leave Out | changes what is asked: throws away |
 | Data Shown | both | Sentences; Table | display only |
-| Answer Format | both | As Written; Whole Numbers; Both | display only |
 | Working Shown | both | Full; Constraints Only | display only (worked example only) |
 
 Options meaningful at one level only are shown only there (a `requires` option, R23: the generator ignores a blocked option and keeps a fallback). Each option has an `info` sentence (R40) and an `.about.ts` explainer (R11). A group with a single option is not shown (R21).
@@ -216,15 +215,18 @@ interface Model { vars: Var[]; sense: "max" | "min"; obj: Fr[]; objConst: Fr; co
 
 Either-or is built before Level 2 because it is the skill the book has no exercise for; swap F2 and F3 if Harry prefers. `src/registry.ts`, `src/shared/index.ts` and the hub files are shared: each edit is minimal and in its own chunk.
 
-## 11. Decided, and what is needed before the build
+## 11. Decided
 
-**Decided (Harry, 2026-11-21):** the model solution is enough (no typed answers); two sub-tools, three levels each, the level set by the style of constraint; `constraint` asks for exactly one constraint and no objective (`P = …` is in `problem` only); Variables is a multi-select of Two, Three and Four; Constraint Styles is a multi-select; strict inequalities throughout, no option; percentages and blends are in Levels 2 and 3 as in section 1.
+All settled with Harry on 2026-11-21; nothing is waiting on him before F0.
 
-**Needed before F0 to F2** (the `constraint` sub-tool; a yes, or a change, to each):
-1. **Tool count.** Three tools (Formulating, Graphical, Simplex; recommended) or one with all sub-tools. Only affects the registry entry and hub card, not F0 to F2, so the build can start on a yes to the rest.
-2. **Registry entry.** Name "Formulating Linear Programmes", path `/lp-formulate`, `hub: 'decision-overview'`, `enabled: false` until go-live. Yes?
-3. **The question names the variables.** Each question says "let x be the number of loaves, y the number of cakes" (with units), and the student writes only the constraint. Yes? (The alternative, the student defines the variables too, is the `problem` sub-tool's Level 1.)
-4. **Default option settings:** Variables Two ticked; Constraint Styles all ticked at each level; Capacity Method Fractions Of Capacity; Answer Format Both (the fraction form and the whole-number form shown). Yes?
-5. **Branch.** This branch has only the plan documents. Keep building on it (F0 next), or merge the documents to `main` first and start F0 on a fresh branch from `main` (`AGENTS.md`: small chunks, merged early)? Harry decides each merge.
+1. **Three tools** (Formulating, Graphical, Simplex); this brief is the first.
+2. **Registry entry:** name "Formulating Linear Programmes", path `/lp-formulate`, `hub: 'decision-overview'`, `enabled: false` until go-live.
+3. **The model solution is enough** (no typed answers). **Every answer is a whole-number constraint**, everywhere; fractions only in the working.
+4. **`constraint`:** exactly one constraint per question, no objective, the question names the variables; **`problem`:** the student assigns the variables.
+5. **Three levels** in both sub-tools: translation, proportion, modelling (section 1).
+6. **Variables** (Two, Three, Four) and **Constraint Styles** are multi-selects.
+7. **Strict inequalities throughout**, no option; the wording picks the operator; dotted boundaries in the graphical tool.
+8. **Defaults:** Variables Two; every style ticked at each level; Capacity Method Fractions Of Capacity.
+9. **Branch:** the plan documents were merged to `main` on their own (a small chunk), and F0 starts from a fresh branch off `main`.
 
-**Can wait** (decided when the part is built): the bar model for capacity (F2); the `problem` sub-tool options (F5); Test and spot (later); exam-style chains (later).
+**Left to the build** (decided when the part is built, not before): the bar model for capacity (F2); the `problem` options (F5); Test and spot (later); the exam-style chains (later).

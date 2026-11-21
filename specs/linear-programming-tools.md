@@ -72,6 +72,6 @@ Every corpus row has a home except L55 (parametric tableau), which goes to the e
 4. `lp.ts` simplex, the tableau picture, Tool 3.
 5. Hub pairings and go-live; exam-style chains; DF6.
 
-## 5. Decision for Harry
+## 5. Decided (Harry, 2026-11-21)
 
-Three tools (this plan) or one tool with all sub-tools (the brief)? Recommended: three, because section 1 can merge and go live alone, the simplex is A2-only and hides whole, and the tool tabs stay short. If one tool is preferred, the sub-tool lists above carry over unchanged.
+Three tools: Formulating (this plan's Tool 1, brief `specs/linear-programming-formulate.md`), Graphical and Simplex, each under the Decision hub's DD chapter card. Graphical and Simplex need their own briefs (from this plan and the corpus) before they are built.
