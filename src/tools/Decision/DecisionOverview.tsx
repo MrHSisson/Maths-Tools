@@ -30,7 +30,7 @@ export default function DecisionOverview() {
       public
       title="Decision Maths"
       subtitle="AQA A-level Further Mathematics (Discrete)"
-      about="The Discrete option of AQA 7367, sections DA to DG. Open a part of the specification to find its question generators and the specification statements it covers, with which are in AS and which are A2 only. In Developing-tools mode each statement also shows the older AQA D1 and D2 content it draws on."
+      about="The Discrete option of AQA 7367, sections DA to DG. Open a part of the specification to find its question generators and the specification statements it covers, with anything beyond AS marked A2. In Developing-tools mode each statement also shows the older AQA D1 and D2 content it draws on."
       chapters={chapters}
       generalResources={DECISION_GENERAL_RESOURCES}
       papers={{ heading: "Older papers and question banks", intro: "The legacy course was two modules, D1 and D2, with a much deeper bank than the current spec.", cardText: "AQA D1 and D2 papers, what is no longer in the spec, and the checked legacy map" }}

@@ -36,7 +36,7 @@ export default function FurtherMechanics() {
       public
       title="Further Mechanics"
       subtitle="AQA A-level Further Mathematics"
-      about="The mechanics option of AQA 7367 (sections MA to ME), planned chapter by chapter. Each chapter lists the specification statements, which are in AS and which are A2 only, and the older AQA papers they draw on. Open a chapter to find its question generators and exam-style questions; Dimensional Analysis (MA) is the first built."
+      about="The mechanics option of AQA 7367 (sections MA to ME), planned chapter by chapter. Each chapter lists the whole course's specification statements, with anything beyond AS marked A2. Open a chapter to find its question generators and exam-style questions; Dimensional Analysis (MA) is the first built."
       chapters={chapters}
       generalResources={GENERAL_RESOURCES}
       papers={{ heading: "Older papers and question banks", intro: "The legacy AQA mechanics papers have a much deeper bank than the current spec.", cardText: "AQA M1–M3 papers and the checked legacy map" }}

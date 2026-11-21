@@ -27,9 +27,9 @@ export const CHAPTERS: SpecChapter[] = [
     name: "Momentum and collisions",
     tools: [],
     statements: [
-      { ref: "MB1", text: "Conservation of momentum for linear motion and cases where velocities are given as one or two dimensional vectors (problems which require resolving).", as: true, asLimit: "resolving not required", legacy: ["M1", "M3"], status: "supported", note: "M1 for straight-line collisions; M3 for two dimensions." },
-      { ref: "MB2", text: "Coefficient of restitution and Newton's Experimental Law. Use in direct collisions and impacts with a fixed smooth surface. Problems which require resolving.", as: true, asLimit: "resolving not required", legacy: ["M3"], status: "supported" },
-      { ref: "MB3", text: "Impulse and its relation to momentum. Problems which require resolving.", formula: "Ft = mv − mu", as: true, asLimit: "resolving not required (one or two dimensions)", legacy: ["M3"], status: "revised", was: "M1 / M3", note: "Impulse questions are in the M3 papers; the M1 papers have none." },
+      { ref: "MB1", text: "Conservation of momentum for linear motion and cases where velocities are given as one or two dimensional vectors (problems which require resolving).", as: true, a2Adds: "problems which require resolving", legacy: ["M1", "M3"], status: "supported", note: "M1 for straight-line collisions; M3 for two dimensions." },
+      { ref: "MB2", text: "Coefficient of restitution and Newton's Experimental Law. Use in direct collisions and impacts with a fixed smooth surface. Problems which require resolving.", as: true, a2Adds: "problems which require resolving", legacy: ["M3"], status: "supported" },
+      { ref: "MB3", text: "Impulse and its relation to momentum. Problems which require resolving.", formula: "Ft = mv − mu", as: true, a2Adds: "problems which require resolving (in one or two dimensions)", legacy: ["M3"], status: "revised", was: "M1 / M3", note: "Impulse questions are in the M3 papers; the M1 papers have none." },
       { ref: "MB4", text: "Impulse for variable forces. One dimension only.", formula: "I = ∫ F dt", as: true, legacy: ["M3"], status: "revised", was: "M2 / M4", note: "Found once, as a force on a ball during contact with a bat (M3). Thin evidence." },
     ],
     resources: [
@@ -43,13 +43,13 @@ export const CHAPTERS: SpecChapter[] = [
     name: "Work, energy and power",
     tools: [],
     statements: [
-      { ref: "MC1", text: "Work done by a force acting in the direction of motion or directly opposing the motion.", formula: "WD = Fd cos θ", as: true, asLimit: "no Fd cos θ", legacy: ["M2"], status: "supported" },
+      { ref: "MC1", text: "Work done by a force acting in the direction of motion or directly opposing the motion.", formula: "WD = Fd cos θ", as: true, a2Adds: "work done by a force at an angle, Fd cos θ", legacy: ["M2"], status: "supported" },
       { ref: "MC2", text: "Gravitational potential energy. Use in conservation of energy problems.", as: true, legacy: ["M2"], status: "supported" },
       { ref: "MC3", text: "Kinetic energy. Use in conservation of energy problems.", as: true, legacy: ["M2"], status: "supported" },
       { ref: "MC4", text: "Hooke's Law including using modulus of elasticity.", formula: "T = kx  or  T = (λ/l)x", as: true, legacy: ["M2"], status: "supported", note: "The most common legacy M2 topic." },
       { ref: "MC5", text: "Work done by a variable force. Use in conservation of energy problems.", formula: "WD = ∫ F dx", as: true, legacy: ["M2"], status: "revised", was: "M3 / M4", note: "M2 has 'show, by integration, that the work done in stretching the string is …'." },
       { ref: "MC6", text: "Elastic potential energy using modulus of elasticity. Use in conservation of energy problems.", formula: "EPE = kx²/2  and  EPE = λx²/2l", as: true, legacy: ["M2"], status: "revised", was: "M2 / M3" },
-      { ref: "MC7", text: "Power.", formula: "P = Fv", as: true, asLimit: "resolving not required", legacy: ["M2"], status: "supported", note: "Missing from the first map." },
+      { ref: "MC7", text: "Power.", formula: "P = Fv", as: true, a2Adds: "problems which require resolving", legacy: ["M2"], status: "supported", note: "Missing from the first map." },
     ],
     resources: [
       aqaFm("Work, Energy and Power I"), aqaFm("Work, Energy and Power II"),
