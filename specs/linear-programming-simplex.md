@@ -1,6 +1,6 @@
 # The Simplex Algorithm (DD3, DD4; A-level) — plan
 
-**Status:** `draft`. Nothing is built. This is the plan for the third tool of the Linear Programming family (`specs/linear-programming-tools.md`, Tool 3), written on 2026-11-21 after the Formulating tool (F0 to F7) was built. It answers two worries of Harry's: **(1)** random generation will give horrific numbers, unlike the questions in the books; **(2)** the answers must look like the answers the books and the exams give. Sections 2 and 3 are those two answers; sections 4 to 9 are the tool built around them.
+**Status:** `draft`. Nothing is built. **Decided with Harry 2026-11-21: the tool is a build-up of the two books** (the Cambridge book's skill-by-skill ladder first, then the Oxford book's wider range once the skills are covered; section 4). This is the plan for the third tool of the Linear Programming family (`specs/linear-programming-tools.md`, Tool 3), written on 2026-11-21 after the Formulating tool (F0 to F7) was built. It answers two worries of Harry's: **(1)** random generation will give horrific numbers, unlike the questions in the books; **(2)** the answers must look like the answers the books and the exams give. Sections 2 and 3 are those two answers; sections 4 to 9 are the tool built around them.
 
 **Read first:** `specs/linear-programming.md` section 9a (what the first textbook settled), `specs/corpus/linear-programming-styles.md` (rows L40 to L57, and the new rows L77 to L87 from the second textbook), `docs/pathways/linear-programming.md`. **Sources** (copyright, never committed): the first textbook (Cambridge chapter 4, section 3) and, new today, **the Oxford chapter 30, "Linear programming and game theory 2"** (34 pages, uploaded by Harry; section 30.1 simplex, Exercises 30.1A and 30.1B, worked Examples 1 to 4, section 30.2 games as LPs, summary, review and the Assessment). It is recorded in `specs/sources.md`. Nothing from either book is copied here: the numbers in this plan are ours, or statistics about the books' numbers.
 
@@ -11,6 +11,8 @@
 **The numbers.** A random linear programme is almost always ugly. Measured today (480 000 random draws, exact fractions, the textbook's own method): with coefficients 1 to 8 and no further care, only **about 3%** of two- and three-variable problems keep every number in every tableau to a denominator of 5 or less, and under 1% keep it to 3. Textbook tableaux sit at denominators 2, 3, 4, 5 (occasionally 8), and their optima are mostly whole numbers. So the generator will not draw a problem and hope. It will **design the answer first** (the optimal point, which constraints are binding, a dual) and build the objective and the right-hand sides from it, so the optimum is whole by construction, **then run the real algorithm on it and keep it only if every tableau on the way is nice** (a "niceness budget", section 2.3). Measured: that keeps **23% to 39%** of draws at denominator ≤ 5 (up to 32% at ≤ 3 with small coefficients), the optimum is whole in every one, and 3-variable problems take 2 to 4 iterations like the books'. It is a rejection loop over microsecond runs, so cost is nothing. A fixed bank of hand-checked problems backs it up, and a test measures the numbers of every generated problem.
 
 **The answers.** The model answer is not "the optimum"; it is the **page a student writes**: standard form with slack variables, the initial tableau, the pivot with its θ-values and the reason, each iteration with its row operations written ("R5 = R1 + 8 × R6"), the optimality sentence, the **full reading-off** (every variable, slack included, and P, from the value column), and the **statement in context with units and what each slack means**. Both books do it this way, and the exam's mark scheme pays for each of those lines (section 3). The layout of the two books differs a little, so it is an option, and the working is built from one exact simplex that is independently re-derived.
+
+**The shape (decided):** the levels are a ladder. **Level 1 is the Cambridge build-up** (one skill at a time, on small bare problems, in the Cambridge layout). **Level 2 puts the skills together** (full solves, three variables, simplifying constraints). **Level 3 is the Oxford range** (worded tables and decimals, non-standard starts, practical plans, a marked exam-style chain). The Oxford features never appear at Level 1, and the layout stays Cambridge's until a student asks for Oxford's.
 
 **Build order:** S0 a numbers study and the exact simplex core (no UI), S1 `setup`, S2 `pivot`, S3 `solve`, S4 `interpret`, S5 the non-standard starts (≥ constraints, minimise, lower bounds, equalities), S6 go-live; the exam-style pass and Games as LPs (DF6) after. Eight decisions for Harry are in section 9.
 
@@ -128,7 +130,7 @@ The sub-tools (section 4) each own a slice of this list; `solve` puts the whole 
 
 | Option | Values | Notes |
 |---|---|---|
-| Tableau Layout | **Textbook A** (the first book: no basic-variable column, row operations beside the table) · **Textbook B** (the second: a Basic variable column, and a Row column R1, R2, … with definitions) | display only; same numbers. **Decision 1.** |
+| Tableau Layout | **Textbook A** (the Cambridge layout: no basic-variable column, row operations beside the table; **the default at every level**) · **Textbook B** (the Oxford layout: a Basic variable column, and a Row column R1, R2, … with definitions; opt-in, and the natural pairing for the marked exam-style chains of Level 3) | display only; same numbers. **Decided 2026-11-21.** |
 | Slack Names | s, t, u … · r, s, t (with x, y, z) · s₁, s₂ … | display only; with 3 or 4 variables the default avoids a clash |
 | Number Format | Fractions · Mixed numbers | display only; the final answer also gives the decimal when it terminates ("22.5 ha") |
 | Row Operations | Written beside the table · Hidden (a "show the steps" key) | display only |
@@ -154,18 +156,24 @@ Reading P from the objective row; reading the optimum from the wrong tableau; a 
 
 ---
 
-## 4. The sub-tools and levels
+## 4. The sub-tools and levels: a build-up of the two books
 
-Four sub-tools on `DecisionShell` (the written working is the picture, as in `lp-formulate`; a new picture, the **tableau** with the pivot highlighted and the row operations beside it, is a small shared component `LpTableau`; section 6). Each sub-tool pairs with one specification statement.
+**The ladder (decided 2026-11-21).** Cambridge teaches a skill at a time and then joins them; Oxford has the wider range (worded tables, non-standard starts, "is it practical?", marked chains). So each sub-tool climbs from the Cambridge skill to the Oxford range:
 
-| Sub-tool | Statement | The student | Levels |
+| Level | Character | Source of the style | What is new at this level |
 |---|---|---|---|
-| **`setup` Set up the tableau** | DD3 | rewrite as equations with slack variables, name them, write the initial tableau; the reverse (tableau to formulation, and what s and t mean) | L1 two variables, ≤ constraints, whole coefficients; L2 three variables, a constraint that simplifies, decimals per unit; L3 minimise, a ≥ constraint, a constant in the objective |
-| **`pivot` Pivot** | DD3 | choose the pivot with the θ-values and the reason; carry out one iteration; a given tableau | L1 two variables, one iteration; L2 three variables and the zero θ; L3 explain the choice among columns, a second iteration |
-| **`solve` Solve to optimality** | DD3, DD4 | iterate to the end and give the full reading and the statement in context | L1 two iterations; L2 three variables, two or three iterations; L3 four constraints, minimise, mixed-number answers |
-| **`interpret` Interpret a tableau** | DD4 | read a tableau: optimal or not and why; every variable and P; binding constraints and the meaning of each slack in the story; is it practical | L1 final tableau, whole answers; L2 a mid-run tableau, explain not optimal; L3 a story with units after simplification |
+| **1 Skills** | one skill in isolation, small bare problems (two variables, two or three ≤ constraints), whole coefficients, the Cambridge layout | Cambridge: set-up, pivot choice, one iteration, read a tableau | a single idea per question; the numbers sit in the Level 1 niceness budget (denominators ≤ 3, two iterations) |
+| **2 Together** | full runs and the first story; three variables; constraints that need simplifying; mid-run tableaux | Cambridge's solve-to-optimality, plus Oxford's worked-example flow (the full model answer of 3.1) | three variables, three iterations, a constraint to simplify, the zero θ, minimise by P = −C |
+| **3 Range** | the wider Oxford set, with the marked-chain presentation and the Oxford layout available | Oxford: decimal tables, a ≥ start, lower bounds, equalities, four variables, "is it practical", reverse and slack meaning, error analysis (exam-style pass) | the Starting Form pool, Context: a table, the Row column, mixed-number answers, the mark-style short parts |
 
-**Non-standard starts (chunk S5, Level 3 of `setup`, `pivot` and `solve`):** a minimise (P = −C); a ≥ constraint (rewrite ≤, then pivot on a negative coefficient in the row with the negative right-hand side to the first basic feasible tableau); a lower bound (substitute X = x − a); an equality (eliminate a variable, or two inequalities). Each is a **Starting Form** pool (a multi-select, default Standard), so the AS-friendly standard case stays clean and the rest is opt-in.
+| Sub-tool | Statement | The student | Level 1 (Cambridge skill) | Level 2 (together) | Level 3 (Oxford range) |
+|---|---|---|---|---|---|
+| **`setup` Set up the tableau** | DD3 | slack variables, the objective row, the initial tableau, the reverse | rewrite ≤ constraints as equations with slacks; the objective as `P − … = 0`; write the tableau; two variables | three variables; a constraint with a common factor; decimals per unit simplified first; name the slacks; tableau to formulation | minimise (Q = −P), a ≥ constraint rewritten, a constant in the objective, a table-driven word problem; "state what s and t mean" |
+| **`pivot` Pivot** | DD3 | choose the pivot and carry out one iteration | most negative column, θ-values over the positive entries, name the pivot; carry out one iteration given the pivot ("NPR, then row ± k × NPR") | three variables; the zero θ; a mid-run tableau; the student's own column choice and the same optimum | a second iteration; explain the choice (stock wording, marked parts); pivot on a negative entry to start (Starting Form) |
+| **`solve` Solve to optimality** | DD3, DD4 | iterate to the end and give the full reading | two iterations, two variables, a whole answer | three variables, two or three iterations, the full model answer of 3.1 with a story | four constraints, minimise, a ≥ start, a lower bound, an equality; mixed-number answers |
+| **`interpret` Interpret a tableau** | DD4 | read a tableau | optimal or not, and why; read every variable and P from the value column; which constraints are binding | a mid-run tableau: explain not optimal; the slack in the story | units after simplification; "is it practical?" and a practical plan; the error-analysis style (if wanted) |
+
+**Non-standard starts (chunk S5; these are the Oxford range, Level 3 only, never at Levels 1 and 2):** a minimise (P = −C); a ≥ constraint (rewrite ≤, then pivot on a negative coefficient in the row with the negative right-hand side to the first basic feasible tableau); a lower bound (substitute X = x − a); an equality (eliminate a variable, or two inequalities). Each is a **Starting Form** pool (a multi-select, default Standard), so the AS-friendly standard case stays clean and the rest is opt-in.
 
 **Options** (draft, in the shell's vocabulary): Variables (Two, Three, Four; multi-select); Constraints (Two, Three, Four); Starting Form (Standard, Minimise, A ≥ Constraint, A Lower Bound, An Equality); Context (A bare problem, A story, A table); Answer Asked (Every Variable, The Optimum Only); the display options of 3.2. Each carries an `info` sentence (R40) and the explainer words (R11).
 
@@ -207,13 +215,15 @@ One set of contexts is shared with `lp-formulate`: bakery, workshop, farm, café
 | Chunk | Contents | Behind |
 |---|---|---|
 | S0 | **The numbers study as a test, and the exact simplex core** in `lp.ts` (`simplexPath(c, A, b)` returning every tableau, pivots and θ-values in `Fr`, with the independent checks of 2.4); the designed generator `lpSimplexGen.ts` (steps 1 to 3 of 2.3) and the niceness budget; the bank skeleton; tests. **No UI, no registry.** The study's script is kept in `scripts/` so the acceptance rates can be re-measured | nothing (library only) |
-| S1 | `setup` sub-tool, Levels 1 and 2 (standard form, slack names, the initial tableau, the reverse), `LpTableau`, layout options; About words | `enabled: false` |
-| S2 | `pivot` (the θ-values, the reason, one iteration), the zero θ hazard | `enabled: false` |
-| S3 | `solve` (the full model answer of 3.1, in context with units), Level 3 sizes | `enabled: false` |
-| S4 | `interpret` (read a tableau, binding constraints, meaning of slack, is it practical) | `enabled: false` |
-| S5 | Starting Form: minimise, ≥, lower bound, equality; the wording and slips for each | `enabled: false` |
+| S1 | `setup` sub-tool, Levels 1 and 2 (the Cambridge ladder: standard form, slack names, the initial tableau, the reverse), `LpTableau`, layout options; About words | `enabled: false` |
+| S2 | `pivot`, Levels 1 and 2 (the θ-values, the reason, one iteration), the zero θ hazard | `enabled: false` |
+| S3 | `solve`, Levels 1 and 2 (the full model answer of 3.1, in context with units) | `enabled: false` |
+| S4 | `interpret`, Levels 1 and 2 (read a tableau, binding constraints, meaning of slack in a story) | `enabled: false` |
+| S5 | **The Oxford range** (Level 3 of all four sub-tools, including "is it practical?" and the four-variable table): Starting Form (minimise, ≥, lower bound, equality), Context: a table, the Textbook B layout, the mark-style short parts; the wording and slips for each | `enabled: false` |
 | S6 | the Decision hub's DD3 and DD4 links, spec pairing and tests, the dashboard notes, a real printer check, go-live | the switch |
 | later | the exam-style chains and parametric tableaux; **Games as LPs (DF6)** with the game theory chapter (the shape is in corpus L87: add a constant so every payoff is non-negative, `P = v`, the probabilities' sum as one constraint, subtract the constant back) | |
+
+Levels 1 and 2 (the Cambridge ladder) are therefore complete in S1 to S4 before the Oxford range arrives in S5, so a class can use the tool from S1.
 
 S0 is the chunk that answers worry (1) with data before any interface is built: if the study's acceptance rates fall short for a size, the pools or the budget are adjusted there, not later.
 
@@ -221,10 +231,10 @@ S0 is the chunk that answers worry (1) with data before any interface is built: 
 
 ## 9. Decisions for Harry
 
-1. **Tableau layout:** the first book's (no basic-variable column, row operations beside the table) or the second's (a Basic variable column and a Row column R1, R2 …)? Proposed: offer both as the option **Tableau Layout**, default the **second book's**, since it is the more explicit and matches the Assessment's marks; or default whichever your class uses.
+1. ~~Tableau layout~~ **Decided 2026-11-21:** a build-up of both books. The Cambridge layout is the default at every level; the Oxford layout (Basic variable and Row columns) is an opt-in display option, used by the marked chains of Level 3. Levels climb from Cambridge's skills to Oxford's range (section 4).
 2. **Slack letters:** s, t, u with every variable count, or r, s, t when the variables are x, y, z? Proposed: r, s, t with three variables, s, t with two (so a letter never clashes with x, y, z), s₁ … with four.
 3. **Fractions or mixed numbers** in a tableau by default? Proposed: mixed numbers in the tableau (both books use them), fractions in the working lines, the decimal in the final statement when it terminates.
-4. **How much weight on non-standard starts** (≥ constraints, lower bounds, equalities)? Proposed: all four, but only at Level 3 and opt-in (S5), so the standard case is untouched.
+4. **How much weight on non-standard starts** (≥ constraints, lower bounds, equalities)? Now part of the Oxford range at Level 3 (decision 1). Still to settle: all four, or only the ≥ start and the lower bound? Proposed: all four, opt-in (S5), so the standard case is untouched.
 5. **Is-it-practical questions:** whole-number plans from a fractional optimum (boxes, bicycles) are a feature of the second book. Proposed: in `interpret` only, with a designed practical neighbour; the simplex itself stays on the real numbers.
 6. **Unbounded and infeasible problems** (the error-analysis question) are outside the AQA wording. Proposed: leave to the exam-style pass, if at all.
 7. **A numbers floor:** is "no denominator above 5 at Level 2" the right feel for your students? The study makes this a dial, not a rewrite.
