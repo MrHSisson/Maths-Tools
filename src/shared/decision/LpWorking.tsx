@@ -39,7 +39,9 @@ export default function LpCanvas({ p, step }: { p: DecisionProblem; step: SolveS
   const inner = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const v = step?.lpView;
-  const rows: LpRow[] = v ? v.rows : d ? [{ k: "head", t: "Variables" }, ...d.vars.map((x): LpRow => ({ k: "words", t: `$${x.sym}$ is the number of ${x.noun}` }))] : [];
+  const prob = d?.info.kind === "problem" ? d.info : undefined;
+  // a problem does not name its variables before the answer: the question shows only its table (when the data is shown as one)
+  const rows: LpRow[] = v ? v.rows : d && !prob ? [{ k: "head", t: "Variables" }, ...d.vars.map((x): LpRow => ({ k: "words", t: `$${x.sym}$ is the number of ${x.noun}` }))] : [];
   const fresh = v?.fresh ?? 0;
   useIso(() => {
     const b = box.current, i = inner.current;
@@ -62,6 +64,12 @@ export default function LpCanvas({ p, step }: { p: DecisionProblem; step: SolveS
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.5em" }}>
             {rows.map((r, i) => <Row key={i} r={r} fresh={!!v && i >= rows.length - fresh} big={r.k === "tex"} />)}
           </div>
+          {!v && prob?.showTable && prob.table && (
+            <table style={{ borderCollapse: "collapse", fontSize: "0.8em", marginBottom: 8 }}>
+              <thead><tr>{prob.table.head.map((h, i) => <th key={i} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", background: "#f1f5f9", fontWeight: 600, textAlign: i === 0 ? "left" : "center" }}>{h}</th>)}</tr></thead>
+              <tbody>{prob.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", textAlign: j === 0 ? "left" : "center", fontWeight: j === 0 || i === prob.table!.rows.length - 1 ? 600 : 400 }}>{c}</td>)}</tr>)}</tbody>
+            </table>
+          )}
           {!v && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 10 }}>Your working builds up here, one line at a time.</div>}
         </div>
       </div>

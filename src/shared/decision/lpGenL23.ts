@@ -126,27 +126,27 @@ export function genDecimal(n: number, fx?: Fix): Gen {
 }
 
 // ── Level 3: blends and averages ─────────────────────────────────────────────
-interface BlendCtx { id: string; intro: string; names: string[]; noun: (name: string) => string; did: string; comp: string; step: number; lo: number; hi: number; invest: boolean; describe: (names: string[], pcts: number[]) => string; require: (op: Op, p: number) => string }
-const BLENDS: BlendCtx[] = [
-  { id: "oil", intro: "A shop blends oils to make a salad dressing.", names: ["oil A", "oil B", "oil C", "oil D"], noun: (s) => `litres of ${s}`, did: "in the mix", comp: "olive oil", step: 10, lo: 10, hi: 90, invest: false,
+interface BlendCtx { id: string; unit: string; intro: string; names: string[]; noun: (name: string) => string; did: string; comp: string; step: number; lo: number; hi: number; invest: boolean; describe: (names: string[], pcts: number[]) => string; require: (op: Op, p: number) => string }
+export const BLENDS: BlendCtx[] = [
+  { id: "oil", unit: "litre", intro: "A shop blends oils to make a salad dressing.", names: ["oil A", "oil B", "oil C", "oil D"], noun: (s) => `litres of ${s}`, did: "in the mix", comp: "olive oil", step: 10, lo: 10, hi: 90, invest: false,
     describe: (nm, p) => `${cap(list(nm.map((s, i) => `${s} is ${p[i]}% olive oil`)))}.`, require: (op, p) => `The mix must be ${opWord(op, false)} ${p}% olive oil.` },
-  { id: "feed", intro: "A farmer mixes feeds for her animals.", names: ["feed A", "feed B", "feed C", "feed D"], noun: (s) => `kilograms of ${s}`, did: "in the mix", comp: "protein", step: 10, lo: 10, hi: 90, invest: false,
+  { id: "feed", unit: "kilogram", intro: "A farmer mixes feeds for her animals.", names: ["feed A", "feed B", "feed C", "feed D"], noun: (s) => `kilograms of ${s}`, did: "in the mix", comp: "protein", step: 10, lo: 10, hi: 90, invest: false,
     describe: (nm, p) => `${cap(list(nm.map((s, i) => `${s} is ${p[i]}% protein`)))}.`, require: (op, p) => `The mix must be ${opWord(op, false)} ${p}% protein.` },
-  { id: "drink", intro: "A bar mixes drinks to make a cocktail.", names: ["drink A", "drink B", "drink C", "drink D"], noun: (s) => `litres of ${s}`, did: "in the mix", comp: "alcohol", step: 10, lo: 10, hi: 90, invest: false,
+  { id: "drink", unit: "litre", intro: "A bar mixes drinks to make a cocktail.", names: ["drink A", "drink B", "drink C", "drink D"], noun: (s) => `litres of ${s}`, did: "in the mix", comp: "alcohol", step: 10, lo: 10, hi: 90, invest: false,
     describe: (nm, p) => `${cap(list(nm.map((s, i) => `${s} is ${p[i]}% alcohol`)))}.`, require: (op, p) => `The mix must be ${opWord(op, false)} ${p}% alcohol.` },
-  { id: "invest", intro: "An investor splits her money between funds.", names: ["bonds", "shares", "a property fund", "a savings account"], noun: (s) => `pounds invested in ${s}`, did: "", comp: "interest", step: 1, lo: 2, hi: 12, invest: true,
+  { id: "invest", unit: "pound", intro: "An investor splits her money between funds.", names: ["bonds", "shares", "a property fund", "a savings account"], noun: (s) => `pounds invested in ${s}`, did: "", comp: "interest", step: 1, lo: 2, hi: 12, invest: true,
     describe: (nm, p) => `${cap(list(nm.map((s, i) => `${s} pay${/^(bonds|shares)$/.test(s) ? "" : "s"} ${p[i]}% interest`)))}.`, require: (op, p) => `The overall return must be ${opWord(op, false)} ${p}%.` },
 ];
-function genBlend(n: number): Gen {
+export function genBlend(n: number, fxb?: { bc: BlendCtx; names: string[]; ops?: Op[] }): Gen {
   for (let tries = 0; tries < 80; tries++) {
-    const bc = pick(BLENDS);
-    const names = shuffled(bc.names).slice(0, n);
+    const bc = fxb?.bc ?? pick(BLENDS);
+    const names = fxb?.names ?? shuffled(bc.names).slice(0, n);
     const pcts = Array.from({ length: n }, () => bc.lo + bc.step * ri(0, Math.round((bc.hi - bc.lo) / bc.step)));
     const lo = Math.min(...pcts), hi = Math.max(...pcts);
     if (hi - lo < 2 * bc.step) continue;
     const share = bc.invest ? ri(lo + 1, hi - 1) : 5 * ri(Math.floor(lo / 5) + 1, Math.ceil(hi / 5) - 1);
     if (share <= lo || share >= hi) continue;
-    const op = pickOp();
+    const op = fxb?.ops ? pick(fxb.ops) : pickOp();
     const contents = pcts.map((p) => fr(p, 100));
     const spec: LpSpec = { t: "blend", contents, share: fr(share, 100), op };
     const c = constraintOf(spec);
@@ -161,7 +161,7 @@ function genBlend(n: number): Gen {
       : { spec: { t: "linear", coeffs: contents, op, rhs: fr(share, 100), kind: "percent" } as LpSpec, what: "forgetting the total: the amount of the component is compared with the share, not with the share of the mix" };
     return { prompt, data: { kind: "blend", vars, op, spec, slip, info: { kind: "blend", contents, share: fr(share, 100), comp: bc.comp, invest: bc.invest } } };
   }
-  return genBlend(2);
+  return genBlend(2, fxb && { ...fxb, names: fxb.names.slice(0, 2) });
 }
 
 // ── Level 3: either-or limits ────────────────────────────────────────────────
@@ -169,15 +169,15 @@ const CAPS = [12, 15, 16, 18, 20, 24, 25, 30, 32, 36, 40, 45, 48, 50, 60, 72, 75
 const CAPS_PER_ITEM = [12, 15, 20, 24, 30, 40, 45, 60]; // 60 / a is a nice number of minutes: 5, 4, 3, 5/2, 2, 3/2, 4/3, 1
 const HOURS = [2, 3, 4, 5, 6, 8, 10];
 const minTex = (a: number): string => { const f = fr(60, a); return f[1] === 1 ? String(f[0]) : `$\\frac{${f[0]}}{${f[1]}}$`; };
-function genEitherOr(n: number, given: string, method: "fractions" | "units" | "both"): Gen {
+export function genEitherOr(n: number, given: string, method: "fractions" | "units" | "both", fx?: Fix): Gen {
   for (let tries = 0; tries < 200; tries++) {
     const requirement = given === "requirement";
-    const ctx = requirement ? CONTEXTS.find((c) => c.id === "diet")! : pick(CONTEXTS.filter((c) => c.device));
-    const { vars, sing } = pickVars(ctx, n);
+    const ctx = fx?.ctx ?? (requirement ? CONTEXTS.find((c) => c.id === "diet")! : pick(CONTEXTS.filter((c) => c.device)));
+    const { vars, sing } = fx ?? pickVars(ctx, n);
     const pool = given === "perItem" ? CAPS_PER_ITEM : CAPS;
     const caps = shuffled(pool).slice(0, n);
     const T = given === "rate" || given === "perItem" ? pick(HOURS) : 1;
-    const op: Op = requirement ? weighted<Op>([["≥", 6], [">", 1.5]]) : weighted<Op>([["≤", 6], ["<", 1.5]]);
+    const op: Op = fx?.ops ? pick(fx.ops) : requirement ? weighted<Op>([["≥", 6], [">", 1.5]]) : weighted<Op>([["≤", 6], ["<", 1.5]]);
     const spec: LpSpec = { t: "either", caps: caps.map((a) => fr(a)), amount: fr(T), op };
     const c = constraintOf(spec);
     if (maxCoeff(c) > (n === 4 ? 12 : 9) || Math.abs(c.rhs[0]) > 1500 || c.rhs[1] !== 1) continue;
@@ -206,7 +206,7 @@ function genEitherOr(n: number, given: string, method: "fractions" | "units" | "
     const slip = pick(options);
     return { prompt, data: { kind: "eitherOr", vars, op, spec, slip, info: { kind: "eitherOr", caps, given: given as "most" | "rate" | "perItem" | "requirement", T, method, sing } } };
   }
-  return genEitherOr(2, "most", method);
+  return genEitherOr(2, "most", method, fx);
 }
 
 // ── The "try a number" check, by looking at every small point: fits the words, the slip does not allow it ─

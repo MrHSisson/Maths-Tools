@@ -1595,6 +1595,12 @@
         "2026-11-21 (hub link, F5 built). The Decision hub's DD card lists the tool (dev mode only while `enabled: false`). `problem` Level 1: `lpProblem.ts`, the model working in `lpSolve.ts`, exact corner points in `lp.ts` (the region is non-empty with a single best corner for every model), Objective option (maximise a profit, minimise a cost), `lpProblem.test.ts`. The `problem` brief is still `draft`; strict operators are left out of problems until Level 2 brings \"integers\".",
         "2026-11-21 (slips as a step, F6 part). The common slip is a step of its own in the stepper (plain text in the caption), not a box on the page. `problem` Level 2: percentages, ratios, shares, decimal amounts, fixed totals; profit as price minus cost; the Integers option. Still to do at Level 2: pack variables, unit conversions, per-packet scaling, a single-variable objective, the data as a table."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-21 (F6 rest and F7 built, not live). `problem` now has Levels 1 to 3: strict inequalities (with \"integers\") at every level, the single-variable objective, a pack variable, unit conversions, the data as a table (Data Shown), either-or limits, a blend to make, \"exactly half\" and a remainder to substitute out. Not built from the brief: per-packet scaling, pence to pounds, and three variables reduced to two by an equality."
+       ]
       }
      ]
     },
@@ -1605,7 +1611,7 @@
       {
        "t": "ul",
        "items": [
-        "**F6 (rest) and F7**: the rest of `problem` Level 2 (packs, unit conversions, per-packet scaling, a single-variable objective, a table), then Level 3 (blends, either-or, a remainder, \"exactly half\", three variables reduced), after Harry confirms the `problem` section of the brief.",
+        "Confirm the `problem` section of the brief against what is built (strict inequalities with \"integers\", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.",
         "**F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.",
         "Write briefs for the Graphical and Simplex tools from `specs/linear-programming-tools.md` and the corpus before they are built (the Simplex tableau layout is in section 9a of `specs/linear-programming.md`).",
         "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).",
@@ -3855,6 +3861,10 @@
     {
      "date": "2026-11-21",
      "title": "Formulating Linear Programmes: \"Write a constraint\", Level 1 (chunk F1), not live"
+    },
+    {
+     "date": "2026-11-21",
+     "title": "Formulating Linear Programmes: strict inequalities in problems, the rest of \"Formulate a problem\" Level 2, and Level 3 (chunks F6 and F7), not live"
     },
     {
      "date": "2026-11-21",

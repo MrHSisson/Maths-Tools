@@ -21,7 +21,7 @@ export const constraintOf = (s: LpSpec, source = ""): Constraint =>
 
 /** what the working needs to say about each kind */
 type LpInfo =
-  | { kind: "resource"; per: number[]; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
+  | { kind: "resource"; per: number[]; packs?: number[]; packText?: string[]; conv?: { n: number; unit: string; factor: number }; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
   | { kind: "multiple"; a: number; b: number[]; m: Fr }
   | { kind: "difference"; a: number; b: number; k: number }
   | { kind: "bound"; i: number; N: number; each: boolean }
@@ -30,7 +30,10 @@ type LpInfo =
   | { kind: "ratio"; form: "ratio" | "every" | "share"; a: number[]; b: number[]; m: Fr }
   | { kind: "decimal"; a: number[]; den: number; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
   | { kind: "blend"; contents: Fr[]; share: Fr; comp: string; invest: boolean }
-  | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[]; integers?: boolean; price?: number[]; cost?: number[] }
+  | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[]; integers?: boolean; price?: number[]; cost?: number[]; konst?: number; single?: number;
+      table?: { head: string[]; rows: string[][] }; showTable?: boolean;
+      pack?: { i: number; k: number; name: string; text: string; item: string }; itemObj?: number[];
+      rem?: { T: number; unit: string; restNoun: string; restSing: string; rest: string; profits: number[]; per: number[]; amount: number; resource: { topic: string; unit: string; verb: string; label: string; of: string } } }
   | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {
@@ -122,19 +125,23 @@ export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs">, var
 }
 
 /** a context, variables and (for a resource) the resource and operators already chosen: a `problem` question builds several constraints on one set of variables */
-export interface Fix { ctx: Context; vars: Var[]; sing: string[]; res?: Resource; ops?: Op[] }
+export interface Fix { ctx: Context; vars: Var[]; sing: string[]; res?: Resource; ops?: Op[]; /** items per pack for each variable (1: not a pack), and its words ("tray of 6") */ packs?: number[]; packText?: string[] }
+/** "1 minute", "2 minutes": the unit in the singular for a single one */
+export const unitOf = (n: number, unit: string): string => (n === 1 ? (unit === "boxes" ? "box" : unit.endsWith("s") ? unit.slice(0, -1) : unit) : unit);
 export const opFrom = (fx: Fix | undefined, otherwise: () => Op): Op => (fx?.ops ? pick(fx.ops) : otherwise());
 
 // ── Level 1: resource use ────────────────────────────────────────────────────
 /** a round amount, at least one of the coefficients dividing it (so "if only this item is made" is a whole number of items) */
 export const AMOUNTS = [30, 40, 48, 50, 60, 72, 80, 90, 100, 120, 144, 150, 160, 180, 200, 240, 250, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200, 1440, 1500];
-function resourceNumbers(n: number): { per: number[]; amount: number } {
-  for (let tries = 0; tries < 60; tries++) {
-    const per = Array.from({ length: n }, () => ri(n === 2 ? 2 : 1, n === 2 ? 20 : 12));
-    if (new Set(per).size < 2) continue; // at least two different, so the order of the coefficients matters
-    const g = per.reduce((h, v) => gcdInt(h, v), 0);
+/** the amount of the resource each item uses, and a round amount available; `mult` is how many items one unit of each variable stands for (a pack), so the coefficients are per × mult */
+export function resourceNumbers(n: number, mult?: number[]): { per: number[]; amount: number } {
+  for (let tries = 0; tries < 80; tries++) {
+    const per = Array.from({ length: n }, (_, i) => ri(n === 2 && !mult ? 2 : 1, Math.max(1, Math.floor((n === 2 ? 20 : 12) / (mult?.[i] ?? 1)))));
+    const coef = per.map((a, i) => a * (mult?.[i] ?? 1));
+    if (new Set(coef).size < 2) continue; // at least two different, so the order of the coefficients matters
+    const g = coef.reduce((h, v) => gcdInt(h, v), 0);
     const hi = n === 2 ? 600 : 1500;
-    const ok = AMOUNTS.filter((N) => N <= hi && N >= Math.max(...per) * 3 && N % g === 0 && per.some((a) => N % a === 0));
+    const ok = AMOUNTS.filter((N) => N <= hi && N >= Math.max(...coef) * 3 && N % g === 0 && coef.some((a) => N % a === 0));
     if (ok.length) return { per, amount: pick(ok) };
   }
   return { per: n === 2 ? [10, 15] : n === 3 ? [2, 3, 5] : [2, 3, 4, 6], amount: n === 2 ? 300 : 120 };
@@ -143,18 +150,19 @@ export function genResource(n: number, fx?: Fix): { prompt: string; sentence: st
   const ctx = fx?.ctx ?? pick(CONTEXTS);
   const res = fx?.res ?? pick(ctx.resources.filter((r) => !r.decOnly));
   const { vars, sing } = fx ?? pickVars(ctx, n);
-  const { per, amount } = resourceNumbers(n);
+  const { per, amount } = resourceNumbers(n, fx?.packs);
+  const coef = per.map((a, i) => a * (fx?.packs?.[i] ?? 1));
   const op = opFrom(fx, () => (res.mode === "use" ? weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]) : weighted<Op>([["≥", 6], [">", 1.5], ["=", 1]])));
-  const tail = (a: number): string => `${a} ${res.unit}${res.of ? ` of ${res.of}` : ""}`;
-  const each = sing.map((s, i) => `each ${s} ${res.verb} ${i === 0 ? tail(per[i]) : `${per[i]} ${res.unit}`}`);
+  const tail = (a: number): string => `${a} ${unitOf(a, res.unit)}${res.of ? ` of ${res.of}` : ""}`;
+  const each = sing.map((s, i) => `each ${s} ${res.verb} ${i === 0 ? tail(per[i]) : `${per[i]} ${unitOf(per[i], res.unit)}`}`);
   const sentence = `${cap(list(each))}. The total ${res.label} must be ${opWord(op, false)} ${amount} ${res.unit}.`;
   const prompt = `${ctx.intro(vars.map((v) => v.noun))} ${letDef(vars, ctx.did)} ${sentence} Write down a constraint for the ${res.topic}.`;
-  const spec: LpSpec = { t: "linear", coeffs: per.map((a) => fr(a)), op, rhs: fr(amount), kind: "resource" };
+  const spec: LpSpec = { t: "linear", coeffs: coef.map((a) => fr(a)), op, rhs: fr(amount), kind: "resource" };
   // the slip: the coefficients the wrong way round (reversed; if that is the same line, the first two swapped)
-  let wrong = [...per].reverse();
-  if (wrong.every((v, i) => v === per[i])) wrong = [per[1], per[0], ...per.slice(2)];
+  let wrong = [...coef].reverse();
+  if (wrong.every((v, i) => v === coef[i])) wrong = [coef[1], coef[0], ...coef.slice(2)];
   const slip: LpSpec = { t: "linear", coeffs: wrong.map((a) => fr(a)), op, rhs: fr(amount), kind: "resource" };
-  return { prompt, sentence, data: { kind: "resource", vars, op, spec, slip: { spec: slip, what: "the coefficients the wrong way round" }, info: { kind: "resource", per, amount, unit: res.unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing } } };
+  return { prompt, sentence, data: { kind: "resource", vars, op, spec, slip: { spec: slip, what: "the coefficients the wrong way round" }, info: { kind: "resource", per, packs: fx?.packs, packText: fx?.packText, amount, unit: res.unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing } } };
 }
 
 // ── Level 1: direct comparisons ──────────────────────────────────────────────

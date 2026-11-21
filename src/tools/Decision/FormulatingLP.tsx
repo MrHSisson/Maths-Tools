@@ -14,7 +14,7 @@ import { solveLp } from "../../shared/decision/lpSolve";
 
 const SUB_TOOLS = [
   { key: "constraint", label: "Write a constraint", levels: 3, blurb: "One constraint from a short situation" },
-  { key: "problem", label: "Formulate a problem", levels: 2, blurb: "The variables, the objective and every constraint" },
+  { key: "problem", label: "Formulate a problem", levels: 3, blurb: "The variables, the objective and every constraint" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
@@ -23,7 +23,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const vars = ticked(o.lpVars, "2").map(Number).filter((n) => n >= 2 && n <= 4);
   if (ctx?.subTool === "problem") {
-    const q = generateProblem(level, { vars, objective: ticked(o.lpObjective, "max"), integers: o.lpIntegers !== "leave" });
+    const q = generateProblem(level, { vars, objective: ticked(o.lpObjective, "max"), integers: o.lpIntegers !== "leave", table: o.lpData === "table" });
     return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
   }
   const styles = ticked(o.lpStyles, level === 1 ? "resource,compare" : level === 2 ? "percent,ratio,decimal" : "blend,eitherOr");
@@ -51,8 +51,13 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "lpIntegers", label: "Integers", info: "Whether the question says that only whole numbers of items can be made, so that the model must say the variables are integers.",
-    forSubTools: ["problem"], forLevels: [2], defaultFor: () => "say",
+    forSubTools: ["problem"], forLevels: [2, 3], defaultFor: () => "say",
     choices: [{ value: "say", label: "Say So" }, { value: "leave", label: "Leave Out" }],
+  },
+  {
+    key: "lpData", label: "Data Shown", info: "Whether the limits and the profit per item are written in sentences or set out in a table beside the question. It changes only how the same question is shown.",
+    forSubTools: ["problem"], forLevels: [2, 3], displayOnly: true, tab: "display", defaultFor: () => "sentences",
+    choices: [{ value: "sentences", label: "Sentences" }, { value: "table", label: "Table" }],
   },
   {
     key: "lpStyles", label: "Constraint Styles", info: "Which kinds of constraint to ask for. A question draws one of the ticked kinds, so a teacher can drill one style at a time or mix them all.",
@@ -102,7 +107,7 @@ export default function App() {
         noSandbox: true,
         levelLabels: {
           constraint: ["Resource use and direct comparisons", "Percentages, ratios and decimal amounts", "Blends and either-or limits"],
-          problem: ["Resource limits and direct comparisons, with a profit or a cost per item", "Percentages, ratios, decimal amounts and fixed totals; profit as price minus cost; integers"],
+          problem: ["Resource limits and direct comparisons, with a profit or a cost per item", "Percentages, ratios, decimal amounts and fixed totals; price minus cost, a pack, another unit; integers", "Either-or limits, a blend to make, a rest to substitute out; \"exactly half\""],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

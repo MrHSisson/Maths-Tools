@@ -84,30 +84,37 @@ type Add = (caption: string, add: LpRow[], phase?: string) => void;
 function resourceSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add): void {
   const info = d.info as Extract<LpProblemData["info"], { kind: "resource" }>;
   const { per, amount, unit, label, sing, verb } = info;
+  // the coefficient of each variable: the amount one item uses, times the items in a pack when the variable counts packs
+  const coef = per.map((a, i) => a * (info.packs?.[i] ?? 1));
   const pl = PLURAL[verb] ?? verb;
   step(`Work out the ${info.topic} each kind of item ${verb === "supplies" ? "supplies" : "needs"}: the amount for one item, times the number of items.`, [
     { k: "head", t: `${cap(info.topic)}, one kind at a time` },
-    ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${sing[i]} ${verb} ${per[i]} ${unit}, so $${v.sym}$ ${v.noun} ${pl} $${exprTex([per[i]], [v.sym])}$ ${unit}.` })),
+    ...d.vars.map((v, i): LpRow => ({ k: "words", t: (info.packs?.[i] ?? 1) > 1
+      ? `Each ${sing[i]} ${verb} ${per[i]} ${unit}, so one ${info.packText![i]} ${verb} $${info.packs![i]} \\times ${per[i]} = ${coef[i]}$ ${unit}, and $${v.sym}$ ${v.noun} ${pl} $${exprTex([coef[i]], [v.sym])}$ ${unit}.`
+      : `Each ${sing[i]} ${verb} ${per[i]} ${unit}, so $${v.sym}$ ${v.noun} ${pl} $${exprTex([per[i]], [v.sym])}$ ${unit}.` })),
   ], "One kind at a time");
-  const sum = exprTex(per, syms);
+  if (info.conv) step(`The limit is given in ${info.conv.unit} but the amounts for each item are in ${unit}: change the units first.`, [
+    { k: "words", t: `$${info.conv.n} \\times ${texN(info.conv.factor)} = ${texN(amount)}$ ${unit}.` },
+  ], "Change the units");
+  const sum = exprTex(coef, syms);
   step(`Add them up: the total ${label} is the sum, and the question says how it is limited.`, [
     { k: "words", t: `Together the ${label} is $${sum}$ ${unit}, and it must be ${opWordTex(d.op)} ${texN(amount)} ${unit}.` },
     { k: "tex", t: `${sum} ${opTex(d.op)} ${texN(amount)}` },
   ], "Add them up");
-  const g = [...per, amount].reduce((h, v) => gcdInt(h, v), 0);
+  const g = [...coef, amount].reduce((h, v) => gcdInt(h, v), 0);
   if (g > 1) {
     step(`Every number is divisible by ${g}, so divide the whole line by ${g}: the lowest terms.`, [
       { k: "words", t: `Divide every term by ${g}:` },
       { k: "tex", t: constraintTex(c, syms) },
     ], "Lowest terms");
   }
-  const i = per.findIndex((a) => amount % a === 0);
+  const i = coef.findIndex((a) => amount % a === 0);
   const only = d.vars[i].sym;
   const others = syms.filter((_, j) => j !== i).map((s) => `${s} = 0`).join(",\\ ");
-  const lim = amount / per[i];
+  const lim = amount / coef[i];
   step("Check the constraint with a simple case: make only one kind of item.", [
-    { k: "words", t: `If only ${d.vars[i].noun} are made ($${others}$), then $${per[i]}${only} ${opTex(d.op)} ${texN(amount)}$, so $${only} ${opTex(d.op)} ${lim}$.` },
-    { k: "note", t: `${lim} ${d.vars[i].noun} ${verb === "supplies" ? "supply" : "use"} ${lim} × ${per[i]} = ${texN(amount)} ${unit}: that is the limit in the question ✓` },
+    { k: "words", t: `If only ${d.vars[i].noun} are made ($${others}$), then $${coef[i]}${only} ${opTex(d.op)} ${texN(amount)}$, so $${only} ${opTex(d.op)} ${texN(lim)}$.` },
+    { k: "note", t: `${texN(lim)} ${d.vars[i].noun} ${verb === "supplies" ? "supply" : "use"} ${texN(lim)} × ${coef[i]} = ${texN(amount)} ${unit}: that is the limit in the question ✓` },
   ], "Check");
 }
 const opWordTex = (op: Op): string => ({ "≤": "at most", "≥": "at least", "=": "exactly", "<": "less than", ">": "more than" }[op]);
@@ -478,35 +485,84 @@ function eitherSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add)
 }
 
 // ── "Formulate a problem": the whole model ───────────────────────────────────
+type PInfo = Extract<LpProblemData["info"], { kind: "problem" }>;
+/** "120 + x - 3y" in TeX: a constant first, then the letters (whole-number coefficients) */
+function polyTex(konst: number, coeffs: readonly number[], syms: readonly string[]): string {
+  const body = exprTex(coeffs, syms);
+  if (!konst) return body;
+  return body === "0" ? String(konst) : body.startsWith("-") ? `${konst} - ${body.slice(1)}` : `${konst} + ${body}`;
+}
+
 /** the steps of a problem: the variables, the objective, each constraint worked as in "Write a constraint" (its working shown while it is written, then kept as one line), non-negativity, and the model in the book's layout */
 function solveProblem(d: LpProblemData): SolveStep[] {
-  const info = d.info as Extract<LpProblemData["info"], { kind: "problem" }>;
+  const info = d.info as PInfo;
   const syms = d.vars.map((v) => v.sym);
   const out: SolveStep[] = [];
   let base: LpRow[] = [];
   const push = (caption: string, rows: LpRow[], fresh: number, phase?: string): void => { out.push({ caption, phase, edgeStates: {}, lpView: { rows, fresh } }); };
   const max = info.sense === "max";
-  const sum = exprFr(info.obj.map((k) => fr(k)), syms, "dec");
-
-  const vars: LpRow[] = [{ k: "head", t: "Variables" }, ...d.vars.map((v): LpRow => ({ k: "words", t: `Let $${v.sym}$ be the number of ${v.noun}.` }))];
-  base = vars;
-  push("Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
-
-  const objRows: LpRow[] = [
-    { k: "head", t: "Objective" },
-    ...d.vars.map((v, i): LpRow => ({ k: "words", t: info.price && info.cost
-      ? `Each ${info.sing[i]} makes a profit of £${info.price[i]} − £${info.cost[i]} = £${info.obj[i]}, so $${v.sym}$ ${v.noun} make $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.`
-      : `Each ${info.sing[i]} ${max ? "makes a profit of" : "costs"} £${info.obj[i]}, so $${v.sym}$ ${v.noun} ${max ? "make" : "cost"} $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.` })),
-    { k: "tex", t: `${info.name} = ${sum}` },
-    { k: "words", t: `We want to ${max ? "maximise" : "minimise"} $${info.name}$.` },
-  ];
-  base = [...base, ...objRows];
-  push(`The objective is the ${max ? "profit" : "cost"}: add up what each kind of item ${max ? "makes" : "costs"}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
-
-  const lines: string[] = [];
+  const rem = info.rem;
+  const konst = info.konst ?? 0;
+  const objTex = polyTex(konst, info.obj, syms);
   const slips: string[] = [];
-  if (info.price) slips.push(`Objective. Common slip: using the selling prices, not the profits (price minus cost): ${info.name} = ${objText(info.price, syms)}.`);
-  info.parts.forEach((part, j) => {
+
+  const vars: LpRow[] = [
+    { k: "head", t: "Variables" },
+    ...d.vars.map((v): LpRow => ({ k: "words", t: `Let $${v.sym}$ be the number of ${v.noun}.` })),
+    ...(rem ? [{ k: "words", t: `The rest of the ${rem.unit === "hectares" ? "land" : "floor space"} is used for ${rem.rest}: that is $${rem.T} - ${syms.join(" - ")}$ ${rem.unit}, so it needs no letter of its own.` } as LpRow] : []),
+  ];
+  base = vars;
+  push(rem ? "Nothing is named for you: choose a letter for each use you decide. The last use is whatever is left, so it needs no letter." : "Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
+
+  // ── the objective ──
+  const money = (i: number): string => (info.price && info.cost ? `£${info.price[i]} − £${info.cost[i]} = £${(info.itemObj ?? info.obj)[i]}` : `£${(info.itemObj ?? info.obj)[i]}`);
+  let objRows: LpRow[];
+  if (info.single !== undefined) {
+    const v = d.vars[info.single];
+    objRows = [
+      { k: "head", t: "Objective" },
+      { k: "words", t: `The aim is to make as many ${v.noun} as possible, so the thing to maximise is just the number of them, $${v.sym}$.` },
+      { k: "tex", t: `${info.name} = ${v.sym}` },
+    ];
+  } else if (rem) {
+    const m = d.vars.length;
+    const rest = `(${rem.T} - ${syms.join(" - ")})`;
+    objRows = [
+      { k: "head", t: "Objective" },
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `$${v.sym}$ ${v.noun} make $${exprTex([rem.profits[i]], [v.sym])}$ pounds.` })),
+      { k: "words", t: `The ${rem.rest} is the rest, $${rem.T} - ${syms.join(" - ")}$ ${rem.unit}, and makes £${rem.profits[m]} for each: $${rem.profits[m] === 1 ? "" : rem.profits[m]}${rest}$ pounds.` },
+      { k: "tex", t: `${info.name} = ${exprTex(rem.profits.slice(0, m), syms)} + ${rem.profits[m] === 1 ? "" : rem.profits[m]}${rest}` },
+    ];
+  } else {
+    objRows = [
+      { k: "head", t: "Objective" },
+      ...d.vars.map((v, i): LpRow => {
+        const k = info.pack?.i === i ? info.pack.k : 1;
+        const verbs = max ? "makes a profit of" : "costs";
+        const own = max ? "make" : "cost";
+        return { k: "words", t: k > 1
+          ? `Each ${info.sing[i]} ${verbs} ${money(i)}, so one ${info.pack!.text} ${own === "make" ? "makes" : "costs"} $${k} \\times ${(info.itemObj ?? info.obj)[i]} = ${info.obj[i]}$ pounds, and $${v.sym}$ ${v.noun} ${own} $${exprTex([info.obj[i]], [v.sym])}$ pounds.`
+          : `Each ${info.sing[i]} ${verbs} ${money(i)}, so $${v.sym}$ ${v.noun} ${own} $${exprTex([info.obj[i]], [v.sym])}$ pounds.` };
+      }),
+      { k: "tex", t: `${info.name} = ${exprTex(info.obj, syms)}` },
+    ];
+  }
+  objRows.push({ k: "words", t: `We want to ${max ? "maximise" : "minimise"} $${info.name}$.` });
+  base = [...base, ...objRows];
+  push(`The objective is ${info.single !== undefined ? "the number of items wanted" : `the ${max ? "profit" : "cost"}`}: ${info.single !== undefined ? "a single letter" : `add up what each kind of ${rem ? "use" : "item"} ${max ? "makes" : "costs"}`}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
+  if (rem) {
+    const m = d.vars.length;
+    const c = rem.profits[m];
+    const expanded = `${exprTex(rem.profits.slice(0, m), syms)} + ${rem.T * c} - ${syms.map((s) => `${c === 1 ? "" : c}${s}`).join(" - ")}`;
+    base = [...base, { k: "tex", t: `${info.name} = ${expanded}` }, { k: "tex", t: `${info.name} = ${objTex}` }, { k: "note", t: `The ${rem.T * c} is a constant: it does not change which $${syms.join(", ")}$ are best, but it is part of ${info.name}.` }];
+    push(`Multiply out the bracket and collect the like terms: ${info.name} is a constant plus a multiple of each letter.`, base, 3, "Collect");
+    slips.push(`Objective. Common slip: leaving out the ${rem.rest}, ${info.name} = ${rem.profits.slice(0, m).map((p, i) => `${p}${syms[i]}`).join(" + ")}.`);
+  } else if (info.price) slips.push(`Objective. Common slip: using the selling prices, not the profits (price minus cost): ${info.name} = ${objText(info.price, syms)}.`);
+  else if (info.pack) slips.push(`Objective. Common slip: forgetting that ${info.pack.i >= 0 ? syms[info.pack.i] : ""} counts ${info.pack.name}s of ${info.pack.k}: using the profit of one item, ${info.name} = ${objText(info.itemObj ?? info.obj, syms)}.`);
+
+  // ── the constraints ──
+  const lines: string[] = [];
+  const ordinary = (part: LpProblemData, j: number): void => {
     const all0 = solveLp({ kind: part.kind, level: part.level, lp: part, prompt: "", answer: { text: "" }, matrixMode: "off" });
     const slipStep = all0[all0.length - 1].phase === "Common slip" ? all0[all0.length - 1] : undefined;
     const steps = slipStep ? all0.slice(0, -1) : all0;
@@ -515,26 +571,67 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
     steps.slice(1).forEach((st, k) => {
       const v = st.lpView!;
-      const rows = v.rows.slice(skip);
-      push(`Constraint ${j + 1}. ${st.caption}`, [...base, head, ...rows], v.fresh! + (k === 0 ? 1 : 0), st.phase);
+      push(`Constraint ${j + 1}. ${st.caption}`, [...base, head, ...v.rows.slice(skip)], v.fresh! + (k === 0 ? 1 : 0), st.phase);
     });
+  };
+  const remainderPart = (part: LpProblemData, j: number): void => {
+    const m = d.vars.length;
+    const c = constraintOf(part.spec);
+    const o = opTex(part.op);
+    const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
+    const rest = `(${rem!.T} - ${syms.join(" - ")})`;
+    if (j === 0) {
+      const flip = part.op === "<" ? ">" : "\\ge";
+      push(`Constraint 1. The rest, ${rem!.T} − ${syms.join(" − ")}, is an amount of ${rem!.unit}, so it cannot be negative${part.op === "<" ? " (and the question says some is left over)" : ""}.`, [...base, head, { k: "tex", t: `${rem!.T} - ${syms.join(" - ")} ${flip} 0` }], 2, "The rest");
+      push("Move the letters to the other side.", [...base, head, { k: "tex", t: `${rem!.T} - ${syms.join(" - ")} ${flip} 0` }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
+      slips.push(`Constraint 1. Common slip: forgetting that the rest cannot be negative, so leaving out ${syms.join(" + ")} ${part.op === "<" ? "<" : "≤"} ${rem!.T}.`);
+      return;
+    }
+    const r = rem!.resource;
+    const per = rem!.per;
+    const rr = per[m];
+    const sums = `${exprTex(per.slice(0, m), syms)} + ${rr === 1 ? "" : rr}${rest}`;
+    const line1 = `${sums} ${o} ${texN(rem!.amount)}`;
+    const line2 = `${exprTex(per.slice(0, m), syms)} + ${texN(rr * rem!.T)} - ${syms.map((s) => `${rr === 1 ? "" : rr}${s}`).join(" - ")} ${o} ${texN(rem!.amount)}`;
+    const diff = per.slice(0, m).map((a) => a - rr);
+    const line3 = `${polyTex(rr * rem!.T, diff, syms)} ${o} ${texN(rem!.amount)}`;
+    const line4 = `${exprTex(diff, syms)} ${o} ${texN(rem!.amount - rr * rem!.T)}`;
+    push(`Constraint 2. Add up the ${r.topic}: each use ${r.verb} an amount per ${rem!.unit.replace(/s$/, "")}, and the ${rem!.rest} uses ${rr} for each of its ${rem!.rest === "turf" ? "hectares" : rem!.unit}.`, [...base, head,
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `$${v.sym}$ ${v.noun} ${PLURAL[r.verb] ?? r.verb} $${exprTex([per[i]], [v.sym])}$ ${r.unit}.` })),
+      { k: "words", t: `The ${rem!.rest}, $${rem!.T} - ${syms.join(" - ")}$ ${rem!.unit}, ${PLURAL[r.verb] ?? r.verb} $${rr === 1 ? "" : rr}${rest}$ ${r.unit}.` },
+      { k: "tex", t: line1 }], d.vars.length + 2, "Add up");
+    push("Multiply out the bracket.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }], 1, "Expand");
+    push("Collect the like terms.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "tex", t: line3 }], 1, "Collect");
+    push(`Take the constant ${texN(rr * rem!.T)} to the right-hand side.`, [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "tex", t: line3 }, { k: "tex", t: line4 }], 1, "Subtract");
+    const tail = [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "tex", t: line3 }, { k: "tex", t: line4 }] as LpRow[];
+    if (line4 !== constraintTex(c, syms)) push("Divide through by the common factor, and write the letters in order with the first coefficient positive.", [...tail, { k: "tex", t: constraintTex(c, syms) }], 1, "Lowest terms");
+    slips.push(`Constraint 2. Common slip: leaving out the ${rem!.rest}, ${exprTex(per.slice(0, m), syms)} ${part.op === "<" ? "<" : "≤"} ${rem!.amount}, as if only the named uses took ${r.topic}.`.replace(/\\/g, ""));
+  };
+
+  const addLine = (part: LpProblemData, j: number): void => {
     const line = constraintTex(constraintOf(part.spec), syms);
     lines.push(line);
     base = [...base, ...(j === 0 ? [{ k: "head", t: "Constraints" } as LpRow] : []), { k: "tex", t: line }];
+  };
+  info.parts.forEach((part, j) => {
+    if (rem && j < 2) remainderPart(part, j); else ordinary(part, j);
+    addLine(part, j);
   });
 
   const nonneg = `${syms.map((s) => `${s} \\ge 0`).join(",\\ ")}`;
-  base = [...base, { k: "words", t: "Numbers of items cannot be negative:" }, { k: "tex", t: nonneg }];
-  push("The numbers of items cannot be negative: each variable is at least 0.", base, 2, "Non-negativity");
+  base = [...base, { k: "words", t: `${rem ? "Amounts" : "Numbers of items"} cannot be negative:` }, { k: "tex", t: nonneg }];
+  push(`The ${rem ? "amounts" : "numbers of items"} cannot be negative: each variable is at least 0.`, base, 2, "Non-negativity");
+  const strictPart = info.parts.map((p) => constraintOf(p.spec)).find((c) => isStrictOp(c.op));
   const intRow: LpRow = { k: "words", t: `${syms.map((s) => `$${s}$`).join(", ")} ${syms.length > 1 ? "are" : "is"} whole numbers, so they are integers.` };
+  const strictRow: LpRow | undefined = strictPart && { k: "note", t: `A strict inequality keeps its sign: points on the boundary are not allowed. For whole numbers, $${exprTex(strictPart.coeffs.map((f) => f[0]), syms)} ${opTex(strictPart.op)} ${texN(strictPart.rhs[0])}$ means $${exprTex(strictPart.coeffs.map((f) => f[0]), syms)} ${strictPart.op === "<" ? "\\le" : "\\ge"} ${texN(strictPart.rhs[0] + (strictPart.op === "<" ? -1 : 1))}$.` };
   if (info.integers) {
-    base = [...base, intRow];
-    push("Only whole numbers of items can be made, so the variables must be integers.", base, 1, "Integers");
+    base = [...base, intRow, ...(strictRow ? [strictRow] : [])];
+    push(`${rem ? "Only whole numbers of " + rem.unit + " can be used" : "Only whole numbers of items can be made"}, so the variables must be integers.`, base, 1 + (strictRow ? 1 : 0), "Integers");
   }
 
   const model: LpRow[] = [
     { k: "head", t: "The linear programme" },
-    { k: "words", t: `${max ? "Maximise" : "Minimise"} $${info.name} = ${sum}$` },
+    { k: "words", t: `${max ? "Maximise" : "Minimise"} $${info.name} = ${objTex}$` },
     { k: "words", t: "subject to:" },
     ...lines.map((t): LpRow => ({ k: "tex", t })),
     { k: "result", t: nonneg },
@@ -544,3 +641,4 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   if (slips.length) push(`Common slips. ${slips.join(" ")}`, [...vars, ...model], 0, "Common slips");
   return out;
 }
+const isStrictOp = (op: Op): boolean => op === "<" || op === ">";
