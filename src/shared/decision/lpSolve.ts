@@ -46,6 +46,7 @@ const sumOf = (xs: readonly number[]): string => xs.join(" + ");
 /** the steps of a question, each carrying the whole page so far (the rows the step adds are the last `fresh`) */
 export function solveLp(p: DecisionProblem): SolveStep[] {
   const d = p.lp!;
+  if (d.info.kind === "problem") return solveProblem(d);
   const syms = d.vars.map((v) => v.sym);
   const c = constraintOf(d.spec);
   const out: SolveStep[] = [];
@@ -123,7 +124,7 @@ function multipleSteps(d: LpProblemData, c: Constraint, syms: string[], step: Ad
   const brk = (k: number): string => (many ? (k === 1 ? `(${Bsum})` : `${k}(${Bsum})`) : k === 1 ? Bsum : `${k}${Bsum}`);
   step(`Write the sentence as an inequality: ${A} on one side, ${frTex(m)} times ${many ? "the others together" : syms[b[0]]} on the other.`, [
     { k: "head", t: "Write it as an inequality" },
-    { k: "words", t: `$${A}$ is ${opWordTex(d.op)} ${frTex(m) === "1" ? "" : `$${frTex(m)}$ times `}${many ? "all of" : ""} $${Bsum}$.` },
+    { k: "words", t: `$${A}$ is ${opWordTex(d.op)} ${frTex(m) === "1" ? "" : `$${frTex(m)}$ times `}${many ? "all of " : ""}$${Bsum}$.` },
     { k: "tex", t: `${A} ${op} ${qq === 1 ? (pp === 1 ? `${many ? `(${Bsum})` : Bsum}` : `${pp}${many ? `(${Bsum})` : Bsum}`) : `\\frac{${pp}}{${qq}}${many ? `(${Bsum})` : Bsum}`}` },
   ], "Translate");
   if (qq > 1) {
@@ -456,4 +457,63 @@ function eitherSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add)
     rows.push({ k: "words", t: `If only ${v.noun} are made ($${others}$), then ${c.coeffs[i][0] === 1 ? "" : `$${c.coeffs[i][0]}${v.sym} ${opTex(c.op)} ${texN(c.rhs[0])}$, so `}$${v.sym} ${opTex(c.op)} ${texN(lim)}$${given === "rate" ? `: ${caps[i]} an hour for ${T} hours` : given === "perItem" ? `: ${caps[i]} an hour for ${T} hours` : ""}, ${requirement ? "all that is needed" : "the most that could be made"} ✓` });
   });
   step("Check the constraint at the ends of its line: each kind on its own should give the number in the question.", rows, "Check");
+}
+
+// ── "Formulate a problem": the whole model ───────────────────────────────────
+/** the steps of a problem: the variables, the objective, each constraint worked as in "Write a constraint" (its working shown while it is written, then kept as one line), non-negativity, and the model in the book's layout */
+function solveProblem(d: LpProblemData): SolveStep[] {
+  const info = d.info as Extract<LpProblemData["info"], { kind: "problem" }>;
+  const syms = d.vars.map((v) => v.sym);
+  const out: SolveStep[] = [];
+  let base: LpRow[] = [];
+  const push = (caption: string, rows: LpRow[], fresh: number, phase?: string): void => { out.push({ caption, phase, edgeStates: {}, lpView: { rows, fresh } }); };
+  const max = info.sense === "max";
+  const sum = exprFr(info.obj.map((k) => fr(k)), syms, "dec");
+
+  const vars: LpRow[] = [{ k: "head", t: "Variables" }, ...d.vars.map((v): LpRow => ({ k: "words", t: `Let $${v.sym}$ be the number of ${v.noun}.` }))];
+  base = vars;
+  push("Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
+
+  const objRows: LpRow[] = [
+    { k: "head", t: "Objective" },
+    ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${info.sing[i]} ${max ? "makes a profit of" : "costs"} £${info.obj[i]}, so $${v.sym}$ ${v.noun} ${max ? "make" : "cost"} $${info.obj[i] === 1 ? "" : info.obj[i]}${v.sym}$ pounds.` })),
+    { k: "tex", t: `${info.name} = ${sum}` },
+    { k: "words", t: `We want to ${max ? "maximise" : "minimise"} $${info.name}$.` },
+  ];
+  base = [...base, ...objRows];
+  push(`The objective is the ${max ? "profit" : "cost"}: add up what each kind of item ${max ? "makes" : "costs"}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
+
+  const lines: string[] = [];
+  const slips: LpRow[] = [];
+  info.parts.forEach((part, j) => {
+    const steps = solveLp({ kind: part.kind, level: part.level, lp: part, prompt: "", answer: { text: "" }, matrixMode: "off" });
+    const skip = steps[0].lpView!.rows.length; // the part's own "variables" rows are already on the page
+    const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
+    steps.slice(1).forEach((st, k) => {
+      const v = st.lpView!;
+      const isLast = k === steps.length - 2;
+      const all = v.rows.slice(skip);
+      const rows = all.filter((r) => r.k !== "slip");
+      push(`Constraint ${j + 1}. ${st.caption}`, [...base, head, ...rows], Math.min(rows.length, v.fresh! - (all.length - rows.length)) + (k === 0 ? 1 : 0), st.phase);
+      if (isLast) all.filter((r) => r.k === "slip").forEach((r) => slips.push({ k: "slip", t: `Constraint ${j + 1}. ${r.t}` }));
+    });
+    const line = constraintTex(constraintOf(part.spec), syms);
+    lines.push(line);
+    base = [...base, ...(j === 0 ? [{ k: "head", t: "Constraints" } as LpRow] : []), { k: "tex", t: line }];
+  });
+
+  const nonneg = `${syms.map((s) => `${s} \\ge 0`).join(",\\ ")}`;
+  base = [...base, { k: "words", t: "Numbers of items cannot be negative:" }, { k: "tex", t: nonneg }];
+  push("Finally, the numbers of items cannot be negative: each variable is at least 0.", base, 2, "Non-negativity");
+
+  const model: LpRow[] = [
+    { k: "head", t: "The linear programme" },
+    { k: "words", t: `${max ? "Maximise" : "Minimise"} $${info.name} = ${sum}$` },
+    { k: "words", t: "subject to:" },
+    ...lines.map((t): LpRow => ({ k: "tex", t })),
+    { k: "result", t: nonneg },
+    ...slips,
+  ];
+  push("That is the model, in the usual layout: the objective, then the constraints, then non-negativity. Any consistent choice of letters is correct.", [...vars, ...model], model.length, "The model");
+  return out;
 }

@@ -6,7 +6,7 @@ import { type Fr, fr, ZERO } from "./dim";
 import { type Constraint, type ConstraintKind, type Op, type Var, blend, eitherOr, flipOp, gcdInt, linear, relationship } from "./lp";
 
 // ── The question's data ──────────────────────────────────────────────────────
-export type LpKind = "resource" | "multiple" | "difference" | "bound" | "total" | "percent" | "ratio" | "decimal" | "blend" | "eitherOr";
+export type LpKind = "resource" | "multiple" | "difference" | "bound" | "total" | "percent" | "ratio" | "decimal" | "blend" | "eitherOr" | "problem";
 /** the rule behind a constraint, from the sentence's own numbers (rebuilt with `constraintOf`) */
 export type LpSpec =
   | { t: "linear"; coeffs: Fr[]; op: Op; rhs: Fr; kind: ConstraintKind }
@@ -30,6 +30,7 @@ type LpInfo =
   | { kind: "ratio"; form: "ratio" | "every" | "share"; a: number[]; b: number[]; m: Fr }
   | { kind: "decimal"; a: number[]; den: number; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
   | { kind: "blend"; contents: Fr[]; share: Fr; comp: string; invest: boolean }
+  | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[] }
   | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {
@@ -120,6 +121,10 @@ export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs">, var
   return `${s} ${c.op} ${r < 0 ? "−" + Math.abs(r) : r}`;
 }
 
+/** a context, variables and (for a resource) the resource and operators already chosen: a `problem` question builds several constraints on one set of variables */
+export interface Fix { ctx: Context; vars: Var[]; sing: string[]; res?: Resource; ops?: Op[] }
+const opFrom = (fx: Fix | undefined, otherwise: () => Op): Op => (fx?.ops ? pick(fx.ops) : otherwise());
+
 // ── Level 1: resource use ────────────────────────────────────────────────────
 /** a round amount, at least one of the coefficients dividing it (so "if only this item is made" is a whole number of items) */
 export const AMOUNTS = [30, 40, 48, 50, 60, 72, 80, 90, 100, 120, 144, 150, 160, 180, 200, 240, 250, 300, 360, 400, 480, 500, 600, 720, 800, 900, 1000, 1200, 1440, 1500];
@@ -134,12 +139,12 @@ function resourceNumbers(n: number): { per: number[]; amount: number } {
   }
   return { per: n === 2 ? [10, 15] : n === 3 ? [2, 3, 5] : [2, 3, 4, 6], amount: n === 2 ? 300 : 120 };
 }
-function genResource(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
-  const ctx = pick(CONTEXTS);
-  const res = pick(ctx.resources.filter((r) => !r.decOnly));
-  const { vars, sing } = pickVars(ctx, n);
+export function genResource(n: number, fx?: Fix): { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> } {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const res = fx?.res ?? pick(ctx.resources.filter((r) => !r.decOnly));
+  const { vars, sing } = fx ?? pickVars(ctx, n);
   const { per, amount } = resourceNumbers(n);
-  const op = res.mode === "use" ? weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]) : weighted<Op>([["≥", 6], [">", 1.5], ["=", 1]]);
+  const op = opFrom(fx, () => (res.mode === "use" ? weighted<Op>([["≤", 6], ["<", 1.5], ["=", 1]]) : weighted<Op>([["≥", 6], [">", 1.5], ["=", 1]])));
   const tail = (a: number): string => `${a} ${res.unit}${res.of ? ` of ${res.of}` : ""}`;
   const each = sing.map((s, i) => `each ${s} ${res.verb} ${i === 0 ? tail(per[i]) : `${per[i]} ${res.unit}`}`);
   const sentence = `${cap(list(each))}. The total ${res.label} must be ${opWord(op, false)} ${amount} ${res.unit}.`;
@@ -149,7 +154,7 @@ function genResource(n: number): { prompt: string; data: Omit<LpProblemData, "le
   let wrong = [...per].reverse();
   if (wrong.every((v, i) => v === per[i])) wrong = [per[1], per[0], ...per.slice(2)];
   const slip: LpSpec = { t: "linear", coeffs: wrong.map((a) => fr(a)), op, rhs: fr(amount), kind: "resource" };
-  return { prompt, data: { kind: "resource", vars, op, spec, slip: { spec: slip, what: "the coefficients the wrong way round" }, info: { kind: "resource", per, amount, unit: res.unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing } } };
+  return { prompt, sentence, data: { kind: "resource", vars, op, spec, slip: { spec: slip, what: "the coefficients the wrong way round" }, info: { kind: "resource", per, amount, unit: res.unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing } } };
 }
 
 // ── Level 1: direct comparisons ──────────────────────────────────────────────
@@ -157,60 +162,60 @@ const MULTIPLES: Array<readonly [Fr, number]> = [[fr(2), 4], [fr(3), 3], [fr(4),
 const MWORD: Record<string, string> = { "2/1": "twice", "3/1": "three times", "4/1": "four times", "1/2": "half", "1/3": "one third of", "3/2": "one and a half times", "5/2": "two and a half times" };
 const mWord = (m: Fr): string => MWORD[`${m[0]}/${m[1]}`];
 
-function genMultiple(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
-  const ctx = pick(CONTEXTS);
-  const { vars } = pickVars(ctx, n);
+export function genMultiple(n: number, fx?: Fix): { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> } {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const { vars } = fx ?? pickVars(ctx, n);
   const a = ri(0, n - 1);
   const others = shuffled(Array.from({ length: n }, (_, i) => i).filter((i) => i !== a));
   // "combined" needs a third variable: with two variables B is the one other
   const size = n >= 3 && Math.random() < 0.55 ? ri(2, Math.min(3, n - 1)) : 1;
   const b = others.slice(0, size).sort((p, q) => p - q);
   const m = weighted(MULTIPLES);
-  const op = pickOp();
+  const op = opFrom(fx, pickOp);
   const bNoun = size === 1 ? vars[b[0]].noun : `${list(b.map((i) => vars[i].noun))} combined`;
   const sentence = `The number of ${vars[a].noun} must be ${opWord(op)} ${mWord(m)} the number of ${bNoun}.`;
   const prompt = `${ctx.intro(vars.map((v) => v.noun))} ${letDef(vars, ctx.did)} ${sentence} Write down a constraint.`;
   const mk = (aa: number[], bb: number[]): LpSpec => ({ t: "rel", n, a: aa, b: bb, m, op, kind: "multiple" });
-  return { prompt, data: { kind: "multiple", vars, op, spec: mk([a], b), slip: { spec: mk(b, [a]), what: "the comparison the wrong way round" }, info: { kind: "multiple", a, b, m } } };
+  return { prompt, sentence, data: { kind: "multiple", vars, op, spec: mk([a], b), slip: { spec: mk(b, [a]), what: "the comparison the wrong way round" }, info: { kind: "multiple", a, b, m } } };
 }
-function genDifference(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
-  const ctx = pick(CONTEXTS);
-  const { vars } = pickVars(ctx, n);
+export function genDifference(n: number, fx?: Fix): { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> } {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const { vars } = fx ?? pickVars(ctx, n);
   const [a, b] = shuffled(Array.from({ length: n }, (_, i) => i)).slice(0, 2);
   const k = ri(2, 15);
-  const op = pickOp();
+  const op = opFrom(fx, pickOp);
   const sentence = `The number of ${vars[a].noun} must exceed the number of ${vars[b].noun} by ${opWord(op)} ${k}.`;
   const prompt = `${ctx.intro(vars.map((v) => v.noun))} ${letDef(vars, ctx.did)} ${sentence} Write down a constraint.`;
   const coeffs = (p: number, q: number): Fr[] => Array.from({ length: n }, (_, i) => (i === p ? fr(1) : i === q ? fr(-1) : ZERO));
-  return { prompt, data: { kind: "difference", vars, op, spec: { t: "linear", coeffs: coeffs(a, b), op, rhs: fr(k), kind: "bound" }, slip: { spec: { t: "linear", coeffs: coeffs(b, a), op, rhs: fr(k), kind: "bound" }, what: "the two variables the wrong way round" }, info: { kind: "difference", a, b, k } } };
+  return { prompt, sentence, data: { kind: "difference", vars, op, spec: { t: "linear", coeffs: coeffs(a, b), op, rhs: fr(k), kind: "bound" }, slip: { spec: { t: "linear", coeffs: coeffs(b, a), op, rhs: fr(k), kind: "bound" }, what: "the two variables the wrong way round" }, info: { kind: "difference", a, b, k } } };
 }
-function genBound(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
-  const ctx = pick(CONTEXTS);
-  const { vars } = pickVars(ctx, n);
+export function genBound(n: number, fx?: Fix): { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> } {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const { vars } = fx ?? pickVars(ctx, n);
   const i = ri(0, n - 1);
   const N = pick([10, 12, 15, 20, 24, 25, 30, 40, 50, 60, 75, 80]);
-  const op = pickOp();
-  const each = Math.random() < 0.4 && op !== "=";
+  const op = opFrom(fx, pickOp);
+  const each = !fx && Math.random() < 0.4 && op !== "=";
   const sentence = each
     ? `There must be ${opWord(op)} ${N} of each type. Write down the constraint for the number of ${vars[i].noun}.`
-    : `The number of ${vars[i].noun} must be ${opWord(op)} ${N}. Write down a constraint.`;
+    : `The number of ${vars[i].noun} must be ${opWord(op)} ${N}.${fx ? "" : " Write down a constraint."}`;
   const prompt = `${ctx.intro(vars.map((v) => v.noun))} ${letDef(vars, ctx.did)} ${sentence}`;
   const coeffs = Array.from({ length: n }, (_, j) => (j === i ? fr(1) : ZERO));
   const spec: LpSpec = { t: "linear", coeffs, op, rhs: fr(N), kind: "bound" };
   const slip: LpSpec | undefined = op === "=" ? undefined : { t: "linear", coeffs, op: flipOp(op), rhs: fr(N), kind: "bound" };
-  return { prompt, data: { kind: "bound", vars, op, spec, slip: slip && { spec: slip, what: "the inequality sign the wrong way round" }, info: { kind: "bound", i, N, each } } };
+  return { prompt, sentence, data: { kind: "bound", vars, op, spec, slip: slip && { spec: slip, what: "the inequality sign the wrong way round" }, info: { kind: "bound", i, N, each } } };
 }
-function genTotal(n: number): { prompt: string; data: Omit<LpProblemData, "level" | "point"> } {
-  const ctx = pick(CONTEXTS);
-  const { vars } = pickVars(ctx, n);
+export function genTotal(n: number, fx?: Fix): { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> } {
+  const ctx = fx?.ctx ?? pick(CONTEXTS);
+  const { vars } = fx ?? pickVars(ctx, n);
   const N = pick([20, 24, 30, 36, 40, 48, 50, 60, 72, 80, 90, 100, 120, 150, 200]);
-  const op = pickOp();
+  const op = opFrom(fx, pickOp);
   const sentence = `The total number of ${list(vars.map((v) => v.noun))} ${ctx.did} must be ${opWord(op)} ${N}.`;
   const prompt = `${ctx.intro(vars.map((v) => v.noun))} ${letDef(vars, ctx.did)} ${sentence} Write down a constraint.`;
   const coeffs = vars.map(() => fr(1));
   const spec: LpSpec = { t: "linear", coeffs, op, rhs: fr(N), kind: "bound" };
   const slip: LpSpec | undefined = op === "=" ? undefined : { t: "linear", coeffs, op: flipOp(op), rhs: fr(N), kind: "bound" };
-  return { prompt, data: { kind: "total", vars, op, spec, slip: slip && { spec: slip, what: "the inequality sign the wrong way round" }, info: { kind: "total", N } } };
+  return { prompt, sentence, data: { kind: "total", vars, op, spec, slip: slip && { spec: slip, what: "the inequality sign the wrong way round" }, info: { kind: "total", N } } };
 }
 
 // ── The "try a number" check: a point that fits the words and that the slip does not allow ─
@@ -240,7 +245,7 @@ export interface LpGenOptions {
 export function generateLevel1(level: number, o: LpGenOptions): LpQuestion {
   const n = pick(o.vars.length ? o.vars : [2]);
   const style = pick(o.styles.length ? o.styles : ["resource", "compare"]);
-  let g: { prompt: string; data: Omit<LpProblemData, "level" | "point"> };
+  let g: { prompt: string; sentence: string; data: Omit<LpProblemData, "level" | "point"> };
   if (style === "resource") g = genResource(n);
   else {
     const kind = weighted<LpKind>([["multiple", 6], ["difference", 2], ["bound", 1.5], ["total", 1.5]]);

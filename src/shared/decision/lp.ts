@@ -186,3 +186,50 @@ export const feasible = (m: Model, p: readonly Fr[]): boolean => m.constraints.e
 export const objective = (m: Model, p: readonly Fr[]): Fr => fadd(dot(m.obj, p), m.objConst);
 /** a point from plain numbers */
 export const pt = (...n: number[]): Fr[] => n.map((v) => fr(v));
+
+// ── Corner points and the best one (for a model's feasible region, exact) ────
+interface Row { c: Fr[]; r: Fr; op: Op }
+/** the unique solution of n equations in n unknowns, or null (Gaussian elimination in exact fractions) */
+function solveSquare(rows: readonly Row[], n: number): Fr[] | null {
+  const m = rows.map((row) => [...row.c, row.r]);
+  for (let col = 0; col < n; col++) {
+    const piv = m.findIndex((r, i) => i >= col && !fzero(r[col]));
+    if (piv < 0) return null;
+    [m[col], m[piv]] = [m[piv], m[col]];
+    m[col] = m[col].map((v) => fdiv(v, m[col][col]));
+    for (let i = 0; i < n; i++) if (i !== col && !fzero(m[i][col])) m[i] = m[i].map((v, k) => fsub(v, fmul(m[i][col], m[col][k])));
+  }
+  return m.map((r) => r[n]);
+}
+/** the corner points of the region the constraints and x ≥ 0 bound (a strict operator is treated as its non-strict closure) */
+export function vertices(cons: readonly Pick<Constraint, "coeffs" | "op" | "rhs">[], n: number): Fr[][] {
+  const rows: Row[] = [...cons.map((c) => ({ c: [...c.coeffs], r: c.rhs, op: c.op })), ...Array.from({ length: n }, (_, i): Row => ({ c: Array.from({ length: n }, (__, j) => (i === j ? ONE : ZERO)), r: ZERO, op: "≥" }))];
+  const closed = (row: Row, p: readonly Fr[]): boolean => {
+    const v = dot(row.c, p);
+    const k = fcmp(v, row.r);
+    return row.op === "=" ? k === 0 : row.op === "≤" || row.op === "<" ? k <= 0 : k >= 0;
+  };
+  const out = new Map<string, Fr[]>();
+  const pick = (start: number, chosen: Row[]): void => {
+    if (chosen.length === n) {
+      const p = solveSquare(chosen, n);
+      if (p && rows.every((row) => closed(row, p))) out.set(p.map((f) => `${f[0]}/${f[1]}`).join(","), p);
+      return;
+    }
+    for (let i = start; i < rows.length; i++) pick(i + 1, [...chosen, rows[i]]);
+  };
+  pick(0, []);
+  return [...out.values()];
+}
+/** the best corner points for an objective (all of them: more than one means the optimum is not a single point) */
+export function bestVertices(vs: readonly Fr[][], obj: readonly Fr[], sense: "max" | "min"): { value: Fr; at: Fr[][] } | null {
+  if (!vs.length) return null;
+  let value = dot(obj, vs[0]);
+  let at: Fr[][] = [];
+  for (const v of vs) {
+    const o = dot(obj, v);
+    const k = fcmp(o, value);
+    if (at.length === 0 || (sense === "max" ? k > 0 : k < 0)) { value = o; at = [v]; } else if (k === 0) at.push(v);
+  }
+  return { value, at };
+}

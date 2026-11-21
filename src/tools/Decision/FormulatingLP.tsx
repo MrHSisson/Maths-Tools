@@ -2,6 +2,7 @@ import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveSt
 import type { ShellOption } from "../../shared/decision/types";
 import LpCanvas, { LpSolution } from "../../shared/decision/LpWorking";
 import { generateConstraint } from "../../shared/decision/lpGenL23";
+import { generateProblem } from "../../shared/decision/lpProblem";
 import { solveLp } from "../../shared/decision/lpSolve";
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════
@@ -13,6 +14,7 @@ import { solveLp } from "../../shared/decision/lpSolve";
 
 const SUB_TOOLS = [
   { key: "constraint", label: "Write a constraint", levels: 3, blurb: "One constraint from a short situation" },
+  { key: "problem", label: "Formulate a problem", levels: 1, blurb: "The variables, the objective and every constraint" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
@@ -20,6 +22,10 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const vars = ticked(o.lpVars, "2").map(Number).filter((n) => n >= 2 && n <= 4);
+  if (ctx?.subTool === "problem") {
+    const q = generateProblem(level, { vars, objective: ticked(o.lpObjective, "max") });
+    return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
+  }
   const styles = ticked(o.lpStyles, level === 1 ? "resource,compare" : level === 2 ? "percent,ratio,decimal" : "blend,eitherOr");
   const pctOf = ticked(o.lpPctOf, "one,combined,total,morless");
   const method = o.lpMethod === "units" || o.lpMethod === "both" ? o.lpMethod : "fractions";
@@ -37,6 +43,11 @@ const OPTIONS: ShellOption[] = [
     key: "lpVars", label: "Variables", info: "How many quantities the situation has: two (x, y), three (x, y, z) or four (w, x, y, z). Tick any of them and each question draws one.",
     multi: true, defaultFor: () => "2",
     choices: [{ value: "2", label: "Two", sub: "x and y" }, { value: "3", label: "Three", sub: "x, y and z" }, { value: "4", label: "Four", sub: "w, x, y and z" }],
+  },
+  {
+    key: "lpObjective", label: "Objective", info: "Whether the model maximises a profit (resource limits) or minimises a cost (amounts that must be supplied). Tick both to mix them.",
+    forSubTools: ["problem"], multi: true, defaultFor: () => "max",
+    choices: [{ value: "max", label: "Maximise Profit" }, { value: "min", label: "Minimise Cost" }],
   },
   {
     key: "lpStyles", label: "Constraint Styles", info: "Which kinds of constraint to ask for. A question draws one of the ticked kinds, so a teacher can drill one style at a time or mix them all.",
@@ -86,6 +97,7 @@ export default function App() {
         noSandbox: true,
         levelLabels: {
           constraint: ["Resource use and direct comparisons", "Percentages, ratios and decimal amounts", "Blends and either-or limits"],
+          problem: ["Resource limits and direct comparisons, with a profit or a cost per item"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,
