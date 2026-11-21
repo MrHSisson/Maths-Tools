@@ -20,14 +20,14 @@ Each sits under the Decision hub's DD chapter card (its `toolIds` is empty today
 
 ### Tool 1: Formulating Linear Programmes (DD1)
 
-Two sub-tools (revised 2026-11-21: the first plan had seven, which split one skill, translating a sentence into an inequality, by constraint type, when the exam sets them mixed). The level of the first sub-tool is the style of constraint.
+Two sub-tools, two levels each, two to four variables (revised 2026-11-21: the first plan had seven sub-tools, which split one skill, translating a sentence into an inequality, by constraint type, when the exam sets them mixed). The level of the first sub-tool is how direct the constraint is.
 
-| Sub-tool | Skill | Level 1 | Level 2 | Level 3 | Styles |
-|---|---|---|---|---|---|
-| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use: 10x + 15y ≤ 300 | comparisons and percentages | either-or limits: x/60 + y/45 ≤ 1 | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5 |
-| `problem` Formulate a problem | variables, objective, all constraints, non-negativity, integers, mixed | resource limits only | adds comparisons, percentages, price minus cost, packs, units, table | adds either-or, a remainder, three variables | L01, L02, L05 to L08, L12, L13, L14a |
+| Sub-tool | Skill | Level 1: direct | Level 2: indirect | Styles |
+|---|---|---|---|---|
+| `constraint` Write a constraint | one constraint (or a pair) from a short situation | resource use (10x + 15y ≤ 300); comparisons (x at least twice y and z combined); differences, bounds, totals | percentages (of a variable, of several combined, of the total); ratios; either-or limits (x/60 + y/45 ≤ 1) | L02, L04, L05, L07, L09 wording, L11, L03, N1 to N5 |
+| `problem` Formulate a problem | variables, objective `P = …`, all constraints, non-negativity, integers, mixed | the Level 1 styles with `P = …` | adds the Level 2 styles, price minus cost, packs, units, table, a remainder, "exactly half" | L01, L02, L05 to L08, L12, L13, L14a |
 
-A third sub-tool, **Test and spot** (L09; N7: which point is feasible, which of three formulations is right), is a later addition.
+Every constraint is written with whole-number coefficients in lowest terms. A third sub-tool, **Test and spot** (L09; N7: which point is feasible, which of three formulations is right), is a later addition.
 
 ### Tool 2: Graphical Linear Programming (DD2)
 
