@@ -137,8 +137,6 @@ function ResourceLink({ r }: { r: SpecResource }) {
 }
 
 function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) {
-  const [open, setOpen] = useState(false);
-  const note = planning ? [s.was ? `The first map said ${s.was}.` : "", s.note ?? ""].join(" ").trim() : "";
   return (
     <li className="px-4 py-3.5 sm:px-5">
       <div className="flex gap-3">
@@ -150,14 +148,7 @@ function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {planning && s.legacy.map(m => <span key={m} className={`${tag} bg-slate-100 text-slate-600`}>Legacy {m}</span>)}
             {planning && s.legacy.length === 0 && <span className={`${tag} bg-slate-50 text-slate-400`}>No legacy source</span>}
-            {note && (
-              <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label={`About ${s.ref}'s legacy link`}
-                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${open ? "bg-blue-900 text-white" : "text-slate-400 hover:bg-slate-100 hover:text-blue-900"}`}>
-                <Info size={16} />
-              </button>
-            )}
           </div>
-          {open && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{note}</p>}
           <LinkRow links={s.links} label="Practise" planning={planning} />
         </div>
       </div>
@@ -309,8 +300,18 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
               <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
             </div>
+            {chapter.exam && (planning || chapter.exam.link.live) && (
+              <a href={chapter.exam.link.href} className={`${card} group mt-4 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
+                <span className="min-w-0">
+                  <span className="block text-lg font-semibold text-slate-900">Exam-style questions</span>
+                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
+                </span>
+                <ChevronRight size={22} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
+              </a>
+            )}
+
             {shownTools(chapter.tools, planning).length > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
                 {shownTools(chapter.tools, planning).map(t => (
                   <a key={t.path} href={t.path} className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
                     Open {t.name}
@@ -321,17 +322,6 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               </div>
             ) : (
               <p className="mt-3 text-sm text-slate-500">{chapter.tools.length === 0 ? "No generators for this part of the specification yet." : "The generators for this part are on their way."}</p>
-            )}
-
-            {chapter.exam && (planning || chapter.exam.link.live) && (
-              <a href={chapter.exam.link.href} className={`${card} group mt-5 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">Exam style</span>
-                  <span className="block text-lg font-semibold text-slate-900">{chapter.exam.link.label}</span>
-                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
-                </span>
-                <ChevronRight size={22} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
-              </a>
             )}
 
             <ul className={`${card} mt-5 divide-y divide-slate-200 overflow-hidden`}>

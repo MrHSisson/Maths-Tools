@@ -3,7 +3,7 @@
 // sees where they stand. The ratings are kept on the student's device (store.ts), nothing leaves it. A card can carry a mechanics diagram. Design: specs/flashcards/further-mechanics-mc.md.
 // The page around it (title, Home) is the tool's.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Eye, Shuffle } from "lucide-react";
+import { Check, Eye, SlidersHorizontal } from "lucide-react";
 import { useLayoutMode } from "../layoutMode";
 import { MechDiagram } from "../mechanics";
 import { MathText } from "./MathText";
@@ -21,8 +21,6 @@ const GROUP: Record<CardKind, { label: string; plural: string; blurb: string; to
 const GROUPS = Object.keys(GROUP) as CardKind[];
 const SIZES: (number | null)[] = [10, 20, null];
 
-const chip = (on: boolean) =>
-  `inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors ${on ? "border-blue-900 bg-blue-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"}`;
 const panel = "rounded-2xl border border-slate-300 bg-white shadow-card";
 const heading = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
@@ -35,6 +33,32 @@ const sizeFor = (t: string): string => (t.length > 150 ? "text-lg" : t.length > 
 const reduceMotion = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 
 const face: CSSProperties = { gridArea: "1 / 1", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" };
+
+/** Two or three choices as one joined control (a cleaner choice than a row of separate pills). */
+function Segmented<T extends string | number | null>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex rounded-xl border border-slate-300 bg-slate-100 p-0.5">
+      {options.map((o) => (
+        <button key={String(o.value)} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}
+          className={`min-h-[36px] rounded-[10px] px-3.5 text-sm font-semibold transition-colors ${o.value === value ? "bg-white text-slate-900 shadow-card" : "text-slate-500 hover:text-slate-800"}`}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** An on/off switch with its words beside it. */
+function Switch({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)} className="flex w-full items-start gap-3 text-left">
+      <span className={`mt-0.5 flex h-6 w-10 shrink-0 items-center rounded-full p-0.5 transition-colors ${on ? "bg-blue-900" : "bg-slate-300"}`}>
+        <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-4" : ""}`} />
+      </span>
+      <span><span className="block text-sm font-semibold text-slate-800">{label}</span><span className="block text-sm text-slate-500">{hint}</span></span>
+    </button>
+  );
+}
 
 /** The three piles (and the cards not yet met) as one coloured bar, with the numbers underneath: where a student stands on a deck at a glance. */
 function PileBar({ keys, mem, compact = false }: { keys: string[]; mem: Memory; compact?: boolean }) {
@@ -66,6 +90,7 @@ export default function FlashcardDeck({ set }: { set: CardSet }) {
   const [flipped, setFlipped] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const requeued = useRef<Set<string>>(new Set());
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -147,36 +172,52 @@ export default function FlashcardDeck({ set }: { set: CardSet }) {
     };
     return (
       <div className="space-y-4">
-        <section className={`${panel} p-4 sm:p-5`}>
-          <h2 className={heading}>Topic</h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button type="button" className={chip(prefs.statements.length === 0)} onClick={() => update({ statements: [] })}>All</button>
-            {set.statements.map((s) => (
-              <button key={s.code} type="button" title={s.name} className={chip(prefs.statements.includes(s.code))} onClick={() => update({ statements: toggle(prefs.statements, s.code) })}>
-                {s.code} <span className="font-normal opacity-80">{s.name}</span>
-              </button>
-            ))}
+        {/* what is being revised, in one line; the choices open only when wanted */}
+        <section className={`${panel} p-3 sm:p-4`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold text-slate-900">{prefs.statements.length === 0 ? "All topics" : prefs.statements.join(", ")}</span>
+              <span className="text-slate-400"> · </span>{prefs.course === "AS" ? "AS only" : "AS and A2"}
+              <span className="text-slate-400"> · </span>{prefs.size == null ? "every card" : `${prefs.size} cards`} a session
+              {prefs.bothWays && <><span className="text-slate-400"> · </span>also back to front</>}
+            </p>
+            <button type="button" aria-expanded={showOptions} onClick={() => setShowOptions((o) => !o)}
+              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-blue-900 hover:bg-slate-100">
+              <SlidersHorizontal size={16} /> {showOptions ? "Done" : "Change"}
+            </button>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-slate-500">Course:</span>
-            <button type="button" className={chip(prefs.course === "AS")} onClick={() => update({ course: "AS" })}>AS only</button>
-            <button type="button" className={chip(prefs.course === "all")} onClick={() => update({ course: "all" })}>AS and A2</button>
-          </div>
+          {showOptions && (
+            <div className="mt-4 space-y-5 border-t border-slate-200 pt-4">
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <h2 className={heading}>Topic</h2>
+                  {prefs.statements.length > 0 && <button type="button" className="text-xs font-semibold text-slate-500 hover:text-slate-800" onClick={() => update({ statements: [] })}>Clear: all topics</button>}
+                </div>
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                  {set.statements.map((st) => {
+                    const on = prefs.statements.includes(st.code);
+                    return (
+                      <button key={st.code} type="button" aria-pressed={on} onClick={() => update({ statements: toggle(prefs.statements, st.code) })}
+                        className={`flex min-h-[40px] items-center gap-2.5 rounded-lg border px-3 text-left text-sm transition-colors ${on ? "border-blue-900 bg-blue-50 text-slate-900" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}>
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${on ? "border-blue-900 bg-blue-900 text-white" : "border-slate-300 bg-white"}`}>{on && <Check size={12} strokeWidth={3} />}</span>
+                        <span className="font-mono text-xs font-semibold text-slate-500">{st.code}</span>
+                        <span className="truncate font-semibold">{st.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                <div><h2 className={`${heading} mb-1.5`}>Course</h2><Segmented label="Course" value={prefs.course} onChange={(v) => update({ course: v })} options={[{ value: "AS", label: "AS only" }, { value: "all", label: "AS and A2" }]} /></div>
+                <div><h2 className={`${heading} mb-1.5`}>Cards a session</h2><Segmented label="Cards a session" value={prefs.size} onChange={(v) => update({ size: v })} options={SIZES.map((n) => ({ value: n, label: n == null ? "All" : String(n) }))} /></div>
+              </div>
+              <Switch on={prefs.bothWays} onChange={(v) => update({ bothWays: v })} label="Also back to front" hint="Formulas and definitions are asked the other way round too: given the formula, name it." />
+            </div>
+          )}
         </section>
 
         <h2 className={`${heading} px-1`}>What do you want to revise?</h2>
         <div className="grid gap-3 sm:grid-cols-2">{GROUPS.map((d) => tile(d))}{tile("mixed")}</div>
-
-        <section className={`${panel} p-4 sm:p-5`}>
-          <h2 className={heading}>Each session</h2>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {SIZES.map((n) => <button key={String(n)} type="button" className={chip(prefs.size === n)} onClick={() => update({ size: n })}>{n == null ? "Every card" : `${n} cards`}</button>)}
-            <button type="button" className={chip(prefs.bothWays)} aria-pressed={prefs.bothWays} onClick={() => update({ bothWays: !prefs.bothWays })}>
-              <Shuffle size={15} /> Also back to front
-            </button>
-          </div>
-          <p className="mt-2 text-sm text-slate-500">Back to front also asks formulas and definitions the other way round: given the formula, name it.</p>
-        </section>
 
         <div className="space-y-1 px-1 text-sm text-slate-500">
           <p>Every card is in one of three piles. <span className="font-semibold text-slate-700">Not yet</span> sends it back to the first; <span className="font-semibold text-slate-700">Got it</span> moves it up one, and a secure card is only shown again after a week. Your piles are kept on this device only.</p>

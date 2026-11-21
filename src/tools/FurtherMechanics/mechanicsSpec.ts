@@ -142,10 +142,11 @@ export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
 };
 
 /** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
-export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?: boolean; links: MechSubRef[] }>> = {
+export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?: boolean; /** placed here so every sub-tool has one home, but not shown on the hub page */ hidden?: boolean; links: MechSubRef[] }>> = {
   MA: [{
     heading: "Particular kinds of exam question",
     devOnly: true,
+    hidden: true,
     links: [da("exCircle", "Circle your answer", "exam"), da("exFind", "State the dimensions, then find the powers", "exam"), da("exConstant", "Dimensions of a constant, then predict", "exam"),
       da("exConsistent", "Show it is consistent", "exam"), da("exModels", "Two models, reject one", "exam"), da("exZero", "Show a quantity does not matter", "exam")],
   }],

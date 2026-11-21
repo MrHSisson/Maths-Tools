@@ -20,7 +20,7 @@ const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
     const t = ALL_TOOLS.find((x) => x.id === id);
     return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];
   })],
-  groups: (MECHANICS_GROUPS[c.id] ?? []).map((g) => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
+  groups: (MECHANICS_GROUPS[c.id] ?? []).filter((g) => !g.hidden).map((g) => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
   exam: MECHANICS_EXAM[c.id] ? (l => (l[0] ? { text: MECHANICS_EXAM[c.id].text, link: l[0] } : undefined))(linkOf(MECHANICS_EXAM[c.id].ref)) : undefined,
 }));
 

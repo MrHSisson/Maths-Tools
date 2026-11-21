@@ -16,7 +16,7 @@ const linkOf = (r: SubToolRef): SpecLink[] => {
 const chapters: SpecChapter[] = DECISION_CHAPTERS.map(({ toolIds, ...c }) => ({
   ...c,
   statements: c.statements.map(s => ({ ...s, links: (DECISION_PAIRINGS[s.ref] ?? []).flatMap(linkOf) })),
-  groups: (DECISION_GROUPS[c.id] ?? []).map(g => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
+  groups: (DECISION_GROUPS[c.id] ?? []).filter((g) => !g.hidden).map(g => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
   exam: DECISION_EXAM[c.id] ? (l => l[0] ? { text: DECISION_EXAM[c.id].text, link: l[0] } : undefined)(linkOf(DECISION_EXAM[c.id].ref)) : undefined,
   tools: toolIds.flatMap(id => {
     const t = ALL_TOOLS.find(x => x.id === id);
