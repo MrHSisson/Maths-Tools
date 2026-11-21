@@ -520,6 +520,26 @@
    ]
   },
   {
+   "title": "Work Done and Energy (Further Mechanics MC, in development)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** practising the work, energy and power chapter of the AQA 7367 / 7366 mechanics option one skill at a time: work done (force and distance, gravity, a force at an angle, several forces, a variable force) and energy (kinetic and potential energy, the work-energy principle, conservation of energy). **How it works:** each question is a particle or a worded situation, with a mechanics diagram, the written working a line at a time (the newest line in blue) and the answer to 3 significant figures; the Course option hides the A2 content (cos θ, slopes by angle, velocity vectors) at AS, and the Diagram option gives the picture with the question, builds it up as the working goes on, or leaves it out. **Where:** the Further Mechanics hub (the tools are behind Developing-tools mode while they are reviewed)."
+    }
+   ]
+  },
+  {
+   "title": "Mechanics diagrams",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** one drawing system for every mechanics question: a body on level ground, a slope, a vertical fall, a pulley, a spring or string, a force-displacement graph, energy bars. **How it works:** a picture is made of parts (the setting, the forces, the measurements) that can be shown at once or added one at a time as the working goes on; labels are placed by one solver and shrink a little rather than collide. **Where:** inside the Further Mechanics tools (`src/shared/mechanics`)."
+    }
+   ]
+  },
+  {
    "title": "Flashcards (Further Maths)",
    "level": 3,
    "blocks": [
@@ -1423,18 +1443,17 @@
      "blocks": [
       {
        "t": "p",
-       "s": "Open decisions first, since each changes the shape of what is built."
+       "s": "State at 2026-11-21: Dimensional Analysis (MA) is live; Work Done (MC1, MC5) and Energy (MC2, MC3) are built behind Developing-tools mode; flashcards for MC and the hub changes are live on merge. What is left, in order:"
       },
       {
        "t": "ul",
        "items": [
-        "**Which shell?** *Settled for MA (2026-11-14): `DecisionShell` with the written working as its picture; decide per chapter for the rest.* Generators on `ToolShell` for the number-driven skills, exam chains on a `DecisionShell`-style parts library for the multi-part questions, or both in one tool. Decide per chapter; MA is pure algebra with no picture and may sit on `ToolShell` alone.",
-        "**How AS and A2 show.** A year option in the tool (the same sub-tool at AS or A2 wording) or the Levels. MB, MC and MD each have AS and A2 versions of the same statement, so it cannot be a tool-per-year split.",
-        "**The mechanics picture.** Decide the representation for force and motion diagrams (resolved forces, a particle on a string, a lamina with its centre of mass) before any question needing a picture; this wants the eight core representations considered first (`docs/reference/pictures.md`).",
-        "**Build order.** Suggested: Dimensional Analysis first as a small pilot of the whole route (spec statement, corpus, generator, exam chain, go-live); then Momentum and Collisions, Work, Energy and Power, Circular Motion, Centres of Mass and Moments.",
-        "**A corpus.** Tag the 7367/3M papers' questions as part chains in `specs/corpus/` (as for Network Flows) so the generators and exam chains match what is asked; the legacy AQA M1 to M3 papers are the extra bank.",
-        "Check what is still unverified: the M4 and M5 legacy mapping, and the one-example evidence for MB4 (impulse of a variable force).",
-        "A go-live checklist per chapter, as for the Decision tools: exam chains, corpus, validators that re-derive each answer, phone / tablet / laptop check, then remove `enabled: false`."
+        "**Harry's review of Work Done and Energy**, including confirming decisions D1 to D7 of `specs/further-mechanics-mc.md` (built on the recommended answers), a real phone / tablet check and the dashboard Review status, then go-live (remove `enabled: false`).",
+        "**Gaps inside the built tools.** Work Done: the slope setting of Several Forces (S97), the cubic stopping-point question (S69), a stopping-distance ask. Energy: the pulley case, A2 friction on a slope and projection up a rough slope, energy-bar pictures as the working picture (D14). Both: printing (these two tools do not set `skillSheet`, so a saved question cannot be printed yet, and the shell's print draws pictures only for Dimensional Analysis), calibration of the level ladders (R25, R26), the Depth and Teach material (the brief's section 7).",
+        "**The remaining MC tools:** Power (MC7: average power, force and speed, slopes at A2, from motion data), then Elastic strings and springs (MC4, MC6). The corpus (`specs/corpus/mechanics-mc-question-styles.md`) and the brief (§5.9 onwards) say what each holds.",
+        "**Exam-style questions for MC**, a separate pass built from the real past papers (not started).",
+        "**The other chapters:** MB Momentum and collisions, MD Circular motion, ME Centres of mass and moments, each from the textbook and the spec as MC was; flashcard sets for each; flashcard printing.",
+        "**Hub tidying (optional):** remove the legacy tags and \"How the legacy map was checked\" panel; rename the tools' own \"Any exam question\" tiles to \"Exam-style questions\"; M4 and M5 legacy mapping still unverified."
        ]
       }
      ]

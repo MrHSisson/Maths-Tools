@@ -37,6 +37,8 @@ The textbook exercises are the **source of the skill list and the difficulty lad
 
 ### 2.2 Decisions for Harry (recommended answer first)
 
+**Built on the recommendations (2026-11-21).** Harry asked for the first tool to be built without answering D1 to D7 one by one, so Work Done and Energy follow every recommended answer below (D1 `DecisionShell`, D2 a Course setting, D3 a g option, D4 3 s.f., D5 blocks and particles only, D6 the Method option in Work-Energy, D7 Work Done first). Each is cheap to change now and gets dearer with every tool: Harry should confirm or amend them when he reviews the first two tools.
+
 | # | Decision | Recommended | Why it matters |
 |---|---|---|---|
 | D1 | **Shell** | `DecisionShell` with the diagram as the picture and the written working beside it, as Dimensional Analysis | Gives the Practice \| Exam style switch, the chooser tiles, hand-picked saved questions for printing, stepped working behind the (?) and a mark scheme. The alternative, `ToolShell` with `diagramSplit`, gives Whiteboard / Worked Example / Worksheet but no exam view. The pathway file already settled `DecisionShell` for MA |
