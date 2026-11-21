@@ -491,11 +491,21 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** finding a Decision generator by the part of the AQA 7367 Discrete specification it covers. **How it works:** the A-Level tab shows one **Decision Maths** card instead of one card per tool, under a **Further Maths** heading beside the Further Mechanics card. It opens a page of the chapters DA to DG ; opening a chapter shows an **Open <tool>** button and an **Exam style** card (Any A-level exam question), then the specification statements, the AS ones first and the A-level-only ones after a labelled rule, each followed by the generator **sub-tools that practise it** (for Critical Path, for example, DE2 lists Forward pass, Backward pass and Missing time); each opens the tool on that sub-tool. A-level-only practice chips sit on their own \"Practice (A2)\" row under the statement they extend. A chapter with nothing built says so, and a chapter whose generators are not live yet says \"Coming soon\". Each chapter has an address of its own (`/decision-overview#DB`), and `/decision` goes to the page. Everyone sees the live generators; Developing-tools mode also shows tools still in development, each statement's link back to the older AQA D1 and D2 papers with notes, the question banks and the older-papers page. The tools keep their own addresses and are still found by the landing page's search box. **Where:** landing page (A-Level), Decision Maths."
+     "s": "**For:** finding a Decision generator by the part of the AQA 7367 Discrete specification it covers. **How it works:** the A-Level tab shows one **Decision Maths** card instead of one card per tool, under a **Further Maths** heading beside the Further Mechanics card. It opens a page of the chapters DA to DG ; opening a chapter shows an **Exam-style questions** card at the top, an **Open <tool>** button, then the whole course's specification statements in the spec's order, with anything beyond AS marked **A2** (an A2-only statement carries the tag; a statement with an A2 extension shows \"A2 adds …\" and an \"A2 practice\" row; AS content needs no label, since the A-level course covers it too), each followed by the generator **sub-tools that practise it** (for Critical Path, for example, DE2 lists Forward pass, Backward pass and Missing time); each opens the tool on that sub-tool. Practice that goes beyond AS sits on its own \"A2 practice\" row under the statement it extends. A chapter with nothing built says so, and a chapter whose generators are not live yet says \"Coming soon\". Each chapter has an address of its own (`/decision-overview#DB`), and `/decision` goes to the page. Everyone sees the live generators; Developing-tools mode also shows tools still in development, each statement's link back to the older AQA D1 and D2 papers, the question banks and the older-papers page (the explanatory (i) notes on each statement and the list of particular kinds of exam question were removed from the hub pages on 2026-11-21). The tools keep their own addresses and are still found by the landing page's search box. **Where:** landing page (A-Level), Decision Maths."
     },
     {
      "t": "p",
      "s": "Decision and Further Mechanics chapter cards keep the specification statement count and generator status on separate lines, including at narrow widths and enlarged text sizes."
+    }
+   ]
+  },
+  {
+   "title": "Further Mechanics hub: planned sub-tools",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** showing a teacher what is coming. **How it works:** under each specification statement of the chapters not yet built, the sub-tools planned for it appear as greyed-out buttons that do not open anything; a statement with an A2 layer shows it in brackets after the statement. **Where:** Further Mechanics hub, chapters MB to ME."
     }
    ]
   },
@@ -506,6 +516,36 @@
     {
      "t": "p",
      "s": "**For:** practising dimensional analysis, the AQA 7367 / 7366 topic MA1 and MA2, one micro-skill at a time and then as exam questions. **How it works:** three skill tools, each with Question Options so one tool gives many kinds of question: **Find the dimensions** (a quantity from its name or its units, an expression, or a constant in a formula; written or circled), **Check consistency** (show a formula is consistent, find the odd term out, find a missing power, or circle the consistent formula) and **Find the powers** (equate the powers of M, L and T and solve; in letters with no context, with named quantities, or in a worded situation such as a pendulum or an orbit; including \"show one power is zero\" and \"show it cannot work\"). **Exam style** switches to short chains of lettered parts with marks and an AQA-style mark scheme, from the same generators, with hand-selected basket printing of the paper then mark scheme. Everything is written as an examiner expects: the powers are α, β, γ, all maths is typeset, and the working is the formal chain with square brackets, for example [F] = [ma] = [m][a] = M × LT⁻² = MLT⁻². The picture is **the page a student would write**: it has a title (\"Find the dimensions of force\"), opens with a short given set (length, time, mass, speed, acceleration), builds every other quantity from those, stating the formula first (F = ma, kinetic energy ½mv²), and writes it out in full with square brackets: [F] = [ma] = [m][a] = M × LT⁻², with a power on a bracket written as [v]² and then expanded. A division is kept as a fraction and cancelled, and only the last line uses negative powers (MLT⁻²/L = M/T² = MT⁻²). Beside it a teacher talks you through each line in words. The page never scrolls. A built quantity is one step that opens into its parts with a chevron (a Builds option shows every step); dimensionless numbers and trig functions are stated (\\[½\\] = 1); angle, sin, cos and tan are questions. On a phone the whole solution is one open scrolling page. Save individual skill or exam questions with the pin, then print the basket with working space and answers or mark schemes. There is no Worksheet option or random batch generator. **Where:** `/dimensional-analysis`, Further Mechanics hub."
+    }
+   ]
+  },
+  {
+   "title": "Work Done and Energy (Further Mechanics MC, in development)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** practising the work, energy and power chapter of the AQA 7367 / 7366 mechanics option one skill at a time: work done (force and distance, gravity, a force at an angle, several forces, a variable force) and energy (kinetic and potential energy, the work-energy principle, conservation of energy). **How it works:** each question is a particle or a worded situation, with a mechanics diagram, the written working a line at a time (the newest line in blue) and the answer to 3 significant figures; the Course option hides the A2 content (cos θ, slopes by angle, velocity vectors) at AS, and the Diagram option gives the picture with the question, builds it up as the working goes on, or leaves it out. **Where:** the Further Mechanics hub (the tools are behind Developing-tools mode while they are reviewed)."
+    }
+   ]
+  },
+  {
+   "title": "Mechanics diagrams",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** one drawing system for every mechanics question: a body on level ground, a slope, a vertical fall, a pulley, a spring or string, a force-displacement graph, energy bars. **How it works:** a picture is made of parts (the setting, the forces, the measurements) that can be shown at once or added one at a time as the working goes on; labels are placed by one solver and shrink a little rather than collide. **Where:** inside the Further Mechanics tools (`src/shared/mechanics`)."
+    }
+   ]
+  },
+  {
+   "title": "Flashcards (Further Maths)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** learning the key formulas, definitions, what a situation implies, and the common mistakes of a Further Maths topic, and a quick check of what a student remembers. **How it works:** choose a topic (the statements, AS or AS and A2), then one of four decks: **Formulas**, **Definitions**, **Implications** (what a situation tells you: maximum speed implies zero acceleration and zero resultant force) or **Common mistakes**, or a mix. Each deck shows its size and a coloured bar of where the student stands. The card turns over; the student says Not yet or Got it. Every card is in one of three piles (learning, getting there, secure): Not yet sends it back to the first, Got it moves it up, and a secure card comes back after a week. Fronts are always a clear prompt (\"State…\", \"Define…\", \"What does this imply?\"). Formula and definition cards can also be asked back to front, and some cards carry a mechanics diagram. The piles are kept on the student's own device and nowhere else. **Where:** Further Mechanics hub, under Revision; Work, Energy and Power (MC1 to MC7) so far. **Plan:** `specs/flashcards/further-mechanics-mc.md`."
     }
    ]
   },
@@ -765,6 +805,36 @@
   }
  ],
  "tasks": [
+  {
+   "status": "Open",
+   "title": "Mechanics tools: print a saved question with its picture",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Work Done and Energy do not set `skillSheet`, so a question saved with the pin cannot be printed, and the Decision shell's print draws pictures only for Dimensional Analysis. Make the saved-question basket print a mechanics question with its diagram and a worked answer. Links: `src/tools/FurtherMechanics/WorkDone.tsx`, `Energy.tsx`, `src/shared/decision/DecisionShell.tsx`, `src/shared/decision/printBasket.ts`, `docs/pathways/further-mechanics.md`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Further Mechanics hub: tidy-ups",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Remove the legacy tags and the \"How the legacy map was checked\" panel; rename the tools' own \"Any exam question\" tiles to \"Exam-style questions\"; let a sub-tool that serves two statements (kinetic and potential energy, conservation of energy serve both MC2 and MC3) show under both (the pairing test places each sub-tool once). Links: `src/tools/FurtherMechanics/mechanicsSpec.ts`, `FurtherMechanics.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/mechanicsPairings.test.ts`."
+    }
+   ]
+  },
+  {
+   "status": "Open",
+   "title": "Dashboard Review for the Further Mechanics tools",
+   "blocks": [
+    {
+     "t": "p",
+     "s": "Suggested 2026-11-21, approved by Harry. Set the Review status and notes on the Tools dashboard for Flashcards, Work Done and Energy once Harry has looked at them (none is set yet), then the go-live check for Work Done and Energy: a real phone, tablet and printer check, then remove `enabled: false`. Links: `/admin`, `docs/pathways/further-mechanics.md`."
+    }
+   ]
+  },
   {
    "status": "Open",
    "title": "Standard Form: finish the tool and take it live",
@@ -1302,9 +1372,9 @@
   {
    "id": "further-mechanics",
    "title": "Further Mechanics (AQA 7367 MA–ME)",
-   "status": "building (Dimensional Analysis is live)",
+   "status": "building (Dimensional Analysis is live; Work Done and Energy are built, behind Developing-tools mode)",
    "measure": "",
-   "updated": "2026-11-16",
+   "updated": "2026-11-21",
    "sections": [
     {
      "title": "Intention",
@@ -1327,13 +1397,17 @@
       {
        "t": "ul",
        "items": [
+        "2026-11-21. **Energy (MC2, MC3) built, behind Developing-tools mode** (`/energy`): Kinetic and Potential Energy, Work-Energy Principle, Conservation of Energy, on `DecisionShell` with the mechanics diagrams. Acceptance examples reproduced and every answer closed against its energy equation in `src/tests/energy.test.ts`. Not done: the pulley case, A2 friction on a slope, energy-bar pictures. Next tool: Power (MC7), then Elastic strings and springs (MC4, MC6).",
+        "2026-11-21. **Work Done (MC1, MC5) built, behind Developing-tools mode** (`/work-done`): five sub-tools (Force and Distance, Work and Gravity, Force at an Angle (A2), Several Forces, Variable Force) on `DecisionShell`, drawn with the mechanics diagram system and written working; the hub's MC1 and MC5 buttons now point at it. Every acceptance example of the brief is reproduced and every answer re-derived in `src/tests/workDone.test.ts`. Not done: the S97 slope setting and the S69 cubic, a stopping-distance ask, Harry's go-live review. Next tool: Energy (MC2, MC3, MC6 conservation and work-energy).",
+        "2026-11-21. **Flashcards are live in the hub** (Revision): `/further-maths-flashcards`, the Work, Energy and Power set, in four decks (Formulas, Definitions, Implications, Common mistakes) with three piles shown on each, a card that turns over and two ratings (Not yet, Got it); piles kept on the device. The mechanics diagram system (fifteen templates) is built in `src/shared/mechanics/` but no tool uses it yet.",
+        "2026-11-20. **Work, Energy and Power (MC) planned, nothing built.** 109 question styles from the textbook and its AQA past-paper questions are tagged by skill in `specs/corpus/mechanics-mc-question-styles.md`; `specs/further-mechanics-mc.md` is the draft programme brief (four tools, fifteen sub-tools, the shared mechanics library, the AS / A2 Course setting, exam chains as phase 2) and `docs/architecture/MECHANICS_DIAGRAMS_PLAN.md` plans the diagram system (one scene model, fifteen templates). Seven decisions are waiting for Harry (brief, section 2.2).",
         "2026-11-16. Hand-selected printing: Dimensional Analysis uses the shared saved-question basket for skills and exam questions. Worksheet mode and random batch generation removed from DecisionShell; only questions explicitly saved with the pin are printed.",
         "2026-11-06. The specification is in the repo as data: `specs/exam/spec/aqa-mechanics.md` (25 statements quoted from AQA 7367 and, for the AS column, 7366) and the page `src/tools/FurtherMechanics/` at `/further-mechanics` (dev-gated), which shows each chapter's statements, their AS or A2 status, the printed formulae, the legacy module each came from and the question banks found for it.",
         "AS or A2 is settled from the spec (the same codes in both): ME and MD4 to MD6 are A2 only; the rest is in AS. MB1 to MB3 and MC7 are \"resolving not required\" at AS, and MC1 has no Fd cos θ at AS, so those chapters carry an AS and an A2 version of the same statement.",
         "The Gemini legacy map was checked against the AQA M1 to M3 combined papers. M1 to M3 hold up with a few changes (vertical circles, variable-force work and centres of mass by integration are in M2, not M4; impulse is in M3). Nothing assigned to M4 or M5 could be checked.",
         "2026-11-13. **Dimensional Analysis (MA) is built** as the pilot of the whole route, on `DecisionShell` with the written working as its picture (the page a student would write, building a line at a time beside the steps that explain it) (`DecisionProblem.network` is now optional, so a non-network tool carries its own data field): three skill tools (Find the dimensions, Check consistency, Find the powers; the last runs in letters, with named quantities or in ~19 worded situations) and six exam-style chains plus a mixed one, with tests that re-derive every answer independently. Still Developing-tools only (`enabled: false`). Brief: `specs/dimensional-analysis.md`. The hub page now shows the chapter's tool, its exam card and its practice chips (the same layout as Decision Maths).",
         "2026-11-14. **Dimensional Analysis audited four ways and fixed** (accuracy, structure and design, ease of use, pitch): given quantities are never asked, g is always tagged, dimensionless things are stated, angle and trig are questions, builds fold into one step with a chevron, exam mark splits follow the papers, named and cannot-work powers questions come from real situations, ten more situations, trig consistency formulas, 40px touch targets and keyboard steps. On a phone it is one open scrolling page; the Decision diagram tools got a clean full-screen working view. Still `enabled: false`: it needs a look on a real phone and printer, then Harry's decision. Shell question settled: **`DecisionShell`**, with the written working as the picture and `renderSolution` for the phone page.",
-        "No other chapter tool exists yet."
+        "Work Done and Energy are the only other chapter tools so far."
        ]
       }
      ]
@@ -1399,18 +1473,18 @@
      "blocks": [
       {
        "t": "p",
-       "s": "Open decisions first, since each changes the shape of what is built."
+       "s": "State at 2026-11-21: Dimensional Analysis (MA) is live; Work Done (MC1, MC5) and Energy (MC2, MC3) are built behind Developing-tools mode; flashcards for MC and the hub changes are live on merge. What is left, in order:"
       },
       {
        "t": "ul",
        "items": [
-        "**Which shell?** *Settled for MA (2026-11-14): `DecisionShell` with the written working as its picture; decide per chapter for the rest.* Generators on `ToolShell` for the number-driven skills, exam chains on a `DecisionShell`-style parts library for the multi-part questions, or both in one tool. Decide per chapter; MA is pure algebra with no picture and may sit on `ToolShell` alone.",
-        "**How AS and A2 show.** A year option in the tool (the same sub-tool at AS or A2 wording) or the Levels. MB, MC and MD each have AS and A2 versions of the same statement, so it cannot be a tool-per-year split.",
-        "**The mechanics picture.** Decide the representation for force and motion diagrams (resolved forces, a particle on a string, a lamina with its centre of mass) before any question needing a picture; this wants the eight core representations considered first (`docs/reference/pictures.md`).",
-        "**Build order.** Suggested: Dimensional Analysis first as a small pilot of the whole route (spec statement, corpus, generator, exam chain, go-live); then Momentum and Collisions, Work, Energy and Power, Circular Motion, Centres of Mass and Moments.",
-        "**A corpus.** Tag the 7367/3M papers' questions as part chains in `specs/corpus/` (as for Network Flows) so the generators and exam chains match what is asked; the legacy AQA M1 to M3 papers are the extra bank.",
-        "Check what is still unverified: the M4 and M5 legacy mapping, and the one-example evidence for MB4 (impulse of a variable force).",
-        "A go-live checklist per chapter, as for the Decision tools: exam chains, corpus, validators that re-derive each answer, phone / tablet / laptop check, then remove `enabled: false`."
+        "**Harry's review of Work Done and Energy**, including confirming decisions D1 to D7 of `specs/further-mechanics-mc.md` (built on the recommended answers), a real phone / tablet check and the dashboard Review status, then go-live (remove `enabled: false`).",
+        "**Small known roughnesses.** The angle diagram's `F cos θ` and `F sin θ` labels sit oddly at small angles (the generator only draws 10° and above); the Several Forces picture of a road that falls swaps the A and B names on the rising-slope template to fake the direction (see the comment in `workDone/several.ts`); kinetic-energy-only questions in Energy have no picture (display `hidden`). A proper falling-slope option and a velocity-and-body picture would fix these.",
+        "**Gaps inside the built tools.** Work Done: the slope setting of Several Forces (S97), the cubic stopping-point question (S69), a stopping-distance ask. Energy: the pulley case, A2 friction on a slope and projection up a rough slope, energy-bar pictures as the working picture (D14). Both: printing (these two tools do not set `skillSheet`, so a saved question cannot be printed yet, and the shell's print draws pictures only for Dimensional Analysis), calibration of the level ladders (R25, R26), the Depth and Teach material (the brief's section 7).",
+        "**The remaining MC tools:** Power (MC7: average power, force and speed, slopes at A2, from motion data), then Elastic strings and springs (MC4, MC6). The corpus (`specs/corpus/mechanics-mc-question-styles.md`) and the brief (§5.9 onwards) say what each holds.",
+        "**Exam-style questions for MC**, a separate pass built from the real past papers (not started).",
+        "**The other chapters:** MB Momentum and collisions, MD Circular motion, ME Centres of mass and moments, each from the textbook and the spec as MC was; flashcard sets for each; flashcard printing.",
+        "**Hub tidying (optional):** remove the legacy tags and \"How the legacy map was checked\" panel; rename the tools' own \"Any exam question\" tiles to \"Exam-style questions\"; M4 and M5 legacy mapping still unverified."
        ]
       }
      ]
@@ -1421,7 +1495,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "`specs/exam/spec/aqa-mechanics.md` (the statements, the AS column and the legacy-map check), `src/tools/FurtherMechanics/mechanicsSpec.ts` (the data behind the page), `docs/pathways/decision-exam-questions.md` and `docs/architecture/DECISION_SHELL_PLAN.md` (the exam-chain pattern), `specs/corpus/network-flows.md` (a tagged corpus), `docs/reference/pictures.md`."
+       "s": "The MC plan: `specs/further-mechanics-mc.md` (the programme brief), `specs/corpus/mechanics-mc-question-styles.md` (the running list of question styles) and `docs/architecture/MECHANICS_DIAGRAMS_PLAN.md` (the diagrams). `specs/exam/spec/aqa-mechanics.md` (the statements, the AS column and the legacy-map check), `src/tools/FurtherMechanics/mechanicsSpec.ts` (the data behind the page), `docs/pathways/decision-exam-questions.md` and `docs/architecture/DECISION_SHELL_PLAN.md` (the exam-chain pattern), `specs/corpus/network-flows.md` (a tagged corpus), `docs/reference/pictures.md`."
       }
      ]
     }
@@ -1471,6 +1545,63 @@
       {
        "t": "p",
        "s": "`docs/reference/options-and-calibration.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "linear-programming",
+   "title": "Linear Programming (Decision Maths, chapter DD)",
+   "status": "idea",
+   "measure": "",
+   "updated": "2026-11-21",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Question generators for AQA 7366 / 7367 section DD: formulating a constrained optimisation problem (DD1), solving it graphically (DD2), the simplex algorithm with slack variables (DD3, A-level) and interpreting a tableau (DD4, A-level). Built like the Mechanics tools: single-skill sub-tools on `DecisionShell`, an independent re-derivation of every answer, exam-style questions as a separate later pass from real past papers. DF6 (a game as a linear programme) is planned with the game theory chapter."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-21. Researched and planned, nothing built. `specs/linear-programming.md` is the draft brief (the specification, what the research found, six proposed sub-tools, equations-first generation with exact fractions, tests, build order, an intake checklist and seven decisions for Harry); `specs/corpus/linear-programming-styles.md` is the empty list of question styles to fill from the textbook chapters Harry is sending. AQA's examiner reports were read only as search fragments."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Harry sends the textbook chapters; fill the corpus and the checklist in section 9 of the brief (tableau layout, which region is shaded, the minimising method, whether only ≤ constraints reach the simplex), then make the brief `Status: ready`.",
+        "Harry answers the decisions in section 10 (one tool or two, the drawing convention, scope of the simplex, integer solutions).",
+        "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working.",
+        "Build in small merges: the maths core (`lp.ts`: exact rationals, vertex enumeration, lattice search, simplex) with its tests; the region picture and the graphical sub-tools; the tableau picture and the simplex sub-tools; the hub pairing and go-live.",
+        "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`specs/linear-programming.md`, `specs/corpus/linear-programming-styles.md`, `specs/exam/spec/aqa-discrete.md`, `docs/architecture/DECISION_SHELL_PLAN.md`, `specs/further-mechanics-mc.md` (the model brief)."
       }
      ]
     }
@@ -3705,6 +3836,30 @@
     {
      "date": "2026-11-13",
      "title": "Dimensional Analysis (Further Mechanics MA): skill tools, exam-style chains and the written working"
+    }
+   ]
+  },
+  "work-done": {
+   "changes": [
+    {
+     "date": "2026-11-21",
+     "title": "Further Mechanics: flashcards, the mechanics diagram system, and the Work Done and Energy tools"
+    }
+   ]
+  },
+  "energy": {
+   "changes": [
+    {
+     "date": "2026-11-21",
+     "title": "Further Mechanics: flashcards, the mechanics diagram system, and the Work Done and Energy tools"
+    }
+   ]
+  },
+  "further-maths-flashcards": {
+   "changes": [
+    {
+     "date": "2026-11-21",
+     "title": "Further Mechanics: flashcards, the mechanics diagram system, and the Work Done and Energy tools"
     }
    ]
   },

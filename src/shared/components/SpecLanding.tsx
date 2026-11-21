@@ -7,7 +7,7 @@ import { checkDevPassword } from "../../devAccess";
 
 // A landing page for one specification option (Further Mechanics, Decision): the chapters, each chapter's generators and
 // statements, and the older papers. By default it is a planning page, Developing-tools only: it asks for the Developing tools
-// password itself, so a direct address does not open it either, and it shows each statement's AS or A2 status, the legacy module
+// password itself, so a direct address does not open it either, and it shows the legacy module
 // it came from and the older question banks. With `public` it is also the way in for teachers: open to everyone, it lists each
 // chapter's live generators first, then the statements as the spec words them, and keeps the planning material (legacy links,
 // notes, question banks, older papers, tools still in development) to Developing-tools mode. The subject supplies the data and
@@ -20,8 +20,8 @@ export interface SpecStatement {
   formula?: string;
   /** in the AS spec? false = A2 only */
   as: boolean;
-  /** what AS leaves out of a statement that is in both */
-  asLimit?: string;
+  /** what A2 adds to a statement that is in both courses (the AS course stops short of it) */
+  a2Adds?: string;
   /** the legacy modules this content came from ("M2", "D1") */
   legacy: string[];
   /** supported: the legacy papers show this content. revised: the first map said otherwise. unverified: nothing found either way. */
@@ -34,7 +34,11 @@ export interface SpecStatement {
 }
 
 /** a generator (or one sub-tool of one) that addresses a statement or a chapter; `href` opens it, `as` is whether it is part of the AS course */
-export interface SpecLink { label: string; href: string; live: boolean; as: boolean }
+export interface SpecLink {
+  label: string; href: string; live: boolean; as: boolean;
+  /** planned but not built: shown greyed out to everyone, and not a link */
+  provisional?: boolean;
+}
 
 export interface SpecResource {
   label: string;
@@ -78,6 +82,8 @@ interface SpecLandingProps {
 type View = { kind: "home" } | { kind: "chapter"; id: string } | { kind: "papers" };
 
 const card = "rounded-2xl border border-slate-300 bg-white shadow-card";
+/** the label on A2 content: the part of the course beyond AS (AS content needs no label, since A-level covers it too) */
+const a2Tag = "inline-block rounded-md bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800";
 const tag = "rounded-md px-1.5 py-0.5 text-xs font-semibold";
 
 /** the tools a visitor sees: everything in Developing-tools mode, only the live ones otherwise */
@@ -137,70 +143,60 @@ function ResourceLink({ r }: { r: SpecResource }) {
 }
 
 function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) {
-  const [open, setOpen] = useState(false);
-  const note = planning ? [s.was ? `The first map said ${s.was}.` : "", s.note ?? ""].join(" ").trim() : "";
   return (
     <li className="px-4 py-3.5 sm:px-5">
       <div className="flex gap-3">
         <span className="mt-0.5 h-fit shrink-0 rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{s.ref}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] leading-snug text-slate-900">{s.text}</p>
-          {s.formula && <p className="mt-1 font-mono text-sm text-slate-600">{s.formula}</p>}
-          {s.asLimit && <p className="mt-1 text-sm text-slate-500">At AS: {s.asLimit}.</p>}
+          <p className="text-[15px] leading-snug text-slate-900">
+            {s.text}
+            {!s.as && <span className={`${a2Tag} ml-2 align-middle`}>A2</span>}
+            {s.a2Adds && <span className="text-slate-500"> (<span className="font-semibold text-violet-800">A2</span>: {s.a2Adds})</span>}
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {planning && s.legacy.map(m => <span key={m} className={`${tag} bg-slate-100 text-slate-600`}>Legacy {m}</span>)}
             {planning && s.legacy.length === 0 && <span className={`${tag} bg-slate-50 text-slate-400`}>No legacy source</span>}
-            {note && (
-              <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label={`About ${s.ref}'s legacy link`}
-                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${open ? "bg-blue-900 text-white" : "text-slate-400 hover:bg-slate-100 hover:text-blue-900"}`}>
-                <Info size={16} />
-              </button>
-            )}
           </div>
-          {open && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{note}</p>}
-          <LinkRow links={s.links} label="Practise" planning={planning} />
+          <LinkRow links={s.links} label="Practise" a2Only={!s.as} planning={planning} />
         </div>
       </div>
     </li>
   );
 }
 
-/** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the AS ones are one row ("Practise")
- *  and the ones that go beyond AS a second row ("Practice (A2)"). */
-function LinkRow({ links, label, planning }: { links?: SpecLink[]; label?: string; planning: boolean }) {
-  const shown = (links ?? []).filter(l => planning || l.live);
+/** the generators for a statement or group; a visitor sees the live ones. Where a statement has both, the ones in the AS course are one row ("Practise")
+ *  and the ones that go beyond AS a second row labelled A2. A statement that is A2 throughout (`a2Only`) has one row, since the statement itself is marked A2. */
+function LinkRow({ links, label, a2Only, planning }: { links?: SpecLink[]; label?: string; a2Only?: boolean; planning: boolean }) {
+  const { phone } = useLayoutMode();
+  const shown = (links ?? []).filter(l => planning || l.live || l.provisional);
   if (!shown.length) return null;
-  const asLinks = shown.filter(l => l.as);
-  const a2Links = shown.filter(l => !l.as);
-  const chip = (l: SpecLink) => (
+  const asLinks = a2Only ? shown : shown.filter(l => l.as);
+  const a2Links = a2Only ? [] : shown.filter(l => !l.as);
+  // on a phone every button is the full width of the card, one above the other, at a touch-sized height; elsewhere they sit side by side
+  const size = phone ? "min-h-[44px] w-full px-3.5" : "px-2.5 py-1";
+  const chip = (l: SpecLink) => l.provisional ? (
+    <span key={l.label} aria-disabled="true" title="Planned, not built yet"
+      className={`inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400 ${size}`}>
+      {l.label}
+    </span>
+  ) : (
     <a key={l.href} href={l.href}
-      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50">
-      {l.label}{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+      className={`inline-flex items-center justify-between gap-1 rounded-lg border border-slate-200 text-sm font-semibold text-blue-900 hover:border-slate-400 hover:bg-slate-50 ${size}`}>
+      <span>{l.label}</span>{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
     </a>
   );
   const row = (name: string | undefined, ls: SpecLink[]) => ls.length > 0 && (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {name && <span className="mr-0.5 shrink-0 text-xs sm:w-[7.5rem] font-semibold uppercase tracking-wide text-slate-400">{name}</span>}
+    <div className={phone ? "flex flex-col gap-1.5" : "flex flex-wrap items-center gap-1.5"}>
+      {name && <span className={`shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400 ${phone ? "mt-0.5" : "mr-0.5 sm:w-[7.5rem]"}`}>{name}</span>}
       {ls.map(chip)}
     </div>
   );
   // a statement's practice is labelled by course; a row of chips with no label (a group) stays unlabelled
   return (
     <div className="mt-2.5 flex flex-col gap-1.5">
-      {row(label && "Practice (AS)", asLinks)}
-      {row(label && "Practice (A2)", a2Links)}
+      {row(label, asLinks)}
+      {row(label && "A2 practice", a2Links)}
     </div>
-  );
-}
-
-/** the line that starts a section of statements: what the course covers, with a rule across the card */
-function SectionHead({ children, sub }: { children: string; sub?: string }) {
-  return (
-    <li className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 sm:px-5">
-      <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">{children}</span>
-      <span className="h-px flex-1 bg-slate-300" />
-      {sub && <span className="text-xs text-slate-500">{sub}</span>}
-    </li>
   );
 }
 
@@ -309,10 +305,20 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
               <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
             </div>
+            {chapter.exam && (planning || chapter.exam.link.live) && (
+              <a href={chapter.exam.link.href} className={`${card} group mt-4 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
+                <span className="min-w-0">
+                  <span className="block text-lg font-semibold text-slate-900">Exam-style questions</span>
+                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
+                </span>
+                <ChevronRight size={22} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
+              </a>
+            )}
+
             {shownTools(chapter.tools, planning).length > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className={phone ? "mt-5 flex flex-col gap-2" : "mt-5 flex flex-wrap gap-2"}>
                 {shownTools(chapter.tools, planning).map(t => (
-                  <a key={t.path} href={t.path} className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+                  <a key={t.path} href={t.path} className={`inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white hover:bg-blue-800 ${phone ? "min-h-[48px] justify-between" : "py-2.5"}`}>
                     Open {t.name}
                     {planning && !t.live && <span className={`${tag} bg-amber-100 text-amber-900`}>Dev</span>}
                     <ChevronRight size={16} />
@@ -323,30 +329,18 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               <p className="mt-3 text-sm text-slate-500">{chapter.tools.length === 0 ? "No generators for this part of the specification yet." : "The generators for this part are on their way."}</p>
             )}
 
-            {chapter.exam && (planning || chapter.exam.link.live) && (
-              <a href={chapter.exam.link.href} className={`${card} group mt-5 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">Exam style</span>
-                  <span className="block text-lg font-semibold text-slate-900">{chapter.exam.link.label}</span>
-                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
-                </span>
-                <ChevronRight size={22} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
-              </a>
-            )}
-
-            <ul className={`${card} mt-5 divide-y divide-slate-200 overflow-hidden`}>
-              {(() => {
-                const asS = chapter.statements.filter(s => s.as);
-                const a2S = chapter.statements.filter(s => !s.as);
-                return (
-                  <>
-                    {asS.length > 0 && <SectionHead>AS</SectionHead>}
-                    {asS.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
-                    {a2S.length > 0 && <SectionHead>A-level only</SectionHead>}
-                    {a2S.map(s => <StatementRow key={s.ref} s={s} planning={planning} />)}
-                  </>
-                );
-              })()}
+            {(() => {
+              const hasA2 = chapter.statements.some(x => !x.as || x.a2Adds || (x.links ?? []).some(l => !l.as));
+              const hasPlanned = chapter.statements.some(x => (x.links ?? []).some(l => l.provisional));
+              return (hasA2 || hasPlanned) && (
+                <p className="mt-5 px-1 text-sm text-slate-500">
+                  {hasA2 && <>The whole A-level course is listed here. Anything beyond AS is marked <span className={a2Tag}>A2</span>. </>}
+                  {hasPlanned && <>Greyed buttons are planned and not built yet.</>}
+                </p>
+              );
+            })()}
+            <ul className={`${card} mt-3 divide-y divide-slate-200 overflow-hidden`}>
+              {chapter.statements.map(x => <StatementRow key={x.ref} s={x} planning={planning} />)}
             </ul>
             {(chapter.groups ?? []).filter(g => planning || !g.devOnly).map(g => {
               const any = g.links.some(l => planning || l.live);

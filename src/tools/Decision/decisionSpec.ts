@@ -170,12 +170,13 @@ export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
 };
 
 /** Sub-tools that belong to a chapter but to no single statement: exam-style questions span several, and some come from the older papers only. */
-export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[]; devOnly?: boolean }[]> = {
+export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[]; devOnly?: boolean; /** placed here so every sub-tool has one home, but not shown on the hub page */ hidden?: boolean }[]> = {
   DE: [
     {
       // the public page offers the one mixed exam question (DECISION_EXAM); these particular kinds stay in the tool and in Developing-tools mode
       heading: "Particular kinds of exam question",
       devOnly: true,
+      hidden: true,
       links: [
         cpa("exAsAny", "Any AS exam question", "as", "exam"), cpa("exBuild", "Network, then a change or a claim", "as", "exam"), cpa("exClaim", "Times and Glyn's claim", "as", "exam"),
         cpa("exChange", "Effect of a change", "as", "exam"), cpa("exClock", "Clock times and a second project", "as", "exam"),

@@ -27,9 +27,9 @@ export const CHAPTERS: SpecChapter[] = [
     name: "Momentum and collisions",
     tools: [],
     statements: [
-      { ref: "MB1", text: "Conservation of momentum for linear motion and cases where velocities are given as one or two dimensional vectors (problems which require resolving).", as: true, asLimit: "resolving not required", legacy: ["M1", "M3"], status: "supported", note: "M1 for straight-line collisions; M3 for two dimensions." },
-      { ref: "MB2", text: "Coefficient of restitution and Newton's Experimental Law. Use in direct collisions and impacts with a fixed smooth surface. Problems which require resolving.", as: true, asLimit: "resolving not required", legacy: ["M3"], status: "supported" },
-      { ref: "MB3", text: "Impulse and its relation to momentum. Problems which require resolving.", formula: "Ft = mv − mu", as: true, asLimit: "resolving not required (one or two dimensions)", legacy: ["M3"], status: "revised", was: "M1 / M3", note: "Impulse questions are in the M3 papers; the M1 papers have none." },
+      { ref: "MB1", text: "Conservation of momentum for linear motion and cases where velocities are given as one or two dimensional vectors (problems which require resolving).", as: true, a2Adds: "problems which require resolving", legacy: ["M1", "M3"], status: "supported", note: "M1 for straight-line collisions; M3 for two dimensions." },
+      { ref: "MB2", text: "Coefficient of restitution and Newton's Experimental Law. Use in direct collisions and impacts with a fixed smooth surface. Problems which require resolving.", as: true, a2Adds: "problems which require resolving", legacy: ["M3"], status: "supported" },
+      { ref: "MB3", text: "Impulse and its relation to momentum. Problems which require resolving.", formula: "Ft = mv − mu", as: true, a2Adds: "problems which require resolving (in one or two dimensions)", legacy: ["M3"], status: "revised", was: "M1 / M3", note: "Impulse questions are in the M3 papers; the M1 papers have none." },
       { ref: "MB4", text: "Impulse for variable forces. One dimension only.", formula: "I = ∫ F dt", as: true, legacy: ["M3"], status: "revised", was: "M2 / M4", note: "Found once, as a force on a ball during contact with a bat (M3). Thin evidence." },
     ],
     resources: [
@@ -43,13 +43,13 @@ export const CHAPTERS: SpecChapter[] = [
     name: "Work, energy and power",
     tools: [],
     statements: [
-      { ref: "MC1", text: "Work done by a force acting in the direction of motion or directly opposing the motion.", formula: "WD = Fd cos θ", as: true, asLimit: "no Fd cos θ", legacy: ["M2"], status: "supported" },
+      { ref: "MC1", text: "Work done by a force acting in the direction of motion or directly opposing the motion.", formula: "WD = Fd cos θ", as: true, a2Adds: "work done by a force at an angle, Fd cos θ", legacy: ["M2"], status: "supported" },
       { ref: "MC2", text: "Gravitational potential energy. Use in conservation of energy problems.", as: true, legacy: ["M2"], status: "supported" },
       { ref: "MC3", text: "Kinetic energy. Use in conservation of energy problems.", as: true, legacy: ["M2"], status: "supported" },
       { ref: "MC4", text: "Hooke's Law including using modulus of elasticity.", formula: "T = kx  or  T = (λ/l)x", as: true, legacy: ["M2"], status: "supported", note: "The most common legacy M2 topic." },
       { ref: "MC5", text: "Work done by a variable force. Use in conservation of energy problems.", formula: "WD = ∫ F dx", as: true, legacy: ["M2"], status: "revised", was: "M3 / M4", note: "M2 has 'show, by integration, that the work done in stretching the string is …'." },
       { ref: "MC6", text: "Elastic potential energy using modulus of elasticity. Use in conservation of energy problems.", formula: "EPE = kx²/2  and  EPE = λx²/2l", as: true, legacy: ["M2"], status: "revised", was: "M2 / M3" },
-      { ref: "MC7", text: "Power.", formula: "P = Fv", as: true, asLimit: "resolving not required", legacy: ["M2"], status: "supported", note: "Missing from the first map." },
+      { ref: "MC7", text: "Power.", formula: "P = Fv", as: true, a2Adds: "problems which require resolving", legacy: ["M2"], status: "supported", note: "Missing from the first map." },
     ],
     resources: [
       aqaFm("Work, Energy and Power I"), aqaFm("Work, Energy and Power II"),
@@ -129,26 +129,58 @@ export const CHECK_NOTES = {
 // ── The tools built for each chapter, and which of their sub-tools practise which statement ───────────────────────────────────────────────────
 // The page reads each tool's name, address and whether it is live from the registry (FurtherMechanics.tsx), so none of that is typed here.
 // Every sub-tool of a tool is placed exactly once (src/tests/mechanicsPairings.test.ts), as for the Decision hub.
-export interface MechSubRef { tool: string; sub: string; label: string; practice: "skills" | "exam" }
+export interface MechSubRef { tool: string; sub: string; label: string; /** a tool with a Skills / Exam style switch says which (Dimensional Analysis); others leave it out */ practice?: "skills" | "exam"; /** beyond AS: shown on the A2 row */ a2?: boolean }
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
+const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
+const en = (sub: string, label: string): MechSubRef => ({ tool: "energy", sub, label });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy"] };
 
-/** the sub-tools that practise each statement (every one of them is AS) */
+/** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   MA1: [da("dims", "Find the dimensions"), da("consistent", "Check consistency")],
   MA2: [da("powers", "Find the powers")],
+  MC1: [wd("fd", "Force and distance"), wd("grav", "Work and gravity"), wd("several", "Several forces"), wd("angle", "Force at an angle", true)],
+  // kinetic and potential energy and conservation practise both MC2 and MC3; each sub-tool is placed once, under the first statement it serves
+  MC2: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy")],
+  MC3: [en("workenergy", "Work-energy principle")],
+  MC5: [wd("variable", "Variable force")],
 };
 
 /** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
-export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?: boolean; links: MechSubRef[] }>> = {
+export const MECHANICS_GROUPS: Record<string, Array<{ heading: string; devOnly?: boolean; /** placed here so every sub-tool has one home, but not shown on the hub page */ hidden?: boolean; links: MechSubRef[] }>> = {
   MA: [{
     heading: "Particular kinds of exam question",
     devOnly: true,
+    hidden: true,
     links: [da("exCircle", "Circle your answer", "exam"), da("exFind", "State the dimensions, then find the powers", "exam"), da("exConstant", "Dimensions of a constant, then predict", "exam"),
       da("exConsistent", "Show it is consistent", "exam"), da("exModels", "Two models, reject one", "exam"), da("exZero", "Show a quantity does not matter", "exam")],
   }],
+};
+
+/** Sub-tools planned for each statement but not built: shown greyed out on the hub so a teacher can see what is coming (the plan is specs/further-mechanics-mc.md for MC and
+ *  docs/pathways/further-mechanics.md for the other chapters). `a2` marks one that exists only at A2. Chapter MA is built, so it has none. */
+export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]> = {
+  MB1: [{ label: "Conservation of momentum" }],
+  MB2: [{ label: "Restitution and impacts" }],
+  MB3: [{ label: "Impulse and momentum" }],
+  MB4: [{ label: "Impulse of a variable force" }],
+  MC4: [{ label: "Hooke's law" }],
+  MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
+  MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],
+  MD1: [{ label: "Angular speed, speed and acceleration" }],
+  MD2: [{ label: "Angular speed, speed and acceleration" }],
+  MD3: [{ label: "Angular speed, speed and acceleration" }],
+  MD4: [{ label: "Vectors in circular motion", a2: true }],
+  MD5: [{ label: "Conical pendulum", a2: true }],
+  MD6: [{ label: "Vertical circles", a2: true }],
+  ME1: [{ label: "Particles and composite bodies", a2: true }],
+  ME2: [{ label: "Particles and composite bodies", a2: true }],
+  ME3: [{ label: "Centres of mass by integration", a2: true }],
+  ME4: [{ label: "Centres of mass by integration", a2: true }],
+  ME5: [{ label: "Sliding and toppling", a2: true }],
+  ME6: [{ label: "Equilibrium, moments and couples", a2: true }],
 };
 
 /** a chapter's exam-style practice: the one mixed question its page opens from the exam card */

@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 // every area may use (shared code, the registry, config), runs EVERYTHING: when unsure, run all.
 //
 // Areas (work in seconds on a laptop, 2026-11-20): cpa (Critical Path and levelling, ~220), flow (Network Flows, ~330), graphs (MST, TSP, Route
-// Inspection, ~5), mechanics (Dimensional Analysis and the mechanics diagrams, ~10), decision (the checks that span the Decision shell, ~10),
+// Inspection, ~5), mechanics (Dimensional Analysis, Work Done, Energy and the mechanics diagrams, ~10), decision (the checks that span the Decision shell, ~10),
 // cross (the checks that run over every tool: generators, seeded replay, recent questions…, ~60), tools (each maths tool's own tests, ~50),
 // decks (~40), cs (~5), docs (~5: docs, patch notes and the checks that read every tool's source).
 
@@ -17,7 +17,7 @@ export const TEST_AREAS = {
   cpa: /^(cpa.*|criticalPathOptions|levelling.*|workerLabels)\.test\.ts$/,
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
-  mechanics: /^(dim|mechanics.*)\.test\.ts$/,
+  mechanics: /^(dim|mechanics.*|workDone|energy)\.test\.ts$/,
   decision: /^(decision|decisionOptions|decisionPairings)\.test\.ts$/,
   decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
@@ -57,7 +57,7 @@ export const PATH_RULES = [
 // Which tools a changed file under src/shared/decision/ can affect (for the cross-tool checks). Checked by reading the imports: no Decision topic imports
 // another except the graph topics, which use the flow templates and geometry; the Decision tools reach their topic through the shell, and only
 // Dimensional Analysis (mechanics) imports the dim files directly.
-const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx";
+const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx";
 const TOPIC_TOOLS = [
   [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)/, [CPA]],
   [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [FLOW, MST, TSP, ROUTE]],
@@ -67,6 +67,8 @@ const TOPIC_TOOLS = [
   [/^src\/shared\/decision\/routeInspection/, [ROUTE]],
   [/^src\/shared\/decision\/graphBank/, [MST, TSP, ROUTE]],
   [/^src\/shared\/decision\/(dim|DimWorking)/, [DIM]],
+  [/^src\/shared\/decision\/mechSolve/, [WORK, ENERGY]],
+  [/^src\/shared\/mechanics\//, [WORK, ENERGY]],
 ];
 
 /** The tool file a changed path stands for (the tool itself or its About words), or null for any other file. Read from the generated tool facts. */

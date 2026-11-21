@@ -13,6 +13,7 @@ import type { FlowProblemData, FlowViewState } from "./flow";
 import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from "./cpa";
 import type { CpaSheetInput } from "./printCpa";
 import type { DimProblemData } from "./dimGen";
+import type { MechProblemData, MechViewState } from "../mechanics/problem";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
@@ -87,6 +88,8 @@ export interface DecisionProblem {
   exam?: ExamData;
   /** Dimensional Analysis (Further Mechanics MA): the dimension question's rows and answer, drawn as the written working through `renderCanvas` */
   dim?: DimProblemData;
+  /** Further Mechanics (Work Done…): the scene, givens, working and answer, drawn through `renderCanvas` */
+  mech?: MechProblemData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
@@ -188,6 +191,7 @@ export interface SolveStep {
   histView?: HistViewState; // Critical Path Analysis: which blocks of the resource histogram are drawn this beat
   ganttView?: GanttViewState; // Critical Path Analysis: which bars and floats of the cascade chart are drawn this beat
   dimView?: DimViewState; // Dimensional Analysis: the written working so far
+  mechView?: MechViewState; // Further Mechanics: the diagram and written working so far
   /** a step that is one line of a longer chain: the step shows the finished chain, and these are its parts, opened one at a time on request ("Show the steps") */
   more?: SolveStep[];
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in

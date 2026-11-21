@@ -12,6 +12,18 @@ Nothing at the moment.
 
 ## Open
 
+### Mechanics tools: print a saved question with its picture
+Suggested 2026-11-21, approved by Harry. Work Done and Energy do not set `skillSheet`, so a question saved with the pin cannot be printed, and the Decision shell's print draws pictures only for Dimensional Analysis. Make the saved-question basket print a mechanics question with its diagram and a worked answer.
+Links: `src/tools/FurtherMechanics/WorkDone.tsx`, `Energy.tsx`, `src/shared/decision/DecisionShell.tsx`, `src/shared/decision/printBasket.ts`, `docs/pathways/further-mechanics.md`.
+
+### Further Mechanics hub: tidy-ups
+Suggested 2026-11-21, approved by Harry. Remove the legacy tags and the "How the legacy map was checked" panel; rename the tools' own "Any exam question" tiles to "Exam-style questions"; let a sub-tool that serves two statements (kinetic and potential energy, conservation of energy serve both MC2 and MC3) show under both (the pairing test places each sub-tool once).
+Links: `src/tools/FurtherMechanics/mechanicsSpec.ts`, `FurtherMechanics.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/mechanicsPairings.test.ts`.
+
+### Dashboard Review for the Further Mechanics tools
+Suggested 2026-11-21, approved by Harry. Set the Review status and notes on the Tools dashboard for Flashcards, Work Done and Energy once Harry has looked at them (none is set yet), then the go-live check for Work Done and Energy: a real phone, tablet and printer check, then remove `enabled: false`.
+Links: `/admin`, `docs/pathways/further-mechanics.md`.
+
 
 ### Standard Form: finish the tool and take it live
 Banked 2026-11-15 at Harry's request. The tool (`/standard-form`, four sub-tools: Converting, Multiplying & Dividing, Adding & Subtracting, Comparing & Ordering) is built and **went live on 2026-11-17 at Harry's request** (no longer dev-gated; the review below is still open). Still to build or decide: a spec file `specs/standard-form.md` and the "About this tool" review; a Depth bank (the "which of these is in standard form?" multiple choice and the misconception options belong there, not in the generator); a Teach deck and lesson; calibration; a phone and tablet check of the Converting picture (a 3-digit coefficient with a large power is about 12 columns wide); whether calculator-style coefficients (Multiplying & Dividing) should be on by default; whether the place value shift picture (digits slide a column, the power rolls by 1) should also be used on Multiplying & Dividing when the coefficient is adjusted, and on Adding & Subtracting when a term is matched; a printable blank place value grid; and an optional play button that runs the whole slide on its own. Review notes go on the tool's dashboard note.

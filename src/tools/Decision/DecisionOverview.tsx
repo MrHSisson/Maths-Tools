@@ -16,7 +16,7 @@ const linkOf = (r: SubToolRef): SpecLink[] => {
 const chapters: SpecChapter[] = DECISION_CHAPTERS.map(({ toolIds, ...c }) => ({
   ...c,
   statements: c.statements.map(s => ({ ...s, links: (DECISION_PAIRINGS[s.ref] ?? []).flatMap(linkOf) })),
-  groups: (DECISION_GROUPS[c.id] ?? []).map(g => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
+  groups: (DECISION_GROUPS[c.id] ?? []).filter((g) => !g.hidden).map(g => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
   exam: DECISION_EXAM[c.id] ? (l => l[0] ? { text: DECISION_EXAM[c.id].text, link: l[0] } : undefined)(linkOf(DECISION_EXAM[c.id].ref)) : undefined,
   tools: toolIds.flatMap(id => {
     const t = ALL_TOOLS.find(x => x.id === id);
@@ -30,7 +30,7 @@ export default function DecisionOverview() {
       public
       title="Decision Maths"
       subtitle="AQA A-level Further Mathematics (Discrete)"
-      about="The Discrete option of AQA 7367, sections DA to DG. Open a part of the specification to find its question generators and the specification statements it covers, with which are in AS and which are A2 only. In Developing-tools mode each statement also shows the older AQA D1 and D2 content it draws on."
+      about="The Discrete option of AQA 7367, sections DA to DG. Open a part of the specification to find its question generators and the specification statements it covers, with anything beyond AS marked A2. In Developing-tools mode each statement also shows the older AQA D1 and D2 content it draws on."
       chapters={chapters}
       generalResources={DECISION_GENERAL_RESOURCES}
       papers={{ heading: "Older papers and question banks", intro: "The legacy course was two modules, D1 and D2, with a much deeper bank than the current spec.", cardText: "AQA D1 and D2 papers, what is no longer in the spec, and the checked legacy map" }}
