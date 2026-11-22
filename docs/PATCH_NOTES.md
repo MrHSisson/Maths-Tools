@@ -62,6 +62,8 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpSimplexWhole.t
 - **Whole Numbers mixed:** on Solve and Read a tableau the optimum may be whole (the answer is "practical") or not; the Is it practical? sub-tool always has a fraction.
 - **Engine:** a tableau records its basis, so a degenerate tableau is read correctly; a tableau given to be read must show one unit column per constraint.
 
+- **Room left (three or more fractional variables):** the working rounds down, finds the room left in each constraint, and lists the sets of variables whose coefficients give exactly the rise needed to reach the bound, each checked against the room; the full table stays for one or two fractional variables.
+
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: Simplex, is it practical (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 

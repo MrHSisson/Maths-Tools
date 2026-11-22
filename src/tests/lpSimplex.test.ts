@@ -178,6 +178,24 @@ describe("whole numbers: is it practical?", () => {
       expect(steps.map((s) => s.caption).join(" ")).toMatch(/practical solution|is practical/);
     }
   });
+  it("with three or more fractional variables the working uses the room left, not every combination, and the set it finds fits", () => {
+    let seen = 0;
+    for (let i = 0; i < 80 && seen < 8; i++) {
+      const q = generateSimplex(3, OPT("practical", { forms: ["standard"], vars: [3, 4], cons: [3, 4], context: ["bare"] }));
+      const run = runSpec(q.data.spec);
+      const w = wholeAnalysis(q.data.spec, run);
+      if (w.frac.length < 3) continue;
+      seen++;
+      const steps = solveSimplex(asProblem(q));
+      expect(steps.map((s) => s.caption).join(" ")).toMatch(/room is left|how much room/);
+      expect(steps.some((s) => s.sxView!.blocks.some((b) => b.k === "tab" && b.rows.length > 12))).toBe(false);
+      const sets = steps.flatMap((s) => s.sxView!.blocks).filter((b) => b.k === "tab" && b.head[0] === "\\text{Add 1 to}");
+      expect(sets.length).toBe(1);
+      const fits = sets.some((b) => b.k === "tab" && b.rows.some((r) => !r.slice(2).some((c) => c.includes("\\times"))));
+      expect(fits).toBe(true);
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
   it("when the optimum is not given, the working solves with the simplex algorithm first", () => {
     for (let i = 0; i < 10; i++) {
       const q = W(2, { given: false });

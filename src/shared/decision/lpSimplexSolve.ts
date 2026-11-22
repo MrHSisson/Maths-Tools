@@ -242,14 +242,35 @@ function wholeSteps(d: SxData, run: Run, push: (caption: string, show: SxBlock[]
   const bad = w.frac.map((j) => `$${orig[j]} = ${frTex(w.x[j])}$`);
   push(`${what}, but the optimum has ${bad.length > 1 ? "fractions" : "a fraction"} in it (${list(bad)}). So it is not a practical solution.`, [rowsOf(H("Is it practical?"), ...w.frac.map((j) => T(`${orig[j]} = ${frTex(w.x[j])}`)), W("Not a whole number: not practical."))], 1);
   push("A practical plan is also a plan for the linear programme, so its value cannot be more than the optimum. With whole-number coefficients the value of a practical plan is a whole number, so it is at most the whole number just below the optimum.", [rowsOf(H("An upper bound"), T(`P \\le ${frTex(w.p)}`), T(`P \\le ${w.bound}`))], 1);
-  const heads = sp.cons.map((k) => `${termsTex(k.a, orig)} \\le ${k.b}`);
-  const table: SxBlock = { k: "tab", head: [...orig, ...heads, "P"], rows: w.cands.map((c) => [...c.pt.map(String), ...c.lhs.map((l, i) => `${l}\\ ${l <= sp.cons[i].b ? "\\checkmark" : "\\times"}`), String(c.p)]) };
   const notes: LpRow[] = [];
-  if (!w.nearest.ok) notes.push(N(`Rounding to the nearest whole number gives (${w.nearest.pt.join(", ")}), which breaks a constraint, so rounding to the nearest is not safe: every point must be tested.`));
-  push("Test the whole-number points either side of the optimum: round each fractional variable down and up. A point is practical only if it satisfies every constraint.", [table, ...(notes.length ? [rowsOf(...notes)] : [])], notes.length ? 2 : 1);
+  if (!w.nearest.ok) notes.push(N(`Rounding to the nearest whole number gives (${w.nearest.pt.join(", ")}), which breaks a constraint, so rounding to the nearest is not safe: every candidate must be tested.`));
   const b = w.best;
-  const feas = w.cands.filter((c) => c.ok).length;
-  const text = `${feas === 1 ? "Only one of these points is practical" : `${feas} of these points are practical`}, and ${feas === 1 ? "it is" : "the best is"} (${b.pt.join(", ")}) with $P = ${b.p}$. That reaches the upper bound of ${w.bound}, so no practical plan can do better.`;
+  let text: string;
+  if (w.frac.length >= 3) {
+    // three or more fractional variables: not every combination, but the room left once everything is rounded down, and which sets of additions reach the bound
+    const dn = w.down;
+    const room = sp.cons.map((k, i) => k.b - dn.lhs[i]);
+    const roomTab: SxBlock = { k: "tab", head: ["\\text{Uses}", "\\text{Limit}", "\\text{Room left}"], label: sp.cons.map((k) => termsTex(k.a, orig)), labelHead: "", rows: sp.cons.map((k, i) => [String(dn.lhs[i]), String(k.b), String(room[i])]) };
+    push(`Round every variable down to (${dn.pt.join(", ")}). This is always practical, because it uses less than the optimum did. Work out how much room is left in each constraint.`, [roomTab, rowsOf(W(`Rounding down gives $P = ${dn.p}$.`), ...notes)], 2);
+    const need = w.bound - dn.p;
+    const idx = w.frac;
+    const sets: number[][] = [];
+    for (let mask = 1; mask < 1 << idx.length; mask++) {
+      const set = idx.filter((_, t) => mask & (1 << t));
+      if (set.reduce((t, j) => t + sp.c[j], 0) === need) sets.push(set);
+    }
+    sets.sort((a, c) => a.length - c.length);
+    const rows = sets.slice(0, 10).map((set) => [set.map((j) => orig[j]).join(",\\ "), String(need), ...sp.cons.map((k, i) => { const sum = set.reduce((t, j) => t + k.a[j], 0); return `${sum} \\le ${room[i]}\\ ${sum <= room[i] ? "\\checkmark" : "\\times"}`; })]);
+    push(`Adding 1 to a variable raises P by its objective coefficient. To reach the upper bound of ${w.bound}, P must rise by ${need}. Look for sets of variables, adding 1 to each, that raise P by exactly ${need}, and check that each set fits in the room left. A set that raises P by more would beat the bound, so it cannot fit.`, [{ k: "tab", head: ["\\text{Add 1 to}", "\\text{P rises by}", ...room.map((r) => `\\text{room } ${r}`)], rows }], 1);
+    const up = idx.filter((j) => b.pt[j] > dn.pt[j]);
+    text = `Adding 1 to ${list(up.map((j) => `$${orig[j]}$`))} fits in the room left, giving (${b.pt.join(", ")}) with $P = ${b.p}$. That reaches the upper bound of ${w.bound}, so no practical plan can do better.`;
+  } else {
+    const heads = sp.cons.map((k) => `${termsTex(k.a, orig)} \\le ${k.b}`);
+    const table: SxBlock = { k: "tab", head: [...orig, ...heads, "P"], rows: w.cands.map((c) => [...c.pt.map(String), ...c.lhs.map((l, i) => `${l}\\ ${l <= sp.cons[i].b ? "\\checkmark" : "\\times"}`), String(c.p)]) };
+    push("Test the whole-number points either side of the optimum: round each fractional variable down and up. A point is practical only if it satisfies every constraint.", [table, ...(notes.length ? [rowsOf(...notes)] : [])], notes.length ? 2 : 1);
+    const feas = w.cands.filter((c) => c.ok).length;
+    text = `${feas === 1 ? "Only one of these points is practical" : `${feas} of these points are practical`}, and ${feas === 1 ? "it is" : "the best is"} (${b.pt.join(", ")}) with $P = ${b.p}$. That reaches the upper bound of ${w.bound}, so no practical plan can do better.`;
+  }
   const out: LpRow[] = [R(`${orig.map((v, j) => `${v} = ${b.pt[j]}`).join(",\\ ")},\\ P = ${b.p}`)];
   if (s) out.push(W(`So make ${list(orig.map((_, j) => `${b.pt[j]} ${s.items[j].plural}`))}, for a profit of £${b.p}.`));
   if (b.pt.join() !== w.down.pt.join()) out.push(N(`Rounding every value down is practical (P = ${w.down.p}) but it is not the best plan.`));
