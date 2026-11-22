@@ -5,7 +5,7 @@ import type { DeckElement } from "./types";
 
 type El = Extract<DeckElement, { kind: "venn" }>;
 const INK = "#1e293b", LINE_H = 56;
-const LEFT_C = "#2563eb", RIGHT_C = "#d97706", HCF_C = "#1e3a8a", LCM_C = "#6d28d9";
+const LEFT_C = "#6683a8", RIGHT_C = "#a58b66", HCF_C = "#334155", LCM_C = "#334155";   // quiet colours: the cards carry the colour, not the circles
 
 /** The Venn diagram as a slide piece. The cards start where `layoutCards` puts them (scattered round the outside unless a card has a
  *  region) and in the player every card drags with a finger, stylus or mouse and stays where it is dropped: nothing is checked, ticked or
@@ -56,10 +56,10 @@ export function VennEl({ el, stage, live }: { el: El; stage: number; live: boole
   const order = [...el.cards.keys()].filter((i) => !lifted.includes(i)).concat(lifted.filter((i) => i < el.cards.length));
   return (
     <svg ref={svg} viewBox={`0 0 ${BOX_W} ${height}`} preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block", touchAction: "none", userSelect: "none" }} role="img" aria-label="A Venn diagram" data-no-swipe="" data-venn="">
-      <rect x={3} y={3} width={BOX_W - 6} height={BOX_H - 6} rx={14} fill="white" stroke={INK} strokeWidth={5} />
+      <rect x={3} y={3} width={BOX_W - 6} height={BOX_H - 6} rx={14} fill="white" stroke="#94a3b8" strokeWidth={3} />
       {el.box && <text x={24} y={44 * text} fontSize={34 * text} fontWeight={700} fill={INK} fontFamily="'Segoe UI',Arial,sans-serif">{el.box}</text>}
-      <circle cx={LEFT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={LEFT_C} fillOpacity={0.1} stroke={LEFT_C} strokeWidth={5} />
-      <circle cx={RIGHT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={RIGHT_C} fillOpacity={0.1} stroke={RIGHT_C} strokeWidth={5} />
+      <circle cx={LEFT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={LEFT_C} fillOpacity={0.07} stroke={LEFT_C} strokeWidth={4} />
+      <circle cx={RIGHT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={RIGHT_C} fillOpacity={0.07} stroke={RIGHT_C} strokeWidth={4} />
       <text x={LEFT_X - 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text} fontWeight={700} fill={LEFT_C} fontFamily="'Segoe UI',Arial,sans-serif">{el.left}</text>
       <text x={RIGHT_X + 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text} fontWeight={700} fill={RIGHT_C} fontFamily="'Segoe UI',Arial,sans-serif">{el.right}</text>
       {order.map((i) => {
@@ -69,7 +69,7 @@ export function VennEl({ el, stage, live }: { el: El; stage: number; live: boole
         return (
           <g key={i} transform={`translate(${p.x - p.w / 2} ${p.y - p.h / 2})`} data-card={c.text} data-tile={c.tile ? "" : undefined} data-no-swipe=""
             onPointerDown={down(i)} style={{ cursor: live ? "grab" : "default", touchAction: "none" }}>
-            <rect width={p.w} height={p.h} rx={c.tile ? 10 * size : 14 * size} fill={c.tile ? tileColour(Number(c.text)) : "white"} stroke={c.tile ? "none" : "#64748b"} strokeWidth={2.5} />
+            <rect width={p.w} height={p.h} rx={c.tile ? 10 * size : 14 * size} fill={c.tile ? tileColour(Number(c.text)) : "white"} style={c.tile ? { filter: "saturate(0.7)" } : undefined} stroke={c.tile ? "none" : "#64748b"} strokeWidth={2.5} />
             <text x={p.w / 2} y={p.h / 2 + fs * 0.36} textAnchor="middle" fontSize={fs} fontWeight={c.tile ? 700 : 600} fill={c.tile ? "white" : INK} fontFamily="'Segoe UI',Arial,sans-serif" pointerEvents="none">{c.text}</text>
           </g>
         );

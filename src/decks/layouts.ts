@@ -114,12 +114,15 @@ export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes",
 
 /** A full-slide Venn diagram with cards to drag: scattered round the outside (no region on a card) or placed. `staged` brings the cards in one
  *  per click, `lines` adds the HCF and/or LCM line on later clicks. */
-export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule", right = "Right rule", cards: VennCard[] = [], opts: { box?: string; staged?: boolean; lines?: VennLine[]; size?: number; prompt?: string } = {}) =>
-  make(id, "teach", title, [
-    text(70, 50, 560, 200, title, 56, { bold: true }),
-    ...(opts.prompt ? [text(70, 270, 560, 560, opts.prompt, 38, { colour: MUTED })] : []),
-    { kind: "venn", x: 660, y: 70, w: 900, h: Math.round(0.9 * (700 + (opts.lines?.length ? 122 * (opts.size ?? 1) : 0))), left, right, cards, ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
+export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule", right = "Right rule", cards: VennCard[] = [], opts: { box?: string; staged?: boolean; lines?: VennLine[]; size?: number; prompt?: string } = {}) => {
+  // The diagram takes the middle three fifths of the slide (960 of 1600), centred; the title and the prompt go in the side columns.
+  const h = Math.round(0.96 * (700 + (opts.lines?.length ? 122 * (opts.size ?? 1) : 0)));
+  return make(id, "teach", title, [
+    text(40, 50, 270, 300, title, 44, { bold: true }),
+    ...(opts.prompt ? [text(40, 370, 270, 460, opts.prompt, 32, { colour: MUTED })] : []),
+    { kind: "venn", x: 320, y: Math.round((900 - h) / 2) + 10, w: 960, h, left, right, cards, ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
   ]);
+};
 
 /** A row of four small Venns, each with its own cards (a to d), to read: the answer line under each on a click when `lines` is given. */
 export const vennRowSlide = (id: string, title = "Read the Venns", sets: { left: string; right: string; cards: VennCard[] }[] = [], lines: VennLine[] = []) =>

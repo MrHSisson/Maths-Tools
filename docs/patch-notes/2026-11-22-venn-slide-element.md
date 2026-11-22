@@ -9,6 +9,7 @@ Branch `claude/hcf-lcm-venn-lesson-diz7dz` (merge 2 of the Venn plan). Area: `sr
 - **Layouts**: `vennSlide` (full slide) and `vennRowSlide` (four small Venns in a row, a to d, with a line under each on a click); both are in Add slide and the slide library, and in the builder's `S`.
 - **Editor**: "Venn diagram" in Add, and a Venn options panel (labels, cards with tile and region, prime tiles for two numbers placed or scattered, one per click, the two lines, card size).
 - **Deck check**: fails prime tiles that are not where the two numbers' factors go (the wrong Venn cannot be authored); warns about an answer line with nothing to multiply, empty cards and more than 12 scattered cards.
+- **Look**: the full-slide Venn takes the middle three fifths of the slide (960 of 1600 wide), centred, with the title and prompt in the side columns; circles, box and answer lines in quiet colours, the tiles slightly desaturated.
 - **Checked** at tablet 1180×820 and laptop 1366×768 in headless Chromium: drag, one-per-click, answer lines, the row of four. A phone only previews decks, so no phone-specific work.
 - **Deliberately not done:** the Venn worksheet print format (merge 3), the deck itself, dashboard Review (no tool changed).
 
