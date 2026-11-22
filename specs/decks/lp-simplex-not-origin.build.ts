@@ -41,7 +41,7 @@ const COLS = ["P", "x", "y", "s_1", "s_2", "s_3"];
 const YELLOW = "#fde047";
 const BLUE = "#1d4ed8";
 const RED = "#b91c1c";
-/** a tableau with its basic-variable column; `negRow` colours the row with the negative right-hand side red, `pivot` marks one cell, `hiRow` colours a row blue */
+/** a tableau (no basic-variable column); `negRow` colours the row with the negative right-hand side red, `pivot` marks one cell, `hiRow` colours a row blue */
 function tabTex(tab: Tab, nCons: number, o: { pivot?: [number, number]; negRow?: number; hiRow?: number; cols?: string[] } = {}): string {
   const cols = (o.cols ?? COLS).slice(0, 3 + nCons);
   const n = cols.length;
@@ -52,10 +52,9 @@ function tabTex(tab: Tab, nCons: number, o: { pivot?: [number, number]; negRow?:
     if (o.hiRow === i) return `\\textcolor{${BLUE}}{${s}}`;
     return s;
   };
-  const head = `\\text{basic}&${cols.join("&")}&\\text{RHS}`;
-  const label = (i: number): string => (i === 0 ? "P" : cols[tab.basis[i - 1]]);
-  const rows = tab.rows.map((_, i) => `${label(i)}&${Array.from({ length: n }, (_, j) => cell(i, j)).join("&")}&${cell(i, n)}`);
-  return `\\begin{array}{c|${"c".repeat(n)}|c}${head}\\\\[0.6ex]\\hline ${rows[0]}\\\\[0.8ex]\\hline ${rows.slice(1).join("\\\\[1ex]")}\\end{array}`;
+  const head = `${cols.join("&")}&\\text{RHS}`;
+  const rows = tab.rows.map((_, i) => `${Array.from({ length: n }, (_, j) => cell(i, j)).join("&")}&${cell(i, n)}`);
+  return `\\begin{array}{${"c".repeat(n)}|c}${head}\\\\[0.6ex]\\hline ${rows[0]}\\\\[0.8ex]\\hline ${rows.slice(1).join("\\\\[1ex]")}\\end{array}`;
 }
 const maths = (x: number, y: number, w: number, h: number, latex: string, size: number, more: Record<string, unknown> = {}) =>
   ({ kind: "maths", x, y, w, h, latex, size, ...more }) as never;

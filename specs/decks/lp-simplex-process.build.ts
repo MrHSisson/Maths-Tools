@@ -47,7 +47,7 @@ const F = (f: Fr): string => (f[1] === 1 ? String(f[0]) : `${f[0] < 0 ? "-" : ""
 const COLS = ["P", "x", "y", "s_1", "s_2"];
 const YELLOW = "#fde047";
 const COL_HI = "#1d4ed8";
-/** a tableau with its basic-variable column; `col` colours a column, `pivot` marks one cell, `hiRow` colours a row */
+/** a tableau (P, the variables, the slacks, then the right-hand side: no basic-variable column); `col` colours a column, `pivot` marks one cell, `hiRow` colours a row */
 function tabTex(tab: Tab, o: { col?: number; pivot?: [number, number]; hiRow?: number } = {}): string {
   const cell = (i: number, j: number): string => {
     let s = F(tab.rows[i][j]);
@@ -55,10 +55,9 @@ function tabTex(tab: Tab, o: { col?: number; pivot?: [number, number]; hiRow?: n
     if (o.col === j || o.hiRow === i) s = `\\textcolor{${COL_HI}}{${s}}`;
     return s;
   };
-  const head = `\\text{basic}&${COLS.map((c, j) => (o.col === j ? `\\textcolor{${COL_HI}}{${c}}` : c)).join("&")}&\\text{RHS}`;
-  const label = (i: number): string => (i === 0 ? "P" : COLS[tab.basis[i - 1]]);
-  const rows = tab.rows.map((_, i) => `${label(i)}&${[0, 1, 2, 3, 4].map((j) => cell(i, j)).join("&")}&${o.hiRow === i ? `\\textcolor{${COL_HI}}{${F(tab.rows[i][5])}}` : F(tab.rows[i][5])}`);
-  return `\\begin{array}{c|ccccc|c}${head}\\\\[0.6ex]\\hline ${rows[0]}\\\\[0.8ex]\\hline ${rows.slice(1).join("\\\\[1ex]")}\\end{array}`;
+  const head = `${COLS.map((c, j) => (o.col === j ? `\\textcolor{${COL_HI}}{${c}}` : c)).join("&")}&\\text{RHS}`;
+  const rows = tab.rows.map((_, i) => `${[0, 1, 2, 3, 4].map((j) => cell(i, j)).join("&")}&${o.hiRow === i ? `\\textcolor{${COL_HI}}{${F(tab.rows[i][5])}}` : F(tab.rows[i][5])}`);
+  return `\\begin{array}{ccccc|c}${head}\\\\[0.6ex]\\hline ${rows[0]}\\\\[0.8ex]\\hline ${rows.slice(1).join("\\\\[1ex]")}\\end{array}`;
 }
 const maths = (x: number, y: number, w: number, h: number, latex: string, size: number, more: Record<string, unknown> = {}) =>
   ({ kind: "maths", x, y, w, h, latex, size, ...more }) as never;
@@ -94,9 +93,9 @@ function graph(o: GraphOpts = {}) {
     const step = cs && i !== 0 ? cs.step : 0;
     els.push(dot(x, y, LOOK.ink, step, 11));
     // labels go where no line runs: (0, 4) to the left of the axis, (4, 2) above and to the right (outside both limits)
-    const lx = i === 1 ? px(x) - 140 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? -70 : 14);
-    const ly = i === 1 ? py(y) - 40 : i === 2 ? py(y) - 100 : py(y) + 14;
-    const al = i === 1 ? { align: "right" } : {};
+    const lx = i === 1 ? px(x) + 28 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? -70 : 14);
+    const ly = i === 1 ? py(y) - 104 : i === 2 ? py(y) - 100 : py(y) + 14;
+    const al = i === 1 ? { align: "left" } : {};
     if (cs) els.push(t(lx, ly, 130, 46, `$(${x}, ${y})$`, 30, { colour: LOOK.ink, ...al, ...(step ? { step } : {}) }));
     if (cs && cs.labels !== undefined) els.push(t(lx, ly + 40, 130, 46, `$P = ${PVAL[i]}$`, 30, { colour: grey, bold: true, ...al, ...(cs.labels ? { step: cs.labels } : {}) }));
   });
@@ -145,7 +144,7 @@ const slides: Slide[] = [
   slide(`${P}-table0`, "The starting table", [
     ...titleEls("The starting table", "Each row is one of the equations"),
     maths(40, 250, 900, 330, tabTex(T0), 58),
-    t(60, 620, 880, 220, "Read it: the variables in the first column are the ones that are not zero.\n$s_1 = 10$, $s_2 = 8$, $P = 0$, and $x = y = 0$.", 42, { step: 1 }),
+    t(60, 620, 880, 230, "Read it: a column with a single 1 and 0s elsewhere is a variable that is not zero. Its value is on the right, in the row of the 1.\n$s_1 = 10$, $s_2 = 8$, $P = 0$, and $x = y = 0$.", 40, { step: 1 }),
     ...graph({ at: 0, labels: false }),
   ]),
 
@@ -167,11 +166,23 @@ const slides: Slide[] = [
     ...graph({ at: 0, labels: false, path: [[0, 1, 2]] }),
   ], "Only the positive entries in the chosen column are used for the ratios."),
 
+  slide(`${P}-negative`, "Why only positive entries?", [
+    ...titleEls("Why only positive entries?", "A ratio asks how far $y$ can go before a limit runs out"),
+    t(80, 250, 700, 60, "The entry in row 2 is $2$", 40, { colour: grey, bold: true }),
+    ml(80, 330, 700, 110, "s_2 = 8 - 2y", 62),
+    t(80, 470, 700, 210, "Raise $y$: $s_2$ shrinks and reaches 0 at $y = 8 \\div 2 = 4$. A real limit.", 40, { step: 1 }),
+    t(820, 250, 700, 60, "Imagine the entry were $-2$", 40, { colour: grey, bold: true, step: 2 }),
+    ml(820, 330, 700, 110, "s = 8 + 2y", 62, { step: 2 }),
+    t(820, 470, 700, 210, "Raise $y$: $s$ grows and never reaches 0. It is no limit at all.", 40, { step: 2 }),
+    t(80, 700, 1440, 90, "$8 \\div (-2) = -4$ would be a limit behind us, at $y = -4$. So we skip negative entries.", 44, { bold: true, step: 3 }),
+    t(80, 810, 1440, 60, "A zero entry does not touch that limit either, so it is skipped too.", 38, { colour: grey, step: 4 }),
+  ], "Why the ratio test uses positive entries only. Row 2 of the starting table, with x = 0, is s2 = 8 - 2y: raising y shrinks s2, which runs out at y = 4. A negative entry would make the variable grow instead (s = 8 + 2y), so it never runs out; dividing would give a limit at y = -4, behind us."),
+
   slide(`${P}-pivot1`, "Moving there: row operations", [
     ...titleEls("Moving there", "Rewrite every equation from the new corner"),
-    ml(60, 240, 880, 180, `\\begin{array}{l}${OPS1[0]} \\quad \\text{(divide the pivot row)}\\\\[1ex] ${OPS1[1]} \\quad \\text{(take } y \\text{ out of the bottom row)}\\\\[1ex] ${OPS1[2]} \\quad \\text{(take } y \\text{ out of the first limit)}\\end{array}`, 38),
-    maths(40, 430, 900, 370, tabTex(T1), 58, { step: 1 }),
-    t(60, 810, 880, 70, "Now $y$ is in the first column: $y = 4$, and $P = 12$.", 44, { bold: true, step: 2 }),
+    ml(60, 235, 880, 215, `\\begin{array}{l}${OPS1[0]} \\quad \\text{(divide the pivot row)}\\\\[1ex] ${OPS1[1]} \\quad \\text{(take } y \\text{ out of the bottom row)}\\\\[1ex] ${OPS1[2]} \\quad \\text{(take } y \\text{ out of the first limit)}\\end{array}`, 38),
+    maths(40, 470, 900, 330, tabTex(T1), 58, { step: 1 }),
+    t(60, 810, 880, 70, "Now the $y$ column is a single 1: $y = 4$, and $P = 12$.", 44, { bold: true, step: 2 }),
     ...graph({ labels: false, path: [[0, 1, 0]], at: 1 }),
   ], "The row operations first, then the new table on the first click."),
 
@@ -204,8 +215,8 @@ const slides: Slide[] = [
 
   slide(`${P}-pivot2`, "Moving again", [
     ...titleEls("Moving again"),
-    ml(60, 240, 880, 180, `\\begin{array}{l}${OPS2[0]} \\quad \\text{(divide the pivot row)}\\\\[1ex] ${OPS2[1]} \\quad \\text{(take } x \\text{ out of the bottom row)}\\\\[1ex] ${OPS2[2]} \\quad \\text{(take } x \\text{ out of the } y \\text{ row)}\\end{array}`, 38),
-    maths(40, 430, 900, 370, tabTex(T2), 58, { step: 1 }),
+    ml(60, 235, 880, 215, `\\begin{array}{l}${OPS2[0]} \\quad \\text{(divide the pivot row)}\\\\[1ex] ${OPS2[1]} \\quad \\text{(take } x \\text{ out of the bottom row)}\\\\[1ex] ${OPS2[2]} \\quad \\text{(take } x \\text{ out of the } y \\text{ row)}\\end{array}`, 38),
+    maths(40, 470, 900, 330, tabTex(T2), 58, { step: 1 }),
     t(60, 810, 880, 70, "Now $x = 4$, $y = 2$ and $P = 14$.", 44, { bold: true, step: 2 }),
     ...graph({ labels: false, path: [[0, 1, 0], [1, 2, 0]], at: 2 }),
   ]),
@@ -221,7 +232,7 @@ const slides: Slide[] = [
 
   slide(`${P}-journey`, "The whole journey", [
     ...titleEls("The whole journey"),
-    maths(40, 240, 900, 320, "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}", 44),
+    maths(40, 240, 880, 320, "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}", 44),
     t(60, 600, 880, 100, "Each step moved to a better corner. We never visited $(5, 0)$, where $P = 10$.", 42, { step: 1 }),
     t(60, 730, 880, 120, "$y$ came in first, then went back down as $x$ came in: the walk is not always straight up.", 40, { colour: grey, step: 2 }),
     ...graph({ labels: false, corners: { step: 0, labels: 0 }, path: [[0, 1, 0], [1, 2, 0]] }),
@@ -231,13 +242,13 @@ const slides: Slide[] = [
     "Pivot column: the most negative entry in the bottom row.",
     "Pivot row: the smallest ratio, right-hand side divided by the positive entries in that column.",
     "Divide the pivot row by the pivot. Take away multiples of it from every other row.",
-    "Stop when the bottom row has no negatives. Read the variables from the first column.",
+    "Stop when the bottom row has no negatives. A column with a single 1 is a variable that is not zero: its value is on the right, in the row of the 1. Every other variable is 0.",
   ]),
 
   S.summary(`${P}-mistakes`, "Watch out", [
     "Ratios: only for positive entries in the pivot column.",
     "Update the bottom row too: it is a row like the others.",
-    "A variable not in the first column is 0, even if you were using it a step ago.",
+    "A variable whose column is not a single 1 is 0, even if you were using it a step ago.",
     "Stopping early: check the whole bottom row, not just the first entry.",
   ]),
 ];
