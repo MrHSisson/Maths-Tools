@@ -23,12 +23,12 @@ const PALETTES: Record<string, Palette> = {
 };
 const PALETTE_ORDER = ["bright", "soft", "blues", "festive"];
 
-// How a spin looks: the round wheel (pointer at the top), an upright carnival prize wheel (pegs and a flapper on the
-// right, slices moving top to bottom) or a case-opening strip (names slide across the screen past a marker).
+// How a spin looks: the round wheel (pointer at the top), a carnival reel (names scroll top to bottom past a marker)
+// or a case-opening strip (names slide across the screen past a marker). Carnival and Case are the same strip, turned.
 type SpinStyle = "classic" | "carnival" | "case";
 const STYLES: { id: SpinStyle; name: string; about: string }[] = [
   { id: "classic", name: "Classic", about: "A round wheel with the pointer at the top." },
-  { id: "carnival", name: "Carnival", about: "An upright prize wheel: the slices move top to bottom past a clicking flapper." },
+  { id: "carnival", name: "Carnival", about: "The names scroll down a tall reel past a marker, like a slot machine." },
   { id: "case", name: "Case", about: "The names slide across the screen past a marker, like opening a case." },
 ];
 const isStyle = (v: unknown): v is SpinStyle => STYLES.some(x => x.id === v);
@@ -78,75 +78,58 @@ function buildEntries(rows: Row[]): Entry[] {
   return list.sort((a, b) => a.pos - b.pos);
 }
 
-// Where the pointer sits on the wheel: the top for the classic wheel, the right-hand side for the carnival wheel.
-const POINTER: Record<"classic" | "carnival", number> = { classic: 1.5 * Math.PI, carnival: 0 };
+// The classic wheel's pointer is at the top.
+const POINTER = 1.5 * Math.PI;
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 /** The slice under the pointer when the wheel is turned by `angle`. */
-const indexAt = (angle: number, n: number, pointer = POINTER.classic) => Math.floor(mod(pointer - angle, TAU) / (TAU / n)) % n;
-/** The case strip's position is the item coordinate under its marker: item k covers [k, k+1) and the strip repeats. */
+const indexAt = (angle: number, n: number) => Math.floor(mod(POINTER - angle, TAU) / (TAU / n)) % n;
+/** A strip's position is the item coordinate under its marker: item k covers [k, k+1) and the strip repeats. */
 const stripIndexAt = (pos: number, n: number) => mod(Math.floor(pos), n);
 /** Neighbouring slices never share a colour, including the last beside the first. */
 const colourIndex = (i: number, n: number, len: number) => { const ci = i % len; return i === n - 1 && n > 1 && ci === 0 ? 2 % len : ci; };
 
-/** Round the carnival wheel: bulbs on the rim, a peg at every slice edge and the flapper the pegs knock as they pass. */
-function drawCarnivalTrim(ctx: CanvasRenderingContext2D, size: number, R: number, r: number, n: number, rot: number) {
-  const cx = size / 2, cy = size / 2, bulbs = 28;
-  for (let k = 0; k < bulbs; k++) {
-    const a = (k / bulbs) * TAU;   // the bulbs stay still: only the slices turn
-    ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (R - 7), cy + Math.sin(a) * (R - 7), 3.2, 0, TAU);
-    ctx.fillStyle = k % 2 ? "#ffffff" : "#fde68a"; ctx.fill();
-  }
-  const slice = TAU / n;
-  if (n <= 60) {
-    for (let i = 0; i < n; i++) {
-      const a = rot + i * slice;
-      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (r - 3), cy + Math.sin(a) * (r - 3), 3.6, 0, TAU);
-      ctx.fillStyle = "#fde68a"; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "#92400e"; ctx.stroke();
-    }
-  }
-  // the flapper: the pegs move down the right-hand side, so it is pushed down as one reaches it and springs back once it has passed
-  const u = mod((POINTER.carnival - rot) / slice, 1), push = n <= 60 && u < 0.3 ? 1 - u / 0.3 : 0;
-  const pivotX = size - 5, tipX = cx + r - 14, len = pivotX - tipX;
-  ctx.save();
-  ctx.translate(pivotX, cy); ctx.rotate(-push * 0.5);
-  ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(-len, 0); ctx.lineTo(0, 6); ctx.closePath();
-  ctx.fillStyle = "#dc2626"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.lineJoin = "round"; ctx.stroke();
-  ctx.restore();
-  ctx.beginPath(); ctx.arc(pivotX, cy, 5, 0, TAU); ctx.fillStyle = "#1e3a8a"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-}
-
-/** The case strip: cards in a row, sliding left past a marker in the middle. `pos` is the item coordinate under the marker. */
-function drawStrip(ctx: CanvasRenderingContext2D, w: number, h: number, entries: Entry[], palette: Palette, pos: number) {
+/** The strip, for Case (a row sliding left) and Carnival (a column moving down): cards past a marker in the middle. `pos` is the item coordinate under the marker. */
+function drawStrip(ctx: CanvasRenderingContext2D, w: number, h: number, entries: Entry[], palette: Palette, pos: number, vertical: boolean) {
   ctx.fillStyle = "#f1f5f9"; ctx.fillRect(0, 0, w, h);
-  const n = entries.length, mid = w / 2;
+  const n = entries.length, len = vertical ? h : w, cross = vertical ? w : h, mid = len / 2;
   if (n === 0) {
     ctx.fillStyle = "#64748b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.font = `500 ${Math.round(h * 0.14)}px ${SANS}`; ctx.fillText("Add some names", mid, h / 2);
+    ctx.font = `500 ${Math.round(Math.min(w, h) * 0.12)}px ${SANS}`; ctx.fillText("Add some names", w / 2, h / 2);
     return;
   }
-  const W = Math.round(h * 0.9), pad = 10, cardH = h - pad * 2, first = Math.floor(pos - mid / W) - 1, last = Math.ceil(pos + mid / W) + 1;
+  const pad = 10, across = cross - pad * 2, step = vertical ? Math.round(Math.min(cross * 0.3, 84)) : Math.round(h * 0.9);
+  const first = Math.floor(pos - mid / step) - 1, last = Math.ceil(pos + mid / step) + 1, textMax = (vertical ? across : step) - 22;
   for (let j = first; j <= last; j++) {
-    const i = mod(j, n), x = mid + (j - pos) * W, col = palette.colours[colourIndex(i, n, palette.colours.length)];
-    ctx.fillStyle = col.bg; ctx.beginPath(); ctx.roundRect(x + 3, pad, W - 6, cardH, 8); ctx.fill();
-    ctx.fillStyle = "rgba(15,23,42,.22)"; ctx.beginPath(); ctx.roundRect(x + 3, pad + cardH - 7, W - 6, 7, [0, 0, 8, 8]); ctx.fill();
+    const i = mod(j, n), off = vertical ? mid - (j - pos + 1) * step : mid + (j - pos) * step, col = palette.colours[colourIndex(i, n, palette.colours.length)];
+    // a card: along the strip it is one step long (less a 6px gap), across it fills the strip (less padding)
+    const x = vertical ? pad : off + 3, y = vertical ? off + 3 : pad, cw = vertical ? across : step - 6, ch = vertical ? step - 6 : across;
+    ctx.fillStyle = col.bg; ctx.beginPath(); ctx.roundRect(x, y, cw, ch, 8); ctx.fill();
+    ctx.fillStyle = "rgba(15,23,42,.22)"; ctx.beginPath(); ctx.roundRect(x, y + ch - 7, cw, 7, [0, 0, 8, 8]); ctx.fill();
     ctx.fillStyle = col.fg; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    let px = Math.min(22, Math.round(h * 0.16));
+    let px = Math.min(22, Math.round(Math.min(ch, cw) * 0.3));
     ctx.font = `600 ${px}px ${SANS}`;
-    while (px > 11 && ctx.measureText(entries[i].name).width > W - 22) { px--; ctx.font = `600 ${px}px ${SANS}`; }
+    while (px > 11 && ctx.measureText(entries[i].name).width > textMax) { px--; ctx.font = `600 ${px}px ${SANS}`; }
     let label = entries[i].name;
-    if (ctx.measureText(label).width > W - 22) {
-      while (label.length > 1 && ctx.measureText(label + "…").width > W - 22) label = label.slice(0, -1);
+    if (ctx.measureText(label).width > textMax) {
+      while (label.length > 1 && ctx.measureText(label + "…").width > textMax) label = label.slice(0, -1);
       label += "…";
     }
-    ctx.fillText(label, x + W / 2, pad + (cardH - 7) / 2);
+    ctx.fillText(label, x + cw / 2, y + (ch - 7) / 2);
   }
-  for (const [x0, x1] of [[0, w * 0.16], [w, w * 0.84]]) {
-    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  // the edges fade out so cards appear to come from, and go to, somewhere
+  for (const [a, b] of [[0, len * 0.16], [len, len * 0.84]]) {
+    const g = vertical ? ctx.createLinearGradient(0, a, 0, b) : ctx.createLinearGradient(a, 0, b, 0);
     g.addColorStop(0, "rgba(241,245,249,.95)"); g.addColorStop(1, "rgba(241,245,249,0)");
-    ctx.fillStyle = g; ctx.fillRect(Math.min(x0, x1), 0, Math.abs(x1 - x0), h);
+    ctx.fillStyle = g;
+    if (vertical) ctx.fillRect(0, Math.min(a, b), w, Math.abs(b - a)); else ctx.fillRect(Math.min(a, b), 0, Math.abs(b - a), h);
   }
-  ctx.fillStyle = "#f59e0b"; ctx.fillRect(mid - 1.5, 0, 3, h);
-  for (const [y, d] of [[0, 1], [h, -1]]) { ctx.beginPath(); ctx.moveTo(mid - 9, y); ctx.lineTo(mid + 9, y); ctx.lineTo(mid, y + d * 12); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = "#f59e0b";
+  if (vertical) ctx.fillRect(0, mid - 1.5, w, 3); else ctx.fillRect(mid - 1.5, 0, 3, h);
+  for (const [e, d] of [[0, 1], [cross, -1]]) {
+    ctx.beginPath();
+    if (vertical) { ctx.moveTo(e, mid - 9); ctx.lineTo(e, mid + 9); ctx.lineTo(e + d * 12, mid); } else { ctx.moveTo(mid - 9, e); ctx.lineTo(mid + 9, e); ctx.lineTo(mid, e + d * 12); }
+    ctx.closePath(); ctx.fill();
+  }
 }
 
 const card = "rounded-2xl border border-slate-300 bg-white shadow-card";
@@ -173,12 +156,12 @@ export default function NameWheel() {
   const lastTickRef = useRef(0);
   const nameInputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const style = wheel.style;
+  const style = wheel.style, strip = style !== "classic";   // Carnival and Case are strips
   const palette = PALETTES[wheel.palette] ?? PALETTES.bright;
   const entries = useMemo(() => buildEntries(wheel.rows), [wheel.rows]);
   const names = wheel.rows.filter(r => r.name.trim()).length;
   const total = entries.length;
-  const tiny = total > 100 && style !== "case";   // labels too small to read; the name at the pointer shows while it spins
+  const tiny = total > 100 && !strip;   // labels too small to read; the name at the pointer shows while it spins
   const canSpin = !spinning && names >= 2;
 
   const patch = useCallback((p: Partial<Wheel>) => setStore(s => ({ ...s, wheels: s.wheels.map(w => (w.id === s.active ? { ...w, ...p } : w)) })), []);
@@ -194,17 +177,15 @@ export default function NameWheel() {
   const draw = useCallback(() => {
     const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const w = canvas.clientWidth || 500, h = style === "case" ? (canvas.clientHeight || 150) : w, dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 500, h = strip ? (canvas.clientHeight || 150) : w, dpr = window.devicePixelRatio || 1;
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     const n = entries.length, rot = rotRef.current;
-    if (style === "case") { drawStrip(ctx, w, h, entries, palette, rot); return; }
-    const size = w, cx = size / 2, cy = size / 2;
-    // the carnival wheel is a little smaller so its flapper fits inside the picture
-    const R = style === "carnival" ? size * 0.44 : size / 2 - 3, rim = style === "carnival" ? 14 : 6, r = R - rim;
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = style === "carnival" ? "#1e3a8a" : "#ffffff"; ctx.fill();
-    if (style === "classic") { ctx.lineWidth = 1.5; ctx.strokeStyle = "#cbd5e1"; ctx.stroke(); }
+    if (strip) { drawStrip(ctx, w, h, entries, palette, rot, style === "carnival"); return; }
+    const size = w, cx = size / 2, cy = size / 2, R = size / 2 - 3, r = R - 6;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = "#ffffff"; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = "#cbd5e1"; ctx.stroke();
     if (n === 0) {
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = "#f1f5f9"; ctx.fill();
       ctx.fillStyle = "#64748b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -228,11 +209,10 @@ export default function NameWheel() {
         while (label.length > 1 && ctx.measureText(label + "…").width > maxW) label = label.slice(0, -1);
         label += "…";
       }
-      ctx.fillText(label, r - (style === "carnival" ? 18 : 14), 0);
+      ctx.fillText(label, r - 14, 0);
       ctx.restore();
     }
-    if (style === "carnival") drawCarnivalTrim(ctx, size, R, r, n, rot);
-  }, [entries, palette, style]);
+  }, [entries, palette, strip, style]);
 
   useEffect(() => { draw(); }, [draw]);
   useEffect(() => {
@@ -269,15 +249,13 @@ export default function NameWheel() {
     setSpinning(true); setCurrent("");
     const reduce = !store.fullSpin && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const from = rotRef.current;
-    // Carnival and Case are the long, suspenseful spins: many turns (or 90 to 130 cards), about ten seconds, and a slow crawl at the end.
+    // Carnival and Case are the long, suspenseful spins: 90 to 130 cards, about ten seconds, and a slow crawl at the end.
     // Classic keeps its shorter spin.
-    const to = style === "case" ? from + 90 + Math.random() * 40
-      : style === "carnival" ? from + TAU * (9 + Math.floor(Math.random() * 5)) + Math.random() * TAU
-      : from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
+    const to = strip ? from + 90 + Math.random() * 40 : from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
     const dur = reduce ? 1200 : style === "classic" ? 5000 + Math.random() * 1800 : 9500 + Math.random() * 2500;
     const ease = style === "classic" ? 4 : 3.2;   // a lower power leaves more of the distance for the final seconds
     const start = performance.now();
-    const at = (v: number) => (style === "case" ? stripIndexAt(v, n) : indexAt(v, n, POINTER[style]));
+    const at = (v: number) => (strip ? stripIndexAt(v, n) : indexAt(v, n));
     let last = at(from);
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - t, ease);
@@ -363,19 +341,17 @@ export default function NameWheel() {
         <div className={`mx-auto mt-5 ${style === "case" ? "max-w-3xl" : "max-w-xl"}`}>
           {/* the wheel, or the strip */}
           <div>
-            {style === "case" ? (
-              <div className="relative mx-auto w-full">
-                <canvas key="case" ref={canvasRef} onClick={spin} aria-label="Name strip. Click to spin." className="block h-32 w-full cursor-pointer rounded-2xl border border-slate-300 shadow-lift sm:h-40" />
+            {strip ? (
+              <div className={`relative mx-auto w-full ${style === "carnival" ? "max-w-sm" : ""}`}>
+                <canvas key={style} ref={canvasRef} onClick={spin} aria-label={style === "carnival" ? "Name reel. Click to spin." : "Name strip. Click to spin."}
+                  className={`block w-full cursor-pointer rounded-2xl border border-slate-300 shadow-lift ${style === "carnival" ? "h-[360px] sm:h-[440px]" : "h-32 sm:h-40"}`} />
               </div>
             ) : (
               <div className="relative mx-auto aspect-square w-full max-w-[520px]">
-                <canvas key={style} ref={canvasRef} onClick={spin} aria-label={style === "carnival" ? "Carnival wheel. Click to spin." : "Name wheel. Click to spin."}
-                  className={`block h-full w-full cursor-pointer ${style === "classic" ? "rounded-full shadow-lift" : ""}`} />
-                {style === "classic" && (
-                  <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
-                    <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
-                  </svg>
-                )}
+                <canvas key={style} ref={canvasRef} onClick={spin} aria-label="Name wheel. Click to spin." className="block h-full w-full cursor-pointer rounded-full shadow-lift" />
+                <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
+                  <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
+                </svg>
                 <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
               </div>
             )}

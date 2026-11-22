@@ -94,7 +94,7 @@ Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (update
 The Name Wheel can now spin in three ways, chosen per wheel under **Wheel settings → Spin style** and saved with that wheel:
 
 - **Classic**: the existing round wheel, pointer at the top.
-- **Carnival**: an upright prize wheel with bulbs round the rim, a peg at every slice edge and a red flapper on the right that is pushed down as each peg passes. The slices move top to bottom.
+- **Carnival**: a tall reel, like a slot machine: the names scroll top to bottom past a marker line in the middle and slow to a stop. It is the Case strip turned vertical (an earlier version drew an upright prize wheel with a flapper; that was replaced because it was not what was wanted).
 - **Case**: names as a row of cards that slide across the screen past a marker in the middle and slow to a stop, like opening a case. The strip is wider than the wheel on laptop and tablet, and about three cards wide on a phone.
 
 All three use the same tick sound, the same colours, the same winner dialog (with confetti and balloons) and the same "Remove from wheel" choice, and the reduced-motion shortcut still applies. Extra entries per name still weight the chance. Older saved wheels open as Classic.
@@ -103,9 +103,9 @@ Also fixed: `Confetti` and `Balloons` shared one React key, which logged a dupli
 
 Checked in headless Chromium at laptop (1366×768), tablet (820×1180) and phone (390×800): for every style the name the dialog announces is the card or slice drawn under the pointer, and a spin logs no console errors.
 
-Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 9 to 13 turns or 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. A device set to reduce motion (macOS Reduce motion, Windows animation effects off) still gets a one-second spin, but Wheel settings now has "Full-length spin even if the device reduces motion" (saved on this device) to override that.
+Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. A device set to reduce motion (macOS Reduce motion, Windows animation effects off) still gets a one-second spin, but Wheel settings now has "Full-length spin even if the device reduces motion" (saved on this device) to override that.
 
-Not done: sound is the same tick for every style (no separate carnival clack); the strip has no "tiny label" mode because cards always show a readable name.
+Not done: sound is the same tick for every style (no separate carnival clack); the strips have no "tiny label" mode because cards always show a readable name.
 
 The Name Wheel is now live: `enabled: false` is removed from its registry entry, so it is on the landing page under Classroom without Developing-tools mode.
 
