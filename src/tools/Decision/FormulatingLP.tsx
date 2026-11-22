@@ -40,9 +40,9 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <LpSolution 
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "lpVars", label: "Variables", info: "How many quantities the situation has: two (x, y), three (x, y, z) or four (w, x, y, z). Tick any of them and each question draws one.",
+    key: "lpVars", label: "Variables", info: "How many quantities the situation has: two (x, y), three (x, y, z) or four (w, x, y, z). Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
     multi: true, defaultFor: () => "2",
-    choices: [{ value: "2", label: "Two", sub: "x and y" }, { value: "3", label: "Three", sub: "x, y and z" }, { value: "4", label: "Four", sub: "w, x, y and z" }],
+    choices: [{ value: "2", label: "2", sub: "x and y" }, { value: "3", label: "3", sub: "x, y and z" }, { value: "4", label: "4*", sub: "w, x, y and z" }],
   },
   {
     key: "lpObjective", label: "Objective", info: "Whether the model maximises a profit (resource limits) or minimises a cost (amounts that must be supplied). Tick both to mix them.",
@@ -73,19 +73,19 @@ const OPTIONS: ShellOption[] = [
     ],
   },
   {
-    key: "lpPctOf", label: "Percentages Of", info: "What the percentage is taken of. Several variables combined need three or more variables; they are skipped when only two are ticked.",
+    key: "lpPctOf", label: "Percentages Of", info: "What the percentage is taken of. Several variables combined need three or more variables; they are skipped when only two are ticked. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["constraint"], forLevels: [2], multi: true, defaultFor: () => "one,combined,total,morless",
-    choices: [{ value: "one", label: "One Variable" }, { value: "combined", label: "Several Combined" }, { value: "total", label: "The Total" }, { value: "morless", label: "More Or Less Than", sub: "20% more than y" }],
+    choices: [{ value: "one", label: "One Variable" }, { value: "combined", label: "Several Combined" }, { value: "total", label: "The Total" }, { value: "morless", label: "More Or Less Than*", sub: "20% more than y" }],
   },
   {
-    key: "lpCapGiven", label: "Capacity Given As", info: "How the shared limit is put into words: it changes what the student must read and convert before the same kind of constraint can be written.",
+    key: "lpCapGiven", label: "Capacity Given As", info: "How the shared limit is put into words: it changes what the student must read and convert before the same kind of constraint can be written. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["constraint"], forLevels: [3], defaultFor: () => "most",
-    choices: [{ value: "most", label: "Most You Could Make", sub: "60 loaves or 45 cakes" }, { value: "rate", label: "Rate And Time", sub: "60 an hour, 8 hours" }, { value: "perItem", label: "Time Per Item", sub: "1 minute, 4/3 minutes" }, { value: "requirement", label: "Share Of A Requirement", sub: "1/60 each, at least 1" }],
+    choices: [{ value: "most", label: "Most You Could Make", sub: "60 loaves or 45 cakes" }, { value: "rate", label: "Rate And Time*", sub: "60 an hour, 8 hours" }, { value: "perItem", label: "Time Per Item*", sub: "1 minute, 4/3 minutes" }, { value: "requirement", label: "Share Of A Requirement*", sub: "1/60 each, at least 1" }],
   },
   {
-    key: "lpMethod", label: "Capacity Method", info: "How the working builds the either-or constraint: as fractions of the capacity, or by supposing a common number of units. It changes only the working, never the numbers.",
+    key: "lpMethod", label: "Capacity Method", info: "How the working builds the either-or constraint: as fractions of the capacity, or by supposing a common number of units. It changes only the working, never the numbers. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["constraint"], forLevels: [3], displayOnly: true, tab: "method", defaultFor: () => "fractions",
-    choices: [{ value: "fractions", label: "Fractions Of Capacity" }, { value: "units", label: "Common Units" }, { value: "both", label: "Both" }],
+    choices: [{ value: "fractions", label: "Fractions Of Capacity" }, { value: "units", label: "Common Units" }, { value: "both", label: "Both*" }],
   },
 ];
 

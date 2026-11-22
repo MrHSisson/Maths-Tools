@@ -146,7 +146,7 @@ describe("whole numbers: is it practical?", () => {
       expect(w3.nearest.ok).toBe(false);
     }
   });
-  it("Solve and Read a tableau ask the whole-number question of any optimum: some are practical as they stand, some are not", () => {
+  it("Solve asks the whole-number question of any optimum: some are practical as they stand, some are not", () => {
     let yes = 0, no = 0;
     for (let i = 0; i < 80; i++) {
       const q = generateSimplex(2, OPT("solve", { whole: true, forms: ["standard"], context: ["bare"] }));
@@ -169,8 +169,8 @@ describe("whole numbers: is it practical?", () => {
     expect(zeros).toBeGreaterThan(0);
     expect(noted).toBe(ties);
   });
-  it("Solve and Read a tableau can ask the whole-number question too, and the question says so", () => {
-    for (const kind of ["solve", "interpret"] as SxKind[]) {
+  it("Solve can ask the whole-number question too, and the question says so", () => {
+    for (const kind of ["solve"] as SxKind[]) {
       const q = generateSimplex(2, OPT(kind, { whole: true, forms: ["standard"] }));
       expect(q.prompt).toMatch(/practical/);
       expect(q.data.whole).toBeTruthy();
@@ -290,5 +290,38 @@ describe("the written working", () => {
       const o = objectiveOf(runSpec(q.data.spec), q.data.spec);
       expect(last).toContain(`P = ${o[1] === 1 ? o[0] : ""}`);
     }
+  });
+});
+
+describe("audit changes: minimise, equality, size", () => {
+  it("a minimise problem has a mixed-sign cost (some variables earn, some cost), not just a negated maximise", () => {
+    for (const level of [3]) for (let i = 0; i < 60; i++) {
+      const q = generateSimplex(level, OPT("solve", { forms: ["min"], context: ["bare"] }));
+      expect(q.data.spec.sense).toBe("min");
+      expect(q.data.spec.c.some((v) => v > 0)).toBe(true);
+      expect(q.data.spec.c.some((v) => v < 0)).toBe(true);
+      const sp = q.data.spec;
+      expect(objectiveOf(runSpec(sp), sp)[0] / objectiveOf(runSpec(sp), sp)[1]).toBeCloseTo(brute(sp), 6);
+    }
+  });
+  it("an equality constraint involves at least two of the variables", () => {
+    for (let i = 0; i < 80; i++) {
+      const q = generateSimplex(3, OPT("setup", { forms: ["eq"], context: ["bare"] }));
+      for (const k of q.data.spec.cons) if (k.op === "=") expect(k.a.filter((v) => v !== 0).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+  it("a size is a variables-by-constraints pair, kept within the level", () => {
+    for (let i = 0; i < 60; i++) {
+      const q1 = generateSimplex(1, OPT("solve", { sizes: [[2, 2], [4, 4]] }));
+      expect(q1.data.spec.c.length).toBe(2);
+      const q3 = generateSimplex(3, OPT("solve", { sizes: [[3, 3]], forms: ["standard"], context: ["bare"] }));
+      expect(q3.data.spec.c.length).toBe(3);
+      expect(q3.data.spec.cons.length).toBe(3);
+    }
+  });
+  it("Read a tableau can ask for the problem the tableau shows", () => {
+    const q = generateSimplex(2, OPT("reverse", {}));
+    expect(q.prompt).toMatch(/Write down the linear programming problem/);
+    expect(solveSimplex(asProblem(q)).length).toBeGreaterThan(2);
   });
 });

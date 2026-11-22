@@ -55,7 +55,7 @@ export function nice(run: Run, level: number): boolean {
 
 // ── Designing a problem from its optimum ─────────────────────────────────────
 interface Base { A: number[][]; b: number[]; c: number[]; xs: number[] }
-function designBase(n: number, m: number, pool: number[], degenerate = false): Base | null {
+function designBase(n: number, m: number, pool: number[], degenerate = false, mixed = false): Base | null {
   const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
@@ -71,7 +71,12 @@ function designBase(n: number, m: number, pool: number[], degenerate = false): B
     const s = A.reduce((t, r, i) => t + y[i] * r[j], 0);
     return basicX.includes(j) ? s : s - ri(1, 3);
   });
-  if (c.some((v) => v < 1) || b.some((v) => v <= 0)) return null;
+  // a minimise problem with a mixed-sign cost: the variables left out of the best plan cost something (a positive C coefficient), the ones used earn (a negative one)
+  if (mixed) {
+    if (basicX.length === n) return null;
+    for (let j = 0; j < n; j++) if (!basicX.includes(j)) c[j] = -ri(1, 6);
+  }
+  if (c.some((v, j) => (mixed && !basicX.includes(j) ? false : v < 1)) || b.some((v) => v <= 0)) return null;
   return { A, b, c, xs };
 }
 
@@ -126,7 +131,7 @@ function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null 
   }
   // a new constraint through (or below) the optimum that the origin does not satisfy
   const a = Array.from({ length: n }, () => ri(0, 3));
-  if (a.every((v) => v === 0)) return null;
+  if (a.filter((v) => v !== 0).length < 2) return null; // an equality involves at least two of the variables
   const at = a.reduce((t, v, j) => t + v * base.xs[j], 0);
   if (at < 1) return null;
   if (form === "eq") return { sense: "max", c: base.c, cons: [...cons, { a, op: "=", b: at }] };
@@ -203,6 +208,8 @@ export interface SxOptions {
   /** numbers of variables and of constraints that may be used (each question draws one) */
   vars: number[];
   cons: number[];
+  /** or, instead of vars and cons, the sizes that may be used, as [variables, constraints] pairs (each question draws one) */
+  sizes?: Array<[number, number]>;
   /** Level 3: the starting forms that may be used ("standard", "min", "ge", "lower", "eq") */
   forms: string[];
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
@@ -217,19 +224,19 @@ export interface SxOptions {
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
-  const whole = kind === "practical" || (o.whole && (kind === "solve" || kind === "interpret"));
+  const whole = kind === "practical" || (o.whole && kind === "solve");
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
-  const n = pick(o.vars.filter((v) => v >= 2 && v <= caps.n).length ? o.vars.filter((v) => v >= 2 && v <= caps.n) : [2]);
-  const m = pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [2]);
+  const fitting = (o.sizes ?? []).filter(([sn, sm]) => sn >= 2 && sn <= caps.n && sm >= 2 && sm <= caps.m);
+  const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : [2, 2]) : [pick(o.vars.filter((v) => v >= 2 && v <= caps.n).length ? o.vars.filter((v) => v >= 2 && v <= caps.n) : [2]), pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [2])];
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
   if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
     const allowed = (o.forms.length ? o.forms : ["standard"]) as StartForm[];
     form = pick(allowed);
   }
-  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3);
+  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3, form === "min");
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
@@ -253,7 +260,6 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // the tableau the question gives
   let at = 0;
   if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : ri(0, Math.min(1, run.steps.length - 1));
-  else if (kind === "interpret" && whole) at = run.tabs.length - 1;
   else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
@@ -278,7 +284,6 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
     prompt = `${it.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. " : "A simplex tableau for a maximising problem is shown. "}The pivot is the $${fmtFr(it.pivot)}$ ${where}. Carry out one iteration of the simplex algorithm, showing the row operations.`;
   }
   if (whole && kind === "solve") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}. Is the solution practical? If not, find the best practical plan and state its ${story ? "profit" : "value"}.`;
-  if (whole && kind === "interpret") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}: is this solution practical? If not, find the best practical plan.`;
   void vars;
   return { prompt, answerText: w && (kind === "practical" || kind === "solve" || kind === "interpret") ? (w.frac.length ? `${answerPlain(sp, run, kind, at)}; best practical plan ${varNames(n).map((v, j) => `${v} = ${w.best.pt[j]}`).join(", ")}, P = ${w.best.p}` : `${answerPlain(sp, run, kind, at)}; the solution is practical`) : answerPlain(sp, run, kind, at), data };
 }

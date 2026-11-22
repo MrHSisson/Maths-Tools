@@ -23,12 +23,13 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const key = (ctx?.subTool ?? "solve") as string;
-  const kind: SxKind = key === "setup" && o.sxDirection === "reverse" ? "reverse" : (key as SxKind);
+  const kind: SxKind = key === "interpret" && o.sxDirection === "reverse" ? "reverse" : (key as SxKind);
   const q = generateSimplex(level, {
     kind,
-    vars: ticked(o.sxVars, "2").map(Number),
-    cons: ticked(o.sxCons, level === 1 ? "2" : "3").map(Number),
-    forms: ticked(o.sxForms, "standard"),
+    vars: [],
+    cons: [],
+    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "2x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
+    forms: kind === "pivot" ? ticked(o.sxStart, "standard").map((v) => (v === "negative" ? "ge" : v)) : ticked(o.sxForms, "standard"),
     context: ticked(o.sxContext, "bare"),
     pivotGiven: o.sxPivot === "given",
     whole: o.sxWhole === "on",
@@ -44,19 +45,16 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <SxSolution 
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "sxVars", label: "Variables", info: "How many quantities the problem has: two (x, y), three (x, y, z) or four (w, x, y, z). Tick any of them and each question draws one.",
-    multi: true, defaultFor: () => "2",
-    choices: [{ value: "2", label: "Two", sub: "x and y" }, { value: "3", label: "Three", sub: "x, y and z", forLevels: [2, 3] }, { value: "4", label: "Four", sub: "w, x, y and z", forLevels: [3] }],
+    key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
+    multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "2x3"),
+    choices: [
+      { value: "2x2", label: "2 × 2" }, { value: "2x3", label: "2 × 3" }, { value: "3x3", label: "3 × 3", forLevels: [2, 3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
+    ],
   },
   {
-    key: "sxCons", label: "Constraints", info: "How many constraints the problem has, and so how many rows the tableau has. Tick any of them and each question draws one.",
-    multi: true, defaultFor: (lv: number) => (lv === 1 ? "2" : "3"),
-    choices: [{ value: "2", label: "Two" }, { value: "3", label: "Three" }, { value: "4", label: "Four", forLevels: [3] }],
-  },
-  {
-    key: "sxDirection", label: "Direction", info: "Whether the question gives the problem and asks for the tableau, or gives the tableau and asks for the problem it represents.",
-    forSubTools: ["setup"], defaultFor: () => "forward",
-    choices: [{ value: "forward", label: "Problem To Tableau" }, { value: "reverse", label: "Tableau To Problem" }],
+    key: "sxDirection", label: "Ask For", info: "Whether the question gives a tableau and asks for what it says (the values, the binding constraints, the meaning of each slack variable), or asks for the problem it represents.",
+    forSubTools: ["interpret"], defaultFor: () => "values",
+    choices: [{ value: "values", label: "What It Says" }, { value: "reverse", label: "The Problem It Shows" }],
   },
   {
     key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation (in sentences or in a table) that must first be turned into them.",
@@ -69,8 +67,13 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "choose", label: "Student Chooses" }, { value: "given", label: "Pivot Given" }],
   },
   {
+    key: "sxStart", label: "Start", info: "Whether the tableau is a standard one (every right-hand side positive) or has a negative right-hand side, so that the first pivot is chosen from the negative row. Tick both to mix them.",
+    forSubTools: ["pivot"], forLevels: [3], multi: true, defaultFor: () => "standard",
+    choices: [{ value: "standard", label: "Standard Tableau" }, { value: "negative", label: "A Negative Right-Hand Side" }],
+  },
+  {
     key: "sxForms", label: "Starting Form", info: "What the problem looks like before the simplex algorithm can start: already in standard form, or needing a change first. Tick any of them and each question draws one.",
-    forSubTools: ["setup", "pivot", "solve"], forLevels: [3], multi: true, defaultFor: () => "standard",
+    forSubTools: ["setup", "solve"], forLevels: [3], multi: true, defaultFor: () => "standard",
     choices: [
       { value: "standard", label: "Standard Form", sub: "maximise, every constraint ≤" },
       { value: "min", label: "Minimise", sub: "maximise P = −C" },
@@ -80,9 +83,9 @@ const OPTIONS: ShellOption[] = [
     ],
   },
   {
-    key: "sxWhole", label: "Whole Numbers", info: "Whether only whole numbers make sense. When it is on, the optimum has a fraction in it, and the question asks why that is not practical and for the best practical plan.",
-    forSubTools: ["solve", "interpret"], defaultFor: () => "off",
-    choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical" }],
+    key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. An asterisk marks an extension that is unlikely to come up.",
+    forSubTools: ["solve"], defaultFor: () => "off",
+    choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
   },
   {
     key: "sxGiven", label: "Optimum", info: "Whether the question gives the optimal solution of the linear programme, or asks for it first with the simplex algorithm.",

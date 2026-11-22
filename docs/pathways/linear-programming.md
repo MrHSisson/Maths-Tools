@@ -36,6 +36,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (Formulating: a kind substituted out). `problem` Level 3 gains a style where one kind is exactly a multiple of the others (twice the power smoothies; twice the total of power and energy; equal to their total) and needs no letter: the relation is substituted into the objective and every limit, with an Another way step. The remainder case stays. Both of Harry's cases are now in.
 
+- 2026-11-22 (audit applied). `specs/linear-programming-audit.md`: a mixed-sign minimise; One pivot's Start option; equalities in two or more variables; Tableau To Problem moved to Read a tableau; Whole Numbers on Solve only; one Size option (2 × 2 to 4 × 4*); an asterisk on each option button that is an extension.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

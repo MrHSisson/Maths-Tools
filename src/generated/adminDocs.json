@@ -1640,6 +1640,12 @@
        "items": [
         "2026-11-22 (Formulating: a kind substituted out). `problem` Level 3 gains a style where one kind is exactly a multiple of the others (twice the power smoothies; twice the total of power and energy; equal to their total) and needs no letter: the relation is substituted into the objective and every limit, with an Another way step. The remainder case stays. Both of Harry's cases are now in."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (audit applied). `specs/linear-programming-audit.md`: a mixed-sign minimise; One pivot's Start option; equalities in two or more variables; Tableau To Problem moved to Read a tableau; Whole Numbers on Solve only; one Size option (2 × 2 to 4 × 4*); an asterisk on each option button that is an extension."
+       ]
       }
      ]
     },
@@ -3909,6 +3915,10 @@
      "title": "Formulating Linear Programmes: a kind that is exactly a multiple of the others, substituted out (problem, Level 3), not live"
     },
     {
+     "date": "2026-11-22",
+     "title": "Linear Programming audit applied: balance, arbitrariness, asterisks, not live"
+    },
+    {
      "date": "2026-11-21",
      "title": "Formulating Linear Programmes: \"Write a constraint\", Level 1 (chunk F1), not live"
     },
@@ -3919,10 +3929,6 @@
     {
      "date": "2026-11-21",
      "title": "Formulating Linear Programmes: \"Formulate a problem\" Level 2 (chunk F6, part), and the common slip as a step"
-    },
-    {
-     "date": "2026-11-21",
-     "title": "Formulating Linear Programmes: reachable from the Decision hub; \"Formulate a problem\", Level 1 (chunk F5), not live"
     }
    ]
   },
@@ -3939,6 +3945,10 @@
     {
      "date": "2026-11-22",
      "title": "The Simplex Algorithm: a pivot given, and the data as a table, not live"
+    },
+    {
+     "date": "2026-11-22",
+     "title": "Linear Programming audit applied: balance, arbitrariness, asterisks, not live"
     }
    ]
   },
