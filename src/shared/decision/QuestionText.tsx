@@ -17,7 +17,7 @@ const TASK = /^(Formulate|Use|State|Write|Find|Choose|Explain|Show|Is |Say|Read|
 const ENDS_PARAGRAPH = /^(There (is|are)|The total|The mix|The number|Only |Let |A simplex tableau|The tableau|The initial)|profit of|sells for|must be integers|can be made/;
 const STARTS_PARAGRAPH = /^The simplex algorithm gives/;
 
-export interface QuestionParts {
+interface QuestionParts {
   /** an optimise-subject-to statement, when the prompt opens with one */
   lp?: { sense: string; objective: string; constraints: string[] };
   /** the context, as paragraphs of sentences */

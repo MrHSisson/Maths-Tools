@@ -106,7 +106,7 @@ export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveS
 
 /** how wide the widest tableau of a working is, in the tableau's own em (an estimate from its columns; a little generous): every tableau of a working is sized from it, so they are the
  *  same size and line up with each other, and a wide one is made smaller to fit its column instead of scrolling */
-export function tabSpan(blocks: SxBlock[]): number {
+function tabSpan(blocks: SxBlock[]): number {
   // the text a KaTeX string shows, roughly: no commands or braces; a letter is about half an em wide
   const chars = (t: string | undefined): number => (t ? t.replace(/\\[a-zA-Z]+/g, "").replace(/[{}^_]/g, "").length : 0);
   let w = 0;

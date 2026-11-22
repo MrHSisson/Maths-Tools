@@ -124,7 +124,7 @@ function frame(sc: number, ox: number, oy: number) {
   };
   const axes = (mx: number, my: number): unknown[] => [
     seg(0, 0, mx, 0, LOOK.ink, 6), seg(0, 0, 0, my, LOOK.ink, 6),
-    t(px(mx) + 5, py(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(my) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
+    t(px(mx) + 5, py(0) - 26, 44, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(my) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
   ];
   /** a label placed beside a point: below it, or to its left (right-aligned) */
   const tag = (x: number, y: number, text: string, colour: string, side: "below" | "left" | "above-right" | "below-left", step = 0): unknown => {
@@ -158,7 +158,7 @@ function graphA(o: AOpts = {}): unknown[] {
   if (o.shade === "origin") els.push(region([[0, 0], [5, 0], [4, 2], [0, 4]]));
   if (o.shade === "cut") els.push(region([[3, 0], [5, 0], [4, 2], [0, 4], [0, 3]]));
   els.push(...axes(5.4, 4.6), seg(5, 0, 2.75, 4.5, BLUE, 7), seg(0, 4, 5.3, 1.35, PURPLE, 7));
-  if (o.labels !== false) els.push(t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(px(4.2), py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }));
+  if (o.labels !== false) els.push(t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(px(4.2), py(2.6), 190, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }));
   if (o.orange !== undefined && o.orange !== false) {
     const step = typeof o.orange === "number" ? o.orange : 0;
     els.push(seg(3.4, -0.4, 0, 3, ORANGE, 7, step), t(px(0.1), py(0.95), 330, 44, "$x + y = 3$", 30, { colour: ORANGE, bold: true, align: "left", ...(step ? { step } : {}) }));
@@ -270,9 +270,9 @@ const slides: Slide[] = [
     const lab: Array<[number, number, string, string]> = [[4, 0, "12", "-12"], [6, 0, "18", "-18"], [0, 6, "12", "-12"], [0, 4, "8", "-8"]];
     lab.forEach(([x, y, c, p], i) => {
       els.push(g.dot(x, y, LOOK.ink, 1, 11));
-      const lx = i === 2 || i === 3 ? g.px(x) - 310 : g.px(x) - 90, ly = i === 2 || i === 3 ? g.py(y) - 56 : g.py(y) + 18;
+      const lx = i === 2 || i === 3 ? g.px(x) - 230 : g.px(x) - 90, ly = i === 2 || i === 3 ? g.py(y) - 56 : g.py(y) + 18;
       const al = i === 2 || i === 3 ? "right" : "left";
-      els.push(t(lx, ly, 250, 46, `$C = ${c}$`, 30, { colour: LOOK.ink, align: al, step: 1 }), t(lx, ly + 40, 250, 46, `$P = ${p}$`, 30, { colour: grey, bold: true, align: al, step: 2 }));
+      els.push(t(lx, ly, 170, 46, `$C = ${c}$`, 30, { colour: LOOK.ink, align: al, step: 1 }), t(lx, ly + 40, 170, 46, `$P = ${p}$`, 30, { colour: grey, bold: true, align: al, step: 2 }));
     });
     els.push(g.dot(0, 4, GREEN, 3, 17));
     return slide(`${P}-min`, "Minimising", [
@@ -328,8 +328,8 @@ const slides: Slide[] = [
     const els: unknown[] = [
       g.region([[0, 1], [4.5, 1], [4, 2], [0, 4]]),
       ...g.axes(5.4, 4.6), g.seg(5, 0, 2.75, 4.5, BLUE, 7), g.seg(0, 4, 5.3, 1.35, PURPLE, 7), g.seg(-0.2, 1, 5.2, 1, ORANGE, 7),
-      t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
-      t(g.px(3.3), g.py(1) + 14, 330, 44, "$y = 1$", 30, { colour: ORANGE, bold: true, align: "left" }),
+      t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 190, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
+      t(g.px(3.3), g.py(1) + 14, 250, 44, "$y = 1$", 30, { colour: ORANGE, bold: true, align: "left" }),
       g.dot(0, 0, RED, 0, 15), g.dot(0, 1, GREEN, 3, 15),
       t(g.px(0.25), g.py(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left" }),
       t(g.px(0.25), g.py(1) + 14, 330, 44, "new origin", 30, { colour: GREEN, bold: true, align: "left", step: 3 }),
@@ -351,13 +351,13 @@ const slides: Slide[] = [
       g.region([[0, 0], [4.5, 0], [4, 1], [0, 3]]),
       ...g.axes(5.4, 3.9),
       g.seg(4.7, -0.4, 3.3, 2.4, BLUE, 7), g.seg(0, 3, 5.2, 0.4, PURPLE, 7),
-      t(g.px(3.95), g.py(2.45), 330, 44, "$2x + Y = 9$", 30, { colour: BLUE, bold: true, align: "left" }), t(g.px(2.3), g.py(2.95), 330, 44, "$x + 2Y = 6$", 30, { colour: PURPLE, bold: true, align: "left" }),
+      t(g.px(3.95), g.py(2.45), 200, 44, "$2x + Y = 9$", 30, { colour: BLUE, bold: true, align: "left" }), t(g.px(2.3), g.py(2.95), 330, 44, "$x + 2Y = 6$", 30, { colour: PURPLE, bold: true, align: "left" }),
       // the new axis is the old line y = 1: say so beside the axis
       t(g.px(0) - 260, g.py(0) - 22, 230, 46, "$Y = 0$, $y = 1$", 28, { colour: GREEN, bold: true, align: "right" }),
       t(g.px(0) - 260, g.py(3) - 22, 230, 46, "$Y = 3$, $y = 4$", 28, { colour: grey, bold: true, align: "right" }),
       g.dot(0, 0, GREEN, 0, 17),
       t(g.px(0.3), g.py(0) + 22, 420, 46, "starts at $(0, 0)$", 30, { colour: GREEN, bold: true, align: "left" }),
-      g.dot(4, 1, GREEN, 3, 15), t(g.px(4) + 30, g.py(1) - 74, 240, 46, "$(4, 1)$", 30, { colour: GREEN, bold: true, align: "left", step: 3 }),
+      g.dot(4, 1, GREEN, 3, 15), t(g.px(4) + 30, g.py(1) - 74, 170, 46, "$(4, 1)$", 30, { colour: GREEN, bold: true, align: "left", step: 3 }),
     ];
     return slide(`${P}-lower2`, "The new graph starts at 0", [
       ...titleEls("The new graph starts at 0", "Measure $Y$ up from the line $y = 1$"),
@@ -373,11 +373,11 @@ const slides: Slide[] = [
     const g = frame(100, 985, 790);
     const els: unknown[] = [
       ...g.axes(5.4, 4.6), g.seg(5, 0, 2.75, 4.5, BLUE, 7), g.seg(0, 4, 5.3, 1.35, PURPLE, 7), g.seg(5.2, -0.2, 0.4, 4.6, ORANGE, 7),
-      t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
+      t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 190, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
       t(g.px(0.1), g.py(0.95), 330, 44, "$x + y = 5$", 30, { colour: ORANGE, bold: true, align: "left" }),
       g.seg(2, 3, 5, 0, GREEN, 14, 1), g.dot(2, 3, GREEN, 1, 15), g.dot(5, 0, GREEN, 1, 15),
       t(g.px(2) - 270, g.py(3) + 34, 240, 46, "$(2, 3)$", 30, { colour: GREEN, bold: true, align: "right", step: 1 }),
-      t(g.px(5) - 30, g.py(0) + 20, 240, 46, "$(5, 0)$", 30, { colour: GREEN, bold: true, align: "left", step: 1 }),
+      t(g.px(5) - 30, g.py(0) + 20, 140, 46, "$(5, 0)$", 30, { colour: GREEN, bold: true, align: "left", step: 1 }),
     ];
     return slide(`${P}-equal`, "An equality: the region is a line", [
       ...titleEls("An equality: the region is a line", "Say $x + y = 5$ on the earlier problem"),
