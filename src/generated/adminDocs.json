@@ -1610,6 +1610,12 @@
        "items": [
         "2026-11-22 (Simplex S0 to S5 built, not live). The exact engine (`lpSimplex.ts`), the designed generator with the per-level niceness budget (`lpSimplexGen.ts`), the stepped working (`lpSimplexSolve.ts`), the tableau picture (`SxWorking.tsx`) and the tool `/lp-simplex` (`enabled: false`, on the Decision hub's DD card) with four sub-tools: set up, one pivot, solve, read a tableau; three levels (skills, together, range with a change of form); Tableau Layout option (Cambridge or Oxford). Tested against a brute-force vertex search. Not built: \"is it practical?\", the zero-θ hazard, unbounded and infeasible, exam-style chains."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (Simplex: is it practical). A fifth sub-tool and a Whole Numbers option on solve and interpret: why the fractional optimum is not practical, the upper bound, the table of whole-number points around it, the best practical plan. Problems are designed so the best point has fractions and a feasible whole-number point reaches the bound. Standard form only."
+       ]
       }
      ]
     },
@@ -1622,7 +1628,7 @@
        "items": [
         "Confirm the `problem` section of the brief against what is built (strict inequalities with \"integers\", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.",
         "**F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.",
-        "**Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items (\"is it practical?\", zero-θ, a Pivot Column option, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.",
+        "**Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items (zero-θ, a Pivot Column option, practical plans that do not reach the bound, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.",
         "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).",
         "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
        ]
@@ -3894,6 +3900,10 @@
     {
      "date": "2026-11-22",
      "title": "The Simplex Algorithm: engine, designed numbers and four sub-tools (chunks S0 to S5), not live"
+    },
+    {
+     "date": "2026-11-22",
+     "title": "The Simplex Algorithm: \"Is it practical?\" (whole-number solutions), not live"
     }
    ]
   },

@@ -6,6 +6,8 @@ import type { DecisionProblem, LpRow, SolveStep, SxBlock, SxTabView } from "./ty
 import { type Fr, fr, fadd, fneg } from "./dim";
 import { type Run, type Tab, type Iter, basicRowOf, pivotColumn, readTab, runSpec, valueCol } from "./lpSimplex";
 import { type SxData, termsTex, varNames } from "./lpSimplexGen";
+import { wholeAnalysis } from "./lpSimplexWhole";
+import { list } from "./lpGen";
 
 const frTex = (f: Fr): string => (f[1] === 1 ? String(f[0]) : `${f[0] < 0 ? "-" : ""}\\frac{${Math.abs(f[0])}}{${f[1]}}`);
 const mt = (f: Fr): string => `$${frTex(f)}$`;
@@ -221,6 +223,31 @@ function conclusion(d: SxData, run: Run): LpRow[] {
   return out;
 }
 
+// ── Is it practical? ─────────────────────────────────────────────────────────
+/** the steps after the optimum is known: why it is not practical, the bound, the whole-number points around it, and the best of them */
+function wholeSteps(d: SxData, run: Run, push: (caption: string, show: SxBlock[], fresh: number) => void): void {
+  const w = wholeAnalysis(d.spec, run);
+  const sp = d.spec, n = sp.c.length;
+  const orig = varNames(n);
+  const s = d.story;
+  const what = s ? `Only whole numbers of ${list(s.items.slice(0, n).map((it) => it.plural))} can be made` : `${list(orig.map((v) => `$${v}$`))} must be whole numbers`;
+  const bad = w.frac.map((j) => `$${orig[j]} = ${frTex(w.x[j])}$`);
+  push(`${what}, but the optimum has ${bad.length > 1 ? "fractions" : "a fraction"} in it (${list(bad)}). So it is not a practical solution.`, [rowsOf(H("Is it practical?"), ...w.frac.map((j) => T(`${orig[j]} = ${frTex(w.x[j])}`)), W("Not a whole number: not practical."))], 1);
+  push("A practical plan is also a plan for the linear programme, so its value cannot be more than the optimum. With whole-number coefficients the value of a practical plan is a whole number, so it is at most the whole number just below the optimum.", [rowsOf(H("An upper bound"), T(`P \\le ${frTex(w.p)}`), T(`P \\le ${w.bound}`))], 1);
+  const heads = sp.cons.map((k) => `${termsTex(k.a, orig)} \\le ${k.b}`);
+  const table: SxBlock = { k: "tab", head: [...orig, ...heads, "P"], rows: w.cands.map((c) => [...c.pt.map(String), ...c.lhs.map((l, i) => `${l}\\ ${l <= sp.cons[i].b ? "\\checkmark" : "\\times"}`), String(c.p)]) };
+  const notes: LpRow[] = [];
+  if (!w.nearest.ok) notes.push(N(`Rounding to the nearest whole number gives (${w.nearest.pt.join(", ")}), which breaks a constraint, so rounding to the nearest is not safe: every point must be tested.`));
+  push("Test the whole-number points either side of the optimum: round each fractional variable down and up. A point is practical only if it satisfies every constraint.", [table, ...(notes.length ? [rowsOf(...notes)] : [])], notes.length ? 2 : 1);
+  const b = w.best;
+  const feas = w.cands.filter((c) => c.ok).length;
+  const text = `${feas === 1 ? "Only one of these points is practical" : `${feas} of these points are practical`}, and ${feas === 1 ? "it is" : "the best is"} (${b.pt.join(", ")}) with $P = ${b.p}$. That reaches the upper bound of ${w.bound}, so no practical plan can do better.`;
+  const out: LpRow[] = [R(`${orig.map((v, j) => `${v} = ${b.pt[j]}`).join(",\\ ")},\\ P = ${b.p}`)];
+  if (s) out.push(W(`So make ${list(orig.map((_, j) => `${b.pt[j]} ${s.items[j].plural}`))}, for a profit of £${b.p}.`));
+  if (b.pt.join() !== w.down.pt.join()) out.push(N(`Rounding every value down is practical (P = ${w.down.p}) but it is not the best plan.`));
+  push(text, [rowsOf(...out)], 1);
+}
+
 // ── The steps of each kind ───────────────────────────────────────────────────
 export function solveSimplex(p: DecisionProblem): SolveStep[] {
   const d = p.sx!;
@@ -240,6 +267,13 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
     push("Each constraint row is an equation with a slack variable in it.", [rowsOf(...rows)], 1);
     push("The slack variables are at least 0, so each equation is an inequality: leave the slack out and replace = with ≤.", [rowsOf(H("Constraints"), ...t.rows.slice(1).map((r) => T(`${termsTex(r.slice(1, 1 + d.spec.c.length).map((v) => v[0]), vars)} \\le ${frTex(r[vc(t)])}`)))], 1);
     push("The objective row says P minus the terms is 0, so P equals the terms with their signs changed.", [rowsOf(H("Objective"), R(`\\text{Maximise } P = ${termsTex(d.spec.c, vars)}`), ...d.spec.cons.map((_, i) => N(`$${sub(i)}$ is the amount of constraint ${i + 1} not used.`)))], 1);
+  } else if (d.kind === "practical") {
+    if (!d.whole?.given) {
+      setupSteps(d, run, ids, push);
+      run.iters.forEach((_, k) => iterationSteps(d, run, k, ids, push, k === run.iters.length - 1));
+      push("Read the value of every variable from the value column: a variable in a unit column takes the value in its row, every other variable is 0.", [rowsOf(...readRows(d, run, run.final).values)], 1);
+    }
+    wholeSteps(d, run, push);
   } else if (d.kind === "pivot") {
     const k = d.at;
     if (run.iters[k]) iterationSteps(d, run, k, ids, push, true);
@@ -267,6 +301,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
     if (pc) push(`To continue, the next pivot column is the ${cols[pc.col - 1]} column.`, [rowsOf(N(`The most negative entry is ${mt(t.rows[0][pc.col])}.`))], 1);
     else push("State the answer.", [rowsOf(R(`P = ${frTex(rd.tab.p)}`))], 1);
   }
+  if (d.whole && (d.kind === "solve" || d.kind === "interpret")) wholeSteps(d, run, push);
   return out;
 }
 const vc = (t: Tab): number => valueCol(t);
@@ -275,7 +310,7 @@ const vc = (t: Tab): number => valueCol(t);
 export function questionBlocks(p: DecisionProblem): SxBlock[] {
   const d = p.sx;
   if (!d) return [];
-  if (d.kind === "setup" || d.kind === "solve") return [];
+  if (d.kind === "setup" || d.kind === "solve" || d.kind === "practical") return [];
   const run = runSpec(d.spec);
   return [tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run))];
 }

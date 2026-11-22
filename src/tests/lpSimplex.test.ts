@@ -3,6 +3,7 @@
 import { describe, it, expect } from "vitest";
 import katex from "katex";
 import { runSpec, objectiveOf, pathStats, readTab, type SxSpec } from "../shared/decision/lpSimplex";
+import { wholeAnalysis, wholeNice } from "../shared/decision/lpSimplexWhole";
 import { generateSimplex, nice, BUDGET, type SxKind, type SxOptions } from "../shared/decision/lpSimplexGen";
 import { solveSimplex, questionBlocks } from "../shared/decision/lpSimplexSolve";
 import type { DecisionProblem, SxBlock } from "../shared/decision/types";
@@ -36,7 +37,7 @@ function brute(sp: SxSpec): number {
   return best ?? NaN;
 }
 
-const OPT = (kind: SxKind, over: Partial<SxOptions> = {}): SxOptions => ({ kind, vars: [2, 3, 4], cons: [2, 3, 4], forms: ["standard", "min", "ge", "lower", "eq"], context: ["bare", "story"], layout: "A", ...over });
+const OPT = (kind: SxKind, over: Partial<SxOptions> = {}): SxOptions => ({ kind, vars: [2, 3, 4], cons: [2, 3, 4], forms: ["standard", "min", "ge", "lower", "eq"], context: ["bare", "story"], whole: false, given: true, layout: "A", ...over });
 
 describe("the engine", () => {
   it("finds the optimum a brute-force vertex search finds, in every starting form", () => {
@@ -107,8 +108,73 @@ function texOf(b: SxBlock): string[] {
 }
 const asProblem = (q: ReturnType<typeof generateSimplex>): DecisionProblem => ({ kind: q.data.kind, level: q.data.level, sx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" });
 
+describe("whole numbers: is it practical?", () => {
+  const W = (level: number, o: Partial<SxOptions> = {}) => generateSimplex(level, OPT("practical", { forms: ["standard"], ...o }));
+  /** the best whole-number plan by trying every point in a box that holds the feasible region */
+  function bestWhole(sp: SxSpec): number {
+    const n = sp.c.length;
+    const box = Math.max(...sp.cons.map((k) => k.b)) + 1;
+    let best = -Infinity;
+    const walk = (j: number, pt: number[]): void => {
+      if (j === n) { if (sp.cons.every((k) => k.a.reduce((t, v, i) => t + v * pt[i], 0) <= k.b)) best = Math.max(best, sp.c.reduce((t, v, i) => t + v * pt[i], 0)); return; }
+      for (let v = 0; v <= box; v++) walk(j + 1, [...pt, v]);
+    };
+    walk(0, []);
+    return best;
+  }
+  for (const level of [1, 2, 3]) {
+    it(`Level ${level}: the optimum has a fraction, and the best practical plan is the true best whole-number plan and reaches the bound`, () => {
+      for (let i = 0; i < 60; i++) {
+        const q = W(level);
+        const run = runSpec(q.data.spec);
+        const w = wholeAnalysis(q.data.spec, run);
+        expect(wholeNice(w, level)).toBe(true);
+        expect(w.frac.length).toBeGreaterThan(0);
+        expect(w.best.p).toBe(w.bound);
+        if (q.data.spec.c.length <= 3) expect(w.best.p).toBe(bestWhole(q.data.spec));
+        expect(q.data.whole).toBeTruthy();
+      }
+    });
+  }
+  it("Level 2 needs more than rounding down, and Level 3 has a nearest rounding that is not allowed", () => {
+    for (let i = 0; i < 60; i++) {
+      const a = wholeAnalysis(W(2).data.spec, runSpec(W(2).data.spec));
+      void a;
+      const q2 = W(2), q3 = W(3);
+      const w2 = wholeAnalysis(q2.data.spec, runSpec(q2.data.spec)), w3 = wholeAnalysis(q3.data.spec, runSpec(q3.data.spec));
+      expect(w2.best.pt.join()).not.toBe(w2.down.pt.join());
+      expect(w3.nearest.ok).toBe(false);
+    }
+  });
+  it("Solve and Read a tableau can ask the whole-number question too, and the question says so", () => {
+    for (const kind of ["solve", "interpret"] as SxKind[]) {
+      const q = generateSimplex(2, OPT(kind, { whole: true, forms: ["standard"] }));
+      expect(q.prompt).toMatch(/practical/);
+      expect(q.data.whole).toBeTruthy();
+      const steps = solveSimplex(asProblem(q));
+      expect(steps.map((s) => s.caption).join(" ")).toMatch(/not a practical solution/);
+    }
+  });
+  it("when the optimum is not given, the working solves with the simplex algorithm first", () => {
+    for (let i = 0; i < 10; i++) {
+      const q = W(2, { given: false });
+      expect(q.prompt).toMatch(/Use the simplex algorithm/);
+      const caps = solveSimplex(asProblem(q)).map((s) => s.caption).join(" ");
+      expect(caps).toMatch(/pivot column/);
+      expect(caps).toMatch(/not a practical solution/);
+    }
+  });
+  it("the working ends on the best plan and states the upper bound", () => {
+    const q = W(2);
+    const steps = solveSimplex(asProblem(q));
+    const w = wholeAnalysis(q.data.spec, runSpec(q.data.spec));
+    expect(steps[steps.length - 1].caption).toContain(`upper bound of ${w.bound}`);
+    expect(steps.map((s) => s.caption).join(" ")).toMatch(/round each fractional variable down and up/);
+  });
+});
+
 describe("the written working", () => {
-  for (const layout of ["A", "B"] as const) for (const kind of ["setup", "reverse", "pivot", "solve", "interpret"] as SxKind[]) {
+  for (const layout of ["A", "B"] as const) for (const kind of ["setup", "reverse", "pivot", "solve", "interpret", "practical"] as SxKind[]) {
     it(`${kind}, layout ${layout}: every step has a caption, blocks that render, and the question's picture renders`, () => {
       for (const level of [1, 2, 3]) for (let i = 0; i < 25; i++) {
         const p = asProblem(generateSimplex(level, OPT(kind, { layout })));

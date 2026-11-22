@@ -15,6 +15,7 @@ const SUB_TOOLS = [
   { key: "pivot", label: "One pivot", levels: 3, blurb: "Choose the pivot, then do one iteration" },
   { key: "solve", label: "Solve a problem", levels: 3, blurb: "The whole simplex algorithm, to the optimum" },
   { key: "interpret", label: "Read a tableau", levels: 3, blurb: "Optimal? The values, the binding constraints" },
+  { key: "practical", label: "Is it practical?", levels: 3, blurb: "Whole numbers: why the optimum fails, and the best practical plan" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
@@ -29,6 +30,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     cons: ticked(o.sxCons, level === 1 ? "2" : "3").map(Number),
     forms: ticked(o.sxForms, "standard"),
     context: ticked(o.sxContext, "bare"),
+    whole: o.sxWhole === "on",
+    given: o.sxGiven !== "find",
     layout: o.sxLayout === "B" ? "B" : "A",
   });
   return { kind: q.data.kind, level, sx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
@@ -56,7 +59,7 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation in words that must first be turned into them.",
-    forSubTools: ["setup", "solve"], forLevels: [2, 3], multi: true, defaultFor: () => "bare",
+    forSubTools: ["setup", "solve", "practical"], forLevels: [2, 3], multi: true, defaultFor: () => "bare",
     choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation" }],
   },
   {
@@ -69,6 +72,16 @@ const OPTIONS: ShellOption[] = [
       { value: "lower", label: "A Lower Bound", sub: "x ≥ 2, so X = x − 2" },
       { value: "eq", label: "An Equality", sub: "a ≤ and a ≥" },
     ],
+  },
+  {
+    key: "sxWhole", label: "Whole Numbers", info: "Whether only whole numbers make sense. When it is on, the optimum has a fraction in it, and the question asks why that is not practical and for the best practical plan.",
+    forSubTools: ["solve", "interpret"], defaultFor: () => "off",
+    choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical" }],
+  },
+  {
+    key: "sxGiven", label: "Optimum", info: "Whether the question gives the optimal solution of the linear programme, or asks for it first with the simplex algorithm.",
+    forSubTools: ["practical"], defaultFor: () => "given",
+    choices: [{ value: "given", label: "Given" }, { value: "find", label: "Find It First" }],
   },
   {
     key: "sxLayout", label: "Tableau Layout", info: "How the tableau and the row operations are written. It changes only the way the same working is laid out, never the numbers.",
@@ -98,6 +111,7 @@ export default function App() {
           pivot: ["The first pivot", "Any pivot, three variables", "Including a negative right-hand side to start"],
           solve: ["Two variables, two iterations", "Three variables, up to three iterations", "Four variables, a change of form, up to four iterations"],
           interpret: ["The optimal tableau", "Optimal or not, and the slack variables", "Optimal or not, up to four variables"],
+          practical: ["Two variables: round down and up, test, choose", "A situation in words, or three variables; rounding down is not best", "Up to four variables; rounding to the nearest is not allowed"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

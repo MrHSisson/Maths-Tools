@@ -2,12 +2,13 @@
 // The numbers are DESIGNED, not drawn: pick the optimal point (whole numbers), which constraints bind there and a whole dual, then build the right-hand sides and the
 // objective from them, so the optimum is whole; then run the real algorithm and KEEP the problem only if every tableau on the way meets the level's niceness
 // budget (the denominators the textbooks use, few non-whole entries, a small number of iterations, no ties). Rejection is cheap: each run is microseconds.
-import { type Fr, fr } from "./dim";
+import { type Fr, fr, fsub, fmul, fdiv } from "./dim";
 import { type SxCon, type SxSpec, type Run, pathStats, readTab, runSpec } from "./lpSimplex";
-import { CONTEXTS, ri, pick, shuffled, unitOf, weighted } from "./lpGen";
+import { CONTEXTS, ri, pick, shuffled, unitOf, weighted, list } from "./lpGen";
+import { wholeAnalysis, wholeNice } from "./lpSimplexWhole";
 import { gcdInt } from "./lp";
 
-export type SxKind = "setup" | "reverse" | "pivot" | "solve" | "interpret";
+export type SxKind = "setup" | "reverse" | "pivot" | "solve" | "interpret" | "practical";
 type StartForm = "standard" | "min" | "ge" | "lower" | "eq";
 interface SxStory {
   intro: string;
@@ -27,6 +28,8 @@ export interface SxData {
   story?: SxStory;
   /** the tableau the question gives, as an index into the run's tableaux (pivot, reverse and interpret) */
   at: number;
+  /** only whole numbers make sense: the optimum has a fraction in it, and the best practical plan is asked for; `given` says the question hands over the optimum */
+  whole?: { given: boolean };
 }
 interface SxQuestion { prompt: string; answerText: string; data: SxData }
 
@@ -64,6 +67,45 @@ function designBase(n: number, m: number, pool: number[]): Base | null {
   });
   if (c.some((v) => v < 1) || b.some((v) => v <= 0)) return null;
   return { A, b, c, xs };
+}
+
+/** solve n equations in n unknowns exactly (the last column is the right-hand side); null when there is no single solution */
+function solveFr(M0: Fr[][]): Fr[] | null {
+  const n = M0.length;
+  const M = M0.map((r) => [...r]);
+  for (let c = 0; c < n; c++) {
+    let r = c;
+    while (r < n && M[r][c][0] === 0) r++;
+    if (r === n) return null;
+    [M[c], M[r]] = [M[r], M[c]];
+    M[c] = M[c].map((v) => fdiv(v, M[c][c]));
+    for (let i = 0; i < n; i++) if (i !== c && M[i][c][0] !== 0) { const f = M[i][c]; M[i] = M[i].map((v, k) => fsub(v, fmul(f, M[c][k]))); }
+  }
+  return M.map((row) => row[n]);
+}
+/** a problem whose optimum is NOT whole: n of the constraints bind at a point with fractions in it (whole right-hand sides), and the objective is any whole-number
+ *  objective that makes that point the best (its dual is positive), so the optimal value is usually a fraction too */
+function designWhole(n: number, m: number, pool: number[]): Base | null {
+  if (m < n) return null;
+  const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
+  if (A.some((r) => r.filter((v) => v !== 0).length < 2)) return null; // every limit involves at least two of the variables
+  if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
+  if (new Set(A.map((r) => r.join())).size < m) return null;
+  const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, n);
+  const bB = binding.map(() => ri(4, 40));
+  const x = solveFr(binding.map((i, r) => [...A[i].map((v) => fr(v)), fr(bB[r])]));
+  if (!x || x.some((v) => v[0] <= 0) || x.every((v) => v[1] === 1)) return null;
+  const c = Array.from({ length: n }, () => ri(1, 12));
+  // the dual: A_B^T y = c, and every y must be positive for the point to be the unique best
+  const y = solveFr(Array.from({ length: n }, (_, j) => [...binding.map((i) => fr(A[i][j])), fr(c[j])]));
+  if (!y || y.some((v) => v[0] <= 0)) return null;
+  const b = A.map((r, i) => {
+    if (binding.includes(i)) return bB[binding.indexOf(i)];
+    const at = r.reduce((t, v, j) => t + (v * x[j][0]) / x[j][1], 0);
+    return Math.floor(at + 1e-9) + ri(1, 4);
+  });
+  if (b.some((v) => v <= 0)) return null;
+  return { A, b, c, xs: x.map((v) => Math.floor(v[0] / v[1])) };
 }
 
 function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null {
@@ -146,6 +188,7 @@ const PROMPT: Record<SxKind, string> = {
   pivot: "",
   solve: "Use the simplex algorithm to solve the problem. State the value of every variable and of the objective.",
   interpret: "",
+  practical: "",
 };
 
 // ── The generator ────────────────────────────────────────────────────────────
@@ -158,20 +201,25 @@ export interface SxOptions {
   forms: string[];
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
   context: string[];
+  /** whole numbers: the optimum has a fraction in it and the best practical plan is asked for (the `practical` kind always; Solve and Read a tableau when ticked) */
+  whole: boolean;
+  /** `practical` only: the question hands over the optimum rather than asking for it */
+  given: boolean;
   layout: "A" | "B";
 }
 function attempt(level: number, o: SxOptions): SxQuestion | null {
   const kind = o.kind;
+  const whole = kind === "practical" || (o.whole && (kind === "solve" || kind === "interpret"));
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
   const n = pick(o.vars.filter((v) => v >= 2 && v <= caps.n).length ? o.vars.filter((v) => v >= 2 && v <= caps.n) : [2]);
   const m = pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [2]);
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
-  if (level >= 3 && kind !== "reverse" && kind !== "interpret") {
+  if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
     const allowed = (o.forms.length ? o.forms : ["standard"]) as StartForm[];
     form = pick(allowed);
   }
-  const base = designBase(n, m, POOLS[level]);
+  const base = whole ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level]);
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
@@ -182,12 +230,16 @@ function attempt(level: number, o: SxOptions): SxQuestion | null {
   }
   let run: Run;
   try { run = runSpec(sp); } catch { return null; }
-  if (!nice(run, level)) return null;
+  const w = whole ? wholeAnalysis(sp, run) : undefined;
+  // when the optimum is handed over the tableaux are never shown, so only the optimum itself has to read well; otherwise every tableau on the way must
+  if (kind === "practical" && o.given && w) { if (run.tie || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, level)) return null;
+  if (w && !wholeNice(w, level)) return null;
   // the tableau the question gives
   let at = 0;
   if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : ri(0, Math.min(1, run.steps.length - 1));
+  else if (kind === "interpret" && whole) at = run.tabs.length - 1;
   else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
-  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at };
+  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}) };
   const vars = varNames(n);
   const problem = story ? storyText(story, sp) : problemTex(sp);
   let prompt: string;
@@ -195,9 +247,24 @@ function attempt(level: number, o: SxOptions): SxQuestion | null {
   else if (kind === "reverse") prompt = "The initial simplex tableau for a maximising problem is shown. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.";
   else if (kind === "pivot") prompt = at === 0 && run.iters[0]?.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. Choose a pivot to reach a feasible start, and carry out the iteration." : `A simplex tableau for a maximising problem is shown. Choose the pivot, showing the θ-values, and carry out one iteration of the simplex algorithm.`;
   else if (kind === "interpret") prompt = `A simplex tableau for a maximising problem is shown${story ? ` (${story.intro.replace(/\.$/, "")})` : ""}. Is the solution optimal? Explain how you know. State the value of every variable and of the objective at this stage, which constraints are at their limit, and what each slack variable means.`;
-  else prompt = `${problem} ${PROMPT.solve}`;
+  else if (kind === "practical") {
+    const asks = "Explain why this is not a practical solution, then find the best practical plan and state its value.";
+    const ask = story ? asks.replace("value", "profit") : asks;
+    const need = story ? `Only whole numbers of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made.` : `${vars.map((v) => `$${v}$`).join(", ").replace(/, ([^,]*)$/, " and $1")} must be integers.`;
+    prompt = o.given
+      ? `${problem} ${need} ${story ? `Let ${list(vars.map((v, j) => `$${v}$ be the number of ${story.items[j].plural}`))}. ` : ""}The simplex algorithm gives ${solutionText(w!, vars)}. ${ask}`
+      : `${problem} ${need} Use the simplex algorithm to solve the problem without the whole-number condition. ${ask}`;
+  } else prompt = `${problem} ${PROMPT.solve}`;
+  if (whole && kind === "solve") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}. Explain why the solution is not practical, then find the best practical plan and state its ${story ? "profit" : "value"}.`;
+  if (whole && kind === "interpret") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}: is this solution practical? If not, find the best practical plan.`;
   void vars;
-  return { prompt, answerText: answerPlain(sp, run, kind, at), data };
+  return { prompt, answerText: w && (kind === "practical" || kind === "solve" || kind === "interpret") ? `${answerPlain(sp, run, kind, at)}; best practical plan ${varNames(n).map((v, j) => `${v} = ${w.best.pt[j]}`).join(", ")}, P = ${w.best.p}` : answerPlain(sp, run, kind, at), data };
+}
+
+const fmtFr = (v: Fr): string => (v[1] === 1 ? String(v[0]) : `${v[0]}/${v[1]}`);
+/** the optimum of the linear programme in a sentence ("x = 11/3, y = 5 and P = 62 2/3") */
+function solutionText(w: { x: Fr[]; p: Fr }, vars: string[]): string {
+  return `${vars.map((v, j) => `$${v} = ${fmtFr(w.x[j])}$`).join(", ")} and $P = ${fmtFr(w.p)}$`;
 }
 
 /** the answer as plain text (for the printed answers): the values of every variable and slack, and P, from the tableau the question is about */
@@ -217,7 +284,7 @@ function answerPlain(sp: SxSpec, run: Run, kind: SxKind, at: number): string {
 
 /** The question for a sub-tool at a level. A fixed problem is never used: the rejection loop is bounded, and a failure to find one is an error to fix, not to hide. */
 export function generateSimplex(level: number, o: SxOptions): SxQuestion {
-  for (let tries = 0; tries < 20000; tries++) {
+  for (let tries = 0; tries < 400000; tries++) {
     const q = attempt(level, o);
     if (q) return q;
   }
