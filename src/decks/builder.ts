@@ -15,6 +15,7 @@ import { gcd } from "../shared";
 import type { CuratedQuestion, DeckDef, GeneratorPreset, Slide } from "./types";
 import { exitRowsSlide, pairModelSlide, plainBookSlide, whiteboardQuestionsSlide } from "./pieces";
 import { textbookSheetSlide } from "./textbookSheet";
+import { vennSheetSlide } from "./vennSheet";
 // Shared look and rules for build scripts (see pieces.ts and deckRules.ts): sizes and colours that work, hint lines, factor-pair tables, fresh-number assertions.
 export { LOOK, assertCentred, fitsCentred, green, hintLine, lineEl, makeSlide, mathsGrid, mathsStack, quiet, textEl, titleEls, type Els, type Footer, type PairColumn } from "./pieces";
 export { assertFreshNumbers, freshNumberProblems, headlineNumbers } from "./deckRules";
@@ -146,6 +147,8 @@ export const S = {
   pairModel: pairModelSlide,
   /** A textbook-style printed sheet (Question 1: instruction, parts (a) to (x) in columns), pinned to the lesson: printed on A4 with an answer page, answers on a click on the slide. */
   textbookSheet: textbookSheetSlide,
+  /** A printed sheet of Venn diagrams (HCF and LCM), three to an A4 page and at most nine, pinned to the lesson: each Venn is just two numbers, so its tiles are right by construction. Answers on a click. */
+  vennSheet: vennSheetSlide,
 };
 
 /** The deck the player opens: embedded questions (nothing left to look up) and the tool's page filled in. */

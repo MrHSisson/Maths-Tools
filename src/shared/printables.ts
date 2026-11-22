@@ -250,3 +250,32 @@ export function shapeWorksheet(cells: ShapeCell[], title: string, mode: "questio
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
+
+/** One Venn on a printed sheet: its drawing, with and without the tiles, the numbers' factorisations and the answer lines. */
+export interface VennCell { a: number; b: number; svg: string; answerSvg: string; factors: string[]; lines: boolean; answers: string[] }
+
+/**
+ * Printed Venn sheets, designed to be shrunk like the shape sheets: A4 pages printed scaled to A5, three Venns to a page (one across, three
+ * down), so a sheet holds at most nine. The Venn is large on the left with the two numbers' factorisations beside it, and, where the sheet
+ * asks for them, "HCF =" and "LCM =" lines to fill in. The answer pages draw every tile and fill the lines in.
+ */
+export function vennWorksheet(cells: VennCell[], title: string, note: string | undefined, mode: "questions" | "answers" | "both"): string {
+  const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  const PER = 3;
+  const pages = (answers: boolean) => Array.from({ length: Math.ceil(cells.length / PER) }, (_, page) => {
+    const rows = cells.slice(page * PER, (page + 1) * PER).map((c, i) => `<article><b class="n">${page * PER + i + 1}</b><div class="pic">${answers ? c.answerSvg : c.svg}</div><div class="side">${c.factors.map(f => `<p class="f">${esc(f)}</p>`).join("")}${c.lines ? (answers ? c.answers.map(t => `<p class="ln key">${esc(t)}</p>`) : ["HCF", "LCM"].map(t => `<p class="ln">${t} = <i></i></p>`)).join("") : ""}</div></article>`).join("");
+    return `<section class="page"><header><h1>${esc(title)}${answers ? " — answers" : ""}</h1>${answers ? "" : '<span class="name">Name <i></i></span>'}</header>${!answers && note ? `<p class="note">${esc(note)}</p>` : ""}<div class="rows">${rows}</div></section>`;
+  }).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+  *{box-sizing:border-box} @page{size:A4 portrait;margin:0} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a}
+  .page{width:210mm;height:297mm;padding:11mm 13mm 9mm;break-after:page;display:flex;flex-direction:column;overflow:hidden} .page:last-child{break-after:auto}
+  header{display:flex;justify-content:space-between;align-items:baseline;height:9mm} h1{font-size:16pt;margin:0;font-weight:700;white-space:nowrap} .name{font-size:12.5pt;display:flex;align-items:baseline;gap:2mm} .name i{display:inline-block;width:40mm;border-bottom:.4mm solid #0f172a}
+  .note{margin:1.5mm 0 0;font-size:12.5pt;color:#334155}
+  .rows{flex:1;min-height:0;display:grid;grid-template-rows:repeat(${PER},1fr);gap:3.5mm;margin-top:3mm}
+  article{position:relative;display:flex;gap:4mm;align-items:center;border:.35mm solid #94a3b8;border-radius:2.5mm;padding:2mm 4mm 2mm 2mm;min-height:0;overflow:hidden;break-inside:avoid}
+  .n{position:absolute;left:2.5mm;top:1.5mm;font-size:15pt;color:#1e3a8a;z-index:1} .pic{flex:0 0 122mm;height:100%;min-height:0} .pic svg{width:100%;height:100%;display:block}
+  .side{flex:1;min-width:0;display:flex;flex-direction:column;gap:3mm} .f{margin:0;font-size:12.5pt;line-height:1.3}
+  .ln{margin:2mm 0 0;font-size:13pt;font-weight:700;display:flex;align-items:flex-end;gap:1.5mm;white-space:nowrap} .ln i{flex:1;min-width:10mm;height:5mm;border-bottom:.35mm solid #0f172a} .ln.key{color:#166534;display:block;white-space:normal;font-size:12pt}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
+}

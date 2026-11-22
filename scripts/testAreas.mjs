@@ -19,7 +19,7 @@ export const TEST_AREAS = {
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
   mechanics: /^(dim|mechanics.*|workDone|energy)\.test\.ts$/,
   decision: /^(decision|decisionOptions|decisionPairings)\.test\.ts$/,
-  decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
+  decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|vennSheet|vennLayout|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
   // the checks that run over every tool
   cross: /^(generators|seedReplay|recentQuestions|organisation|qoTabs|questionExtras|savedQuestions|seededReformat|hookDisables|localExports|depth|redraw)\.test\.ts$/,
