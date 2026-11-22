@@ -1755,7 +1755,7 @@
    "kind": "tool",
    "shell": "DecisionShell",
    "subTools": null,
-   "lines": 125,
+   "lines": 131,
    "depth": false,
    "teach": false,
    "lessons": false,

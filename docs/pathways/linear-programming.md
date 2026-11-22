@@ -32,6 +32,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (decisions on the Simplex gaps). Harry: L53 (boundedness from a tableau) and L55 (a tableau with a parameter k) are notes for the exam-style pass; L42 (the matrix equation of a tableau) has no place in the generator; full exam chains come later; and a standing rule: no question type that is always the same or stagnant. The gaps worth building (real, repeated question types) are L46 (one iteration, pivot given), L80 (data as a table) and L85 (mark-style short parts).
 
+- 2026-11-22 (Simplex: pivot given, data as a table). L46 and L80 built: the Pivot option on One pivot (Pivot Given) and Wording: A Table. L85 (mark-style short parts) and L57 (the exam chain) are left to the exam-style pass.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

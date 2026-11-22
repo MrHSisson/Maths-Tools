@@ -7,7 +7,7 @@ import { type Fr, fr, fadd, fneg } from "./dim";
 import { type Run, type Tab, type Iter, pivotColumn, readTab, runSpec, valueCol } from "./lpSimplex";
 import { type SxData, termsTex, varNames } from "./lpSimplexGen";
 import { wholeAnalysis } from "./lpSimplexWhole";
-import { list } from "./lpGen";
+import { list, cap } from "./lpGen";
 
 const frTex = (f: Fr): string => (f[1] === 1 ? String(f[0]) : `${f[0] < 0 ? "-" : ""}\\frac{${Math.abs(f[0])}}{${f[1]}}`);
 const mt = (f: Fr): string => `$${frTex(f)}$`;
@@ -151,12 +151,14 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
 }
 
 // ── One iteration ────────────────────────────────────────────────────────────
-function iterationSteps(d: SxData, run: Run, k: number, ids: number[][], push: (caption: string, show: SxBlock[], fresh: number) => void, last: boolean): void {
+function iterationSteps(d: SxData, run: Run, k: number, ids: number[][], push: (caption: string, show: SxBlock[], fresh: number) => void, last: boolean, given = false): void {
   const it: Iter = run.iters[k];
   const t = run.tabs[k];
   const { cols } = nameLists(d, t.m);
   const vc = valueCol(t);
-  if (it.start) {
+  if (given) {
+    push(`The pivot is given: ${mt(it.pivot)}, in the $${cols[it.col - 1]}$ column and row ${it.row + 1}. Divide the pivot row by the pivot first.`, [tabBlock(run, k, d, ids, { pivot: [it.row, it.col] })], 1);
+  } else if (it.start) {
     const neg = t.rows.slice(1).findIndex((r) => r[vc][0] < 0) + 1;
     push(`A right-hand side is negative (${mt(t.rows[neg][vc])}), so the origin is not a feasible start. In that row choose a negative entry that makes every right-hand side positive.`, [tabBlock(run, k, d, ids, { pivot: [it.row, it.col] })], 1);
   } else {
@@ -305,7 +307,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
     wholeSteps(d, run, push);
   } else if (d.kind === "pivot") {
     const k = d.at;
-    if (run.iters[k]) iterationSteps(d, run, k, ids, push, true);
+    if (run.iters[k]) iterationSteps(d, run, k, ids, push, true, !!d.pivotGiven);
   } else if (d.kind === "solve") {
     setupSteps(d, run, ids, push);
     run.iters.forEach((_, k) => iterationSteps(d, run, k, ids, push, k === run.iters.length - 1));
@@ -335,11 +337,24 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
 }
 const vc = (t: Tab): number => valueCol(t);
 
+/** a situation's data as a table: what one of each item uses, what is available, and the profit per item */
+function storyTable(d: SxData): SxTabView {
+  const s = d.story!, sp = d.spec, n = sp.c.length;
+  const dec = (v: number, scale: [number, number]): string => String(Math.round(((v * scale[0]) / scale[1]) * 10000) / 10000);
+  return {
+    k: "tab",
+    head: [...s.items.slice(0, n).map((it) => `\\text{${it.plural}}`), "\\text{Available}"],
+    labelHead: "",
+    label: [...sp.cons.map((_, i) => `\\text{${cap(s.res[i].of)} (${s.res[i].unit})}`), "\\text{Profit per item (£)}"],
+    rows: [...sp.cons.map((k, i) => [...k.a.map((v) => dec(v, s.res[i].scale)), dec(k.b, s.res[i].scale)]), [...sp.c.map((v) => String(v * s.profitScale)), ""]],
+  };
+}
+
 /** the picture of the question before any working: the tableau the question gives (pivot, reverse and interpret) */
 export function questionBlocks(p: DecisionProblem): SxBlock[] {
   const d = p.sx;
   if (!d) return [];
-  if (d.kind === "setup" || d.kind === "solve" || d.kind === "practical") return [];
+  if (d.kind === "setup" || d.kind === "solve" || d.kind === "practical") return d.table && d.story ? [storyTable(d)] : [];
   const run = runSpec(d.spec);
   return [tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run))];
 }

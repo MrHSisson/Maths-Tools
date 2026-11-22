@@ -37,7 +37,7 @@ function brute(sp: SxSpec): number {
   return best ?? NaN;
 }
 
-const OPT = (kind: SxKind, over: Partial<SxOptions> = {}): SxOptions => ({ kind, vars: [2, 3, 4], cons: [2, 3, 4], forms: ["standard", "min", "ge", "lower", "eq"], context: ["bare", "story"], whole: false, given: true, layout: "A", ...over });
+const OPT = (kind: SxKind, over: Partial<SxOptions> = {}): SxOptions => ({ kind, vars: [2, 3, 4], cons: [2, 3, 4], forms: ["standard", "min", "ge", "lower", "eq"], context: ["bare", "story"], whole: false, given: true, pivotGiven: false, layout: "A", ...over });
 
 describe("the engine", () => {
   it("finds the optimum a brute-force vertex search finds, in every starting form", () => {
@@ -211,6 +211,48 @@ describe("whole numbers: is it practical?", () => {
     const w = wholeAnalysis(q.data.spec, runSpec(q.data.spec));
     expect(steps[steps.length - 1].caption).toContain(`upper bound of ${w.bound}`);
     expect(steps.map((s) => s.caption).join(" ")).toMatch(/round each fractional variable down and up/);
+  });
+});
+
+describe("a pivot given, and the data as a table", () => {
+  it("One pivot with the pivot given names it, skips the choosing, and carries out the row operations", () => {
+    for (const layout of ["A", "B"] as const) for (const level of [1, 2, 3]) for (let i = 0; i < 15; i++) {
+      const q = generateSimplex(level, OPT("pivot", { pivotGiven: true, layout }));
+      expect(q.data.pivotGiven).toBe(true);
+      expect(q.prompt).toMatch(/The pivot is the/);
+      const steps = solveSimplex(asProblem(q));
+      expect(steps[0].caption).toMatch(/The pivot is given/);
+      expect(steps.map((s) => s.caption).join(" ")).not.toMatch(/most negative|smallest θ/);
+      expect(steps.some((s) => s.sxView!.blocks.some((b) => b.k === "tab" && (b.ops ?? []).some((o) => o.includes("\\times") || o.includes("\\div") || o.includes("-") || o.includes("+"))))).toBe(true);
+      for (const st of steps) for (const b of st.sxView!.blocks) for (const t of texOf(b)) expect(bad(t), t).toBe(false);
+    }
+  });
+  it("the pivot the question names is the pivot the working uses", () => {
+    for (let i = 0; i < 40; i++) {
+      const q = generateSimplex(2, OPT("pivot", { pivotGiven: true, layout: "A" }));
+      const run = runSpec(q.data.spec);
+      const it = run.iters[q.data.at];
+      const shown = it.pivot[1] === 1 ? String(it.pivot[0]) : `${it.pivot[0]}/${it.pivot[1]}`;
+      expect(q.prompt).toContain(`$${shown}$`);
+      expect(q.prompt).toContain(`row R${it.row + 1}`);
+    }
+  });
+  it("a situation can be given as a table: the picture is the table, and it holds every limit, use and profit", () => {
+    for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 25; i++) {
+      const q = generateSimplex(2, OPT(kind, { forms: ["standard"], context: ["table"], vars: [2, 3], cons: [2, 3] }));
+      expect(q.data.table).toBe(true);
+      expect(q.prompt).toMatch(/The table shows/);
+      const blocks = questionBlocks(asProblem(q));
+      expect(blocks.length).toBe(1);
+      const t = blocks[0];
+      expect(t.k).toBe("tab");
+      if (t.k === "tab") {
+        expect(t.rows.length).toBe(q.data.spec.cons.length + 1);
+        expect(t.head.length).toBe(q.data.spec.c.length + 1);
+        for (const s of texOf(t)) expect(bad(s), s).toBe(false);
+        expect(t.rows[t.rows.length - 1].slice(0, -1)).toEqual(q.data.spec.c.map(String));
+      }
+    }
   });
 });
 

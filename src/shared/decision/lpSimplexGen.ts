@@ -28,6 +28,10 @@ export interface SxData {
   story?: SxStory;
   /** the tableau the question gives, as an index into the run's tableaux (pivot, reverse and interpret) */
   at: number;
+  /** One pivot: the question names the pivot, and the student carries out the iteration */
+  pivotGiven?: boolean;
+  /** a situation whose data is shown as a table (limits, use per item, profit per item) rather than in sentences */
+  table?: boolean;
   /** only whole numbers make sense: the optimum has a fraction in it, and the best practical plan is asked for; `given` says the question hands over the optimum */
   whole?: { given: boolean };
 }
@@ -207,6 +211,8 @@ export interface SxOptions {
   whole: boolean;
   /** `practical` only: the question hands over the optimum rather than asking for it */
   given: boolean;
+  /** One pivot: the pivot is given, not chosen */
+  pivotGiven: boolean;
   layout: "A" | "B";
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
@@ -228,7 +234,11 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const sp = spec(form, base, n, m);
   if (!sp) return null;
   let story: SxStory | undefined;
-  if (level >= 2 && form === "standard" && (o.context.length ? o.context : ["bare"]).includes("story") && pick(o.context.length ? o.context : ["bare"]) === "story" && m <= 3) {
+  let table = false;
+  const ctxList = o.context.length ? o.context : ["bare"];
+  const chosen = pick(ctxList);
+  if (level >= 2 && form === "standard" && (chosen === "story" || chosen === "table") && m <= 3) {
+    table = chosen === "table";
     story = dress(sp, n, m) ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
   }
@@ -245,9 +255,9 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : ri(0, Math.min(1, run.steps.length - 1));
   else if (kind === "interpret" && whole) at = run.tabs.length - 1;
   else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
-  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}) };
+  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
-  const problem = story ? storyText(story, sp) : problemTex(sp);
+  const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
   let prompt: string;
   if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
   else if (kind === "reverse") prompt = "The initial simplex tableau for a maximising problem is shown. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.";
@@ -261,6 +271,12 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
       ? `${problem} ${need} ${story ? `Let ${list(vars.map((v, j) => `$${v}$ be the number of ${story.items[j].plural}`))}. ` : ""}The simplex algorithm gives ${solutionText(w!, vars)}. ${ask}`
       : `${problem} ${need} Use the simplex algorithm to solve the problem without the whole-number condition. ${ask}`;
   } else prompt = `${problem} ${PROMPT.solve}`;
+  if (data.pivotGiven) {
+    const it = run.iters[at];
+    const names = [...vars, ...Array.from({ length: run.final.m }, (_, i) => `s_${i + 1}`)];
+    const where = o.layout === "B" ? `in the $${names[it.col - 1]}$ column, in the row of the basic variable $${names[run.tabs[at].basis[it.row - 1] - 1]}$` : `in the $${names[it.col - 1]}$ column of row R${it.row + 1} (R1 is the objective row)`;
+    prompt = `${it.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. " : "A simplex tableau for a maximising problem is shown. "}The pivot is the $${fmtFr(it.pivot)}$ ${where}. Carry out one iteration of the simplex algorithm, showing the row operations.`;
+  }
   if (whole && kind === "solve") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}. Is the solution practical? If not, find the best practical plan and state its ${story ? "profit" : "value"}.`;
   if (whole && kind === "interpret") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}: is this solution practical? If not, find the best practical plan.`;
   void vars;

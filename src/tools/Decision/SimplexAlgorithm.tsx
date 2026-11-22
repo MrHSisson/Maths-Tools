@@ -30,6 +30,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     cons: ticked(o.sxCons, level === 1 ? "2" : "3").map(Number),
     forms: ticked(o.sxForms, "standard"),
     context: ticked(o.sxContext, "bare"),
+    pivotGiven: o.sxPivot === "given",
     whole: o.sxWhole === "on",
     given: o.sxGiven !== "find",
     layout: o.sxLayout === "B" ? "B" : "A",
@@ -58,9 +59,14 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "forward", label: "Problem To Tableau" }, { value: "reverse", label: "Tableau To Problem" }],
   },
   {
-    key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation in words that must first be turned into them.",
+    key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation (in sentences or in a table) that must first be turned into them.",
     forSubTools: ["setup", "solve", "practical"], forLevels: [2, 3], multi: true, defaultFor: () => "bare",
-    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation" }],
+    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
+  },
+  {
+    key: "sxPivot", label: "Pivot", info: "Whether the student chooses the pivot (the column, the θ-values, the row) or is told the pivot and only carries out the row operations.",
+    forSubTools: ["pivot"], defaultFor: () => "choose",
+    choices: [{ value: "choose", label: "Student Chooses" }, { value: "given", label: "Pivot Given" }],
   },
   {
     key: "sxForms", label: "Starting Form", info: "What the problem looks like before the simplex algorithm can start: already in standard form, or needing a change first. Tick any of them and each question draws one.",

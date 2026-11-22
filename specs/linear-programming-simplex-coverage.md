@@ -12,7 +12,7 @@
 | L43 | Minimise by Q = −P; sometimes with a constant | Minimise at Level 3 (P = −C), the constant only through a lower bound | partly (the books say Q; we say P) |
 | L44 | Spot the correct initial tableau among three, name the errors | not built | gap |
 | L45 | Choose the pivot, show the ratios | One pivot: the column, the θ-values, the pivot, highlighted | covered |
-| L46 | Carry out one iteration **given** the pivot | One pivot always asks the student to choose the pivot as well; a "pivot given" version is not separate | partly |
+| L46 | Carry out one iteration **given** the pivot | One pivot, option Pivot: Pivot Given (built 2026-11-22) | covered |
 | L47 | Solve to optimality (two or three iterations), all variables, slack and optimum; build the tableau first | Solve: two to four iterations, the tableau built first, every variable, slack and P | covered |
 | L48 | A different first pivot column; same optimum | **dropped by Harry (2026-11-22)** | dropped |
 | L49 | A zero in a right-hand side (zero ratio) | ties and degenerate problems arise from Level 2, with a note for θ = 0 | covered (extended) |
@@ -21,14 +21,14 @@
 | L54, L83 | From an initial tableau write the problem and say what the slacks mean | Set up, Direction: Tableau To Problem. The slack meaning is generic ("the amount of constraint k not used"), not in a story | partly |
 | L55 | A tableau with a parameter k | not built; **a note for the exam-style pass** (2026-11-22) | exam-style note |
 | L56, L82 | The output interpreted in the story, units, every slack explained | Solve and Read a tableau with a situation in words | covered |
-| L57 | A full exam-style chain | not built (Harry: not today) | gap, by decision |
+| L57 | A full exam-style chain | not built; **exam-style pass** (Harry, 2026-11-22) | exam-style note |
 | L77 | A ≥ start: pivot on a negative entry in the negative row | Level 3, Starting Form: A ≥ Constraint (Set up, One pivot, Solve) | covered |
 | L78 | Lower bounds by X = x − a | Level 3, Starting Form: A Lower Bound | covered |
 | L79 | An equality: eliminate a variable, **or** two inequalities; compare | the pair of inequalities only; the elimination method is not built | partly |
-| L80 | A **table** of decimal amounts, simplified to integers, the amount left over | decimals and a simplification step in worded problems; the data is never shown as a table | partly |
+| L80 | A **table** of decimal amounts, simplified to integers, the amount left over | Wording: A Table (built 2026-11-22), with the decimals, the simplification step and the amount left over | covered |
 | L81 | Four variables and four constraints; why the optimum is not practical, a practical plan | Level 3 four variables, four constraints; Is it practical? | covered (extended, see below) |
 | L84 | Error analysis (infeasible, unbounded) | not built (unbounded left out by Harry) | gap, by decision |
-| L85 | Short mark-style parts ("state and explain why this is the pivot") | the steps explain every choice, but the questions are not split into marked parts | gap |
+| L85 | Short mark-style parts ("state and explain why this is the pivot") | not built; **belongs to the exam-style pass** (Harry, 2026-11-22) | exam-style note |
 | L86 | Name the slacks and write the objective with them | the equations name the slacks; the objective row is P − 3x − 2y = 0 (checked against the book: not yet) | to check |
 | L87 | A game as a linear programme (DF6) | not built, belongs to the game theory chapter | later |
 
@@ -57,3 +57,4 @@
 
 - **L53 and L55** are notes for the exam-style pass, not generator questions. **L42** (the matrix equation) has no place in the generator.
 - **A standing rule for this tool: no question type may be always the same.** A question type that would be one fixed example (or only ever differ in its numbers) is not built as a generator question; it is a learning aid, or an exam-style note. Variety to check in the built sub-tools: the stem wording, the starting form, the size, whether a tie or a zero θ turns up, and whether the answer is whole.
+- **L46 and L80 built; L85 and L57 belong to the exam-style pass** (Harry, 2026-11-22).
