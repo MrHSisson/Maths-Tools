@@ -21,7 +21,7 @@ afterEach(() => vi.restoreAllMocks());
 
 const asProblem = (q: { prompt: string; answerText: string; data: LpProblemData }): DecisionProblem => ({ kind: q.data.kind, level: 1, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" });
 const F = (n: number, d = 1) => fr(n, d);
-const generateConstraint = (level: number, o: Pick<LpGenOptionsFull, "vars" | "styles"> & Partial<LpGenOptionsFull>) => gen(level, { pctOf: [], capGiven: "most", method: "fractions", ...o });
+const generateConstraint = (level: number, o: Pick<LpGenOptionsFull, "vars" | "styles"> & Partial<LpGenOptionsFull>) => gen(level, { pctOf: [], capGiven: "most", ...o });
 
 describe("the working of the brief's examples", () => {
   const vars2 = [{ sym: "x", noun: "loaves", integer: true }, { sym: "y", noun: "cakes", integer: true }];

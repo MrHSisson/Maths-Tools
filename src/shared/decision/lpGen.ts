@@ -37,7 +37,7 @@ type LpInfo =
       /** one kind is exactly a multiple of the others (or of one of them), so it is substituted out: `items` are all the kinds, the last being the one that is fixed; `S` the letters it depends on, `a` the multiple (1 for a plain total) */
       link?: { dep: { plural: string; singular: string }; items: Array<{ plural: string; singular: string }>; form: "single" | "combined" | "sum"; S: number[]; a: number; /** a constant: the fixed kind is a·(the others) + c ("10 more than", "10 fewer than") */ c?: number; /** worded the other way round: the letters' kinds are "half" (or a third) of the fixed kind */ reverse?: boolean; profits: number[];
         resources: Array<{ topic: string; unit: string; verb: string; label: string; of: string; per: number[]; amount: number }> } }
-  | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
+  | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; sing?: string[] };
 
 export interface LpProblemData {
   /** display only: whether the working shows the common slips and the check with a number (set by the tool from its display options, never by a generator) */

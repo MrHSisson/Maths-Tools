@@ -476,52 +476,41 @@ function blendSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add):
 // ── Level 3: either-or limits ────────────────────────────────────────────────
 function eitherSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add): void {
   const info = d.info as Extract<LpProblemData["info"], { kind: "eitherOr" }>;
-  const { caps, given, T, method } = info;
+  const { caps, given, T } = info;
   const o = opTex(d.op);
   const L = caps.reduce((l, a) => lcmInt(l, a), 1);
   const requirement = given === "requirement";
   const whole = requirement ? "the whole daily requirement" : given === "rate" || given === "perItem" ? `the ${T} hours available` : "the whole capacity";
   const sing = (i: number): string => info.sing?.[i] ?? d.vars[i].noun.replace(/s$/, "");
   const lcmWords = caps.join(" and ");
-  const showFractions = method !== "units";
-  if (showFractions) {
-    if (given === "perItem") {
-      const mins = caps.map((a) => fr(60, a));
-      step("Each item takes a number of minutes: x items take that many minutes times x. The time available is in hours, so change it to minutes.", [
-        { k: "head", t: "Minutes used" },
-        ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${sing(i)} takes $${coefTex(mins[i], "frac")}$ minutes, so $${v.sym}$ of them take $${exprFr([mins[i]], [v.sym], "frac")}$ minutes.` })),
-        { k: "words", t: `$${T}$ hours $= ${T} \\times 60 = ${60 * T}$ minutes.` },
-      ], "Minutes");
-      step(`Together they must take ${o === "\\le" ? "at most" : "less than"} the ${60 * T} minutes available.`, [
-        { k: "tex", t: `${exprFr(mins, syms, "frac")} ${o} ${60 * T}` },
-      ], "Add them up");
-      const k = mins.reduce((l, f) => lcmInt(l, f[1]), 1);
-      step(`Multiply every term by ${k}, the lowest common multiple of the denominators, to clear the fractions.`, [{ k: "tex", t: `${exprFr(mins.map((f) => fmul(f, fr(k))), syms, "frac")} ${o} ${texN(60 * T * k)}` }], "Whole numbers");
-      const ints = mins.map((f) => fmul(f, fr(k)));
-      const g = [...ints.map((f) => f[0]), 60 * T * k].reduce((h, v) => gcdInt(h, v), 0);
-      if (g > 1) step(`Every number is divisible by ${g}: divide through, to get lowest terms.`, [{ k: "tex", t: constraintTex(c, syms) }], "Lowest terms");
-    } else {
-      step(`${requirement ? "Each item supplies a fraction of the daily requirement" : given === "rate" ? "One item takes a fraction of an hour: 1 over the number that can be done in an hour" : "One item uses a fraction of the whole capacity: 1 over the most that could be made"}; x items use x times that fraction.`, [
-        { k: "head", t: "Fractions of the capacity" },
-        ...d.vars.map((v, i): LpRow => ({ k: "words", t: `${requirement ? `One ${sing(i)} supplies` : `One ${sing(i)} uses`} $\\frac{1}{${caps[i]}}$ ${requirement ? "of the requirement" : given === "rate" ? "of an hour" : "of the capacity"}, so $${v.sym}$ of them ${requirement ? "supply" : "use"} $\\frac{${v.sym}}{${caps[i]}}$.` })),
-      ], "Fractions of the capacity");
-      step(`Together they must ${requirement ? (o === "\\ge" ? "supply at least" : "supply more than") : o === "\\le" ? "use at most" : "use less than"} ${whole}.`, [
-        { k: "tex", t: `${caps.map((a, i) => `\\frac{${syms[i]}}{${a}}`).join(" + ")} ${o} ${T}` },
-      ], "Add them up");
-      step(`Multiply every term by ${L}, the lowest common multiple of ${lcmWords}, to clear the fractions. The right-hand side is multiplied too.`, [
-        { k: "tex", t: constraintTex(c, syms) },
-      ], "Whole numbers");
-    }
-  }
-  if (method === "units" || method === "both") {
-    const units = caps.map((a) => L / a);
-    step(method === "both" ? `The same result by the other method: suppose the ${requirement ? "requirement" : given === "rate" || given === "perItem" ? "capacity for one hour" : "capacity"} is ${L} units (a number ${lcmWords} all divide into).` : `Suppose the ${requirement ? "requirement" : given === "rate" || given === "perItem" ? "capacity for one hour" : "capacity"} is ${L} units: a number that ${lcmWords} all divide into.`, [
-      { k: "head", t: method === "both" ? "The same, in common units" : "Common units" },
-      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${sing(i)} ${requirement ? "supplies" : "uses"} $${L} \\div ${caps[i]} = ${units[i]}$ unit${units[i] === 1 ? "" : "s"}, so $${v.sym}$ of them ${requirement ? "supply" : "use"} $${units[i] === 1 ? "" : units[i]}${v.sym}$.` })),
-      ...(T > 1 ? [{ k: "words", t: `For ${T} hours the capacity is $${T} \\times ${L} = ${T * L}$ units.` } as LpRow] : []),
+  if (given === "perItem") {
+    const mins = caps.map((a) => fr(60, a));
+    step("Each item takes a number of minutes: x items take that many minutes times x. The time available is in hours, so change it to minutes.", [
+      { k: "head", t: "Minutes used" },
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `Each ${sing(i)} takes $${coefTex(mins[i], "frac")}$ minutes, so $${v.sym}$ of them take $${exprFr([mins[i]], [v.sym], "frac")}$ minutes.` })),
+      { k: "words", t: `$${T}$ hours $= ${T} \\times 60 = ${60 * T}$ minutes.` },
+    ], "Minutes");
+    step(`Together they must take ${o === "\\le" ? "at most" : "less than"} the ${60 * T} minutes available.`, [
+      { k: "tex", t: `${exprFr(mins, syms, "frac")} ${o} ${60 * T}` },
+    ], "Add them up");
+    const k = mins.reduce((l, f) => lcmInt(l, f[1]), 1);
+    step(`Multiply every term by ${k}, the lowest common multiple of the denominators, to clear the fractions.`, [{ k: "tex", t: `${exprFr(mins.map((f) => fmul(f, fr(k))), syms, "frac")} ${o} ${texN(60 * T * k)}` }], "Whole numbers");
+    const ints = mins.map((f) => fmul(f, fr(k)));
+    const g = [...ints.map((f) => f[0]), 60 * T * k].reduce((h, v) => gcdInt(h, v), 0);
+    if (g > 1) step(`Every number is divisible by ${g}: divide through, to get lowest terms.`, [{ k: "tex", t: constraintTex(c, syms) }], "Lowest terms");
+  } else {
+    step(`${requirement ? "Each item supplies a fraction of the daily requirement" : given === "rate" ? "One item takes a fraction of an hour: 1 over the number that can be done in an hour" : "One item uses a fraction of the whole capacity: 1 over the most that could be made"}; x items use x times that fraction.`, [
+      { k: "head", t: "Fractions of the capacity" },
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `${requirement ? `One ${sing(i)} supplies` : `One ${sing(i)} uses`} $\\frac{1}{${caps[i]}}$ ${requirement ? "of the requirement" : given === "rate" ? "of an hour" : "of the capacity"}, so $${v.sym}$ of them ${requirement ? "supply" : "use"} $\\frac{${v.sym}}{${caps[i]}}$.` })),
+    ], "Fractions of the capacity");
+    step(`Together they must ${requirement ? (o === "\\ge" ? "supply at least" : "supply more than") : o === "\\le" ? "use at most" : "use less than"} ${whole}.`, [
+      { k: "tex", t: `${caps.map((a, i) => `\\frac{${syms[i]}}{${a}}`).join(" + ")} ${o} ${T}` },
+    ], "Add them up");
+    step(`Multiply every term by ${L}, the lowest common multiple of ${lcmWords}, to clear the fractions. The right-hand side is multiplied too.`, [
       { k: "tex", t: constraintTex(c, syms) },
-    ], "Common units");
+    ], "Whole numbers");
   }
+
   // the check of brief 4.4: with only one kind, the limit is the most of it that could be made
   const rows: LpRow[] = [{ k: "head", t: "Check the ends of the line" }];
   d.vars.forEach((v, i) => {

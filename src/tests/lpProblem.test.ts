@@ -252,7 +252,7 @@ describe("random draws (seeded)", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 600; i++) {
       const level = i % 2 === 0 ? 2 : 3;
-      const info = generateProblem(level, { vars: [2, 3], objective: ["max"], integers: true }).data.info as PInfo;
+      const info = generateProblem(level, { vars: [2, 3], objective: ["max"], integers: true, single: true }).data.info as PInfo;
       if (info.single !== undefined) seen.add("single"); if (info.pack) seen.add("pack");
       if (info.parts.some((p) => p.info.kind === "resource" && p.info.conv)) seen.add("conv");
       if (info.parts.some((p) => p.info.kind === "ratio" && p.op === "=")) seen.add("half");
@@ -330,4 +330,18 @@ describe("audit notes: limits, situations, display toggles", () => {
       }
     }
   });
+});
+
+describe("the single-variable aim is off unless asked for", () => {
+  it("never drawn by default, drawn when included", () => {
+    seeded(41);
+    let on = 0;
+    for (let i = 0; i < 300; i++) {
+      for (const level of [2, 3]) {
+        expect((generateProblem(level, { vars: [2], objective: ["max"], integers: true }).data.info as PInfo).single).toBeUndefined();
+        if ((generateProblem(level, { vars: [2], objective: ["max"], integers: true, single: true }).data.info as PInfo).single !== undefined) on++;
+      }
+    }
+    expect(on).toBeGreaterThan(0);
+  }, 120_000);
 });

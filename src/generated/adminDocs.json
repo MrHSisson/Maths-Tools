@@ -1656,7 +1656,7 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say \"using only x and y\"); display toggles for Common Slips and Number Check. Open: the single-variable objective (one Oxford exercise) and the capacity method."
+        "2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say \"using only x and y\"); display toggles for Common Slips and Number Check. Decided: the capacity method is fractions only (common units removed); the single-variable aim is an asterisked option, off by default."
        ]
       }
      ]
@@ -3936,11 +3936,11 @@
     },
     {
      "date": "2026-11-22",
-     "title": "Linear Programming audit applied: balance, arbitrariness, asterisks, not live"
+     "title": "Formulating: fractions of capacity only; the single aim is off by default, not live"
     },
     {
-     "date": "2026-11-21",
-     "title": "Formulating Linear Programmes: \"Write a constraint\", Level 1 (chunk F1), not live"
+     "date": "2026-11-22",
+     "title": "Linear Programming audit applied: balance, arbitrariness, asterisks, not live"
     }
    ]
   },

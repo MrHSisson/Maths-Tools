@@ -29,7 +29,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (ctx?.subTool === "problem") {
     const q = generateProblem(level, {
       vars, objective: ticked(o.lpObjective, "max"), integers: o.lpIntegers !== "leave", table: o.lpData === "table",
-      limits: ticked(o.lpLimits, "1,2").map(Number), situations: ticked(o.lpSituations, "standard,half,eitherOr,remainder,relation,blend"),
+      limits: ticked(o.lpLimits, "1,2").map(Number), single: o.lpSingle === "on", situations: ticked(o.lpSituations, "standard,half,eitherOr,remainder,relation,blend"),
     });
     q.data.view = view;
     return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
@@ -43,8 +43,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     else if (t === "ratio" || t === "share") { styles.add("ratio"); ratioForms.push(t); }
     else styles.add(t);
   }
-  const method = o.lpMethod === "units" || o.lpMethod === "both" ? o.lpMethod : "fractions";
-  const q = generateConstraint(level, { vars, styles: [...styles], pctOf, ratioForms, capGiven: o.lpCapGiven || "most", method });
+  const q = generateConstraint(level, { vars, styles: [...styles], pctOf, ratioForms, capGiven: o.lpCapGiven || "most" });
   q.data.view = view;
   return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
@@ -83,6 +82,11 @@ const OPTIONS: ShellOption[] = [
     ],
   },
   {
+    key: "lpSingle", label: "Single Aim", info: "Whether some questions only ask to make as many of one kind as possible (the number of chairs), instead of maximising a profit. It is rare in the exercises, so it is left out unless asked for. An asterisk marks an extension that is unlikely to come up.",
+    forSubTools: ["problem"], forLevels: [2, 3], defaultFor: () => "off",
+    choices: [{ value: "off", label: "Left Out" }, { value: "on", label: "Included*", sub: "as many chairs as possible" }],
+  },
+  {
     key: "lpIntegers", label: "Integers", info: "Whether the question says that only whole numbers of items can be made, so that the model must say the variables are integers.",
     forSubTools: ["problem"], forLevels: [2, 3], defaultFor: () => "say",
     choices: [{ value: "say", label: "Say So" }, { value: "leave", label: "Leave Out" }],
@@ -114,6 +118,16 @@ const OPTIONS: ShellOption[] = [
     key: "lpCapGiven", label: "Capacity Given As", info: "How the shared limit is put into words: as the most that could be made of each ('60 loaves or 45 cakes'), or as a rate and a time. Either way the student has to work out the amount each item uses before the constraint can be written. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["constraint"], forLevels: [3], defaultFor: () => "most",
     choices: [{ value: "most", label: "Most You Could Make", sub: "60 loaves or 45 cakes" }, { value: "rate", label: "Rate And Time*", sub: "60 an hour, 8 hours" }],
+  },
+  {
+    key: "lpSlips", label: "Common Slips", info: "Whether the working ends with the common slip: the mistake a student often makes on this kind of constraint, and why it is wrong. It changes only what is shown.",
+    displayOnly: true, tab: "display", defaultFor: () => "show",
+    choices: [{ value: "show", label: "Shown" }, { value: "hide", label: "Hidden" }],
+  },
+  {
+    key: "lpChecks", label: "Number Check", info: "Whether the working tries a number to check the constraint (a point that fits the words, or the case of making only one kind). It changes only what is shown.",
+    displayOnly: true, tab: "display", defaultFor: () => "show",
+    choices: [{ value: "show", label: "Shown" }, { value: "hide", label: "Hidden" }],
   },
   {
     key: "lpSlips", label: "Common Slips", info: "Whether the working ends with the common slip: the mistake a student often makes on this kind of constraint, and why it is wrong. It changes only what is shown.",

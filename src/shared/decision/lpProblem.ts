@@ -27,6 +27,8 @@ interface LpProblemOptions {
   table?: boolean;
   /** how many resource limits a question may have (1 to 3): each question draws one that its situation can supply */
   limits?: number[];
+  /** Levels 2 and 3: some questions only ask to make as many of one kind as possible (off unless asked for: one exercise in one book) */
+  single?: boolean;
   /** Level 3: which kinds of model may be drawn ("standard", "half", "eitherOr", "remainder", "relation", "blend") */
   situations?: string[];
 }
@@ -125,7 +127,7 @@ function genConv(n: number, fx: Fix & { res: Resource }): Part | null {
   return { sentence, prompt: sentence, data: { kind: "resource", vars, op, spec, slip, info: { kind: "resource", per, amount, unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing, conv } } };
 }
 
-interface StdOpts { limits?: number[]; /** Level 3: force the extra limit ("half", "eitherOr") or none ("none") */ l3?: string }
+interface StdOpts { single?: boolean; limits?: number[]; /** Level 3: force the extra limit ("half", "eitherOr") or none ("none") */ l3?: string }
 function standard(n: number, sense: "max" | "min", level: number, strict: boolean, canPack: boolean, so: StdOpts = {}): Draft | null {
   const want = pick(so.limits?.length ? so.limits : [1, 2]);
   const useRes = (c: Context): number => c.resources.filter((r) => !r.decOnly && r.mode === "use").length;
@@ -165,7 +167,7 @@ function standard(n: number, sense: "max" | "min", level: number, strict: boolea
     const fx: Fix = { ...base, ops: cmpOps(strict) };
     if (level >= 3 && so.l3 !== "none" && (so.l3 === "half" || so.l3 === "eitherOr" || Math.random() < 0.6)) {
       if (so.l3 === "half" || (so.l3 !== "eitherOr" && n >= 2 && Math.random() < 0.5)) parts.push(halfPart(n, base));
-      else parts.push(genEitherOr(n, pick(["most", "rate"]), "fractions", { ...base, ops: sense === "max" ? (strict ? ["≤", "≤", "<"] : ["≤"]) : ["≥"] }));
+      else parts.push(genEitherOr(n, pick(["most", "rate"]), { ...base, ops: sense === "max" ? (strict ? ["≤", "≤", "<"] : ["≤"]) : ["≥"] }));
     } else if (level >= 2) {
       const kind = weighted<"percent" | "ratio" | "total" | "multiple">([["percent", 4], ["ratio", 4], ["total", 1], ["multiple", 1]]);
       if (kind === "percent") parts.push(genPercent(n, ["one", "combined", "total", "morless"], fx));
@@ -183,7 +185,7 @@ function standard(n: number, sense: "max" | "min", level: number, strict: boolea
   if (parts.length < 2) return null;
 
   // the objective: a profit (or cost) per item; at Level 2 a profit that is price minus cost, or a single variable to make as many as possible
-  const single = level >= 2 && sense === "max" && !pack && Math.random() < 0.15 ? ri(0, n - 1) : undefined;
+  const single = so.single && level >= 2 && sense === "max" && !pack && Math.random() < 0.15 ? ri(0, n - 1) : undefined;
   let obj: number[], price: number[] | undefined, cost: number[] | undefined;
   const perItem = (): number[] => Array.from({ length: n }, () => (sense === "max" ? ri(2, 20) : ri(1, 9)));
   if (single !== undefined) obj = range(n).map((i) => (i === single ? 1 : 0));
@@ -400,8 +402,8 @@ function attempt(n: number, sense: "max" | "min", level: number, integersWanted:
     if (sit === "blend") d = blendMix(n, level);
     else if (sit === "remainder") d = remainder(n, strict);
     else if (sit === "relation") d = linked(n, strict);
-    else d = standard(n, "max", level, strict, false, { limits: o.limits, l3: sit === "standard" ? "none" : sit });
-  } else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2, { limits: o.limits });
+    else d = standard(n, "max", level, strict, false, { limits: o.limits, single: o.single, l3: sit === "standard" ? "none" : sit });
+  } else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2, { limits: o.limits, single: o.single });
   return d ? finalise(d, level, integersWanted, showTable) : null;
 }
 

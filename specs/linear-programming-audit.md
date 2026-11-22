@@ -70,3 +70,5 @@ Nothing here removes a question type. Items 1 to 3 change the numbers and wordin
 ## 6. Status (2026-11-22, later)
 
 Recommendations 1 to 6 and 8 **applied**: a mixed-sign minimise; One pivot's Start option; equalities in two or more variables; Tableau To Problem moved to Read a tableau (Ask For); Whole Numbers off Read a tableau; one Size option; asterisks on the option buttons (Formulating: 4*, Rate And Time*, Time Per Item*, Share Of A Requirement*, More Or Less Than*, Both*; Simplex: 4 × 4*, Ask If Practical*). Recommendation 7 judged already met (Capacity Method is a display-only option in its own tab). Recommendation 9 is left until a teacher asks. The asterisked things that are not options (price minus cost, three times, the reversed half wording, built-on-purpose ties, the θ column, the Is it practical? method) are marked in section 4 only.
+
+**Later on 2026-11-22.** Capacity Method removed (fractions of capacity only). The single-variable aim (one Oxford exercise) is an asterisked option, off by default.

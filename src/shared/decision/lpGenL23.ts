@@ -27,8 +27,6 @@ export interface LpGenOptionsFull extends LpGenOptions {
   capGiven: string;
   /** Level 2 ratios and shares: which of "ratio" and "share" may be used (both when empty) */
   ratioForms?: string[];
-  /** display only: how the either-or working is shown */
-  method: "fractions" | "units" | "both";
 }
 
 // ── Level 2: percentages ─────────────────────────────────────────────────────
@@ -165,7 +163,7 @@ const CAPS = [12, 15, 16, 18, 20, 24, 25, 30, 32, 36, 40, 45, 48, 50, 60, 72, 75
 const CAPS_PER_ITEM = [12, 15, 20, 24, 30, 40, 45, 60]; // 60 / a is a nice number of minutes: 5, 4, 3, 5/2, 2, 3/2, 4/3, 1
 const HOURS = [2, 3, 4, 5, 6, 8, 10];
 const minTex = (a: number): string => { const f = fr(60, a); return f[1] === 1 ? String(f[0]) : `$\\frac{${f[0]}}{${f[1]}}$`; };
-export function genEitherOr(n: number, given: string, method: "fractions" | "units" | "both", fx?: Fix): Gen {
+export function genEitherOr(n: number, given: string, fx?: Fix): Gen {
   for (let tries = 0; tries < 200; tries++) {
     const requirement = given === "requirement";
     const ctx = fx?.ctx ?? (requirement ? CONTEXTS.find((c) => c.id === "diet")! : pick(CONTEXTS.filter((c) => c.device)));
@@ -200,9 +198,9 @@ export function genEitherOr(n: number, given: string, method: "fractions" | "uni
       options.push(lin(caps, 1, "multiplying by each capacity instead of dividing"));
     } else options.push(lin(ints, L, "leaving out the time"));
     const slip = pick(options);
-    return { prompt, data: { kind: "eitherOr", vars, op, spec, slip, info: { kind: "eitherOr", caps, given: given as "most" | "rate" | "perItem" | "requirement", T, method, sing } } };
+    return { prompt, data: { kind: "eitherOr", vars, op, spec, slip, info: { kind: "eitherOr", caps, given: given as "most" | "rate" | "perItem" | "requirement", T, sing } } };
   }
-  return genEitherOr(2, "most", method, fx);
+  return genEitherOr(2, "most", fx);
 }
 
 // ── The "try a number" check, by looking at every small point: fits the words, the slip does not allow it ─
@@ -246,10 +244,10 @@ function makeOne(level: number, n: number, style: string, o: LpGenOptionsFull): 
   let g: Gen;
   if (style === "percent") g = genPercent(n, o.pctOf.length ? o.pctOf : ["one", "combined", "total", "morless"]);
   else if (style === "ratio") g = genRatio(n, undefined, o.ratioForms?.length === 1 ? (o.ratioForms[0] as "ratio" | "share") : undefined);
-  else if (style === "fractional") g = genEitherOr(n, pick(["perItem", "requirement"]), "fractions");
+  else if (style === "fractional") g = genEitherOr(n, pick(["perItem", "requirement"]));
   else if (style === "decimal") g = genDecimal(n);
   else if (style === "blend") g = genBlend(n);
-  else g = genEitherOr(n, o.capGiven || "most", o.method);
+  else g = genEitherOr(n, o.capGiven || "most");
   void level;
   return g;
 }

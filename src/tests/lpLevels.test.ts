@@ -22,7 +22,7 @@ const F = (n: number, d = 1) => fr(n, d);
 const asProblem = (data: LpProblemData, prompt = "", answerText = ""): DecisionProblem => ({ kind: data.kind, level: data.level, lp: data, prompt, answer: { text: answerText }, matrixMode: "off" });
 const V = (...syms: string[]) => syms.map((sym) => ({ sym, noun: sym === "x" ? "loaves" : sym === "y" ? "cakes" : sym === "z" ? "pies" : "buns", integer: true }));
 const newRows = (data: LpProblemData): string[] => solveLp(asProblem(data)).flatMap((s) => s.lpView!.rows.slice(-s.lpView!.fresh!)).map((r) => r.t);
-const ALL: LpGenOptionsFull = { vars: [2], styles: [], pctOf: ["one", "combined", "total", "morless"], capGiven: "most", method: "fractions" };
+const ALL: LpGenOptionsFull = { vars: [2], styles: [], pctOf: ["one", "combined", "total", "morless"], capGiven: "most" };
 
 describe("worked examples (brief 2, 4 and 4.6)", () => {
   it("x at least 40% of the total, three variables: 3x ≥ 2y + 2z, line by line", () => {
@@ -74,22 +74,16 @@ describe("worked examples (brief 2, 4 and 4.6)", () => {
     const rows = newRows(d);
     for (const r of ["-0.03x + 0.02y \\ge 0", "-3x + 2y \\ge 0", "3x - 2y \\le 0"]) expect(rows).toContain(r);
   });
-  it("either-or: 60 loaves or 45 cakes: x/60 + y/45 ≤ 1, ×180, 3x + 4y ≤ 180, ends of the line 60 and 45; with Common Units and Both", () => {
-    const mk = (method: "fractions" | "units" | "both"): LpProblemData => ({ kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(1), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "most", T: 1, method } });
-    const f = newRows(mk("fractions")).join("\n");
+  it("either-or: 60 loaves or 45 cakes: x/60 + y/45 ≤ 1, ×180, 3x + 4y ≤ 180, ends of the line 60 and 45", () => {
+    const mk = (): LpProblemData => ({ kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(1), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "most", T: 1 } });
+    const f = newRows(mk()).join("\n");
     expect(f).toContain("\\frac{x}{60} + \\frac{y}{45} \\le 1");
     expect(f).toContain("3x + 4y \\le 180");
     expect(f).toContain("$x \\le 60$");
     expect(f).toContain("$y \\le 45$");
-    const u = newRows(mk("units")).join("\n");
-    expect(u).toContain("180 \\div 60 = 3");
-    expect(u).not.toContain("\\frac{x}{60}");
-    const both = newRows(mk("both")).join("\n");
-    expect(both).toContain("\\frac{x}{60}");
-    expect(both).toContain("180 \\div 45 = 4");
   });
   it("either-or: rate and time, 60 an hour or 45 an hour for 8 hours: 3x + 4y ≤ 1440, intercepts 480 and 360", () => {
-    const d: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(8), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "rate", T: 8, method: "fractions" } };
+    const d: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(8), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "rate", T: 8 } };
     const text = newRows(d).join("\n");
     expect(text).toContain("\\frac{x}{60} + \\frac{y}{45} \\le 8");
     expect(text).toContain("3x + 4y \\le 1{,}440");
@@ -97,16 +91,16 @@ describe("worked examples (brief 2, 4 and 4.6)", () => {
     expect(text).toContain("$y \\le 360$");
   });
   it("either-or: time per item, 1 minute and 4/3 minutes, 8 hours: x + (4/3)y ≤ 480, ×3, 3x + 4y ≤ 1440 (hours changed to minutes)", () => {
-    const d: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(8), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "perItem", T: 8, method: "fractions" } };
+    const d: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≤", spec: { t: "either", caps: [F(60), F(45)], amount: F(8), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45], given: "perItem", T: 8 } };
     const text = newRows(d).join("\n");
     expect(text).toContain("8 \\times 60 = 480");
     expect(text).toContain("x + \\frac{4}{3}y \\le 480");
     expect(text).toContain("3x + 4y \\le 1{,}440");
   });
   it("either-or: three products 60, 45, 36: 3x + 4y + 5z ≤ 180; a requirement x/60 + y/45 ≥ 1 gives 3x + 4y ≥ 180", () => {
-    const three: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y", "z"), op: "≤", spec: { t: "either", caps: [F(60), F(45), F(36)], amount: F(1), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45, 36], given: "most", T: 1, method: "fractions" } };
+    const three: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y", "z"), op: "≤", spec: { t: "either", caps: [F(60), F(45), F(36)], amount: F(1), op: "≤" }, info: { kind: "eitherOr", caps: [60, 45, 36], given: "most", T: 1 } };
     expect(newRows(three)).toContain("3x + 4y + 5z \\le 180");
-    const req: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≥", spec: { t: "either", caps: [F(60), F(45)], amount: F(1), op: "≥" }, info: { kind: "eitherOr", caps: [60, 45], given: "requirement", T: 1, method: "fractions" } };
+    const req: LpProblemData = { kind: "eitherOr", level: 3, vars: V("x", "y"), op: "≥", spec: { t: "either", caps: [F(60), F(45)], amount: F(1), op: "≥" }, info: { kind: "eitherOr", caps: [60, 45], given: "requirement", T: 1 } };
     expect(newRows(req)).toContain("3x + 4y \\ge 180");
   });
   it("every slip of brief 4.5 is a different constraint that the intercepts expose", () => {
@@ -149,7 +143,7 @@ describe("random draws, Levels 2 and 3 (seeded)", () => {
         const kinds = new Set<string>(), forms = new Set<string>(), ops = new Set<Op>(), givens = new Set<string>();
         let withPoint = 0, needPoint = 0;
         for (let i = 0; i < 240; i++) {
-          const q = generateConstraint(level, { ...ALL, vars: [n], styles, capGiven: level === 3 ? ["most", "rate", "perItem", "requirement"][i % 4] : "most", method: (["fractions", "units", "both"] as const)[i % 3] });
+          const q = generateConstraint(level, { ...ALL, vars: [n], styles, capGiven: level === 3 ? ["most", "rate", "perItem", "requirement"][i % 4] : "most" });
           const d = q.data;
           const c = constraintOf(d.spec);
           kinds.add(d.kind); ops.add(d.op);
@@ -268,16 +262,6 @@ describe("random draws, Levels 2 and 3 (seeded)", () => {
       const set = new Set<string>();
       for (let i = 0; i < 30; i++) set.add(__seed.generate(level, { subTool: "constraint", options: {} }).prompt);
       expect(set.size).toBe(30);
-    }
-  });
-  it("Capacity Method changes only the working, never the numbers", () => {
-    for (const method of ["fractions", "units", "both"] as const) {
-      seeded(33);
-      const q = generateConstraint(3, { ...ALL, vars: [3], styles: ["eitherOr"], capGiven: "rate", method });
-      seeded(33);
-      const base = generateConstraint(3, { ...ALL, vars: [3], styles: ["eitherOr"], capGiven: "rate", method: "fractions" });
-      expect(q.prompt).toBe(base.prompt);
-      expect(q.answerText).toBe(base.answerText);
     }
   });
 });
