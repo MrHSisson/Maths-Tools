@@ -80,8 +80,8 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "substitute", label: "Substitute And Split", sub: "Y = y − 4; two inequalities" }, { value: "rows", label: "Use As Rows", sub: "−y ≤ −4; an equation as a row" }],
   },
   {
-    key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. An asterisk marks an extension that is unlikely to come up.",
-    forSubTools: ["solve"], defaultFor: () => "off",
+    key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. Levels 1 and 2 only: at Level 3 Solve always needs a change of form, and the whole-number question is the Is it practical? sub-tool. An asterisk marks an extension that is unlikely to come up.",
+    forSubTools: ["solve"], forLevels: [1, 2], defaultFor: () => "off",
     choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
   },
   {

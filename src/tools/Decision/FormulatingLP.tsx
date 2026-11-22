@@ -162,8 +162,8 @@ export default function App() {
         skillSheet: true,
         noSandbox: true,
         levelLabels: {
-          constraint: ["Resource use and direct comparisons", "Percentages, ratios and decimal amounts", "Blends and either-or limits"],
-          problem: ["Resource limits and direct comparisons, with a profit or a cost per item", "Percentages, ratios, decimal amounts and fixed totals; price minus cost, a pack, another unit; integers", "Either-or limits, a blend to make, a rest to substitute out; \"exactly half\""],
+          constraint: ["Resource use and direct comparisons", "Percentages, ratios, shares, and decimal or fractional amounts", "Blends, and either-or limits worked out from the capacity"],
+          problem: ["Resource limits and direct comparisons, with a profit or a cost per item", "Percentages, ratios, decimal amounts and fixed totals; price minus cost, a pack, another unit; integers", "Either-or limits, exactly half, a blend to minimise, a remainder or a relation between kinds substituted out"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

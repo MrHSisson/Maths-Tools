@@ -226,7 +226,7 @@ export interface SxOptions {
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
-  const whole = kind === "practical" || (o.whole && kind === "solve");
+  const whole = kind === "practical" || (o.whole && kind === "solve" && level < 3);
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
@@ -240,7 +240,11 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
   if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
-    const allowed = (o.forms.length ? o.forms : ["min", "ge", "lower", "eq"]) as StartForm[];
+    // Level 3 always needs a change of form: a standard-form start is a Level 1 or 2 question, so it is never drawn here, whatever is asked
+    const changes = (o.forms as string[]).filter((f) => f !== "standard") as StartForm[];
+    // a tableau is all that One pivot shows, so only a ≥ constraint or an equality (a start that is not at the origin) makes it a Level 3 question
+    const usable = kind === "pivot" ? changes.filter((f) => f === "ge" || f === "eq") : changes;
+    const allowed = usable.length ? usable : kind === "pivot" ? (["ge", "eq"] as StartForm[]) : (["min", "ge", "lower", "eq"] as StartForm[]);
     form = pick(allowed);
   }
   const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3, form === "min");

@@ -316,7 +316,7 @@ describe("audit changes: minimise, equality, size", () => {
       expect(q1.data.spec.c.length).toBe(2);
       const q3 = generateSimplex(3, OPT("solve", { sizes: [[3, 3]], forms: ["standard"], context: ["bare"] }));
       expect(q3.data.spec.c.length).toBe(3);
-      expect(q3.data.spec.cons.length).toBe(3);
+      expect(q3.data.spec.cons.length).toBeGreaterThanOrEqual(3); // a change of form (≥, an equality) can add a row
     }
   });
   it("Read a tableau can ask for the problem the tableau shows", () => {

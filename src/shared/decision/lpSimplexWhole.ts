@@ -43,11 +43,13 @@ export function wholeAnalysis(spec: SxSpec, run: Run): Whole {
 }
 
 /** whether a problem makes a good whole-number question at a level: a fraction in the optimum, a practical plan that reaches the bound, something to rule out,
- *  and from Level 2 a best plan that is not just everything rounded down, and at Level 3 a nearest rounding that is not allowed */
+ *  at Level 1 a best plan that is just everything rounded down, from Level 2 one that is not, and at Level 3 a nearest rounding that is not allowed */
 export function wholeNice(w: Whole, level: number): boolean {
   if (!w.frac.length || w.p[1] === 1) return false;
   if (!w.best.ok || w.best.p !== w.bound) return false;
   if (!w.cands.some((c) => !c.ok)) return false;
+  // each level has its own questions: at Level 1 rounding down is the best plan; from Level 2 it is not
+  if (level === 1 && w.best.pt.join() !== w.down.pt.join()) return false;
   if (level >= 2 && w.best.pt.join() === w.down.pt.join()) return false;
   if (level >= 3 && w.nearest.ok) return false;
   return true;
