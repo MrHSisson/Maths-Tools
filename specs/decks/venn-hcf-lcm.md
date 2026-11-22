@@ -187,8 +187,14 @@ These are **authored** worksheets (hand-written, not generated), printed through
 
 ---
 
+## Confirmed by Harry (2026-11-22)
+
+- **Worksheets:** three A4 pages of three Venns each (nine at most), printed scaled to A5.
+- **Words:** "in both", "neither" and "middle" stay.
+- **Look card approved:** built as is; tweaks as we go.
+
 ## Still open (small)
 
-1. **Words:** "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.
+1. ~~**Words:**~~ (confirmed above) "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.
 2. **Section 1 contexts** (pets and 3-letter words, can fly and has feathers, four sides and a right angle, even and multiple of 3) are my suggestions; replace any you like.
-3. **Worksheets (decided by Harry):** three Venns per A4 page, larger, printed by Harry scaled from A4 to A5, so a worksheet holds at most 9 questions (three pages). Assumed: up to three pages of three; say if the 9 should sit some other way.
+3. ~~**Worksheets (decided by Harry):**~~ (confirmed above) three Venns per A4 page, larger, printed by Harry scaled from A4 to A5, so a worksheet holds at most 9 questions (three pages). Assumed: up to three pages of three; say if the 9 should sit some other way.
