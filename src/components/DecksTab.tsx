@@ -14,12 +14,12 @@ const LIVE_WAIT_MS = 4000;
 
 /** The one Decks page's list (/deck-gallery), for everyone. Signed out: the published decks and nothing else, each shown as its first
  *  slide under its category, with no editing controls at all. Signed in (the same password and switch as Developing tools): every deck,
- *  published or not, each with an Edit pencil, plus New deck, the Slide library and a check for decks changed elsewhere. A phone only
- *  previews a deck, so it never shows the editing controls. */
+ *  published or not, each with an Edit pencil, plus New deck, the Slide library and a check for decks changed elsewhere. A phone signed in
+ *  sees the same list (the unpublished decks too) but only previews a deck, so it never shows the editing controls. */
 export default function DecksTab() {
   const unlocked = useDevMode();
   const phone = usePhoneDevice();
-  return unlocked && !phone ? <EditableList /> : <PublishedList />;
+  return unlocked ? <EditableList viewOnly={phone} /> : <PublishedList />;
 }
 
 /** What anyone sees: the published decks, newest first. */
@@ -39,8 +39,8 @@ function PublishedList() {
   );
 }
 
-/** What Harry sees when signed in: every deck, with the editing controls. */
-function EditableList() {
+/** What Harry sees when signed in: every deck, with the editing controls (`viewOnly`, on a phone: the same decks, none of the controls). */
+function EditableList({ viewOnly = false }: { viewOnly?: boolean }) {
   const navigate = useNavigate();
   const published = usePublishedIndex();
   const [, refresh] = useState(0);
@@ -72,7 +72,7 @@ function EditableList() {
     id: d.id, title: d.title, summary: d.summary, strand: d.strand, pitch: d.pitch, slides: d.slides, preview: d.preview,
     badge: published?.[d.id] ? undefined : 'Not published',
     notes: [published?.[d.id] ? 'published' : 'not published', 'your deck', ...(d.edited ? ['edited on this device'] : [])],
-    action: <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
+    action: viewOnly ? undefined : <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil size={16} /></Link>,
   }));
   const button = 'rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-card hover:bg-slate-50';
   return (
@@ -81,10 +81,10 @@ function EditableList() {
         <Heading inline>Decks</Heading>
         {checking && <span className="ml-auto text-sm text-slate-500" role="status">{checking}</span>}
         <button onClick={() => void check()} disabled={checking === 'Checking…'} title="Look for decks changed on another device or by Claude" className={`${checking ? '' : 'ml-auto '}${button} disabled:opacity-60`}>Check for changes</button>
-        <Link to="/decks/library" className={button}>Slide library</Link>
-        <button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>
+        {!viewOnly && <Link to="/decks/library" className={button}>Slide library</Link>}
+        {!viewOnly && (<button onClick={create} className="inline-flex items-center gap-1 rounded-xl bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Plus size={16} />New deck</button>)}
       </div>
-      {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : decks.length === 0 ? <p className="text-slate-500">No decks yet.</p> : <DeckSections decks={decks} admin />}
+      {!synced ? <p className="py-10 text-center font-medium text-slate-500" role="status">Loading the latest decks…</p> : decks.length === 0 ? <p className="text-slate-500">No decks yet.</p> : <DeckSections decks={decks} admin={!viewOnly} />}
     </div>
   );
 }

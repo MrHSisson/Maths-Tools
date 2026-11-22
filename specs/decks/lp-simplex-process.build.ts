@@ -87,18 +87,18 @@ function graph(o: GraphOpts = {}) {
     seg(0, 0, 5.4, 0, LOOK.ink, 6), seg(0, 0, 0, 4.6, LOOK.ink, 6),
     t(px(5.45), py(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(4.6) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
     seg(5, 0, 2.75, 4.5, "#1d4ed8", 7), seg(0, 4, 5.3, 1.35, "#7c3aed", 7),
-    ...(o.labels === false ? [] : [t(px(2.9), py(4.55) - 8, 330, 44, "$2x + y = 10$", 30, { colour: "#1d4ed8", bold: true }), t(px(0.15), py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: "#7c3aed", bold: true })]),
+    ...(o.labels === false ? [] : [t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: "#1d4ed8", bold: true }), t(px(0.15), py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: "#7c3aed", bold: true })]),
   ];
   const cs = o.corners;
   CORNERS.forEach(([x, y], i) => {
     const step = cs && i !== 0 ? cs.step : 0;
     els.push(dot(x, y, LOOK.ink, step, 11));
     // labels go where no line runs: (0, 4) to the left of the axis, (4, 2) above and to the right (outside both limits)
-    const lx = i === 1 ? px(x) - 200 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? 10 : 14);
+    const lx = i === 1 ? px(x) - 140 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? -70 : 14);
     const ly = i === 1 ? py(y) - 40 : i === 2 ? py(y) - 100 : py(y) + 14;
     const al = i === 1 ? { align: "right" } : {};
-    if (cs) els.push(t(lx, ly, 190, 46, `$(${x}, ${y})$`, 30, { colour: LOOK.ink, ...al, ...(step ? { step } : {}) }));
-    if (cs && cs.labels !== undefined) els.push(t(lx, ly + 40, 190, 46, `$P = ${PVAL[i]}$`, 30, { colour: grey, bold: true, ...al, ...(cs.labels ? { step: cs.labels } : {}) }));
+    if (cs) els.push(t(lx, ly, 130, 46, `$(${x}, ${y})$`, 30, { colour: LOOK.ink, ...al, ...(step ? { step } : {}) }));
+    if (cs && cs.labels !== undefined) els.push(t(lx, ly + 40, 130, 46, `$P = ${PVAL[i]}$`, 30, { colour: grey, bold: true, ...al, ...(cs.labels ? { step: cs.labels } : {}) }));
   });
   for (const [a, b, step] of o.path ?? []) els.push(seg(CORNERS[a][0], CORNERS[a][1], CORNERS[b][0], CORNERS[b][1], GREEN, 12, step, true));
   if (o.at !== undefined) els.push(dot(CORNERS[o.at][0], CORNERS[o.at][1], GREEN, 0, 18));
