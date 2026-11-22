@@ -1,6 +1,6 @@
 import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import LpCanvas, { LpSolution } from "../../shared/decision/LpWorking";
+import LpCanvas, { LpSolution, LpStageFigure } from "../../shared/decision/LpWorking";
 import { generateConstraint } from "../../shared/decision/lpGenL23";
 import { generateProblem } from "../../shared/decision/lpProblem";
 import { solveLp } from "../../shared/decision/lpSolve";
@@ -160,6 +160,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: { hasFigure: (p) => !!p.lp && (p.lp.info.kind !== "problem" || !!p.lp.info.showTable), figure: (p) => <LpStageFigure p={p} /> },
         noSandbox: true,
         levelLabels: {
           constraint: ["Resource use and direct comparisons", "Percentages, ratios, shares, and decimal or fractional amounts", "Blends, and either-or limits worked out from the capacity"],

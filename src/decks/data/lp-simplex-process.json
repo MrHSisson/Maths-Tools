@@ -273,7 +273,7 @@
     },
     {
      "kind": "text",
-     "x": 845,
+     "x": 807,
      "y": 350,
      "w": 130,
      "h": 46,
@@ -286,7 +286,7 @@
     },
     {
      "kind": "text",
-     "x": 845,
+     "x": 807,
      "y": 390,
      "w": 130,
      "h": 46,
@@ -375,7 +375,7 @@
      "id": "sx-problem-24"
     }
    ],
-   "built": "66bxku"
+   "built": "1r03hyy"
   },
   {
    "id": "sx-idea",
@@ -667,7 +667,7 @@
      "y": 250,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&1&-2&-3&0&0&0\\\\[0.8ex]\\hline s_1&0&2&1&1&0&10\\\\[1ex]s_2&0&1&2&0&1&8\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline 1&-2&-3&0&0&0\\\\[0.8ex]\\hline 0&2&1&1&0&10\\\\[1ex]0&1&2&0&1&8\\end{array}",
      "size": 58,
      "id": "sx-table0-3"
     },
@@ -676,9 +676,9 @@
      "x": 60,
      "y": 620,
      "w": 880,
-     "h": 220,
-     "text": "Read it: the variables in the first column are the ones that are not zero.\n$s_1 = 10$, $s_2 = 8$, $P = 0$, and $x = y = 0$.",
-     "size": 42,
+     "h": 230,
+     "text": "Read it: a column with a single 1 and 0s elsewhere is a variable that is not zero. Its value is on the right, in the row of the 1.\n$s_1 = 10$, $s_2 = 8$, $P = 0$, and $x = y = 0$.",
+     "size": 40,
      "colour": "#0f172a",
      "step": 1,
      "id": "sx-table0-4"
@@ -806,7 +806,7 @@
      "id": "sx-table0-15"
     }
    ],
-   "built": "5p2ohn"
+   "built": "bmkob9"
   },
   {
    "id": "sx-column",
@@ -842,7 +842,7 @@
      "y": 250,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&\\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{-2}&\\textcolor{#1d4ed8}{-3}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}\\\\[0.8ex]\\hline s_1&0&2&1&1&0&10\\\\[1ex]s_2&0&1&2&0&1&8\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline \\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{-2}&\\textcolor{#1d4ed8}{-3}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}\\\\[0.8ex]\\hline 0&2&1&1&0&10\\\\[1ex]0&1&2&0&1&8\\end{array}",
      "size": 58,
      "id": "sx-column-3"
     },
@@ -1006,7 +1006,7 @@
      "id": "sx-column-17"
     }
    ],
-   "built": "13jnjoh"
+   "built": "178pexo"
   },
   {
    "id": "sx-ratio",
@@ -1043,7 +1043,7 @@
      "y": 250,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&\\textcolor{#1d4ed8}{y}&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&1&-2&\\textcolor{#1d4ed8}{-3}&0&0&0\\\\[0.8ex]\\hline s_1&0&2&\\textcolor{#1d4ed8}{1}&1&0&10\\\\[1ex]s_2&0&1&\\colorbox{#fde047}{$\\;2\\;$}&0&1&8\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&x&\\textcolor{#1d4ed8}{y}&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline 1&-2&\\textcolor{#1d4ed8}{-3}&0&0&0\\\\[0.8ex]\\hline 0&2&\\textcolor{#1d4ed8}{1}&1&0&10\\\\[1ex]0&1&\\colorbox{#fde047}{$\\;2\\;$}&0&1&8\\end{array}",
      "size": 58,
      "id": "sx-ratio-3"
     },
@@ -1219,7 +1219,136 @@
      "id": "sx-ratio-18"
     }
    ],
-   "built": "1d0e6c1"
+   "built": "7sspws"
+  },
+  {
+   "id": "sx-negative",
+   "family": "teach",
+   "title": "Why only positive entries?",
+   "brief": "Why the ratio test uses positive entries only. Row 2 of the starting table, with x = 0, is s2 = 8 - 2y: raising y shrinks s2, which runs out at y = 4. A negative entry would make the variable grow instead (s = 8 + 2y), so it never runs out; dividing would give a limit at y = -4, behind us.",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Why only positive entries?",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "sx-negative-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 165,
+     "w": 1400,
+     "h": 60,
+     "text": "A ratio asks how far $y$ can go before a limit runs out",
+     "size": 40,
+     "colour": "#64748b",
+     "id": "sx-negative-2"
+    },
+    {
+     "kind": "text",
+     "x": 80,
+     "y": 250,
+     "w": 700,
+     "h": 60,
+     "text": "The entry in row 2 is $2$",
+     "size": 40,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "sx-negative-3"
+    },
+    {
+     "kind": "maths",
+     "x": 80,
+     "y": 330,
+     "w": 700,
+     "h": 110,
+     "latex": "s_2 = 8 - 2y",
+     "size": 62,
+     "align": "left",
+     "id": "sx-negative-4"
+    },
+    {
+     "kind": "text",
+     "x": 80,
+     "y": 470,
+     "w": 700,
+     "h": 210,
+     "text": "Raise $y$: $s_2$ shrinks and reaches 0 at $y = 8 \\div 2 = 4$. A real limit.",
+     "size": 40,
+     "colour": "#0f172a",
+     "step": 1,
+     "id": "sx-negative-5"
+    },
+    {
+     "kind": "text",
+     "x": 820,
+     "y": 250,
+     "w": 700,
+     "h": 60,
+     "text": "Imagine the entry were $-2$",
+     "size": 40,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "sx-negative-6"
+    },
+    {
+     "kind": "maths",
+     "x": 820,
+     "y": 330,
+     "w": 700,
+     "h": 110,
+     "latex": "s = 8 + 2y",
+     "size": 62,
+     "align": "left",
+     "step": 2,
+     "id": "sx-negative-7"
+    },
+    {
+     "kind": "text",
+     "x": 820,
+     "y": 470,
+     "w": 700,
+     "h": 210,
+     "text": "Raise $y$: $s$ grows and never reaches 0. It is no limit at all.",
+     "size": 40,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "sx-negative-8"
+    },
+    {
+     "kind": "text",
+     "x": 80,
+     "y": 700,
+     "w": 1440,
+     "h": 90,
+     "text": "$8 \\div (-2) = -4$ would be a limit behind us, at $y = -4$. So we skip negative entries.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 3,
+     "id": "sx-negative-9"
+    },
+    {
+     "kind": "text",
+     "x": 80,
+     "y": 810,
+     "w": 1440,
+     "h": 60,
+     "text": "A zero entry does not touch that limit either, so it is skipped too.",
+     "size": 38,
+     "colour": "#64748b",
+     "step": 4,
+     "id": "sx-negative-10"
+    }
+   ],
+   "built": "rgi5v"
   },
   {
    "id": "sx-pivot1",
@@ -1253,9 +1382,9 @@
     {
      "kind": "maths",
      "x": 60,
-     "y": 240,
+     "y": 235,
      "w": 880,
-     "h": 180,
+     "h": 215,
      "latex": "\\begin{array}{l}\\mathrm{NPR} = \\mathrm{R}3 \\div 2 \\quad \\text{(divide the pivot row)}\\\\[1ex] \\mathrm{R}1 + 3 \\times \\mathrm{NPR} \\quad \\text{(take } y \\text{ out of the bottom row)}\\\\[1ex] \\mathrm{R}2 - \\mathrm{NPR} \\quad \\text{(take } y \\text{ out of the first limit)}\\end{array}",
      "size": 38,
      "align": "left",
@@ -1264,10 +1393,10 @@
     {
      "kind": "maths",
      "x": 40,
-     "y": 430,
+     "y": 470,
      "w": 900,
-     "h": 370,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&1&-\\tfrac{1}{2}&0&0&\\tfrac{3}{2}&12\\\\[0.8ex]\\hline s_1&0&\\tfrac{3}{2}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]y&0&\\tfrac{1}{2}&1&0&\\tfrac{1}{2}&4\\end{array}",
+     "h": 330,
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline 1&-\\tfrac{1}{2}&0&0&\\tfrac{3}{2}&12\\\\[0.8ex]\\hline 0&\\tfrac{3}{2}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]0&\\tfrac{1}{2}&1&0&\\tfrac{1}{2}&4\\end{array}",
      "size": 58,
      "step": 1,
      "id": "sx-pivot1-4"
@@ -1278,7 +1407,7 @@
      "y": 810,
      "w": 880,
      "h": 70,
-     "text": "Now $y$ is in the first column: $y = 4$, and $P = 12$.",
+     "text": "Now the $y$ column is a single 1: $y = 4$, and $P = 12$.",
      "size": 44,
      "colour": "#0f172a",
      "bold": true,
@@ -1419,7 +1548,7 @@
      "id": "sx-pivot1-17"
     }
    ],
-   "built": "1ww3pzk"
+   "built": "6u10zy"
   },
   {
    "id": "sx-corner1",
@@ -1645,7 +1774,7 @@
      "y": 240,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&\\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{-\\tfrac{1}{2}}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{\\tfrac{3}{2}}&\\textcolor{#1d4ed8}{12}\\\\[0.8ex]\\hline s_1&0&\\tfrac{3}{2}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]y&0&\\tfrac{1}{2}&1&0&\\tfrac{1}{2}&4\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline \\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{-\\tfrac{1}{2}}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{\\tfrac{3}{2}}&\\textcolor{#1d4ed8}{12}\\\\[0.8ex]\\hline 0&\\tfrac{3}{2}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]0&\\tfrac{1}{2}&1&0&\\tfrac{1}{2}&4\\end{array}",
      "size": 58,
      "id": "sx-tradeoff-3"
     },
@@ -1831,7 +1960,7 @@
      "id": "sx-tradeoff-19"
     }
    ],
-   "built": "1izip9q"
+   "built": "13qbp5g"
   },
   {
    "id": "sx-ratio2",
@@ -1867,7 +1996,7 @@
      "y": 250,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&\\textcolor{#1d4ed8}{x}&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&1&\\textcolor{#1d4ed8}{-\\tfrac{1}{2}}&0&0&\\tfrac{3}{2}&12\\\\[0.8ex]\\hline s_1&0&\\colorbox{#fde047}{$\\;\\tfrac{3}{2}\\;$}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]y&0&\\textcolor{#1d4ed8}{\\tfrac{1}{2}}&1&0&\\tfrac{1}{2}&4\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&\\textcolor{#1d4ed8}{x}&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline 1&\\textcolor{#1d4ed8}{-\\tfrac{1}{2}}&0&0&\\tfrac{3}{2}&12\\\\[0.8ex]\\hline 0&\\colorbox{#fde047}{$\\;\\tfrac{3}{2}\\;$}&0&1&-\\tfrac{1}{2}&6\\\\[1ex]0&\\textcolor{#1d4ed8}{\\tfrac{1}{2}}&1&0&\\tfrac{1}{2}&4\\end{array}",
      "size": 58,
      "id": "sx-ratio2-3"
     },
@@ -2054,7 +2183,7 @@
      "id": "sx-ratio2-19"
     }
    ],
-   "built": "1o9tn4v"
+   "built": "1r128bp"
   },
   {
    "id": "sx-pivot2",
@@ -2076,9 +2205,9 @@
     {
      "kind": "maths",
      "x": 60,
-     "y": 240,
+     "y": 235,
      "w": 880,
-     "h": 180,
+     "h": 215,
      "latex": "\\begin{array}{l}\\mathrm{NPR} = \\mathrm{R}2 \\div \\tfrac{3}{2} \\quad \\text{(divide the pivot row)}\\\\[1ex] \\mathrm{R}1 + \\tfrac{1}{2} \\times \\mathrm{NPR} \\quad \\text{(take } x \\text{ out of the bottom row)}\\\\[1ex] \\mathrm{R}3 - \\tfrac{1}{2} \\times \\mathrm{NPR} \\quad \\text{(take } x \\text{ out of the } y \\text{ row)}\\end{array}",
      "size": 38,
      "align": "left",
@@ -2087,10 +2216,10 @@
     {
      "kind": "maths",
      "x": 40,
-     "y": 430,
+     "y": 470,
      "w": 900,
-     "h": 370,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&1&0&0&\\tfrac{1}{3}&\\tfrac{4}{3}&14\\\\[0.8ex]\\hline x&0&1&0&\\tfrac{2}{3}&-\\tfrac{1}{3}&4\\\\[1ex]y&0&0&1&-\\tfrac{1}{3}&\\tfrac{2}{3}&2\\end{array}",
+     "h": 330,
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline 1&0&0&\\tfrac{1}{3}&\\tfrac{4}{3}&14\\\\[0.8ex]\\hline 0&1&0&\\tfrac{2}{3}&-\\tfrac{1}{3}&4\\\\[1ex]0&0&1&-\\tfrac{1}{3}&\\tfrac{2}{3}&2\\end{array}",
      "size": 58,
      "step": 1,
      "id": "sx-pivot2-3"
@@ -2253,7 +2382,7 @@
      "id": "sx-pivot2-17"
     }
    ],
-   "built": "1wb8u85"
+   "built": "1kkuo6x"
   },
   {
    "id": "sx-stop",
@@ -2289,7 +2418,7 @@
      "y": 250,
      "w": 900,
      "h": 330,
-     "latex": "\\begin{array}{c|ccccc|c}\\text{basic}&P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline P&\\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{\\tfrac{1}{3}}&\\textcolor{#1d4ed8}{\\tfrac{4}{3}}&\\textcolor{#1d4ed8}{14}\\\\[0.8ex]\\hline x&0&1&0&\\tfrac{2}{3}&-\\tfrac{1}{3}&4\\\\[1ex]y&0&0&1&-\\tfrac{1}{3}&\\tfrac{2}{3}&2\\end{array}",
+     "latex": "\\begin{array}{ccccc|c}P&x&y&s_1&s_2&\\text{RHS}\\\\[0.6ex]\\hline \\textcolor{#1d4ed8}{1}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{0}&\\textcolor{#1d4ed8}{\\tfrac{1}{3}}&\\textcolor{#1d4ed8}{\\tfrac{4}{3}}&\\textcolor{#1d4ed8}{14}\\\\[0.8ex]\\hline 0&1&0&\\tfrac{2}{3}&-\\tfrac{1}{3}&4\\\\[1ex]0&0&1&-\\tfrac{1}{3}&\\tfrac{2}{3}&2\\end{array}",
      "size": 58,
      "id": "sx-stop-3"
     },
@@ -2474,7 +2603,7 @@
      "id": "sx-stop-19"
     }
    ],
-   "built": "pziiwy"
+   "built": "113arf7"
   },
   {
    "id": "sx-journey",
@@ -2497,7 +2626,7 @@
      "kind": "maths",
      "x": 40,
      "y": 240,
-     "w": 900,
+     "w": 820,
      "h": 320,
      "latex": "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}",
      "size": 44,
@@ -2638,7 +2767,7 @@
     },
     {
      "kind": "text",
-     "x": 845,
+     "x": 807,
      "y": 350,
      "w": 130,
      "h": 46,
@@ -2650,7 +2779,7 @@
     },
     {
      "kind": "text",
-     "x": 845,
+     "x": 807,
      "y": 390,
      "w": 130,
      "h": 46,
@@ -2754,7 +2883,7 @@
      "id": "sx-journey-24"
     }
    ],
-   "built": "rx0vqm"
+   "built": "15khu97"
   },
   {
    "id": "sx-rules",
@@ -2779,13 +2908,13 @@
      "y": 260,
      "w": 1400,
      "h": 560,
-     "text": "•  Pivot column: the most negative entry in the bottom row.\n•  Pivot row: the smallest ratio, right-hand side divided by the positive entries in that column.\n•  Divide the pivot row by the pivot. Take away multiples of it from every other row.\n•  Stop when the bottom row has no negatives. Read the variables from the first column.",
+     "text": "•  Pivot column: the most negative entry in the bottom row.\n•  Pivot row: the smallest ratio, right-hand side divided by the positive entries in that column.\n•  Divide the pivot row by the pivot. Take away multiples of it from every other row.\n•  Stop when the bottom row has no negatives. A column with a single 1 is a variable that is not zero: its value is on the right, in the row of the 1. Every other variable is 0.",
      "size": 50,
      "colour": "#0f172a",
      "id": "sx-rules-2"
     }
    ],
-   "built": "cuvxrb"
+   "built": "1f8g9h"
   },
   {
    "id": "sx-mistakes",
@@ -2810,13 +2939,13 @@
      "y": 260,
      "w": 1400,
      "h": 560,
-     "text": "•  Ratios: only for positive entries in the pivot column.\n•  Update the bottom row too: it is a row like the others.\n•  A variable not in the first column is 0, even if you were using it a step ago.\n•  Stopping early: check the whole bottom row, not just the first entry.",
+     "text": "•  Ratios: only for positive entries in the pivot column.\n•  Update the bottom row too: it is a row like the others.\n•  A variable whose column is not a single 1 is 0, even if you were using it a step ago.\n•  Stopping early: check the whole bottom row, not just the first entry.",
      "size": 50,
      "colour": "#0f172a",
      "id": "sx-mistakes-2"
     }
    ],
-   "built": "htsgyc"
+   "built": "r04l2i"
   }
  ]
 }

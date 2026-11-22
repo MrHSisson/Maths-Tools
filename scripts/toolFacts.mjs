@@ -64,7 +64,7 @@ function subToolCount(src) {
 //   generator  a standalone PDF worksheet generator
 //   workshop   internal build pages (templates, libraries, technique previews) — not for teachers
 const KIND_OVERRIDES = {
-  "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop", "further-mechanics": "workshop", "decision-overview": "workshop",
+  "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop", "further-mechanics": "workshop", "decision-overview": "workshop", "lp-roadmap": "workshop",
   visualiser: "sandbox", "name-wheel": "sandbox", "advent-calendar": "sandbox",
 };
 function kindOf(t) {
@@ -88,7 +88,26 @@ const REPS = [
   [/\bbars\b.*num|BarModel|barModel/, "Bar model"],
 ];
 
-function sourceFacts(src, tool, specs) {
+/** Number of entries in a Decision tool's `SUB_TOOLS = [ … ]` list (each is `{ key: "…", … }`), or null. */
+function decisionSubTools(src) {
+  const at = src.search(/\bSUB_TOOLS\b[^=\n]*=\s*\[/);
+  if (at < 0) return null;
+  let depth = 0, n = 0;
+  for (let k = src.indexOf("[", at); k < src.length; k++) {
+    const c = src[k];
+    if (c === "[") depth++;
+    else if (c === "]") { depth--; if (depth === 0) return n || null; }
+    else if (c === "{" && depth === 1) { if (/^\{\s*key:/.test(src.slice(k, k + 14))) n++; }
+  }
+  return null;
+}
+/** The number of levels a Decision tool offers (`levels: n` in its config), or null. */
+function decisionLevels(src) {
+  const m = src.match(/config=\{\{[\s\S]*?\blevels:\s*(\d)/);
+  return m ? Number(m[1]) : null;
+}
+
+function sourceFacts(src, tool, specs, testImports, decks) {
   const shell = /<ToolShell\b/.test(src) ? "ToolShell"
     : /shared\/decision|DecisionShell/.test(src) ? "DecisionShell"
     : /shared\/cs|CSShell/.test(src) ? "CSShell" : "Standalone";
@@ -97,7 +116,8 @@ function sourceFacts(src, tool, specs) {
   const calibration = existsSync(join(ROOT, tool.file.replace(/\.tsx$/, ".calibration.ts")));
   return {
     shell,
-    subTools: shell === "ToolShell" ? subToolCount(src) : null,
+    subTools: shell === "ToolShell" ? subToolCount(src) : shell === "DecisionShell" ? decisionSubTools(src) : null,
+    levels: shell === "DecisionShell" ? decisionLevels(src) : null,
     lines: src.split("\n").length,
     depth: has(/depthItems\s*=/),
     teach: has(/teachingSlides\s*=|teachingLessons\s*=/),
@@ -109,7 +129,12 @@ function sourceFacts(src, tool, specs) {
     customPrint: has(/customPrintHandler/),
     printables: has(/printables=\{|printTemplates:\s*true/),
     printBasket: has(/questionSheet:|skillSheet:|examSheet:/),   // saved questions can be printed from the basket (a sheet, a skill worksheet or exam papers)
-    tests: has(/export const __test/),
+    // tested: a generator smoke-test export (`__test`, or `__seed` for a Decision tool), or a test file that imports the tool
+    tests: has(/export const __test/) || has(/export const __seed/) || testImports.has(tool.file.replace(/^src\/tools\//, "").replace(/\.tsx$/, "")),
+    // explains itself: an About file beside the tool, or (a Decision tool) a purpose sentence in its config
+    about: existsSync(join(ROOT, tool.file.replace(/\.tsx$/, ".about.ts"))) || has(/\bpurpose:\s*["'`]/),
+    // the lesson decks built for this tool
+    decks: decks.filter(d => d.tool === tool.id).map(d => d.id),
     skillLinks: has(/\[\[[a-z0-9-]+\|/),
     representations,
     spec: specs.has(tool.id) || specs.has(tool.path.replace(/^\//, "")),
@@ -118,23 +143,57 @@ function sourceFacts(src, tool, specs) {
 
 function listSpecs() {
   const ids = new Set();
-  const walk = dir => {
+  const walk = (dir, top) => {
     for (const f of readdirSync(dir, { withFileTypes: true })) {
-      if (f.isDirectory()) walk(join(dir, f.name));
-      else if (f.name.endsWith(".md")) ids.add(f.name.replace(/\.md$/, ""));
+      if (f.isDirectory()) walk(join(dir, f.name), false);
+      else if (f.name.endsWith(".md")) {
+        ids.add(f.name.replace(/\.md$/, ""));
+        // a brief at the top of specs/ names its tool in its header: `/lp-simplex` or `lp-simplex` in backticks (deck plans, the corpus and the exam notes are not briefs)
+        if (top) {
+          const head = readFileSync(join(dir, f.name), "utf8").split("\n").slice(0, 10).join("\n");
+          for (const m of head.matchAll(/`(\/?[a-z][a-z0-9-]*)`/g)) ids.add(m[1].replace(/^\//, ""));
+        }
+      }
     }
   };
-  walk(join(ROOT, "specs"));
+  walk(join(ROOT, "specs"), true);
   return ids;
+}
+
+/** The tool files that the test files import (as `Decision/SimplexAlgorithm`), so a tool tested through its file counts as tested. */
+function listTestImports() {
+  const out = new Set();
+  const dir = join(ROOT, "src/tests");
+  if (!existsSync(dir)) return out;
+  for (const f of readdirSync(dir)) {
+    if (!/\.test\.tsx?$/.test(f)) continue;
+    const text = readFileSync(join(dir, f), "utf8");
+    for (const m of text.matchAll(/from\s+["'][^"']*\/tools\/([^"']+)["']/g)) out.add(m[1].replace(/\.tsx?$/, ""));
+  }
+  return out;
+}
+
+/** The decks in src/decks/data: their id and the tool each is built on. */
+function listDecks() {
+  const dir = join(ROOT, "src/decks/data");
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith(".json")) continue;
+    try { const d = JSON.parse(readFileSync(join(dir, f), "utf8")); if (d && d.id) out.push({ id: d.id, tool: d.tool ?? null }); } catch { /* not a deck */ }
+  }
+  return out;
 }
 
 function computeToolFacts() {
   const registry = parseRegistry(readFileSync(join(ROOT, "src/registry.ts"), "utf8"));
   const specs = listSpecs();
+  const testImports = listTestImports();
+  const decks = listDecks();
   const tools = registry.map(t => {
     const p = join(ROOT, t.file);
     const src = existsSync(p) ? readFileSync(p, "utf8") : "";
-    return { ...t, kind: kindOf(t), ...sourceFacts(src, t, specs) };
+    return { ...t, kind: kindOf(t), ...sourceFacts(src, t, specs, testImports, decks) };
   });
   return { tools };
 }

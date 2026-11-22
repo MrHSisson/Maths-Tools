@@ -15,10 +15,10 @@ export interface ToolFacts {
   category: string; subject: string; kind: Kind;
   enabled: boolean;
   file: string; shell: "ToolShell" | "DecisionShell" | "CSShell" | "Standalone";
-  subTools: number | null; lines: number;
+  subTools: number | null; levels: number | null; lines: number;
   depth: boolean; teach: boolean; lessons: boolean; workedSplit: boolean; calibrated: boolean;
   scaffold: boolean; reformat: boolean; customPrint: boolean; printables: boolean; printBasket: boolean; tests: boolean;
-  skillLinks: boolean; spec: boolean; representations: string[];
+  skillLinks: boolean; spec: boolean; about: boolean; decks: string[]; representations: string[];
 }
 
 export const TOOLS: ToolFacts[] = (raw as { tools: ToolFacts[] }).tools;
