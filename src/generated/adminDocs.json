@@ -4183,6 +4183,10 @@
   "name-wheel": {
    "changes": [
     {
+     "date": "2026-11-22",
+     "title": "Name Wheel: three spin styles"
+    },
+    {
      "date": "2026-11-07",
      "title": "Balloons rise when the wheel picks a name"
     },
@@ -4197,10 +4201,6 @@
     {
      "date": "2026-11-06",
      "title": "Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
     }
    ]
   },

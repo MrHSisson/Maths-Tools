@@ -23,13 +23,23 @@ const PALETTES: Record<string, Palette> = {
 };
 const PALETTE_ORDER = ["bright", "soft", "blues", "festive"];
 
+// How a spin looks: the round wheel (pointer at the top), an upright carnival prize wheel (pegs and a flapper on the
+// right, slices moving top to bottom) or a case-opening strip (names slide across the screen past a marker).
+type SpinStyle = "classic" | "carnival" | "case";
+const STYLES: { id: SpinStyle; name: string; about: string }[] = [
+  { id: "classic", name: "Classic", about: "A round wheel with the pointer at the top." },
+  { id: "carnival", name: "Carnival", about: "An upright prize wheel: the slices move top to bottom past a clicking flapper." },
+  { id: "case", name: "Case", about: "The names slide across the screen past a marker, like opening a case." },
+];
+const isStyle = (v: unknown): v is SpinStyle => STYLES.some(x => x.id === v);
+
 interface Row { name: string; count: number }
-interface Wheel { id: string; name: string; rows: Row[]; winners: string[]; palette: string }
+interface Wheel { id: string; name: string; rows: Row[]; winners: string[]; palette: string; style: SpinStyle }
 interface Store { active: string; wheels: Wheel[]; sound: boolean }
 interface Entry { name: string; row: number; pos: number }
 
 const newId = () => Math.random().toString(36).slice(2, 9);
-const emptyWheel = (name: string): Wheel => ({ id: newId(), name, rows: [{ name: "", count: 1 }], winners: [], palette: "bright" });
+const emptyWheel = (name: string): Wheel => ({ id: newId(), name, rows: [{ name: "", count: 1 }], winners: [], palette: "bright", style: "classic" });
 const clampCount = (v: string | number) => { const n = parseInt(String(v), 10); return Number.isNaN(n) || n < 1 ? 1 : Math.min(MAX_ENTRIES, n); };
 const cleanRows = (rows: unknown): Row[] => {
   const r = Array.isArray(rows) ? rows.map((x: Row) => ({ name: String(x?.name ?? ""), count: clampCount(x?.count ?? 1) })) : [];
@@ -43,6 +53,7 @@ function load(): Store {
       const wheels: Wheel[] = s.wheels.map((w: Wheel) => ({
         id: String(w.id || newId()), name: String(w.name || "Wheel"), rows: cleanRows(w.rows),
         winners: Array.isArray(w.winners) ? w.winners.map(String) : [], palette: PALETTES[w.palette] ? w.palette : "bright",
+        style: isStyle(w.style) ? w.style : "classic",
       }));
       return { wheels, active: wheels.some(w => w.id === s.active) ? s.active : wheels[0].id, sound: s.sound !== false };
     }
@@ -67,7 +78,76 @@ function buildEntries(rows: Row[]): Entry[] {
   return list.sort((a, b) => a.pos - b.pos);
 }
 
-const indexAt = (angle: number, n: number) => Math.floor(((((1.5 * Math.PI - angle) % TAU) + TAU) % TAU) / (TAU / n)) % n;
+// Where the pointer sits on the wheel: the top for the classic wheel, the right-hand side for the carnival wheel.
+const POINTER: Record<"classic" | "carnival", number> = { classic: 1.5 * Math.PI, carnival: 0 };
+const mod = (a: number, n: number) => ((a % n) + n) % n;
+/** The slice under the pointer when the wheel is turned by `angle`. */
+const indexAt = (angle: number, n: number, pointer = POINTER.classic) => Math.floor(mod(pointer - angle, TAU) / (TAU / n)) % n;
+/** The case strip's position is the item coordinate under its marker: item k covers [k, k+1) and the strip repeats. */
+const stripIndexAt = (pos: number, n: number) => mod(Math.floor(pos), n);
+/** Neighbouring slices never share a colour, including the last beside the first. */
+const colourIndex = (i: number, n: number, len: number) => { const ci = i % len; return i === n - 1 && n > 1 && ci === 0 ? 2 % len : ci; };
+
+/** Round the carnival wheel: bulbs on the rim, a peg at every slice edge and the flapper the pegs knock as they pass. */
+function drawCarnivalTrim(ctx: CanvasRenderingContext2D, size: number, R: number, r: number, n: number, rot: number) {
+  const cx = size / 2, cy = size / 2, bulbs = 28;
+  for (let k = 0; k < bulbs; k++) {
+    const a = (k / bulbs) * TAU;   // the bulbs stay still: only the slices turn
+    ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (R - 7), cy + Math.sin(a) * (R - 7), 3.2, 0, TAU);
+    ctx.fillStyle = k % 2 ? "#ffffff" : "#fde68a"; ctx.fill();
+  }
+  const slice = TAU / n;
+  if (n <= 60) {
+    for (let i = 0; i < n; i++) {
+      const a = rot + i * slice;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (r - 3), cy + Math.sin(a) * (r - 3), 3.6, 0, TAU);
+      ctx.fillStyle = "#fde68a"; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "#92400e"; ctx.stroke();
+    }
+  }
+  // the flapper: the pegs move down the right-hand side, so it is pushed down as one reaches it and springs back once it has passed
+  const u = mod((POINTER.carnival - rot) / slice, 1), push = n <= 60 && u < 0.3 ? 1 - u / 0.3 : 0;
+  const pivotX = size - 5, tipX = cx + r - 14, len = pivotX - tipX;
+  ctx.save();
+  ctx.translate(pivotX, cy); ctx.rotate(-push * 0.5);
+  ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(-len, 0); ctx.lineTo(0, 6); ctx.closePath();
+  ctx.fillStyle = "#dc2626"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(pivotX, cy, 5, 0, TAU); ctx.fillStyle = "#1e3a8a"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+}
+
+/** The case strip: cards in a row, sliding left past a marker in the middle. `pos` is the item coordinate under the marker. */
+function drawStrip(ctx: CanvasRenderingContext2D, w: number, h: number, entries: Entry[], palette: Palette, pos: number) {
+  ctx.fillStyle = "#f1f5f9"; ctx.fillRect(0, 0, w, h);
+  const n = entries.length, mid = w / 2;
+  if (n === 0) {
+    ctx.fillStyle = "#64748b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `500 ${Math.round(h * 0.14)}px ${SANS}`; ctx.fillText("Add some names", mid, h / 2);
+    return;
+  }
+  const W = Math.round(h * 0.9), pad = 10, cardH = h - pad * 2, first = Math.floor(pos - mid / W) - 1, last = Math.ceil(pos + mid / W) + 1;
+  for (let j = first; j <= last; j++) {
+    const i = mod(j, n), x = mid + (j - pos) * W, col = palette.colours[colourIndex(i, n, palette.colours.length)];
+    ctx.fillStyle = col.bg; ctx.beginPath(); ctx.roundRect(x + 3, pad, W - 6, cardH, 8); ctx.fill();
+    ctx.fillStyle = "rgba(15,23,42,.22)"; ctx.beginPath(); ctx.roundRect(x + 3, pad + cardH - 7, W - 6, 7, [0, 0, 8, 8]); ctx.fill();
+    ctx.fillStyle = col.fg; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    let px = Math.min(22, Math.round(h * 0.16));
+    ctx.font = `600 ${px}px ${SANS}`;
+    while (px > 11 && ctx.measureText(entries[i].name).width > W - 22) { px--; ctx.font = `600 ${px}px ${SANS}`; }
+    let label = entries[i].name;
+    if (ctx.measureText(label).width > W - 22) {
+      while (label.length > 1 && ctx.measureText(label + "…").width > W - 22) label = label.slice(0, -1);
+      label += "…";
+    }
+    ctx.fillText(label, x + W / 2, pad + (cardH - 7) / 2);
+  }
+  for (const [x0, x1] of [[0, w * 0.16], [w, w * 0.84]]) {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    g.addColorStop(0, "rgba(241,245,249,.95)"); g.addColorStop(1, "rgba(241,245,249,0)");
+    ctx.fillStyle = g; ctx.fillRect(Math.min(x0, x1), 0, Math.abs(x1 - x0), h);
+  }
+  ctx.fillStyle = "#f59e0b"; ctx.fillRect(mid - 1.5, 0, 3, h);
+  for (const [y, d] of [[0, 1], [h, -1]]) { ctx.beginPath(); ctx.moveTo(mid - 9, y); ctx.lineTo(mid + 9, y); ctx.lineTo(mid, y + d * 12); ctx.closePath(); ctx.fill(); }
+}
 
 const card = "rounded-2xl border border-slate-300 bg-white shadow-card";
 const primary = "inline-flex h-11 items-center justify-center rounded-xl bg-blue-900 px-6 text-base font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40";
@@ -93,11 +173,12 @@ export default function NameWheel() {
   const lastTickRef = useRef(0);
   const nameInputs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const style = wheel.style;
   const palette = PALETTES[wheel.palette] ?? PALETTES.bright;
   const entries = useMemo(() => buildEntries(wheel.rows), [wheel.rows]);
   const names = wheel.rows.filter(r => r.name.trim()).length;
   const total = entries.length;
-  const tiny = total > 100;   // labels too small to read; the name at the pointer shows while it spins
+  const tiny = total > 100 && style !== "case";   // labels too small to read; the name at the pointer shows while it spins
   const canSpin = !spinning && names >= 2;
 
   const patch = useCallback((p: Partial<Wheel>) => setStore(s => ({ ...s, wheels: s.wheels.map(w => (w.id === s.active ? { ...w, ...p } : w)) })), []);
@@ -113,13 +194,17 @@ export default function NameWheel() {
   const draw = useCallback(() => {
     const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const size = canvas.clientWidth || 500, dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== Math.round(size * dpr)) canvas.width = canvas.height = Math.round(size * dpr);
+    const w = canvas.clientWidth || 500, h = style === "case" ? (canvas.clientHeight || 150) : w, dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
-    const cx = size / 2, cy = size / 2, R = size / 2 - 3, r = R - 6, n = entries.length, rot = rotRef.current;
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = "#ffffff"; ctx.fill();
-    ctx.lineWidth = 1.5; ctx.strokeStyle = "#cbd5e1"; ctx.stroke();
+    ctx.clearRect(0, 0, w, h);
+    const n = entries.length, rot = rotRef.current;
+    if (style === "case") { drawStrip(ctx, w, h, entries, palette, rot); return; }
+    const size = w, cx = size / 2, cy = size / 2;
+    // the carnival wheel is a little smaller so its flapper fits inside the picture
+    const R = style === "carnival" ? size * 0.44 : size / 2 - 3, rim = style === "carnival" ? 14 : 6, r = R - rim;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = style === "carnival" ? "#1e3a8a" : "#ffffff"; ctx.fill();
+    if (style === "classic") { ctx.lineWidth = 1.5; ctx.strokeStyle = "#cbd5e1"; ctx.stroke(); }
     if (n === 0) {
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fillStyle = "#f1f5f9"; ctx.fill();
       ctx.fillStyle = "#64748b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -129,9 +214,7 @@ export default function NameWheel() {
     }
     const slice = TAU / n;
     for (let i = 0; i < n; i++) {
-      let ci = i % palette.colours.length;
-      if (i === n - 1 && n > 1 && ci === 0) ci = 2 % palette.colours.length;
-      const a0 = rot + i * slice, col = palette.colours[ci];
+      const a0 = rot + i * slice, col = palette.colours[colourIndex(i, n, palette.colours.length)];
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a0, a0 + slice + (n > 120 ? 0.004 : 0)); ctx.closePath();
       ctx.fillStyle = col.bg; ctx.fill();
       if (n > 1 && n <= 120) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1; ctx.stroke(); }
@@ -145,10 +228,11 @@ export default function NameWheel() {
         while (label.length > 1 && ctx.measureText(label + "…").width > maxW) label = label.slice(0, -1);
         label += "…";
       }
-      ctx.fillText(label, r - 14, 0);
+      ctx.fillText(label, r - (style === "carnival" ? 18 : 14), 0);
       ctx.restore();
     }
-  }, [entries, palette]);
+    if (style === "carnival") drawCarnivalTrim(ctx, size, R, r, n, rot);
+  }, [entries, palette, style]);
 
   useEffect(() => { draw(); }, [draw]);
   useEffect(() => {
@@ -185,16 +269,18 @@ export default function NameWheel() {
     setSpinning(true); setCurrent("");
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const from = rotRef.current;
-    const to = from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
+    // the wheels turn a few times; the strip slides 40 to 70 cards and stops anywhere along the winning card
+    const to = style === "case" ? from + 40 + Math.random() * 30 : from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
     const dur = reduce ? 1200 : 5000 + Math.random() * 1800;
     const start = performance.now();
-    let last = indexAt(from, n);
+    const at = (v: number) => (style === "case" ? stripIndexAt(v, n) : indexAt(v, n, POINTER[style]));
+    let last = at(from);
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - t, 4);
       rotRef.current = from + (to - from) * e;
       draw();
-      const idx = indexAt(rotRef.current, n);
-      if (idx !== last) { tick(); last = idx; if (n > 100) setCurrent(entries[idx].name); }
+      const idx = at(rotRef.current);
+      if (idx !== last) { tick(); last = idx; if (tiny) setCurrent(entries[idx].name); }
       if (t < 1) { rafRef.current = requestAnimationFrame(step); return; }
       const entry = entries[idx];
       setSpinning(false); setCurrent("");
@@ -270,16 +356,25 @@ export default function NameWheel() {
         <h1 className="text-3xl font-semibold text-slate-900">Name Wheel</h1>
         {wheel.name.trim() && <p className="mt-1 text-slate-500">{wheel.name}</p>}
 
-        <div className="mx-auto mt-5 max-w-xl">
-          {/* the wheel */}
+        <div className={`mx-auto mt-5 ${style === "case" ? "max-w-3xl" : "max-w-xl"}`}>
+          {/* the wheel, or the strip */}
           <div>
-            <div className="relative mx-auto aspect-square w-full max-w-[520px]">
-              <canvas ref={canvasRef} onClick={spin} aria-label="Name wheel. Click to spin." className="block h-full w-full cursor-pointer rounded-full shadow-lift" />
-              <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
-                <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
-              </svg>
-              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
-            </div>
+            {style === "case" ? (
+              <div className="relative mx-auto w-full">
+                <canvas key="case" ref={canvasRef} onClick={spin} aria-label="Name strip. Click to spin." className="block h-32 w-full cursor-pointer rounded-2xl border border-slate-300 shadow-lift sm:h-40" />
+              </div>
+            ) : (
+              <div className="relative mx-auto aspect-square w-full max-w-[520px]">
+                <canvas key={style} ref={canvasRef} onClick={spin} aria-label={style === "carnival" ? "Carnival wheel. Click to spin." : "Name wheel. Click to spin."}
+                  className={`block h-full w-full cursor-pointer ${style === "classic" ? "rounded-full shadow-lift" : ""}`} />
+                {style === "classic" && (
+                  <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
+                    <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
+                  </svg>
+                )}
+                <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
+              </div>
+            )}
             <p className="mt-3 min-h-[1.75em] text-center text-xl font-semibold text-slate-800 [overflow-wrap:anywhere]" aria-hidden="true">{current}</p>
             {!phone && <div className="mt-2 flex justify-center gap-3">{actions}</div>}
           </div>
@@ -367,6 +462,18 @@ export default function NameWheel() {
               {names < 2 ? "Add at least two names to spin." : `${names} names, ${total} entries${tiny ? ". Labels are tiny at this size, so the name at the pointer shows while it spins." : "."}`}
             </p>
 
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Spin style">
+                <span className="text-sm text-slate-600">Spin style</span>
+                {STYLES.map(x => (
+                  <button key={x.id} type="button" aria-pressed={x.id === style} onClick={() => patch({ style: x.id })}
+                    className={`h-9 rounded-full px-4 text-sm font-semibold transition-colors ${x.id === style ? "bg-slate-900 text-white" : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-100"}`}>
+                    {x.name}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-slate-500">{STYLES.find(x => x.id === style)?.about}</p>
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-slate-200 pt-4">
               <div className="flex items-center gap-2" role="group" aria-label="Colours">
                 <span className="text-sm text-slate-600">Colours</span>
@@ -391,8 +498,8 @@ export default function NameWheel() {
 
       {phone && <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white px-4 py-3">{actions}</div>}
 
-      {result && <Confetti key={wheel.winners.length} colours={palette.colours.map(c => c.bg)} />}
-      {result && <Balloons key={wheel.winners.length} colours={palette.colours.map(c => c.bg)} />}
+      {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} />}
+      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} />}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-5" onClick={e => { if (e.target === e.currentTarget) closeDialog(); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="winner-name" className={`${card} w-full max-w-[420px] p-6 text-center shadow-lift`}>
