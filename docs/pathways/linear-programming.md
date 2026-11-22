@@ -30,6 +30,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (ties, degenerate cases, whole numbers mixed). Harry: ties and degenerate cases are allowed naturally. From Level 2 a tie in the pivot column or the θ-values is no longer rejected, one in three problems is built degenerate (a second constraint through the optimum, so a basic variable is 0 and the θ-values tie), the working says which columns or rows tie and that either choice reaches the optimum, and a θ of 0 is explained; Level 1 stays tie-free. The Pivot Column option is dropped (not needed). Whole Numbers on Solve and Read a tableau now asks the question of any optimum, whole or not; only the Is it practical? sub-tool always has a fraction. A tableau now records its basic variables (a degenerate tableau can show more unit columns than constraints), and a tableau given to be read must show exactly one unit column per constraint.
 
+- 2026-11-22 (decisions on the Simplex gaps). Harry: L53 (boundedness from a tableau) and L55 (a tableau with a parameter k) are notes for the exam-style pass; L42 (the matrix equation of a tableau) has no place in the generator; full exam chains come later; and a standing rule: no question type that is always the same or stagnant. The gaps worth building (real, repeated question types) are L46 (one iteration, pivot given), L80 (data as a table) and L85 (mark-style short parts).
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

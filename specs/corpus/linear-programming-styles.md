@@ -56,7 +56,7 @@
 |---|---|---|---|---|---|
 | L40 | Rewrite ≤ constraints as equations with slack variables (non-negative); sometimes with decimal coefficients and with a ≥ constraint that must first be turned into ≤ | T4 WE4.10; MP5 | DD3 | A2 | setup |
 | L41 | Write the objective in the form P − (linear function) = 0 (sign flip of every coefficient); rewrite each constraint with a non-negative RHS, flipping a ≥ to ≤ where needed; add slack variables | T4 WE4.11 | DD3 | A2 | setup |
-| L42 | Write the initial tableau (columns: objective variable P, the variables, the slack variables, the right-hand side, unlabelled; objective row first); also its matrix equation | T4 WE4.11; Ex4C 1 | DD3 | A2 | setup |
+| L42 | Write the initial tableau (columns: objective variable P, the variables, the slack variables, the right-hand side, unlabelled; objective row first); also its matrix equation | T4 WE4.11; Ex4C 1 | DD3 | A2 | NOT IN THE GENERATOR (Harry, 2026-11-22: the matrix form is another way of writing the same tableau, not a question type for a generator) |
 | L43 | Minimising: replace the objective with Q = −P, build and solve the tableau, then give the minimum as −(max Q); sometimes with a constant in the objective | T4 WE4.17; Ex4C 9; MP14 | DD3 | A2 | setup, pivot |
 | L44 | Spot the correct initial tableau among three candidates and name the errors in the others (sign error in the objective row; wrong sign handling when minimising) | T4 Work it out 4.1 | DD3 | A2 | setup (an error-spotting presentation) |
 | L45 | Choose the pivot: most negative objective-row entry for the column, ratio test over positive entries in that column, state the pivot (and show the ratios) | T4 WE4.12; Ex4C 2, 5; MP2, MP8b | DD3 | A2 | pivot |
@@ -67,9 +67,9 @@
 | L50 | Read off the values of every variable (basic variables from the column of 0s and a single 1 across to the final column; non-basic are 0), and the objective value | T4 WE4.14; Ex4C 4 | DD4 | A2 | interpret |
 | L51 | Say what a zero slack value means (the constraint is at its limit, binding) and which constraints are binding | T4 WE4.14, WE4.15, WE4.17; Ex4C 8c; MP10c | DD4 | A2 | interpret |
 | L52 | Is this tableau optimal for a maximise problem? (no negative entry in the objective row), with an explanation | T4 Key point 4.8; Ex4C 3 | DD4 | A2 | interpret |
-| L53 | From a tableau, deduce without further work something about the maximum (that the objective row has a negative entry so it is not optimal, and what the pivot column would say about boundedness) | T4 MP6 | DD4 | A2 | interpret |
+| L53 | From a tableau, deduce without further work something about the maximum (that the objective row has a negative entry so it is not optimal, and what the pivot column would say about boundedness) | T4 MP6 | DD4 | A2 | interpret | <!-- Harry 2026-11-22: a note for the exam-style pass, not built as a generator question -->
 | L54 | Reverse: from an initial tableau write the linear programming formulation it represents (with the objective) | T4 MP8a | DD3 | A2 | setup (a reverse direction) |
-| L55 | A tableau containing a parameter k after one iteration: find the pivot used, the optimal solution in terms of k, and k from the optimal value | T4 MP12 | DD4 | A2 | UNHOMED (a parametric tableau; propose to leave to the exam-style pass) |
+| L55 | A tableau containing a parameter k after one iteration: find the pivot used, the optimal solution in terms of k, and k from the optimal value | T4 MP12 | DD4 | A2 | UNHOMED (a parametric tableau; propose to leave to the exam-style pass) | <!-- Harry 2026-11-22: a note for the exam-style pass, not built as a generator question -->
 | L56 | The simplex output of a worded problem interpreted in the original context (hours of study, sleep) | T4 Ex4C 10; Ex4C 8c | DD4 | A2 | interpret |
 | L57 | Full AQA-style chain: display the problem in a tableau, identify and justify the pivot, two iterations, interpret and state the slack values | AQA 2016 in T4 MP10 | DD3, DD4 | A2 | exam-style pass (later) |
 

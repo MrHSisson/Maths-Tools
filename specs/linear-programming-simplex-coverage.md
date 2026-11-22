@@ -8,7 +8,7 @@
 |---|---|---|---|
 | L40 | Slack variables and equations (decimals; a ≥ turned into ≤) | Set up: equations with s₁, s₂; decimals in the worded problems; a ≥ at Level 3 | covered |
 | L41 | The objective as P − … = 0; every constraint with the right sign | Set up and Solve show the objective row and the multiplied-by-−1 step | covered |
-| L42 | The initial tableau (also its matrix equation) | The tableau yes; **the matrix equation no** | partly |
+| L42 | The initial tableau (also its matrix equation) | The tableau yes; the matrix equation is **left out by decision** (2026-11-22: it is another way of writing the same tableau, not a question type for a generator) | decided: not here |
 | L43 | Minimise by Q = −P; sometimes with a constant | Minimise at Level 3 (P = −C), the constant only through a lower bound | partly (the books say Q; we say P) |
 | L44 | Spot the correct initial tableau among three, name the errors | not built | gap |
 | L45 | Choose the pivot, show the ratios | One pivot: the column, the θ-values, the pivot, highlighted | covered |
@@ -17,9 +17,9 @@
 | L48 | A different first pivot column; same optimum | **dropped by Harry (2026-11-22)** | dropped |
 | L49 | A zero in a right-hand side (zero ratio) | ties and degenerate problems arise from Level 2, with a note for θ = 0 | covered (extended) |
 | L50 to L52 | Read every variable; zero slack means binding; optimal or not | Read a tableau | covered |
-| L53 | Deduce from a tableau something about boundedness | not built (unbounded left out by Harry) | gap, by decision |
+| L53 | Deduce from a tableau something about boundedness | not built; **a note for the exam-style pass** (2026-11-22) | exam-style note |
 | L54, L83 | From an initial tableau write the problem and say what the slacks mean | Set up, Direction: Tableau To Problem. The slack meaning is generic ("the amount of constraint k not used"), not in a story | partly |
-| L55 | A tableau with a parameter k | not built (exam-style, later) | gap, by decision |
+| L55 | A tableau with a parameter k | not built; **a note for the exam-style pass** (2026-11-22) | exam-style note |
 | L56, L82 | The output interpreted in the story, units, every slack explained | Solve and Read a tableau with a situation in words | covered |
 | L57 | A full exam-style chain | not built (Harry: not today) | gap, by decision |
 | L77 | A ≥ start: pivot on a negative entry in the negative row | Level 3, Starting Form: A ≥ Constraint (Set up, One pivot, Solve) | covered |
@@ -52,3 +52,8 @@
 
 - Do the extras in section 2 stay as they are? (1 and 2 are the largest.)
 - Which gaps in section 1 are wanted next: the data as a table (L80), mark-style parts (L85), a "pivot given" version (L46), spot-the-error (L44), the matrix equation (L42), equality by elimination (L79)?
+
+## 4. Decisions recorded 2026-11-22
+
+- **L53 and L55** are notes for the exam-style pass, not generator questions. **L42** (the matrix equation) has no place in the generator.
+- **A standing rule for this tool: no question type may be always the same.** A question type that would be one fixed example (or only ever differ in its numbers) is not built as a generator question; it is a learning aid, or an exam-style note. Variety to check in the built sub-tools: the stem wording, the starting form, the size, whether a tie or a zero θ turns up, and whether the answer is whole.
