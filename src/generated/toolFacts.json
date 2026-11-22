@@ -1783,7 +1783,7 @@
    "kind": "workshop",
    "shell": "DecisionShell",
    "subTools": null,
-   "lines": 217,
+   "lines": 281,
    "depth": false,
    "teach": false,
    "lessons": false,
