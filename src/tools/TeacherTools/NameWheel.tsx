@@ -500,7 +500,7 @@ export default function NameWheel() {
 
       {/* a win is a big moment: confetti, balloons and fireworks, all bigger and longer than the shared defaults */}
       {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={2.2} force={store.fullSpin} />}
-      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.6} force={store.fullSpin} />}
+      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.6} speed={1.6} force={store.fullSpin} />}
       {result && <Fireworks key={`f${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.3} force={store.fullSpin} />}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-5" onClick={e => { if (e.target === e.currentTarget) closeDialog(); }}>

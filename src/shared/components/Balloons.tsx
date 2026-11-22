@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 // Balloons that rise from the bottom of the screen, sway a little and float off the top. Mount it when something is
 // revealed; it plays once (the last balloon leaves in about ten seconds), draws nothing afterwards and never catches a
-// tap. People who ask their device for reduced motion get no balloons at all, unless `force` is set. `scale` above 1 means more balloons for longer.
+// tap. People who ask their device for reduced motion get no balloons at all, unless `force` is set. `scale` above 1 means more balloons for longer; `speed` above 1 makes them rise faster.
 
 interface Balloon { x: number; y: number; r: number; speed: number; sway: number; swayHz: number; phase: number; colour: string; delay: number }
 
@@ -15,7 +15,7 @@ function shade(hex: string, amount: number): string {
   return `rgb(${c.map(v => Math.round(v + (t - v) * k)).join(",")})`;
 }
 
-export function Balloons({ colours, scale = 1, force = false }: { colours: string[]; scale?: number; force?: boolean }): JSX.Element | null {
+export function Balloons({ colours, scale = 1, force = false, speed = 1 }: { colours: string[]; scale?: number; force?: boolean; speed?: number }): JSX.Element | null {
   const ref = useRef<HTMLCanvasElement>(null);
   const key = colours.join(",");
 
@@ -35,7 +35,7 @@ export function Balloons({ colours, scale = 1, force = false }: { colours: strin
     const balloons: Balloon[] = Array.from({ length: count }, (_, i) => {
       const r = rnd(26, 42) * size;
       return {
-        x: ((i + rnd(0.1, 0.9)) / count) * W, y: H + r * 4, r, speed: rnd(1.1, 2.3) * (H / 800 > 0.6 ? 1 : 0.7),
+        x: ((i + rnd(0.1, 0.9)) / count) * W, y: H + r * 4, r, speed: rnd(1.1, 2.3) * (H / 800 > 0.6 ? 1 : 0.7) * speed,
         sway: rnd(8, 22), swayHz: rnd(0.0008, 0.0016), phase: rnd(0, Math.PI * 2),
         colour: palette[Math.floor(Math.random() * palette.length)], delay: rnd(0, 2600 * scale),
       };
@@ -79,7 +79,7 @@ export function Balloons({ colours, scale = 1, force = false }: { colours: strin
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
-  }, [key, scale, force]);
+  }, [key, scale, force, speed]);
 
   return <canvas ref={ref} aria-hidden="true" data-balloons className="pointer-events-none fixed inset-0 z-[58] h-full w-full" />;
 }
