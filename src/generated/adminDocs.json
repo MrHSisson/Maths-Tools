@@ -363,7 +363,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x, restricted to −π/2 ≤ x ≤ π/2, being reflected in the line y = x and then separating into its own axes as y = arcsin x, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse."
+     "s": "**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x (restricted to −π/2 ≤ x ≤ π/2), y = cos x (0 ≤ x ≤ π) or y = tan x (−π/2 < x < π/2) being reflected in the line y = x and then separating into its own axes as arcsin, arccos or arctan, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse."
     }
    ]
   },

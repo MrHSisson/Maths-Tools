@@ -155,10 +155,10 @@ export const factorTreeSlide = (id: string, title = "Factor tree", tree: TreeNod
   ]);
 
 /** The graph of sin x restricted to -π/2 ≤ x ≤ π/2, reflected in y = x and separated into y = arcsin x: four clicks (restrict, mirror line, fold, separate). */
-export const inverseTrigSlide = (id: string, title = "Inverse of sin x") =>
+export const inverseTrigSlide = (id: string, fn: "sin" | "cos" | "tan" = "sin", title = `Inverse of ${fn} x`) =>
   make(id, "teach", title, [
     text(70, 36, 1460, 100, title, 64, { bold: true }),
-    { kind: "inverseTrig", fn: "sin", x: 70, y: 150, w: 1460, h: 720 },
+    { kind: "inverseTrig", fn, x: 70, y: 150, w: 1460, h: 720 },
   ]);
 
 /** The ratio look (Ratio Sharing's): a row per quantity, aligned from the left, with a brace across the rows for the total. */
@@ -262,7 +262,7 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "number-grid", label: "Number grid (1 to 100)", family: "teach", use: "The 1 to 100 grid: tap to scribble in a prime's colour and finish a times table in one click, or the finished sieve built a click at a time. Printable.", make: (id) => numberGridSlide(id) },
   { key: "venn", label: "Venn diagram", family: "teach", use: "A box with two circles and cards (words, numbers or prime tiles) to drag round and drop where they go; nothing is checked. Cards can appear one per click, then the HCF and LCM lines.", make: (id) => vennSlide(id, "Venn diagram", "Even", "Multiple of 3", ["2", "3", "6", "9", "10", "15"].map((text) => ({ text }))) },
   { key: "venn-row", label: "Four Venns in a row", family: "teach", use: "Four small prime-tile Venns side by side (a to d) to read: the HCF line under each on a click.", make: (id) => vennRowSlide(id, "HCF: read the Venn", [[12, 18], [10, 15], [8, 12], [9, 18]].map(([a, b]) => { const r = splitPrimes(a, b); const mk = (xs: number[], region: "left" | "middle" | "right"): VennCard[] => xs.map((n) => ({ text: String(n), tile: true, region })); return { left: String(a), right: String(b), cards: [...mk(r.left, "left"), ...mk(r.middle, "middle"), ...mk(r.right, "right")] }; }), ["hcf"]) },
-  { key: "inverse-graph", label: "Inverse graph", family: "teach", use: "The graph of sin x restricted to −π/2 ≤ x ≤ π/2, then reflected in y = x and separated into y = arcsin x, as an animation over four clicks.", make: (id) => inverseTrigSlide(id) },
+  { key: "inverse-graph", label: "Inverse graph", family: "teach", use: "The graph of sin x restricted to −π/2 ≤ x ≤ π/2, then reflected in y = x and separated into y = arcsin x, as an animation over four clicks.", make: (id) => inverseTrigSlide(id, "sin") },
   { key: "factor-tree", label: "Factor tree", family: "teach", use: "A factor tree: each number splits in two until every branch ends in a circled prime; built a split at a time, with the primes as a product, a tally and the index form on later clicks. Filled in / Structure only / Blank.", make: (id) => factorTreeSlide(id) },
   { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },

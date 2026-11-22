@@ -18,7 +18,7 @@ export default () => ({
       "A function gives exactly one output for each input. So we keep just one section of the sine graph that does not repeat any output.",
       "Which section of $y = \\sin x$ do we keep?",
       "-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}"),
-    S.inverseTrig("as-animation", "Inverse of sin x"),
+    S.inverseTrig("as-animation", "sin"),
     S.twoColumn("as-facts", "Domain and range swap",
       "$y = \\sin x$ (restricted)\n\nDomain: $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$\n\nRange: $-1 \\le y \\le 1$",
       "$y = \\arcsin x$\n\nDomain: $-1 \\le x \\le 1$\n\nRange: $-\\frac{\\pi}{2} \\le y \\le \\frac{\\pi}{2}$"),

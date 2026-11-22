@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { EXTENT, HALF_PI, INVERSE_STAGES, K, PANEL, fold, phase, sinPoints } from "../shared/inverseTrig";
+import { EXTENT, HALF_PI, INVERSE_SPECS, INVERSE_STAGES, K, PANEL, curveSegments, fold, keptPoints, phase } from "../shared/inverseTrig";
 import type { DeckElement } from "./types";
 
 type El = Extract<DeckElement, { kind: "inverseTrig" }>;
@@ -56,23 +56,28 @@ function Axes({ ox, oy, opacity }: { ox: number; oy: number; opacity: number }) 
   );
 }
 
-/** y = sin x restricted to −π/2 ≤ x ≤ π/2, reflected in y = x and separated into y = arcsin x, one click at a time. The whole drawing is laid out at full size
- *  from the first view; each click only changes opacity, the fold or a slide sideways, so nothing re-lays out. */
+/** y = sin x, cos x or tan x restricted to the part that has an inverse, reflected in y = x and separated into y = arcsin x, arccos x or arctan x, one click at a time.
+ *  The whole drawing is laid out at full size from the first view; each click only changes opacity, the fold or a slide sideways, so nothing re-lays out. */
 export function InverseTrigEl({ el, stage, live }: { el: El; stage: number; live: boolean }) {
   const target = Math.min(INVERSE_STAGES, Math.max(0, Number.isFinite(stage) ? stage : INVERSE_STAGES));
   const p = useAnimatedStage(target, live);
   const restrict = phase(p, 1), mirror = phase(p, 2), flip = phase(p, 3), split = phase(p, 4);
+  const fn = el.fn, spec = INVERSE_SPECS[fn], name = fn;
 
   const W = el.w, H = el.h, oy = H / 2 + 60, mid = W / 2;
   const leftX = PANEL / 2 + 10, rightX = W - PANEL / 2 - 10;
   const mainX = mid + (leftX - mid) * split;        // the first axes slide left to make room
   const copyX = mid + (rightX - mid) * split;       // the reflected copy slides out to its own axes
 
-  const whole = sinPoints(-EXTENT, EXTENT, 260);
-  const kept = sinPoints(-HALF_PI, HALF_PI);
+  const whole = curveSegments(fn, -EXTENT, EXTENT, 600);
+  const kept = keptPoints(fn);
   const folded = kept.map((pt) => fold(pt, flip));
+  const asym: [number, number][][] = spec.asymptotes ? [-1, 1].map((s) => [[s * spec.dom[1], -EXTENT], [s * spec.dom[1], EXTENT]] as [number, number][]) : [];
+  const foldedAsym = asym.map((line) => line.map((pt) => fold(pt, flip)));
   const diag = EXTENT * K;
   const hide = (a: number) => Math.max(0, Math.min(1, a));
+  const [d0, d1] = spec.dom, [r0, r1] = spec.rng;
+  const dot = (cx: number, cy: number, colour: string, k: number) => <circle key={k} cx={cx} cy={cy} r={11} fill={spec.closed ? colour : "#fff"} stroke={colour} strokeWidth={5} />;
 
   return (
     <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }} fontFamily="system-ui, sans-serif">
@@ -80,14 +85,15 @@ export function InverseTrigEl({ el, stage, live }: { el: El; stage: number; live
       <Axes ox={mainX} oy={oy} opacity={1} />
       <Axes ox={rightX} oy={oy} opacity={split} />
 
-      {/* the whole of sin x: solid at first, then only the part we keep stays bold */}
-      <path d={path(whole, mainX, oy)} fill="none" stroke={BLUE} strokeWidth={5} strokeLinecap="round" opacity={1 - restrict * 0.8} strokeDasharray={restrict > 0.02 ? "14 12" : undefined} />
+      {/* the whole curve: solid at first, then only the part we keep stays bold */}
+      {whole.map((seg, i) => <path key={i} d={path(seg, mainX, oy)} fill="none" stroke={BLUE} strokeWidth={5} strokeLinecap="round" opacity={1 - restrict * 0.8} strokeDasharray={restrict > 0.02 ? "14 12" : undefined} />)}
       {/* the kept part: drawn over it, bold, with its end points */}
       <g opacity={restrict}>
         <path d={path(kept, mainX, oy)} fill="none" stroke={BLUE} strokeWidth={9} strokeLinecap="round" />
-        {[-HALF_PI, HALF_PI].map((x) => <circle key={x} cx={mainX + K * x} cy={oy - K * Math.sin(x)} r={11} fill="#fff" stroke={BLUE} strokeWidth={5} />)}
-        <path d={`M${mainX - K * HALF_PI} ${oy}H${mainX + K * HALF_PI}`} stroke={BLUE} strokeWidth={10} strokeLinecap="round" opacity={0.55} />
-        <path d={`M${mainX} ${oy + K}V${oy - K}`} stroke={BLUE} strokeWidth={10} strokeLinecap="round" opacity={0.35} />
+        {spec.closed && [kept[0], kept[kept.length - 1]].map(([x, y], i) => dot(mainX + K * x, oy - K * y, BLUE, i))}
+        {asym.map((line, i) => <path key={i} d={path(line, mainX, oy)} stroke={BLUE} strokeWidth={4} strokeDasharray="14 10" opacity={0.7} />)}
+        <path d={`M${mainX + K * d0} ${oy}H${mainX + K * d1}`} stroke={BLUE} strokeWidth={10} strokeLinecap="round" opacity={0.55} />
+        <path d={`M${mainX} ${oy - K * r0}V${oy - K * r1}`} stroke={BLUE} strokeWidth={10} strokeLinecap="round" opacity={0.35} />
       </g>
 
       {/* the mirror line y = x */}
@@ -99,22 +105,23 @@ export function InverseTrigEl({ el, stage, live }: { el: El; stage: number; live
       {/* the copy folding over the line, then sliding to its own axes (its points are relative to the first axes until it moves) */}
       <g opacity={flip > 0 ? 1 : 0}>
         <path d={path(folded, copyX, oy)} fill="none" stroke={ORANGE} strokeWidth={9} strokeLinecap="round" />
-        {[0, kept.length - 1].map((i) => <circle key={i} cx={copyX + K * folded[i][0]} cy={oy - K * folded[i][1]} r={11} fill="#fff" stroke={ORANGE} strokeWidth={5} />)}
+        {spec.closed && [folded[0], folded[folded.length - 1]].map(([x, y], i) => dot(copyX + K * x, oy - K * y, ORANGE, i))}
+        {foldedAsym.map((line, i) => <path key={i} d={path(line, copyX, oy)} stroke={ORANGE} strokeWidth={4} strokeDasharray="14 10" opacity={0.7} />)}
         <g opacity={split} stroke={ORANGE} strokeWidth={10} strokeLinecap="round">
-          <path d={`M${rightX - K} ${oy}H${rightX + K}`} opacity={0.55} />
-          <path d={`M${rightX} ${oy + K * HALF_PI}V${oy - K * HALF_PI}`} opacity={0.35} />
+          <path d={`M${rightX + K * r0} ${oy}H${rightX + K * r1}`} opacity={0.55} />
+          <path d={`M${rightX} ${oy - K * d0}V${oy - K * d1}`} opacity={0.35} />
         </g>
       </g>
 
       {/* captions */}
       <text x={mainX} y={44} textAnchor="middle" fontSize={40} fill={BLUE} fontWeight={600}>
-        <tspan fontStyle="italic">y</tspan> = sin <tspan fontStyle="italic">x</tspan>
+        <tspan fontStyle="italic">y</tspan> = {name} <tspan fontStyle="italic">x</tspan>
       </text>
-      <text x={mainX} y={92} textAnchor="middle" fontSize={32} fill={AXIS} opacity={restrict}>−π/2 ≤ <tspan fontStyle="italic">x</tspan> ≤ π/2</text>
+      <text x={mainX} y={92} textAnchor="middle" fontSize={32} fill={AXIS} opacity={restrict}>{spec.domCaption.replace("x", "\u0000").split("\u0000").flatMap((t, i, a) => i < a.length - 1 ? [t, <tspan key={i} fontStyle="italic">x</tspan>] : [t])}</text>
       <text x={rightX} y={44} textAnchor="middle" fontSize={40} fill={ORANGE} fontWeight={600} opacity={split}>
-        <tspan fontStyle="italic">y</tspan> = arcsin <tspan fontStyle="italic">x</tspan>
+        <tspan fontStyle="italic">y</tspan> = arc{name} <tspan fontStyle="italic">x</tspan>
       </text>
-      <text x={rightX} y={92} textAnchor="middle" fontSize={32} fill={AXIS} opacity={split}>−1 ≤ <tspan fontStyle="italic">x</tspan> ≤ 1</text>
+      <text x={rightX} y={92} textAnchor="middle" fontSize={32} fill={AXIS} opacity={split}>{spec.invDomCaption.replace("x", "\u0000").split("\u0000").flatMap((t, i, a) => i < a.length - 1 ? [t, <tspan key={i} fontStyle="italic">x</tspan>] : [t])}</text>
     </svg>
   );
 }
