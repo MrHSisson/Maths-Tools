@@ -48,11 +48,13 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (display). The working is an open page on screen (`WorkingPage`: full-size text, centred, every step so far, tableaux aligned), and a question stage is on trial in both LP tools (`config.questionStage`): the question large and centred before the steps, shrinking to its card when they start. To go shell-wide once Harry has tried it.
 
+- 2026-11-22 (roadmap). The textbook stop-offs are now whole exercises, given only where everything in them can be done (T4 Exercise 4C after stage 6; 4A, 4B and Mixed practice not on this route; T30 30.1A/B not placed); the page shows planned decks for stages 5 and 6 (agreed with Harry: stage 1 needs none, stages 3 and 4 are better practised in the tool).
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
 - **Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
-- **Roadmap:** check the textbook exercise numbers against Harry's copies; add which Level 1 questions to run before and after the deck; publish the deck so the page's deck button works.
+- **Roadmap decks (agreed):** two decks with the graph beside the table, built one at a time: stage 5 "Why rounding fails" and stage 6 "Not starting at the origin" (what each covers is in `docs/roadmaps/linear-programming.md`). Order: a short brief in `specs/decks/`, the look card, Harry's yes, then the build. Also: place Oxford 30.1A and 30.1B once Harry has checked their questions against the book; add which Level 1 questions to run before and after the deck; publish `lp-simplex-process` so the page's deck button works.
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
 

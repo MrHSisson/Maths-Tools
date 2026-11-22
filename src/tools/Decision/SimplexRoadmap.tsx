@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, Check, Home, Info, ArrowRight, BookOpen, Presentation, Compass } from "lucide-react";
+import { ChevronLeft, Check, Home, Info, ArrowRight, Presentation, Compass } from "lucide-react";
 import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 
@@ -7,7 +7,8 @@ import { useLayoutMode } from "../../shared/layoutMode";
 // the sub-tool, level and option the stage needs (`?tool=…&level=…&o_…`, read by DecisionShell), so the page is the front door to the tool. Each stage says what it does and what it builds
 // towards, and its scale (how many variables, in what form), so the route reads as one climb. The stages are data below; the written version with the reasoning is
 // docs/roadmaps/linear-programming.md (keep the two in step). A tick on a stage is kept on this device only.
-// The textbook numbers were recorded when the chapters were read (specs/corpus/linear-programming-styles.md): the page says to check them against your own copy.
+// Textbook exercises are given whole, after the route, and only where everything in them can be done (EXERCISES below); the question numbers were recorded when the chapters were read
+// (specs/corpus/linear-programming-styles.md), so the page says to check them against your own copy.
 
 const TOOL = "/lp-simplex";
 const DECK = "/decks/lp-simplex-process";
@@ -15,7 +16,7 @@ const href = (tool: string, level: number, opts: Record<string, string> = {}): s
   `${TOOL}?tool=${tool}&level=${level}${Object.entries(opts).map(([k, v]) => `&o_${k}=${v}`).join("")}`;
 
 interface Practice { label: string; sub: string; href: string; group?: string }
-interface Stop { book: "Cambridge" | "Oxford"; refs: string; what?: string }
+interface PlannedDeck { title: string; blurb: string }
 interface Stage {
   n: number; title: string;
   /** how big the problems are at this stage: variables, and what the student is given */
@@ -24,7 +25,7 @@ interface Stage {
   short: string;
   /** what this stage is doing, in a few sentences */
   does: string;
-  can: string[]; practice: Practice[]; deck?: string; stops: Stop[]; tip?: string;
+  can: string[]; practice: Practice[]; deck?: string; plannedDeck?: PlannedDeck; tip?: string;
   /** what the stage hands on to the next one */
   towards: string;
 }
@@ -38,17 +39,13 @@ const STAGES: Stage[] = [
       { label: "Set up the tableau", sub: "Level 1", href: href("setup", 1) },
       { label: "Read a tableau", sub: "Level 1: the optimal tableau", href: href("interpret", 1) },
     ],
-    stops: [
-      { book: "Cambridge", refs: "Ex4C 1", what: "the initial tableau" }, { book: "Cambridge", refs: "Ex4C 4", what: "read the values" },
-      { book: "Cambridge", refs: "MP5", what: "equations with slack variables" }, { book: "Oxford", refs: "Assessment 1a", what: "name the slacks" },
-    ],
     towards: "A student who can read a tableau can see what each row operation changes, which is what the next stage explains and the one after it practises.",
   },
   {
     n: 2, title: "Why it works", scale: "2 variables · the graph and the table together", short: "The idea before the procedure",
     does: "Gives the reasons before the rules. A tableau is a corner of the feasible region; a pivot moves to a neighbouring corner that is better; the algorithm stops when no neighbour improves P. The deck sets the graph beside the table so every step has a picture.",
     can: ["Say why the most negative entry is the way to go", "Say what the ratio test is for", "Say what the row operations do", "Say what the bottom row says when it stops"],
-    practice: [], deck: DECK, stops: [{ book: "Cambridge", refs: "the deck's worked problem" }],
+    practice: [], deck: DECK,
     tip: "Run this as the lesson on the board; there is no tool practice here.",
     towards: "The pivot rules arrive in the next stage as reasons, not recipes: why that column, why the smallest θ, why the pivot row is divided first.",
   },
@@ -60,10 +57,6 @@ const STAGES: Stage[] = [
       { label: "One pivot", sub: "Level 1, pivot given: the row operations only", href: href("pivot", 1, { sxPivot: "given" }), group: "One step" },
       { label: "One pivot", sub: "Level 1, the student chooses", href: href("pivot", 1), group: "One step" },
       { label: "Solve a problem", sub: "Level 1: two iterations", href: href("solve", 1), group: "The whole run" },
-    ],
-    stops: [
-      { book: "Cambridge", refs: "Ex4C 2, 5", what: "choose the pivot" }, { book: "Cambridge", refs: "Ex4C 6", what: "one iteration" }, { book: "Cambridge", refs: "Ex4C 7", what: "solve" },
-      { book: "Cambridge", refs: "WE4.12, 4.13, 4.15" }, { book: "Cambridge", refs: "MP2, MP8" },
     ],
     towards: "A secure two-variable run is the base for everything after it: from here the problem changes, the procedure does not.",
   },
@@ -77,10 +70,6 @@ const STAGES: Stage[] = [
       { label: "Solve a problem", sub: "Level 2: words or a table", href: href("solve", 2), group: "The run" },
       { label: "Read a tableau", sub: "Level 2: not yet optimal", href: href("interpret", 2), group: "Reading it back" },
     ],
-    stops: [
-      { book: "Cambridge", refs: "Ex4C 8, 9, 10", what: "context; a zero slack" }, { book: "Cambridge", refs: "WE4.14 to 4.17" }, { book: "Cambridge", refs: "MP10, MP14" },
-      { book: "Oxford", refs: "Ex30.1A 2, 4" }, { book: "Oxford", refs: "Ex30.1B 6, 7", what: "tables of decimal amounts" }, { book: "Oxford", refs: "Assessment 4" },
-    ],
     towards: "Students can now run the algorithm on a real problem and explain the answer. The next two stages ask harder questions of the answer and of the setup.",
   },
   {
@@ -92,9 +81,7 @@ const STAGES: Stage[] = [
       { label: "Is it practical?", sub: "Level 2", href: href("practical", 2) },
       { label: "Is it practical?", sub: "Level 3: rounding to the nearest breaks a constraint", href: href("practical", 3) },
     ],
-    stops: [
-      { book: "Cambridge", refs: "Ex4B 9, 10", what: "integers, graphically; and the “common error” after WE4.8" }, { book: "Oxford", refs: "Ex30.1B 8", what: "boxes of vegetables" },
-    ],
+    plannedDeck: { title: "Why rounding fails", blurb: "The graph with the whole-number points near the optimum: the bound, the points that fit, and why rounding to the nearest can break a constraint" },
     towards: "This closes the loop between the algorithm and the situation it came from; the last stage widens which problems the algorithm can be started on.",
   },
   {
@@ -110,12 +97,17 @@ const STAGES: Stage[] = [
       { label: "One pivot", sub: "Level 3: a negative right-hand side", href: href("pivot", 3), group: "The start, and back again" },
       { label: "Read a tableau", sub: "Level 3: the problem the tableau shows", href: href("interpret", 3), group: "The start, and back again" },
     ],
-    stops: [
-      { book: "Cambridge", refs: "WE4.17, Ex4C 9, MP14", what: "minimise" }, { book: "Oxford", refs: "Ex 4, review 3", what: "a ≥ start" },
-      { book: "Oxford", refs: "Ex30.1B 2", what: "lower bounds" }, { book: "Oxford", refs: "Ex30.1B 11", what: "an equality" }, { book: "Cambridge", refs: "MP8", what: "from a tableau back to the problem" },
-    ],
+    plannedDeck: { title: "Not starting at the origin", blurb: "The geometry of a ≥ constraint and a negative right-hand side, why the origin is not feasible, and why minimising is maximising −C" },
     towards: "The whole of DD3 and DD4 in one setting. What is left is the exam-style chain (below), which the tools do not build.",
   },
+];
+
+/** whole exercises only: placed where everything in them can be done */
+const EXERCISES: Array<{ name: string; when?: string; why: string }> = [
+  { name: "Cambridge Exercise 4C", when: "After stage 6", why: "Every question recorded from it (1 to 10) is a skill covered by the end of stage 6: the initial tableau, choosing the pivot, one iteration, solving, reading the values, a story with a zero slack, minimising, and the study-and-sleep problem. Question 8 also asks whether a different first pivot column changes the final tableau: students can try that by hand (the tool does not ask it)." },
+  { name: "Cambridge Exercises 4A and 4B", why: "4A is formulating, which this route assumes, and 4B is solving graphically (including the whole-number question). They belong with formulating and the graphical tool, which is not built yet." },
+  { name: "Cambridge Mixed practice", why: "It mixes graphical and simplex questions, so it can only be set once the graphical work is done as well." },
+  { name: "Oxford Exercises 30.1A and 30.1B", why: "Parts of them fit stages 4, 5 and 6, but 30.1B includes a question about a miscopied number that makes the problem infeasible or unbounded, which neither the tools nor this route cover, so it cannot be set whole. 30.1A is still to be placed once its questions are checked against the book." },
 ];
 
 const NOT_IN_TOOLS: Array<{ what: string; where: string }> = [
@@ -126,7 +118,7 @@ const NOT_IN_TOOLS: Array<{ what: string; where: string }> = [
 
 const ABOUT =
   "A route through the simplex tools for a class to follow in order. Each stage says what it is doing and what it builds towards, how big its problems are, and what students should be able to do; then it gives one button for each piece of practice, which opens the Simplex tool on the right sub-tool and level with the option the stage needs already set. " +
-  "Levels do not overlap: when a stage is too easy go to the next level of the same sub-tool, not back. The textbook numbers were recorded when the chapters were read, so check them against your own copy. " +
+  "Levels do not overlap: when a stage is too easy go to the next level of the same sub-tool, not back. Textbook exercises are set whole, at the end, once everything in them can be done. " +
   "Option buttons with an asterisk in the tool are extensions that are unlikely to come up: leave them for the last. The ticks are kept on this device only.";
 
 const KEY = "mt-lp-roadmap-done";
@@ -231,6 +223,14 @@ export default function App() {
                             </button>
                           </div>
                         )}
+                        {s.plannedDeck && (
+                          <div className="mt-4">
+                            <div aria-disabled className="flex min-h-[48px] w-full items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-left sm:w-2/3">
+                              <Presentation size={18} className="shrink-0 text-slate-300" />
+                              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-500">Deck: {s.plannedDeck.title} <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">planned</span></span><span className="block text-xs text-slate-400">{s.plannedDeck.blurb}</span></span>
+                            </div>
+                          </div>
+                        )}
                         {groups.map((g) => (
                           <div key={g} className="mt-4">
                             {g && <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{g}</div>}
@@ -239,15 +239,6 @@ export default function App() {
                         ))}
                         {s.tip && <p className="mt-3 text-sm text-slate-500">{s.tip}</p>}
 
-                        <div className="mt-4 flex items-start gap-2 border-t border-slate-200 pt-3">
-                          <BookOpen size={16} className="mt-0.5 shrink-0 text-slate-400" />
-                          <div className="text-sm text-slate-600">
-                            <span className="font-semibold text-slate-700">Textbook stop-offs.</span>{" "}
-                            {s.stops.map((t, i) => (
-                              <span key={i}>{i > 0 && "; "}<span className="font-medium text-slate-800">{t.book} {t.refs}</span>{t.what ? ` (${t.what})` : ""}</span>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -263,6 +254,20 @@ export default function App() {
         </ol>
 
         <div className="mt-5 rounded-2xl border border-slate-300 bg-white p-4 shadow-card sm:p-5">
+          <h2 className="text-lg font-semibold text-slate-900">Textbook exercises</h2>
+          <p className="mt-1 text-sm text-slate-600">Set a whole exercise, not single questions, and only once everything in it can be done. So they come at the end of the route, not stage by stage.</p>
+          <ul className="mt-3 flex flex-col gap-3 text-sm text-slate-700">
+            {EXERCISES.map((e) => (
+              <li key={e.name}>
+                <div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-slate-900">{e.name}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${e.when ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>{e.when ?? "not placed on this route"}</span></div>
+                <p className="mt-0.5 text-slate-600">{e.why}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-slate-400">Cambridge is chapter 4 of the Cambridge book; Oxford is chapter 30 of the Oxford book. The questions were recorded when the chapters were read: check an exercise against your own copy before you set it.</p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-card sm:p-5">
           <h2 className="text-lg font-semibold text-slate-900">The gate at the end</h2>
           <p className="mt-1 text-sm text-slate-700">A student can take a worded problem, set it up, solve it by the tableau, state the answer in context with the meaning of each slack variable, and say whether it is practical.</p>
         </div>
@@ -273,7 +278,6 @@ export default function App() {
             {NOT_IN_TOOLS.map((n) => <li key={n.what}><span className="font-medium text-slate-800">{n.what}.</span> {n.where}</li>)}
           </ul>
         </div>
-        <p className="mt-4 text-xs text-slate-400">Cambridge is chapter 4 of the Cambridge book; Oxford is chapter 30 of the Oxford book. Check the exercise numbers against your own copy before the lesson.</p>
       </div>
     </div>
   );
