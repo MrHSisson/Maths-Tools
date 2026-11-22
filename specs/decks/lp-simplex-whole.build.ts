@@ -126,10 +126,10 @@ const slides: Slide[] = [
 
   slide(`${P}-best`, "The best practical plan", [
     ...titleEls("The best practical plan", "Nothing above $P = 20$ is a whole-number point"),
-    ml(60, 250, 780, 170, "\\begin{array}{l}P = \\tfrac{41}{2} \\text{ at the optimum}\\\\[1.2ex]P \\le 20 \\text{ for a whole-number plan}\\end{array}", 46),
-    t(60, 430, 780, 170, "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.", 36, { bold: true, step: 1 }),
-    t(60, 610, 780, 150, "The orange sliver is every point with $P > 20$. It holds no whole-number point.", 36, { colour: ORANGE, step: 1 }),
-    t(60, 770, 780, 130, "Rounding down gives $(3, 2)$, $P = 17$: practical, but not the best.", 36, { step: 2 }),
+    ml(60, 245, 780, 170, "\\begin{array}{l}P = \\tfrac{41}{2} \\text{ at the optimum}\\\\[1.2ex]P \\le 20 \\text{ for a whole-number plan}\\end{array}", 46),
+    t(60, 435, 780, 150, "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.", 36, { bold: true, step: 1 }),
+    t(60, 600, 780, 140, "The orange sliver is every point with $P > 20$. It holds no whole-number point.", 36, { colour: ORANGE, step: 1 }),
+    t(60, 755, 780, 120, "Rounding down gives $(3, 2)$, $P = 17$: practical, but not the best.", 36, { step: 2 }),
     ...graph({ points: true, optimum: 0 }),
     // the part of the region with P > 20: a thin sliver at the corner, and no whole-number point in it
     { ...(region([[4, 2], [3.5, 2.5], [3.2, 2.6]], "#fb923c") as object), step: 1 },
