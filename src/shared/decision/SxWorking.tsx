@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { DecisionProblem, LpRow, SolveStep, SxBlock, SxTabView } from "./types";
@@ -32,7 +32,13 @@ function Row({ r, colour }: { r: LpRow; colour: string }) {
   return <div style={{ color: colour }}><Tex t={r.t} /></div>;
 }
 
-function Tableau({ b, colour, size = "0.85em" }: { b: SxTabView; colour: string; size?: string }) {
+/** a cell that takes no room in its row: its content hangs to the right of the table, on the row's own line */
+const hung = (tag: "th" | "td", content: ReactNode, style: CSSProperties) => {
+  const Cell = tag;
+  return <Cell style={{ position: "relative", padding: 0, width: 0, border: "none" }}><span style={{ position: "absolute", top: 0, bottom: 0, left: 0, display: "flex", alignItems: "center", paddingLeft: "1.2em", whiteSpace: "nowrap", ...style }}>{content}</span></Cell>;
+};
+
+function Tableau({ b, colour, size = "0.85em", hang = false }: { b: SxTabView; colour: string; size?: string; hang?: boolean }) {
   const cell: CSSProperties = { padding: "0.18em 0.55em", textAlign: "center", whiteSpace: "nowrap", minWidth: "2.1em" };
   const last = b.head.length - 1;
   return (
@@ -41,7 +47,7 @@ function Tableau({ b, colour, size = "0.85em" }: { b: SxTabView; colour: string;
         <tr style={{ borderBottom: `2px solid ${colour}` }}>
           {b.label && <th style={{ ...cell, fontSize: "0.7em", color: GIVEN, textAlign: "left" }}>{b.labelHead}</th>}
           {b.head.map((h, j) => <th key={j} style={{ ...cell, fontWeight: 600, borderLeft: j === last ? `2px solid ${colour}` : undefined, background: b.hi === j || b.pivot?.[1] === j ? "#fef9c3" : undefined }}>{h ? <Tex t={h} /> : null}</th>)}
-          {b.ops && <th style={{ ...cell, fontSize: "0.7em", color: GIVEN, textAlign: "left", paddingLeft: "1em" }}>{b.opsHead ? <Tex t={b.opsHead} /> : null}</th>}
+          {b.ops && (hang ? hung("th", b.opsHead ? <Tex t={b.opsHead} /> : null, { fontSize: "0.7em", color: GIVEN }) : <th style={{ ...cell, fontSize: "0.7em", color: GIVEN, textAlign: "left", paddingLeft: "1em" }}>{b.opsHead ? <Tex t={b.opsHead} /> : null}</th>)}
         </tr>
       </thead>
       <tbody>
@@ -53,7 +59,7 @@ function Tableau({ b, colour, size = "0.85em" }: { b: SxTabView; colour: string;
               const tint = b.pivot ? (b.pivot[0] === i || b.pivot[1] === j) : b.hi === j;
               return <td key={j} style={{ ...cell, borderLeft: j === last ? `2px solid ${colour}` : undefined, background: isPivot ? "#fde047" : tint ? "#fef9c3" : undefined, outline: isPivot ? "2px solid #ca8a04" : undefined, fontWeight: isPivot ? 700 : 400 }}><Tex t={v} /></td>;
             })}
-            {b.ops && <td style={{ ...cell, textAlign: "left", paddingLeft: "1em", color: colour === INK ? GIVEN : colour, fontSize: "0.85em" }}>{b.ops[i] ? <Tex t={b.ops[i]} /> : null}</td>}
+            {b.ops && (hang ? hung("td", b.ops[i] ? <Tex t={b.ops[i]} /> : null, { color: colour === INK ? GIVEN : colour, fontSize: "0.85em" }) : <td style={{ ...cell, textAlign: "left", paddingLeft: "1em", color: colour === INK ? GIVEN : colour, fontSize: "0.85em" }}>{b.ops[i] ? <Tex t={b.ops[i]} /> : null}</td>)}
           </tr>
         ))}
       </tbody>
@@ -61,9 +67,9 @@ function Tableau({ b, colour, size = "0.85em" }: { b: SxTabView; colour: string;
   );
 }
 
-function Block({ b, fresh, size }: { b: SxBlock; fresh: boolean; size?: string }) {
+function Block({ b, fresh, size, hang }: { b: SxBlock; fresh: boolean; size?: string; hang?: boolean }) {
   const colour = fresh ? NEW : INK;
-  if (b.k === "tab") return <Tableau b={b} colour={colour} size={size} />;
+  if (b.k === "tab") return <Tableau b={b} colour={colour} size={size} hang={hang} />;
   return <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.45em" }}>{b.rows.map((r, i) => <Row key={i} r={r} colour={colour} />)}</div>;
 }
 
@@ -82,7 +88,7 @@ export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveS
   const blocksOf = (st: SolveStep): SxBlock[] => { const v = st.sxView; return v ? v.blocks.slice(v.blocks.length - (v.fresh ?? 0)) : []; };
   return (
     <WorkingPage watch={`${p.prompt}|${shown.length}`} heading={!step && given.length ? "The tableau" : "Your working"} hint={!step && !given.length ? "Your working builds up here, one step at a time." : undefined}>
-      {given.map((b, i) => <PageBlock key={`g${i}`} b={b} fresh={false} span={span} natural />)}
+      {given.map((b, i) => <PageBlock key={`g${i}`} b={b} fresh={false} span={span} />)}
       {shown.map((st, i) => {
         const newest = i === shown.length - 1;
         if (!blocksOf(st).length) return null;   // a step that only says something (the list beside it says it) adds nothing to draw
@@ -108,29 +114,31 @@ export function tabSpan(blocks: SxBlock[]): number {
     if (b.k !== "tab") continue;
     const cols = b.head.map((h, j) => Math.max(3.25, 0.55 * Math.max(chars(h), ...b.rows.map((r) => chars(r[j]))) + 1.3));
     const label = b.label ? Math.max(3, 0.55 * Math.max(chars(b.labelHead), ...b.label.map(chars)) + 1.8) : 0;
-    w = Math.max(w, cols.reduce((a, c) => a + c, 0) + label + (b.ops ? 15 : 0));
+    // what hangs to the right of the table (the row operations or θ-values) is reserved on both sides, so the table itself is centred
+    const hangW = b.ops ? Math.max(3, 0.5 * Math.max(chars(b.opsHead), ...b.ops.map(chars)) * 0.85 + 2.2) : 0;
+    w = Math.max(w, cols.reduce((a, c) => a + c, 0) + label + 2 * hangW);
   }
   return w;
 }
 /** a tableau that fits the width it is given: its text is the normal size (`base`) unless the column is too narrow, when it shrinks so that the whole tableau shows. Never scrolls. */
-function FitTab({ b, fresh, span, base = 0.85, natural = false }: { b: SxTabView; fresh: boolean; span: number; base?: number; natural?: boolean }) {
+function FitTab({ b, fresh, span, base = 0.85 }: { b: SxTabView; fresh: boolean; span: number; base?: number }) {
   return (
     <div style={{ alignSelf: "stretch", width: "100%", containerType: "inline-size" }}>
-      {/* natural: a lone figure is centred on its own width; otherwise every tableau of a working sits in one box so they line up */}
-      <div style={{ margin: "0 auto", fontSize: `min(${base}em, calc(100cqw / ${span}))`, width: natural ? "fit-content" : `${span}em`, maxWidth: "100%" }}><Block b={b} fresh={fresh} size="1em" /></div>
+      {/* the table is centred on its own width; the row operations hang outside it, so every tableau of a working is centred and lines up with the others */}
+      <div style={{ margin: "0 auto", fontSize: `min(${base}em, calc(100cqw / ${span}))`, width: "fit-content", maxWidth: "100%" }}><Block b={b} fresh={fresh} size="1em" hang /></div>
     </div>
   );
 }
 /** a block on the open page: a tableau fits the column (centred, the same size and left edge as every other tableau), a run of lines is left-aligned */
-function PageBlock({ b, fresh, span, natural }: { b: SxBlock; fresh: boolean; span: number; natural?: boolean }) {
-  return b.k === "tab" ? <FitTab b={b} fresh={fresh} span={span} natural={natural} /> : <Block b={b} fresh={fresh} />;
+function PageBlock({ b, fresh, span }: { b: SxBlock; fresh: boolean; span: number }) {
+  return b.k === "tab" ? <FitTab b={b} fresh={fresh} span={span} /> : <Block b={b} fresh={fresh} />;
 }
 
 /** the tableau (or table of data) a question gives, for the question stage: flowing content sized to fit, never a scrolling box */
 export function SxStageFigure({ p }: { p: DecisionProblem }) {
   const blocks = questionBlocks(p);
   const span = tabSpan(blocks);
-  return <div style={{ containerType: "inline-size" }}><div style={{ display: "flex", flexDirection: "column", gap: "0.8em", fontSize: "clamp(16px, 2.6cqw, 28px)", color: INK }}>{blocks.map((b, i) => <PageBlock key={i} b={b} fresh={false} span={span} natural />)}</div></div>;
+  return <div style={{ containerType: "inline-size" }}><div style={{ display: "flex", flexDirection: "column", gap: "0.8em", fontSize: "clamp(16px, 2.6cqw, 28px)", color: INK }}>{blocks.map((b, i) => <PageBlock key={i} b={b} fresh={false} span={span} />)}</div></div>;
 }
 
 // ── the phone: the whole solution as one open page ──────────────────────────────────────────
@@ -162,7 +170,6 @@ export function SxPrintFigure({ p }: { p: DecisionProblem }) {
   return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6em", color: INK }}>{blocks.map((b, i) => <Block key={i} b={b} fresh={false} />)}</div>;
 }
 export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
-  const span = tabSpan(steps.flatMap((st) => st.sxView?.blocks ?? []));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
       {steps.map((st, i) => {
@@ -171,7 +178,7 @@ export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
         return (
           <div key={i} style={{ breakInside: "avoid" }}>
             <div style={{ fontSize: "0.9em", color: GIVEN, lineHeight: 1.4, marginBottom: 2 }}><Prose text={st.caption} /></div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center", width: `${span * 0.85}em` } : undefined}><Block b={b} fresh={false} /></div>)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "stretch", display: "flex", justifyContent: "center" } : undefined}><Block b={b} fresh={false} hang /></div>)}</div>
           </div>
         );
       })}
