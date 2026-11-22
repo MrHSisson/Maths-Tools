@@ -20,8 +20,10 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { blockCols, partLetter } from "./textbookSheet";
+import { vennSheetCells } from "./vennSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
+import { VennEl } from "./Venn";
 import { InkLayer } from "./InkLayer";
 import { sieveSteps } from "../shared/numberGrid";
 import { treeSteps } from "../shared/factorTree";
@@ -398,6 +400,37 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   );
 }
 
+/** A Venn sheet on the slide: the printed Venns in a grid (three across), each with its factorisations; `a` (or the button) fills every
+ *  Venn in and shows the answer lines, in the same places. */
+function VennSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const sheet = el.vennSheet!, cells = vennSheetCells(sheet);
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const answers = shown || forced, cols = Math.min(3, cells.length), rows = Math.ceil(cells.length / cols);
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`, gap: 16 }}>
+        {cells.map((c, i) => (
+          <div key={i} style={{ minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ flex: 1, minHeight: 0, width: "100%" }} dangerouslySetInnerHTML={{ __html: (answers ? c.answerSvg : c.svg).replace("<svg ", '<svg style="width:100%;height:100%;display:block" ') }} />
+            <div style={{ fontSize: 30, lineHeight: 1.25, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: 76, textAlign: "center", paddingTop: 6 }}>
+              {(answers && c.lines ? c.answers : c.factors).map((t, k) => <div key={k}>{t}</div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26, marginTop: 8 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 /** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
 /** A textbook-style sheet: each question's instruction, then its parts (a), (b), (c) ... in columns. `a` (or the button) shows the answers in the
  *  same places, so showing them never changes the layout. Sized to fill the slide. */
@@ -672,13 +705,14 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "bar": return <BarEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
+    case "venn": return <VennEl el={el} stage={stage} live={live} />;
     case "factorTree": return <FactorTreeEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} fixed={el.fixed} reportId={el.id} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
     default: return <NewerCodePlaceholder />;      // an element kind a newer version of the site adds
   }
 }
@@ -713,4 +747,4 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, r
 export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
 
 /** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
-export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : el.kind === "factorTree" && el.staged ? treeSteps(el.tree, el.reveal) : 0);
+export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : el.kind === "factorTree" && el.staged ? treeSteps(el.tree, el.reveal) : el.kind === "venn" ? (el.staged ? el.cards.length : 0) + (el.lines?.length ?? 0) : 0);
