@@ -4,6 +4,7 @@ import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, Refres
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
+import QuestionText from "./QuestionText";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -1154,7 +1155,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       <button onClick={() => jump(0)} tabIndex={atQuestion ? 0 : -1} className={BTN_PRIMARY}><Eye size={18} /> Show working</button>
                     </div>
                   </div>
-                  <div className={`${problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} font-semibold text-slate-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
+                  <QuestionText prompt={problem.prompt} size={problem.prompt.length > 260 ? "text-lg xl:text-xl" : problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} />
                   {config.questionStage?.hasFigure?.(problem) && <div className="relative shrink-0 rounded-xl border border-slate-200 overflow-hidden" style={{ height: "min(34vh, 320px)", minHeight: "13rem" }}>{shown(undefined)}</div>}
                 </div>
               </div>
