@@ -74,6 +74,27 @@ Branch `claude/hcf-lcm-venn-lesson-diz7dz`. Area: `specs/decks/venn-hcf-lcm.md`,
 Agent: Claude Code
 Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (Build Log block to be added when the element lands).
 
+## 2026-11-22 — Venn, HCF and LCM deck: section 2, prime factors in a Venn (slides 8 to 27)
+
+Branch `claude/venn-hcf-lcm-deck-section-2-a744m1` (from main 9a8f72a). Area: `specs/decks/venn-hcf-lcm.build.ts`, `src/decks/data/venn-hcf-lcm.json`, `src/shared/misconceptions.ts`.
+
+- **Slides 8 to 27 added to the one deck `venn-hcf-lcm`** (37 slides so far): divider, quickfire, prime tiles to drag, tiles to number (6), the rule (10 and 15), the check (multiply each circle back), prime factors in a Venn (6), book work (9, 3 × 3), repeated-primes divider, model 8 and 12, discussion (Mei puts all three 2s in the middle), repeated primes (6), two special pictures side by side (nothing shared; one inside the other), special cases (6), two read-a-Venn-backwards grids, book work (9), **Worksheet 1** (three A4 pages of three Venns, blank) and two authored Depth cards (a tile in the middle that is not in both; can the middle be empty). No three Depth slides together.
+- **Every pair is computed and asserted** from `src/shared/venn.ts`: its factorisations, the kind it must be (one shared prime, two, repeated and matched one for one, shared in full, three or more in the middle, one inside the other, nothing shared), an LCM of at most 500, and never asked twice. `assertFreshNumbers` keeps the worked numbers (10, 15, 8, 12, 9, 4, 18) and the Depth numbers (54, 80, 27, 32) out of every set. Repeated-prime questions carry the "every copy in the middle" slip as a wrong answer, checked to differ from the right one.
+- **Harry's changes after the first look**: slide 7 (the If time sort) is removed, so the deck is 26 slides and section 2 is slides 7 to 26. The prime tile slides (prime tiles, the rule, 8 and 12) use a new **build layout** on the Venn element (`listing`, `palette`; `S.vennBuild`): the numbers listed as prime tiles in the left 2/5, the Venn in the right 3/5, and prime tile buttons along the bottom, each pressing adding one tile to drag in (dragged back onto the buttons it goes away). Editor fields for both lists.
+- **Second round of Harry's changes**: the Prime tiles slide and the check slide are removed; the six "Prime factors in a Venn" questions are now six build slides (numbers as tiles, Venn, prime buttons; the middle-tile count as a quiet note on the first four) instead of one question set; the repeated-primes discussion became a slide that shows Mei's wrong Venn (all three 2s in the middle, draggable) beside the prompt, key point and answer on clicks. The deck is 29 slides.
+- **Review from the first book set onwards (Harry, two rounds)**: the repeated-primes and special-cases sets are build slides too (one Venn each, six and six), so every "put the factors in a Venn" question looks the same. **Worksheet 1 sits right after the book work and carries the same nine questions** (blank Venns, nothing placed, the numbers and factorisations beside them; the last, 40 and 44, has two 2s in the middle), followed by a **visualiser slide** (a whiteboard slide with the camera workspace) for Harry to do the answers under. Mei's slide uses different numbers (150 and 200) and lists the product of primes of each as tiles beside her wrong Venn; the old read-backwards grids, the closing worksheet and the second book set are gone. The printed Venn sheet separates its questions with a dividing line instead of a box round each. The deck is 34 slides.
+- **Third round (Harry)**: the section 1 Venns (slides 3 to 6) are drawn larger into the space on the right, with the labels kept at their size (`wide` on `vennSlide`, `labelScale` on the Venn); the quickfire questions are centred in their boxes; the tiles-to-number slide and Mei's discussion slide are removed; the answers slide is now a **full-width visualiser box** (a new `visualiser` slide element that starts the camera in the player); **both worksheets sit at the end after a "Worksheet slides" divider**: Worksheet 1 (the nine slide 17 questions, blank) and the new Worksheet 2 (nine harder blank Venns: several primes shared, nothing shared, one number inside the other, a repeated prime). A worksheet has to be on a slide so File → Worksheets can find and print it. The deck is 34 slides.
+- **Fourth round (Harry)**: the second worksheet now has its own book slide (the same nine questions, plain numbers) and a second visualiser slide for its answers, after the special-cases run; the three Venn runs are slimmed from six slides each to four (prime factors, repeated primes, special cases), so the deck is 33 slides. The one-Venn-a-slide runs therefore have four questions each; the book sets and Worksheets keep nine.
+- **Fifth round (Harry)**: the three non-maths Venns (slides 4 to 6) have fewer cards (eight each), a new **definition slide** (slide 3, "The parts of a Venn diagram": the empty Venn with each part named and a plain definition of each, for the class to draw and label), and the two Depth cards are now one speaker and a "Do you agree with Mei / Amara?" with I agree / I disagree (short text, so it reads larger). The deck is 34 slides. The deck check no longer warns about an empty Venn on a non-teach slide.
+- **Two new misconception tags**: `venn-middle-not-shared` and `venn-empty-middle-error`, used by the two Depth cards.
+- **Book work is just the two numbers, big and plain** (the factorisations are on the printed worksheet, Harry), with the quiet middle-tile count on the first six of each nine.
+- **Checked**: build, lint, `npm run deck -- check venn-hcf-lcm --layout` (27 slides, no spill at rest, with the working open or answers shown) and a look at every review sheet.
+- **Deliberately not done:** sections 3 and 4 (HCF, LCM: slides 28 to 46); the editor's Venn options panel (still not browser-checked); dashboard Review.
+- **Next:** section 3 (HCF from the Venn, slides 28 to 35) on a new branch from main, then section 4.
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "Claude Code — claude/hcf-lcm-venn-lesson-diz7dz (Venn, HCF and LCM deck)"; the Build Log block is written at the end of the whole deck.
+
 ## 2026-11-22 — Venn, HCF and LCM deck: the look card approved, section 1 built (slides 1 to 7)
 
 Branch `claude/venn-hcf-lcm-deck-qmkg07` (merge 4a of the Venn plan). Area: `specs/decks/venn-hcf-lcm.build.ts` (new, the build script), `src/decks/data/venn-hcf-lcm.json` (the deck snapshot), `src/decks/SlideCanvas.tsx` (the Venn sheet slide).
@@ -112,6 +133,32 @@ Branch `claude/beautiful-noether-aczmnn`. Area: `src/shared/decision/{printExam,
 
 Agent: Claude Code
 Notes: Maths Tools — Handoff block "claude/beautiful-noether-aczmnn".
+
+## 2026-11-22 — Name Wheel: three spin styles
+
+The Name Wheel can now spin in three ways, chosen per wheel under **Wheel settings → Spin style** and saved with that wheel:
+
+- **Classic**: the existing round wheel, pointer at the top.
+- **Carnival**: a tall reel, like a slot machine: the names scroll top to bottom past a marker line in the middle and slow to a stop. It is the Case strip turned vertical (an earlier version drew an upright prize wheel with a flapper; that was replaced because it was not what was wanted).
+- **Case**: names as a row of cards that slide across the screen past a marker in the middle and slow to a stop, like opening a case. The strip is wider than the wheel on laptop and tablet, and about three cards wide on a phone.
+
+All three use the same tick sound, the same colours, the same winner dialog (with confetti and balloons) and the same "Remove from wheel" choice, and the same reduced-motion option (see below). Extra entries per name still weight the chance. Older saved wheels open as Classic.
+
+Also fixed: `Confetti` and `Balloons` shared one React key, which logged a duplicate-key warning after every spin. The Name Wheel registry description now says four colour sets (it said six) and mentions the spin styles.
+
+Checked in headless Chromium at laptop (1366×768), tablet (820×1180) and phone (390×800): for every style the name the dialog announces is the card or slice drawn under the pointer, and a spin logs no console errors.
+
+Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. Full-length spins and celebrations are the default on every device. Wheel settings has "Follow the device's reduce-motion setting" (off by default, saved on this device) for anyone who wants devices set to reduce motion (macOS Reduce motion, Windows animation effects off) to get a one-second spin and no celebrations.
+
+A win now has the full celebration: a short rising fanfare (generated in the browser, on the same Sounds switch as the tick, which is now labelled "Sounds (tick and fanfare)"), bigger and longer confetti and balloons, and a new `Fireworks` component (`src/shared/components/Fireworks.tsx`: rockets climb and burst into trailing sparks). `Confetti` and `Balloons` gained optional `scale` and `force` props (`Balloons` also `speed`; the wheel's balloons rise 1.6 times faster) (defaults unchanged, so the Advent Calendar is unaffected). The shared `Confetti`, `Balloons` and `Fireworks` still draw nothing on a reduce-motion device unless `force` is set; the wheel sets it unless the Follow box is ticked.
+
+Not done: the tick is the same for every style (no separate clack); the strips have no "tiny label" mode because cards always show a readable name.
+
+The Name Wheel is now live: `enabled: false` is removed from its registry entry, so it is on the landing page under Classroom without Developing-tools mode.
+
+Branch: `claude/vigilant-noether-bm951n`. Files: `src/tools/TeacherTools/NameWheel.tsx`, `src/registry.ts` (description only), `src/generated/toolFacts.json`.
+Agent: Claude Code
+Notes: Maths Tools — Build Log block "2026-11-22 — Name Wheel: three spin styles (Claude Code)". Handoff block and dashboard Review not updated.
 
 ## 2026-11-22 — The Simplex Algorithm: engine, designed numbers and four sub-tools (chunks S0 to S5), not live
 
@@ -244,6 +291,33 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `src/tools/Decisio
 
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: audit applied (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — An animated graph slide piece, and a short deck on y = arcsin x
+
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{types,InverseTrig,SlideCanvas,EditorChrome,layouts,builder}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/arcsin-graph.build.ts`, `src/decks/data/arcsin-graph.json`, docs (FEATURES, `docs/reference/decks.md`).
+
+- **New slide piece `inverseTrig`**: the graph of y = sin x restricted to −π/2 ≤ x ≤ π/2, reflected in y = x and separated into y = arcsin x, as an animation over four clicks: restrict, mirror line, fold (every point swaps x and y, so the copy is exactly y = arcsin x), separate (the copy slides out to its own axes). Back plays it in reverse. The editor, thumbnails and print show the finished state; reduced-motion jumps to each state. x and y are drawn at the same scale so the reflection is a true one.
+- **Layout** `inverseTrigSlide` (`S.inverseTrig`), in Add slide and the slide library.
+- **Deck `arcsin-graph`** (6 slides, no practice): title, objective, a discussion (why sin x must be restricted), the animation, domain and range swap, summary. Pushed to the shared copy only when Harry asks (see below).
+- Only `fn: "sin"` for now; cos and tan are not built.
+- Checked: `npm run deck -- check arcsin-graph --layout`; every click watched frame by frame in the player (no console errors); `inverseTrig.test.ts` checks the fold maths against `Math.asin`.
+- Deliberately not done: the look card step (Harry's yes before building) was skipped because the request was a single animation; no Handoff block or planner Build Log (planner not used this session).
+
+Agent: Claude Code
+Notes: no Build Log block written this session (see above).
+
+## 2026-11-22 — The inverse-graph animation for cos x and tan x, and two more decks
+
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{InverseTrig,types,layouts}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/{arccos,arctan}-graph.build.ts`, `src/decks/data/{arccos,arctan}-graph.json`, docs.
+
+- **`inverseTrig` now takes `fn`: `sin`, `cos` or `tan`.** cos x is restricted to 0 ≤ x ≤ π (filled end points, reflected to y = arccos x with range 0 to π). tan x is restricted to −π/2 < x < π/2 between dashed vertical asymptotes; they fold into the horizontal asymptotes y = ±π/2 of y = arctan x (domain all real x). The other three clicks are the same. `S.inverseTrig(id, fn)`.
+- **Decks `arccos-graph` and `arctan-graph`** (6 slides each, same shape as `arcsin-graph`, no practice). Their discussion slides use cos(π/3) = cos(5π/3) = 0.5 and tan(π/4) = tan(5π/4) = 1.
+- Checked: deck check with layout for all three decks, every click watched in the player, a test that each folded curve equals `Math.asin`, `Math.acos`, `Math.atan` and that each restriction is one-to-one.
+- **Axis labelling** (Harry's feedback): ±π/2 and ±π sit below the x axis and left of the y axis, ±1 on the other side so labels no longer collide; a 0 at the origin; white-edged labels drawn over the curves and asymptotes so none is hidden; end points of sin and cos carry their coordinates, e.g. (π/2, 1) becoming (1, π/2), so the swap of x and y can be read off the graph; the y = x label sits clear of its line.
+- Not on the shared deck service yet (the live site needs this branch merged first).
+
+Agent: Claude Code
+Notes: no Build Log block written this session.
 
 ## 2026-11-21 — Formulating Linear Programmes: "Write a constraint", Level 1 (chunk F1), not live
 

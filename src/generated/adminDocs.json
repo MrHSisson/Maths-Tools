@@ -358,6 +358,16 @@
    ]
   },
   {
+   "title": "Inverse graph animation (decks)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x (restricted to −π/2 ≤ x ≤ π/2), y = cos x (0 ≤ x ≤ π) or y = tan x (−π/2 < x < π/2) being reflected in the line y = x and then separating into its own axes as arcsin, arccos or arctan, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse."
+    }
+   ]
+  },
+  {
    "title": "Rectilinear shapes in decks",
    "level": 3,
    "blocks": [
@@ -4366,6 +4376,10 @@
   "visualiser": {
    "changes": [
     {
+     "date": "2026-11-22",
+     "title": "Venn, HCF and LCM deck: section 2, prime factors in a Venn (slides 8 to 27)"
+    },
+    {
      "date": "2026-10-25",
      "title": "Admin tidy, the level (i) on every tool, options keep your question"
     }
@@ -4373,6 +4387,10 @@
   },
   "name-wheel": {
    "changes": [
+    {
+     "date": "2026-11-22",
+     "title": "Name Wheel: three spin styles"
+    },
     {
      "date": "2026-11-07",
      "title": "Balloons rise when the wheel picks a name"
@@ -4388,10 +4406,6 @@
     {
      "date": "2026-11-06",
      "title": "Classroom tab; Name Wheel in the site style with saved wheels; Further Mechanics as a landing page"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
     }
    ]
   },
