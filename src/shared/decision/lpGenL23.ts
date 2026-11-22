@@ -1,5 +1,5 @@
 // Formulating Linear Programmes, "Write a constraint", Levels 2 and 3 (the Level 1 generators are in lpGen.ts), with no React. See specs/linear-programming-formulate.md.
-// Level 2: percentages (of one variable, of several combined, of the total, p% more or less than), ratios and shares ("one for every two", "a third of the total"),
+// Level 2: percentages (of one variable, of several combined, of the total, p% more or less than), ratios (always written x : y) and shares ("a third of the total"),
 // and decimal amounts per item. Level 3: blends and averages, and either-or limits (x/60 + y/45 ≤ 1). Equations first, as at Level 1: the numbers are picked, the
 // constraint is built from them by lp.ts, and the words are written from the same numbers.
 import { type Fr, fr, ZERO } from "./dim";
@@ -65,32 +65,26 @@ export function genPercent(n: number, forms: string[], fx?: Fix): Gen {
   return genPercent(2, ["one"], fx);
 }
 
-// ── Level 2: ratios, "one for every", and shares of the total ────────────────
+// ── Level 2: ratios (x : y) and shares of the total ────────────────
 const RATIOS: Array<[number, number]> = [[1, 2], [2, 3], [3, 4], [1, 3], [3, 2], [2, 5], [5, 2], [3, 5], [4, 3], [5, 3], [1, 4]];
 const SHARES: Array<[Fr, string]> = [[fr(1, 2), "half"], [fr(1, 3), "one third"], [fr(1, 4), "one quarter"], [fr(2, 3), "two thirds"], [fr(3, 4), "three quarters"], [fr(1, 5), "one fifth"], [fr(2, 5), "two fifths"], [fr(3, 5), "three fifths"]];
-const KWORD: Record<number, string> = { 2: "two", 3: "three", 4: "four" };
 export function genRatio(n: number, fx?: Fix): Gen {
   const ctx = fx?.ctx ?? pick(CONTEXTS);
   const { vars } = fx ?? pickVars(ctx, n);
   const op = opFrom(fx, pickOp);
-  const form = weighted<"ratio" | "every" | "share">([["ratio", 4], ["every", 3], ["share", 3]]);
+  const form = weighted<"ratio" | "share">([["ratio", 7], ["share", 3]]);
   const all = vars.map((v) => v.noun);
   const names = (xs: number[]): string => list(xs.map((i) => vars[i].noun));
   const head = `${ctx.intro(all)} ${letDef(vars, ctx.did)}`;
   if (form === "ratio") {
-    const [a, b] = shuffled(range(n)).slice(0, 2);
-    const [num, den] = pick(RATIOS);
-    const spec: LpSpec = { t: "rel", n, a: [a], b: [b], m: fr(num, den), op, kind: "ratio" };
-    return { prompt: `${head} The ratio of the number of ${vars[a].noun} to the number of ${vars[b].noun} must be ${opWord(op)} ${num} : ${den}. Write down a constraint.`, data: { kind: "ratio", vars, op, spec, slip: { spec: { ...spec, m: fr(den, num) }, what: "the ratio the wrong way round" }, info: { kind: "ratio", form, a: [a], b: [b], m: fr(num, den) } } };
-  }
-  if (form === "every") {
-    const k = pick([2, 3, 4]);
+    // "the ratio of A to B is at least 2 : 3", with A one kind or two kinds combined: always written as a ratio, never as "one for every"
     const aSize = n >= 3 && Math.random() < 0.4 ? 2 : 1;
     const order = shuffled(range(n));
     const a = order.slice(0, aSize).sort((x, y) => x - y);
     const b = order[aSize];
-    const spec: LpSpec = { t: "rel", n, a, b: [b], m: fr(1, k), op, kind: "ratio" };
-    return { prompt: `${head} The number of ${names(a)}${aSize > 1 ? " combined" : ""} must be ${opWord(op)} one for every ${KWORD[k]} ${vars[b].noun}. Write down a constraint.`, data: { kind: "ratio", vars, op, spec, slip: { spec: { ...spec, a: [b], b: a }, what: "the comparison the wrong way round" }, info: { kind: "ratio", form, a, b: [b], m: fr(1, k) } } };
+    const [num, den] = pick(RATIOS);
+    const spec: LpSpec = { t: "rel", n, a, b: [b], m: fr(num, den), op, kind: "ratio" };
+    return { prompt: `${head} The ratio of the number of ${names(a)}${aSize > 1 ? " combined" : ""} to the number of ${vars[b].noun} must be ${opWord(op)} ${num} : ${den}. Write down a constraint.`, data: { kind: "ratio", vars, op, spec, slip: { spec: { ...spec, m: fr(den, num) }, what: "the ratio the wrong way round" }, info: { kind: "ratio", form, a, b: [b], m: fr(num, den) } } };
   }
   const a = ri(0, n - 1);
   const [m, word] = pick(SHARES);

@@ -46,6 +46,8 @@ export interface Constraint {
   /** the worded rule it came from */
   source: string;
   kind: ConstraintKind;
+  /** a relation between the variables ("x is at least twice y"): the variables the sentence is about, so it can be shown the way it is said (3y ≥ x), not only with 0 on the right */
+  subject?: readonly number[];
   /** the meaning in plain terms, written independently of `coeffs` */
   holds: (point: readonly Fr[]) => boolean;
 }
@@ -125,7 +127,16 @@ export function relationship(s: RelationshipSpec): Constraint {
   const raw: Fr[] = Array.from({ length: s.n }, () => ZERO);
   for (const i of s.a) raw[i] = fadd(raw[i], ONE);
   for (const i of s.b) raw[i] = fsub(raw[i], s.m);
-  return build(s.kind ?? "multiple", s.source ?? "", raw, s.op, ZERO, (p) => opHolds(sumAt(s.a, p), s.op, fmul(s.m, sumAt(s.b, p))));
+  return { ...build(s.kind ?? "multiple", s.source ?? "", raw, s.op, ZERO, (p) => opHolds(sumAt(s.a, p), s.op, fmul(s.m, sumAt(s.b, p)))), subject: s.a };
+}
+/** a relation constraint (letters on both sides, nothing on the right) as the relation it was said as: whole numbers in lowest terms, the sentence's own side first ("2x ≥ 3y"). Null for any other constraint. */
+export function relationForm(c: Pick<Constraint, "coeffs" | "op" | "rhs"> & { subject?: readonly number[] }): { left: number[]; right: number[]; op: Op } | null {
+  if (!c.subject || c.rhs[0] !== 0) return null;
+  const ints = c.coeffs.map((f) => f[0]);
+  if (!ints.some((v) => v > 0) || !ints.some((v) => v < 0)) return null;
+  const flip = c.subject.reduce((t, i) => t + ints[i], 0) < 0;
+  const sg = flip ? -1 : 1;
+  return { left: ints.map((v) => (sg * v > 0 ? Math.abs(v) : 0)), right: ints.map((v) => (sg * v < 0 ? Math.abs(v) : 0)), op: flip ? flipOp(c.op) : c.op };
 }
 /** "A is p% of B" (a percentage, p may be a fraction: 12.5 is fr(25, 2)) */
 export const percentOf = (s: Omit<RelationshipSpec, "m" | "kind"> & { p: Fr }): Constraint =>

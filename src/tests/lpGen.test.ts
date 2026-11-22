@@ -43,7 +43,7 @@ describe("the working of the brief's examples", () => {
     // the slip is never shown before the answer
     expect(steps.slice(0, -1).some((s) => s.caption.startsWith("Common slip"))).toBe(false);
   });
-  it("x at least twice y and z combined: x ≥ 2(y + z), then x ≥ 2y + 2z, then x − 2y − 2z ≥ 0", () => {
+  it("x at least twice y and z combined: x ≥ 2(y + z), then x ≥ 2y + 2z (the letters stay on both sides)", () => {
     const vars3 = [...vars2, { sym: "z", noun: "pies", integer: true }];
     const d: LpProblemData = {
       kind: "multiple", level: 1, vars: vars3, op: "≥",
@@ -54,10 +54,9 @@ describe("the working of the brief's examples", () => {
     const rows = solveLp(asProblem({ prompt: "", answerText: "", data: d })).flatMap((s) => s.lpView!.rows.slice(-s.lpView!.fresh!)).map((r) => r.t);
     expect(rows).toContain("x \\ge 2(y + z)");
     expect(rows).toContain("x \\ge 2y + 2z");
-    expect(rows).toContain("x - 2y - 2z \\ge 0");
-    expect(rows.join("\n")).toContain("40 - 2(15) - 2(5) = 0");
+    expect(rows.join("\n")).toContain("2(15) + 2(5) = 40");
   });
-  it("y at least 3/2 times x: cleared, moved left, then multiplied by −1 to put x first (the sign reverses)", () => {
+  it("y at least 3/2 times x: the fraction cleared, 2y ≥ 3x (no rearranging to 0 on the right)", () => {
     const d: LpProblemData = {
       kind: "multiple", level: 1, vars: vars2, op: "≥",
       spec: { t: "rel", n: 2, a: [1], b: [0], m: F(3, 2), op: "≥", kind: "multiple" },
@@ -66,8 +65,6 @@ describe("the working of the brief's examples", () => {
     const rows = solveLp(asProblem({ prompt: "", answerText: "", data: d })).flatMap((s) => s.lpView!.rows.slice(-s.lpView!.fresh!)).map((r) => r.t);
     expect(rows).toContain("y \\ge \\frac{3}{2}x");
     expect(rows).toContain("2y \\ge 3x");
-    expect(rows).toContain("2y - 3x \\ge 0");
-    expect(rows).toContain("3x - 2y \\le 0");
   });
   it("a strict bound keeps its sign and says what it means for whole numbers", () => {
     const d: LpProblemData = {

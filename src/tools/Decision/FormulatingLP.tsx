@@ -66,7 +66,7 @@ const OPTIONS: ShellOption[] = [
       { value: "resource", forLevels: [1], label: "Resource Use", sub: "10x + 15y ≤ 300" },
       { value: "compare", forLevels: [1], label: "Comparisons", sub: "x ≥ 2y" },
       { value: "percent", forLevels: [2], label: "Percentages", sub: "x is 40% of y" },
-      { value: "ratio", forLevels: [2], label: "Ratios And Shares", sub: "x : y, one for every two" },
+      { value: "ratio", forLevels: [2], label: "Ratios And Shares", sub: "x : y at least 2 : 3" },
       { value: "decimal", forLevels: [2], label: "Decimal Amounts", sub: "0.4x + 0.6y ≤ 30" },
       { value: "blend", forLevels: [3], label: "Blends", sub: "At least 30% olive oil" },
       { value: "eitherOr", forLevels: [3], label: "Either-Or Limits", sub: "x/60 + y/45 ≤ 1" },

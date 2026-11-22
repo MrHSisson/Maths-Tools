@@ -25,29 +25,30 @@ const newRows = (data: LpProblemData): string[] => solveLp(asProblem(data)).flat
 const ALL: LpGenOptionsFull = { vars: [2], styles: [], pctOf: ["one", "combined", "total", "morless"], capGiven: "most", method: "fractions" };
 
 describe("worked examples (brief 2, 4 and 4.6)", () => {
-  it("x at least 40% of the total, three variables: 3x − 2y − 2z ≥ 0, line by line", () => {
+  it("x at least 40% of the total, three variables: 3x ≥ 2y + 2z, line by line", () => {
     const d: LpProblemData = { kind: "percent", level: 2, vars: V("x", "y", "z"), op: "≥", spec: { t: "rel", n: 3, a: [0], b: [0, 1, 2], m: F(2, 5), op: "≥", kind: "percent" }, info: { kind: "percent", form: "total", a: [0], b: [0, 1, 2], m: F(2, 5), p: 40 } };
     const rows = newRows(d);
-    for (const r of ["x \\ge 0.4(x + y + z)", "x \\ge 0.4x + 0.4y + 0.4z", "0.6x - 0.4y - 0.4z \\ge 0", "3x - 2y - 2z \\ge 0"]) expect(rows).toContain(r);
+    for (const r of ["x \\ge 0.4(x + y + z)", "x \\ge 0.4x + 0.4y + 0.4z", "0.6x \\ge 0.4y + 0.4z", "3x \\ge 2y + 2z"]) expect(rows).toContain(r);
   });
-  it("x is 20% more than y: 5x − 6y = 0 (1.2, multiplied by 5)", () => {
+  it("x is 20% more than y: 5x = 6y (1.2, multiplied by 5)", () => {
     const d: LpProblemData = { kind: "percent", level: 2, vars: V("x", "y"), op: "=", spec: { t: "rel", n: 2, a: [0], b: [1], m: F(6, 5), op: "=", kind: "percent" }, info: { kind: "percent", form: "more", a: [0], b: [1], m: F(6, 5), p: 20 } };
     const rows = newRows(d);
-    for (const r of ["x = 1.2y", "x - 1.2y = 0", "5x - 6y = 0"]) expect(rows).toContain(r);
+    for (const r of ["x = 1.2y", "5x = 6y"]) expect(rows).toContain(r);
   });
-  it("the ratio of x to y is at least 2 : 3: 3x − 2y ≥ 0", () => {
+  it("the ratio of x to y is at least 2 : 3: 3x ≥ 2y", () => {
     const d: LpProblemData = { kind: "ratio", level: 2, vars: V("x", "y"), op: "≥", spec: { t: "rel", n: 2, a: [0], b: [1], m: F(2, 3), op: "≥", kind: "ratio" }, info: { kind: "ratio", form: "ratio", a: [0], b: [1], m: F(2, 3) } };
     const rows = newRows(d);
-    for (const r of ["\\frac{x}{y} \\ge \\frac{2}{3}", "3x \\ge 2y", "3x - 2y \\ge 0"]) expect(rows).toContain(r);
+    for (const r of ["\\frac{x}{y} \\ge \\frac{2}{3}", "3x \\ge 2y"]) expect(rows).toContain(r);
   });
-  it("each plant at least one third of the total: 2x − y − z ≥ 0 (three plants)", () => {
+  it("each plant at least one third of the total: 2x ≥ y + z (three plants)", () => {
     const d: LpProblemData = { kind: "ratio", level: 2, vars: V("x", "y", "z"), op: "≥", spec: { t: "rel", n: 3, a: [0], b: [0, 1, 2], m: F(1, 3), op: "≥", kind: "ratio" }, info: { kind: "ratio", form: "share", a: [0], b: [0, 1, 2], m: F(1, 3) } };
     const rows = newRows(d);
-    for (const r of ["x \\ge \\frac{1}{3}(x + y + z)", "\\frac{2}{3}x - \\frac{1}{3}y - \\frac{1}{3}z \\ge 0", "2x - y - z \\ge 0"]) expect(rows).toContain(r);
+    for (const r of ["x \\ge \\frac{1}{3}(x + y + z)", "\\frac{2}{3}x \\ge \\frac{1}{3}y + \\frac{1}{3}z", "2x \\ge y + z"]) expect(rows).toContain(r);
   });
-  it("at least one adult to every two children (adults x + y, children z): 2x + 2y − z ≥ 0", () => {
-    const d: LpProblemData = { kind: "ratio", level: 2, vars: V("x", "y", "z"), op: "≥", spec: { t: "rel", n: 3, a: [0, 1], b: [2], m: F(1, 2), op: "≥", kind: "ratio" }, info: { kind: "ratio", form: "every", a: [0, 1], b: [2], m: F(1, 2) } };
-    expect(newRows(d)).toContain("2x + 2y - z \\ge 0");
+  it("the ratio of adults (x + y) to children (z) at least 1 : 2: 2(x + y) ≥ z", () => {
+    const d: LpProblemData = { kind: "ratio", level: 2, vars: V("x", "y", "z"), op: "≥", spec: { t: "rel", n: 3, a: [0, 1], b: [2], m: F(1, 2), op: "≥", kind: "ratio" }, info: { kind: "ratio", form: "ratio", a: [0, 1], b: [2], m: F(1, 2) } };
+    const rr = newRows(d);
+    for (const r of ["\\frac{x + y}{z} \\ge \\frac{1}{2}", "2(x + y) \\ge z", "2x + 2y \\ge z"]) expect(rr).toContain(r);
   });
   it("decimal amounts: 0.8x + 0.6y ≤ 3000 gives 4x + 3y ≤ 15 000", () => {
     const d: LpProblemData = {
@@ -243,7 +244,7 @@ describe("random draws, Levels 2 and 3 (seeded)", () => {
         }
         if (level === 2) {
           expect([...kinds].sort()).toEqual(["decimal", "percent", "ratio"]);
-          for (const f of ["percent:one", "percent:total", "percent:more", "percent:less", "ratio:ratio", "ratio:every", "ratio:share"]) expect(forms.has(f)).toBe(true);
+          for (const f of ["percent:one", "percent:total", "percent:more", "percent:less", "ratio:ratio", "ratio:share"]) expect(forms.has(f)).toBe(true);
           if (n >= 3) expect(forms.has("percent:combined")).toBe(true);
           else expect(forms.has("percent:combined")).toBe(false);
           expect(ops.size).toBe(5);

@@ -1646,6 +1646,12 @@
        "items": [
         "2026-11-22 (audit applied). `specs/linear-programming-audit.md`: a mixed-sign minimise; One pivot's Start option; equalities in two or more variables; Tableau To Problem moved to Read a tableau; Whole Numbers on Solve only; one Size option (2 × 2 to 4 × 4*); an asterisk on each option button that is an extension."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (Harry's notes from the preview). In Formulating a relation constraint stays a relation (3x ≥ 2y, not 3x − 2y ≥ 0), because a constraint need only be tidied when a simplex is to use it; and ratios are written as ratios (\"the ratio of A to B is at least 2 : 3\", also for two kinds combined), not \"one for every\". Shares of the total stay in words."
+       ]
       }
      ]
     },
@@ -3912,6 +3918,10 @@
    "changes": [
     {
      "date": "2026-11-22",
+     "title": "Formulating: relations stay as relations; ratios are written as ratios, not live"
+    },
+    {
+     "date": "2026-11-22",
      "title": "Formulating Linear Programmes: a kind that is exactly a multiple of the others, substituted out (problem, Level 3), not live"
     },
     {
@@ -3925,10 +3935,6 @@
     {
      "date": "2026-11-21",
      "title": "Formulating Linear Programmes: strict inequalities in problems, the rest of \"Formulate a problem\" Level 2, and Level 3 (chunks F6 and F7), not live"
-    },
-    {
-     "date": "2026-11-21",
-     "title": "Formulating Linear Programmes: \"Formulate a problem\" Level 2 (chunk F6, part), and the common slip as a step"
     }
    ]
   },

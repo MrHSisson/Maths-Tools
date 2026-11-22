@@ -3,7 +3,7 @@
 // from the same numbers, so the wording and the model cannot disagree. Everything a question needs later (the working, the check, the tests) is
 // plain data in `LpProblemData`: no functions, so a seed rebuilds the same question. Level 1 only so far (resource use and direct comparisons).
 import { type Fr, fr, ZERO } from "./dim";
-import { type Constraint, type ConstraintKind, type Op, type Var, blend, eitherOr, flipOp, gcdInt, linear, relationship } from "./lp";
+import { type Constraint, type ConstraintKind, type Op, type Var, blend, eitherOr, flipOp, gcdInt, linear, relationForm, relationship } from "./lp";
 
 // ── The question's data ──────────────────────────────────────────────────────
 export type LpKind = "resource" | "multiple" | "difference" | "bound" | "total" | "percent" | "ratio" | "decimal" | "blend" | "eitherOr" | "problem";
@@ -27,7 +27,7 @@ type LpInfo =
   | { kind: "bound"; i: number; N: number; each: boolean }
   | { kind: "total"; N: number }
   | { kind: "percent"; form: "one" | "combined" | "total" | "more" | "less"; a: number[]; b: number[]; m: Fr; p: number }
-  | { kind: "ratio"; form: "ratio" | "every" | "share"; a: number[]; b: number[]; m: Fr }
+  | { kind: "ratio"; form: "ratio" | "share"; a: number[]; b: number[]; m: Fr }
   | { kind: "decimal"; a: number[]; den: number; amount: number; unit: string; of: string; verb: string; label: string; topic: string; sing: string[] }
   | { kind: "blend"; contents: Fr[]; share: Fr; comp: string; invest: boolean }
   | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[]; integers?: boolean; price?: number[]; cost?: number[]; konst?: number; single?: number;
@@ -115,7 +115,12 @@ export const letDef = (vars: Var[], did: string): string => {
 // ── Writing a constraint: "3x + 4y ≤ 180" ────────────────────────────────────
 const SIGN = (f: number): string => (f < 0 ? "−" : "+");
 /** plain text, for the answer line and the printed answers */
-export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs">, vars: Var[]): string {
+export function constraintText(c: Pick<Constraint, "coeffs" | "op" | "rhs"> & { subject?: readonly number[] }, vars: Var[]): string {
+  const rf = relationForm(c);
+  if (rf) {
+    const side = (xs: number[]): string => xs.map((k, i) => (k === 0 ? "" : `${k === 1 ? "" : k}${vars[i].sym}`)).filter(Boolean).join(" + ");
+    return `${side(rf.left)} ${rf.op} ${side(rf.right)}`;
+  }
   let s = "";
   c.coeffs.forEach((f, i) => {
     const k = f[0];

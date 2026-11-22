@@ -3,7 +3,7 @@
 // the check (try a number), and last the constraint with the common slip. The slip is shown with the answer, never before.
 import type { LpRow, SolveStep, DecisionProblem } from "./types";
 import { type Fr, fr, fmul, fsub, fdiv } from "./dim";
-import { type Constraint, type Op, gcdInt, lcmInt, intercept } from "./lp";
+import { type Constraint, type Op, gcdInt, lcmInt, intercept, relationForm } from "./lp";
 import { type LpProblemData, constraintOf, constraintText, texN, unitOf } from "./lpGen";
 import { decStr, isFinite10 } from "./lpGenL23";
 
@@ -23,7 +23,10 @@ function exprTex(coeffs: readonly number[], syms: readonly string[]): string {
   return s || "0";
 }
 /** a constraint as a line of TeX: "3x + 4y \le 180" */
-export const constraintTex = (c: Pick<Constraint, "coeffs" | "op" | "rhs">, syms: readonly string[]): string => `${exprTex(c.coeffs.map((f) => f[0]), syms)} ${opTex(c.op)} ${frTex(c.rhs)}`;
+export const constraintTex = (c: Pick<Constraint, "coeffs" | "op" | "rhs"> & { subject?: readonly number[] }, syms: readonly string[]): string => {
+  const rf = relationForm(c);
+  return rf ? `${exprTex(rf.left, syms)} ${opTex(rf.op)} ${exprTex(rf.right, syms)}` : `${exprTex(c.coeffs.map((f) => f[0]), syms)} ${opTex(c.op)} ${frTex(c.rhs)}`;
+};
 /** the left side with the numbers put in: "3(4) + 4(6) = 36" */
 function substTex(coeffs: readonly number[], p: readonly number[]): { text: string; value: number } {
   let text = "";
@@ -146,18 +149,8 @@ function multipleSteps(d: LpProblemData, c: Constraint, syms: string[], step: Ad
       { k: "tex", t: `${lhsA} ${op} ${b.map((i) => `${pp}${syms[i]}`).join(" + ")}` },
     ], "Expand");
   }
-  const right = b.map((i) => `${pp === 1 ? "" : pp}${syms[i]}`);
-  const moved = `${lhsA} - ${right.join(" - ")} ${op} 0`;
-  step("Take everything to the left, so that the right-hand side is 0.", [
-    { k: "tex", t: moved },
-  ], "Move to the left");
-  const first = Math.min(a, ...b);
-  if (first !== a) {
-    const flip = d.op === "=" ? "" : " This reverses the inequality sign.";
-    step(`Write the letters in order, with the first coefficient positive: multiply by −1.${flip}`, [
-      { k: "tex", t: constraintTex(c, syms) },
-    ], "Tidy");
-  }
+  // the relation, in whole numbers and lowest terms, is the constraint: the letters can stay on both sides
+  void c;
 }
 
 // ── a difference: "x exceeds y by at least 5" ────────────────────────────────
@@ -227,6 +220,17 @@ function checkStep(d: LpProblemData, c: Constraint, syms: string[], ints: number
     const r = (x: number): string => String(Math.round(x * 10000) / 10000);
     meaning = `the ${info.comp} is $${info.contents.map((f, i) => `${decStr(f)}(${pt[i]})`).join(" + ")} = ${r(amount)}$ out of a total of $${sumOf(pt)} = ${total}$. The required share of the total is $${decStr(info.share)} \\times ${total} = ${r(share)}$, and $${r(amount)} ${op} ${r(share)}$ is ${tf}.`;
   }
+  const rf = relationForm(c);
+  if (rf) {
+    const L = substTex(rf.left, pt), R = substTex(rf.right, pt);
+    const ok = holdsInt(L.value, rf.op, R.value);
+    step("Check the constraint with a number: choose values that fit the words, and see that the constraint agrees.", [
+      { k: "head", t: "Check with a number" },
+      { k: "words", t: `Try $${assign(syms, pt)}$: ${meaning}` },
+      { k: "words", t: `In the constraint: the left side is $${L.text} = ${L.value}$ and the right side is $${R.text} = ${R.value}$, and $${L.value} ${opTex(rf.op)} ${R.value}$ is ${ok ? "true" : "false"}${ok === fits ? ", so the constraint agrees with the words ✓" : " ✗"}.` },
+    ], "Check");
+    return;
+  }
   const { text, value } = substTex(ints, pt);
   const rhs = c.rhs[0] / c.rhs[1];
   step("Check the constraint with a number: choose values that fit the words, and see that the constraint agrees.", [
@@ -242,7 +246,7 @@ function finalStep(d: LpProblemData, c: Constraint, syms: string[], step: Add): 
   if (d.op === "<" || d.op === ">") {
     rows.push({ k: "note", t: `The sign stays strict: points on the boundary are not allowed.${c.coeffs.filter((f) => f[0] !== 0).length === 1 ? ` For whole numbers, $${syms[c.coeffs.findIndex((f) => f[0] !== 0)]} ${opTex(c.op)} ${texN(c.rhs[0])}$ also means $${syms[c.coeffs.findIndex((f) => f[0] !== 0)]} ${c.op === ">" ? "\\ge" : "\\le"} ${texN(c.rhs[0] + (c.op === ">" ? 1 : -1))}$.` : ""}` });
   }
-  step("That is the constraint: whole-number coefficients in lowest terms, the first coefficient positive.", rows, "The constraint");
+  step(relationForm(c) ? "That is the constraint: whole numbers in lowest terms. The letters can stay on both sides: it is just as correct as a line with 0 on the right." : "That is the constraint: whole-number coefficients in lowest terms, the first coefficient positive.", rows, "The constraint");
   // the common slip is a step of its own, said in the caption (plain text): it adds nothing to the page
   if (d.slip) {
     const s = constraintOf(d.slip.spec);
@@ -252,6 +256,10 @@ function finalStep(d: LpProblemData, c: Constraint, syms: string[], step: Add): 
       const differs = (j: number): boolean => { const r = intercept(s, j), q = intercept(c, j); return !!r && !!q && r[0] * q[1] !== q[0] * r[1]; };
       const i = c.coeffs.findIndex((f, j) => f[0] !== 0 && c.rhs[0] % f[0] === 0 && differs(j));
       if (i >= 0) why = ` Check it: with only ${d.vars[i].noun} it gives ${syms[i]} ${s.op} ${plainFr(intercept(s, i)!)}, not ${plainFr(intercept(c, i)!)}.`;
+    } else if (d.point && relationForm(s)) {
+      const rf = relationForm(s)!;
+      const L = substTex(rf.left, d.point), R = substTex(rf.right, d.point);
+      why = ` At the check point (${assign(syms, d.point).replace(/,\\ /g, ", ")}) the left side is ${L.text} = ${L.value} and the right side is ${R.text} = ${R.value}, and ${L.value} ${rf.op} ${R.value} is ${d.pointFits === false ? "true, so it would wrongly allow a point that the words rule out" : "false, so it does not fit the words"}.`;
     } else if (d.point) {
       const sp = substTex(s.coeffs.map((f) => f[0]), d.point);
       why = ` At the check point (${assign(syms, d.point).replace(/,\\ /g, ", ")}) it gives ${sp.text.replace(/-/g, "−")} = ${String(sp.value).replace("-", "−")}, and ${String(sp.value).replace("-", "−")} ${s.op} ${plainFr(s.rhs)} is ${d.pointFits === false ? "true, so it would wrongly allow a point that the words rule out" : "false, so it does not fit the words"}.`;
@@ -305,6 +313,7 @@ const bracketed = (idx: readonly number[], syms: readonly string[]): string => i
 interface Pipe { left: Fr[]; right: Fr[]; op: Op; mode: Mode; expand: boolean; c: Constraint; syms: string[] }
 /** from "A ⟨op⟩ m(B)" to the tidy form: multiply out the bracket, take everything to the left and collect, clear the decimals or fractions, divide by a common factor, put the first coefficient positive */
 function pipeline(step: Add, P: Pipe): void {
+  if (P.c.subject && relationPipeline(step, P)) return;
   const { left, right, op, mode, syms, c } = P;
   const o = opTex(op);
   if (P.expand) step("Multiply out the bracket.", [{ k: "tex", t: `${exprFr(left, syms, mode)} ${o} ${exprFr(right, syms, mode)}` }], "Expand");
@@ -320,6 +329,37 @@ function pipeline(step: Add, P: Pipe): void {
   }
   const lead = cur.find((f) => f[0] !== 0);
   if (lead && lead[0] < 0) step(`Write the letters in order, with the first coefficient positive: multiply by −1.${op === "=" ? "" : " This reverses the inequality sign."}`, [{ k: "tex", t: constraintTex(c, syms) }], "Tidy");
+}
+/** from "A ⟨op⟩ m(B)" to the relation in whole numbers and lowest terms, with the letters left on both sides: collect a letter that is on both sides, clear the decimals or fractions, divide by a common factor. False when the relation cannot be shown this way. */
+function relationPipeline(step: Add, P: Pipe): boolean {
+  const { left, right, op, mode, syms, c } = P;
+  const rf = relationForm(c);
+  if (!rf) return false;
+  const moved = left.map((f, i) => fsub(f, right[i]));
+  const diff = rf.left.map((v, i) => v - rf.right[i]);
+  const i0 = diff.findIndex((v) => v !== 0);
+  if (i0 < 0 || moved[i0][0] === 0) return false;
+  const t = fdiv(moved[i0], fr(diff[i0]));
+  if (t[0] <= 0 || !moved.every((f, i) => fsub(f, fmul(t, fr(diff[i])))[0] === 0)) return false;
+  const o = opTex(rf.op);
+  const rel = (l: Fr[], r: Fr[]): string => `${exprFr(l, syms, mode)} ${o} ${exprFr(r, syms, mode)}`;
+  const scale = (k: Fr): [Fr[], Fr[]] => [rf.left.map((v) => fmul(k, fr(v))), rf.right.map((v) => fmul(k, fr(v)))];
+  if (P.expand) step("Multiply out the bracket.", [{ k: "tex", t: `${exprFr(left, syms, mode)} ${opTex(op)} ${exprFr(right, syms, mode)}` }], "Expand");
+  let cur = scale(t);
+  if (left.some((f, i) => f[0] !== 0 && right[i][0] !== 0)) {
+    step("A letter that is on both sides is combined, so that each letter is on one side only.", [{ k: "tex", t: rel(cur[0], cur[1]) }], "Collect");
+  }
+  const k = [...cur[0], ...cur[1]].reduce((l, f) => lcmInt(l, f[1]), 1);
+  if (k > 1) {
+    cur = scale(fmul(t, fr(k)));
+    step(`Multiply every term by ${k} to remove the ${mode === "dec" ? "decimals" : "fractions"}.`, [{ k: "tex", t: rel(cur[0], cur[1]) }], "Whole numbers");
+  }
+  const g = fmul(t, fr(k));
+  if (g[1] === 1 && g[0] > 1) {
+    cur = scale(fr(1));
+    step(`Every number is divisible by ${g[0]}: divide both sides through, to get lowest terms.`, [{ k: "tex", t: rel(cur[0], cur[1]) }], "Lowest terms");
+  }
+  return true;
 }
 const zeros = (n: number): Fr[] => Array.from({ length: n }, () => fr(0));
 const unit = (n: number, idx: readonly number[], v: Fr): Fr[] => zeros(n).map((z, i) => (idx.includes(i) ? v : z));
@@ -343,7 +383,7 @@ function percentSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add
   pipeline(step, { left: unit(n, a, fr(1)), right: unit(n, b, m), op: d.op, mode: "dec", expand: many, c, syms });
 }
 
-// ── Level 2: ratios, "one for every", and shares of the total ────────────────
+// ── Level 2: ratios (x : y) and shares of the total ────────────────
 function ratioSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add): void {
   const info = d.info as Extract<LpProblemData["info"], { kind: "ratio" }>;
   const { form, a, b, m } = info;
@@ -351,18 +391,20 @@ function ratioSteps(d: LpProblemData, c: Constraint, syms: string[], step: Add):
   const o = opTex(d.op);
   if (form === "ratio") {
     const [num, den] = m;
-    step(`A ratio compares the two numbers by division: ${syms[a[0]]} : ${syms[b[0]]} is ${syms[a[0]]} divided by ${syms[b[0]]}.`, [
+    const A = a.map((i) => syms[i]).join(" + "), B = syms[b[0]];
+    const group = a.length > 1;
+    step(`A ratio compares the two numbers by division: ${group ? `(${A})` : A} : ${B} is ${group ? "the two added together" : A} divided by ${B}.`, [
       { k: "head", t: "Write it as an inequality" },
-      { k: "tex", t: `\\frac{${syms[a[0]]}}{${syms[b[0]]}} ${o} \\frac{${num}}{${den}}` },
+      { k: "tex", t: `\\frac{${A}}{${B}} ${o} \\frac{${num}}{${den}}` },
     ], "Translate");
-    step(`Multiply both sides by ${den}${syms[b[0]]} (both positive, so the inequality sign stays the same).`, [
-      { k: "tex", t: `${den === 1 ? "" : den}${syms[a[0]]} ${o} ${num === 1 ? "" : num}${syms[b[0]]}` },
+    step(`Multiply both sides by ${den}${B} (both positive, so the inequality sign stays the same).`, [
+      { k: "tex", t: `${den === 1 ? "" : den}${group && den > 1 ? `(${A})` : A} ${o} ${num === 1 ? "" : num}${B}` },
     ], "Cross-multiply");
-    pipeline(step, { left: unit(n, a, fr(den)), right: unit(n, b, fr(num)), op: d.op, mode: "frac", expand: false, c, syms });
+    pipeline(step, { left: unit(n, a, fr(den)), right: unit(n, b, fr(num)), op: d.op, mode: "frac", expand: group && den > 1, c, syms });
     return;
   }
   const many = b.length > 1;
-  step(form === "every" ? "\"One for every k\" means one k-th: write the amount compared with the others as a fraction of them." : "A share of the total is a fraction of all of them added together, including this one.", [
+  step("A share of the total is a fraction of all of them added together, including this one.", [
     { k: "head", t: "Write it as an inequality" },
     { k: "tex", t: `${bracketed(a, syms)} ${o} ${coefTex(m, "frac")}${many ? `(${bracketed(b, syms)})` : bracketed(b, syms)}` },
   ], "Translate");

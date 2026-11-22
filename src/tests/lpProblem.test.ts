@@ -35,10 +35,10 @@ describe("the working of a hand-made model", () => {
     expect(all).toContain("P = 5x + 8y");
     expect(all).toContain("10x + 15y \\le 300");
     expect(all).toContain("2x + 3y \\le 60");
-    expect(all).toContain("x - 2y \\ge 0");
+    expect(all).toContain("x \\ge 2y");
     expect(all).toContain("x \\ge 0,\\ y \\ge 0");
     const last = steps[steps.length - 1].lpView!.rows;
-    expect(last.map((r) => r.t)).toEqual(expect.arrayContaining(["Maximise $P = 5x + 8y$", "subject to:", "2x + 3y \\le 60", "x - 2y \\ge 0", "x \\ge 0,\\ y \\ge 0"]));
+    expect(last.map((r) => r.t)).toEqual(expect.arrayContaining(["Maximise $P = 5x + 8y$", "subject to:", "2x + 3y \\le 60", "x \\ge 2y", "x \\ge 0,\\ y \\ge 0"]));
     // the common slips are shown only on the last step
     expect(steps.slice(0, -1).some((s) => s.caption.startsWith("Common slips"))).toBe(false);
     expect(steps[steps.length - 1].caption).toContain("Common slips");

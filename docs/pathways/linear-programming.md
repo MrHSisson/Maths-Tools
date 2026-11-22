@@ -38,6 +38,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (audit applied). `specs/linear-programming-audit.md`: a mixed-sign minimise; One pivot's Start option; equalities in two or more variables; Tableau To Problem moved to Read a tableau; Whole Numbers on Solve only; one Size option (2 × 2 to 4 × 4*); an asterisk on each option button that is an extension.
 
+- 2026-11-22 (Harry's notes from the preview). In Formulating a relation constraint stays a relation (3x ≥ 2y, not 3x − 2y ≥ 0), because a constraint need only be tidied when a simplex is to use it; and ratios are written as ratios ("the ratio of A to B is at least 2 : 3", also for two kinds combined), not "one for every". Shares of the total stay in words.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
