@@ -345,12 +345,15 @@ function linked(n: number, strict: boolean): Draft | null {
   }
   const times = a === 1 ? "equal to " : a === 2 ? "twice " : `${a} times `;
   const of = form === "single" ? `the number of ${picked[S[0]].plural}` : `the total number of ${list(S.map((j) => picked[j].plural))}`;
-  const relation = `The number of ${dep.plural} ${ctx.did} must be exactly ${times}${of}.`;
+  // worded the other way round ("the power smoothies are half of the boost smoothies"), the fixed kind is still a multiple of the others: the half is a trap to read, not a fraction in the model
+  const reverse = a > 1 && Math.random() < 0.45;
+  const subject = form === "single" ? `The number of ${picked[S[0]].plural}` : `The total number of ${list(S.map((j) => picked[j].plural))}`;
+  const relation = reverse ? `${subject} ${ctx.did} must be exactly ${a === 2 ? "half" : "one third"} of the number of ${dep.plural}.` : `The number of ${dep.plural} ${ctx.did} must be exactly ${times}${of}.`;
   const objSentence = `${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} makes a profit of £${profits[i]}` : `each ${it.singular} £${profits[i]}`))))}.`;
   return {
     intro: ctx.intro(picked.map((it) => it.plural)), objSentence, parts, prefix: "", vars, sing, obj, sense: "max", name: "P", canInteger: true,
     extra: [relation, ...resS], closing: "Formulate this as a linear programming problem, to maximise the profit.",
-    info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, profits, resources: rs } },
+    info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, ...(reverse ? { reverse } : {}), profits, resources: rs } },
   };
 }
 

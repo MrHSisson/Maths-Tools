@@ -515,6 +515,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     ...d.vars.map((v): LpRow => ({ k: "words", t: `Let $${v.sym}$ be the number of ${v.noun}.` })),
     ...(rem ? [{ k: "words", t: `The rest of the ${rem.unit === "hectares" ? "land" : "floor space"} is used for ${rem.rest}: that is $${rem.T} - ${syms.join(" - ")}$ ${rem.unit}, so it needs no letter of its own.` } as LpRow] : []),
     ...(link ? [{ k: "words", t: `The number of ${link.dep.plural} is exactly $${linkE}$, so they need no letter of their own: the other kinds decide how many there are.` } as LpRow] : []),
+    ...(link?.reverse ? [{ k: "note", t: `Read the relation carefully: if the ${link.S.length === 1 ? link.items[link.S[0]].plural : "others"} are ${link.a === 2 ? "half" : "a third"} of the ${link.dep.plural}, then the ${link.dep.plural} are ${link.a === 2 ? "twice" : "three times"} as many, so the ${link.dep.plural} are $${linkE}$.` } as LpRow] : []),
   ];
   base = vars;
   push(link ? `Nothing is named for you: choose a letter for each kind you decide. The ${link.dep.plural} are fixed by the others, so they need no letter.` : rem ? "Nothing is named for you: choose a letter for each use you decide. The last use is whatever is left, so it needs no letter." : "Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
@@ -569,6 +570,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     base = [...base, { k: "tex", t: `${info.name} = ${exprTex(link.profits.slice(0, nL), syms)} + ${add}` }, { k: "tex", t: `${info.name} = ${objTex}` }];
     push(`Multiply out the bracket and collect the like terms: the ${link.dep.plural} add to the profit from the letters they depend on.`, base, 2, "Collect");
     slips.push(`Objective. Common slip: leaving out the ${link.dep.plural}, ${info.name} = ${link.profits.slice(0, nL).map((q, i) => `${q}${syms[i]}`).join(" + ")}.`);
+    if (link.reverse) slips.push(`Relation. Common slip: turning it the wrong way round, so the ${link.dep.plural} are ${link.a === 2 ? "half" : "a third"} of the others instead of ${link.a === 2 ? "twice" : "three times"} them.`);
   } else if (rem) {
     const m = d.vars.length;
     const c = rem.profits[m];

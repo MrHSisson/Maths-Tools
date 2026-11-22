@@ -102,6 +102,7 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
     seeded(777);
     let seen = 0;
     const forms = new Set<string>();
+    let revSeen = 0;
     for (let i = 0; i < 400 && seen < 60; i++) {
       const q = generateProblem(3, { vars: [2, 3], objective: ["max"], integers: true });
       const info = q.data.info as PInfo;
@@ -111,7 +112,8 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
       forms.add(L.form);
       const n = q.data.vars.length;
       expect(L.items).toHaveLength(n + 1);
-      expect(q.prompt).toMatch(/must be exactly (twice |3 times |equal to )/);
+      expect(q.prompt).toMatch(/must be exactly (twice |3 times |equal to |half of |one third of )/);
+      if (L.reverse) { expect(q.prompt).toMatch(new RegExp(`(half|one third) of the number of ${L.dep.plural}`)); revSeen++; }
       expect(q.prompt).toContain(L.dep.plural);
       expect(q.data.vars.map((v) => v.noun)).not.toContain(L.dep.plural);
       const dep = (pt: number[]): number => L.a * L.S.reduce((t, j) => t + pt[j], 0);
@@ -133,6 +135,7 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
     }
     expect(seen).toBeGreaterThan(10);
     expect(forms.size).toBeGreaterThanOrEqual(2);
+    expect(revSeen).toBeGreaterThan(0);
   });
 });
 
