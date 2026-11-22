@@ -160,6 +160,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: { hasFigure: (p) => !!p.lp && (p.lp.info.kind !== "problem" || !!p.lp.info.showTable) },
         noSandbox: true,
         levelLabels: {
           constraint: ["Resource use and direct comparisons", "Percentages, ratios, shares, and decimal or fractional amounts", "Blends, and either-or limits worked out from the capacity"],

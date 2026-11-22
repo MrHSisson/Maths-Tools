@@ -25,7 +25,7 @@ export default function WorkingPage({ children, watch, heading = "Your working",
   return (
     <div ref={box} style={{ position: "absolute", inset: 0, background: "#fff", overflowY: "auto", overflowX: "hidden", containerType: "inline-size" } as CSSProperties}>
       <div style={{ padding: "12px 14px 20px 60px", ...label }}>{heading}</div>
-      <div style={{ width: "100%", maxWidth: "46em", margin: "0 auto", padding: "0 1.2em 3em", boxSizing: "border-box", fontSize: "clamp(16px, 2.5cqw, 26px)", display: "flex", flexDirection: "column", gap: "1.1em" }}>
+      <div style={{ width: "100%", maxWidth: "46em", margin: "0 auto", padding: "0 1.2em 3em", boxSizing: "border-box", fontSize: "clamp(18px, 3cqw, 30px)", display: "flex", flexDirection: "column", gap: "1.1em" }}>
         {children}
         {hint && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500 }}>{hint}</div>}
       </div>

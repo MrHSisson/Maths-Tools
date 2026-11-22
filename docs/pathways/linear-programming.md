@@ -46,6 +46,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (print, and the roadmap as a page). The Simplex print now carries the tableau or data table under each question, a page to work in, and the model working on the answers page (`config.skillPrint`; before, only the words printed). The roadmap is a page, `/lp-roadmap` (`SimplexRoadmap.tsx`, `enabled: false`), each practice button opening the tool on the right sub-tool, level and option.
 
+- 2026-11-22 (display). The working is an open page on screen (`WorkingPage`: full-size text, centred, every step so far, tableaux aligned), and a question stage is on trial in both LP tools (`config.questionStage`): the question large and centred before the steps, shrinking to its card when they start. To go shell-wide once Harry has tried it.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

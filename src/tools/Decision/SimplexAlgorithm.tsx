@@ -2,7 +2,7 @@ import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveSt
 import type { ShellOption } from "../../shared/decision/types";
 import SxCanvas, { SxSolution, SxPrintFigure, SxPrintWorking } from "../../shared/decision/SxWorking";
 import { generateSimplex, type SxKind } from "../../shared/decision/lpSimplexGen";
-import { solveSimplex } from "../../shared/decision/lpSimplexSolve";
+import { solveSimplex, questionBlocks } from "../../shared/decision/lpSimplexSolve";
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════
 // The Simplex Algorithm — Decision Maths DD3 and DD4 (AQA 7367), built on DecisionShell with the written working (the tableau and the row operations) as its
@@ -111,6 +111,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: { hasFigure: (p) => questionBlocks(p).length > 0 },
         // on paper the tableau (or the table of data) the question gives is printed under it, each question has a page to work in, and the answers page has the model working
         skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true, dots: true },
         noSandbox: true,

@@ -1670,6 +1670,12 @@
        "items": [
         "2026-11-22 (print, and the roadmap as a page). The Simplex print now carries the tableau or data table under each question, a page to work in, and the model working on the answers page (`config.skillPrint`; before, only the words printed). The roadmap is a page, `/lp-roadmap` (`SimplexRoadmap.tsx`, `enabled: false`), each practice button opening the tool on the right sub-tool, level and option."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (display). The working is an open page on screen (`WorkingPage`: full-size text, centred, every step so far, tableaux aligned), and a question stage is on trial in both LP tools (`config.questionStage`): the question large and centred before the steps, shrinking to its card when they start. To go shell-wide once Harry has tried it."
+       ]
       }
      ]
     },

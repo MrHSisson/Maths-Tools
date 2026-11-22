@@ -1,5 +1,5 @@
 import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
@@ -623,6 +623,20 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
   const [qOpen, setQOpen] = useState(false);
   useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
+  // question stage (a trial: opt in with config.questionStage; laptop only): before the steps start the question is shown large and centred over the tool, then shrinks away
+  // toward the question card at the top right as the first step begins. It stays mounted and is only hidden, so the shrink is a transition.
+  const stageOn = !!config.questionStage && !narrow && !problem.exam;
+  // it covers the working card only (measured), so Level, Options and New Question above it stay usable
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [stageBox, setStageBox] = useState<{ top: number; left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!stageOn) return;
+    const measure = () => { const r = cardRef.current?.getBoundingClientRect(); if (r) setStageBox((b) => (b && b.top === Math.max(r.top, 48) && b.left === r.left && b.width === r.width ? b : { top: Math.max(r.top, 48), left: r.left, width: r.width })); };
+    measure();
+    const t = window.setTimeout(measure, 300);   // once the page has settled (fonts, the controls above)
+    window.addEventListener("resize", measure);
+    return () => { window.clearTimeout(t); window.removeEventListener("resize", measure); };
+  }, [stageOn, atQuestion, problem, level, subTool]);
   const questionBlock = (big: boolean) => {
     const folded = !atQuestion && !qOpen;
     return (
@@ -1126,7 +1140,25 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           <div className="flex flex-col gap-4">
             {topicChooser}
             {controlBar}
-            <div className={`${CARD} overflow-clip`}>{body}</div>
+            <div ref={cardRef} className={`${CARD} overflow-clip`}>{body}</div>
+            {stageOn && stageBox && (
+              <div data-question-stage="" aria-hidden={!atQuestion} className="fixed bottom-0 z-30 flex items-center justify-center p-4 bg-white/90 rounded-t-2xl"
+                style={{ top: stageBox.top, left: stageBox.left, width: stageBox.width, transformOrigin: "75% 20%", ...(atQuestion
+                  ? { opacity: 1, transform: "none", visibility: "visible", transition: "opacity .35s ease, transform .35s ease" }
+                  : { opacity: 0, transform: "scale(0.3)", visibility: "hidden", pointerEvents: "none", transition: "opacity .4s ease, transform .4s ease, visibility 0s linear .4s" }) }}>
+                <div className="w-full max-w-4xl max-h-full overflow-auto rounded-2xl border border-slate-300 shadow-lift bg-white p-6 xl:p-8 flex flex-col gap-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{config.instruction ?? "Question"}</div>
+                    <div className="flex items-center gap-3">
+                      <span className="hidden xl:inline text-sm text-slate-500">or press Space</span>
+                      <button onClick={() => jump(0)} tabIndex={atQuestion ? 0 : -1} className={BTN_PRIMARY}><Eye size={18} /> Show working</button>
+                    </div>
+                  </div>
+                  <div className={`${problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} font-semibold text-slate-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
+                  {config.questionStage?.hasFigure?.(problem) && <div className="relative shrink-0 rounded-xl border border-slate-200 overflow-hidden" style={{ height: "min(34vh, 320px)", minHeight: "13rem" }}>{shown(undefined)}</div>}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
