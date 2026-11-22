@@ -14,7 +14,7 @@ Also fixed: `Confetti` and `Balloons` shared one React key, which logged a dupli
 
 Checked in headless Chromium at laptop (1366×768), tablet (820×1180) and phone (390×800): for every style the name the dialog announces is the card or slice drawn under the pointer, and a spin logs no console errors.
 
-Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 9 to 13 turns or 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. Reduced motion still shortens them to about a second.
+Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 9 to 13 turns or 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. A device set to reduce motion (macOS Reduce motion, Windows animation effects off) still gets a one-second spin, but Wheel settings now has "Full-length spin even if the device reduces motion" (saved on this device) to override that.
 
 Not done: sound is the same tick for every style (no separate carnival clack); the strip has no "tiny label" mode because cards always show a readable name.
 

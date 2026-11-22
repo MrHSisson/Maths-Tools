@@ -35,7 +35,7 @@ const isStyle = (v: unknown): v is SpinStyle => STYLES.some(x => x.id === v);
 
 interface Row { name: string; count: number }
 interface Wheel { id: string; name: string; rows: Row[]; winners: string[]; palette: string; style: SpinStyle }
-interface Store { active: string; wheels: Wheel[]; sound: boolean }
+interface Store { active: string; wheels: Wheel[]; sound: boolean; fullSpin: boolean }   // fullSpin: ignore the device's reduced-motion setting for the spin
 interface Entry { name: string; row: number; pos: number }
 
 const newId = () => Math.random().toString(36).slice(2, 9);
@@ -55,16 +55,16 @@ function load(): Store {
         winners: Array.isArray(w.winners) ? w.winners.map(String) : [], palette: PALETTES[w.palette] ? w.palette : "bright",
         style: isStyle(w.style) ? w.style : "classic",
       }));
-      return { wheels, active: wheels.some(w => w.id === s.active) ? s.active : wheels[0].id, sound: s.sound !== false };
+      return { wheels, active: wheels.some(w => w.id === s.active) ? s.active : wheels[0].id, sound: s.sound !== false, fullSpin: s.fullSpin === true };
     }
     const old = JSON.parse(localStorage.getItem(OLD_KEY) ?? "null");
     if (old && Array.isArray(old.rows)) {
       const w: Wheel = { ...emptyWheel("My class"), rows: cleanRows(old.rows), winners: Array.isArray(old.winners) ? old.winners.map(String) : [] };
-      return { wheels: [w], active: w.id, sound: old.sound !== false };
+      return { wheels: [w], active: w.id, sound: old.sound !== false, fullSpin: false };
     }
   } catch { /* blocked or corrupt: start fresh */ }
   const w = emptyWheel("My class");
-  return { wheels: [w], active: w.id, sound: true };
+  return { wheels: [w], active: w.id, sound: true, fullSpin: false };
 }
 
 /** Each name's entries are spread evenly round the wheel instead of sitting in one block. */
@@ -267,7 +267,7 @@ export default function NameWheel() {
     }
     void audioRef.current?.resume?.();
     setSpinning(true); setCurrent("");
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduce = !store.fullSpin && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const from = rotRef.current;
     // Carnival and Case are the long, suspenseful spins: many turns (or 90 to 130 cards), about ten seconds, and a slow crawl at the end.
     // Classic keeps its shorter spin.
@@ -491,6 +491,7 @@ export default function NameWheel() {
                 })}
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={store.sound} onChange={e => setStore(s => ({ ...s, sound: e.target.checked }))} /> Tick sound</label>
+              <label className="flex items-center gap-2 text-sm text-slate-600" title="Devices set to reduce motion get a one-second spin unless this is ticked."><input type="checkbox" checked={store.fullSpin} onChange={e => setStore(st => ({ ...st, fullSpin: e.target.checked }))} /> Full-length spin even if the device reduces motion</label>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
               <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle the order</button>
