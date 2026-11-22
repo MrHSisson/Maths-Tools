@@ -251,7 +251,7 @@ if (cmd === "list") {
       await page.goto(`${url}/decks/${id}?s=${n}`);
       await page.waitForFunction(() => [...document.querySelectorAll("div")].some((d) => d.style.width === "1600px" && d.style.height === "900px"), null, { timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(900);
-      const steps = Math.max(0, ...(slideData[n - 1]?.els ?? []).map((e) => e.step ?? 0));       // every click revealed, as the class sees it at the end of the slide
+      const steps = Math.max(0, ...(slideData[n - 1]?.els ?? []).map((e) => e.step ?? 0), ...(slideData[n - 1]?.els ?? []).filter((e) => e.kind === "venn").map((e) => (e.staged ? e.cards.length : 0) + (e.lines?.length ?? 0)));       // every click revealed, as the class sees it at the end of the slide
       for (let i = 0; i < steps; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
       await page.waitForTimeout(300);
       shots.push((await page.screenshot()).toString("base64"));
