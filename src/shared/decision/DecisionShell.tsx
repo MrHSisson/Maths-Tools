@@ -1,6 +1,6 @@
 import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
+import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, PictureInPicture2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
@@ -636,7 +636,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       <div className={`relative rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
         {stageOn && (
           <button type="button" onClick={() => setStageOpen(true)} aria-label="Show the question large" title="Show the question large"
-            className={`absolute right-3 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 hover:bg-black/10`}><Maximize2 size={16} color="#6b7280" /></button>
+            className={`absolute right-3 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 hover:bg-black/10`}><PictureInPicture2 size={16} color="#6b7280" /></button>
         )}
         {atQuestion ? (
           <>
@@ -663,7 +663,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
         aria-label="Fullscreen"
-        className="absolute top-3 left-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
+        className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -896,7 +896,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
               {/* in the same corner as the page's Fullscreen button, which this one replaces */}
-              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10">
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
                 <Minimize2 size={18} color="#6b7280" />
               </button>
               {!config.noSandbox && (
