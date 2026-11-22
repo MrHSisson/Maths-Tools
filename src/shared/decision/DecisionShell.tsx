@@ -407,7 +407,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: false, space: "auto" as const }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    const sp = config.skillPrint;
+    const html = async (node: React.ReactNode): Promise<string | undefined> => {
+      if (node == null) return undefined;
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      return renderToStaticMarkup(<>{node}</>);
+    };
+    const skillQuestions = await Promise.all(skillProblems.map(async (pr) => ({
+      prompt: pr.prompt, answer: pr.answer?.text ?? "", space: sp ? ("l" as const) : roomFor(pr.dim?.kind),
+      figure: sp?.figure ? await html(sp.figure(pr)) : undefined,
+      working: sp?.working ? await html(sp.working(pr, solve ? solve(pr) : [])) : undefined,
+    })));
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: !!sp?.perPage, space: "auto" as const }, questions: skillQuestions } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");

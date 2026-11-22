@@ -121,3 +121,27 @@ export function SxSolution({ steps }: { steps: SolveStep[] }) {
     </div>
   );
 }
+
+// ── on paper: the question's own tableau or table, and the whole model working as one page ────────────────
+// Used by the print of saved questions (config.skillPrint): flow layout, inline styles only, so it holds in a print window.
+export function SxPrintFigure({ p }: { p: DecisionProblem }) {
+  const blocks = questionBlocks(p);
+  if (!blocks.length) return null;
+  return <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.45em", color: INK }}>{blocks.map((b, i) => <Block key={i} b={b} fresh={false} />)}</div>;
+}
+export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
+      {steps.map((st, i) => {
+        const v = st.sxView;
+        const added = v ? v.blocks.slice(v.blocks.length - (v.fresh ?? 0)) : [];
+        return (
+          <div key={i} style={{ breakInside: "avoid" }}>
+            <div style={{ fontSize: "0.9em", color: GIVEN, lineHeight: 1.4, marginBottom: 2 }}><Prose text={st.caption} /></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <Block key={j} b={b} fresh={false} />)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

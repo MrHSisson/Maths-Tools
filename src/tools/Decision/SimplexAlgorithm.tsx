@@ -1,6 +1,6 @@
 import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import SxCanvas, { SxSolution } from "../../shared/decision/SxWorking";
+import SxCanvas, { SxSolution, SxPrintFigure, SxPrintWorking } from "../../shared/decision/SxWorking";
 import { generateSimplex, type SxKind } from "../../shared/decision/lpSimplexGen";
 import { solveSimplex } from "../../shared/decision/lpSimplexSolve";
 
@@ -111,6 +111,8 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        // on paper the tableau (or the table of data) the question gives is printed under it, each question has a page to work in, and the answers page has the model working
+        skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true },
         noSandbox: true,
         levelLabels: {
           setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
