@@ -2,8 +2,9 @@
 // "Add slide" offers them, and the Slide library (/decks/library) shows each one with its sample content.
 // A layout only places ordinary elements: once made, every part of the slide can be moved, edited or deleted.
 import type { BarModelData } from "../shared/barModel";
+import { splitPrimes } from "../shared/venn";
 import { autoTree, type TreeNode, type TreeReveal } from "../shared/factorTree";
-import type { RatioTableSpec, BoardGrid, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
+import type { RatioTableSpec, BoardGrid, VennCard, VennLine, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
 
 export const INK = "#0f172a";
 const MUTED = "#64748b";
@@ -109,6 +110,22 @@ export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes",
     text(70, 70, 620, 260, title, 64, { bold: true }),
     ...(prompt ? [text(70, 360, 620, 420, prompt, 42, { colour: MUTED })] : []),
     { kind: "numberGrid", x: 720, y: 50, w: 860, h: 796, fill, ...(staged ? { staged } : {}) },
+  ]);
+
+/** A full-slide Venn diagram with cards to drag: scattered round the outside (no region on a card) or placed. `staged` brings the cards in one
+ *  per click, `lines` adds the HCF and/or LCM line on later clicks. */
+export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule", right = "Right rule", cards: VennCard[] = [], opts: { box?: string; staged?: boolean; lines?: VennLine[]; size?: number; prompt?: string } = {}) =>
+  make(id, "teach", title, [
+    text(70, 50, 560, 200, title, 56, { bold: true }),
+    ...(opts.prompt ? [text(70, 270, 560, 560, opts.prompt, 38, { colour: MUTED })] : []),
+    { kind: "venn", x: 660, y: 70, w: 900, h: Math.round(0.9 * (700 + (opts.lines?.length ? 122 * (opts.size ?? 1) : 0))), left, right, cards, ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
+  ]);
+
+/** A row of four small Venns, each with its own cards (a to d), to read: the answer line under each on a click when `lines` is given. */
+export const vennRowSlide = (id: string, title = "Read the Venns", sets: { left: string; right: string; cards: VennCard[] }[] = [], lines: VennLine[] = []) =>
+  make(id, "teach", title, [
+    text(70, 36, 1460, 100, title, 56, { bold: true }),
+    ...sets.slice(0, 4).map((v, i) => ({ kind: "venn" as const, x: 30 + i * 388, y: 260, w: 372, h: Math.round(0.372 * (700 + (lines.length ? 183 : 0))), left: v.left, right: v.right, box: "abcd"[i], cards: v.cards, size: 1.5, ...(lines.length ? { lines } : {}) })),
   ]);
 
 /** A factor tree, built a split at a time (`staged`, Filled in) or to draw on (Structure only or Blank). `reveal` adds the clicks after
@@ -218,6 +235,8 @@ export const LAYOUTS: { key: string; label: string; family: DeckFamily; group?: 
   { key: "board", label: "Board", family: "teach", use: "A table to fill in live, with Filled in / Structure only / Blank.", make: (id) => boardSlide(id) },
   { key: "starter", label: "Starter (2 × 2)", family: "retrieval", use: "Four numbered boxes in a 2 × 2 grid for a starter: write in them with the Pen or type. Add a timer line along the bottom if the slide has one.", make: (id) => starterSlide(id) },
   { key: "number-grid", label: "Number grid (1 to 100)", family: "teach", use: "The 1 to 100 grid: tap to scribble in a prime's colour and finish a times table in one click, or the finished sieve built a click at a time. Printable.", make: (id) => numberGridSlide(id) },
+  { key: "venn", label: "Venn diagram", family: "teach", use: "A box with two circles and cards (words, numbers or prime tiles) to drag round and drop where they go; nothing is checked. Cards can appear one per click, then the HCF and LCM lines.", make: (id) => vennSlide(id, "Venn diagram", "Even", "Multiple of 3", ["2", "3", "6", "9", "10", "15"].map((text) => ({ text }))) },
+  { key: "venn-row", label: "Four Venns in a row", family: "teach", use: "Four small prime-tile Venns side by side (a to d) to read: the HCF line under each on a click.", make: (id) => vennRowSlide(id, "HCF: read the Venn", [[12, 18], [10, 15], [8, 12], [9, 18]].map(([a, b]) => { const r = splitPrimes(a, b); const mk = (xs: number[], region: "left" | "middle" | "right"): VennCard[] => xs.map((n) => ({ text: String(n), tile: true, region })); return { left: String(a), right: String(b), cards: [...mk(r.left, "left"), ...mk(r.middle, "middle"), ...mk(r.right, "right")] }; }), ["hcf"]) },
   { key: "factor-tree", label: "Factor tree", family: "teach", use: "A factor tree: each number splits in two until every branch ends in a circled prime; built a split at a time, with the primes as a product, a tally and the index form on later clicks. Filled in / Structure only / Blank.", make: (id) => factorTreeSlide(id) },
   { key: "ratio-table", label: "Ratio table", family: "teach", use: "A ratio table to model on: headings, a row per step and the factor between rows; Filled in / Structure only / Blank, or one row per click.", make: (id) => ratioTableSlide(id) },
   { key: "bar-model", label: "Bar model", family: "teach", use: "Boxes in coloured parts with braces for the parts and the total; Filled in / Structure only / Blank, or one step per click.", make: (id) => barSlide(id) },

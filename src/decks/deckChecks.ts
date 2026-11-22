@@ -5,6 +5,7 @@ import { textbookProblems } from "./textbookSheet";
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
 import { SIEVE_PRIMES } from "../shared/numberGrid";
+import { regionsOf, tileProblems } from "./vennLayout";
 import { treeProblems } from "../shared/factorTree";
 import { isTimerMinutes } from "./timerMath";
 import katex from "katex";
@@ -103,6 +104,14 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         const stages = el.stages ?? SIEVE_PRIMES;
         if (stages.some((p) => !SIEVE_PRIMES.includes(p))) problems.push(`${where}: the number grid can only sieve with ${SIEVE_PRIMES.join(", ")}`);
         if (el.staged && (el.fill ?? "structure") !== "filled") warnings.push(`${where}: a staged number grid starts as Filled in, or its clicks show nothing`);
+      }
+      if (el.kind === "venn") {
+        if (el.cards.some((c) => !c.text.trim())) problems.push(`${where}: a Venn card has no text`);
+        if (el.cards.some((c) => c.tile && !(Number.isInteger(Number(c.text)) && Number(c.text) > 1))) problems.push(`${where}: a prime tile must be a whole number above 1`);
+        if (el.cards.filter((c) => !c.region).length > 12) warnings.push(`${where}: more than 12 cards scattered round the outside will not all fit`);
+        for (const p of tileProblems(el.cards)) problems.push(`${where}: ${p}`);
+        if ((el.lines?.length ?? 0) > 0 && !regionsOf(el.cards)) warnings.push(`${where}: the HCF / LCM line needs every card to be a prime tile placed in a region, or it shows nothing`);
+        if (el.cards.length === 0) warnings.push(`${where}: the Venn has no cards`);
       }
       if (el.kind === "factorTree") {
         for (const p of treeProblems(el.tree)) problems.push(`${where}: ${p}`);

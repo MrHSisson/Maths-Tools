@@ -13,6 +13,7 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Zoom (editor) | Pinch with two fingers, Ctrl + scroll or the buttons to make a box large enough to write in; 30% to 600%. |
 | Pen (writing) | Write or draw on a slide in the editor with a mouse, finger or stylus; saved with the slide. |
 | Number grid (1 to 100) | Tap to scribble in a prime's colour, finish a times table in one click, or the sieve of Eratosthenes click by click; printable. |
+| Venn diagram | A box with two circles and cards (words, numbers or prime tiles) the class drags to where they go: cards stay where dropped, nothing is checked. Cards can appear one per click, then the HCF and LCM lines; also a row of four small Venns to read. |
 | Factor tree | A number splits in two until every branch ends in a circled prime (in the number grid's prime colours); one split per click, then the primes as a product, a tally and the index form; Filled in / Structure only / Blank |
 | Ratio table · Bar model | The site's own pictures for ratio, fractions and proportion: a ratio table (rows, factors between them) or boxes as stacked rows (the ratio look, as in Ratio Sharing) or one coloured bar with braces; Filled in / Structure only / Blank, or built up one click at a time |
 | Fixed question set (Deliberate practice) | Hand-written questions with answers and working that match the tool's generator; shown Full-width, Workspace right or Workspace left |
