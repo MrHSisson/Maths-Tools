@@ -62,6 +62,25 @@ export default function LpCanvas({ p, step }: { p: DecisionProblem; step: SolveS
   );
 }
 
+/** what a question shows before any working, for the question stage: the variables, or the table of data, as flowing content */
+export function LpStageFigure({ p }: { p: DecisionProblem }) {
+  const d = p.lp;
+  const prob = d?.info.kind === "problem" ? d.info : undefined;
+  if (!d) return null;
+  const rows: LpRow[] = !prob ? [{ k: "head", t: "Variables" }, ...d.vars.map((x): LpRow => ({ k: "words", t: `$${x.sym}$ is the number of ${x.noun}` }))] : [];
+  return (
+    <div style={{ fontSize: 20, color: INK, display: "flex", flexDirection: "column", gap: "0.6em", alignItems: "flex-start" }}>
+      {rows.map((r, i) => <Row key={i} r={r} fresh={false} big={false} />)}
+      {prob?.showTable && prob.table && (
+        <table style={{ borderCollapse: "collapse", fontSize: "0.85em", alignSelf: "center" }}>
+          <thead><tr>{prob.table.head.map((h, i) => <th key={i} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", background: "#f1f5f9", fontWeight: 600, textAlign: i === 0 ? "left" : "center" }}>{h}</th>)}</tr></thead>
+          <tbody>{prob.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", textAlign: j === 0 ? "left" : "center", fontWeight: j === 0 || i === prob.table!.rows.length - 1 ? 600 : 400 }}>{c}</td>)}</tr>)}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 // ── the phone: the whole solution as one open page ──────────────────────────────────────────
 const added = (st: SolveStep): LpRow[] => { const v = st.lpView; return v && v.fresh ? v.rows.slice(v.rows.length - v.fresh) : []; };
 export function LpSolution({ steps }: { steps: SolveStep[] }) {

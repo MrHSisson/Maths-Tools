@@ -32,11 +32,11 @@ function Row({ r, colour }: { r: LpRow; colour: string }) {
   return <div style={{ color: colour }}><Tex t={r.t} /></div>;
 }
 
-function Tableau({ b, colour }: { b: SxTabView; colour: string }) {
+function Tableau({ b, colour, size = "0.85em" }: { b: SxTabView; colour: string; size?: string }) {
   const cell: CSSProperties = { padding: "0.18em 0.55em", textAlign: "center", whiteSpace: "nowrap", minWidth: "2.1em" };
   const last = b.head.length - 1;
   return (
-    <table style={{ borderCollapse: "collapse", fontSize: "0.85em", color: colour }}>
+    <table style={{ borderCollapse: "collapse", fontSize: size, color: colour }}>
       <thead>
         <tr style={{ borderBottom: `2px solid ${colour}` }}>
           {b.label && <th style={{ ...cell, fontSize: "0.7em", color: GIVEN, textAlign: "left" }}>{b.labelHead}</th>}
@@ -61,9 +61,9 @@ function Tableau({ b, colour }: { b: SxTabView; colour: string }) {
   );
 }
 
-function Block({ b, fresh }: { b: SxBlock; fresh: boolean }) {
+function Block({ b, fresh, size }: { b: SxBlock; fresh: boolean; size?: string }) {
   const colour = fresh ? NEW : INK;
-  if (b.k === "tab") return <Tableau b={b} colour={colour} />;
+  if (b.k === "tab") return <Tableau b={b} colour={colour} size={size} />;
   return <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.45em" }}>{b.rows.map((r, i) => <Row key={i} r={r} colour={colour} />)}</div>;
 }
 
@@ -98,19 +98,36 @@ export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveS
   );
 }
 
-/** how wide the widest tableau of a working is, in em (an estimate from its columns): every tableau of a working sits in a box this wide, so they line up with each other */
+/** how wide the widest tableau of a working is, in the tableau's own em (an estimate from its columns; a little generous): every tableau of a working is sized from it, so they are the
+ *  same size and line up with each other, and a wide one is made smaller to fit its column instead of scrolling */
 export function tabSpan(blocks: SxBlock[]): number {
   let w = 0;
-  for (const b of blocks) if (b.k === "tab") w = Math.max(w, ((b.head.length + (b.label ? 1.4 : 0)) * 3.1 + (b.ops ? 13 : 0)) * 0.85);
+  for (const b of blocks) if (b.k === "tab") w = Math.max(w, b.head.length * 3.25 + (b.label ? 3 : 0) + (b.ops ? 15 : 0));
   return w;
 }
-/** a block on the open page: a tableau goes in the shared box (centred as a box, its own left edge the same as every other tableau's), a run of lines is left-aligned */
+/** a tableau that fits the width it is given: its text is the normal size (`base`) unless the column is too narrow, when it shrinks so that the whole tableau shows. Never scrolls. */
+function FitTab({ b, fresh, span, base = 0.85 }: { b: SxTabView; fresh: boolean; span: number; base?: number }) {
+  return (
+    <div style={{ alignSelf: "stretch", width: "100%", containerType: "inline-size" }}>
+      <div style={{ margin: "0 auto", fontSize: `min(${base}em, calc(100cqw / ${span}))`, width: `${span}em`, maxWidth: "100%" }}><Block b={b} fresh={fresh} size="1em" /></div>
+    </div>
+  );
+}
+/** a block on the open page: a tableau fits the column (centred, the same size and left edge as every other tableau), a run of lines is left-aligned */
 function PageBlock({ b, fresh, span }: { b: SxBlock; fresh: boolean; span: number }) {
-  return <div style={b.k === "tab" ? { alignSelf: "center", width: `${span}em`, maxWidth: "100%", overflowX: "auto" } : undefined}><Block b={b} fresh={fresh} /></div>;
+  return b.k === "tab" ? <FitTab b={b} fresh={fresh} span={span} /> : <Block b={b} fresh={fresh} />;
+}
+
+/** the tableau (or table of data) a question gives, for the question stage: flowing content sized to fit, never a scrolling box */
+export function SxStageFigure({ p }: { p: DecisionProblem }) {
+  const blocks = questionBlocks(p);
+  const span = tabSpan(blocks);
+  return <div style={{ containerType: "inline-size" }}><div style={{ display: "flex", flexDirection: "column", gap: "0.8em", fontSize: "clamp(16px, 2.6cqw, 28px)", color: INK }}>{blocks.map((b, i) => <PageBlock key={i} b={b} fresh={false} span={span} />)}</div></div>;
 }
 
 // ── the phone: the whole solution as one open page ──────────────────────────────────────────
 export function SxSolution({ steps }: { steps: SolveStep[] }) {
+  const span = tabSpan(steps.flatMap((st) => st.sxView?.blocks ?? []));
   return (
     <div className="flex flex-col gap-5">
       {steps.map((st, i) => {
@@ -119,8 +136,8 @@ export function SxSolution({ steps }: { steps: SolveStep[] }) {
         return (
           <div key={i}>
             <div style={{ fontSize: 14, color: "#475569", lineHeight: 1.45, marginBottom: 4 }}><Prose text={st.caption} /></div>
-            <div className="flex flex-col gap-2 items-start" style={{ fontSize: 15, color: INK, maxWidth: "100%", overflowX: "auto" }}>
-              {added.map((b, j) => <Block key={j} b={b} fresh={false} />)}
+            <div className="flex flex-col gap-2 items-start" style={{ fontSize: 15, color: INK, maxWidth: "100%" }}>
+              {added.map((b, j) => <PageBlock key={j} b={b} fresh={false} span={span} />)}
             </div>
           </div>
         );
@@ -146,7 +163,7 @@ export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
         return (
           <div key={i} style={{ breakInside: "avoid" }}>
             <div style={{ fontSize: "0.9em", color: GIVEN, lineHeight: 1.4, marginBottom: 2 }}><Prose text={st.caption} /></div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center", width: `${span}em` } : undefined}><Block b={b} fresh={false} /></div>)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center", width: `${span * 0.85}em` } : undefined}><Block b={b} fresh={false} /></div>)}</div>
           </div>
         );
       })}

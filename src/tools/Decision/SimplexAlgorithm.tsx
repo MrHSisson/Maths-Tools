@@ -1,6 +1,6 @@
 import { DecisionShell, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import SxCanvas, { SxSolution, SxPrintFigure, SxPrintWorking } from "../../shared/decision/SxWorking";
+import SxCanvas, { SxSolution, SxPrintFigure, SxPrintWorking, SxStageFigure } from "../../shared/decision/SxWorking";
 import { generateSimplex, type SxKind } from "../../shared/decision/lpSimplexGen";
 import { solveSimplex, questionBlocks } from "../../shared/decision/lpSimplexSolve";
 
@@ -111,7 +111,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
-        questionStage: { hasFigure: (p) => questionBlocks(p).length > 0 },
+        questionStage: { hasFigure: (p) => questionBlocks(p).length > 0, figure: (p) => <SxStageFigure p={p} /> },
         // on paper the tableau (or the table of data) the question gives is printed under it, each question has a page to work in, and the answers page has the model working
         skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true, dots: true },
         noSandbox: true,
