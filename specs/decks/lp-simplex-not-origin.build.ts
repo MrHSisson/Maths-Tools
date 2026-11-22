@@ -60,6 +60,8 @@ const fC = runC.tabs[runC.tabs.length - 1];
 must(valueOf(fC, 1) === 4 && valueOf(fC, 2) === 1 && rhsOf(fC, 0) === 11, "C: with Y = y - 1 the optimum is x = 4, Y = 1, P' = 11");
 must(11 + 3 === 14 && 1 + 1 === 2, "C: P = 11 + 3 = 14 and y = Y + 1 = 2, the same optimum");
 must(2 * 4.5 + 1 === 10 && 4.5 + 2 * 1 <= 8, "C: the corner (4.5, 1)");
+for (const [x, Y] of [[0, 0], [4.5, 0], [4, 1], [0, 3]] as Array<[number, number]>) must(2 * x + Y <= 9 && x + 2 * Y <= 6 && 2 * x + (Y + 1) <= 10 && x + 2 * (Y + 1) <= 8, `C: the corner (x, Y) = (${x}, ${Y})`);
+must(2 * 4.5 + 0 === 9 && 4 + 2 * 1 === 6 && 2 * 4 + 1 === 9 && 0 + 2 * 3 === 6, "C: the corners lie on the new lines");
 
 // ── problem D: an equality, x + y = 5, on the earlier problem ────────────────
 must(2 + 3 === 5 && 2 + 2 * 3 === 8 && 2 * 5 + 0 === 10 && 5 + 0 === 5, "D: the line x + y = 5 meets the region from (2, 3) to (5, 0)");
@@ -340,6 +342,31 @@ const slides: Slide[] = [
       t(60, 780, 880, 100, "Solve as usual: $x = 4$, $Y = 1$, so $y = 2$ and $P = 11 + 3 = 14$.", 40, { bold: true, step: 4 }),
       ...els,
     ], "A lower bound y ≥ 1 moves the origin to (0, 1). With Y = y − 1 the origin is allowed again and the problem is in standard form. The optimum is the same point as before, (4, 2), P = 14.");
+  })(),
+
+  // the same lower bound, redrawn in the new coordinates: Y is measured from the line y = 1, so the graph starts at 0
+  (() => {
+    const g = frame(100, 985, 790);
+    const els: unknown[] = [
+      g.region([[0, 0], [4.5, 0], [4, 1], [0, 3]]),
+      ...g.axes(5.4, 3.9),
+      g.seg(4.7, -0.4, 3.3, 2.4, BLUE, 7), g.seg(0, 3, 5.2, 0.4, PURPLE, 7),
+      t(g.px(3.95), g.py(2.45), 330, 44, "$2x + Y = 9$", 30, { colour: BLUE, bold: true, align: "left" }), t(g.px(2.3), g.py(2.95), 330, 44, "$x + 2Y = 6$", 30, { colour: PURPLE, bold: true, align: "left" }),
+      // the new axis is the old line y = 1: say so beside the axis
+      t(g.px(0) - 330, g.py(0) - 22, 300, 46, "$Y = 0$, $y = 1$", 30, { colour: GREEN, bold: true, align: "right" }),
+      t(g.px(0) - 330, g.py(3) - 22, 300, 46, "$Y = 3$, $y = 4$", 30, { colour: grey, bold: true, align: "right" }),
+      g.dot(0, 0, GREEN, 0, 17),
+      t(g.px(0.3), g.py(0) + 22, 420, 46, "starts at $(0, 0)$", 30, { colour: GREEN, bold: true, align: "left" }),
+      g.dot(4, 1, GREEN, 3, 15), t(g.px(4) + 30, g.py(1) - 74, 240, 46, "$(4, 1)$", 30, { colour: GREEN, bold: true, align: "left", step: 3 }),
+    ];
+    return slide(`${P}-lower2`, "The new graph starts at 0", [
+      ...titleEls("The new graph starts at 0", "Measure $Y$ up from the line $y = 1$"),
+      left("$Y = y - 1$: the line $y = 1$ is now $Y = 0$, so it is the new $x$ axis.", 250, 150, 40),
+      ml(60, 430, 880, 200, "\\begin{array}{l}2x + Y \\le 9\\\\[1ex] x + 2Y \\le 6\\\\[1ex] x \\ge 0,\\; Y \\ge 0\\end{array}", 46, { step: 1 }),
+      t(60, 660, 880, 100, "The origin $(x, Y) = (0, 0)$ is allowed, so the table can start there.", 40, { step: 2 }),
+      t(60, 780, 880, 100, "The best point is $(x, Y) = (4, 1)$, which is $(x, y) = (4, 2)$.", 40, { bold: true, step: 3 }),
+      ...els,
+    ], "The same problem in the new variables: the region is the same shape, with the line y = 1 as the x axis, so the origin is the corner (0, 1) of the old graph. The optimum (4, 1) in (x, Y) is (4, 2) in (x, y).");
   })(),
 
   (() => {

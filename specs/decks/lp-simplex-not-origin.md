@@ -1,6 +1,6 @@
 # When the origin is not allowed: the simplex from a ≥ limit or a minimise (lesson deck)
 
-**Status:** plan, for Harry's review (the look card is built; nothing else is)
+**Status:** implemented (18 slides; built and pushed to the shared service 2026-11-22; unpublished)
 **Deck:** `lp-simplex-not-origin` · **Strand:** Decision Mathematics · **Tool:** The Simplex Algorithm (`/lp-simplex`, behind Developing tools) · **Roadmap:** stage 6 (`docs/roadmaps/linear-programming.md`)
 
 ## What it is for
@@ -25,25 +25,30 @@ A lower bound and an equality are the same idea seen differently (move the origi
 
 **D (one slide).** An equality, x + y = 5 on the earlier problem: written as ≤ and ≥ (or used as a row), the region collapses to a line from (2, 3) to (5, 0), and P = 13 at (2, 3).
 
-## Slides (about 17)
+## Decisions (Harry, 2026-11-22)
+
+Reuse the earlier problem; either entry works for the first pivot (the deck says so, and that if a right-hand side would go negative the other entry is tried); one slide each for a lower bound and an equality; clarity over length.
+
+## Slides (18)
 
 | # | Slide | What it does |
 |---|---|---|
-| 1 to 2 | Title, learning objective | Explain why the simplex needs a changed start, and make it |
-| 3 | Where the simplex starts | Recap on the earlier problem: the origin is the first corner, and it is allowed |
-| 4 | Add a limit | "At least 3 in total", x + y ≥ 3: the region changes |
-| 5 | **Is the origin allowed?** (look card) | The shaded region, the test 0 + 0 ≥ 3 → false, the origin outside |
-| 6 | Writing a ≥ limit | Multiply by −1 to make it ≤; add the slack: −x − y + s₃ = −3 |
-| 7 | **The table says the same** (look card) | The starting table, the −3 in red: s₃ = −3 is impossible |
-| 8 | Which entry? | The pivot must be a negative entry in that row; both x and y work here, either keeps every right-hand side positive |
-| 9 | **Moving onto the region** (look card) | The row operations and the new table: x = 3, P = 6, the jump on the graph |
-| 10 | Then carry on | The ordinary steps from the earlier deck, in one slide with the graph walk (3, 0) → (5, 0) → (4, 2) |
-| 11 | Why it works | A negative slack is a limit broken; the pivot makes it a boundary line |
-| 12 | Minimising | The sliding line on the strip; the smallest C is the largest P = −C |
-| 13 | **Minimising: two signals** (look card) | Bottom row says stop, right-hand side says not allowed; read the right-hand side first |
-| 14 | The answer, with the sign | P = −8, so C = 8: the sign slip is the trap |
-| 15 | Two more starts | A lower bound (the origin moves) and an equality (a line) |
-| 16 to 17 | The rules; Watch out | The checks, in order; common slips |
+| 1 to 2 | Title, learning objective | Explain why the simplex needs a changed start, and make the change |
+| 3 | Where the simplex starts | The earlier problem; the origin is in the region, so the table can start there |
+| 4 | Is the origin allowed? | A new limit, "at least 3 items in total"; the test 0 + 0 ≥ 3 is false; the origin is outside the shaded region |
+| 5 | Writing a ≥ limit for the table | Multiply by −1 (the sign flips), then add the slack: −x − y + s₃ = −3 |
+| 6 | The table says the same | The starting table with the −3 in red: s₃ = −3 is impossible, so the start is not allowed |
+| 7 | Which entry do we pivot on? | A negative entry in the negative row: x gives (3, 0), y gives (0, 3), both positive; either works, we take x |
+| 8 | Moving onto the region | The row operations (from the engine) and the new table: x = 3, P = 6, the jump on the graph |
+| 9 | What did the pivot do? | s₃ is out of the table, so x + y = 3 exactly: we are on the limit's line |
+| 10 | Then carry on as before | The walk (3, 0) → (5, 0) → (4, 2) with P = 6, 10, 14; the same optimum as before |
+| 11 | Minimising | The strip; each corner's C, then P = −C; the smallest C is the largest P |
+| 12 | Minimising: two signals | The bottom row says stop, the right-hand side (−4) says not allowed: the right-hand side comes first |
+| 13 | The answer, with its sign | Two pivots, P = −8, so C = −P = 8 |
+| 14 | A lower bound moves the origin | y ≥ 1, Y = y − 1: the origin moves to (0, 1) and is allowed; the same optimum |
+| 15 | The new graph starts at 0 | The same problem redrawn with Y measured up from the line y = 1: the line is the new x axis (Y = 0, y = 1), the origin is (0, 0), the optimum (4, 1) is (4, 2) in x and y |
+| 16 | An equality: the region is a line | x + y = 5 as two limits; the region is the line from (2, 3) to (5, 0); P = 13 at (2, 3) |
+| 17 to 18 | Before you start the simplex; Watch out | The checks in order; four common slips |
 
 ## Checks and conventions
 
@@ -57,9 +62,3 @@ A lower bound and an equality are the same idea seen differently (move the origi
 - **Practice sets.** The Simplex tool is not live, so generator slides would not work for the class; practice is in the tool, through the roadmap (stage 6). No authored question sets, so the ladder-and-traps checkpoint does not apply.
 - **Unbounded and infeasible problems.** Left out of the tools by Harry's decision; this deck does not teach them either.
 - **Exam-style chains.** Not built anywhere yet.
-
-## Questions for Harry
-
-1. **Is the earlier problem the right one to reuse?** It gives continuity (same region, same optimum 14) but means the new limit is never the binding one. A different problem would make the ≥ limit matter at the optimum.
-2. **Which entry to pivot on?** In problem A both the x and y entries in the ≥ row work. The deck shows both and takes x. Should it say "either" or fix one rule (for example "the most negative entry in the row", with a tie broken left to right)?
-3. **Should the lower bound and equality get a slide each, or a fuller treatment?** They are one slide each in this plan.

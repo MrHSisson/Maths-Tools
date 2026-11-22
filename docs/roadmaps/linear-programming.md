@@ -30,7 +30,7 @@
 Stages 3 and 4 are procedural practice, which the tool does better than a deck; stage 1 is covered well enough by the deck for stage 2. Two decks, both with the graph beside the table; stage 6 is built, stage 5 is planned:
 
 - **Stage 5, "Why rounding fails":** the feasible region with the whole-number points near the optimum, the optimum as an upper bound, the points that fit, and why rounding to the nearest can break a constraint.
-- **Stage 6, "When the origin is not allowed" (`lp-simplex-not-origin`, 17 slides, built; plan in `specs/decks/lp-simplex-not-origin.md`):** why a ≥ limit makes the origin not allowed, what a negative right-hand side is saying, why the first pivot goes on a negative entry, minimising as maximising −C, and one slide each on a lower bound and an equality.
+- **Stage 6, "When the origin is not allowed" (`lp-simplex-not-origin`, 18 slides, built; plan in `specs/decks/lp-simplex-not-origin.md`):** why a ≥ limit makes the origin not allowed, what a negative right-hand side is saying, why the first pivot goes on a negative entry, minimising as maximising −C, and one slide each on a lower bound and an equality.
 
 The stage 5 deck is not built. Order of work: a short brief (`specs/decks/`), the look card, Harry's yes, then the build.
 

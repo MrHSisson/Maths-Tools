@@ -1686,7 +1686,7 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck has a plan and a look card Harry likes (`specs/decks/lp-simplex-not-origin.md`, `.build.ts`); three questions are open (reuse the earlier problem, which pivot entry, how much on lower bounds and equalities); not built."
+        "2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck `lp-simplex-not-origin` is built (17 slides; plan and decisions in `specs/decks/lp-simplex-not-origin.md`) and pushed, unpublished."
        ]
       }
      ]
@@ -1701,7 +1701,7 @@
         "Confirm the `problem` section of the brief against what is built (strict inequalities with \"integers\", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).",
         "**F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.",
         "**Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.",
-        "**Roadmap decks (agreed):** two decks with the graph beside the table, built one at a time: stage 5 \"Why rounding fails\" and stage 6 \"Not starting at the origin\" (what each covers is in `docs/roadmaps/linear-programming.md`). Order: a short brief in `specs/decks/`, the look card, Harry's yes, then the build. Also: place Oxford 30.1A and 30.1B once Harry has checked their questions against the book; add which Level 1 questions to run before and after the deck; publish `lp-simplex-process` so the page's deck button works.",
+        "**Roadmap decks:** stage 6 is built (`lp-simplex-not-origin`); the stage 5 deck \"Why rounding fails\" is still to do (what it covers is in `docs/roadmaps/linear-programming.md`). Order: a short brief in `specs/decks/`, the look card, Harry's yes, then the build. Also: place Oxford 30.1A and 30.1B once Harry has checked their questions against the book; add which Level 1 questions to run before and after the deck; publish `lp-simplex-process` so the page's deck button works.",
         "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).",
         "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
        ]
