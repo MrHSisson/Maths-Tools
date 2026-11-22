@@ -420,7 +420,9 @@ function VennSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
         {cells.map((c, i) => (
           <div key={i} style={{ minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ flex: 1, minHeight: 0, width: "100%" }} dangerouslySetInnerHTML={{ __html: (answers ? c.answerSvg : c.svg).replace("<svg ", '<svg style="width:100%;height:100%;display:block" ') }} />
-            <div style={{ fontSize: 24, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: 30 }}>{answers && c.lines ? c.answers.join("   ") : c.factors.join("   ")}</div>
+            <div style={{ fontSize: 30, lineHeight: 1.25, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: 76, textAlign: "center", paddingTop: 6 }}>
+              {(answers && c.lines ? c.answers : c.factors).map((t, k) => <div key={k}>{t}</div>)}
+            </div>
           </div>
         ))}
       </div>
