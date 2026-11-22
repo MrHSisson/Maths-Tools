@@ -49,7 +49,7 @@ Each slide gets **Core**, **If time** or **Overflow** when it is built. A guide 
 | 2 | Objective | | I can put things in the right part of a Venn |
 | 3 | **Pets and 3-letter words** | Drag | The box, two circles with their labels, cards scattered round the outside: cat, dog, rat, fish, hamster, rabbit, sun, pen, hat, house, tree, spoon |
 | 4 | Can fly and has feathers | Drag | A bird that does not fly, a mammal that does |
-| 5 | Four sides and has a right angle | Drag | Square, rectangle, rhombus, kite, right-angled triangle, circle, equilateral triangle, pentagon |
+| 5 | *(removed: the shapes set. No maths questions in the first set apart from slide 6; the slide numbers below are kept so every reference still holds)* | | |
 | 6 | Even and multiple of 3 | Drag | Numbers 1 to 12; 6 and 12 go in the middle: the bridge to numbers |
 | 7 | If time: sort into a Venn | Questions (5) | Items listed with the two rules, full-width |
 
