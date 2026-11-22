@@ -631,12 +631,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   const [stageOpen, setStageOpen] = useState(false);
   useEffect(() => { setStageOpen(false); }, [stepIdx, problem]);
   const questionBlock = (big: boolean) => {
-    const folded = !atQuestion && !qOpen;
+    const folded = !atQuestion && (stageOn || !qOpen);
     return (
       <div className={`relative rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
         {stageOn && (
           <button type="button" onClick={() => setStageOpen(true)} aria-label="Show the question large" title="Show the question large"
-            className={`absolute ${atQuestion ? "right-3" : "right-10"} top-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 hover:bg-black/10`}><Maximize2 size={16} color="#6b7280" /></button>
+            className={`absolute right-3 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 hover:bg-black/10`}><Maximize2 size={16} color="#6b7280" /></button>
         )}
         {atQuestion ? (
           <>
@@ -644,12 +644,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <div className={`${stageOn ? "pr-9 " : ""}${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
           </>
         ) : (
-          <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className={`w-full text-left flex items-start gap-2 ${stageOn ? "pr-9" : ""}`}>
+          <button type="button" onClick={() => (stageOn ? setStageOpen(true) : setQOpen(!qOpen))} title={stageOn ? "Show the question large" : qOpen ? "Fold the question" : "Show the whole question"} className={`w-full text-left flex items-start gap-2 ${stageOn ? "pr-9" : ""}`}>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
-              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen && !stageOn ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
             </div>
-            <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
+            {!stageOn && <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />}
           </button>
         )}
       </div>
