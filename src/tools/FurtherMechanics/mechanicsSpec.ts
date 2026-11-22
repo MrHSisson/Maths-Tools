@@ -133,10 +133,11 @@ export interface MechSubRef { tool: string; sub: string; label: string; /** a to
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
 const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
 const en = (sub: string, label: string): MechSubRef => ({ tool: "energy", sub, label });
+const el = (sub: string, label: string): MechSubRef => ({ tool: "elastic-strings", sub, label });
 const pw = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "power", sub, label, ...(a2 ? { a2 } : {}) });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy", "power"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy", "power", "elastic-strings"] };
 
 /** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
@@ -146,7 +147,9 @@ export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   // kinetic and potential energy and conservation practise both MC2 and MC3; each sub-tool is placed once, under the first statement it serves
   MC2: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy")],
   MC3: [en("workenergy", "Work-energy principle")],
+  MC4: [el("hooke", "Hooke's law")],
   MC5: [wd("variable", "Variable force")],
+  MC6: [el("epe", "Elastic potential energy"), el("elastic", "Elastic energy problems")],
   MC7: [pw("avgpower", "Average power"), pw("forcespeed", "Force and speed"), pw("powerslope", "Power on a slope", true), pw("motion", "Power from motion data")],
 };
 
@@ -168,8 +171,6 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
   MB2: [{ label: "Restitution and impacts" }],
   MB3: [{ label: "Impulse and momentum" }],
   MB4: [{ label: "Impulse of a variable force" }],
-  MC4: [{ label: "Hooke's law" }],
-  MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
   MD1: [{ label: "Angular speed, speed and acceleration" }],
   MD2: [{ label: "Angular speed, speed and acceleration" }],
   MD3: [{ label: "Angular speed, speed and acceleration" }],
