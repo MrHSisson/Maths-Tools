@@ -495,48 +495,6 @@
    "built": "35dtv3"
   },
   {
-   "id": "vh-tiles",
-   "family": "teach",
-   "title": "Prime tiles",
-   "els": [
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 36,
-     "w": 1460,
-     "h": 90,
-     "text": "Prime tiles",
-     "size": 56,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "vh-tiles-1"
-    },
-    {
-     "kind": "venn",
-     "x": 40,
-     "y": 130,
-     "w": 1520,
-     "h": 748,
-     "left": "",
-     "right": "",
-     "cards": [],
-     "listing": [
-      12
-     ],
-     "palette": [
-      2,
-      3,
-      5,
-      7,
-      11
-     ],
-     "box": "Prime tiles",
-     "id": "vh-tiles-2"
-    }
-   ],
-   "built": "1l7pjft"
-  },
-  {
    "id": "vh-tiles-to-number",
    "family": "teach",
    "title": "Tiles to number",
@@ -739,219 +697,307 @@
    "built": "103wdtk"
   },
   {
-   "id": "vh-check",
-   "family": "teach",
-   "title": "The check",
-   "els": [
-    {
-     "kind": "text",
-     "x": 40,
-     "y": 50,
-     "w": 270,
-     "h": 300,
-     "text": "The check",
-     "size": 44,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "vh-check-1"
-    },
-    {
-     "kind": "text",
-     "x": 40,
-     "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "Left circle: 2 × 5 = 10\nRight circle: 5 × 3 = 15\n\nThe Venn proves itself.",
-     "size": 32,
-     "colour": "#64748b",
-     "id": "vh-check-2"
-    },
-    {
-     "kind": "venn",
-     "x": 320,
-     "y": 124,
-     "w": 960,
-     "h": 672,
-     "left": "10",
-     "right": "15",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "box": "Multiply each circle",
-     "id": "vh-check-3"
-    }
-   ],
-   "built": "5m2i5p"
-  },
-  {
-   "id": "vh-set-a",
+   "id": "vh-set-a-1",
    "family": "teach",
    "title": "Prime factors in a Venn",
    "els": [
     {
-     "kind": "questions",
-     "x": 48,
-     "y": 24,
-     "w": 1504,
-     "h": 852,
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
      "size": 56,
-     "items": [
-      {
-       "version": 2,
-       "id": "vh-a1",
-       "title": "$6$ and $14$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$6 = 2 \\times 3$ and $14 = 2 \\times 7$",
-        "Put them in a Venn.",
-        "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
-       ],
-       "answer": [
-        "Left only: $3$. Middle: $2$. Right only: $7$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-a2",
-       "title": "$21$ and $35$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$21 = 3 \\times 7$ and $35 = 5 \\times 7$",
-        "Put them in a Venn.",
-        "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
-       ],
-       "answer": [
-        "Left only: $3$. Middle: $7$. Right only: $5$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-a3",
-       "title": "$30$ and $42$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$30 = 2 \\times 3 \\times 5$ and $42 = 2 \\times 3 \\times 7$",
-        "Put them in a Venn.",
-        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
-       ],
-       "answer": [
-        "Left only: $5$. Middle: $2$, $3$. Right only: $7$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-a4",
-       "title": "$70$ and $105$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$70 = 2 \\times 5 \\times 7$ and $105 = 3 \\times 5 \\times 7$",
-        "Put them in a Venn.",
-        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
-       ],
-       "answer": [
-        "Left only: $2$. Middle: $5$, $7$. Right only: $3$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-a5",
-       "title": "$44$ and $66$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$44 = 2 \\times 2 \\times 11$ and $66 = 2 \\times 3 \\times 11$",
-        "Put them in a Venn."
-       ],
-       "answer": [
-        "Left only: $2$. Middle: $2$, $11$. Right only: $3$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [
-        {
-         "response": "Middle: 2, 2, 11",
-         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
-        }
-       ],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-a6",
-       "title": "$22$ and $55$",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$22 = 2 \\times 11$ and $55 = 5 \\times 11$",
-        "Put them in a Venn."
-       ],
-       "answer": [
-        "Left only: $2$. Middle: $11$. Right only: $5$."
-       ],
-       "explanation": [],
-       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-1-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "6",
+     "right": "14",
+     "cards": [],
+     "listing": [
+      6,
+      14
      ],
-     "id": "vh-set-a-1",
-     "visualiser": false
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-1-2"
+    },
+    {
+     "kind": "text",
+     "x": 1010,
+     "y": 52,
+     "w": 520,
+     "h": 50,
+     "text": "1 tile in the middle",
+     "size": 32,
+     "colour": "#64748b",
+     "align": "right"
     }
    ],
-   "brief": "Given two numbers with their prime factorisations, put the factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet hint that falls away.",
-   "built": "6k36kg"
+   "brief": "Given two numbers, put their prime factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet hint that falls away. Six slides, one Venn each, built with the prime buttons.",
+   "built": "50my5j"
+  },
+  {
+   "id": "vh-set-a-2",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-2-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "21",
+     "right": "35",
+     "cards": [],
+     "listing": [
+      21,
+      35
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-2-2"
+    },
+    {
+     "kind": "text",
+     "x": 1010,
+     "y": 52,
+     "w": 520,
+     "h": 50,
+     "text": "1 tile in the middle",
+     "size": 32,
+     "colour": "#64748b",
+     "align": "right"
+    }
+   ],
+   "built": "1kqj9rx"
+  },
+  {
+   "id": "vh-set-a-3",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-3-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "30",
+     "right": "42",
+     "cards": [],
+     "listing": [
+      30,
+      42
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-3-2"
+    },
+    {
+     "kind": "text",
+     "x": 1010,
+     "y": 52,
+     "w": 520,
+     "h": 50,
+     "text": "2 tiles in the middle",
+     "size": 32,
+     "colour": "#64748b",
+     "align": "right"
+    }
+   ],
+   "built": "v0765s"
+  },
+  {
+   "id": "vh-set-a-4",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-4-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "70",
+     "right": "105",
+     "cards": [],
+     "listing": [
+      70,
+      105
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-4-2"
+    },
+    {
+     "kind": "text",
+     "x": 1010,
+     "y": 52,
+     "w": 520,
+     "h": 50,
+     "text": "2 tiles in the middle",
+     "size": 32,
+     "colour": "#64748b",
+     "align": "right"
+    }
+   ],
+   "built": "1dvvue3"
+  },
+  {
+   "id": "vh-set-a-5",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-5-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "44",
+     "right": "66",
+     "cards": [],
+     "listing": [
+      44,
+      66
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-5-2"
+    }
+   ],
+   "built": "1l0140s"
+  },
+  {
+   "id": "vh-set-a-6",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Prime factors in a Venn",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-set-a-6-1"
+    },
+    {
+     "kind": "venn",
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
+     "left": "22",
+     "right": "55",
+     "cards": [],
+     "listing": [
+      22,
+      55
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
+     ],
+     "box": "Prime factors",
+     "id": "vh-set-a-6-2"
+    }
+   ],
+   "built": "btr5yr"
   },
   {
    "id": "vh-book-a",
@@ -1256,9 +1302,9 @@
    "els": [
     {
      "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 660,
+     "x": 70,
+     "y": 60,
+     "w": 560,
      "h": 50,
      "text": "DISCUSS",
      "size": 30,
@@ -1268,104 +1314,91 @@
     },
     {
      "kind": "text",
-     "x": 100,
-     "y": 170,
-     "w": 660,
-     "h": 300,
-     "text": "Mei puts all three 2s of $8$ in the middle, because $2$ is in both numbers.\n\nWhere does the check catch her?",
-     "size": 48,
+     "x": 70,
+     "y": 120,
+     "w": 560,
+     "h": 330,
+     "text": "Mei puts all three 2s of 8 in the middle, because 2 is in both numbers.\n\nWhere does it go wrong?",
+     "size": 40,
      "colour": "#0f172a",
      "id": "vh-discuss-2"
     },
     {
-     "kind": "line",
-     "x": 800,
-     "y": 100,
-     "w": 0,
-     "h": 720,
-     "colour": "#e2e8f0",
-     "width": 4,
-     "id": "vh-discuss-3"
-    },
-    {
      "kind": "text",
-     "x": 100,
-     "y": 520,
-     "w": 660,
+     "x": 70,
+     "y": 500,
+     "w": 560,
      "h": 50,
      "text": "KEY POINT",
      "size": 30,
      "colour": "#64748b",
      "bold": true,
      "step": 1,
-     "id": "vh-discuss-4"
+     "id": "vh-discuss-3"
     },
     {
      "kind": "text",
-     "x": 100,
-     "y": 580,
-     "w": 660,
-     "h": 260,
-     "text": "The right circle should multiply to $12$. Mei's circle is $2 \\times 2 \\times 2 \\times 3$, which is too big. Only the 2s both numbers have go in the middle.",
-     "size": 44,
+     "x": 70,
+     "y": 560,
+     "w": 560,
+     "h": 300,
+     "text": "The right circle should multiply to 12. Hers is 2 × 2 × 2 × 3, which is too big. Only the 2s both numbers have go in the middle.",
+     "size": 36,
      "colour": "#0f172a",
      "bold": true,
      "step": 1,
+     "id": "vh-discuss-4"
+    },
+    {
+     "kind": "venn",
+     "x": 640,
+     "y": 110,
+     "w": 920,
+     "h": 644,
+     "left": "8",
+     "right": "12",
+     "box": "Mei's Venn",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.2,
      "id": "vh-discuss-5"
     },
     {
      "kind": "text",
-     "x": 860,
-     "y": 100,
-     "w": 640,
-     "h": 50,
-     "text": "QUESTION",
-     "size": 30,
-     "colour": "#64748b",
+     "x": 640,
+     "y": 780,
+     "w": 920,
+     "h": 90,
+     "text": "How many 2s should go in the middle for 8 and 12? 2",
+     "size": 40,
+     "colour": "#0f172a",
      "bold": true,
+     "align": "center",
      "step": 2,
      "id": "vh-discuss-6"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 170,
-     "w": 640,
-     "h": 260,
-     "text": "How many 2s go in the middle for $8$ and $12$?",
-     "size": 52,
-     "colour": "#0f172a",
-     "step": 2,
-     "id": "vh-discuss-7"
-    },
-    {
-     "kind": "text",
-     "x": 860,
-     "y": 520,
-     "w": 640,
-     "h": 50,
-     "text": "ANSWER",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "step": 3,
-     "id": "vh-discuss-8"
-    },
-    {
-     "kind": "maths",
-     "x": 860,
-     "y": 580,
-     "w": 640,
-     "h": 200,
-     "latex": "2",
-     "size": 96,
-     "colour": "#1e3a8a",
-     "align": "left",
-     "step": 3,
-     "id": "vh-discuss-9"
     }
    ],
-   "built": "9igwy9"
+   "built": "dfxii7"
   },
   {
    "id": "vh-set-c",
