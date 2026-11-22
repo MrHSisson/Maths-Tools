@@ -10,7 +10,7 @@ import type { DeckElement, Slide, VennCard } from "./types";
 import { BOX_H, BOX_W, CIRCLE_R, CIRCLE_Y, LEFT_C, LEFT_X, RIGHT_C, RIGHT_X, layoutCards } from "./vennLayout";
 
 type Part = "left" | "middle" | "right";
-export interface VennSheetItem {
+interface VennSheetItem {
   a: number;
   b: number;
   /** The parts whose tiles are already printed (the fade: the first Venns carry more). Absent or empty: an empty Venn to fill. */
@@ -27,7 +27,7 @@ export interface VennSheet {
   items: VennSheetItem[];
 }
 
-export const VENN_PER_PAGE = 3, MAX_VENN_ITEMS = 9;
+export const MAX_VENN_ITEMS = 9;
 
 const regionsFor = (it: VennSheetItem): VennRegions => splitPrimes(it.a, it.b);
 

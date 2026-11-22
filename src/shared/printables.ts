@@ -252,7 +252,7 @@ export function shapeWorksheet(cells: ShapeCell[], title: string, mode: "questio
 }
 
 /** One Venn on a printed sheet: its drawing, with and without the tiles, the numbers' factorisations and the answer lines. */
-export interface VennCell { a: number; b: number; svg: string; answerSvg: string; factors: string[]; lines: boolean; answers: string[] }
+interface VennCell { a: number; b: number; svg: string; answerSvg: string; factors: string[]; lines: boolean; answers: string[] }
 
 /**
  * Printed Venn sheets, designed to be shrunk like the shape sheets: A4 pages printed scaled to A5, three Venns to a page (one across, three
