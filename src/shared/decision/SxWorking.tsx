@@ -82,7 +82,7 @@ export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveS
   const blocksOf = (st: SolveStep): SxBlock[] => { const v = st.sxView; return v ? v.blocks.slice(v.blocks.length - (v.fresh ?? 0)) : []; };
   return (
     <WorkingPage watch={`${p.prompt}|${shown.length}`} heading={!step && given.length ? "The tableau" : "Your working"} hint={!step && !given.length ? "Your working builds up here, one step at a time." : undefined}>
-      {given.map((b, i) => <PageBlock key={`g${i}`} b={b} fresh={false} span={span} />)}
+      {given.map((b, i) => <PageBlock key={`g${i}`} b={b} fresh={false} span={span} natural />)}
       {shown.map((st, i) => {
         const newest = i === shown.length - 1;
         if (!blocksOf(st).length) return null;   // a step that only says something (the list beside it says it) adds nothing to draw
@@ -101,28 +101,36 @@ export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveS
 /** how wide the widest tableau of a working is, in the tableau's own em (an estimate from its columns; a little generous): every tableau of a working is sized from it, so they are the
  *  same size and line up with each other, and a wide one is made smaller to fit its column instead of scrolling */
 export function tabSpan(blocks: SxBlock[]): number {
+  // the text a KaTeX string shows, roughly: no commands or braces; a letter is about half an em wide
+  const chars = (t: string | undefined): number => (t ? t.replace(/\\[a-zA-Z]+/g, "").replace(/[{}^_]/g, "").length : 0);
   let w = 0;
-  for (const b of blocks) if (b.k === "tab") w = Math.max(w, b.head.length * 3.25 + (b.label ? 3 : 0) + (b.ops ? 15 : 0));
+  for (const b of blocks) {
+    if (b.k !== "tab") continue;
+    const cols = b.head.map((h, j) => Math.max(3.25, 0.55 * Math.max(chars(h), ...b.rows.map((r) => chars(r[j]))) + 1.3));
+    const label = b.label ? Math.max(3, 0.55 * Math.max(chars(b.labelHead), ...b.label.map(chars)) + 1.8) : 0;
+    w = Math.max(w, cols.reduce((a, c) => a + c, 0) + label + (b.ops ? 15 : 0));
+  }
   return w;
 }
 /** a tableau that fits the width it is given: its text is the normal size (`base`) unless the column is too narrow, when it shrinks so that the whole tableau shows. Never scrolls. */
-function FitTab({ b, fresh, span, base = 0.85 }: { b: SxTabView; fresh: boolean; span: number; base?: number }) {
+function FitTab({ b, fresh, span, base = 0.85, natural = false }: { b: SxTabView; fresh: boolean; span: number; base?: number; natural?: boolean }) {
   return (
     <div style={{ alignSelf: "stretch", width: "100%", containerType: "inline-size" }}>
-      <div style={{ margin: "0 auto", fontSize: `min(${base}em, calc(100cqw / ${span}))`, width: `${span}em`, maxWidth: "100%" }}><Block b={b} fresh={fresh} size="1em" /></div>
+      {/* natural: a lone figure is centred on its own width; otherwise every tableau of a working sits in one box so they line up */}
+      <div style={{ margin: "0 auto", fontSize: `min(${base}em, calc(100cqw / ${span}))`, width: natural ? "fit-content" : `${span}em`, maxWidth: "100%" }}><Block b={b} fresh={fresh} size="1em" /></div>
     </div>
   );
 }
 /** a block on the open page: a tableau fits the column (centred, the same size and left edge as every other tableau), a run of lines is left-aligned */
-function PageBlock({ b, fresh, span }: { b: SxBlock; fresh: boolean; span: number }) {
-  return b.k === "tab" ? <FitTab b={b} fresh={fresh} span={span} /> : <Block b={b} fresh={fresh} />;
+function PageBlock({ b, fresh, span, natural }: { b: SxBlock; fresh: boolean; span: number; natural?: boolean }) {
+  return b.k === "tab" ? <FitTab b={b} fresh={fresh} span={span} natural={natural} /> : <Block b={b} fresh={fresh} />;
 }
 
 /** the tableau (or table of data) a question gives, for the question stage: flowing content sized to fit, never a scrolling box */
 export function SxStageFigure({ p }: { p: DecisionProblem }) {
   const blocks = questionBlocks(p);
   const span = tabSpan(blocks);
-  return <div style={{ containerType: "inline-size" }}><div style={{ display: "flex", flexDirection: "column", gap: "0.8em", fontSize: "clamp(16px, 2.6cqw, 28px)", color: INK }}>{blocks.map((b, i) => <PageBlock key={i} b={b} fresh={false} span={span} />)}</div></div>;
+  return <div style={{ containerType: "inline-size" }}><div style={{ display: "flex", flexDirection: "column", gap: "0.8em", fontSize: "clamp(16px, 2.6cqw, 28px)", color: INK }}>{blocks.map((b, i) => <PageBlock key={i} b={b} fresh={false} span={span} natural />)}</div></div>;
 }
 
 // ── the phone: the whole solution as one open page ──────────────────────────────────────────
