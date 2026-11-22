@@ -3,14 +3,12 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Presentation } from 'lucide-react';
 import { checkDevPassword } from '../devAccess';
 import { setDevMode, useDevMode } from '../devMode';
-import { usePhoneDevice } from '../shared/layoutMode';
 import DecksTab from './DecksTab';
 
 /** The one Decks page (/deck-gallery): decks are whole lessons, not tools, so they are not a tab of the landing page. Signed out it shows
  *  the published decks; signed in it also lists every other deck and the editing controls. The sign-in is the Developing tools password
- *  and switch, so one sign-in opens everything. A phone only previews decks, so it has no sign-in here. */
+ *  and switch, so one sign-in opens everything. A phone can sign in too, to see every deck (the unpublished ones included), but it only previews them: no editing controls. */
 export default function DecksPage() {
-  const phone = usePhoneDevice();
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
@@ -18,7 +16,7 @@ export default function DecksPage() {
           <Link to="/" aria-label="Back to Maths Tools" className="grid h-11 w-11 place-items-center rounded-xl text-white hover:bg-blue-800"><ArrowLeft size={22} /></Link>
           <Presentation className="text-blue-200" size={20} />
           <h1 className="text-lg font-bold tracking-tight text-white sm:text-xl">Decks</h1>
-          {!phone && <SignIn />}
+          <SignIn />
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24"><DecksTab /></main>

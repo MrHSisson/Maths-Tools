@@ -41,6 +41,8 @@ Every constraint is written with whole-number coefficients in lowest terms. A th
 
 ### Tool 3: The Simplex Algorithm (DD3, DD4; A2)
 
+**The plan for this tool is `specs/linear-programming-simplex.md` (2026-11-21, draft): how its numbers are kept textbook-like and what the model answer looks like. The table below is the earlier outline.**
+
 | Sub-tool | Skill | Styles | Notes |
 |---|---|---|---|
 | `setup` Set up the tableau | slack variables, the objective row, the initial tableau; the reverse | L40, L41, L42, L44, L54 | the textbook layout (objective row first, no θ column); ≥ rewritten as ≤; minimise as Q = −P (L43 set-up part) |

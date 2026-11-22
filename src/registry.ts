@@ -146,6 +146,8 @@ export const CATEGORIES: CategoryMeta[] = [
       { hub: 'decision-overview', id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
       { hub: 'decision-overview', id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
       { hub: 'decision-overview', id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
+      { hub: 'decision-overview', id: 'lp-formulate', path: '/lp-formulate', name: 'Formulating Linear Programmes', description: 'Turn a situation into a constraint: resource use and direct comparisons, written in whole numbers and lowest terms, with the working built line by line (AQA 7367 DD1)', enabled: false, load: () => import('./tools/Decision/FormulatingLP') },
+      { hub: 'decision-overview', id: 'lp-simplex', path: '/lp-simplex', name: 'The Simplex Algorithm', description: 'Set up a tableau, choose the pivot, solve a problem to its optimum and read a tableau, in exact fractions with the row operations shown (AQA 7367 DD3, DD4)', enabled: false, load: () => import('./tools/Decision/SimplexAlgorithm') },
     ],
   },
   {
@@ -178,7 +180,7 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'Classroom',
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
-      { id: 'name-wheel', path: '/name-wheel', name: 'Name Wheel', description: 'Spin a wheel to pick a name at random, with extra entries per name, six themes and a list of who has been picked. The list stays on this device.', enabled: false, load: () => import('./tools/TeacherTools/NameWheel') },
+      { id: 'name-wheel', path: '/name-wheel', name: 'Name Wheel', description: 'Spin a wheel to pick a name at random, with extra entries per name, four colour sets, three spin styles (classic wheel, carnival reel, sliding case strip) and a list of who has been picked. The list stays on this device.', load: () => import('./tools/TeacherTools/NameWheel') },
       { id: 'advent-calendar', path: '/advent-calendar', name: 'Advent Calendar', description: 'A 24-door advent calendar (4 rows of 6) with a pupil name, set door by door, (or a greeting) behind each door. The names stay on this device.', enabled: false, load: () => import('./tools/TeacherTools/AdventCalendar') },
     ],
   },
