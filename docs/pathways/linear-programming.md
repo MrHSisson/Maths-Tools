@@ -1,6 +1,6 @@
 # Linear Programming (Decision Maths, chapter DD)
 - **Status:** building
-- **Updated:** 2026-11-21
+- **Updated:** 2026-11-22
 
 ## Intention
 Question generators for AQA 7366 / 7367 section DD: formulating a constrained optimisation problem (DD1), solving it graphically (DD2), the simplex algorithm with slack variables (DD3, A-level) and interpreting a tableau (DD4, A-level). Built like the Mechanics tools: single-skill sub-tools on `DecisionShell`, an independent re-derivation of every answer, exam-style questions as a separate later pass from real past papers. DF6 (a game as a linear programme) is planned with the game theory chapter.
@@ -24,10 +24,12 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 - 2026-11-21 (decision on the simplex shape). Harry: a **build-up of the two books**: the Cambridge book's skill-by-skill ladder first, the Oxford book's wider range once the skills are covered. The plan's levels are now Level 1 Skills (Cambridge), Level 2 Together, Level 3 Range (Oxford: decimal tables, a ≥ start, lower bounds, equalities, "is it practical", marked chains). The Cambridge layout is the default at every level; the Oxford layout (Basic variable and Row columns) is an opt-in display option. Decision 1 of the plan is settled.
 - 2026-11-21 (all eight simplex decisions settled). Cambridge layout default, Oxford opt-in; slack variables always s₁, s₂ …; fractions everywhere (no mixed numbers); denominators 1 to 4 at Level 1, 1 to 6, 8 and 10 at Level 2, 1 to 10 at Level 3; all four non-standard starts at Level 3 only (opt-in); "is it practical?" in `interpret` only; unbounded and infeasible left out; build order S0 then `setup`, `pivot`, `solve`, `interpret`, then the Oxford range. Next: chunk S0.
 
+- 2026-11-22 (Simplex S0 to S5 built, not live). The exact engine (`lpSimplex.ts`), the designed generator with the per-level niceness budget (`lpSimplexGen.ts`), the stepped working (`lpSimplexSolve.ts`), the tableau picture (`SxWorking.tsx`) and the tool `/lp-simplex` (`enabled: false`, on the Decision hub's DD card) with four sub-tools: set up, one pivot, solve, read a tableau; three levels (skills, together, range with a change of form); Tableau Layout option (Cambridge or Oxford). Tested against a brute-force vertex search. Not built: "is it practical?", the zero-θ hazard, unbounded and infeasible, exam-style chains.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
-- **Simplex:** chunk S0 (decisions are settled) (the exact simplex core, the designed generator and the numbers study as a test, no UI) before any interface. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
+- **Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items ("is it practical?", zero-θ, a Pivot Column option, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
 

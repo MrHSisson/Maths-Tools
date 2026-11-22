@@ -14,6 +14,7 @@ import type { CpaProblemData, CpaViewState, GanttViewState, HistViewState } from
 import type { CpaSheetInput } from "./printCpa";
 import type { DimProblemData } from "./dimGen";
 import type { LpProblemData } from "./lpGen";
+import type { SxData } from "./lpSimplexGen";
 import type { MechProblemData, MechViewState } from "../mechanics/problem";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
@@ -80,6 +81,12 @@ export interface LpViewState {
   fresh?: number;
 }
 
+/** The Simplex Algorithm: a table of the working (the tableau) and rows of words and lines. Entries are TeX. `pivot` is [row, column] in the table (0 is the objective row; column 0 is P);
+ *  `hi` highlights a column; `ops` is the row operation written beside each row (and the Row column of the Oxford layout); `label` is the Basic variable column of that layout. */
+export interface SxTabView { k: "tab"; head: string[]; labelHead?: string; label?: string[]; rows: string[][]; opsHead?: string; ops?: string[]; pivot?: [number, number]; hi?: number }
+export type SxBlock = { k: "rows"; rows: LpRow[] } | SxTabView;
+export interface SxViewState { blocks: SxBlock[]; fresh?: number }
+
 export interface DecisionProblem {
   /** The network the question is about. Absent for a tool whose picture is not a network (Critical Path, and Mechanics chapters): those carry their own data field and draw it through `renderCanvas`. */
   network?: Network;
@@ -101,6 +108,8 @@ export interface DecisionProblem {
   mech?: MechProblemData;
   /** Linear Programming (Formulating): the situation, the constraint and what its working needs, drawn as the written working through `renderCanvas` */
   lp?: LpProblemData;
+  /** The Simplex Algorithm: the problem, its tableau and what the question asks, drawn as the written working through `renderCanvas` */
+  sx?: SxData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
@@ -204,6 +213,7 @@ export interface SolveStep {
   dimView?: DimViewState; // Dimensional Analysis: the written working so far
   mechView?: MechViewState; // Further Mechanics: the diagram and written working so far
   lpView?: LpViewState; // Linear Programming: the written working so far
+  sxView?: SxViewState; // The Simplex Algorithm: the working so far, with its tableau
   /** a step that is one line of a longer chain: the step shows the finished chain, and these are its parts, opened one at a time on request ("Show the steps") */
   more?: SolveStep[];
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in

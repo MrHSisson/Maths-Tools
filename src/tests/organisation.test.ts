@@ -53,6 +53,7 @@ const STANDALONE_BY_DESIGN = [
   "Binary/BinaryCounting",
   "Decision/CriticalPath",
   "Decision/FormulatingLP",
+  "Decision/SimplexAlgorithm",
   "Decision/DecisionOverview",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",

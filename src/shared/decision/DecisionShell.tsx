@@ -777,7 +777,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       )}
       {showMatrix && stageView === "table"
         ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center shrink-0" style={{ maxHeight: atQuestion ? "40dvh" : "24dvh" }}>{matrixInner}</div>
-        : canvasBox(problem.dim || problem.mech || problem.lp ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "40dvh" : "48dvh") : (showMatrix ? "34dvh" : ((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) ? "38dvh" : "47dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
+        : canvasBox(problem.dim || problem.mech || problem.lp || problem.sx ? (atQuestion ? "40dvh" : "50dvh") : atQuestion ? (showMatrix ? "40dvh" : "48dvh") : (showMatrix ? "34dvh" : ((current?.list && current.list.items.length > 0) || (current?.route && current.route.length > 0)) ? "38dvh" : "47dvh"))} {/* a written working needs room to be read: the page is scaled to fit its box, so a short box makes small writing */}
       {atQuestion && legendItems && <Legend items={legendItems} />}
       {atQuestion && phoneNote}
       {!atQuestion && (
