@@ -418,7 +418,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
       figure: sp?.figure ? await html(sp.figure(pr)) : undefined,
       working: sp?.working ? await html(sp.working(pr, solve ? solve(pr) : [])) : undefined,
     })));
-    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: !!sp?.perPage, space: "auto" as const }, questions: skillQuestions } : null;
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: !!sp?.perPage, space: sp?.dots ? ("dots" as const) : ("auto" as const) }, questions: skillQuestions } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
       const { renderToStaticMarkup } = await import("react-dom/server");

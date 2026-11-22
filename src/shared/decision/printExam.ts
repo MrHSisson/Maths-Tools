@@ -47,6 +47,8 @@ const CSS = `
   .skillq .box.s { height: 26mm; } .skillq .box.m { height: 36mm; } .skillq .box.l { height: 48mm; }
   .skillq .box.lines { background: repeating-linear-gradient(to bottom, #fff 0, #fff 7.6mm, #9ca3af 7.6mm, #9ca3af 7.85mm); border-color: #cbd5e1; }
   .skillq .box.grid { background-color: #fff; background-image: linear-gradient(#e5e7eb 0.2mm, transparent 0.2mm), linear-gradient(90deg, #e5e7eb 0.2mm, transparent 0.2mm); background-size: 5mm 5mm; }
+  .skillq .box.dots { background-color: #fff; background-image: radial-gradient(circle, #6b7280 0.28mm, transparent 0.34mm); background-size: 5mm 5mm; background-position: 2.5mm 2.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .skillq .skillfig { display: flex; justify-content: center; }
   .skillq.single { break-after: page; align-content: start; }
   .skillq.single .box.s { height: 90mm; } .skillq.single .box.m { height: 130mm; } .skillq.single .box.l { height: 170mm; }
   .skillq .skillfig { grid-column: 2; margin-top: 3mm; font-size: 14pt; }
@@ -141,7 +143,7 @@ const PRINT_SCRIPT = `<script>
 interface SkillLayout {
   perPage: boolean;
   /** "auto" gives each kind of question the room it needs; the others make every working area that kind */
-  space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "none";
+  space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "dots" | "none";
 }
 interface SkillPrintQuestion {
   prompt: string;
@@ -159,7 +161,7 @@ function skillParts(title: string, subtitle: string | undefined, questions: Skil
   const area = (q: SkillPrintQuestion): string => {
     if (layout.space === "none") return "";
     const size = layout.space === "s" || layout.space === "m" || layout.space === "l" ? layout.space : q.space ?? "m";
-    return `<div class="box ${size}${layout.space === "lines" ? " lines" : layout.space === "grid" ? " grid" : ""}"></div>`;
+    return `<div class="box ${size}${layout.space === "lines" ? " lines" : layout.space === "grid" ? " grid" : layout.space === "dots" ? " dots" : ""}"></div>`;
   };
   const count = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
   return {

@@ -127,7 +127,7 @@ export function SxSolution({ steps }: { steps: SolveStep[] }) {
 export function SxPrintFigure({ p }: { p: DecisionProblem }) {
   const blocks = questionBlocks(p);
   if (!blocks.length) return null;
-  return <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.45em", color: INK }}>{blocks.map((b, i) => <Block key={i} b={b} fresh={false} />)}</div>;
+  return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6em", color: INK }}>{blocks.map((b, i) => <Block key={i} b={b} fresh={false} />)}</div>;
 }
 export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
   return (
@@ -138,7 +138,7 @@ export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
         return (
           <div key={i} style={{ breakInside: "avoid" }}>
             <div style={{ fontSize: "0.9em", color: GIVEN, lineHeight: 1.4, marginBottom: 2 }}><Prose text={st.caption} /></div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <Block key={j} b={b} fresh={false} />)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center" } : undefined}><Block b={b} fresh={false} /></div>)}</div>
           </div>
         );
       })}

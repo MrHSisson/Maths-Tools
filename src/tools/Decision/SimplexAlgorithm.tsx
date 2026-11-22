@@ -112,7 +112,7 @@ export default function App() {
         hideMatrix: true,
         skillSheet: true,
         // on paper the tableau (or the table of data) the question gives is printed under it, each question has a page to work in, and the answers page has the model working
-        skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true },
+        skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true, dots: true },
         noSandbox: true,
         levelLabels: {
           setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
