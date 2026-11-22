@@ -34,6 +34,7 @@ export function VennEl({ el, stage, live }: { el: El; stage: number; live: boole
   const regions = lines.length ? regionsOf(el.cards) : null;
   const base = el.staged ? el.cards.length : 0;
   const showLine = (k: number) => stage >= base + k + 1;
+  const lab = el.labelScale ?? 1;                       // box and circle labels only
   const text = Math.max(1, size);                       // labels and answer lines grow with the cards, so a small Venn stays readable
   const lineH = lines.length ? Math.round((2 * LINE_H + 10) * text) : 0;
   const height = BOX_H + palH + lineH;
@@ -103,11 +104,11 @@ export function VennEl({ el, stage, live }: { el: El; stage: number; live: boole
       })}
       <g transform={`translate(${ox} 0)`}>
         <rect x={3} y={3} width={BOX_W - 6} height={BOX_H - 6} rx={14} fill="white" stroke="#94a3b8" strokeWidth={3} />
-        {el.box && <text x={24} y={44 * text} fontSize={34 * text} fontWeight={700} fill={INK} fontFamily={FONT}>{el.box}</text>}
+        {el.box && <text x={24} y={44 * text * lab} fontSize={34 * text * lab} fontWeight={700} fill={INK} fontFamily={FONT}>{el.box}</text>}
         <circle cx={LEFT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={LEFT_C} fillOpacity={0.07} stroke={LEFT_C} strokeWidth={4} />
         <circle cx={RIGHT_X} cy={CIRCLE_Y} r={CIRCLE_R} fill={RIGHT_C} fillOpacity={0.07} stroke={RIGHT_C} strokeWidth={4} />
-        <text x={LEFT_X - 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text} fontWeight={700} fill={LEFT_C} fontFamily={FONT}>{el.left}</text>
-        <text x={RIGHT_X + 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text} fontWeight={700} fill={RIGHT_C} fontFamily={FONT}>{el.right}</text>
+        <text x={LEFT_X - 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text * lab} fontWeight={700} fill={LEFT_C} fontFamily={FONT}>{el.left}</text>
+        <text x={RIGHT_X + 60} y={CIRCLE_Y - CIRCLE_R - 14} textAnchor="middle" fontSize={34 * text * lab} fontWeight={700} fill={RIGHT_C} fontFamily={FONT}>{el.right}</text>
         {palette.length > 0 && (
           <g data-palette="">
             <rect x={3} y={BOX_H + 14} width={BOX_W - 6} height={palH - 22} rx={14} fill="#f1f5f9" stroke="#cbd5e1" strokeWidth={2} />
