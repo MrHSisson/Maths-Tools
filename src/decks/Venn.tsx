@@ -1,11 +1,11 @@
 import { useRef, useState, type PointerEvent } from "react";
 import { hcfLine, lcmLine, tileColour } from "../shared/venn";
-import { BOX_H, BOX_W, CIRCLE_R, CIRCLE_Y, LEFT_X, RIGHT_X, layoutCards, regionsOf } from "./vennLayout";
+import { BOX_H, BOX_W, CIRCLE_R, CIRCLE_Y, INK, LEFT_C, LEFT_X, RIGHT_C, RIGHT_X, layoutCards, regionsOf } from "./vennLayout";
 import type { DeckElement } from "./types";
 
 type El = Extract<DeckElement, { kind: "venn" }>;
-const INK = "#1e293b", LINE_H = 56;
-const LEFT_C = "#6683a8", RIGHT_C = "#a58b66", HCF_C = "#334155", LCM_C = "#334155";   // quiet colours: the cards carry the colour, not the circles
+const LINE_H = 56;
+const HCF_C = "#334155", LCM_C = "#334155";
 
 /** The Venn diagram as a slide piece. The cards start where `layoutCards` puts them (scattered round the outside unless a card has a
  *  region) and in the player every card drags with a finger, stylus or mouse and stays where it is dropped: nothing is checked, ticked or

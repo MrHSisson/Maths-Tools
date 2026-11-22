@@ -20,6 +20,7 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { blockCols, partLetter } from "./textbookSheet";
+import { vennSheetCells } from "./vennSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
 import { VennEl } from "./Venn";
@@ -399,6 +400,35 @@ function WorksheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   );
 }
 
+/** A Venn sheet on the slide: the printed Venns in a grid (three across), each with its factorisations; `a` (or the button) fills every
+ *  Venn in and shows the answer lines, in the same places. */
+function VennSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const sheet = el.vennSheet!, cells = vennSheetCells(sheet);
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const answers = shown || forced, cols = Math.min(3, cells.length), rows = Math.ceil(cells.length / cols);
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`, gap: 16 }}>
+        {cells.map((c, i) => (
+          <div key={i} style={{ minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ flex: 1, minHeight: 0, width: "100%" }} dangerouslySetInnerHTML={{ __html: (answers ? c.answerSvg : c.svg).replace("<svg ", '<svg style="width:100%;height:100%;display:block" ') }} />
+            <div style={{ fontSize: 24, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: 30 }}>{answers && c.lines ? c.answers.join("   ") : c.factors.join("   ")}</div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26, marginTop: 8 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 /** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
 /** A textbook-style sheet: each question's instruction, then its parts (a), (b), (c) ... in columns. `a` (or the button) shows the answers in the
  *  same places, so showing them never changes the layout. Sized to fill the slide. */
@@ -680,7 +710,7 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
     default: return <NewerCodePlaceholder />;      // an element kind a newer version of the site adds
   }
 }

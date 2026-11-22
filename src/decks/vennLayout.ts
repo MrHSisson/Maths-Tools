@@ -7,6 +7,8 @@ import type { VennCard, VennRegion } from "./types";
 export const BOX_W = 1000, BOX_H = 700;
 export const CIRCLE_R = 235, CIRCLE_Y = 335, LEFT_X = 345, RIGHT_X = 655;
 export const GAP = 10;
+/** The drawing's colours, shared by the slide piece and the printed sheet so the two cannot drift. */
+export const INK = "#1e293b", LEFT_C = "#6683a8", RIGHT_C = "#a58b66";   // quiet colours: the cards carry the colour, not the circles
 /** The room each part of the diagram gives its cards: the centre and the widest a row of cards may be. */
 const REGION_AT: Record<"left" | "middle" | "right", { cx: number; cy: number; w: number }> = {
   left: { cx: 265, cy: CIRCLE_Y + 10, w: 230 }, middle: { cx: 500, cy: CIRCLE_Y + 10, w: 138 }, right: { cx: 735, cy: CIRCLE_Y + 10, w: 230 },
