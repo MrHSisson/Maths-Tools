@@ -5,7 +5,7 @@
 // Every sort, tile, HCF and LCM below is computed (src/shared/venn.ts) and asserted: nothing is typed in by hand that a pupil could be wrongly told.
 import { LOOK, Q, S, assertCentred, assertFreshNumbers, hintLine, makeSlide, textEl } from "/src/decks/builder";
 import { misconceptionLabel } from "/src/shared/misconceptions";
-import { BOX_H } from "/src/decks/vennLayout";
+import { BOX_H, BOX_W, LIST_W } from "/src/decks/vennLayout";
 import { allTiles, circleNumbers, hcfOf, lcmOf, primeFactors, splitPrimes, vennFlags, vennProblems, type VennRegions } from "/src/shared/venn";
 import type { CuratedQuestion, DeckElement, Slide, VennCard } from "/src/decks/types";
 
@@ -141,18 +141,15 @@ must(same(primeFactors(12), [2, 2, 3]), "12 = 2 x 2 x 3");
 const ruleSlide = S.vennBuild(`${P}-rule`, "The rule: a prime in both goes once in the middle", "10", "15", [10, 15], { box: "Prime factors" });
 const oneForOne = S.vennBuild(`${P}-one-for-one`, "Model: match the tiles one for one", "8", "12", [8, 12], { box: "Prime factors" });
 
-// slide 18: the one trap worth a discussion (Mei puts every 2 of 8 in the middle)
-const meiRight = circleNumbers({ left: [], middle: [2, 2, 2], right: [3] });
-must(meiRight[1] === 24 && meiRight[1] !== 12, "Mei's right-hand circle multiplies to 24, not 12");
-// Mei's Venn is drawn wrong on purpose (every 2 of 8 in the middle), so the class can see where it breaks; Harry can drag the tiles to mend it.
-const meiCards: VennCard[] = [...[2, 2, 2].map((n) => ({ text: String(n), tile: true, region: "middle" as const })), { text: "3", tile: true, region: "right" as const }];
+// the one trap worth a discussion: Mei puts every 2 of 200 in the middle. Different numbers from the 8 and 12 model; the product of primes of each number is listed as tiles.
+const meiRegions = splitPrimes(150, 200);
+must(same(primeFactors(150), [2, 3, 5, 5]) && same(primeFactors(200), [2, 2, 2, 5, 5]) && same(meiRegions.middle, [2, 5, 5]) && meiRegions.middle.filter((p) => p === 2).length === 1, "150 and 200: one 2 in the middle");
+const meiCards: VennCard[] = [{ text: "3", tile: true, region: "left" }, ...[2, 2, 2, 5, 5].map((n) => ({ text: String(n), tile: true, region: "middle" as const }))];
+must(circleNumbers({ left: [3], middle: [2, 2, 2, 5, 5], right: [] })[0] !== 150, "Mei's left circle does not multiply to 150");
 const discussion = makeSlide(`${P}-discuss`, "discussion", "Discuss", [
-  textEl(70, 60, 560, 50, "DISCUSS", 30, { bold: true, colour: "#be185d" }),
-  textEl(70, 120, 560, 330, "Mei puts all three 2s of 8 in the middle, because 2 is in both numbers.\n\nWhere does it go wrong?", 40),
-  textEl(70, 500, 560, 50, "KEY POINT", 30, { bold: true, colour: LOOK.grey, step: 1 }),
-  textEl(70, 560, 560, 300, "The right circle should multiply to 12. Hers is 2 × 2 × 2 × 3, which is too big. Only the 2s both numbers have go in the middle.", 36, { bold: true, step: 1 }),
-  { kind: "venn", x: 640, y: 110, w: 920, h: Math.round(0.92 * BOX_H), left: "8", right: "12", box: "Mei's Venn", cards: meiCards, size: 1.2 } as unknown as DeckElement,
-  textEl(640, 780, 920, 90, `How many 2s should go in the middle for 8 and 12? ${rule8.middle.length}`, 40, { bold: true, align: "center", step: 2 }),
+  textEl(70, 24, 1460, 104, "Mei puts all three 2s of 200 in the middle, because 2 is in both numbers. Where does it go wrong?", 38, { bold: true }),
+  { kind: "venn", x: 40, y: 135, w: 1520, h: Math.round((1520 * BOX_H) / (BOX_W + LIST_W)), left: "150", right: "200", box: "Mei's Venn", cards: meiCards, listing: [150, 200] } as unknown as DeckElement,
+  textEl(70, 790, 1460, 100, "The left circle should multiply to 150, but Mei's is far too big. 150 has only one 2, so only one 2 goes in the middle.", 34, { bold: true, step: 1 }),
 ]);
 
 // slide 20: the two special pictures, side by side (nothing shared; one inside the other)
@@ -175,7 +172,7 @@ const buildSlides = (prefix: string, title: string, pairs: Pair[], hints: number
   return { ...slide, els: [...slide.els, ...hint] as DeckElement[], ...(i === 0 ? { brief } : {}) };
 });
 const buildSet14 = buildSlides("set-a", "Prime factors in a Venn", SET14_PAIRS, 4, "Given two numbers, put their prime factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet note that falls away. Six slides, one Venn each, built with the prime buttons.");
-const BOOK15_PAIRS: Pair[] = [[14, 35, "a"], [6, 21, "a"], [33, 77, "a"], [30, 105, "b"], [42, 70, "b"], [66, 110, "b"], [28, 63, "a"], [20, 90, "b"], [45, 60, "b"]];
+const BOOK15_PAIRS: Pair[] = [[14, 35, "a"], [6, 21, "a"], [33, 77, "a"], [30, 105, "b"], [42, 70, "b"], [66, 110, "b"], [28, 63, "a"], [20, 90, "b"], [40, 44, "c"]];
 const BOOK15 = pairSet("ba", BOOK15_PAIRS, 6, true);
 const SET19_PAIRS: Pair[] = [[45, 75, "c"], [20, 30, "c"], [28, 98, "c"], [40, 56, "d"], [36, 63, "d"], [16, 24, "c"]];
 const SET19 = pairSet("c", SET19_PAIRS, 3);
@@ -186,20 +183,19 @@ const buildSet21 = buildSlides("set-d", "Special cases", SET21_PAIRS, 2, "Mixed 
 [SET14, BOOK15, SET19, SET21, tileQs].forEach((set, i) => must(new Set(set.map((q) => q.id)).size === set.length && set.length >= 5, `set ${i} has at least five distinct questions (R42)`));
 must(BOOK15.length === 9, "the book set is nine, 3 x 3");
 
-// slides 22 and 23: read a Venn backwards (four small Venns each, a to d)
-const gridOf = (pairs: [number, number, Kind][]) => pairs.map(([a, b, k]) => { must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `grid ${a} and ${b}`); return { left: "?", right: "?", cards: placedCards(a, b) }; });
-const GRID1 = gridOf([[14, 21, "a"], [35, 55, "a"], [30, 70, "b"], [42, 105, "b"]]);
-const GRID2 = gridOf([[28, 70, "c"], [40, 72, "d"], [14, 42, "f"], [20, 21, "g"]]);
-
-// Worksheet 1: the closing sheet for the whole section (three A4 pages of three Venns). It has its own nine questions, blank Venns with the numbers and
-// factorisations beside them (Harry: no scaffold, nothing placed), climbing one shared prime, two, a repeated prime, the two edge cases and last a pair
-// with the same prime twice in the middle (20 and 28: two 2s).
-const SHEET1: [number, number, Kind][] = [[6, 22, "a"], [21, 33, "a"], [20, 70, "b"], [42, 63, "b"], [24, 54, "c"], [14, 70, "f"], [30, 50, "c"], [6, 55, "g"], [20, 28, "d"]];
+// Worksheet 1: the nine book questions of slide 17 (the same pairs), printed as blank Venns with the numbers and factorisations beside them (Harry: no
+// scaffold, nothing placed). The last has two 2s in the middle (40 and 44).
+const SHEET1: [number, number, Kind][] = BOOK15_PAIRS;
 SHEET1.forEach(([a, b, k]) => must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `sheet ${a} and ${b} kind ${k}`));
-const lastSheet = splitPrimes(SHEET1[8][0], SHEET1[8][1]);
-must(same(lastSheet.middle, [2, 2]), "the last sheet question has two 2s in the middle");
+must(same(splitPrimes(40, 44).middle, [2, 2]), "the last question has two 2s in the middle");
 const sheet1 = S.vennSheet(`${P}-sheet-1`, { title: "Worksheet 1: Prime factors in a Venn", note: "Put each prime factor in the right part of the Venn.",
   items: SHEET1.map(([a, b]) => ({ a, b })) }, "indices");   // a pinned sheet carries a real tool id (the deck test draws every worksheet element's tool)
+// the answers are done by Harry under the visualiser: a whiteboard slide with the camera workspace and one prompt
+const answersSlide: Slide = (() => {
+  const q = Q.open(`${P}-answers-q`, T, "level1", "Check the answers to Worksheet 1.", "Answers under the visualiser.");
+  const base = S.whiteboard(`${P}-answers`, "Worksheet answers", [{ ...q, title: "Worksheet answers", question: ["Check the answers to Worksheet 1."] }], "A visualiser slide: Harry goes through the answers to Worksheet 1 under the camera.");
+  return { ...base, els: base.els.map((e) => (e.kind === "questions" ? { ...e, presentation: "whiteboard", visualiser: true } : e)) as DeckElement[] };
+})();
 
 // slides 26 and 27: two authored Depth cards (the eight named cast; every wrong option names its misconception; never three in a row)
 function depthQ(id: string, title: string, claims: { name: string; text: string }[], right: number | "both", correct: string, wrong: Record<string, string>, why: string[], mis: string): CuratedQuestion {
@@ -237,21 +233,18 @@ const section2: Slide[] = [
   ruleSlide,
   ...buildSet14,
   { ...S.plainBook(`${P}-book-a`, BOOK15, 3, "Copy into your book. Draw a Venn and put the prime factors in it.", "Book work: prime factors in a Venn"), brief: "Same kinds as the whiteboards, nine in a 3 by 3 grid: the first six carry a quiet hint, the last three none." },
+  sheet1,
+  answersSlide,
   S.divider(`${P}-d3`, "Repeated primes"),
   oneForOne, discussion,
   ...buildSet19,
   specialModel,
   ...buildSet21,
-  S.vennRow(`${P}-grid-1`, "Read a Venn backwards: what are the two numbers?", GRID1),
-  S.vennRow(`${P}-grid-2`, "Read a Venn backwards", GRID2),
-  sheet1,
   depthPage(`${P}-depth-1`, depth1),
   depthPage(`${P}-depth-2`, depth2),
 ];
-must(section2.length === 32, "section 2 is 32 slides");
+must(section2.length === 31, "section 2 is 31 slides");
 
-// the Venns on the read-backwards grids are never the same pair as a question (they are read, not placed), so just check the worked numbers are not reused as answers there
-GRID1.concat(GRID2).forEach((g) => must(g.cards.every((c) => c.tile), "grid cards are tiles"));
 void allTiles;
 
 const slides: Slide[] = [...section1, ...section2];

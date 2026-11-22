@@ -1197,22 +1197,22 @@
       {
        "version": 2,
        "id": "vh-ba9",
-       "title": "$45$ and $60$",
+       "title": "$40$ and $44$",
        "tool": "venn-hcf-lcm",
        "level": "level1",
        "purpose": "practice",
        "format": "open",
        "question": [
-        "$45,\\;60$"
+        "$40,\\;44$"
        ],
        "answer": [
-        "Left only: $3$. Middle: $3$, $5$. Right only: $2$, $2$."
+        "Left only: $2$, $5$. Middle: $2$, $2$. Right only: $11$."
        ],
        "explanation": [],
        "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
        "expectedErrors": [
         {
-         "response": "Middle: 3, 3, 5",
+         "response": "Middle: 2, 2, 2",
          "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
         }
        ],
@@ -1228,7 +1228,120 @@
     }
    ],
    "brief": "Same kinds as the whiteboards, nine in a 3 by 3 grid: the first six carry a quiet hint, the last three none.",
-   "built": "o11fss"
+   "built": "1v77gm7"
+  },
+  {
+   "id": "vh-sheet-1",
+   "family": "practice",
+   "title": "Worksheet 1: Prime factors in a Venn",
+   "els": [
+    {
+     "id": "vh-sheet-1-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "indices",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 9,
+     "cols": 3,
+     "pin": {
+      "title": "Worksheet 1: Prime factors in a Venn",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "vennSheet": {
+      "title": "Worksheet 1: Prime factors in a Venn",
+      "note": "Put each prime factor in the right part of the Venn.",
+      "items": [
+       {
+        "a": 14,
+        "b": 35
+       },
+       {
+        "a": 6,
+        "b": 21
+       },
+       {
+        "a": 33,
+        "b": 77
+       },
+       {
+        "a": 30,
+        "b": 105
+       },
+       {
+        "a": 42,
+        "b": 70
+       },
+       {
+        "a": 66,
+        "b": 110
+       },
+       {
+        "a": 28,
+        "b": 63
+       },
+       {
+        "a": 20,
+        "b": 90
+       },
+       {
+        "a": 40,
+        "b": 44
+       }
+      ]
+     }
+    }
+   ],
+   "built": "nuc4sr"
+  },
+  {
+   "id": "vh-answers",
+   "family": "teach",
+   "title": "Worksheet answers",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-answers-q",
+       "title": "Worksheet answers",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Check the answers to Worksheet 1."
+       ],
+       "answer": [
+        "Answers under the visualiser."
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-answers-1",
+     "visualiser": true,
+     "presentation": "whiteboard"
+    }
+   ],
+   "brief": "A visualiser slide: Harry goes through the answers to Worksheet 1 under the camera.",
+   "built": "l3s3wx"
   },
   {
    "id": "vh-d3",
@@ -1303,102 +1416,77 @@
     {
      "kind": "text",
      "x": 70,
-     "y": 60,
-     "w": 560,
-     "h": 50,
-     "text": "DISCUSS",
-     "size": 30,
-     "colour": "#be185d",
+     "y": 24,
+     "w": 1460,
+     "h": 104,
+     "text": "Mei puts all three 2s of 200 in the middle, because 2 is in both numbers. Where does it go wrong?",
+     "size": 38,
+     "colour": "#0f172a",
      "bold": true,
      "id": "vh-discuss-1"
     },
     {
-     "kind": "text",
-     "x": 70,
-     "y": 120,
-     "w": 560,
-     "h": 330,
-     "text": "Mei puts all three 2s of 8 in the middle, because 2 is in both numbers.\n\nWhere does it go wrong?",
-     "size": 40,
-     "colour": "#0f172a",
+     "kind": "venn",
+     "x": 40,
+     "y": 135,
+     "w": 1520,
+     "h": 638,
+     "left": "150",
+     "right": "200",
+     "box": "Mei's Venn",
+     "cards": [
+      {
+       "text": "3",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "middle"
+      }
+     ],
+     "listing": [
+      150,
+      200
+     ],
      "id": "vh-discuss-2"
     },
     {
      "kind": "text",
      "x": 70,
-     "y": 500,
-     "w": 560,
-     "h": 50,
-     "text": "KEY POINT",
-     "size": 30,
-     "colour": "#64748b",
+     "y": 790,
+     "w": 1460,
+     "h": 100,
+     "text": "The left circle should multiply to 150, but Mei's is far too big. 150 has only one 2, so only one 2 goes in the middle.",
+     "size": 34,
+     "colour": "#0f172a",
      "bold": true,
      "step": 1,
      "id": "vh-discuss-3"
-    },
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 560,
-     "w": 560,
-     "h": 300,
-     "text": "The right circle should multiply to 12. Hers is 2 × 2 × 2 × 3, which is too big. Only the 2s both numbers have go in the middle.",
-     "size": 36,
-     "colour": "#0f172a",
-     "bold": true,
-     "step": 1,
-     "id": "vh-discuss-4"
-    },
-    {
-     "kind": "venn",
-     "x": 640,
-     "y": 110,
-     "w": 920,
-     "h": 644,
-     "left": "8",
-     "right": "12",
-     "box": "Mei's Venn",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.2,
-     "id": "vh-discuss-5"
-    },
-    {
-     "kind": "text",
-     "x": 640,
-     "y": 780,
-     "w": 920,
-     "h": 90,
-     "text": "How many 2s should go in the middle for 8 and 12? 2",
-     "size": 40,
-     "colour": "#0f172a",
-     "bold": true,
-     "align": "center",
-     "step": 2,
-     "id": "vh-discuss-6"
     }
    ],
-   "built": "dfxii7"
+   "built": "1dn91wa"
   },
   {
    "id": "vh-set-c-1",
@@ -2077,389 +2165,6 @@
     }
    ],
    "built": "sab2ak"
-  },
-  {
-   "id": "vh-grid-1",
-   "family": "teach",
-   "title": "Read a Venn backwards: what are the two numbers?",
-   "els": [
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 36,
-     "w": 1460,
-     "h": 100,
-     "text": "Read a Venn backwards: what are the two numbers?",
-     "size": 56,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "vh-grid-1-1"
-    },
-    {
-     "kind": "venn",
-     "x": 30,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "a",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-1-2"
-    },
-    {
-     "kind": "venn",
-     "x": 418,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "b",
-     "cards": [
-      {
-       "text": "7",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "11",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-1-3"
-    },
-    {
-     "kind": "venn",
-     "x": 806,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "c",
-     "cards": [
-      {
-       "text": "3",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-1-4"
-    },
-    {
-     "kind": "venn",
-     "x": 1194,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "d",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-1-5"
-    }
-   ],
-   "built": "igpl0k"
-  },
-  {
-   "id": "vh-grid-2",
-   "family": "teach",
-   "title": "Read a Venn backwards",
-   "els": [
-    {
-     "kind": "text",
-     "x": 70,
-     "y": 36,
-     "w": 1460,
-     "h": 100,
-     "text": "Read a Venn backwards",
-     "size": 56,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "vh-grid-2-1"
-    },
-    {
-     "kind": "venn",
-     "x": 30,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "a",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-2-2"
-    },
-    {
-     "kind": "venn",
-     "x": 418,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "b",
-     "cards": [
-      {
-       "text": "5",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-2-3"
-    },
-    {
-     "kind": "venn",
-     "x": 806,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "c",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "middle"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-2-4"
-    },
-    {
-     "kind": "venn",
-     "x": 1194,
-     "y": 260,
-     "w": 372,
-     "h": 260,
-     "left": "?",
-     "right": "?",
-     "box": "d",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "2",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "5",
-       "tile": true,
-       "region": "left"
-      },
-      {
-       "text": "3",
-       "tile": true,
-       "region": "right"
-      },
-      {
-       "text": "7",
-       "tile": true,
-       "region": "right"
-      }
-     ],
-     "size": 1.5,
-     "id": "vh-grid-2-5"
-    }
-   ],
-   "built": "1borwpc"
-  },
-  {
-   "id": "vh-sheet-1",
-   "family": "practice",
-   "title": "Worksheet 1: Prime factors in a Venn",
-   "els": [
-    {
-     "id": "vh-sheet-1-1",
-     "kind": "worksheet",
-     "x": 40,
-     "y": 30,
-     "w": 1520,
-     "h": 840,
-     "tool": "indices",
-     "preset": {
-      "sub": "converting",
-      "level": "level1"
-     },
-     "count": 9,
-     "cols": 3,
-     "pin": {
-      "title": "Worksheet 1: Prime factors in a Venn",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": false
-     },
-     "vennSheet": {
-      "title": "Worksheet 1: Prime factors in a Venn",
-      "note": "Put each prime factor in the right part of the Venn.",
-      "items": [
-       {
-        "a": 6,
-        "b": 22
-       },
-       {
-        "a": 21,
-        "b": 33
-       },
-       {
-        "a": 20,
-        "b": 70
-       },
-       {
-        "a": 42,
-        "b": 63
-       },
-       {
-        "a": 24,
-        "b": 54
-       },
-       {
-        "a": 14,
-        "b": 70
-       },
-       {
-        "a": 30,
-        "b": 50
-       },
-       {
-        "a": 6,
-        "b": 55
-       },
-       {
-        "a": 20,
-        "b": 28
-       }
-      ]
-     }
-    }
-   ],
-   "built": "m3ix9"
   },
   {
    "id": "vh-depth-1",

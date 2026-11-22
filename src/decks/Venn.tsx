@@ -88,13 +88,14 @@ export function VennEl({ el, stage, live }: { el: El; stage: number; live: boole
     <svg ref={svg} viewBox={`0 0 ${BOX_W + ox} ${height}`} preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block", touchAction: "none", userSelect: "none" }} role="img" aria-label="A Venn diagram" data-no-swipe="" data-venn="">
       {listing.map((n, r) => {
         const rowH = 150, y0 = (BOX_H - listing.length * rowH) / 2 + r * rowH, ps = primeFactors(n);
+        const lts = Math.min(ts, (LIST_W - 250 - 40) / ps.length - 12);     // a long row of tiles shrinks to stay clear of the diagram
         return (
           <g key={n} data-listing={n}>
             <text x={40} y={y0 + rowH / 2 + 22} fontSize={64} fontWeight={700} fill={INK} fontFamily={FONT}>{n} =</text>
             {ps.map((p, k) => (
-              <g key={k} transform={`translate(${250 + k * (ts + 12)} ${y0 + rowH / 2 - ts / 2})`}>
-                <rect width={ts} height={ts} rx={11} fill={tileColour(p)} style={{ filter: "saturate(0.7)" }} />
-                <text x={ts / 2} y={ts / 2 + 15} textAnchor="middle" fontSize={44} fontWeight={700} fill="white" fontFamily={FONT} pointerEvents="none">{p}</text>
+              <g key={k} transform={`translate(${250 + k * (lts + 12)} ${y0 + rowH / 2 - lts / 2})`}>
+                <rect width={lts} height={lts} rx={11} fill={tileColour(p)} style={{ filter: "saturate(0.7)" }} />
+                <text x={lts / 2} y={lts / 2 + 15 * (lts / ts)} textAnchor="middle" fontSize={44 * (lts / ts)} fontWeight={700} fill="white" fontFamily={FONT} pointerEvents="none">{p}</text>
               </g>
             ))}
           </g>
