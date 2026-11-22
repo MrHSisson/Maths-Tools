@@ -84,15 +84,15 @@ function graphA(o: { origin?: number; jump?: number; at?: boolean; lines?: boole
     seg(0, 0, 5.4, 0, LOOK.ink, 6), seg(0, 0, 0, 4.6, LOOK.ink, 6),
     t(px(5.45), py(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(4.6) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
     seg(5, 0, 2.75, 4.5, BLUE, 7), seg(0, 4, 5.3, 1.35, "#7c3aed", 7), seg(3.4, -0.4, -0.4, 3.4, ORANGE, 7),
-    t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(px(3.45), py(2.95), 330, 44, "$x + 2y = 8$", 30, { colour: "#7c3aed", bold: true }),
-    t(px(1.0), py(1.35), 330, 44, "$x + y = 3$", 30, { colour: ORANGE, bold: true }),
+    t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(px(4.2), py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: "#7c3aed", bold: true, align: "left" }),
+    t(px(0.1), py(0.95), 330, 44, "$x + y = 3$", 30, { colour: ORANGE, bold: true, align: "left" }),
   ];
   if (o.origin !== undefined) {
     els.push(dot(0, 0, RED, o.origin, 15));
-    els.push(t(px(-0.35), py(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left", ...(o.origin ? { step: o.origin } : {}) }));
+    els.push(t(px(0.25), py(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left", ...(o.origin ? { step: o.origin } : {}) }));
   }
   if (o.jump !== undefined) els.push(seg(0.15, 0, 2.8, 0, GREEN, 12, o.jump, true));
-  if (o.at) els.push(dot(3, 0, GREEN, o.jump ?? 0, 18), t(px(3) - 10, py(0) + 70, 160, 46, "$(3, 0)$", 30, { colour: GREEN, bold: true, ...(o.jump ? { step: o.jump } : {}) }));
+  if (o.at) els.push(dot(3, 0, GREEN, o.jump ?? 0, 18), t(px(3) - 10, py(0) + 72, 160, 46, "$(3, 0)$", 30, { colour: GREEN, bold: true, ...(o.jump ? { step: o.jump } : {}) }));
   return els;
 }
 /** problem B: the strip between x + y = 4 and x + y = 6 */
@@ -108,8 +108,8 @@ function graphB(o: { at?: [number, number]; jump?: boolean } = {}) {
     ln(0, 0, 6.4, 0, LOOK.ink, 6), ln(0, 0, 0, 6.4, LOOK.ink, 6),
     t(qx(6.5), qy(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(qx(0) + 16, qy(6.4) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
     ln(4.4, -0.4, -0.4, 4.4, ORANGE, 7), ln(6.4, -0.4, -0.4, 6.4, BLUE, 7),
-    t(qx(3.2), qy(0) - 64, 300, 44, "$x + y = 4$", 30, { colour: ORANGE, bold: true }), t(qx(3.4), qy(2.95) - 52, 300, 44, "$x + y = 6$", 30, { colour: BLUE, bold: true }),
-    dot(0, 0, RED, 0, 15), t(qx(-0.35), qy(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left" }),
+    t(qx(0.3), qy(1.6), 300, 44, "$x + y = 4$", 30, { colour: ORANGE, bold: true, align: "left" }), t(qx(3.5), qy(3.7), 300, 44, "$x + y = 6$", 30, { colour: BLUE, bold: true, align: "left" }),
+    dot(0, 0, RED, 0, 15), t(qx(0.25), qy(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left" }),
   ];
   return els;
 }
