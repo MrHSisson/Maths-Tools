@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 // Balloons that rise from the bottom of the screen, sway a little and float off the top. Mount it when something is
 // revealed; it plays once (the last balloon leaves in about ten seconds), draws nothing afterwards and never catches a
-// tap. People who ask their device for reduced motion get no balloons at all.
+// tap. People who ask their device for reduced motion get no balloons at all, unless `force` is set. `scale` above 1 means more balloons for longer.
 
 interface Balloon { x: number; y: number; r: number; speed: number; sway: number; swayHz: number; phase: number; colour: string; delay: number }
 
@@ -15,14 +15,14 @@ function shade(hex: string, amount: number): string {
   return `rgb(${c.map(v => Math.round(v + (t - v) * k)).join(",")})`;
 }
 
-export function Balloons({ colours }: { colours: string[] }): JSX.Element | null {
+export function Balloons({ colours, scale = 1, force = false }: { colours: string[]; scale?: number; force?: boolean }): JSX.Element | null {
   const ref = useRef<HTMLCanvasElement>(null);
   const key = colours.join(",");
 
   useEffect(() => {
     const canvas = ref.current, ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    if (!force && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const palette = key.split(",").filter(c => /^#[0-9a-f]{6}$/i.test(c));
     if (!palette.length) return;
     const dpr = window.devicePixelRatio || 1, W = window.innerWidth, H = window.innerHeight;
@@ -30,14 +30,14 @@ export function Balloons({ colours }: { colours: string[] }): JSX.Element | null
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
-    const count = W < 640 ? 10 : 16;
+    const count = Math.round((W < 640 ? 10 : 16) * scale);
     const size = Math.min(1, Math.max(0.65, W / 1100));
     const balloons: Balloon[] = Array.from({ length: count }, (_, i) => {
       const r = rnd(26, 42) * size;
       return {
         x: ((i + rnd(0.1, 0.9)) / count) * W, y: H + r * 4, r, speed: rnd(1.1, 2.3) * (H / 800 > 0.6 ? 1 : 0.7),
         sway: rnd(8, 22), swayHz: rnd(0.0008, 0.0016), phase: rnd(0, Math.PI * 2),
-        colour: palette[Math.floor(Math.random() * palette.length)], delay: rnd(0, 2600),
+        colour: palette[Math.floor(Math.random() * palette.length)], delay: rnd(0, 2600 * scale),
       };
     }).sort(() => Math.random() - 0.5);
 
@@ -74,12 +74,12 @@ export function Balloons({ colours }: { colours: string[] }): JSX.Element | null
         ctx.fillStyle = "rgba(255,255,255,.55)";
         ctx.beginPath(); ctx.ellipse(cx - bw * 0.38, b.y - bh * 0.42, bw * 0.16, bh * 0.28, -0.5, 0, Math.PI * 2); ctx.fill();
       }
-      if (live && t < MAX_MS) raf = requestAnimationFrame(frame);
+      if (live && t < MAX_MS * scale) raf = requestAnimationFrame(frame);
       else ctx.clearRect(0, 0, W, H);
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
-  }, [key]);
+  }, [key, scale, force]);
 
   return <canvas ref={ref} aria-hidden="true" data-balloons className="pointer-events-none fixed inset-0 z-[58] h-full w-full" />;
 }

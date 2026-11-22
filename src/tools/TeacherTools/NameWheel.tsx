@@ -4,6 +4,7 @@ import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { Confetti } from "../../shared/components/Confetti";
 import { Balloons } from "../../shared/components/Balloons";
+import { Fireworks } from "../../shared/components/Fireworks";
 
 // Name Wheel: pick a name at random from a list, with optional extra entries per name. Several wheels can be saved
 // (one per class, say) and are kept on this device only (localStorage); nothing is sent anywhere. Standalone classroom sandbox.
@@ -236,6 +237,24 @@ export default function NameWheel() {
     } catch { /* audio unavailable */ }
   };
 
+  /** A short rising fanfare for a win (an arpeggio ending on a held chord), played with the tick sound's switch. */
+  const fanfare = () => {
+    const audio = audioRef.current;
+    if (!store.sound || !audio) return;
+    try {
+      const t0 = audio.currentTime + 0.05;
+      const note = (freq: number, at: number, len: number, vol: number) => {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.type = "triangle"; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(vol, t0 + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len);
+        o.connect(g); g.connect(audio.destination); o.start(t0 + at); o.stop(t0 + at + len + 0.05);
+      };
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, k) => note(f, k * 0.13, 0.22, 0.09));   // C E G C
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(f => note(f, 0.55, 1.1, 0.06));      // the chord, held
+    } catch { /* audio unavailable */ }
+  };
+
   const spin = () => {
     const n = entries.length;
     if (!canSpin || n < 2) return;
@@ -265,7 +284,7 @@ export default function NameWheel() {
       if (idx !== last) { tick(); last = idx; if (tiny) setCurrent(entries[idx].name); }
       if (t < 1) { rafRef.current = requestAnimationFrame(step); return; }
       const entry = entries[idx];
-      setSpinning(false); setCurrent("");
+      setSpinning(false); setCurrent(""); fanfare();
       setResult({ name: entry.name, row: entry.row, count: wheel.rows[entry.row]?.count ?? 1 });
       setStore(st => ({ ...st, wheels: st.wheels.map(w => (w.id === st.active ? { ...w, winners: [...w.winners, entry.name] } : w)) }));
     };
@@ -466,8 +485,8 @@ export default function NameWheel() {
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={store.sound} onChange={e => setStore(s => ({ ...s, sound: e.target.checked }))} /> Tick sound</label>
-              <label className="flex items-center gap-2 text-sm text-slate-600" title="Devices set to reduce motion get a one-second spin unless this is ticked."><input type="checkbox" checked={store.fullSpin} onChange={e => setStore(st => ({ ...st, fullSpin: e.target.checked }))} /> Full-length spin even if the device reduces motion</label>
+              <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={store.sound} onChange={e => setStore(s => ({ ...s, sound: e.target.checked }))} /> Sounds (tick and fanfare)</label>
+              <label className="flex items-center gap-2 text-sm text-slate-600" title="Devices set to reduce motion get a one-second spin and no confetti, balloons or fireworks unless this is ticked."><input type="checkbox" checked={store.fullSpin} onChange={e => setStore(st => ({ ...st, fullSpin: e.target.checked }))} /> Full spins and celebrations even if the device reduces motion</label>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
               <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle the order</button>
@@ -479,8 +498,10 @@ export default function NameWheel() {
 
       {phone && <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white px-4 py-3">{actions}</div>}
 
-      {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} />}
-      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} />}
+      {/* a win is a big moment: confetti, balloons and fireworks, all bigger and longer than the shared defaults */}
+      {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={2.2} force={store.fullSpin} />}
+      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.6} force={store.fullSpin} />}
+      {result && <Fireworks key={`f${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.3} force={store.fullSpin} />}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-5" onClick={e => { if (e.target === e.currentTarget) closeDialog(); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="winner-name" className={`${card} w-full max-w-[420px] p-6 text-center shadow-lift`}>
