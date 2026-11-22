@@ -93,9 +93,9 @@ function graph(o: GraphOpts = {}) {
     const step = cs && i !== 0 ? cs.step : 0;
     els.push(dot(x, y, LOOK.ink, step, 11));
     // labels go where no line runs: (0, 4) to the left of the axis, (4, 2) above and to the right (outside both limits)
-    const lx = i === 1 ? px(x) + 28 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? -70 : 14);
-    const ly = i === 1 ? py(y) - 104 : i === 2 ? py(y) - 100 : py(y) + 14;
-    const al = i === 1 ? { align: "left" } : {};
+    const lx = i === 1 ? px(x) - 178 : i === 2 ? px(x) + 26 : px(x) + (i === 3 ? -70 : 14);
+    const ly = i === 1 ? py(y) - 40 : i === 2 ? py(y) - 100 : py(y) + 14;
+    const al = i === 1 ? { align: "right" } : {};
     if (cs) els.push(t(lx, ly, 130, 46, `$(${x}, ${y})$`, 30, { colour: LOOK.ink, ...al, ...(step ? { step } : {}) }));
     if (cs && cs.labels !== undefined) els.push(t(lx, ly + 40, 130, 46, `$P = ${PVAL[i]}$`, 30, { colour: grey, bold: true, ...al, ...(cs.labels ? { step: cs.labels } : {}) }));
   });
@@ -232,7 +232,7 @@ const slides: Slide[] = [
 
   slide(`${P}-journey`, "The whole journey", [
     ...titleEls("The whole journey"),
-    maths(40, 240, 880, 320, "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}", 44),
+    maths(40, 240, 820, 320, "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}", 44),
     t(60, 600, 880, 100, "Each step moved to a better corner. We never visited $(5, 0)$, where $P = 10$.", 42, { step: 1 }),
     t(60, 730, 880, 120, "$y$ came in first, then went back down as $x$ came in: the walk is not always straight up.", 40, { colour: grey, step: 2 }),
     ...graph({ labels: false, corners: { step: 0, labels: 0 }, path: [[0, 1, 0], [1, 2, 0]] }),

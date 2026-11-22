@@ -273,28 +273,28 @@
     },
     {
      "kind": "text",
-     "x": 1013,
-     "y": 286,
+     "x": 807,
+     "y": 350,
      "w": 130,
      "h": 46,
      "text": "$(0, 4)$",
      "size": 30,
      "colour": "#0f172a",
-     "align": "left",
+     "align": "right",
      "step": 1,
      "id": "sx-problem-17"
     },
     {
      "kind": "text",
-     "x": 1013,
-     "y": 326,
+     "x": 807,
+     "y": 390,
      "w": 130,
      "h": 46,
      "text": "$P = 12$",
      "size": 30,
      "colour": "#64748b",
      "bold": true,
-     "align": "left",
+     "align": "right",
      "step": 2,
      "id": "sx-problem-18"
     },
@@ -375,7 +375,7 @@
      "id": "sx-problem-24"
     }
    ],
-   "built": "1eha8h3"
+   "built": "1r03hyy"
   },
   {
    "id": "sx-idea",
@@ -2626,7 +2626,7 @@
      "kind": "maths",
      "x": 40,
      "y": 240,
-     "w": 880,
+     "w": 820,
      "h": 320,
      "latex": "\\begin{array}{c|c|c|c}\\text{step}&\\text{in / out}&\\text{corner}&P\\\\\\hline \\text{start}&&(0,0)&0\\\\ 1&y \\text{ in, } s_2 \\text{ out}&(0,4)&12\\\\ 2&x \\text{ in, } s_1 \\text{ out}&(4,2)&14\\end{array}",
      "size": 44,
@@ -2767,27 +2767,27 @@
     },
     {
      "kind": "text",
-     "x": 1013,
-     "y": 286,
+     "x": 807,
+     "y": 350,
      "w": 130,
      "h": 46,
      "text": "$(0, 4)$",
      "size": 30,
      "colour": "#0f172a",
-     "align": "left",
+     "align": "right",
      "id": "sx-journey-15"
     },
     {
      "kind": "text",
-     "x": 1013,
-     "y": 326,
+     "x": 807,
+     "y": 390,
      "w": 130,
      "h": 46,
      "text": "$P = 12$",
      "size": 30,
      "colour": "#64748b",
      "bold": true,
-     "align": "left",
+     "align": "right",
      "id": "sx-journey-16"
     },
     {
@@ -2883,7 +2883,7 @@
      "id": "sx-journey-24"
     }
    ],
-   "built": "1u6xmgu"
+   "built": "15khu97"
   },
   {
    "id": "sx-rules",
