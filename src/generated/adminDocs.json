@@ -1690,6 +1690,7 @@
       {
        "t": "ul",
        "items": [
+        "`docs/roadmaps/linear-programming.md`: the teaching roadmap, a sequence of tools and levels with textbook stop-offs.",
         "`specs/linear-programming-audit.md`: the audit of both tools (balance, arbitrariness, the asterisked extensions, nine recommendations awaiting Harry).",
         "`specs/linear-programming-simplex-coverage.md`: the Simplex tool against the textbooks (coverage by corpus row, the extras we added, the open gaps)."
        ]
