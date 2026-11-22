@@ -18,7 +18,7 @@ export const TEST_AREAS = {
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
   mechanics: /^(dim|mechanics.*|workDone|energy)\.test\.ts$/,
-  decision: /^(decision|decisionOptions|decisionPairings)\.test\.ts$/,
+  decision: /^(decision|decisionOptions|decisionPairings|decisionPairingsTools)\.test\.ts$/,
   decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|vennSheet|vennLayout|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
   // the checks that run over every tool

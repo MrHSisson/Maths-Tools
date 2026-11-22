@@ -10,7 +10,7 @@ import { DECISION_CHAPTERS, DECISION_GENERAL_RESOURCES, DECISION_OUT_OF_SPEC, DE
 /** a sub-tool as a link that opens its tool on that sub-tool, with the course and kind of practice that show it */
 const linkOf = (r: SubToolRef): SpecLink[] => {
   const t = ALL_TOOLS.find(x => x.id === r.tool);
-  return t ? [{ label: r.label.replace(/\s*\*$/, ""), href: `${t.path}?tool=${r.sub}&o_course=${r.course}&o_practice=${r.practice}`, live: t.enabled !== false, as: r.as }] : [];
+  return t ? [{ label: r.label.replace(/\s*\*$/, ""), href: `${t.path}?tool=${r.sub}${r.course ? `&o_course=${r.course}` : ""}${r.practice ? `&o_practice=${r.practice}` : ""}`, live: t.enabled !== false, as: r.as }] : [];
 };
 
 const chapters: SpecChapter[] = DECISION_CHAPTERS.map(({ toolIds, ...c }) => ({
