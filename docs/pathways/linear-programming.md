@@ -52,7 +52,7 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
 
 ## Where to read more
-- `docs/roadmaps/linear-programming.md`: the teaching roadmap, a sequence of tools and levels with textbook stop-offs.
+- `docs/roadmaps/linear-programming.md`: the simplex teaching roadmap: a sequence of tools and levels with textbook stop-offs.
 - `specs/linear-programming-audit.md`: the audit of both tools (balance, arbitrariness, the asterisked extensions, nine recommendations awaiting Harry).
 - `specs/linear-programming-simplex-coverage.md`: the Simplex tool against the textbooks (coverage by corpus row, the extras we added, the open gaps).
 The two textbook chapters the plan was built from are copyright, so they are not in this public repo: they are in Harry's private Google Drive (Textbooks folder; the list of sources and links is `specs/sources.md`): Chapter 4 "Linear programming" and Chapter 14 "Linear programming and game theory 1" (read section 14.1 only, pages 1 to 13). Read them only when asked; the corpus and the briefs hold what was taken from them. Never commit them.
