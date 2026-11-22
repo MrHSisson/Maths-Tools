@@ -13,7 +13,7 @@
 | **3. One step, then the whole run** | **One pivot › Level 1**, first with **Pivot: Pivot Given** (the row operations only), then the student chooses; then **Solve a problem › Level 1** (two iterations) | Choose the pivot column and row from the θ-values, divide the pivot row, clear the column, and repeat until no negative is left |
 | **4. In words, three variables** | **Set up the tableau › Level 2**, **One pivot › Level 2** (part-way through a run), **Solve a problem › Level 2** (a situation in words or a table), **Read a tableau › Level 2** (not yet optimal) | Simplify the constraints, set up from a story, take three iterations, say what a slack variable means in the story with its units, and say why a tableau is not optimal |
 | **5. Whole numbers** | **Is it practical? › Level 1**, **Level 2**, **Level 3**; a deck is planned (below) | Say why a fractional optimum cannot be made, find the best whole-number plan (round down; add where there is room; check the bound), and know that rounding to the nearest can break a constraint |
-| **6. When it does not start at the origin** | **Solve a problem › Level 3** and **Set up the tableau › Level 3**, ticking Starting Form one at a time: Minimise, A ≥ Constraint, A Lower Bound, An Equality; **One pivot › Level 3** (a negative right-hand side); **Method** (Substitute And Split, or Use As Rows); **Read a tableau › Level 3** (the problem the tableau shows); a deck is planned (below) | Minimise by maximising P = −C; rewrite a ≥ constraint and start by pivoting on a negative entry; handle y ≥ 4 by Y = y − 4 or as one more constraint; handle an equation as two inequalities or as a row; go from a tableau back to the problem |
+| **6. When it does not start at the origin** | **Solve a problem › Level 3** and **Set up the tableau › Level 3**, ticking Starting Form one at a time: Minimise, A ≥ Constraint, A Lower Bound, An Equality; **One pivot › Level 3** (a negative right-hand side); **Method** (Substitute And Split, or Use As Rows); **Read a tableau › Level 3** (the problem the tableau shows); **the deck `lp-simplex-not-origin`** (below) | Minimise by maximising P = −C; rewrite a ≥ constraint and start by pivoting on a negative entry; handle y ≥ 4 by Y = y − 4 or as one more constraint; handle an equation as two inequalities or as a row; go from a tableau back to the problem |
 
 **Gate at the end:** a student can take a worded problem, set it up, solve it by the tableau, state the answer in context with the meaning of each slack variable, and say whether it is practical.
 
@@ -25,14 +25,14 @@
 - **T4 Exercises 4A and 4B** are not on this route: 4A is formulating (assumed) and 4B is solving graphically, which belongs with the Graphical tool (not built). **T4 Mixed practice** mixes graphical and simplex questions, so it waits for the graphical work.
 - **T30 Exercises 30.1A and 30.1B are not placed.** Parts of them fit stages 4, 5 and 6, but 30.1B includes a question on a miscopied number that makes the problem infeasible or unbounded, which the tools and this route do not cover, so it cannot be set whole; 30.1A has to be checked question by question against the book first.
 
-## Decks planned (agreed with Harry, 2026-11-22)
+## Decks (agreed with Harry, 2026-11-22)
 
-Stages 3 and 4 are procedural practice, which the tool does better than a deck; stage 1 is covered well enough by the deck for stage 2. Two decks are planned, both with the graph beside the table:
+Stages 3 and 4 are procedural practice, which the tool does better than a deck; stage 1 is covered well enough by the deck for stage 2. Two decks, both with the graph beside the table; stage 6 is built, stage 5 is planned:
 
 - **Stage 5, "Why rounding fails":** the feasible region with the whole-number points near the optimum, the optimum as an upper bound, the points that fit, and why rounding to the nearest can break a constraint.
-- **Stage 6, "Not starting at the origin":** why a ≥ constraint makes the origin infeasible, what a negative right-hand side is saying, why the first pivot goes on a negative entry, and why minimising is maximising −C.
+- **Stage 6, "When the origin is not allowed" (`lp-simplex-not-origin`, 17 slides, built; plan in `specs/decks/lp-simplex-not-origin.md`):** why a ≥ limit makes the origin not allowed, what a negative right-hand side is saying, why the first pivot goes on a negative entry, minimising as maximising −C, and one slide each on a lower bound and an equality.
 
-Neither is built. Order of work: a short brief (`specs/decks/`), the look card, Harry's yes, then the build.
+The stage 5 deck is not built. Order of work: a short brief (`specs/decks/`), the look card, Harry's yes, then the build.
 
 ## Not in the tools (use the books)
 

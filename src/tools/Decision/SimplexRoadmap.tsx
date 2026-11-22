@@ -12,6 +12,7 @@ import { useLayoutMode } from "../../shared/layoutMode";
 
 const TOOL = "/lp-simplex";
 const DECK = "/decks/lp-simplex-process";
+const DECK_ORIGIN = "/decks/lp-simplex-not-origin";
 const href = (tool: string, level: number, opts: Record<string, string> = {}): string =>
   `${TOOL}?tool=${tool}&level=${level}${Object.entries(opts).map(([k, v]) => `&o_${k}=${v}`).join("")}`;
 
@@ -25,7 +26,7 @@ interface Stage {
   short: string;
   /** what this stage is doing, in a few sentences */
   does: string;
-  can: string[]; practice: Practice[]; deck?: string; plannedDeck?: PlannedDeck; tip?: string;
+  can: string[]; practice: Practice[]; deck?: string; deckTitle?: string; deckBlurb?: string; plannedDeck?: PlannedDeck; tip?: string;
   /** what the stage hands on to the next one */
   towards: string;
 }
@@ -97,7 +98,7 @@ const STAGES: Stage[] = [
       { label: "One pivot", sub: "Level 3: a negative right-hand side", href: href("pivot", 3), group: "The start, and back again" },
       { label: "Read a tableau", sub: "Level 3: the problem the tableau shows", href: href("interpret", 3), group: "The start, and back again" },
     ],
-    plannedDeck: { title: "Not starting at the origin", blurb: "The geometry of a ≥ constraint and a negative right-hand side, why the origin is not feasible, and why minimising is maximising −C" },
+    deck: DECK_ORIGIN, deckTitle: "The deck: when the origin is not allowed", deckBlurb: "Why a ≥ limit cuts the origin off, the first pivot onto the region, minimising by maximising −C, a lower bound and an equality",
     towards: "The whole of DD3 and DD4 in one setting. What is left is the exam-style chain (below), which the tools do not build.",
   },
 ];
@@ -218,7 +219,7 @@ export default function App() {
                           <div className="mt-4">
                             <button type="button" onClick={() => go(s.deck!)} className="flex min-h-[48px] w-full items-center gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-left hover:bg-blue-50 sm:w-1/2">
                               <Presentation size={18} className="shrink-0 text-blue-900" />
-                              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-900">The deck: how the simplex works</span><span className="block text-xs text-slate-500">Lesson slides, the graph beside the table</span></span>
+                              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-900">{s.deckTitle ?? "The deck: how the simplex works"}</span><span className="block text-xs text-slate-500">{s.deckBlurb ?? "Lesson slides, the graph beside the table"}</span></span>
                               <ArrowRight size={16} className="shrink-0 text-slate-400" />
                             </button>
                           </div>
