@@ -167,33 +167,39 @@ const specialModel = makeSlide(`${P}-model-special`, "teach", "Model: nothing sh
 // the question sets (every pair is checked by pairQ: its factorisations, its kind, an LCM of at most 500, and never asked twice)
 const SET14_PAIRS: Pair[] = [[6, 14, "a"], [21, 35, "a"], [30, 42, "b"], [70, 105, "b"], [44, 66, "b"], [22, 55, "a"]];
 const SET14 = pairSet("a", SET14_PAIRS, 4);   // the questions behind the six slides (their answers are computed and kept)
-// slides: each Venn question as a build slide (numbers as tiles on the left, the Venn on the right, prime buttons along the bottom); the middle-tile count is a quiet hint on the first four
-const buildSet14: Slide[] = SET14_PAIRS.map(([a, b], i) => {
+// slides: each Venn question as a build slide (numbers as tiles on the left, the Venn on the right, prime buttons along the bottom); the middle-tile count is a quiet note on the first few
+const buildSlides = (prefix: string, title: string, pairs: Pair[], hints: number, brief: string): Slide[] => pairs.map(([a, b], i) => {
   const mid = splitPrimes(a, b).middle.length;
-  const slide = S.vennBuild(`${P}-set-a-${i + 1}`, "Prime factors in a Venn", String(a), String(b), [a, b], { box: "Prime factors" });
-  const hint = i < 4 ? [textEl(1010, 52, 520, 50, `${mid} tile${mid === 1 ? "" : "s"} in the middle`, 32, { colour: LOOK.grey, align: "right" })] : [];
-  return { ...slide, els: [...slide.els, ...hint] as DeckElement[], ...(i === 0 ? { brief: "Given two numbers, put their prime factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet hint that falls away. Six slides, one Venn each, built with the prime buttons." } : {}) };
+  const slide = S.vennBuild(`${P}-${prefix}-${i + 1}`, title, String(a), String(b), [a, b], { box: "Prime factors" });
+  const hint = i < hints && mid > 0 ? [textEl(1010, 52, 520, 50, `${mid} tile${mid === 1 ? "" : "s"} in the middle`, 32, { colour: LOOK.grey, align: "right" })] : [];
+  return { ...slide, els: [...slide.els, ...hint] as DeckElement[], ...(i === 0 ? { brief } : {}) };
 });
+const buildSet14 = buildSlides("set-a", "Prime factors in a Venn", SET14_PAIRS, 4, "Given two numbers, put their prime factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet note that falls away. Six slides, one Venn each, built with the prime buttons.");
 const BOOK15_PAIRS: Pair[] = [[14, 35, "a"], [6, 21, "a"], [33, 77, "a"], [30, 105, "b"], [42, 70, "b"], [66, 110, "b"], [28, 63, "a"], [20, 90, "b"], [45, 60, "b"]];
 const BOOK15 = pairSet("ba", BOOK15_PAIRS, 6, true);
-const SET19 = pairSet("c", [[45, 75, "c"], [20, 30, "c"], [28, 98, "c"], [40, 56, "d"], [36, 63, "d"], [16, 24, "c"]], 3);
-const SET21 = pairSet("d", [[20, 50, "c"], [36, 48, "e"], [75, 100, "d"], [30, 84, "b"], [6, 35, "g"], [21, 63, "f"]], 2);
-const BOOK24 = pairSet("bb", [[14, 22, "a"], [30, 45, "b"], [28, 42, "c"], [63, 105, "c"], [20, 44, "d"], [50, 75, "d"], [60, 84, "e"], [33, 99, "f"], [6, 25, "g"]], 6, true);
-[SET14, BOOK15, SET19, SET21, BOOK24, tileQs].forEach((set, i) => must(new Set(set.map((q) => q.id)).size === set.length && set.length >= 5, `set ${i} has at least five distinct questions (R42)`));
-must(BOOK15.length === 9 && BOOK24.length === 9, "book sets are nine, 3 x 3");
+const SET19_PAIRS: Pair[] = [[45, 75, "c"], [20, 30, "c"], [28, 98, "c"], [40, 56, "d"], [36, 63, "d"], [16, 24, "c"]];
+const SET19 = pairSet("c", SET19_PAIRS, 3);
+const buildSet19 = buildSlides("set-c", "Repeated primes", SET19_PAIRS, 3, "A prime that appears more than once in a number: match the copies one for one, so a prime goes in the middle as many times as both numbers have it. Six slides, one Venn each, built with the prime buttons; the first three carry the count of middle tiles. The slip of putting every copy in the middle is on the wrong-answer list.");
+const SET21_PAIRS: Pair[] = [[20, 50, "c"], [36, 48, "e"], [75, 100, "d"], [30, 84, "b"], [6, 35, "g"], [21, 63, "f"]];
+const SET21 = pairSet("d", SET21_PAIRS, 2);
+const buildSet21 = buildSlides("set-d", "Special cases", SET21_PAIRS, 2, "Mixed Venns with the two edge cases (nothing shared; one number inside the other) at the end, one of each. Six slides, one Venn each.");
+[SET14, BOOK15, SET19, SET21, tileQs].forEach((set, i) => must(new Set(set.map((q) => q.id)).size === set.length && set.length >= 5, `set ${i} has at least five distinct questions (R42)`));
+must(BOOK15.length === 9, "the book set is nine, 3 x 3");
 
 // slides 22 and 23: read a Venn backwards (four small Venns each, a to d)
 const gridOf = (pairs: [number, number, Kind][]) => pairs.map(([a, b, k]) => { must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `grid ${a} and ${b}`); return { left: "?", right: "?", cards: placedCards(a, b) }; });
 const GRID1 = gridOf([[14, 21, "a"], [35, 55, "a"], [30, 70, "b"], [42, 105, "b"]]);
 const GRID2 = gridOf([[28, 70, "c"], [40, 72, "d"], [14, 42, "f"], [20, 21, "g"]]);
 
-// slide 25: Worksheet 1 (three A4 pages of three Venns; the first Venns carry some tiles, the last only the numbers)
-// Worksheet 1 carries exactly the nine book questions of the first book set (Harry), so the slide and the sheet match
-const SHEET1: [number, number, Kind][] = BOOK15_PAIRS;
+// Worksheet 1: the closing sheet for the whole section (three A4 pages of three Venns). It has its own nine questions, blank Venns with the numbers and
+// factorisations beside them (Harry: no scaffold, nothing placed), climbing one shared prime, two, a repeated prime, the two edge cases and last a pair
+// with the same prime twice in the middle (20 and 28: two 2s).
+const SHEET1: [number, number, Kind][] = [[6, 22, "a"], [21, 33, "a"], [20, 70, "b"], [42, 63, "b"], [24, 54, "c"], [14, 70, "f"], [30, 50, "c"], [6, 55, "g"], [20, 28, "d"]];
 SHEET1.forEach(([a, b, k]) => must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `sheet ${a} and ${b} kind ${k}`));
-const placedFade: (("left" | "middle" | "right")[] | undefined)[] = [["left", "middle"], ["middle"], ["right"], undefined, undefined, undefined, undefined, undefined, undefined];
+const lastSheet = splitPrimes(SHEET1[8][0], SHEET1[8][1]);
+must(same(lastSheet.middle, [2, 2]), "the last sheet question has two 2s in the middle");
 const sheet1 = S.vennSheet(`${P}-sheet-1`, { title: "Worksheet 1: Prime factors in a Venn", note: "Put each prime factor in the right part of the Venn.",
-  items: SHEET1.map(([a, b], i) => ({ a, b, ...(placedFade[i] ? { placed: placedFade[i] } : {}) })) }, "indices");   // a pinned sheet carries a real tool id (the deck test draws every worksheet element's tool)
+  items: SHEET1.map(([a, b]) => ({ a, b })) }, "indices");   // a pinned sheet carries a real tool id (the deck test draws every worksheet element's tool)
 
 // slides 26 and 27: two authored Depth cards (the eight named cast; every wrong option names its misconception; never three in a row)
 function depthQ(id: string, title: string, claims: { name: string; text: string }[], right: number | "both", correct: string, wrong: Record<string, string>, why: string[], mis: string): CuratedQuestion {
@@ -233,17 +239,16 @@ const section2: Slide[] = [
   { ...S.plainBook(`${P}-book-a`, BOOK15, 3, "Copy into your book. Draw a Venn and put the prime factors in it.", "Book work: prime factors in a Venn"), brief: "Same kinds as the whiteboards, nine in a 3 by 3 grid: the first six carry a quiet hint, the last three none." },
   S.divider(`${P}-d3`, "Repeated primes"),
   oneForOne, discussion,
-  S.whiteboard(`${P}-set-c`, "Repeated primes", SET19, "A prime that appears more than once in a number: match the copies one for one, so a prime goes in the middle as many times as both numbers have it. The slip of putting every copy in the middle is on the wrong-answer list."),
+  ...buildSet19,
   specialModel,
-  S.whiteboard(`${P}-set-d`, "Special cases", SET21, "Mixed Venns with the two edge cases (nothing shared; one number inside the other) near the end, one of each."),
+  ...buildSet21,
   S.vennRow(`${P}-grid-1`, "Read a Venn backwards: what are the two numbers?", GRID1),
   S.vennRow(`${P}-grid-2`, "Read a Venn backwards", GRID2),
-  { ...S.plainBook(`${P}-book-b`, BOOK24, 3, "Copy into your book. Draw a Venn and put the prime factors in it.", "Book work: mixed Venns"), brief: "Mixed kinds, nine in a 3 by 3 grid: the first six hinted, the last three (a bigger one, then the two edge cases) not." },
   sheet1,
   depthPage(`${P}-depth-1`, depth1),
   depthPage(`${P}-depth-2`, depth2),
 ];
-must(section2.length === 23, "section 2 is 23 slides");
+must(section2.length === 32, "section 2 is 32 slides");
 
 // the Venns on the read-backwards grids are never the same pair as a question (they are read, not placed), so just check the worked numbers are not reused as answers there
 GRID1.concat(GRID2).forEach((g) => must(g.cards.every((c) => c.tile), "grid cards are tiles"));
@@ -255,7 +260,7 @@ const slides: Slide[] = [...section1, ...section2];
 // Section 1 has no number questions. The Depth numbers
 // (54 and 80, 27 and 32) are asserted unused by every set.
 const DEPTH_NUMBERS = [54, 80, 27, 32];
-const allSets: [string, CuratedQuestion[]][] = [["tiles", tileQs], ["prime factors in a Venn", SET14], ["book work a", BOOK15], ["repeated primes", SET19], ["special cases", SET21], ["book work b", BOOK24]];
+const allSets: [string, CuratedQuestion[]][] = [["tiles", tileQs], ["prime factors in a Venn", SET14], ["book work a", BOOK15], ["repeated primes", SET19], ["special cases", SET21]];
 for (const [name, qs] of allSets) for (const q of qs) for (const n of (q.title.match(/\d+/g) ?? []).map(Number)) must(!DEPTH_NUMBERS.includes(n) || name === "tiles" && false, `${name}: ${q.id} uses a Depth number ${n}`);
 assertFreshNumbers({ worked: WORKED, sections: Object.fromEntries(allSets), exit: [] });
 
