@@ -3,7 +3,7 @@
 //   npm run deck -- build specs/decks/venn-hcf-lcm.build.ts --replace
 //   npm run deck -- check venn-hcf-lcm --layout ; npm run deck -- review venn-hcf-lcm
 // Every sort, tile, HCF and LCM below is computed (src/shared/venn.ts) and asserted: nothing is typed in by hand that a pupil could be wrongly told.
-import { LOOK, Q, S, assertCentred, assertFreshNumbers, hintLine, makeSlide, textEl } from "/src/decks/builder";
+import { Q, S, assertCentred, assertFreshNumbers, hintLine, makeSlide, textEl } from "/src/decks/builder";
 import { misconceptionLabel } from "/src/shared/misconceptions";
 import { allTiles, circleNumbers, hcfOf, lcmOf, primeFactors, splitPrimes, vennFlags, vennProblems, type VennRegions } from "/src/shared/venn";
 import type { CuratedQuestion, DeckElement, Slide, VennCard } from "/src/decks/types";
@@ -117,9 +117,8 @@ function pairQ(id: string, [a, b, kind]: Pair, o: { hint?: boolean; book?: boole
   must(lcmOf(r) <= 500, `${a} and ${b}: LCM ${lcmOf(r)} is over 500`);
   const key = `${a},${b}`; must(!seenPairs.has(key), `${a} and ${b} asked twice`); seenPairs.add(key);
   const hint = o.hint && r.middle.length > 0 ? [hintLine(`${r.middle.length} tile${r.middle.length === 1 ? "" : "s"} in the middle`)] : [];
-  const plainFx = (n: number) => primeFactors(n).join("\\!\\times\\!");
-  // book work: the two numbers big and their factorisations in one small grey line (two full factorisations, or a count as well, do not fit a cell at book size)
-  const lines = o.book ? [`$${a},\\;${b}$`, `$\\textcolor{${LOOK.grey}}{\\tiny ${plainFx(a)},\\, ${plainFx(b)}}$`] : [`$${fx(a)}$ and $${fx(b)}$`, "Put them in a Venn.", ...hint];
+  // book work: just the two numbers, big and plain, with the quiet middle-tile count on the first six; the factorisations are on the printed worksheet
+  const lines = o.book ? [`$${a},\\;${b}$`, ...hint] : [`$${fx(a)}$ and $${fx(b)}$`, "Put them in a Venn.", ...hint];
   if (!o.book) assertCentred(lines, `${a} and ${b}`);
   const answer = `${cap1("left only")}: ${nums(r.left)}. Middle: ${nums(r.middle)}. Right only: ${nums(r.right)}.`;
   const mistakes: Mistake[] = [];

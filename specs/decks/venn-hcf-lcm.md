@@ -195,7 +195,7 @@ These are **authored** worksheets (hand-written, not generated), printed through
 
 ## Built so far (2026-11-22)
 
-Sections 1 and 2 (slides 1 to 27) are built in `venn-hcf-lcm.build.ts`. Differences from the plan above: book sets (slides 15, 24) show the two numbers big and both factorisations in one small grey line on all nine, with no middle-tile count (it did not fit a cell); the discussion speaker is Mei (the cast), not Ella; slide 20 holds both special pictures side by side; two tags were added (`venn-middle-not-shared`, `venn-empty-middle-error`) for the Depth cards. Pairs used so far are listed in the build script (never reuse a pair there in sections 3 and 4).
+Sections 1 and 2 (slides 1 to 27) are built in `venn-hcf-lcm.build.ts`. Differences from the plan above: book sets (slides 15, 24) show just the two numbers, big and plain, with the middle-tile count on the first six (Harry: the book questions are written onto the worksheets anyway, so the factorisations are not forced into the cells); the discussion speaker is Mei (the cast), not Ella; slide 20 holds both special pictures side by side; two tags were added (`venn-middle-not-shared`, `venn-empty-middle-error`) for the Depth cards. Pairs used so far are listed in the build script (never reuse a pair there in sections 3 and 4).
 
 ## Still open (small)
 
