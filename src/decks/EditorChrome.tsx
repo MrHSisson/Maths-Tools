@@ -117,7 +117,7 @@ export function Splitter({ side, width, min, max, onChange }: { side: "left" | "
 
 // ── element names (the list of what is on the slide, and the properties header) ─────────────────────────────────
 
-export const KIND_NAME: Record<string, string> = { ink: "Writing", text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", ratioTable: "Ratio table", factorTree: "Factor tree", venn: "Venn diagram", bar: "Bar model", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
+export const KIND_NAME: Record<string, string> = { ink: "Writing", text: "Text", maths: "Equation", shape: "Shape", line: "Line", image: "Image", board: "Board", ratioTable: "Ratio table", factorTree: "Factor tree", venn: "Venn diagram", visualiser: "Visualiser", bar: "Bar model", questions: "Question set", practice: "Skill practice", generator: "Generator question", worksheet: "Book activity", grid: "Question grid", depth: "Depth question" };
 
 /** A short, human description of one element for the objects list. */
 function elementLabel(el: DeckElement): string {

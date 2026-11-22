@@ -24,6 +24,7 @@ import { vennSheetCells } from "./vennSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
 import { VennEl } from "./Venn";
+import { WhiteboardWorkspace } from "./WhiteboardWorkspace";
 import { InkLayer } from "./InkLayer";
 import { sieveSteps } from "../shared/numberGrid";
 import { treeSteps } from "../shared/factorTree";
@@ -706,6 +707,7 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "ink": return <InkLayer strokes={el.strokes} w={el.w} h={el.h} />;
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
     case "venn": return <VennEl el={el} stage={stage} live={live} />;
+    case "visualiser": return <div style={{ width: "100%", height: "100%", padding: 6 }}><WhiteboardWorkspace live={live} visualiser autoStart /></div>;
     case "factorTree": return <FactorTreeEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} fixed={el.fixed} reportId={el.id} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;

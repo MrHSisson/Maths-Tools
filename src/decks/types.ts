@@ -103,7 +103,15 @@ export type DeckElement = Box & (
    *  `region` sits in that part of the diagram; a card without one starts scattered round the outside. In the player every card drags and stays
    *  where it is dropped (live only, never saved, never checked). `staged` brings the cards in one per click; `lines` adds the HCF and/or LCM
    *  answer line (from the placed prime tiles) on a click each, after the cards. `size` scales the cards (1 by default). */
-  | { kind: "venn"; left: string; right: string; box?: string; cards: VennCard[]; staged?: boolean; lines?: VennLine[]; size?: number }
+  | { kind: "venn"; left: string; right: string; box?: string; cards: VennCard[]; staged?: boolean; lines?: VennLine[]; size?: number;
+      /** Build mode: the numbers listed as rows of prime tiles (`12 = 2 2 3`) in the left two fifths, the Venn in the right three fifths. The element is then the whole slide width. */
+      listing?: number[];
+      /** Prime tile buttons along the bottom: each press adds one more of that tile to the diagram, to drag where it goes (dropped back on the buttons it goes away). Live only, never saved. */
+      palette?: number[];
+      /** Scales the box label and the circle labels only (1 by default), so a diagram drawn larger can keep its labels at the same size: the slide's `wide` Venn sets it to 960/1240. */
+      labelScale?: number }
+  /** A full-width box that pulls the document camera (the visualiser) through: it starts the camera when the slide opens in the player. Nothing else is drawn. */
+  | { kind: "visualiser" }
   | { kind: "factorTree"; tree: TreeNode; fill?: FillMode; staged?: boolean; reveal?: TreeReveal[]; strip?: boolean; rules?: boolean }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }

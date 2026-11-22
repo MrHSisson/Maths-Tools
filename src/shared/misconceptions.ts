@@ -56,6 +56,8 @@ export const MISCONCEPTIONS: Record<string, Misconception> = {
   "venn-lcm-outsides": { label: "Finds the LCM from the two leftover sides only, leaving out the middle", example: "LCM of $12$ and $18$ is $2 \\times 3 = 6$" },
   "venn-empty-middle-zero": { label: "Reads an empty middle as no HCF, or as $0$, instead of $1$", example: "$8$ and $15$ share nothing: HCF is $0$" },
   "venn-one-side-lost": { label: "When one number sits inside the other, loses the number that has nothing on its own side", example: "$9$ and $18$: HCF is $18$" },
+  "venn-middle-not-shared": { label: "Puts a tile in the middle that only one of the two numbers has, instead of only the tiles both numbers have", example: "$54$ and $80$: a $3$ in the middle, though $80$ has no $3$" },
+  "venn-empty-middle-error": { label: "Thinks an empty middle must be a mistake, because two numbers always share something", example: "$27$ and $32$ share nothing, so the Venn must be wrong" },
   "venn-neither-forgotten": { label: "Leaves out an item that belongs in neither circle, instead of placing it outside the circles but inside the box", example: "a card for $5$ in an even and multiple of $3$ Venn is left off" },
 };
 

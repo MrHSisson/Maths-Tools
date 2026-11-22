@@ -3,6 +3,7 @@
 // A layout only places ordinary elements: once made, every part of the slide can be moved, edited or deleted.
 import type { BarModelData } from "../shared/barModel";
 import { splitPrimes } from "../shared/venn";
+import { BOX_H, BOX_W, LIST_W, PAL_H } from "./vennLayout";
 import { autoTree, type TreeNode, type TreeReveal } from "../shared/factorTree";
 import type { RatioTableSpec, BoardGrid, VennCard, VennLine, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
 
@@ -114,15 +115,29 @@ export const numberGridSlide = (id: string, title = "The sieve of Eratosthenes",
 
 /** A full-slide Venn diagram with cards to drag: scattered round the outside (no region on a card) or placed. `staged` brings the cards in one
  *  per click, `lines` adds the HCF and/or LCM line on later clicks. */
-export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule", right = "Right rule", cards: VennCard[] = [], opts: { box?: string; staged?: boolean; lines?: VennLine[]; size?: number; prompt?: string } = {}) => {
+export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule", right = "Right rule", cards: VennCard[] = [], opts: { box?: string; staged?: boolean; lines?: VennLine[]; size?: number; prompt?: string; wide?: boolean } = {}) => {
   // The diagram takes the middle three fifths of the slide (960 of 1600), centred; the title and the prompt go in the side columns.
-  const h = Math.round(0.96 * (700 + (opts.lines?.length ? 122 * (opts.size ?? 1) : 0)));
+  const W = opts.wide ? 1240 : 960;                     // `wide` uses the space on the right too, with the labels kept at their usual size
+  const h = Math.round(0.96 * (W / 960) * (700 + (opts.lines?.length ? 122 * (opts.size ?? 1) : 0)));
   return make(id, "teach", title, [
     text(40, 50, 270, 300, title, 44, { bold: true }),
     ...(opts.prompt ? [text(40, 370, 270, 460, opts.prompt, 32, { colour: MUTED })] : []),
-    { kind: "venn", x: 320, y: Math.round((900 - h) / 2) + 10, w: 960, h, left, right, cards, ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
+    { kind: "venn", x: 320, y: Math.round((900 - h) / 2) + 10, w: W, h, left, right, cards, ...(opts.wide ? { labelScale: 960 / 1240 } : {}), ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
   ]);
 };
+
+/** The build layout: the numbers listed as prime tiles in the left two fifths, the Venn in the right three fifths, and prime tile buttons along
+ *  the bottom that each add one more tile to drag in (`listing`, `palette` on the Venn). The element is the whole slide width under the title. */
+export const vennBuildSlide = (id: string, title = "Build a Venn", left = "", right = "", numbers: number[] = [], opts: { box?: string; palette?: number[]; cards?: VennCard[] } = {}) => {
+  const w = 1520, h = Math.round((w * (BOX_H + PAL_H)) / (BOX_W + LIST_W));
+  return make(id, "teach", title, [
+    text(70, 36, 1460, 90, title, 56, { bold: true }),
+    { kind: "venn", x: 40, y: 130, w, h, left, right, cards: opts.cards ?? [], listing: numbers, palette: opts.palette ?? [2, 3, 5, 7, 11], ...(opts.box ? { box: opts.box } : {}) },
+  ]);
+};
+
+/** A slide that is just a full-width box pulling the visualiser (document camera) through. */
+export const visualiserSlide = (id: string, title = "Visualiser") => make(id, "teach", title, [{ kind: "visualiser", x: 24, y: 24, w: 1552, h: 852 }]);
 
 /** A row of four small Venns, each with its own cards (a to d), to read: the answer line under each on a click when `lines` is given. */
 export const vennRowSlide = (id: string, title = "Read the Venns", sets: { left: string; right: string; cards: VennCard[] }[] = [], lines: VennLine[] = []) =>
