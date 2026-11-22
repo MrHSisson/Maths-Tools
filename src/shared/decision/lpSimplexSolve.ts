@@ -154,9 +154,9 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
   parts.forEach((p) => push(p.caption, [rowsOf(...p.rows)], 1));
   const nonStd = d.startForm !== "standard";
   const slacks = Array.from({ length: m }, (_, i) => sub(i)).join(", ");
-  const eqRows: LpRow[] = [H("Constraints as equations"), ...eqLines(run, vars).map((l) => T(l)), N(`${slacks} ≥ 0`)];
+  const eqRows: LpRow[] = [H("Constraints as equations"), ...eqLines(run, vars).map((l) => T(l)), N(`$${slacks} \\ge 0$`)];
   if (d.story) eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${r.unit})`)));
-  push(`Write each ≤ constraint as an equation by adding a slack variable: ${slacks} take up whatever is left over.${run.st.rows.some((r) => r.eq) ? " The equation has no slack variable: it stays as it is." : ""}${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
+  push(`Write each ≤ constraint as an equation by adding a slack variable: $${slacks}$ take up whatever is left over.${run.st.rows.some((r) => r.eq) ? " The equation has no slack variable: it stays as it is." : ""}${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
   push("Write the objective with every variable on the left and 0 on the right.", [rowsOf(H("Objective"), T(objRow(run.st.c, vars)))], 1);
   push("Write the equations as a tableau: the objective row first, then a row for each constraint.", [tabBlock(run, 0, d, ids)], 1);
 }
@@ -307,7 +307,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
     setupSteps(d, run, ids, push);
   } else if (d.kind === "reverse") {
     const t = run.tabs[0];
-    push(`Read the columns: P, ${cols.slice(0, d.spec.c.length).join(", ")} are the variables, ${cols.slice(d.spec.c.length).join(", ")} are slack variables, and the last column is the right-hand side. So there are ${d.spec.c.length} variables and ${m} constraints.`, [tabBlock(run, 0, d, ids)], 1);
+    push(`Read the columns: $P$, $${cols.slice(0, d.spec.c.length).join(", ")}$ are the variables, $${cols.slice(d.spec.c.length).join(", ")}$ are slack variables, and the last column is the right-hand side. So there are ${d.spec.c.length} variables and ${m} constraints.`, [tabBlock(run, 0, d, ids)], 1);
     const rows: LpRow[] = [H("Each row is an equation"), ...t.rows.slice(1).map((r, i) => T(`${termsTex(r.slice(1, 1 + d.spec.c.length).map((v) => v[0]), vars)} + ${sub(i)} = ${frTex(r[vc(t)])}`))];
     push("Each constraint row is an equation with a slack variable in it.", [rowsOf(...rows)], 1);
     push("The slack variables are at least 0, so each equation is an inequality: leave the slack out and replace = with ≤.", [rowsOf(H("Constraints"), ...t.rows.slice(1).map((r) => T(`${termsTex(r.slice(1, 1 + d.spec.c.length).map((v) => v[0]), vars)} \\le ${frTex(r[vc(t)])}`)))], 1);
@@ -343,7 +343,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
       else meaning.push(N(v[0] === 0 ? `Constraint ${i + 1} ($${termsTex(k2.a, orig)} \\le ${k2.b}$) is at its limit: it is binding.` : `Constraint ${i + 1} has ${frTex(v)} to spare: it is not binding.`));
     });
     push("A slack variable is 0 when its constraint is at its limit (binding), and positive when there is some left over.", [rowsOf(H("What the slack variables say"), ...meaning)], 1);
-    if (pc) push(`To continue, the next pivot column is the ${cols[pc.col - 1]} column.`, [rowsOf(N(`The most negative entry is ${mt(t.rows[0][pc.col])}.`))], 1);
+    if (pc) push(`To continue, the next pivot column is the $${cols[pc.col - 1]}$ column.`, [rowsOf(N(`The most negative entry is ${mt(t.rows[0][pc.col])}.`))], 1);
     else push("State the answer.", [rowsOf(R(`P = ${frTex(rd.tab.p)}`))], 1);
   }
   if (d.whole && (d.kind === "solve" || d.kind === "interpret")) wholeSteps(d, run, push);

@@ -384,3 +384,17 @@ describe("each level has its own questions", () => {
     }
   });
 });
+
+describe("maths in the working is typeset", () => {
+  it("a slack variable (s_1) is never written as plain text in a caption, a sentence or a note: it is always between dollar signs", () => {
+    const outside = (t: string): string => t.replace(/\$[^$]*\$/g, "");
+    for (const kind of ["setup", "reverse", "pivot", "solve", "interpret", "practical"] as SxKind[]) for (const level of [1, 2, 3]) for (let i = 0; i < 10; i++) {
+      const p = asProblem(generateSimplex(level, OPT(kind, { pivotGiven: i % 2 === 0, method: i % 3 === 0 ? "rows" : "substitute" })));
+      for (const st of solveSimplex(p)) {
+        expect(outside(st.caption), st.caption).not.toMatch(/\bs_|\bs\d/);
+        for (const b of st.sxView!.blocks) if (b.k === "rows") for (const r of b.rows) if (r.k === "words" || r.k === "note" || r.k === "head") expect(outside(r.t), r.t).not.toMatch(/\bs_|\bs\d/);
+      }
+      expect(outside(p.prompt), p.prompt).not.toMatch(/\bs_|\bs\d/);
+    }
+  });
+});
