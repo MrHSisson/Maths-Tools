@@ -50,6 +50,13 @@ export const MISCONCEPTIONS: Record<string, Misconception> = {
   "primes-one-tree": { label: "Thinks a number has only one correct factor tree, so a different first split must be wrong", example: "$70 = 7 \\times 10$ is right, so $2 \\times 35$ is wrong" },
   "primes-index-as-multiply": { label: "Reads the index as a multiplier instead of a count of repeats", example: "$5^3 = 15$" },
   "primes-index-wrong-base": { label: "Puts the index on the wrong prime, or on every prime", example: "$2 \\times 3 \\times 3 \\times 3 = 2^3 \\times 3$" },
+  "venn-all-copies-middle": { label: "Puts every copy of a shared prime in the middle, instead of matching the copies one for one", example: "$8 = 2 \\times 2 \\times 2$ and $12 = 2 \\times 2 \\times 3$: all three $2$s in the middle" },
+  "venn-tile-both-sides": { label: "Counts a shared tile twice, so the LCM is just the two numbers multiplied", example: "LCM of $12$ and $18$ is $12 \\times 18 = 216$" },
+  "venn-hcf-everything": { label: "Finds the HCF by multiplying every tile in the Venn, not just the middle", example: "HCF of $12$ and $18$ is $36$" },
+  "venn-lcm-outsides": { label: "Finds the LCM from the two leftover sides only, leaving out the middle", example: "LCM of $12$ and $18$ is $2 \\times 3 = 6$" },
+  "venn-empty-middle-zero": { label: "Reads an empty middle as no HCF, or as $0$, instead of $1$", example: "$8$ and $15$ share nothing: HCF is $0$" },
+  "venn-one-side-lost": { label: "When one number sits inside the other, loses the number that has nothing on its own side", example: "$9$ and $18$: HCF is $18$" },
+  "venn-neither-forgotten": { label: "Leaves out an item that belongs in neither circle, instead of placing it outside the circles but inside the box", example: "a card for $5$ in an even and multiple of $3$ Venn is left off" },
 };
 
 export const misconceptionLabel = (id: string): string => MISCONCEPTIONS[id]?.label ?? id;
