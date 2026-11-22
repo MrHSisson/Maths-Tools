@@ -1,8 +1,11 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { GENERATOR_TOOLS } from "./generators";
 import { CANVAS_H, CANVAS_W, type DeckElement, type FillMode, type Slide } from "./types";
 import { TREE_REVEALS, autoTree, factorPairs, splitOf, splittable, treeProblems, withSplit, type TreeReveal } from "../shared/factorTree";
+import { splitPrimes } from "../shared/venn";
+import { tileProblems } from "./vennLayout";
+import type { VennCard, VennLine, VennRegion } from "./types";
 import { BAR_TONES, barProblems, barUnits } from "../shared/barModel";
 
 // The slide editor's panels: small controls, the question editor and the properties of the integrated elements
@@ -126,6 +129,64 @@ export function NumberGridProps({ el, set }: { el: ElOf<"numberGrid">; set: (p: 
       <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>Sieve one click at a time (needs Filled in)</Check>
       <Label>Primes in the sieve</Label>
       <div className="flex gap-3">{[2, 3, 5, 7].map((p) => <label key={p} className="flex items-center gap-1 text-sm"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={stages.includes(p)} onChange={(e) => set({ stages: [2, 3, 5, 7].filter((q) => (q === p ? e.target.checked : stages.includes(q))) })} />{p}</label>)}</div>
+    </>
+  );
+}
+
+const VENN_REGIONS: [VennRegion | "", string][] = [["", "Scattered outside"], ["left", "Left only"], ["middle", "Middle"], ["right", "Right only"]];
+
+/** The Venn diagram: its labels, the cards (text, tile or not, where each sits), one card per click, the answer lines, and a quick way to
+ *  make the prime tiles of two numbers (placed, or scattered for the class to drag). */
+export function VennProps({ el, set }: { el: ElOf<"venn">; set: (p: Partial<ElOf<"venn">>) => void }) {
+  const [pair, setPair] = useState<[number, number]>([12, 18]);
+  const lines = el.lines ?? [];
+  const setCard = (i: number, p: Partial<VennCard>) => set({ cards: el.cards.map((c, j) => (j === i ? { ...c, ...p } : c)) });
+  const tiles = (placed: boolean) => {
+    const [a, b] = pair, r = splitPrimes(a, b);
+    const mk = (xs: number[], region: VennRegion): VennCard[] => xs.map((n) => ({ text: String(n), tile: true, ...(placed ? { region } : {}) }));
+    set({ cards: [...mk(r.left, "left"), ...mk(r.middle, "middle"), ...mk(r.right, "right")], left: String(a), right: String(b) });
+  };
+  const toggleLine = (k: VennLine, on: boolean) => set({ lines: (["hcf", "lcm"] as VennLine[]).filter((q) => (q === k ? on : lines.includes(q))) });
+  const problems = tileProblems(el.cards);
+  return (
+    <>
+      <Label>Box label (optional)</Label>
+      <input className={input} value={el.box ?? ""} onChange={(e) => set({ box: e.target.value || undefined })} placeholder="e.g. Numbers 1 to 20" />
+      <Label>Circle labels</Label>
+      <div className="flex gap-2">
+        <input className={input} value={el.left} onChange={(e) => set({ left: e.target.value })} aria-label="Left circle label" />
+        <input className={input} value={el.right} onChange={(e) => set({ right: e.target.value })} aria-label="Right circle label" />
+      </div>
+      <Label>Cards</Label>
+      <div className="flex flex-col gap-1">
+        {el.cards.map((c, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <input className={`${input} w-24`} value={c.text} onChange={(e) => setCard(i, { text: e.target.value })} aria-label={`Card ${i + 1}`} />
+            <label className="flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" className="h-4 w-4 accent-blue-900" checked={!!c.tile} onChange={(e) => setCard(i, { tile: e.target.checked || undefined })} />Tile</label>
+            <select className={input} value={c.region ?? ""} onChange={(e) => setCard(i, { region: (e.target.value || undefined) as VennRegion | undefined })} aria-label={`Where card ${i + 1} sits`}>
+              {VENN_REGIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+            <button className={small} onClick={() => set({ cards: el.cards.filter((_, j) => j !== i) })} aria-label="Remove card"><X size={12} /></button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1"><button className={small} onClick={() => set({ cards: [...el.cards, { text: "" }] })}><Plus size={12} />Card</button></div>
+      <Label>Prime tiles for two numbers</Label>
+      <div className="flex items-center gap-2">
+        <input type="number" min={2} max={999} className={`${input} w-20`} value={pair[0]} onChange={(e) => setPair([Math.max(2, Math.round(Number(e.target.value)) || 2), pair[1]])} aria-label="First number" />
+        <input type="number" min={2} max={999} className={`${input} w-20`} value={pair[1]} onChange={(e) => setPair([pair[0], Math.max(2, Math.round(Number(e.target.value)) || 2)])} aria-label="Second number" />
+      </div>
+      <div className="mt-1 flex gap-1"><button className={small} onClick={() => tiles(true)}>Place the tiles</button><button className={small} onClick={() => tiles(false)}>Scatter the tiles</button></div>
+      <p className="mt-1 text-xs text-slate-500">Scattered cards are dragged by the class and stay where they are dropped; nothing is checked.</p>
+      <Check checked={!!el.staged} onChange={(staged) => set({ staged })}>Cards appear one per click</Check>
+      <Label>Then, on later clicks (needs placed tiles)</Label>
+      <Check checked={lines.includes("hcf")} onChange={(on) => toggleLine("hcf", on)}>The HCF line</Check>
+      <Check checked={lines.includes("lcm")} onChange={(on) => toggleLine("lcm", on)}>The LCM line</Check>
+      <Label>Card size</Label>
+      <select className={input} value={el.size ?? 1} onChange={(e) => set({ size: Number(e.target.value) === 1 ? undefined : Number(e.target.value) })} aria-label="Card size">
+        {[1, 1.25, 1.5, 2].map((v) => <option key={v} value={v}>{Math.round(v * 100)}%</option>)}
+      </select>
+      {problems.length > 0 && <p className="mt-2 text-xs font-semibold text-red-700">{problems[0]}</p>}
     </>
   );
 }

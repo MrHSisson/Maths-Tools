@@ -31,11 +31,27 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-22 — The Venn slide element: draggable cards, prime tiles, HCF and LCM lines (no deck yet)
+
+Branch `claude/hcf-lcm-venn-lesson-diz7dz` (merge 2 of the Venn plan). Area: `src/decks/{types,Venn,vennLayout,SlideCanvas,EditorChrome,EditorPanels,Editor,layouts,builder,deckChecks}`, `src/tests/vennLayout.test.ts`, docs (FEATURES, SLIDE_FEATURES, GLOSSARY, `docs/reference/decks.md`).
+
+- **New slide piece `venn`**: a box with an optional label, two circles with rule labels, and cards (words, numbers or coloured prime tiles). A card with a region sits there; a card without one starts scattered round the outside. In the player every card drags with a finger, stylus or mouse and stays where it is dropped: no checking, not saved, put back when the slide is left. The drag does not start a phone swipe; with the Pen on, the pen takes the touch.
+- **Clicks**: cards can appear one per click (`staged`), then an HCF line and/or an LCM line (`lines`), computed from the placed prime tiles with `hcfLine` / `lcmLine`. The diagram is drawn at one size with room kept for the lines, so it does not shift.
+- **Layouts**: `vennSlide` (full slide) and `vennRowSlide` (four small Venns in a row, a to d, with a line under each on a click); both are in Add slide and the slide library, and in the builder's `S`.
+- **Editor**: "Venn diagram" in Add, and a Venn options panel (labels, cards with tile and region, prime tiles for two numbers placed or scattered, one per click, the two lines, card size).
+- **Deck check**: fails prime tiles that are not where the two numbers' factors go (the wrong Venn cannot be authored); warns about an answer line with nothing to multiply, empty cards and more than 12 scattered cards.
+- **Look**: the full-slide Venn takes the middle three fifths of the slide (960 of 1600 wide), centred, with the title and prompt in the side columns; circles, box and answer lines in quiet colours, the tiles slightly desaturated.
+- **Checked** at tablet 1180×820 and laptop 1366×768 in headless Chromium: drag, one-per-click, answer lines, the row of four. A phone only previews decks, so no phone-specific work.
+- **Deliberately not done:** the Venn worksheet print format (merge 3), the deck itself, dashboard Review (no tool changed).
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz".
+
 ## 2026-11-22 — Venn diagrams, HCF and LCM: planned, and the shared logic built (nothing teachers see yet)
 
 Branch `claude/hcf-lcm-venn-lesson-diz7dz`. Area: `specs/decks/venn-hcf-lcm.md`, `src/shared/venn.ts`, `src/tests/venn.test.ts`, `src/shared/misconceptions.ts`.
 
-- **The plan** (`specs/decks/venn-hcf-lcm.md`): one continuous deck, 46 slides in stage 1. A short intro of full-screen draggable Venns (words, shapes, numbers), then prime factors in a Venn, then HCF (multiply the middle), then LCM (multiply everything), with the factorisations always given and no trees. Questions are projected full-width and worked on the board; the HCF and LCM questions have a one-line answer reveal; two printed Venn worksheets. Stage 2 (the combinations, trees) is listed, not planned.
+- **The plan** (`specs/decks/venn-hcf-lcm.md`): one continuous deck, 46 slides in stage 1. A short intro of full-screen draggable Venns (words, everyday things, then numbers), then prime factors in a Venn, then HCF (multiply the middle), then LCM (multiply everything), with the factorisations always given and no trees. Questions are projected full-width and worked on the board; the HCF and LCM questions have a one-line answer reveal; two printed Venn worksheets. Stage 2 (the combinations, trees) is listed, not planned.
 - **Shared logic built** (`src/shared/venn.ts`): splits two numbers' prime factors into left, middle and right (repeats matched one for one), gives the HCF and LCM, the answer lines ("HCF = 2 × 3 = 6"), the factor-list Venn, and flags for which pairs catch which trap. Tested for every pair from 2 to 130 and for the plan's candidate pairs.
 - **Seven new misconception tags** (`venn-*`), and the prime tiles take the factor tree's colours, so the Venn and the tree agree.
 - **Deliberately not done:** the Venn slide element and its draggable cards, the Venn worksheet print format, the deck itself, the dashboard Review (no tool changed). No task or pathway added: that waits for Harry.

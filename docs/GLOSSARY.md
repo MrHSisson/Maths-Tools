@@ -153,6 +153,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 - **Send to a deck** — the tool page's burger-menu item that turns the current setup or question into a deck slide.
 - **Factor tree** — the slide piece (`factorTree`) for prime factorisation: a number splits into two numbers until every branch ends in a circled prime; staged one split per click, then optionally the primes as a product, a tally and the index form. Circles use the number grid's prime colours.
 - **Number grid** — the 1 to 100 slide piece (`numberGrid`): tap to scribble in a prime's colour, finish a times table in one click, or show the sieve of Eratosthenes click by click; **Print grids** prints two plain grids per A4.
+- **Venn diagram** — the slide piece (`venn`): a box, two circles with rule labels and cards (words, numbers or prime tiles) that drag round and stay where dropped, with no checking; cards can appear one per click, then the HCF and LCM lines (computed from the placed prime tiles). `vennRowSlide` lays out four small ones in a row.
 - **Pen / writing** — the editor's Pen draws on a slide and is saved as one `ink` layer per slide; separately, the player's pen keeps its marks with each slide while the deck is open.
 - **Starter** — the 2 × 2 layout of four numbered boxes (`S.starter`), for writing or typing a starter into.
 - **Timer** — a 1 to 10 minute countdown shown as a strip under the slide: called from the player (clock button, `T`) or saved on a slide (`Slide.timer`). It belongs to the slide it was started on.

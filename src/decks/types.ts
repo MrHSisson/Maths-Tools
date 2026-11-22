@@ -26,6 +26,12 @@ export type DeckFamily = "structure" | "language" | "teach" | "practice" | "dept
 /** How much of a board is filled in: everything · the given columns only · nothing (blank boxes to write in). */
 export type FillMode = "filled" | "structure" | "blank";
 
+/** Where a Venn card sits: in the left circle only, the middle, the right circle only, or inside the box but in neither circle. */
+export type VennRegion = "left" | "middle" | "right" | "neither";
+/** One Venn card: its text, whether it is a prime tile (a coloured square, the text a prime), and where it sits (none: scattered outside). */
+export interface VennCard { text: string; tile?: boolean; region?: VennRegion }
+export type VennLine = "hcf" | "lcm";
+
 /** How a pinned worksheet prints: the page, and the same layout choices as the tool pages' Worksheet. */
 export interface PinnedSheet {
   title: string;
@@ -92,6 +98,11 @@ export type DeckElement = Box & (
    *  and scribble on (the default), Blank an empty grid. `staged` brings the sieve in a click at a time: 1 crossed out, then each prime in
    *  `stages` (default 2, 3, 5, 7) with its times table scribbled. Taps in the player are live marks, not saved. */
   | { kind: "numberGrid"; fill?: FillMode; staged?: boolean; stages?: number[] }
+  /** A Venn diagram: a box (optional `box` label), two circles with their rule labels, and cards (words, numbers or prime tiles). A card with a
+   *  `region` sits in that part of the diagram; a card without one starts scattered round the outside. In the player every card drags and stays
+   *  where it is dropped (live only, never saved, never checked). `staged` brings the cards in one per click; `lines` adds the HCF and/or LCM
+   *  answer line (from the placed prime tiles) on a click each, after the cards. `size` scales the cards (1 by default). */
+  | { kind: "venn"; left: string; right: string; box?: string; cards: VennCard[]; staged?: boolean; lines?: VennLine[]; size?: number }
   | { kind: "factorTree"; tree: TreeNode; fill?: FillMode; staged?: boolean; reveal?: TreeReveal[]; strip?: boolean; rules?: boolean }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }
