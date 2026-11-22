@@ -21,37 +21,58 @@ type Where = "left" | "middle" | "right" | "neither";
 const where = (inLeft: boolean, inRight: boolean): Where => (inLeft && inRight ? "middle" : inLeft ? "left" : inRight ? "right" : "neither");
 const cardsOf = (items: string[]): VennCard[] => items.map((text) => ({ text }));
 
-// slide 3: pets and 3-letter words (rat is a pet to some, which is a good word to disagree about)
-const PETS = new Set(["cat", "dog", "rat", "fish", "hamster", "rabbit"]);
-const petWords = ["cat", "dog", "rat", "fish", "hamster", "rabbit", "sun", "pen", "hat", "house", "tree", "spoon"];
+// slide 3: pets and 3-letter words (eight cards: a few to move and fit)
+const PETS = new Set(["cat", "dog", "fish", "rabbit"]);
+const petWords = ["cat", "dog", "fish", "rabbit", "sun", "hat", "house", "tree"];
 must(same(petWords.filter((w) => where(PETS.has(w), w.length === 3)).length, petWords.length), "pet words computed");
-must(same(petWords.filter((w) => where(PETS.has(w), w.length === 3) === "middle"), ["cat", "dog", "rat"]), "pets and 3-letter words: middle");
-must(same(petWords.filter((w) => where(PETS.has(w), w.length === 3) === "neither"), ["house", "tree", "spoon"]), "pets and 3-letter words: neither");
+must(same(petWords.filter((w) => where(PETS.has(w), w.length === 3) === "middle"), ["cat", "dog"]), "pets and 3-letter words: middle");
+must(same(petWords.filter((w) => where(PETS.has(w), w.length === 3) === "neither"), ["house", "tree"]), "pets and 3-letter words: neither");
 
 // slide 4: can fly and has feathers (a bird that does not fly, a mammal that does)
-const FLY = new Set(["robin", "eagle", "parrot", "bat", "bee", "butterfly"]);
-const FEATHERS = new Set(["robin", "eagle", "parrot", "penguin", "ostrich"]);
-const flyers = ["robin", "eagle", "parrot", "penguin", "ostrich", "bat", "bee", "butterfly", "dog", "fish", "snake"];
-must(same(flyers.filter((w) => where(FLY.has(w), FEATHERS.has(w)) === "middle"), ["robin", "eagle", "parrot"]), "fly and feathers: middle");
+const FLY = new Set(["robin", "eagle", "bat", "bee"]);
+const FEATHERS = new Set(["robin", "eagle", "penguin", "ostrich"]);
+const flyers = ["robin", "eagle", "penguin", "ostrich", "bat", "bee", "dog", "fish"];
+must(same(flyers.filter((w) => where(FLY.has(w), FEATHERS.has(w)) === "middle"), ["robin", "eagle"]), "fly and feathers: middle");
 must(same(flyers.filter((w) => where(FLY.has(w), FEATHERS.has(w)) === "right"), ["penguin", "ostrich"]), "feathers only: a bird that does not fly");
 must(flyers.filter((w) => where(FLY.has(w), FEATHERS.has(w)) === "left").includes("bat"), "fly only: a mammal that does");
 
 // slide 5: is red and is a fruit (no shapes in the intro: Harry)
-const RED = new Set(["strawberry", "cherry", "post box", "fire engine", "ladybird"]);
+const RED = new Set(["strawberry", "cherry", "post box", "ladybird"]);
 const FRUIT = new Set(["strawberry", "cherry", "banana", "lemon"]);
-const reds = ["strawberry", "cherry", "banana", "lemon", "post box", "fire engine", "ladybird", "carrot", "football", "grass"];
+const reds = ["strawberry", "cherry", "banana", "lemon", "post box", "ladybird", "carrot", "football"];
 must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "middle"), ["strawberry", "cherry"]), "red and fruit: middle");
 must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "right"), ["banana", "lemon"]), "fruit only");
-must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "left"), ["post box", "fire engine", "ladybird"]), "red only");
-must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "neither"), ["carrot", "football", "grass"]), "neither");
+must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "left"), ["post box", "ladybird"]), "red only");
+must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "neither"), ["carrot", "football"]), "neither");
 
 // slide 6: even and multiple of 3 (the bridge to numbers): 6 and 12 go in the middle
 const to12 = Array.from({ length: 12 }, (_, i) => i + 1);
 must(same(to12.filter((n) => where(n % 2 === 0, n % 3 === 0) === "middle"), [6, 12]), "even and multiple of 3: middle");
 
+// the parts of a Venn, for the class to copy and label: the empty diagram with each part named on it, and a plain definition of each beside it
+const partsSlide = makeSlide(`${P}-parts`, "language", "The parts of a Venn diagram", [
+  textEl(70, 36, 1460, 90, "The parts of a Venn diagram", 56, { bold: true }),
+  { kind: "venn", x: 40, y: 150, w: 980, h: 686, left: "Rule A", right: "Rule B", box: "Everything we are sorting", cards: [] } as unknown as DeckElement,
+  textEl(150, 440, 230, 100, "A only", 32, { bold: true, colour: "#6683a8", align: "center", middle: true }),
+  textEl(470, 440, 120, 100, "Both", 32, { bold: true, colour: "#475569", align: "center", middle: true }),
+  textEl(680, 440, 230, 100, "B only", 32, { bold: true, colour: "#a58b66", align: "center", middle: true }),
+  textEl(70, 735, 200, 60, "Neither", 32, { bold: true, colour: "#475569", middle: true }),
+  textEl(1060, 150, 500, 50, "The box", 38, { bold: true }),
+  textEl(1060, 202, 500, 90, "Everything we are sorting.", 32, { colour: LOOK.grey }),
+  textEl(1060, 298, 500, 50, "A only", 38, { bold: true }),
+  textEl(1060, 350, 500, 90, "Fits rule A but not rule B.", 32, { colour: LOOK.grey }),
+  textEl(1060, 446, 500, 50, "Both (the middle)", 38, { bold: true }),
+  textEl(1060, 498, 500, 90, "Fits rule A and rule B.", 32, { colour: LOOK.grey }),
+  textEl(1060, 594, 500, 50, "B only", 38, { bold: true }),
+  textEl(1060, 646, 500, 90, "Fits rule B but not rule A.", 32, { colour: LOOK.grey }),
+  textEl(1060, 742, 500, 50, "Neither", 38, { bold: true }),
+  textEl(1060, 794, 500, 90, "Inside the box, outside both circles.", 32, { colour: LOOK.grey }),
+]);
+
 const section1: Slide[] = [
   S.title(`${P}-title`, "Venn Diagrams, HCF & LCM", "Sort it. Place it. Multiply."),
   S.objective(`${P}-objective`, "I can put things in the right part of a Venn diagram.", ["Say what each circle is for", "Put a thing in both circles when it fits both", "Put a thing in neither when it fits neither"]),
+  partsSlide,
   S.venn(`${P}-pets`, "Pets and 3-letter words", "Pets", "3-letter words", cardsOf(petWords), { box: "Things", wide: true }),
   S.venn(`${P}-fly`, "Can fly and has feathers", "Can fly", "Has feathers", cardsOf(flyers), { box: "Animals", wide: true }),
   S.venn(`${P}-red`, "Is red and is a fruit", "Is red", "Is a fruit", cardsOf(reds), { box: "Things", wide: true }),
@@ -195,33 +216,26 @@ const answersSlide2: Slide = S.visualiser(`${P}-answers-2`, "Visualiser: workshe
 const BOOK2 = pairSet("bb", SHEET2, 0, true);
 must(BOOK2.length === 9, "the second book set is nine, 3 x 3");
 
-// slides 26 and 27: two authored Depth cards (the eight named cast; every wrong option names its misconception; never three in a row)
-function depthQ(id: string, title: string, claims: { name: string; text: string }[], right: number | "both", correct: string, wrong: Record<string, string>, why: string[], mis: string): CuratedQuestion {
-  const base = Q.open(id, T, "level1", "Who is right?", correct, why);
-  const options = [
-    ...claims.map((c, i) => ({ text: c.name, correct: right === i, reasoning: right === i ? "" : wrong[c.name] ?? "" })),
-    { text: "They are both right", correct: right === "both", reasoning: right === "both" ? "" : wrong.both ?? "Both cannot be right." },
-  ];
-  must(options.filter((o) => o.correct).length === 1 && options.every((o) => o.correct || o.reasoning), `${id}: one correct option, every wrong option explained`);
-  return { ...base, title, purpose: "diagnose", format: "claims", claims, options, expectedErrors: [], depth: { prompt: "", takeaway: "" }, misconception: { id: mis, label: misconceptionLabel(mis) } } as CuratedQuestion;
+// two authored Depth cards (the eight named cast; one speaker and a "do you agree?"; the wrong option names its misconception; never three in a row)
+function agreeQ(id: string, who: string, claim: string, agrees: boolean, correct: string, wrong: string, why: string[], mis: string): CuratedQuestion {
+  const base = Q.open(id, T, "level1", `Do you agree with ${who}?`, correct, why);
+  const options = [{ text: "I agree", correct: agrees, reasoning: agrees ? "" : wrong }, { text: "I disagree", correct: !agrees, reasoning: agrees ? wrong : "" }];
+  must(options.filter((o) => o.correct).length === 1 && options.every((o) => o.correct || o.reasoning), `${id}: one correct option, the wrong one explained`);
+  return { ...base, title: `Do you agree with ${who}?`, purpose: "diagnose", format: "claims", claims: [{ name: who, text: claim }], options, expectedErrors: [], depth: { prompt: "", takeaway: "" }, misconception: { id: mis, label: misconceptionLabel(mis) } } as CuratedQuestion;
 }
 const depthPage = (id: string, q: CuratedQuestion): Slide =>
   makeSlide(id, "depth", "Depth", [{ kind: "questions", x: 24, y: 24, w: 1552, h: 852, presentation: "full", visualiser: false, items: [q] } as never]);
 const r5480 = splitPrimes(54, 80);
 must(same(primeFactors(54), [2, 3, 3, 3]) && same(primeFactors(80), [2, 2, 2, 2, 5]) && same(r5480.middle, [2]) && hcfOf(r5480) === 2, "54 and 80");
-const depth1 = depthQ(`${P}-dp1`, "Who is right about $54$ and $80$?", [
-  { name: "Mei", text: "$54 = 2 \\times 3 \\times 3 \\times 3$ and $80 = 2 \\times 2 \\times 2 \\times 2 \\times 5$. I put a $2$ and a $3$ in the middle, because $3$ is a factor of $54$." },
-  { name: "Ben", text: "Only a $2$ goes in the middle. A tile goes in the middle only if both numbers have it, and $80$ has no $3$." }], 1,
-  "Ben is right: the middle holds only the tiles both numbers have. $80$ has no $3$, so only a $2$ goes in the middle.",
-  { Mei: "Puts a tile in the middle that only one number has. The middle is only for tiles in both numbers.", both: "$80$ has no $3$, so a $3$ in the middle makes the right circle multiply to a different number from $80$." },
+const depth1 = agreeQ(`${P}-dp1`, "Mei", "For $54$ and $80$ the middle is a $2$ and a $3$, because $3$ is a factor of $54$.", false,
+  "Disagree: the middle holds only the tiles both numbers have. $80$ has no $3$, so only a $2$ goes in the middle.",
+  "Puts a tile in the middle that only one number has. The middle is only for tiles in both numbers.",
   ["The middle is for tiles in both numbers.", "$54$ has three $3$s, but $80$ has none.", "Middle: $2$, so the HCF is $2$."], "venn-middle-not-shared");
 const r2732 = splitPrimes(27, 32);
 must(same(primeFactors(27), [3, 3, 3]) && same(primeFactors(32), [2, 2, 2, 2, 2]) && r2732.middle.length === 0 && hcfOf(r2732) === 1, "27 and 32");
-const depth2 = depthQ(`${P}-dp2`, "Can the middle be empty?", [
-  { name: "Leo", text: "$27 = 3 \\times 3 \\times 3$ and $32 = 2 \\times 2 \\times 2 \\times 2 \\times 2$ share no tile, so the middle is empty. I must have made a mistake." },
-  { name: "Amara", text: "The middle is empty because $27$ and $32$ share no prime. That is fine: some pairs of numbers share nothing." }], 1,
-  "Amara is right: $27$ is all $3$s and $32$ is all $2$s, so nothing is in both. An empty middle is a correct answer.",
-  { Leo: "Thinks two numbers must always share a tile, so an empty middle has to be a mistake.", both: "If the empty middle were a mistake, the circles would have to multiply to something other than $27$ and $32$. They do not." },
+const depth2 = agreeQ(`${P}-dp2`, "Amara", "$27$ and $32$ share no prime, so the middle is empty. That is fine.", true,
+  "Agree: $27$ is all $3$s and $32$ is all $2$s, so nothing is in both. An empty middle is a correct answer.",
+  "Thinks two numbers must always share a tile, so an empty middle has to be a mistake.",
   ["Nothing is in both, so nothing goes in the middle.", "The left circle multiplies to $27$ and the right circle to $32$.", "An empty middle is allowed."], "venn-empty-middle-error");
 
 const section2: Slide[] = [
