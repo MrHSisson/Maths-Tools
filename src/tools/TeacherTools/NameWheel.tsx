@@ -36,7 +36,7 @@ const isStyle = (v: unknown): v is SpinStyle => STYLES.some(x => x.id === v);
 
 interface Row { name: string; count: number }
 interface Wheel { id: string; name: string; rows: Row[]; winners: string[]; palette: string; style: SpinStyle }
-interface Store { active: string; wheels: Wheel[]; sound: boolean; fullSpin: boolean }   // fullSpin: ignore the device's reduced-motion setting for the spin
+interface Store { active: string; wheels: Wheel[]; sound: boolean; followDevice: boolean }   // followDevice: obey the device's reduce-motion setting (a one-second spin, no celebrations); off by default
 interface Entry { name: string; row: number; pos: number }
 
 const newId = () => Math.random().toString(36).slice(2, 9);
@@ -56,16 +56,16 @@ function load(): Store {
         winners: Array.isArray(w.winners) ? w.winners.map(String) : [], palette: PALETTES[w.palette] ? w.palette : "bright",
         style: isStyle(w.style) ? w.style : "classic",
       }));
-      return { wheels, active: wheels.some(w => w.id === s.active) ? s.active : wheels[0].id, sound: s.sound !== false, fullSpin: s.fullSpin === true };
+      return { wheels, active: wheels.some(w => w.id === s.active) ? s.active : wheels[0].id, sound: s.sound !== false, followDevice: s.followDevice === true };
     }
     const old = JSON.parse(localStorage.getItem(OLD_KEY) ?? "null");
     if (old && Array.isArray(old.rows)) {
       const w: Wheel = { ...emptyWheel("My class"), rows: cleanRows(old.rows), winners: Array.isArray(old.winners) ? old.winners.map(String) : [] };
-      return { wheels: [w], active: w.id, sound: old.sound !== false, fullSpin: false };
+      return { wheels: [w], active: w.id, sound: old.sound !== false, followDevice: false };
     }
   } catch { /* blocked or corrupt: start fresh */ }
   const w = emptyWheel("My class");
-  return { wheels: [w], active: w.id, sound: true, fullSpin: false };
+  return { wheels: [w], active: w.id, sound: true, followDevice: false };
 }
 
 /** Each name's entries are spread evenly round the wheel instead of sitting in one block. */
@@ -266,7 +266,7 @@ export default function NameWheel() {
     }
     void audioRef.current?.resume?.();
     setSpinning(true); setCurrent("");
-    const reduce = !store.fullSpin && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduce = store.followDevice && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const from = rotRef.current;
     // Carnival and Case are the long, suspenseful spins: 90 to 130 cards, about ten seconds, and a slow crawl at the end.
     // Classic keeps its shorter spin.
@@ -486,7 +486,7 @@ export default function NameWheel() {
                 })}
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={store.sound} onChange={e => setStore(s => ({ ...s, sound: e.target.checked }))} /> Sounds (tick and fanfare)</label>
-              <label className="flex items-center gap-2 text-sm text-slate-600" title="Devices set to reduce motion get a one-second spin and no confetti, balloons or fireworks unless this is ticked."><input type="checkbox" checked={store.fullSpin} onChange={e => setStore(st => ({ ...st, fullSpin: e.target.checked }))} /> Full spins and celebrations even if the device reduces motion</label>
+              <label className="flex items-center gap-2 text-sm text-slate-600" title="Off by default: spins are full length and a win is celebrated whatever the device asks. Tick this to give devices set to reduce motion a one-second spin and no confetti, balloons or fireworks."><input type="checkbox" checked={store.followDevice} onChange={e => setStore(st => ({ ...st, followDevice: e.target.checked }))} /> Follow the device's reduce-motion setting</label>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
               <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle the order</button>
@@ -499,9 +499,9 @@ export default function NameWheel() {
       {phone && <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white px-4 py-3">{actions}</div>}
 
       {/* a win is a big moment: confetti, balloons and fireworks, all bigger and longer than the shared defaults */}
-      {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={2.2} force={store.fullSpin} />}
-      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.6} speed={1.6} force={store.fullSpin} />}
-      {result && <Fireworks key={`f${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.3} force={store.fullSpin} />}
+      {result && <Confetti key={`c${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={2.2} force={!store.followDevice} />}
+      {result && <Balloons key={`b${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.6} speed={1.6} force={!store.followDevice} />}
+      {result && <Fireworks key={`f${wheel.winners.length}`} colours={palette.colours.map(c => c.bg)} scale={1.3} force={!store.followDevice} />}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-5" onClick={e => { if (e.target === e.currentTarget) closeDialog(); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="winner-name" className={`${card} w-full max-w-[420px] p-6 text-center shadow-lift`}>
