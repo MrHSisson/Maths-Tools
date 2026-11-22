@@ -1,0 +1,504 @@
+{
+ "id": "venn-hcf-lcm",
+ "title": "Venn Diagrams, HCF & LCM",
+ "strand": "Number",
+ "questionVersion": 2,
+ "summary": "Pupils meet the Venn diagram with no numbers at all, put the prime factors of two numbers into a Venn, then read the HCF (multiply the middle) and the LCM (multiply everything) off it. Heavy scaffold, with support taken away one step at a time. Every question is authored and its answer computed.",
+ "slides": [
+  {
+   "id": "vh-title",
+   "family": "structure",
+   "title": "Venn Diagrams, HCF & LCM",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Venn Diagrams, HCF & LCM",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "vh-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Sort it. Place it. Multiply.",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "vh-title-2"
+    }
+   ],
+   "built": "1dzv19g"
+  },
+  {
+   "id": "vh-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "vh-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "I can put things in the right part of a Venn diagram.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Say what each circle is for\n•  Put a thing in both circles when it fits both\n•  Put a thing in neither when it fits neither",
+     "size": 44,
+     "colour": "#334155",
+     "id": "vh-objective-3"
+    }
+   ],
+   "built": "14143v9"
+  },
+  {
+   "id": "vh-pets",
+   "family": "teach",
+   "title": "Pets and 3-letter words",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Pets and 3-letter words",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-pets-1"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "Pets",
+     "right": "3-letter words",
+     "cards": [
+      {
+       "text": "cat"
+      },
+      {
+       "text": "dog"
+      },
+      {
+       "text": "rat"
+      },
+      {
+       "text": "fish"
+      },
+      {
+       "text": "hamster"
+      },
+      {
+       "text": "rabbit"
+      },
+      {
+       "text": "sun"
+      },
+      {
+       "text": "pen"
+      },
+      {
+       "text": "hat"
+      },
+      {
+       "text": "house"
+      },
+      {
+       "text": "tree"
+      },
+      {
+       "text": "spoon"
+      }
+     ],
+     "box": "Things",
+     "id": "vh-pets-2"
+    }
+   ],
+   "built": "1iwrv0i"
+  },
+  {
+   "id": "vh-fly",
+   "family": "teach",
+   "title": "Can fly and has feathers",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Can fly and has feathers",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-fly-1"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "Can fly",
+     "right": "Has feathers",
+     "cards": [
+      {
+       "text": "robin"
+      },
+      {
+       "text": "eagle"
+      },
+      {
+       "text": "parrot"
+      },
+      {
+       "text": "penguin"
+      },
+      {
+       "text": "ostrich"
+      },
+      {
+       "text": "bat"
+      },
+      {
+       "text": "bee"
+      },
+      {
+       "text": "butterfly"
+      },
+      {
+       "text": "dog"
+      },
+      {
+       "text": "fish"
+      },
+      {
+       "text": "snake"
+      }
+     ],
+     "box": "Animals",
+     "id": "vh-fly-2"
+    }
+   ],
+   "built": "wrpizo"
+  },
+  {
+   "id": "vh-red",
+   "family": "teach",
+   "title": "Is red and is a fruit",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Is red and is a fruit",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-red-1"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "Is red",
+     "right": "Is a fruit",
+     "cards": [
+      {
+       "text": "strawberry"
+      },
+      {
+       "text": "cherry"
+      },
+      {
+       "text": "banana"
+      },
+      {
+       "text": "lemon"
+      },
+      {
+       "text": "post box"
+      },
+      {
+       "text": "fire engine"
+      },
+      {
+       "text": "ladybird"
+      },
+      {
+       "text": "carrot"
+      },
+      {
+       "text": "football"
+      },
+      {
+       "text": "grass"
+      }
+     ],
+     "box": "Things",
+     "id": "vh-red-2"
+    }
+   ],
+   "built": "1frzh34"
+  },
+  {
+   "id": "vh-even3",
+   "family": "teach",
+   "title": "Even and multiple of 3",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Even and multiple of 3",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-even3-1"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "Even",
+     "right": "Multiple of 3",
+     "cards": [
+      {
+       "text": "1"
+      },
+      {
+       "text": "2"
+      },
+      {
+       "text": "3"
+      },
+      {
+       "text": "4"
+      },
+      {
+       "text": "5"
+      },
+      {
+       "text": "6"
+      },
+      {
+       "text": "7"
+      },
+      {
+       "text": "8"
+      },
+      {
+       "text": "9"
+      },
+      {
+       "text": "10"
+      },
+      {
+       "text": "11"
+      },
+      {
+       "text": "12"
+      }
+     ],
+     "box": "1 to 12",
+     "id": "vh-even3-2"
+    }
+   ],
+   "built": "18kdpdb"
+  },
+  {
+   "id": "vh-sort",
+   "family": "teach",
+   "title": "If time: sort into a Venn",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-sort-1",
+       "title": "Sort into a Venn 1",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Even and multiple of 5:",
+        "Where do $7$, $8$, $10$, $15$, $20$ go?"
+       ],
+       "answer": [
+        "In both: $10$, $20$. Even only: $8$. Multiple of 5 only: $15$. Neither: $7$"
+       ],
+       "explanation": [
+        "In both: $10$, $20$",
+        "Even only: $8$",
+        "Multiple of 5 only: $15$",
+        "Neither: $7$"
+       ],
+       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-sort-2",
+       "title": "Sort into a Venn 2",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Multiple of 4 and multiple of 6:",
+        "Where do $6$, $8$, $12$, $18$, $21$ go?"
+       ],
+       "answer": [
+        "In both: $12$. Multiple of 4 only: $8$. Multiple of 6 only: $6$, $18$. Neither: $21$"
+       ],
+       "explanation": [
+        "In both: $12$",
+        "Multiple of 4 only: $8$",
+        "Multiple of 6 only: $6$, $18$",
+        "Neither: $21$"
+       ],
+       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-sort-3",
+       "title": "Sort into a Venn 3",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Odd and square number:",
+        "Where do $4$, $9$, $11$, $16$, $18$ go?"
+       ],
+       "answer": [
+        "In both: $9$. Odd only: $11$. Square number only: $4$, $16$. Neither: $18$"
+       ],
+       "explanation": [
+        "In both: $9$",
+        "Odd only: $11$",
+        "Square number only: $4$, $16$",
+        "Neither: $18$"
+       ],
+       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-sort-4",
+       "title": "Sort into a Venn 4",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Less than 10 and even:",
+        "Where do $3$, $6$, $12$, $14$, $15$ go?"
+       ],
+       "answer": [
+        "In both: $6$. Less than 10 only: $3$. Even only: $12$, $14$. Neither: $15$"
+       ],
+       "explanation": [
+        "In both: $6$",
+        "Less than 10 only: $3$",
+        "Even only: $12$, $14$",
+        "Neither: $15$"
+       ],
+       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-sort-5",
+       "title": "Sort into a Venn 5",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Factor of 12 and factor of 18:",
+        "Where do $2$, $4$, $6$, $9$, $5$ go?"
+       ],
+       "answer": [
+        "In both: $2$, $6$. Factor of 12 only: $4$. Factor of 18 only: $9$. Neither: $5$"
+       ],
+       "explanation": [
+        "In both: $2$, $6$",
+        "Factor of 12 only: $4$",
+        "Factor of 18 only: $9$",
+        "Neither: $5$"
+       ],
+       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-sort-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Five numbers to sort into a Venn for two rules, full width, with something in both circles and something in neither. Harry works them on the board.",
+   "built": "1ubsx4c"
+  }
+ ]
+}
