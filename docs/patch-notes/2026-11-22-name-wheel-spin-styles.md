@@ -2,7 +2,7 @@ Strand: Maths
 
 ## 2026-11-22 — Name Wheel: three spin styles
 
-The Name Wheel (still behind Developing-tools mode) can now spin in three ways, chosen per wheel under **Wheel settings → Spin style** and saved with that wheel:
+The Name Wheel can now spin in three ways, chosen per wheel under **Wheel settings → Spin style** and saved with that wheel:
 
 - **Classic**: the existing round wheel, pointer at the top.
 - **Carnival**: an upright prize wheel with bulbs round the rim, a peg at every slice edge and a red flapper on the right that is pushed down as each peg passes. The slices move top to bottom.
@@ -17,6 +17,8 @@ Checked in headless Chromium at laptop (1366×768), tablet (820×1180) and phone
 Carnival and Case spins are deliberately long and suspenseful: about 9.5 to 12 seconds (Classic stays at 5 to 7), 9 to 13 turns or 90 to 130 cards, and a gentler slow-down so the last couple of seconds are a crawl. Reduced motion still shortens them to about a second.
 
 Not done: sound is the same tick for every style (no separate carnival clack); the strip has no "tiny label" mode because cards always show a readable name.
+
+The Name Wheel is now live: `enabled: false` is removed from its registry entry, so it is on the landing page under Classroom without Developing-tools mode.
 
 Branch: `claude/vigilant-noether-bm951n`. Files: `src/tools/TeacherTools/NameWheel.tsx`, `src/registry.ts` (description only), `src/generated/toolFacts.json`.
 Agent: Claude Code

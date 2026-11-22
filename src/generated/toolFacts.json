@@ -2184,7 +2184,7 @@
    "description": "Spin a wheel to pick a name at random, with extra entries per name, four colour sets, three spin styles (classic wheel, carnival prize wheel, sliding case strip) and a list of who has been picked. The list stays on this device.",
    "category": "Classroom",
    "subject": "Classroom",
-   "enabled": false,
+   "enabled": true,
    "file": "src/tools/TeacherTools/NameWheel.tsx",
    "kind": "sandbox",
    "shell": "Standalone",
