@@ -157,3 +157,34 @@ describe("Power: strings, pictures, course and worksheet", () => {
     }
   });
 });
+
+describe("Power: a train with coaches and vector work (A2)", () => {
+  it("train: the acceleration closes P = Fv with the total resistance, and the coupling carries the coaches", () => {
+    for (const m of many("forcespeed", 3, 100, { fsVehicle: "train" })) {
+      const i = m.inputs as { n: number; mE: number; mC: number; RE: number; rC: number; v: number; a: number };
+      const M = i.mE + i.n * i.mC, R = i.RE + i.n * i.rC, P = (R + M * i.a) * i.v;
+      expect(rel(m.answer.value, i.a)).toBeLessThan(T3);
+      expect(rel(P / i.v - R, M * m.answer.value)).toBeLessThan(0.0101);
+      expect(rel(m.extra![0].value, i.n * i.rC + i.n * i.mC * i.a)).toBeLessThan(0.0101);
+    }
+  });
+  it("vectors: the work is F·d and the power is the work over the time", () => {
+    for (const m of many("forcespeed", 3, 100, { fsAsk: "vector", fsResist: "const" })) {
+      const i = m.inputs as { F: string; A: string; B: string; t: number; ask: string };
+      expect(i.ask).toBe("vector");
+      const F = i.F.split(",").map(Number), A = i.A.split(",").map(Number), B = i.B.split(",").map(Number);
+      const W = F[0] * (B[0] - A[0]) + F[1] * (B[1] - A[1]);
+      expect(m.answer.value).toBe(W);
+      expect(rel(m.extra![0].value, W / i.t)).toBeLessThan(T3);
+      expect(m.a2).toBe(true);
+    }
+  });
+  it("every line renders, and vectors are not offered at AS", () => {
+    for (const over of [{ fsVehicle: "train" }, { fsAsk: "vector", fsResist: "const" }] as Array<Record<string, string>>) for (const display of ["given", "build", "hidden"]) for (const m of many("forcespeed", 3, 25, { ...over, diagram: display })) {
+      for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), r).not.toThrow();
+      for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
+      if (m.scene) expect(validateScene(m.scene)).toEqual([]);
+    }
+    for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "forcespeed", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "forcespeed"), course: "AS", fsAsk: "vector", fsResist: "const" } }).mech!.a2).toBe(false);
+  });
+});

@@ -2,6 +2,7 @@ import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type Gener
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { generateKepe } from "./energy/kepe";
+import { withEnergyBars } from "./energy/bars";
 import { generateWorkEnergy } from "./energy/workenergy";
 import { generateConserve } from "./energy/conserve";
 
@@ -36,6 +37,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (sub === "workenergy") m = generateWorkEnergy(level, { setting: opt(o, "weSetting", "horizontal"), ask: opt(o, "weAsk", "speed"), forces: opt(o, "weForces", "both"), method: opt(o, "weMethod", "work"), units, context, g, display, course });
   else if (sub === "conserve") m = generateConserve(level, { setting: opt(o, "cvSetting", "vertical"), starts: opt(o, "cvStarts", "rest"), ask: opt(o, "cvAsk", "speed"), parts: opt(o, "cvParts", "one"), context, g, display, course });
   else m = generateKepe(level, { energy: opt(o, "keEnergy", "ke,gpe"), ask: opt(o, "keAsk", "energy"), units, format: opt(o, "format", "j"), velocity: opt(o, "keVelocity", "speed"), context, g, display, course });
+  if (opt(o, "picture", "diagram") === "bars") m = withEnergyBars(m);
   return mechProblem(m, `energy-${sub}`);
 }
 
@@ -52,6 +54,10 @@ const OPTIONS: ShellOption[] = [
     key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, or has none.",
     displayOnly: true, tab: "display", defaultFor: () => "given",
     choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
+  },
+  {
+    key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["workenergy", "conserve"],
+    displayOnly: true, tab: "display", defaultFor: () => "diagram", choices: [{ value: "diagram", label: "The diagram" }, { value: "bars", label: "Energy bars" }],
   },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a car, a ball, a skier) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {

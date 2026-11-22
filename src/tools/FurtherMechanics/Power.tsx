@@ -36,7 +36,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
   let m: MechProblemData;
-  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: opt(o, "fsMotion", "constant"), resist: opt(o, "fsResist", "const"), units, context, display, course });
+  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: opt(o, "fsMotion", "constant"), resist: opt(o, "fsResist", "const"), vehicle: opt(o, "fsVehicle", "single"), units, context, display, course });
   else if (sub === "powerslope") m = generatePowerSlope(level, { ask: opt(o, "psAsk", "speed"), dir: opt(o, "psDir", "up"), resist: opt(o, "psResist", "const"), angleAs: opt(o, "psAngle", "deg"), units, context, g, display, course });
   else if (sub === "motion") m = generateMotion(level, { data: opt(o, "mtData", level === 1 ? "function" : "graph"), phase: opt(o, "mtPhase", "accel,const,decel"), resist: opt(o, "mtResist", "none,const"), context, display, course });
   else m = generateAvgPower(level, { doing: opt(o, "apDoing", "lift"), ask: opt(o, "apAsk", "power"), units, format: opt(o, "format", level === 1 ? "w" : "kw"), context, g, display, course });
@@ -69,13 +69,17 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "power", label: "The power" }, { value: "work", forLevels: [2, 3], label: "The work done" }, { value: "time", forLevels: [2, 3], label: "The time" }],
   },
   {
-    key: "fsAsk", label: "Ask for", info: "What to find: the power, the driving force, the speed, the resistance or the acceleration; the power needed for a higher speed; and with a resistance that depends on speed, k, the maximum speed or the maximum power.", forSubTools: ["forcespeed"], multi: true,
+    key: "fsAsk", label: "Ask for", info: "What to find: the power, the driving force, the speed, the resistance or the acceleration; the power needed for a higher speed; and with a resistance that depends on speed, k, the maximum speed or the maximum power; and (A2) the work done by a force and the power from a vector force and displacement.", forSubTools: ["forcespeed"], multi: true,
     defaultFor: lv({ 1: "power,force,speed,resist", 2: "acc,resist,speed,newpower", 3: "k,maxpower,acc,maxspeed" }),
-    choices: [{ value: "power", label: "The power" }, { value: "force", label: "The driving force" }, { value: "speed", label: "The speed" }, { value: "resist", label: "The resistance" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed" }, { value: "k", forLevels: [3], label: "The constant k" }, { value: "maxspeed", forLevels: [3], label: "The maximum speed" }, { value: "maxpower", forLevels: [3], label: "The maximum power" }],
+    choices: [{ value: "power", label: "The power" }, { value: "force", label: "The driving force" }, { value: "speed", label: "The speed" }, { value: "resist", label: "The resistance" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed" }, { value: "k", forLevels: [3], label: "The constant k" }, { value: "maxspeed", forLevels: [3], label: "The maximum speed" }, { value: "maxpower", forLevels: [3], label: "The maximum power" }, { value: "vector", forLevels: [3], label: "Work and power from vectors (A2)" }],
   },
   {
     key: "fsMotion", label: "Motion", info: "Whether the vehicle is at constant speed (the resultant force is zero) or accelerating at the instant. It applies to a constant resistance; the acceleration question is always accelerating.", forSubTools: ["forcespeed"],
     defaultFor: lv({ 1: "constant", 2: "accel", 3: "accel" }), choices: [{ value: "constant", label: "Constant speed" }, { value: "accel", label: "Accelerating" }],
+  },
+  {
+    key: "fsVehicle", label: "Vehicle", info: "A single vehicle, or a train of an engine and coaches: the acceleration of the whole train, then the tension in the coupling to the coaches.", forSubTools: ["forcespeed"], forLevels: [3],
+    defaultFor: () => "single", choices: [{ value: "single", label: "A single vehicle" }, { value: "train", label: "Engine and coaches" }],
   },
   {
     key: "fsResist", label: "Resistance", info: "A constant resistance, or one proportional to the speed (kv) or to its square (kv²), which makes the maximum power depend on the maximum speed.", forSubTools: ["forcespeed"], forLevels: [3],

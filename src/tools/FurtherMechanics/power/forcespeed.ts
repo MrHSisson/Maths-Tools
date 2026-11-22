@@ -7,6 +7,7 @@ import { CONTEXTS, inRange, pickContext } from "../../../shared/mechanics/contex
 import { cap, L, staged, u, ut, type Common } from "../workDone/common";
 import { massIn, speedIn, speedText, type MassUnit, type SpeedUnit } from "../energy/common";
 import { powerIn, vehicleSizes, vehicleSpeed, POWER_RANGE, type PowerUnit } from "./common";
+import { generateTrain, generateVector } from "./train";
 
 type Ask = "power" | "force" | "speed" | "resist" | "acc" | "newpower" | "k" | "maxspeed" | "maxpower";
 
@@ -197,13 +198,16 @@ export function buildForceSpeed(i: ForceSpeedInput): MechProblemData {
   return { sub: "forcespeed", level: i.level, prompt, course: i.course, a2: false, scene: staged(raw, i.display, ["setting", "motion", "forces", "measure"]), display: i.display, known, steps, answer: { value, unit, tex: u(value, unit), text: ut(value, unit) }, inputs: { ...i } };
 }
 
-export function generateForceSpeed(level: number, o: { ask: string; motion: string; resist: string; units: string; context: string; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
+export function generateForceSpeed(level: number, o: { ask: string; motion: string; resist: string; vehicle: string; units: string; context: string; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
   const conv = o.units === "conv";
   const kv = o.resist !== "const";
   const n = (o.resist === "speed2" ? 2 : 1) as 1 | 2;
-  const valid: Ask[] = kv ? ["k", "maxspeed", "maxpower", "acc"] : ["power", "force", "speed", "resist", "acc", "newpower"];
-  const asks = o.ask.split(",").filter((a) => valid.includes(a as Ask)) as Ask[];
-  const ask = asks.length ? asks[Math.floor(Math.random() * asks.length)] : valid[0];
+  if (o.vehicle === "train") return generateTrain(level, o);
+  const valid: string[] = [...(kv ? ["k", "maxspeed", "maxpower", "acc"] : ["power", "force", "speed", "resist", "acc", "newpower"]), ...(o.course === "A2" ? ["vector"] : [])];
+  const asks = o.ask.split(",").filter((a) => valid.includes(a));
+  const picked = asks.length ? asks[Math.floor(Math.random() * asks.length)] : valid[0];
+  if (picked === "vector") return generateVector(level, o);
+  const ask = picked as Ask;
   const motion = (ask === "acc" || (o.motion === "accel" && ask !== "newpower" && ask !== "force") ? "accel" : "constant") as "constant" | "accel";
   const c = o.context === "story" ? pickContext("power", conv ? true : undefined) : undefined;
   const sizes = vehicleSizes(c);

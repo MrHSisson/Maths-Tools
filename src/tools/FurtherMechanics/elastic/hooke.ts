@@ -1,12 +1,12 @@
 // Hooke's Law (hooke): T = λx/l (or T = kx). The tension or thrust from a length or an extension, the extension, the stiffness k or the modulus λ, a mass hanging in
 // equilibrium, and a particle held between two vertical strings. Brief: specs/further-mechanics-mc.md §5.9. Equations first (R5): the physical inputs are picked, a given
 // force is rounded to 3 s.f., and the answer is recomputed from the SHOWN givens.
-import { buildElasticHorizontal, buildElasticVertical, numTex, sfTex, sig, withParts, type GValue, type MechProblemData, type Scene, type SceneElement } from "../../../shared/mechanics";
+import { buildElasticHorizontal, buildElasticVertical, buildTwoStrings, numTex, sfTex, sig, withParts, type GValue, type MechProblemData, type Scene, type SceneElement } from "../../../shared/mechanics";
 import { inRange } from "../../../shared/mechanics/contexts";
 import { L, staged, u, ut, type Common } from "../workDone/common";
 import { lenIn, thing, theThing, type LenUnit } from "./common";
 
-type Setting = "horizontal" | "hanging" | "two";
+type Setting = "horizontal" | "hanging" | "two" | "points";
 type Ask = "tension" | "extension" | "k" | "modulus" | "length" | "mass";
 
 interface HookeInput extends Common {
@@ -154,6 +154,29 @@ export function buildHooke(i: HookeInput): MechProblemData {
       sub("In equilibrium the tension balances the weight, T = mg", [`m = \\dfrac{T}{g} = \\dfrac{${sfTex((i.lam * xm) / i.l, 6)}}{${G}}`, `m = ${u(value, unit)}${r3}`]);
     }
     raw = buildElasticVertical({ kind: i.kind === "spring" ? "spring" : "elastic", body: "particle", mass: L("m"), fixed: "O", natural: L(lt(i.l)), extension: L(lt((mg * i.l) / i.lam), i.ask === "extension" ? "x" : undefined), modulus: L("λ"), states: [{ ext: 0, ghost: true }, { ext: 0.5, weight: L("mg"), tension: L("T") }] });
+  } else if (i.setting === "points") {
+    // a particle on two strings fixed at A and B on one level (A2): the triangle gives the angles, then resolve horizontally for the second modulus and vertically for the mass
+    const a = i.l + i.x, bb = i.l2 + i.x2, D = i.D;
+    const cosA = (a * a + D * D - bb * bb) / (2 * a * D), cosB = (bb * bb + D * D - a * a) / (2 * bb * D);
+    const sinA = Math.sqrt(1 - cosA * cosA), sinB = Math.sqrt(1 - cosB * cosB);
+    const TA = (i.lam * i.x) / i.l, TB = (TA * cosA) / cosB;
+    const lamB = (TB * i.l2) / i.x2;
+    value = sig(lamB, 3); unit = "N";
+    const TBs = (value * i.x2) / i.l2;
+    const mass = (TA * sinA + TBs * sinB) / g;
+    extra = [{ value: sig(mass, 3), unit: "kg" }];
+    prompt = `A particle P is attached to the ends of two elastic strings. The other ends are fixed to points A and B on the same horizontal level, with $AB = ${numTex(D)}$ m. The string AP has natural length ${ut(i.l, "m")} and modulus of elasticity ${ut(i.lam, "N")}; the string BP has natural length ${ut(i.l2, "m")}. In equilibrium $AP = ${numTex(a)}$ m and $BP = ${numTex(bb)}$ m. Take $g = ${g}$. Find (a) the modulus of elasticity of BP, (b) the mass of the particle.`;
+    known.push(`AB = ${u(D, "m")}`, `l_{A} = ${u(i.l, "m")}`, `\\lambda_{A} = ${u(i.lam, "N")}`, `l_{B} = ${u(i.l2, "m")}`, `AP = ${u(a, "m")}`, `BP = ${u(bb, "m")}`);
+    sub("The extensions are the lengths in equilibrium minus the natural lengths", [`x_{A} = ${numTex(a)} - ${numTex(i.l)} = ${numTex(i.x)},\\quad x_{B} = ${numTex(bb)} - ${numTex(i.l2)} = ${numTex(i.x2)}`]);
+    sub("The cosine rule in triangle APB gives the angles at A and B between the strings and AB", [`\\cos\\alpha = \\dfrac{${numTex(a)}^{2} + ${numTex(D)}^{2} - ${numTex(bb)}^{2}}{2\\times${numTex(a)}\\times${numTex(D)}} = ${sfTex(cosA, 6)}`, `\\cos\\beta = \\dfrac{${numTex(bb)}^{2} + ${numTex(D)}^{2} - ${numTex(a)}^{2}}{2\\times${numTex(bb)}\\times${numTex(D)}} = ${sfTex(cosB, 6)}`]);
+    sub("Hooke's law gives the tension in AP", ["#(a)", `T_{A} = \\dfrac{\\lambda_{A}x_{A}}{l_{A}} = \\dfrac{${numTex(i.lam)}\\times${numTex(i.x)}}{${numTex(i.l)}} = ${sfTex(TA, 6)}\\ \\text{N}`]);
+    sub("Resolve horizontally: the horizontal components of the two tensions balance", [`T_{A}\\cos\\alpha = T_{B}\\cos\\beta`, `T_{B} = \\dfrac{${sfTex(TA, 6)}\\times${sfTex(cosA, 6)}}{${sfTex(cosB, 6)}} = ${sfTex(TB, 6)}\\ \\text{N}`]);
+    sub("Hooke's law for BP gives its modulus", [`\\lambda_{B} = \\dfrac{T_{B}l_{B}}{x_{B}} = \\dfrac{${sfTex(TB, 6)}\\times${numTex(i.l2)}}{${numTex(i.x2)}}`, `\\lambda_{B} = ${u(value, "N")}${r3}`]);
+    sub("Resolve vertically: the vertical components of the tensions support the weight (T_B from the rounded modulus)", ["#(b)", `T_{A}\\sin\\alpha + T_{B}\\sin\\beta = mg`, `${sfTex(TA, 6)}\\times${sfTex(sinA, 6)} + ${sfTex(TBs, 6)}\\times${sfTex(sinB, 6)} = m\\times${G}`]);
+    sub("Solve for m", [`m = ${u(sig(mass, 3), "kg")}${r3}`]);
+    answerTex = `\\text{(a)}\\ ${u(value, "N")},\\ \\text{(b)}\\ ${u(sig(mass, 3), "kg")}`;
+    answerText = `(a) ${ut(value, "N")}, (b) ${ut(sig(mass, 3), "kg")}`;
+    raw = buildTwoStrings({ kind: "elastic", position: (a * cosA) / D, mass: L("m"), ab: L(ut(D, "m")), lengthA: L(ut(a, "m")), lengthB: L(ut(bb, "m")), names: { a: "A", b: "B", p: "P" } });
   } else {
     // a particle between two vertical strings: the upper one A to P, the lower one B to P, with AB = D; the lower extension is picked, the upper derived
     const mg = i.m * g;
@@ -174,16 +197,17 @@ export function buildHooke(i: HookeInput): MechProblemData {
   if (conv.length) steps.unshift({ caption: "Convert to metres first", lines: conv });
   prompt += " Give your answer to 3 significant figures.";
   if (!answerTex) { answerTex = u(value, unit); answerText = ut(value, unit); }
-  const scene = raw ? staged(raw, i.display, ["setting", "mass", "spring", "lengths", "forces"]) : undefined;
-  return { sub: "hooke", level: i.level, prompt, course: i.course, a2: false, scene, display: i.display, known, steps, answer: { value, unit, tex: answerTex, text: answerText }, extra, inputs: { ...i, D: Dshown } };
+  const scene = raw ? staged(raw, i.display, i.setting === "points" ? ["setting", "measures", "forces"] : ["setting", "mass", "spring", "lengths", "forces"]) : undefined;
+  return { sub: "hooke", level: i.level, prompt, course: i.course, a2: i.setting === "points", scene, display: i.display, known, steps, answer: { value, unit, tex: answerTex, text: answerText }, extra, inputs: { ...i, D: Dshown } };
 }
 
 export function generateHooke(level: number, o: { setting: string; ask: string; givenAs: string; kind: string; units: string; g: GValue; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
   const pickIn = (s: string, f: string): string => { const xs = s.split(",").filter(Boolean); return xs[Math.floor(Math.random() * xs.length)] ?? f; };
-  const setting = pickIn(o.setting, "horizontal") as Setting;
+  let setting = pickIn(o.setting, "horizontal") as Setting;
+  if (setting === "points" && o.course !== "A2") setting = "two";
   const kind = (pickIn(o.kind, "string") === "spring" ? "spring" : "string") as "spring" | "string";
   const conv = o.units === "conv";
-  const validAsk: Record<Setting, Ask[]> = { horizontal: ["tension", "extension", "k", "modulus"], hanging: ["extension", "length", "modulus", "mass"], two: ["extension"] };
+  const validAsk: Record<Setting, Ask[]> = { horizontal: ["tension", "extension", "k", "modulus"], hanging: ["extension", "length", "modulus", "mass"], two: ["extension"], points: ["modulus"] };
   const asks = o.ask.split(",").filter((a) => validAsk[setting].includes(a as Ask)) as Ask[];
   const ask = asks.length ? asks[Math.floor(Math.random() * asks.length)] : validAsk[setting][0];
   for (let tries = 0; tries < 400; tries++) {
@@ -198,6 +222,18 @@ export function generateHooke(level: number, o: { setting: string; ask: string; 
       if (!(ex >= 0.05 && ex <= 1.5 * l)) continue;
       if (lUnit === "cm" && Math.abs(lenIn(l, "cm") - Math.round(lenIn(l, "cm"))) > 1e-9) continue;
       return buildHooke(base);
+    }
+    if (setting === "points") {
+      const D = inRange([1, 2.4, 0.1]), a = inRange([0.6, 1.8, 0.1]), bb = inRange([0.6, 1.8, 0.1]);
+      if (!(a * a + D * D > bb * bb && bb * bb + D * D > a * a && a + bb > D && Math.abs(a - bb) < D)) continue;
+      const xA = inRange([0.1, 0.4, 0.05]), xB = inRange([0.1, 0.4, 0.05]);
+      const lA = Math.round((a - xA) * 100) / 100, lB = Math.round((bb - xB) * 100) / 100;
+      if (lA < 0.3 || lB < 0.3) continue;
+      const cosA = (a * a + D * D - bb * bb) / (2 * a * D), cosB = (bb * bb + D * D - a * a) / (2 * bb * D);
+      const TA = (lam * xA) / lA, TB = (TA * cosA) / cosB, lamB = (TB * lB) / xB;
+      const mass = (TA * Math.sqrt(1 - cosA * cosA) + TB * Math.sqrt(1 - cosB * cosB)) / o.g;
+      if (!(lamB >= 5 && lamB <= 400 && mass >= 0.2 && mass <= 20)) continue;
+      return buildHooke({ ...base, ask: "modulus", l: lA, x: xA, lam2: 0, l2: lB, x2: xB, D, lUnit: "m", m: 0 });
     }
     if (setting === "two") {
       const lam2 = inRange([20, 200, 5]), l2 = inRange([0.4, 3, 0.1]), x2 = inRange([0.05, 0.5, 0.05]);

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import katex from "katex";
-import { bisect, validateScene, type MechProblemData } from "../shared/mechanics";
+import { bisect, sfText, validateScene, type MechProblemData } from "../shared/mechanics";
 import type { ShellOption } from "../shared/decision/types";
 import { buildHooke } from "../tools/FurtherMechanics/elastic/hooke";
 import { buildEpe } from "../tools/FurtherMechanics/elastic/epe";
@@ -14,7 +14,7 @@ const base = { level: 1, course: "A2" as const, display: "given" as const };
 const rel = (a: number, b: number) => Math.abs(a - b) / Math.max(1e-12, Math.abs(b));
 const HK = { ...base, setting: "horizontal", kind: "string", ask: "tension", givenAs: "length", compress: false, lUnit: "m", g: 9.8 as const, lam: 0, l: 0, x: 0, m: 0, F: 0, lam2: 0, l2: 0, x2: 0, D: 0 } as const;
 const EP = { ...base, kind: "string", ask: "epe", givenAs: "extension", compress: false, lUnit: "m", lam: 0, l: 0, x1: 0, x2: 0 } as const;
-const EL = { ...base, setting: "horizontal", kind: "spring", ask: "speedNat", g: 9.8 as const, m: 0, lam: 0, l: 0, x: 0, x2: 0, F: 0, compress: false } as const;
+const EL = { ...base, setting: "horizontal", kind: "spring", ask: "speedNat", g: 9.8 as const, m: 0, lam: 0, l: 0, x: 0, x2: 0, F: 0, compress: false, alpha: 0, show: false } as const;
 
 describe("Elastic: acceptance examples", () => {
   it("hooke: λ 90 N, l 1.5 m, length 1.9 m gives 24 N; 0.8 kg on l 0.6 m, λ 40 N extends 0.118 m", () => {
@@ -103,7 +103,7 @@ describe("Elastic: every answer is re-derived by another route", () => {
 describe("Elastic: strings, pictures, course and worksheet", () => {
   it("every KaTeX line renders and every scene validates in every display mode", () => {
     for (const sub of ["hooke", "epe", "elastic"]) for (const level of sub === "epe" ? [1, 2] : [1, 2, 3]) for (const display of ["given", "build", "hidden"]) {
-      for (const m of many(sub, level, 25, { diagram: display, hkSetting: "horizontal,hanging,two", hkAsk: "tension,extension,length,k,modulus,mass", epAsk: "epe,work,modulus,length", elSetting: "horizontal,vertical,rough", elAsk: "speedNat,speedAt,stop,maxext,acc,maxspeed,rest" })) {
+      for (const m of many(sub, level, 25, { diagram: display, hkSetting: "horizontal,hanging,two,points", hkAsk: "tension,extension,length,k,modulus,mass", epAsk: "epe,work,modulus,length", elSetting: "horizontal,vertical,rough", elAsk: "speedNat,speedAt,stop,maxext,acc,maxspeed,rest" })) {
         for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), `${sub} L${level}: ${r}`).not.toThrow();
         for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
         if (m.scene) expect(validateScene(m.scene), `${sub} L${level}`).toEqual([]);
@@ -121,6 +121,54 @@ describe("Elastic: strings, pictures, course and worksheet", () => {
       const seen = new Set<string>();
       for (let k = 0; k < 800 && seen.size < 30; k++) seen.add(draw(sub, level).prompt);
       expect(seen.size, `${sub} L${level}`).toBeGreaterThanOrEqual(30);
+    }
+  });
+});
+
+describe("Elastic: energy bars as the working picture", () => {
+  it("the two columns are the same height in every setting", () => {
+    const total = (c: { gpe?: number; epe?: number; ke?: number; work?: number }) => (c.gpe ?? 0) + (c.epe ?? 0) + (c.ke ?? 0) + (c.work ?? 0);
+    for (const level of [1, 2, 3]) for (const m of many("elastic", level, 150, { elSetting: "horizontal,vertical,rough", elAsk: "speedNat,speedAt,stop,maxext,acc,maxspeed,rest", picture: "bars" })) {
+      expect(validateScene(m.scene!)).toEqual([]);
+      const bars = m.scene!.elements.find((e) => e.type === "bars") as unknown as { columns: Array<{ gpe?: number; epe?: number; ke?: number; work?: number }> };
+      expect(rel(total(bars.columns[0]), total(bars.columns[1])), JSON.stringify(m.inputs)).toBeLessThan(0.0101);
+    }
+  });
+});
+
+describe("Elastic: a slope, two fixed points and Show That (A2)", () => {
+  const sin = (d: number) => Math.sin((d * Math.PI) / 180);
+  it("a drop down a smooth slope closes its energy equation, with g sin α for g", () => {
+    for (const m of many("elastic", 3, 150, { elSetting: "slope", elAsk: "maxext,rest,acc,maxspeed" })) {
+      const i = m.inputs as { setting: string; ask: string; g: number; m: number; lam: number; l: number; alpha: number };
+      expect(i.setting).toBe("slope");
+      const ge = i.g * sin(i.alpha), mg = i.m * ge, E = (x: number) => (i.lam * x * x) / (2 * i.l), ans = m.answer.value;
+      const x = bisect((t) => mg * (i.l + t) - E(t), 0, 50);
+      if (i.ask === "maxext") expect(rel(ans, x)).toBeLessThan(T3);
+      else if (i.ask === "rest") expect(rel(ans, i.l + x)).toBeLessThan(T3);
+      else if (i.ask === "acc") expect(rel(i.m * (ans + ge), (i.lam * x) / i.l)).toBeLessThan(0.0101);
+      else { const e = (mg * i.l) / i.lam; expect(rel(0.5 * i.m * ans * ans + E(e), mg * (i.l + e))).toBeLessThan(0.0101); }
+    }
+  });
+  it("two strings to two points: the answers close the horizontal and vertical equations", () => {
+    for (const m of many("hooke", 3, 150, { hkSetting: "points" })) {
+      const i = m.inputs as { setting: string; g: number; lam: number; l: number; x: number; l2: number; x2: number; D: number };
+      expect(i.setting).toBe("points");
+      const a = i.l + i.x, b = i.l2 + i.x2, D = i.D;
+      const cosA = (a * a + D * D - b * b) / (2 * a * D), cosB = (b * b + D * D - a * a) / (2 * b * D);
+      const TA = (i.lam * i.x) / i.l, TB = (m.answer.value * i.x2) / i.l2;
+      expect(rel(TA * cosA, TB * cosB)).toBeLessThan(T3);
+      expect(rel(TA * Math.sqrt(1 - cosA * cosA) + TB * Math.sqrt(1 - cosB * cosB), m.extra![0].value * i.g)).toBeLessThan(0.0101);
+    }
+  });
+  it("Show That gives the answer in the question, and an A2 setting is not offered at AS", () => {
+    for (const m of many("elastic", 2, 60, { elSetting: "vertical", elAsk: "maxext,rest,maxspeed", elShow: "on" })) {
+      expect(m.prompt).toContain("Show that");
+      expect(m.prompt).toContain(sfText(m.answer.value, 3));
+    }
+    for (const sub of ["hooke", "elastic"]) for (let k = 0; k < 40; k++) {
+      const m = __seed.generate(3, { subTool: sub, options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, sub), course: "AS", hkSetting: "points,two", elSetting: "slope,rough" } }).mech!;
+      expect(m.a2, sub).toBe(false);
     }
   });
 });

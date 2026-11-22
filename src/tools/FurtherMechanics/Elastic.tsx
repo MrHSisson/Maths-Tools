@@ -2,6 +2,7 @@ import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type Gener
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { generateHooke } from "./elastic/hooke";
+import { withEnergyBars } from "./energy/bars";
 import { generateEpe } from "./elastic/epe";
 import { generateElastic } from "./elastic/elastic";
 
@@ -32,8 +33,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const kind = opt(o, "kind", "string,spring");
   let m: MechProblemData;
   if (sub === "epe") m = generateEpe(level, { ask: opt(o, "epAsk", "epe"), givenAs: opt(o, "givenAs", "extension,length"), kind, units, display, course });
-  else if (sub === "elastic") m = generateElastic(level, { setting: opt(o, "elSetting", "horizontal"), ask: opt(o, "elAsk", "speedNat"), kind, g, display, course });
+  else if (sub === "elastic") m = generateElastic(level, { setting: opt(o, "elSetting", "horizontal"), ask: opt(o, "elAsk", "speedNat"), kind, show: opt(o, "elShow", "off"), g, display, course });
   else m = generateHooke(level, { setting: opt(o, "hkSetting", "horizontal"), ask: opt(o, "hkAsk", "tension"), givenAs: opt(o, "givenAs", "extension,length"), kind, units, g, display, course });
+  if (opt(o, "picture", "diagram") === "bars") m = withEnergyBars(m);
   return mechProblem(m, `elastic-${sub}`);
 }
 
@@ -43,7 +45,7 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to smooth surfaces and vertical motion. A2 adds a rough table, where friction takes work.",
+    key: "course", label: "Course", info: "AS keeps to smooth surfaces, vertical motion and strings along a line. A2 adds a rough table, a smooth slope, and two strings fixed at two points, which need friction or resolving.",
     defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes friction" }, { value: "AS", label: "AS" }],
   },
   {
@@ -52,16 +54,20 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
   {
+    key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["elastic"],
+    displayOnly: true, tab: "display", defaultFor: () => "diagram", choices: [{ value: "diagram", label: "The diagram" }, { value: "bars", label: "Energy bars" }],
+  },
+  {
     key: "kind", label: "Spring or String", info: "An elastic string, which can only be stretched, or a spring, which can also be compressed and push back with a thrust.", forSubTools: ["hooke", "epe"], multi: true,
     defaultFor: () => "string,spring", choices: [{ value: "string", label: "String" }, { value: "spring", label: "Spring" }],
   },
   {
-    key: "hkSetting", label: "Setting", info: "A spring or string along a table, a mass hanging in equilibrium, or a particle held between two vertical strings.", forSubTools: ["hooke"], multi: true,
+    key: "hkSetting", label: "Setting", info: "A spring or string along a table, a mass hanging in equilibrium, a particle held between two vertical strings, or (A2) a particle on two strings fixed at two points on one level, which needs the triangle and resolving.", forSubTools: ["hooke"], multi: true,
     defaultFor: lv({ 1: "horizontal", 2: "horizontal,hanging", 3: "hanging,two" }),
-    choices: [{ value: "horizontal", label: "Along a table" }, { value: "hanging", forLevels: [2, 3], label: "Hanging" }, { value: "two", forLevels: [3], label: "Between two strings" }],
+    choices: [{ value: "horizontal", label: "Along a table" }, { value: "hanging", forLevels: [2, 3], label: "Hanging" }, { value: "two", forLevels: [3], label: "Between two strings" }, { value: "points", forLevels: [3], label: "Two fixed points (A2)" }],
   },
   {
-    key: "hkAsk", label: "Ask for", info: "What to find: the tension or thrust, the extension (or the length of a hanging string), the stiffness k, the modulus of elasticity, or the mass. Between two strings the extension of the upper one is asked.", forSubTools: ["hooke"], multi: true,
+    key: "hkAsk", label: "Ask for", info: "What to find: the tension or thrust, the extension (or the length of a hanging string), the stiffness k, the modulus of elasticity, or the mass. Between two strings the extension of the upper one is asked; on two fixed points the modulus of one string and the mass.", forSubTools: ["hooke"], multi: true,
     defaultFor: lv({ 1: "tension", 2: "extension,modulus,k", 3: "extension,length,mass" }),
     choices: [{ value: "tension", label: "The tension" }, { value: "extension", forLevels: [2, 3], label: "The extension" }, { value: "length", forLevels: [3], label: "The length" }, { value: "k", forLevels: [2, 3], label: "The stiffness k" }, { value: "modulus", forLevels: [2, 3], label: "The modulus" }, { value: "mass", forLevels: [3], label: "The mass" }],
   },
@@ -75,14 +81,18 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "epe", label: "The energy stored" }, { value: "work", forLevels: [2], label: "The work done" }, { value: "modulus", forLevels: [2], label: "The modulus" }, { value: "length", forLevels: [2], label: "The length" }],
   },
   {
-    key: "elSetting", label: "Setting", info: "A particle on a smooth table released from a stretched or compressed spring, a particle dropped from the support of a string, or (A2) a rough table.", forSubTools: ["elastic"], multi: true,
+    key: "elSetting", label: "Setting", info: "A particle on a smooth table released from a stretched or compressed spring, a particle dropped from the support of a string, or (A2) a rough table or a smooth slope where the string is fixed at the top.", forSubTools: ["elastic"], multi: true,
     defaultFor: lv({ 1: "horizontal", 2: "vertical", 3: "vertical,rough" }),
-    choices: [{ value: "horizontal", label: "Smooth table" }, { value: "vertical", forLevels: [2, 3], label: "Dropped on a string" }, { value: "rough", forLevels: [3], label: "Rough table" }],
+    choices: [{ value: "horizontal", label: "Smooth table" }, { value: "vertical", forLevels: [2, 3], label: "Dropped on a string" }, { value: "rough", forLevels: [3], label: "Rough table (A2)" }, { value: "slope", forLevels: [3], label: "Down a slope (A2)" }],
   },
   {
     key: "elAsk", label: "Ask for", info: "What to find: the speed at the natural length or at a given extension, or the distance slid after the string goes slack (a rough table); for a drop, the greatest extension, the distance below the support, the acceleration at the lowest point or the greatest speed.", forSubTools: ["elastic"], multi: true,
     defaultFor: lv({ 1: "speedNat,speedAt", 2: "maxext,acc,maxspeed,rest", 3: "maxext,maxspeed,speedNat,stop" }),
     choices: [{ value: "speedNat", label: "Speed at natural length" }, { value: "speedAt", forLevels: [1, 3], label: "Speed at a given extension" }, { value: "stop", forLevels: [3], label: "Distance slid" }, { value: "maxext", forLevels: [2, 3], label: "The greatest extension" }, { value: "rest", forLevels: [2, 3], label: "Distance below the support" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "maxspeed", forLevels: [2, 3], label: "The greatest speed" }],
+  },
+  {
+    key: "elShow", label: "Show That", info: "The answer is given in the question (greatest extension, distance or greatest speed of a drop) and the working proves it, as in the exam.", forSubTools: ["elastic"], forLevels: [2, 3],
+    defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
     key: "units", label: "Units Given", info: "Everything in metres, or with some lengths in centimetres.", forSubTools: ["hooke", "epe"], tab: "numbers",

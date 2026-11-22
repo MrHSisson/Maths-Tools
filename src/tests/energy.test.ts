@@ -152,3 +152,27 @@ describe("Energy: a rough slope (A2) and a load raised over a pulley", () => {
     for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "workenergy", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "workenergy"), course: "AS", weSetting: "rough", weAsk: "speed,mu" } }).mech!.a2).toBe(false);
   });
 });
+
+describe("Energy: energy bars as the working picture", () => {
+  const total = (c: { gpe?: number; epe?: number; ke?: number; work?: number }) => (c.gpe ?? 0) + (c.epe ?? 0) + (c.ke ?? 0) + (c.work ?? 0);
+  it("the two columns are the same height, the scene is sound, and the bars wait for the equation", () => {
+    const cases: Array<[string, number, Record<string, string>]> = [
+      ["conserve", 1, { cvSetting: "vertical", cvAsk: "speed,max" }], ["conserve", 3, { cvSetting: "slope", cvAsk: "speed,stop" }], ["conserve", 2, { cvStarts: "rest,down,up", cvAsk: "speed,max" }],
+      ["workenergy", 1, { weSetting: "horizontal", weAsk: "speed,distance,force" }], ["workenergy", 3, { weSetting: "slope", weAsk: "speed,force,work" }],
+      ["workenergy", 3, { weSetting: "rough", weAsk: "speed,distance,mu" }], ["workenergy", 3, { weSetting: "pulley", weAsk: "speed,force" }],
+    ];
+    for (const [sub, level, over] of cases) for (const m of many(sub, level, 60, { ...over, picture: "bars" })) {
+      expect(m.scene, sub).toBeDefined();
+      expect(validateScene(m.scene!)).toEqual([]);
+      const bars = m.scene!.elements.find((e) => e.type === "bars") as unknown as { columns: Array<{ gpe?: number; epe?: number; ke?: number; work?: number }>; reveal?: number };
+      expect(bars.columns.length).toBe(2);
+      expect(rel(total(bars.columns[0]), total(bars.columns[1])), `${sub} ${JSON.stringify(over)}`).toBeLessThan(0.0101);
+      expect(bars.reveal).toBe(2);
+    }
+  });
+  it("without the option the diagram is untouched, and a question with no picture stays without one", () => {
+    const m = draw("conserve", 1);
+    expect(m.scene!.elements.some((e) => e.type === "bars")).toBe(false);
+    expect(draw("conserve", 1, { picture: "bars", diagram: "hidden" }).display).toBe("hidden");
+  });
+});
