@@ -68,7 +68,7 @@ export const DECISION_CHAPTERS: DecisionChapter[] = [
     ],
   },
   {
-    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-simplex"],
+    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-simplex", "lp-roadmap"],
     resources: [
       aqa("D1", "D1 Linear Programming"), aqa("D2", "D2 Simplex Algorithm"), aqa("D2", "D2 Simplex Algorithm MS"),
       edx("D1", "D1 Linear programming - Formation of problems"), edx("D1", "D1 Linear programming - Graphical"),

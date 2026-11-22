@@ -1,6 +1,6 @@
 # The simplex algorithm: a roadmap through the tools
 
-**What this is.** A route for a class to follow, in order, through the simplex tools and their levels, the way a class follows a textbook chapter. Each stage says what the students should be able to do, which sub-tool and level to use (with the option that matters), and where to stop for textbook exercises. It is not a deck: the deck for the idea is `lp-simplex-process` and it is stage 2.
+**What this is.** (The same route is a page at `/lp-roadmap` in Developing-tools mode, with a button for each piece of practice that opens the tool on the right sub-tool, level and option; the stages are data in `src/tools/Decision/SimplexRoadmap.tsx`, so keep the two in step.) A route for a class to follow, in order, through the simplex tools and their levels, the way a class follows a textbook chapter. Each stage says what the students should be able to do, which sub-tool and level to use (with the option that matters), and where to stop for textbook exercises. It is not a deck: the deck for the idea is `lp-simplex-process` and it is stage 2.
 
 **Assumed.** Formulating is done: students can write a model (objective, constraints, non-negativity) from a story, and can draw a region and read its corners. This roadmap starts at the slack variables.
 

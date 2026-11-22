@@ -44,10 +44,13 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (rows, and exclusive levels). Simplex Level 3 Method: Substitute And Split, or Use As Rows (a lower bound as a ≥ constraint; an equation as a row with no slack, pivoted first), answering Harry's questions on why an equation cannot just be a row and why y ≥ 4 is substituted. Every level now has its own questions in both tools: no higher level can draw a lower-level question (Simplex Level 2 is always words or a table; Level 3 always needs a change of form; Formulating problems carry a feature of their level).
 
+- 2026-11-22 (print, and the roadmap as a page). The Simplex print now carries the tableau or data table under each question, a page to work in, and the model working on the answers page (`config.skillPrint`; before, only the words printed). The roadmap is a page, `/lp-roadmap` (`SimplexRoadmap.tsx`, `enabled: false`), each practice button opening the tool on the right sub-tool, level and option.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
-- **Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
+- **Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
+- **Roadmap:** check the textbook exercise numbers against Harry's copies; add which Level 1 questions to run before and after the deck; publish the deck so the page's deck button works.
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.
 

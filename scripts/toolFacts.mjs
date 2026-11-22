@@ -64,7 +64,7 @@ function subToolCount(src) {
 //   generator  a standalone PDF worksheet generator
 //   workshop   internal build pages (templates, libraries, technique previews) — not for teachers
 const KIND_OVERRIDES = {
-  "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop", "further-mechanics": "workshop", "decision-overview": "workshop",
+  "tool-shell": "workshop", "skills": "workshop", "techniques": "workshop", "further-mechanics": "workshop", "decision-overview": "workshop", "lp-roadmap": "workshop",
   visualiser: "sandbox", "name-wheel": "sandbox", "advent-calendar": "sandbox",
 };
 function kindOf(t) {
