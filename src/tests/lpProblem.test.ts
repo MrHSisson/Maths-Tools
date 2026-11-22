@@ -103,6 +103,7 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
     let seen = 0;
     const forms = new Set<string>();
     let revSeen = 0;
+    let withC = 0;
     for (let i = 0; i < 400 && seen < 60; i++) {
       const q = generateProblem(3, { vars: [2, 3], objective: ["max"], integers: true });
       const info = q.data.info as PInfo;
@@ -112,23 +113,24 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
       forms.add(L.form);
       const n = q.data.vars.length;
       expect(L.items).toHaveLength(n + 1);
-      expect(q.prompt).toMatch(/must be exactly (twice |3 times |equal to |half of |one third of )/);
+      expect(q.prompt).toMatch(/must be exactly (twice |3 times |equal to |half of |one third of |\d+ (more|fewer) than )/);
       if (L.reverse) { expect(q.prompt).toMatch(new RegExp(`(half|one third) of the number of ${L.dep.plural}`)); revSeen++; }
       expect(q.prompt).toContain(L.dep.plural);
       expect(q.data.vars.map((v) => v.noun)).not.toContain(L.dep.plural);
-      const dep = (pt: number[]): number => L.a * L.S.reduce((t, j) => t + pt[j], 0);
-      const ptsOf = (k: number): number[][] => (k === 0 ? [[]] : ptsOf(k - 1).flatMap((q0) => [0, 1, 2, 5, 9].map((v) => [...q0, v])));
+      const c0 = L.c ?? 0;
+      const konst = info.konst ?? 0;
+      const dep = (pt: number[]): number => L.a * L.S.reduce((t, j) => t + pt[j], 0) + c0;
+      const ptsOf = (k: number): number[][] => (k === 0 ? [[]] : ptsOf(k - 1).flatMap((q0) => [0, 1, 2, 5, 9, 14].map((v) => [...q0, v])));
       for (const pt of ptsOf(n)) {
         const full = [...pt, dep(pt)];
-        // the objective, with the relation put in
-        expect(L.profits.reduce((t, pr, k) => t + pr * full[k], 0)).toBe(info.obj.reduce((t, c, k) => t + c * pt[k], 0));
-        // each resource limit, with the relation put in
-        L.resources.forEach((r, j) => {
-          const c = constraintOf(info.parts[j].spec);
-          const lhs = r.per.reduce((t, a, k) => t + a * full[k], 0);
-          expect(lhs <= r.amount).toBe(c.holds(pt.map((v) => fr(v))));
-        });
+        // the objective, with the relation put in (and the constant it leaves)
+        expect(L.profits.reduce((t, pr, k) => t + pr * full[k], 0)).toBe(info.obj.reduce((t, c, k) => t + c * pt[k], 0) + konst);
+        // the full situation: every resource limit and the fixed kind not negative; the model: the substituted limits (and, with "fewer than", the lower limit)
+        const fullOk = dep(pt) >= 0 && L.resources.every((r) => r.per.reduce((t, a, k) => t + a * full[k], 0) <= r.amount);
+        const modelParts = info.parts.slice(0, L.resources.length + (c0 < 0 ? 1 : 0));
+        expect(modelParts.every((part) => constraintOf(part.spec).holds(pt.map((v) => fr(v))))).toBe(fullOk);
       }
+      if (c0 !== 0) withC++;
       for (const st of solveLp({ kind: "problem", level: 3, lp: q.data, prompt: "", answer: { text: "" }, matrixMode: "off" } as never)) {
         for (const r of st.lpView!.rows) if (r.k === "tex" || r.k === "result") expect(() => katex.renderToString(r.t, { throwOnError: true })).not.toThrow();
       }
@@ -136,6 +138,7 @@ describe("a kind that is exactly a multiple of the others (substituted out)", ()
     expect(seen).toBeGreaterThan(10);
     expect(forms.size).toBeGreaterThanOrEqual(2);
     expect(revSeen).toBeGreaterThan(0);
+    expect(withC).toBeGreaterThan(0);
   });
 });
 

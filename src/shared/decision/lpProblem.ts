@@ -319,9 +319,12 @@ function linked(n: number, strict: boolean): Draft | null {
   const vars: Var[] = picked.slice(0, n).map((it, i) => ({ sym: syms[i], noun: it.plural, integer: true }));
   const sing = picked.slice(0, n).map((it) => it.singular);
   const dep = picked[n];
-  const form = pick(["single", "combined", "combined", "sum"] as const);
+  // sometimes with a constant: "exactly 10 more than" (or fewer than): the fixed kind is a·(the others) + c
+  const withC = Math.random() < 0.4;
+  const c = withC ? pick([5, 10, 15, 20]) * (Math.random() < 0.65 ? 1 : -1) : 0;
+  const form = withC ? pick(["single", "single", "combined", "sum"] as const) : pick(["single", "combined", "combined", "sum"] as const);
   const S = form === "single" ? [ri(0, n - 1)] : range(n);
-  const a = form === "sum" ? 1 : pick([2, 2, 3]);
+  const a = form === "sum" ? 1 : withC ? pick([1, 1, 2]) : pick([2, 2, 3]);
   const profits = picked.map(() => ri(2, 9));
   const obj = range(n).map((j) => profits[j] + (S.includes(j) ? a * profits[n] : 0));
   const res = shuffled(ctx.resources.filter((r) => !r.decOnly && r.mode === "use")).slice(0, 2);
@@ -332,28 +335,39 @@ function linked(n: number, strict: boolean): Draft | null {
   for (const r of res) {
     const per = picked.map(() => ri(1, 9));
     const coeffs = range(n).map((j) => per[j] + (S.includes(j) ? a * per[n] : 0));
-    const L = Math.max(...coeffs) * ri(6, 14) + ri(0, 9);
-    if ([...coeffs, L].reduce((h, v) => gcdInt(h, v), 0) !== 1) return null;
-    const spec = { t: "linear" as const, coeffs: coeffs.map((c) => fr(c)), op: "≤" as Op, rhs: fr(L), kind: "resource" as const };
-    parts.push({ prompt: "", sentence: "", data: { kind: "resource", vars, op: "≤", spec, info: { kind: "resource", per: coeffs, amount: L, unit: r.unit, of: r.of, verb: r.verb, label: r.label, topic: r.topic, sing } } });
+    // the limit as written (L) and as it ends up once the constant is taken across (L − per·c)
+    const Lfinal = Math.max(...coeffs) * ri(6, 14) + ri(0, 9);
+    const L = Lfinal + per[n] * c;
+    if (L < 20) return null;
+    if ([...coeffs, Lfinal].reduce((h, v) => gcdInt(h, v), 0) !== 1) return null;
+    const spec = { t: "linear" as const, coeffs: coeffs.map((k) => fr(k)), op: "≤" as Op, rhs: fr(Lfinal), kind: "resource" as const };
+    parts.push({ prompt: "", sentence: "", data: { kind: "resource", vars, op: "≤", spec, info: { kind: "resource", per: coeffs, amount: Lfinal, unit: r.unit, of: r.of, verb: r.verb, label: r.label, topic: r.topic, sing } } });
     resS.push(`${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} ${r.verb} ${per[i]} ${unitOf(per[i], r.unit)} of ${r.of}` : `each ${it.singular} ${per[i]} ${unitOf(per[i], r.unit)}`))))}. There are ${L} ${r.unit} of ${r.of} available.`);
     rs.push({ topic: r.topic, unit: r.unit, verb: r.verb, label: r.label, of: r.of, per, amount: L });
+  }
+  // "10 fewer than": the fixed kind cannot be negative, so the letters it depends on must be big enough (a real constraint, in lowest terms)
+  if (c < 0) {
+    const g = gcdInt(a, -c);
+    const coeffs = range(n).map((j) => (S.includes(j) ? a / g : 0));
+    const rhs = -c / g;
+    parts.push({ prompt: "", sentence: "", data: { kind: "total", vars, op: "≥", spec: { t: "linear", coeffs: coeffs.map((k) => fr(k)), op: "≥", rhs: fr(rhs), kind: "bound" }, info: { kind: "total", N: rhs } } });
   }
   if (Math.random() < 0.5) {
     const fx: Fix = { ctx, vars, sing, ops: cmpOps(strict) };
     parts.push(Math.random() < 0.6 ? genMultiple(n, fx) : genBound(n, fx));
   }
-  const times = a === 1 ? "equal to " : a === 2 ? "twice " : `${a} times `;
+  const times = a === 1 ? "" : a === 2 ? "twice " : `${a} times `;
   const of = form === "single" ? `the number of ${picked[S[0]].plural}` : `the total number of ${list(S.map((j) => picked[j].plural))}`;
   // worded the other way round ("the power smoothies are half of the boost smoothies"), the fixed kind is still a multiple of the others: the half is a trap to read, not a fraction in the model
-  const reverse = a > 1 && Math.random() < 0.45;
+  const reverse = a > 1 && c === 0 && Math.random() < 0.45;
   const subject = form === "single" ? `The number of ${picked[S[0]].plural}` : `The total number of ${list(S.map((j) => picked[j].plural))}`;
-  const relation = reverse ? `${subject} ${ctx.did} must be exactly ${a === 2 ? "half" : "one third"} of the number of ${dep.plural}.` : `The number of ${dep.plural} ${ctx.did} must be exactly ${times}${of}.`;
+  const exactly = c !== 0 ? `${Math.abs(c)} ${c > 0 ? "more" : "fewer"} than ${times}${of}` : a === 1 ? `equal to ${of}` : `${times}${of}`;
+  const relation = reverse ? `${subject} ${ctx.did} must be exactly ${a === 2 ? "half" : "one third"} of the number of ${dep.plural}.` : `The number of ${dep.plural} ${ctx.did} must be exactly ${exactly}.`;
   const objSentence = `${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} makes a profit of £${profits[i]}` : `each ${it.singular} £${profits[i]}`))))}.`;
   return {
-    intro: ctx.intro(picked.map((it) => it.plural)), objSentence, parts, prefix: "", vars, sing, obj, sense: "max", name: "P", canInteger: true,
+    intro: ctx.intro(picked.map((it) => it.plural)), objSentence, parts, prefix: "", vars, sing, obj, ...(c ? { konst: profits[n] * c } : {}), sense: "max", name: "P", canInteger: true,
     extra: [relation, ...resS], closing: "Formulate this as a linear programming problem, to maximise the profit.",
-    info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, ...(reverse ? { reverse } : {}), profits, resources: rs } },
+    info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, ...(c ? { c } : {}), ...(reverse ? { reverse } : {}), profits, resources: rs } },
   };
 }
 

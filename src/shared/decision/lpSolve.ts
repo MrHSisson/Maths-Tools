@@ -505,7 +505,8 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   const link = info.link;
   const nL = d.vars.length;
   /** the kind that is fixed by the others, as an expression in the letters: 2x, 2(x + y), x + y */
-  const linkE = link ? (link.a === 1 ? link.S.map((j) => syms[j]).join(" + ") : link.S.length === 1 ? `${link.a}${syms[link.S[0]]}` : `${link.a}(${link.S.map((j) => syms[j]).join(" + ")})`) : "";
+  const linkC = link?.c ?? 0;
+  const linkE = link ? (link.a === 1 ? link.S.map((j) => syms[j]).join(" + ") : link.S.length === 1 ? `${link.a}${syms[link.S[0]]}` : `${link.a}(${link.S.map((j) => syms[j]).join(" + ")})`) + (linkC ? ` ${linkC > 0 ? "+" : "-"} ${Math.abs(linkC)}` : "") : "";
   const konst = info.konst ?? 0;
   const objTex = polyTex(konst, info.obj, syms);
   const slips: string[] = [];
@@ -566,9 +567,9 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   push(`The objective is ${info.single !== undefined ? "the number of items wanted" : `the ${max ? "profit" : "cost"}`}: ${info.single !== undefined ? "a single letter" : `add up what each kind of ${rem ? "use" : "item"} ${max ? "makes" : "costs"}`}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
   if (link) {
     const p = link.profits[nL];
-    const add = link.S.map((j) => `${link.a * p === 1 ? "" : link.a * p}${syms[j]}`).join(" + ");
-    base = [...base, { k: "tex", t: `${info.name} = ${exprTex(link.profits.slice(0, nL), syms)} + ${add}` }, { k: "tex", t: `${info.name} = ${objTex}` }];
-    push(`Multiply out the bracket and collect the like terms: the ${link.dep.plural} add to the profit from the letters they depend on.`, base, 2, "Collect");
+    const add = link.S.map((j) => `${link.a * p === 1 ? "" : link.a * p}${syms[j]}`).join(" + ") + (linkC ? ` ${linkC > 0 ? "+" : "-"} ${Math.abs(p * linkC)}` : "");
+    base = [...base, { k: "tex", t: `${info.name} = ${exprTex(link.profits.slice(0, nL), syms)} + ${add}` }, { k: "tex", t: `${info.name} = ${objTex}` }, ...(linkC ? [{ k: "note", t: `The ${Math.abs(p * linkC)} is a constant: it does not change which $${syms.join(", ")}$ are best, but it is part of ${info.name}.` } as LpRow] : [])];
+    push(`Multiply out the bracket and collect the like terms: the ${link.dep.plural} add to the profit from the letters they depend on${linkC ? ", and the constant is kept" : ""}.`, base, linkC ? 3 : 2, "Collect");
     slips.push(`Objective. Common slip: leaving out the ${link.dep.plural}, ${info.name} = ${link.profits.slice(0, nL).map((q, i) => `${q}${syms[i]}`).join(" + ")}.`);
     if (link.reverse) slips.push(`Relation. Common slip: turning it the wrong way round, so the ${link.dep.plural} are ${link.a === 2 ? "half" : "a third"} of the others instead of ${link.a === 2 ? "twice" : "three times"} them.`);
   } else if (rem) {
@@ -638,15 +639,28 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     const verb = PLURAL[r.verb] ?? r.verb;
     const lead = exprTex(r.per.slice(0, nL), syms);
     const line1 = `${lead} + ${pD === 1 ? "" : pD}(${linkE}) ${o} ${texN(r.amount)}`;
-    const add = link!.S.map((k) => `${link!.a * pD === 1 ? "" : link!.a * pD}${syms[k]}`).join(" + ");
+    const add = link!.S.map((k) => `${link!.a * pD === 1 ? "" : link!.a * pD}${syms[k]}`).join(" + ") + (linkC ? ` ${linkC > 0 ? "+" : "-"} ${Math.abs(pD * linkC)}` : "");
     const line2 = `${lead} + ${add} ${o} ${texN(r.amount)}`;
+    const line3 = `${polyTex(pD * linkC, c.coeffs.map((f) => f[0]), syms)} ${o} ${texN(r.amount)}`;
     push(`Constraint ${j + 1}. Add up the ${r.topic}: each kind ${r.verb} an amount, and the ${link!.dep.plural} ($${linkE}$ of them) ${verb} ${pD} ${unitOf(pD, r.unit)} each.`, [...base, head,
       ...d.vars.map((v, i): LpRow => ({ k: "words", t: `$${v.sym}$ ${v.noun} ${verb} $${exprTex([r.per[i]], [v.sym])}$ ${r.unit}.` })),
       { k: "words", t: `The ${link!.dep.plural}, $${linkE}$ of them, ${verb} $${pD === 1 ? "" : pD}(${linkE})$ ${r.unit}.` },
       { k: "tex", t: line1 }], nL + 2, "Add up");
     push("Multiply out the bracket.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }], 1, "Expand");
-    push("Collect the like terms.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
+    if (linkC) {
+      push("Collect the like terms.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "tex", t: line3 }], 1, "Collect");
+      push(`Take the constant ${texN(Math.abs(pD * linkC))} to the other side.`, [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "tex", t: line3 }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
+    } else push("Collect the like terms.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
     slips.push(`Constraint ${j + 1}. Common slip: leaving out the ${link!.dep.plural}, ${lead} ${part.op === "<" ? "<" : "≤"} ${r.amount}, as if only the named kinds used the ${r.topic}.`.replace(/\\/g, ""));
+    if (linkC) slips.push(`Constraint ${j + 1}. Common slip: forgetting to take the constant across, ${exprTex(c.coeffs.map((f) => f[0]), syms)} ${part.op === "<" ? "<" : "≤"} ${r.amount}.`.replace(/\\/g, ""));
+  };
+  const linkLowerPart = (part: LpProblemData, j: number): void => {
+    const c = constraintOf(part.spec);
+    const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
+    const lineA = `${linkE} \\ge 0`;
+    push(`Constraint ${j + 1}. The ${link!.dep.plural} cannot be a negative number: ${linkE} is at least 0.`, [...base, head, { k: "tex", t: lineA }], 2, "The fewer than");
+    push("Take the constant to the other side, and write it in lowest terms.", [...base, head, { k: "tex", t: lineA }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
+    slips.push(`Constraint ${j + 1}. Common slip: forgetting that the ${link!.dep.plural} cannot be negative, so leaving out ${constraintTex(c, syms).replace(/\\ge/, "≥")}.`);
   };
 
   const addLine = (part: LpProblemData, j: number): void => {
@@ -655,7 +669,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     base = [...base, ...(j === 0 ? [{ k: "head", t: "Constraints" } as LpRow] : []), { k: "tex", t: line }];
   };
   info.parts.forEach((part, j) => {
-    if (rem && j < 2) remainderPart(part, j); else if (link && j < link.resources.length) linkPart(part, j); else ordinary(part, j);
+    if (rem && j < 2) remainderPart(part, j); else if (link && j < link.resources.length) linkPart(part, j); else if (link && linkC < 0 && j === link.resources.length) linkLowerPart(part, j); else ordinary(part, j);
     addLine(part, j);
   });
 
