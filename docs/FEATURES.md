@@ -43,6 +43,10 @@ Deck grids and book activities reveal an individual answer with a 500 ms hold wi
 
 **For:** building deck content before the code that draws it is live, and seeing it on a branch preview. **How it works:** the shared deck service keeps a question that uses something only newer code understands (a new question format, a later rectilinear shape) and says what it kept; the live site then shows "This needs a newer version of the site; it will appear once its code is merged" in that place, while the rest of the slide still works. A deck holding such content cannot be published until the code is merged.
 
+### Inverse graph animation (decks)
+
+**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x, restricted to −π/2 ≤ x ≤ π/2, being reflected in the line y = x and then separating into its own axes as y = arcsin x, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse.
+
 ### Rectilinear shapes in decks
 **For:** teaching area by splitting into rectangles and by removing cut-outs. **How it works:** live generator slides show the tool's own diagrams and step highlighting. Authored questions have chosen dimensions, orientation and method (shapes: L, T, three- and four-step staircases with steps of different sizes, cross, capital I, U, N, comb, frame; at 270° corners one length of each pair can be drawn inside the shape so labels do not crowd); L-shapes can deliberately mark a length to find by addition or subtraction before area. Board edge labels are larger while worksheet labels keep their print size. Reduced labelling defaults on. Make printable worksheet saves an independent set with a supplied split and prompts, a split only, or independent working space; questions and worked answers print from File → Worksheets, on A4 pages built to be shrunk two to a sheet (large pictures, one page per kind of question, the first question of each page laid out as numbered steps). **Where:** deck editor, Perimeter & Area → Rectilinear Shapes.
 
