@@ -146,6 +146,8 @@ export const CATEGORIES: CategoryMeta[] = [
       { hub: 'decision-overview', id: 'critical-path', path: '/critical-path', name: 'Critical Path Analysis', description: 'Activity networks from precedence tables: forward and backward pass, critical activities, critical path and float — walked through step by step', load: () => import('./tools/Decision/CriticalPath') },
       { hub: 'decision-overview', id: 'network-flows', path: '/network-flows', name: 'Network Flows', description: 'Potentials, cut values and flow augmentation on capacity and minimum/maximum networks — walked through step by step, up to maximum flow and minimum cut', load: () => import('./tools/Decision/NetworkFlows') },
       { hub: 'decision-overview', id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
+      { hub: 'decision-overview', id: 'lp-formulate', path: '/lp-formulate', name: 'Formulating Linear Programmes', description: 'Turn a situation into a constraint: resource use and direct comparisons, written in whole numbers and lowest terms, with the working built line by line (AQA 7367 DD1)', enabled: false, load: () => import('./tools/Decision/FormulatingLP') },
+      { hub: 'decision-overview', id: 'lp-simplex', path: '/lp-simplex', name: 'The Simplex Algorithm', description: 'Set up a tableau, choose the pivot, solve a problem to its optimum and read a tableau, in exact fractions with the row operations shown (AQA 7367 DD3, DD4)', enabled: false, load: () => import('./tools/Decision/SimplexAlgorithm') },
     ],
   },
   {

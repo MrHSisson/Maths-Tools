@@ -89,6 +89,203 @@ Branch `claude/venn-hcf-lcm-deck-qmkg07` (merge 4a of the Venn plan). Area: `spe
 Agent: Claude Code
 Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (update 2026-11-22, deck session).
 
+## 2026-11-22 — The Simplex Algorithm: engine, designed numbers and four sub-tools (chunks S0 to S5), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpSimplex.ts`, `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `SxWorking.tsx` (new); `src/tools/Decision/SimplexAlgorithm.tsx` (new tool, `/lp-simplex`, `enabled: false`, linked from the Decision hub's DD card); small edits to `types.ts` (the `sx` data field and the `sxView` step), `DecisionShell.tsx` (picture height), `registry.ts`, `decisionSpec.ts` and two test lists.
+
+- **The engine** (`lpSimplex.ts`): the textbooks' algorithm in exact fractions. Objective row first; most negative entry is the pivot column; smallest θ over the positive entries is the pivot row; divide, then clear the column; stop when no entry in the objective row is negative. Minimising by P = −C; a ≥ constraint multiplied by −1, and a negative right-hand side starts with a pivot on a negative entry of that row; a lower bound substituted out (X = x − a); an equality as a pair. Checked against a brute-force search of every vertex in every starting form.
+- **Designed numbers** (`lpSimplexGen.ts`): a problem is built from a whole optimum, the constraints that bind there and a whole dual, then the real algorithm is run and the problem is kept only if every tableau on the way is inside the level's budget (denominators 1 to 4 at Level 1; 1 to 6, 8 and 10 at Level 2; 1 to 10 at Level 3; a limit on iterations, size of entry and non-whole entries; no ties).
+- **Four sub-tools:** Set up the tableau (also Tableau To Problem), One pivot (including the negative-right-hand-side start), Solve a problem (every iteration, then every variable and P, then the answer in the question's own terms), Read a tableau (optimal or not, the values, binding constraints and slack meanings).
+- **Levels:** 1 two variables, standard form; 2 up to three variables and a situation in words (the data is scaled, then simplified); 3 up to four variables and four constraints, and a change of form first (minimise, ≥, lower bound, equality).
+- **The working** is the page a student writes: the tableau as a table with the pivot column, row and cell highlighted, the θ-values beside it, and the row operations beside the new tableau. **Tableau Layout** option (display only): Cambridge style (NPR = R3 ÷ 2) or Oxford style (a Basic variable column and numbered rows, R5 = R1 + 8 × R6). Slack variables are s₁, s₂ … and every number is a fraction.
+- **Options:** Variables, Constraints, Direction, Wording, Starting Form, Tableau Layout.
+- **Tests** (`src/tests/lpSimplex.test.ts`): engine against brute force at all three levels; every tableau within budget with no ties for every level and sub-tool; Level 1 limits; a situation reads naturally; 30 different questions; every step of every kind in both layouts renders as KaTeX; the ending states the engine's optimum. The seeded-replay and worksheet-fill tests pick the tool up automatically.
+- **Checked** in headless Chromium at laptop and phone width: no console errors; the tableau renders and steps.
+- **Deliberately not done:** "is it practical?" (needs a designed fractional optimum), the zero-θ hazard, a Pivot Column option, unbounded and infeasible problems, exam-style chains and parametric tableaux, DF6 games; a tablet check, a real printer check, the brief's go-live items and the dashboard notes.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Simplex engine and four sub-tools (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — The Simplex Algorithm: "Is it practical?" (whole-number solutions), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpSimplexWhole.ts` (new); edits to `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `src/tools/Decision/SimplexAlgorithm.tsx`, `src/tests/lpSimplex.test.ts`.
+
+- **A fifth sub-tool, Is it practical?** The optimum of the linear programme has a fraction in it, but only whole numbers make sense. The question asks why the optimum is not practical and for the best practical plan. **Optimum** option: given, or find it first with the simplex algorithm (the whole working, then the whole-number part).
+- **Whole Numbers option on Solve a problem and Read a tableau:** the same question is added to a solve or to a tableau, so the whole-number part can follow any run.
+- **The working:** why the optimum is not practical; the upper bound (a practical plan is a plan of the linear programme, and with whole coefficients its value is a whole number, so at most the whole number below the optimum); a table of the whole-number points either side of the optimum (each fractional variable rounded down and up) with every constraint ticked or crossed and P; the best practical point, which reaches the bound, so nothing can be better. Notes: rounding to the nearest can break a constraint; rounding down is practical but not always best. A situation in words gives the plan in its own words ("make 24 shelves and 5 chairs, for a profit of £131").
+- **Designed numbers:** the problem is built so that a vertex with fractions in it is the best point (a positive whole dual-style design with whole objective coefficients, so the optimal value is usually a fraction too), then kept only if a feasible whole-number point reaches the bound. Level 1: two variables, any practical neighbour. Level 2: the best plan is not just everything rounded down. Level 3: also rounding to the nearest breaks a constraint, up to four variables. Standard form only.
+- **Tests:** the best practical plan equals the true best whole-number plan found by trying every point (two and three variables), reaches the bound, and the working renders in both layouts.
+- **Deliberately not done:** problems where no practical point reaches the bound (the best plan then needs a longer check); an unbounded or infeasible problem; practical for the non-standard forms (minimise, ≥, lower bound).
+- **Ties and degenerate cases (Harry's call):** allowed naturally from Level 2. One problem in three is built degenerate. The working names the tied columns or rows (either choice reaches the optimum) and explains a θ of 0. Level 1 stays tie-free. The Pivot Column option is dropped.
+- **Whole Numbers mixed:** on Solve and Read a tableau the optimum may be whole (the answer is "practical") or not; the Is it practical? sub-tool always has a fraction.
+- **Engine:** a tableau records its basis, so a degenerate tableau is read correctly; a tableau given to be read must show one unit column per constraint.
+
+- **Room left (three or more fractional variables):** the working rounds down, finds the room left in each constraint, and lists the sets of variables whose coefficients give exactly the rise needed to reach the bound, each checked against the room; the full table stays for one or two fractional variables.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Simplex, is it practical (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — The Simplex Algorithm: a pivot given, and the data as a table, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `src/tools/Decision/SimplexAlgorithm.tsx`, `src/tests/lpSimplex.test.ts`.
+
+- **Pivot Given (corpus L46):** One pivot has a new **Pivot** option, Student Chooses or Pivot Given. When given, the question names the pivot (by column and row, or by column and basic variable in the Oxford layout) and the working goes straight to dividing the pivot row and the row operations, with no column or θ steps. It works with the negative-right-hand-side start too.
+- **Data as a table (corpus L80):** the **Wording** option gains **A Table**. A situation's limits, the use of each resource per item and the profit per item are shown in a table beside the question (the picture), and the student formulates, simplifies decimals to whole numbers, and sets up or solves. Levels 2 and 3, Set up, Solve and Is it practical?.
+- **Tests:** the pivot the question names is the pivot the working uses (both layouts, three levels); the table holds every limit, use and profit and renders as KaTeX.
+- **Decided not to build (exam-style notes):** L85 (mark-style short parts) and L57 (the full exam chain).
+- **Not checked:** the table on screen at phone, tablet and laptop width.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Simplex, pivot given and table (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Simplex: an equation as a row, a lower bound as a row, and every level has its own questions, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplex.ts` (the engine), `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `src/tools/Decision/SimplexAlgorithm.tsx`, `lpProblem.ts`, `src/tools/Decision/FormulatingLP.tsx`, the tests.
+
+- **Method (Level 3, Set up and Solve):** **Substitute And Split** (a lower bound y ≥ 4 becomes Y = y − 4; an equality becomes a ≤ and a ≥ constraint) or **Use As Rows**. As rows: **y ≥ 4 is one more constraint**, −y ≤ −4, so the tableau starts with a negative right-hand side and the first pivot is chosen from that row; and **an equation 2x + 3y = 15 goes in as a row with no slack variable**, so no variable is basic in it, and the first pivot is in that row, in a column where that row has the smallest θ (so every right-hand side stays positive). The engine now has rows without a slack column. The answer is the same either way: the tests check both against a brute-force search and against each other. This is the textbook's equality method (corpus L79) as well as the lower bound as a ≥ constraint.
+- **Every level has its own questions.** A higher level must not be able to draw a lower-level question.
+  - **Simplex.** Level 2 Set up, Solve and Is it practical? are always a situation in words or a table (the inequalities are Level 1, and Level 3 where it applies). Level 2 One pivot is part-way through the run (Level 1 is the first pivot); Level 2 Read a tableau is a tableau that is not yet optimal (Level 1 is the optimal one). Level 3 always needs a change of form first (minimise, ≥, a lower bound, an equality: no standard-form choice); Level 3 One pivot is a negative right-hand side; Level 3 Read a tableau is the other way round (the problem the tableau shows). The Start and Ask For options are removed (their choices were each level's own). Sizes: 2 × 2 at Levels 1 and 2, 3 × 3 at Levels 2 and 3, 4 × 4* at Level 3.
+  - **Formulating, Formulate a problem.** A Level 2 problem always has at least one Level 2 feature (a percentage, a ratio, a decimal amount, a unit change, a pack, a price minus a cost); a Level 3 problem is always one of the Situations (Exactly Half, Either-Or Limits, A Remainder, A Relation Between Kinds, A Blend To Minimise): the plain Resource Limits choice is removed from Level 3.
+- **Tests:** an equation as a row (no slack, first pivot in its row, the same optimum as the pair of inequalities and as brute force); a lower bound as a row (negative start); Level 2 is always a situation; Level 1 and Level 2 pivots and tableaux are different; Level 2 and 3 problems always have their level's feature.
+- **The number of variables is enforced too (Harry's catch):** Level 1 is two variables, Level 2 is three, Level 3 is three or four*. The Size option is 2 × 2 and 2 × 3 at Level 1, 3 × 3 and 4 × 4* at Level 3, and not offered at Level 2 (it is always 3 × 3). The level labels say it ("Three variables, a pivot part-way through the run"). A whole-number question with a fraction in its optimum is judged by the next level's tableau budget, because the fractions run all through its tableaux.
+- **A test of the whole level design** (`src/tests/lpLevelDesign.test.ts`) now checks both tools, every level, with every option ticked: Formulating constraints by kind and by the capacity form; Formulating problems by the features of their level; Simplex by the number of variables, the wording, the form, the tableau shown and the whole-number rule. It found three gaps, now closed: Level 3 One pivot could draw a minimise or a lower bound (which look like a standard tableau), a standard-form start could still be drawn at Level 3 if asked for, and Level 3 Solve with Whole Numbers was a standard-form question (that option is now Levels 1 and 2; Level 3 is the Is it practical? sub-tool). Is it practical? Level 1 is now the case where rounding down is the best plan. The Formulating level labels were brought up to date.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: rows for equations and bounds, exclusive levels (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Formulating: relations stay as relations; ratios are written as ratios, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lp.ts`, `lpGen.ts`, `lpGenL23.ts`, `lpSolve.ts`, the Formulating tests, `src/tools/Decision/FormulatingLP.tsx`. Harry's two notes while previewing.
+
+- **Relations are not forced to "≤ a constant".** A constraint that says how the letters compare (a ratio, a percentage or a share of the others, a multiple: "x is at least twice y", "the ratio of x to y is at least 2 : 3") now ends in whole numbers and lowest terms with the letters on both sides: **3x ≥ 2y**, **3x ≤ y + z**, **5x = 6y**. The working no longer takes everything to the left and multiplies by −1 to put the first letter positive: it translates, multiplies out any bracket, combines a letter that is on both sides, clears the decimals or fractions, divides by a common factor, and stops. A note says the line is just as correct as one with 0 on the right (the rearranged form would only be needed to feed a simplex tableau). The "check with a number" and the common slip show both sides of the relation. A constraint with a constant on the right (a resource limit, a bound, a difference) is unchanged, and so are blends.
+- **Ratios are written as ratios.** The "one for every" wording is gone. A ratio constraint is **"The ratio of the number of A to the number of B must be at least 2 : 3"**, and A can be two kinds combined ("the ratio of the number of A and B combined to the number of C must be at least 1 : 2", working: the two added together, divided by C, then 2(x + y) ≥ z). Shares of the total ("one third of the total") stay in words: they are a fraction, not a ratio. The style's option button now reads "x : y at least 2 : 3".
+- **Tests:** the worked examples were rewritten to the new lines (3x ≥ 2y; 3x ≥ 2y + 2z by collecting and clearing 0.6x ≥ 0.4y + 0.4z; 2(x + y) ≥ z), and every random draw still agrees with its meaning, renders as KaTeX and ends on the constraint it shows.
+- **Not changed:** the Simplex tool keeps its own tidy form (a ≤ constraint with a slack); a constraint in the Formulating model is a relation or a ≤ constant as it is said.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Formulating relations and ratios (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Formulating: styles regrouped, resource limits, Level 3 situations, display toggles, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpGenL23.ts`, `lpProblem.ts`, `lpGen.ts`, `lpSolve.ts`, `src/tools/Decision/FormulatingLP.tsx`, the Formulating tests. Harry's notes from the preview.
+
+- **Percentages Of is gone as a separate option.** It could be ticked with no percentage style selected. The four things a percentage is taken of are now styles of their own: **Percentage Of One Kind, Percentage Of Several Kinds, Percentage Of The Total, More Or Less Than\***. Ratios and shares are two styles too (**Ratios**, **Shares Of The Total**).
+- **Time Per Item and Share Of A Requirement are Level 2, not Level 3.** The student is given the amount each item uses, so they are fractional coefficients: they are now the Level 2 style **Fractional Amounts** ("each loaf takes 1 minute, each cake 4/3 minutes"; "each uses 1/60 of the oven, at least 1 in all"). Capacity Given As at Level 3 keeps the two forms in which the student must work the coefficients out: **Most You Could Make** and **Rate And Time\***.
+- **Resource Limits (Formulate a problem):** One, Two or Three. Three limits need a new context, a **florist** (spring, summer, wedding and market bouquets; roses, tulips and sunflowers, one limit each). A question draws the count it can supply.
+- **Situations (Formulate a problem, Level 3):** Resource Limits, Exactly Half, Either-Or Limits, A Remainder, A Relation Between Kinds, A Blend To Minimise. The Objective option now applies to Levels 1 and 2 only (a blend is the Level 3 minimise). A remainder or a relation says which letters to use: "Formulate this as a linear programming problem, **using only x and y**, to maximise the profit."
+- **Display toggles:** **Common Slips** and **Number Check** (Shown or Hidden) in the display tab. They redraw the same question without those steps.
+- **Tests:** three limits in a florist, the Situations option picks the model and the wording names the letters, the toggles remove exactly the check and the slip steps.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Formulating notes from the preview (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Formulating Linear Programmes: a kind that is exactly a multiple of the others, substituted out (problem, Level 3), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpProblem.ts` (the `linked` problem style, a juice-bar context), `lpGen.ts` (the `link` data), `lpSolve.ts` (the working), `src/tests/lpProblem.test.ts`.
+
+- **The new style:** "The number of boost smoothies made must be exactly twice the number of power smoothies" (or **twice the total** of power and energy smoothies, or **equal to the total**; the multiple is 2 or 3 or 1). The kind that is fixed by the others needs **no letter of its own**: the model is written in the other letters only, with the relation put into the objective and into every resource limit (the same idea as the remainder, which stays: "the rest of 40 hectares").
+- **The working:** the variables (the fixed kind is named as an expression, e.g. $2(x + y)$, and gets no letter), the objective with the bracket multiplied out and the like terms collected, each limit added up with the fixed kind's use, the bracket multiplied out and collected, non-negativity (the fixed kind cannot be negative either), the model, and an **Another way** step (keep a letter for it and add $z = 2x + 2y$ as an equation: the same problem with one more letter). Common slips: leaving the fixed kind out of the objective and of each limit.
+- **Contexts:** a new juice bar (power, energy, boost and green smoothies; preparation and blending time), and the bakery, print shop and workshop. Two or three letters in the model, so up to four kinds in the situation.
+- **Tests:** over 60 draws, the model in the letters means the same as the full situation (the profit and every resource limit, tried at whole-number points with the relation put in); the wording says the relation; the fixed kind has no letter; the working renders as KaTeX. The existing problem tests were widened to know the new style.
+- **A half (and a third):** the relation can also be worded the other way round, "the power smoothies are exactly half of the boost smoothies", so the fixed kind is still twice the others, not half (the half is a trap to read). A note in the Variables step and a common slip name it. A fraction in the model itself ("boost is half of power") is left out: it would force the number of power smoothies to be even.
+- **A constant (Harry):** the relation can be "exactly 10 more than" or "10 fewer than" (5, 10, 15 or 20), alone or with a multiple (more than twice the others). The objective keeps a constant (P = 30 + 13x + 13y), each limit takes the constant across ("Take the constant 45 to the other side"), and with **fewer than** the fixed kind cannot be negative, so the letters it depends on must be big enough: a real extra constraint (x + y ≥ 10), with its own step and common slip. Slips named: forgetting the constant in the objective and across each limit.
+- **Not done:** the same relation as a one-line "Write a constraint" question with a substituted-out letter; the equality-elimination method in the Simplex tool (corpus L79).
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Formulating, a kind substituted out (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Formulating: fractions of capacity only; the single aim is off by default, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpGenL23.ts`, `lpGen.ts`, `lpProblem.ts`, `lpSolve.ts`, `src/tools/Decision/FormulatingLP.tsx`, the Formulating tests.
+
+- **Capacity Method is gone.** Harry: keep the fractions of capacity ("one loaf uses 1/60 of the oven…", then multiply by the lowest common multiple); remove the common-units route. The either-or working is now always fractions, the option, the "Both" choice and the common-units step are removed.
+- **Single Aim** (some questions only ask to make as many of one kind as possible) is now an option on Formulate a problem, Levels 2 and 3: **Left Out** (the default) or **Included\***. It comes from one exercise in the Oxford chapter 14, so it is left out unless asked for. Tests: never drawn by default, drawn when included.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: fractions only and the single aim (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-22 — Linear Programming audit applied: balance, arbitrariness, asterisks, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `src/tools/Decision/SimplexAlgorithm.tsx`, `src/tools/Decision/FormulatingLP.tsx`, `src/tests/lpSimplex.test.ts`. The audit is `specs/linear-programming-audit.md`.
+
+- **Minimise is a real minimise:** the cost is mixed-sign (some variables earn, some cost: "Minimise C = 3x − 5y"), not a negated maximise.
+- **One pivot:** Starting Form is replaced by **Start** (Standard Tableau, or A Negative Right-Hand Side), because the other forms looked identical in a question that gives only the tableau.
+- **An equality** now involves at least two variables.
+- **Tableau To Problem moved** from Set up to Read a tableau, as the option **Ask For** (What It Says, or The Problem It Shows).
+- **Whole Numbers** is now on Solve a problem only (the Is it practical? sub-tool is unchanged); it was thin on Read a tableau.
+- **Size** replaces Variables and Constraints in the Simplex tool: 2 × 2, 2 × 3, 3 × 3, 4 × 4* (variables × constraints), by level.
+- **Asterisks:** an extension that is unlikely to come up has an asterisk on its option button (Formulating: 4* variables, Rate And Time*, Time Per Item*, Share Of A Requirement*, More Or Less Than*, Both*; Simplex: 4 × 4*, Ask If Practical*), and the option's information says what an asterisk means.
+- **Left as it was:** Capacity Method is already a display-only option in its own tab, so it is not among the Question Options (recommendation 7); a Formulate a problem style control (recommendation 9) only if a teacher asks.
+- **Tests:** a minimise has both signs and still matches the brute-force optimum; an equality has two or more variables; a size is a variables-by-constraints pair; Read a tableau can ask for the problem.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: audit applied (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Formulating Linear Programmes: "Write a constraint", Level 1 (chunk F1), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpGen.ts`, `lpSolve.ts`, `LpWorking.tsx` (new); `src/tools/Decision/FormulatingLP.tsx` (new tool, `/lp-formulate`, `enabled: false`); small edits to `src/shared/decision/types.ts` (the `lp` data field and `lpView` step), `DecisionShell.tsx` (picture height for the `lp` field), `src/registry.ts`, and three test lists (`organisation`, `printBasket`, `localExports`-clean).
+
+- **The tool.** One sub-tool, **Write a constraint**, Level 1: a short situation and the student writes exactly one constraint, in whole numbers and lowest terms. **Resource use** (`10x + 15y ≤ 300`, divided by 5 to `2x + 3y ≤ 60`; minimum-to-meet contexts too) and **direct comparisons** (a multiple of one variable or of several combined, a difference, a bound including "of each", a total), with all five operators (at least, at most, exactly, more than, fewer than) and two, three or four variables. Six settings (bakery, print shop, workshop, café, craft stall, a dietician's meal).
+- **The working** is the page a student would write, built a line at a time: the variables; the translation of the words; clearing a fraction, multiplying out brackets, moving everything to the left, multiplying by −1 to put the first coefficient positive (and reversing the sign); a **check** (for resource use, "if only loaves are made"; otherwise a number that fits the words and that the slip does not allow, closest to the boundary); then the constraint boxed with the **common slip** shown only with the answer. A strict operator stays strict, with a note that the boundary is not allowed (and what `x > 15` means for whole numbers).
+- **Options:** Variables (Two, Three, Four; tick any) and Constraint Styles (Resource Use, Comparisons). Skill worksheets print with the print basket.
+- **Tests** (`src/tests/lpGen.test.ts`, seeded): the brief's worked examples reproduced line by line; over 3,000 draws, the constraint is tidy, its meaning (from the sentence's own numbers) agrees with its coefficients, the wording carries every number and the operator word, every piece of working renders as KaTeX with no `\text`, the slip is a different constraint that the check point exposes, and 30 questions of a worksheet differ.
+- **Checked** at phone, tablet and laptop width in headless Chromium: no console errors; the working fits its panel; the phone shows the whole solution as one page.
+- **Deliberately not done:** Levels 2 and 3 (F2 to F4: either-or, percentages, ratios, blends), Working Shown, Data Shown, the `problem` sub-tool; the Decision hub's DD chapter card; the dashboard notes for the new tool; the brief stays `ready` (it is only partly built); a real printer check.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Write a constraint, Level 1 (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Linear Programming: the plan for the Simplex tool (documents only)
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `specs/linear-programming-simplex.md` (new), `specs/corpus/linear-programming-styles.md` (rows L77 to L87), `specs/sources.md`, `specs/linear-programming-tools.md`, `docs/pathways/linear-programming.md`, `scripts/lpSimplexNumbersStudy.py` (new). No code in the app, nothing teachers see.
+
+- **The plan.** `specs/linear-programming-simplex.md` plans the Simplex tool (DD3, DD4, A2) as four sub-tools (set up, pivot, solve, interpret) with a tableau picture, built in chunks S0 to S6, with eight decisions for Harry. It is written from the first textbook and the Oxford chapter 30 Harry attached (read in full: the simplex section, both exercises, the four worked examples, the games section, the summary and the Assessment).
+- **Worry 1, horrific numbers: measured, then designed out.** Every tableau entry's denominator divides the determinant of the basis the algorithm is in, so pivots on 5, 7 and 11 breed fractions. 480 000 random exact runs: with coefficients 1 to 8 only about 3% of problems keep every denominator in every tableau at 5 or below (under 1% at 3); sparse small coefficients (0 to 5) help most. The method: **design the optimum first** (a whole optimal point, which constraints bind, a whole dual), build the objective and right-hand sides from it, run the real algorithm, and keep the problem only if every tableau meets a per-level niceness budget (denominators ≤ 3, 5, 6; iterations; entry size; no ties). That keeps 23% to 39% of draws at denominators ≤ 5 (up to 32% at ≤ 3 with the smallest coefficients), with the optimum always whole. A stricter "every minor small" idea was tried and rejected. Tests will measure the numbers of every generated problem and compare their distribution with the books' profile.
+- **Worry 2, the style of answer.** The model answer is the page a student writes, in the order a mark scheme pays: standard form and the slack names, the tableau, the pivot with θ-values and the reason, each iteration with its row operations written, the optimality sentence, every variable (slacks too) and P read from the value column, and the statement in context with the slack's meaning in the story's units. The two books differ in layout (a Basic variable column and a Row column against neither), slack letters and mixed numbers, so those are display options. Stock wording and the named slips are listed.
+- **Corpus and sources.** Rows L77 to L87 (a non-standard start by pivoting on a negative entry, lower-bound substitution, equalities, decimal tables with simplification, "is it practical", reading a tableau, the reverse, error analysis, mark-style short parts, naming slack, games as LPs) and a sources row for the Oxford chapter 30 (not committed; not yet in Drive).
+- **Deliberately not done:** any code; the Graphical brief; the examiner reports; the `problem` brief confirmation; moving the Oxford chapter into Drive.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: the Simplex plan (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Formulating Linear Programmes: strict inequalities in problems, the rest of "Formulate a problem" Level 2, and Level 3 (chunks F6 and F7), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpProblem.ts` (rewritten), `lpGen.ts`, `lpGenL23.ts`, `lpSolve.ts`, `LpWorking.tsx`, `src/tools/Decision/FormulatingLP.tsx`, `src/tests/lpProblem.test.ts`, the brief's status line and the pathway.
+
+- **Strict inequalities in problems, at every level.** A strict inequality keeps its sign in the model. Because a strict edge has no best point on the real numbers, any problem with a strict constraint says that only whole numbers of items can be made, and the model ends "integers", with a note that (for example) `2x + 3y < 60` means `2x + 3y ≤ 59`. The Integers option (Say So or Leave Out, Levels 2 and 3) decides whether strict ones appear at those levels; the exact region check also asks that the middle of the region satisfies every sentence as worded.
+- **The rest of Level 2.** A **single-variable objective** ("make as many salads as possible": N = y). A **pack variable** (buns sold in trays of 6: the working shows 6 × £2 = £12 and 6 × 5 = 30 minutes a tray). **Unit conversions** (5 hours against minutes per item: a step "5 × 60 = 300 minutes"; 12 kg against grams per item, with a common factor then divided out). **The data as a table** (Data Shown: Sentences or Table, display only: the table is drawn beside the question, and the question never names the variables).
+- **Level 3.** **Either-or limits** in a problem (on the kitchen, 2, 4 and 3 minutes an item for 5 hours); **a blend to make at least cost** (feed, oil or a drink: the share of the mix and the total amount, minimising the cost); **"exactly half"** of the total; and a **remainder**: a total (hectares, square metres) split over named uses with the last use being what is left, substituted out. The working shows the objective with the bracket multiplied out and collected (`P = 4x + 5y + 3(40 − x − y)` becomes `P = 120 + x + 2y`), the rest cannot be negative (`x + y ≤ 40`), and a limit with the rest substituted (`5x + 8y + 3(40 − x − y) ≤ 200` becomes `2x + 5y ≤ 80`).
+- **Tests:** the problem tests now run at Levels 1 to 3 in two, three and four variables (a non-empty region, a single best corner, every lattice point checked by the meaning of each sentence, no variable named in the question, every number present, valid KaTeX, the slips in the last step), plus hand-made models for the remainder, the pack, the conversion and the single-variable objective, a check that each rarer kind turns up, that Leave Out gives no strict inequality, and that the table changes only the display.
+- **Deliberately not done:** per-packet scaling ("800 kg of stock for 1600 packets is 500 g a packet"), pence to pounds, and Level 3's "three variables reduced to two by using all the time" (the remainder covers substituting a variable out, but not an equality that eliminates one). The `problem` section of the brief is still `draft`.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: problem Levels 2 and 3, strict inequalities (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Formulating Linear Programmes: "Formulate a problem" Level 2 (chunk F6, part), and the common slip as a step
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpProblem.ts`, `lpGenL23.ts`, `lpGen.ts`, `lpSolve.ts`, `LpWorking.tsx`, `types.ts` (the `slip` row kind removed), `src/tools/Decision/FormulatingLP.tsx`, the three LP test files, the pathway.
+
+- **The common slip is now a step, not a box in the working area.** The last step of a question is "Common slip", said in plain text in the caption on the right; it adds nothing to the page. In a problem, the slips for the objective and each constraint are one final step, "Common slips".
+- **Formulate a problem, Level 2.** The constraints now include percentages, ratios, shares of the total, decimal amounts per item and fixed totals ("exactly"); the profit can be **price minus cost** ("each loaf sells for £14 and costs £6": the working shows 14 − 6 = 8, and the slip is using the price); and the question can say that **only whole numbers of items can be made**, so the model ends "x, y, z are integers" (new option Integers: Say So or Leave Out).
+- **Tests:** the problem tests now run at both levels in two, three and four variables (non-empty region, a single best corner, every lattice point checked by the meaning of each sentence, the wording carrying every number, valid KaTeX, the slips in the last step's caption).
+- **Deliberately not done:** the rest of Level 2 in the brief (pack variables, unit conversions, per-packet scaling, a single-variable objective, the data as a table), and Level 3 of `problem` (F7). Strict operators are still left out of problems; equalities appear only from fixed totals and "exactly" comparisons.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: problem Level 2, slips as a step (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Formulating Linear Programmes: reachable from the Decision hub; "Formulate a problem", Level 1 (chunk F5), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/tools/Decision/decisionSpec.ts` (the DD chapter's `toolIds`), `src/shared/decision/lpProblem.ts` (new), `lp.ts`, `lpGen.ts`, `lpSolve.ts`, `src/tools/Decision/FormulatingLP.tsx`, `src/tests/lpProblem.test.ts` (new), the brief's status line and the pathway.
+
+- **The hub.** The Linear programming card (DD) on the Decision hub now lists Formulating Linear Programmes. The tool is still `enabled: false`, so the card shows it, and the link works, only in Developing-tools mode.
+- **A second sub-tool, Formulate a problem (Level 1).** The question gives a situation, a profit (or a cost) per item and the limits, and **names no variables**: the student assigns them. The working builds the whole model: the variables, the objective (`P = 16x + 3y + 8z`, or `C = …` to minimise), each constraint worked as in Write a constraint (its working shown while it is written, then kept as one line), non-negativity, and the model in the book's layout ("Maximise P = …, subject to: …"). Each constraint's common slip is shown only with the finished model. Two to four variables.
+- **Maximise a profit or minimise a cost** (the Objective option): resource limits (at most) with a profit per item, or amounts that must be supplied (at least) with a cost per item (the dietician setting), plus one direct comparison (a multiple, a difference, a bound or a total).
+- **Every model is checked** with the new exact corner-point routines in `lp.ts` (`vertices`, `bestVertices`): the region is not empty, there is a single best corner, and it is a plan that does something, so the same models can feed the graphical tool later. The tests re-check this independently, by the meaning of each sentence at every lattice point.
+- **Deliberately not done:** Levels 2 and 3 of `problem` (F6 and F7: price minus cost, packs, unit conversions, integers, a table, remainders, blends, either-or); the Data Shown option; strict inequalities and equalities in a problem (an objective over a region with a strict edge has no best point on the real numbers: they come back with "integers" at Level 2); the brief's `problem` section is still `draft`, so the choices above are mine to confirm.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: hub link and Formulate a problem, Level 1 (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
 ## 2026-11-21 — Linear Programming (Decision Maths, chapter DD): planned, nothing built
 
 Branch `claude/wonderful-gates-jfutd2`. Area: `specs/`, `docs/pathways/linear-programming.md` (documents only; no code, no tool, nothing teachers see).
@@ -100,6 +297,33 @@ Branch `claude/wonderful-gates-jfutd2`. Area: `specs/`, `docs/pathways/linear-pr
 
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: planned (Claude Code)" (tag agent:claude-code), branch `claude/wonderful-gates-jfutd2`.
+
+## 2026-11-21 — Linear Programming: the maths core (chunk F0), library only
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lp.ts`, `src/tests/lp.test.ts`, `docs/pathways/linear-programming.md` (no tool, no registry entry, no UI: nothing teachers see).
+
+- **`lp.ts` is built.** Exact fractions (the `Fr` of `dim.ts`); the `Var`, `Constraint` (coeffs, op of ≤ ≥ = < >, rhs, source, kind, `holds`) and `Model` types from brief section 9; the tidy rule (whole-number coefficients, lowest terms, leading coefficient positive with the operator flipped on a negation, strict operators kept strict); the relationship rule (`relationship`, `percentOf`, `ratioOf`: clear the fraction, move to the left, combine like terms, B may be the total); the blend rule (`blend`); the either-or rule (`eitherOr`: x/a + y/b ≤ T becomes (b/g)x + (a/g)y ≤ Tab/g, any number of products); `linear` for resource uses, bounds, totals and decimal amounts; `intercept`, `tidyHolds`, `feasible`, `objective`.
+- **`holds` is independent.** Each constructor writes the meaning from the sentence's own numbers (sum of A against m times the sum of B; the actual share of the actual mix; the capacity share x/a + y/b), never from the tidy coefficients.
+- **Tests** (`src/tests/lp.test.ts`, seeded): every worked example of brief 2 and 4.6, the blend examples and the decimal-amount examples; thousands of random draws in 2, 3 and 4 variables check integer coefficients, gcd 1, positive leading coefficient, and that `holds` agrees with the tidy inequality at every lattice point (0 to 30, 0 to 12, 0 to 8), counting boundary points (false for strict operators there).
+- **A rule worth knowing:** the tidy form divides by the common factor of the coefficients *and* the right-hand side, so `80x ≤ 500` becomes `4x ≤ 25`, and `2x + 4y ≤ 5` stays as it is (coefficient gcd 2). The generators build whole-number right-hand sides by construction, so their constraints always have coefficient gcd 1.
+- **Deliberately not done:** `lpGen.ts`, the stepper, the `constraint` sub-tool (F1 onward), any registry entry.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: maths core F0 (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
+## 2026-11-21 — Formulating Linear Programmes: "Write a constraint" Levels 2 and 3 (chunks F2 to F4), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpGenL23.ts` (new), `lpGen.ts`, `lp.ts` (one export), `lpSolve.ts`; `src/tools/Decision/FormulatingLP.tsx` (levels and options); `src/tests/lpLevels.test.ts` (new), `lpGen.test.ts`; the brief's status line and the pathway.
+
+- **Level 2 (proportions).** Percentages (of one variable, of several combined, of the total, 20% more or less than), ratios and shares ("the ratio of x to y is at least 2 : 3", "at least one for every two", "a third of the total"), and decimal amounts per item (`0.8x + 0.6y ≤ 3000` becomes `4x + 3y ≤ 15 000`). Two to four variables; every operator.
+- **Level 3 (models).** Blends and averages (oil, feed, a cocktail, an investment: the share is of the whole mix, so the total goes in the bracket) and **either-or limits** (`x/60 + y/45 ≤ 1`, multiplied by the lowest common multiple to `3x + 4y ≤ 180`) in the four forms of the brief: Most You Could Make, Rate And Time, Time Per Item (hours changed to minutes) and Share Of A Requirement; two to four products.
+- **The working** shows each translation, the bracket multiplied out, everything moved left and collected, the decimals or fractions cleared by the stated multiplier, a common factor divided out, and a −1 (reversing the sign) when the first coefficient comes out negative. The either-or working can be shown as fractions of the capacity, as common units, or both (the display-only option Capacity Method). The check is a number that fits the words (or, where the slip is the weaker rule, one the words rule out that the slip would allow), or for either-or the ends of the line: with only one kind, the most that could be made. The common slip (the share of the others only, the ratio the wrong way round, the right-hand side not scaled, the coefficients swapped, the capacities added, the time forgotten, the content of one item only) is shown only with the answer.
+- **Options added:** Constraint Styles now has Levels 2 and 3 choices; Percentages Of (Level 2); Capacity Given As and Capacity Method (Level 3).
+- **Tests:** the brief's worked examples reproduced line by line (3x − 2y − 2z ≥ 0, 5x − 6y = 0, 3x − 2y ≥ 0, 2x − y − z ≥ 0, 2x + 2y − z ≥ 0, 4x + 3y ≤ 15 000, 2x − y ≥ 0, 3x − 2y ≤ 0 from a negative leading coefficient, and the either-or forms 3x + 4y ≤ 180 and ≤ 1440, three products, the requirement), the rate, per-item and most-you-could-make forms agreeing for the same a, b and T, each slip of brief 4.5 exposed by the intercepts, and seeded draws at both levels in two, three and four variables (tidy form, coefficient bounds, `holds` against the coefficients at random points and at the ends of the line, the wording carrying every number, valid KaTeX, the last line of working equal to the answer).
+- **Deliberately not done:** the `problem` sub-tool (F5 to F7), Working Shown and Data Shown options, the Decision hub's DD chapter card and go-live (F8), the dashboard notes, a real printer check. "Each" pairs and ranges ("between 20% and 30%") are asked one constraint at a time, as decided; a range is not built.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Levels 2 and 3 (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 
 ## 2026-11-21 — Further Mechanics: flashcards, the mechanics diagram system, and the Work Done and Energy tools
 

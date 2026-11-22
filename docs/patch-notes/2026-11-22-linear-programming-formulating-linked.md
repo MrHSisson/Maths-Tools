@@ -1,0 +1,16 @@
+Strand: Maths
+
+## 2026-11-22 — Formulating Linear Programmes: a kind that is exactly a multiple of the others, substituted out (problem, Level 3), not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpProblem.ts` (the `linked` problem style, a juice-bar context), `lpGen.ts` (the `link` data), `lpSolve.ts` (the working), `src/tests/lpProblem.test.ts`.
+
+- **The new style:** "The number of boost smoothies made must be exactly twice the number of power smoothies" (or **twice the total** of power and energy smoothies, or **equal to the total**; the multiple is 2 or 3 or 1). The kind that is fixed by the others needs **no letter of its own**: the model is written in the other letters only, with the relation put into the objective and into every resource limit (the same idea as the remainder, which stays: "the rest of 40 hectares").
+- **The working:** the variables (the fixed kind is named as an expression, e.g. $2(x + y)$, and gets no letter), the objective with the bracket multiplied out and the like terms collected, each limit added up with the fixed kind's use, the bracket multiplied out and collected, non-negativity (the fixed kind cannot be negative either), the model, and an **Another way** step (keep a letter for it and add $z = 2x + 2y$ as an equation: the same problem with one more letter). Common slips: leaving the fixed kind out of the objective and of each limit.
+- **Contexts:** a new juice bar (power, energy, boost and green smoothies; preparation and blending time), and the bakery, print shop and workshop. Two or three letters in the model, so up to four kinds in the situation.
+- **Tests:** over 60 draws, the model in the letters means the same as the full situation (the profit and every resource limit, tried at whole-number points with the relation put in); the wording says the relation; the fixed kind has no letter; the working renders as KaTeX. The existing problem tests were widened to know the new style.
+- **A half (and a third):** the relation can also be worded the other way round, "the power smoothies are exactly half of the boost smoothies", so the fixed kind is still twice the others, not half (the half is a trap to read). A note in the Variables step and a common slip name it. A fraction in the model itself ("boost is half of power") is left out: it would force the number of power smoothies to be even.
+- **A constant (Harry):** the relation can be "exactly 10 more than" or "10 fewer than" (5, 10, 15 or 20), alone or with a multiple (more than twice the others). The objective keeps a constant (P = 30 + 13x + 13y), each limit takes the constant across ("Take the constant 45 to the other side"), and with **fewer than** the fixed kind cannot be negative, so the letters it depends on must be big enough: a real extra constraint (x + y ≥ 10), with its own step and common slip. Slips named: forgetting the constant in the objective and across each limit.
+- **Not done:** the same relation as a one-line "Write a constraint" question with a substituted-out letter; the equality-elimination method in the Simplex tool (corpus L79).
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: Formulating, a kind substituted out (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.

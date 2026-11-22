@@ -1,6 +1,6 @@
 # Formulating Linear Programmes (DD1) — brief
 
-**Status:** the `constraint` sub-tool is **`ready`** (chunks F0 to F4, decided 2026-11-21); the `problem` sub-tool stays **draft** until its own pass (F5 to F7). Two sub-tools, three levels each. The first build of the Linear Programming family (`specs/linear-programming-tools.md`). Nothing is built.
+**Status:** the `constraint` sub-tool is **`implemented`** (chunks F0 to F4, built 2026-11-21); the `problem` sub-tool stays **draft** until its own pass (F5 to F7). Two sub-tools, three levels each. The first build of the Linear Programming family (`specs/linear-programming-tools.md`). The `constraint` sub-tool is built (F0 to F4, behind `enabled: false`, 2026-11-21); `problem` Levels 1 to 3 are built (F5 to F7, 2026-11-21), except per-packet scaling, pence to pounds and "three variables reduced"; the `problem` section is still to be confirmed.
 
 **What this is.** A tool, `lp-formulate`, on `DecisionShell` (own data field `lp`, written working, no network), with **two sub-tools, each with three levels**:
 
