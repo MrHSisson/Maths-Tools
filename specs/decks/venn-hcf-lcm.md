@@ -1,174 +1,170 @@
 # Lesson sequence: Venn diagrams, then HCF and LCM from prime factors
 
-**Status:** plan for review (nothing built; no task or pathway added: that waits for Harry) · **Decks:** `venn-diagrams`, `venn-prime-factors`, `venn-hcf-lcm` (three decks, one sequence) · **Strand:** Number · **Tool:** none (every question is authored, as in the factor and multiple decks)
-**Follows:** `multiples-systematic-listing`, `factors-hcf-systematic-listing` (HCF and LCM by listing) and `prime-factor-trees` (trees, product of primes, index form). **Class:** not stated for this sequence: see open question 3.
+**Status:** plan for review (nothing built; no task or pathway added: that waits for Harry) · **Deck:** one continuous deck, `venn-hcf-lcm` · **Strand:** Number · **Tool:** none (every question is authored)
+**Follows:** `multiples-systematic-listing`, `factors-hcf-systematic-listing` and `prime-factor-trees` (trees, product of primes, index form). **Class:** calculators allowed for the multiplying.
 
-**Aim:** pupils meet the Venn diagram with no numbers at all, learn to put the prime factors of two numbers into a Venn (given as tiles first), and then read the HCF (multiply the middle) and the LCM (multiply everything) straight off it. Heavy scaffold, every idea met several times, support taken away one step at a time.
+**Aim:** pupils meet the Venn diagram with no numbers at all, put the prime factors of two numbers into a Venn (tiles given first), then read the HCF (multiply the middle) and LCM (multiply everything) off it. Heavy scaffold, every idea met several times, support taken away one step at a time.
+
+## Decisions so far (Harry)
+
+1. **"Tree" meant the Venn.** Factor trees already have a deck; this one assumes them, with one retrieval step.
+2. **One continuous deck**, sections divided by section dividers (the pick-up points), not three decks.
+3. **Questions are projected full-width and Harry works them on the board.** No workspace at the side, no picture in the question, **no answers needed**: a question slide is just the questions, one at a time, five or six to a set. (The build script still computes every answer, to be sure each question works and to check the numbers; they are not shown.)
+4. **Drag and drop is the simplest it can be:** cards can be dragged around the Venn and stay where they are dropped. No home regions, no check, no tick, no reset button (leaving the slide and coming back puts them back). Harry decides what is right.
+5. **Worksheets are authored and printed with the Venns on them** (three, one per section: see "The worksheets").
+6. Calculators for the multiplying, so the LCMs can reach about 500.
 
 ---
 
-## Please check these first (what I assumed)
+## The scaffold ladder (the fade, used again and again)
 
-1. **"Putting prime factors into a tree" I read as into the Venn**, not a factor tree: factor trees already have a deck (`prime-factor-trees`). The sequence assumes pupils have done it, with one retrieval step; the first Venn questions *give* the factorisation and the tiles, and only later start from the number (tree first). Say if you did mean something else.
-2. **Three decks, one lesson-and-a-half each**, not one big deck: a deck is built for about two lessons, and this much scaffold would be 60 or more slides. Each deck ends on an exit ticket so any of them can stand alone.
-3. **All questions authored, no generator**, and the maths is computed by the build script, never typed (the Venn contents, HCF and LCM are derived from the two numbers, as `factorTree` derives primality), so a wrong answer cannot be authored.
-4. Wording: **"in both"** (the overlap) and **"neither"** (outside the circles, inside the box). Prime tiles are the coloured squares the site already uses.
-
----
-
-## Decisions (Harry, after the first plan)
-
-1. **Practice is projected, and Harry fills the Venn in on the board**, as with the trees. A question slide shows the question (the numbers, or the tiles); the answer on a click is a short line of text ("middle 2, 3 · left 2 · right 3 · HCF 6"). So **no picture-carrying fixed questions (`Q.venn`) are built**: that was the largest piece and a data-format change, and it is gone from the plan.
-2. **Deck A teaches the Venn with draggable cards.** Cards are scattered round the Venn and Harry drags each into place (pets and 3-letter words: *cat* goes in both). This is a live piece in the player, like the number grid's taps. Details under "The draggable Venn".
-3. Where a *picture* is needed (a filled Venn to read, a Venn to read backwards), a slide carries **a row of small Venn elements** (three or four, labelled a to d, answers one click each) instead of a question set. That needs a layout helper, not a new format.
-
-## The sequence at a glance
-
-| Deck | Slides | What pupils can do at the end | New code it needs |
-|---|---|---|---|
-| **A. Venn diagrams** (`venn-diagrams`) | about 19 | Read a two-circle Venn; place items (words, animals, shapes, then numbers) in the right region, including "in both" and "neither"; say why | Draggable Venn element |
-| **B. Prime factors in a Venn** (`venn-prime-factors`) | about 25 | Given two prime factorisations, build the Venn (shared tile once in the middle, leftovers either side); check by multiplying each circle back; read a Venn backwards to find its two numbers; start from the numbers (tree, then tiles, then Venn) | Venn element (prime mode), prime tile row, a row-of-Venns layout |
-| **C. HCF and LCM from a Venn** (`venn-hcf-lcm`) | about 28 | HCF = multiply the middle; LCM = multiply everything; both from one Venn; edge cases; a check by dividing | Nothing beyond B |
-
-## The scaffold ladder (the fade, used in B and again in C)
-
-Every skill is met at each rung before the next rung starts, and each rung is a model, three whiteboards and a book set share:
+Each skill is met at every rung before the next starts; a question set climbs through the support inside it.
 
 | Rung | What pupils are given | What they do |
 |---|---|---|
-| 1. Watch | Everything, built one click at a time | Follow and say what happens next |
-| 2. Finish it | A Venn already filled in | Read it (the two numbers, then the HCF or LCM) |
-| 3. Place the tiles | The two prime factorisations as coloured tiles, circles drawn | Place the tiles, then multiply |
+| 1. Watch | Everything, placed one click at a time | Follow, predict the next card |
+| 2. Read it | A filled-in Venn | Read it (the two numbers, then the HCF or LCM) |
+| 3. Place the tiles | The two prime factorisations as tiles | Place them, then multiply |
 | 4. Build it | The two factorisations as numbers (2 × 2 × 3) | Draw the Venn, place the tiles, multiply |
 | 5. From the numbers | Just the two numbers | Tree, product of primes, Venn, answer |
 
-Alongside it, the **help on a whiteboard climbs and then goes** (house style): partly placed, then a count in small grey brackets, then nothing; a book set is nine questions, three × three, the first six with a quiet hint and the last three none.
-**Repeats:** each kind of Venn (below) appears in a model, a whiteboard and a book question. **Fresh numbers** (`assertFreshNumbers`): a worked number is never asked, none is asked twice inside a section, the exit ticket uses numbers asked nowhere else.
+**Help inside a question set** falls away in the house style: a quiet count in small grey brackets ("1 tile in the middle") on the first questions, then nothing; the last question in a set has no help and a friendly number. Edge cases (nothing shared; one number inside the other) sit at the end of a set, one of each, never several in a row. A book set is nine questions, three × three, the first six hinted and the last three not. **Fresh numbers** (`assertFreshNumbers`): a worked number is never asked, none is asked twice inside a section, the exit ticket uses numbers asked nowhere else.
 
 ---
 
-## Deck A: Venn diagrams (no numbers first)
+## The deck, section by section
+
+Tags are not shown here; as in the trees deck each slide gets **Core**, **If time** or **Overflow** when it is built. A guide to lessons, not timings: lesson 1 is section 1; lesson 2 is section 2 to slide 28; lesson 3 is the rest of section 2 and section 3 (HCF); lesson 4 is section 4 (LCM), section 5 and the exit ticket.
+
+**Slide kinds:** *Drag* is the draggable Venn, full-slide. *Questions* is the existing full-width question set. *Grid* is a full-slide grid of four small filled Venns (a to d), to read.
+
+### Section 1: Venn diagrams (no numbers first)
 
 | # | Slide | Kind | Notes |
 |---|---|---|---|
-| 1 | Title | Title | |
-| 2 | Objective | Learning objective | I can read a Venn · place things in a Venn · explain where something goes |
-| 3 | Divider: Reading a Venn | Divider | |
-| 4 | **What a Venn shows: pets and 3-letter words** | Draggable Venn | Box, circle "Pets", circle "3-letter words", cards scattered round it. Regions are named by click (the overlap is "both", the outside "neither"), then Harry drags each card in |
-| 5 | Read it back | Same Venn, regions lit one click each | Which are pets only? In both? In neither? Why is *cat* in the middle? |
-| 6 | Reading whiteboards × 3 | Whiteboards | Three fresh contexts (shapes, drinks, transport); help climbs: regions labelled, then a count, then none |
-| 7 | Divider: Placing things | Divider | Recap of four quick questions after it (pick-up point) |
-| 8 | Drag and drop: ten animals ("Can fly" / "Has feathers") | Draggable Venn | Penguin, bat, parrot, dog; the hardest (a bat flies without feathers; a dog neither) are scattered like the rest, so the class decides |
-| 9 | Drag and drop × 3 (fresh contexts) | Draggable Venns, one slide each | Two items already placed, then labels only, then a context with a doubtful card ("Is a horse a pet?"), which feeds the discussion |
-| 10 | Discussion | Split discussion | "Mia has a dog and a cat, so she goes in both circles, once in each." Can both be right? Where does the claim go wrong? |
-| 11 | Book work | Plain book, 6 questions (2 × 3) | Fresh contexts, hint on the first four. Fewer than the standard 12 because each one is a drawn Venn: see open question 6 |
-| 12 | Depth | Depth card | "Neither" is not left out: it lives outside the circles, inside the box |
-| 13 | Divider: Numbers in a Venn | Divider | |
-| 14 | Drag and drop: the numbers 1 to 12, "even" and "multiple of 3" | Draggable Venn | 6 and 12 go in the middle; each card's home is computed from the rule |
-| 15 | Number whiteboards × 3 | Whiteboards | "Multiple of 2 / of 5", "odd / more than 10", "square / odd" |
-| 16 | Book work | Plain book, 6 questions | |
-| 17 | Depth | Depth card | "Prime" and "odd": 2 is prime but not odd (the one edge case, at the end) |
-| 18 | Exit ticket | One question to a row | Read a Venn · place four items · a number Venn |
-| 19 | Summary | Summary | |
+| 1 | Title | | |
+| 2 | Objective | | I can read a Venn · put things in a Venn · explain where something goes |
+| 3 | Divider: Venn diagrams | | |
+| 4 | **Pets and 3-letter words** | Drag | The box, two circles with their labels, cards scattered round the outside: cat, dog, rat, fish, hamster, rabbit, sun, pen, hat, house, tree, spoon |
+| 5 | Can fly and has feathers | Drag | A bird that does not fly, a mammal that does; the class decides |
+| 6 | Discussion | Split discussion | "Is a horse a pet? Where does the card go?": a doubtful card, so two views |
+| 7 | Four sides and has a right angle | Drag | Square, rectangle, rhombus, kite, right-angled triangle, circle, equilateral triangle, pentagon |
+| 8 | Even and multiple of 3 | Drag | Numbers 1 to 12; 6 and 12 go in the middle: the bridge to numbers |
+| 9 | Sort into a Venn | Questions (6) | Items listed with the two rules, full-width, one at a time; contexts and numbers mixed |
+| 10 | Book work | Plain book (6, 2 × 3) | Fresh contexts; fewer than 12 because each is a drawn Venn |
+| 11 | **Worksheet 1** | Pinned worksheet | Printed Venns to sort items into |
+| 12 | Depth | Depth card | "Neither" is outside the circles but inside the box |
+| 13 | Depth | Depth card | "Prime" and "odd": 2 is prime but not odd (the one edge case, at the end) |
 
-The factors-of and multiples-of Venns (the bridge to HCF and LCM) are deliberately not here: they open Deck C, where they answer "why does the middle give the HCF?".
+### Section 2: Prime factors in a Venn
 
-## Deck B: Prime factors in a Venn
+| # | Slide | Kind | Notes |
+|---|---|---|---|
+| 14 | Divider: Prime factors in a Venn | | |
+| 15 | Retrieval, four quick ones | Quickfire | Which of 2 to 19 are prime? 2, 2, 3 multiply to which number? |
+| 16 | **Prime tiles** | Drag | Each prime has its colour; 12 = [2][2][3]; the tiles can be moved about |
+| 17 | Tiles to number | Questions (6) | "Which number do these tiles make?" |
+| 18 | **The rule** (10 and 15) | Drag | Each number as a row of tiles; a tile in both lists goes **once in the middle**, leftovers on their own side. Harry drags |
+| 19 | **The check:** multiply each circle back | Drag, placed | Left circle (left and middle) is the first number, right circle the second: the Venn proves itself |
+| 20 | Prime factors in a Venn | Questions (6) | One shared prime, then two. "10 = 2 × 5, 15 = 3 × 5: put them in a Venn" |
+| 21 | Book work | Plain book (9, 3 × 3) | Same kinds, first six hinted |
+| 22 | Divider: Repeated primes | | Pick-up point |
+| 23 | Model: 8 and 12 | Drag | Match tiles **one for one**: two 2s match two 2s, the third 2 stays on the left |
+| 24 | Discussion | Split discussion | "Ella puts all three 2s of 8 in the middle because 2 is in both." Where does the check catch her? |
+| 25 | Repeated primes | Questions (6) | |
+| 26 | Model: nothing shared, and one inside the other | Drag | An empty middle is fine; one inside the other leaves a side empty |
+| 27 | Special cases | Questions (6) | Edge cases at the end, one of each |
+| 28 | Read a Venn backwards: what are the two numbers? | Grid (4) | Multiply left and middle; multiply right and middle |
+| 29 | Read a Venn backwards | Grid (4) | A second grid, different Venns |
+| 30 | **From the numbers:** tree, tiles, Venn | Tree beside a Drag | The existing factor tree beside the Venn |
+| 31 | From the numbers | Questions (6) | Just two numbers; help gone |
+| 32 | Book work | Plain book (9, 3 × 3) | Mixed; edge cases last |
+| 33 | **Worksheet 2** | Pinned worksheet | Printed Venns with the factorisations as tiles |
+| 34 | Depth | Depth card | A tile in the middle that is not in both numbers |
+| 35 | Depth | Depth card | Can the middle be empty? |
 
-| # | Slide | Kind | Rung | Notes |
-|---|---|---|---|---|
-| 1 | Title | | | |
-| 2 | Objective | | | I can put the prime factors of two numbers in a Venn |
-| 3 | Divider: Prime tiles | | | |
-| 4 | Retrieval, four quick ones | Quickfire | | Which of 2 to 19 are prime? Multiply the tiles back: 2, 2, 3 make which number? |
-| 5 | **Prime tiles** | Tile row, staged | 1 | Each prime has its colour; a number is a row of tiles, smallest first; 12 = [2][2][3] |
-| 6 | Tiles to number, 6 questions | Fixed set | | Quick, to be sure the tile idea is secure before the Venn |
-| 7 | Divider: Two numbers, one Venn | | | Pick-up point, with a four-question recap after it |
-| 8 | **The rule** (10 and 15) | Draggable Venn, with the source tile lists | 1 | 1 write both as tiles · 2 a tile in both lists: **one goes in the middle, cross one off each list** · 3 leftovers go on their own side |
-| 9 | Place the tiles × 3 | Whiteboards | 3 to 4 | Tiles given and circles drawn, then the two factorisations only; Harry draws, the answer line is on a click. (Rung 2, a filled Venn to read, is a row of small Venns, as slide 20) |
-| 10 | **The check:** multiply each circle back | Venn, staged | 1 | Left circle (left side and middle) multiplies to the first number, the right circle to the second: the Venn proves itself |
-| 11 | Divider: Repeated tiles | | | |
-| 12 | Model: a prime repeated (8 and 12) | Venn, staged | 1 | Match tiles **one for one**: two 2s match two 2s, the third stays left |
-| 13 | Discussion | Split discussion | | "Ella puts all three 2s of 8 in the middle because 2 is in both." Where does the check catch her? |
-| 14 | Repeated-tile whiteboards × 3 | Whiteboards | 3 to 5 | |
-| 15 | Book work | Plain book, 9 (3 × 3) | 3 to 5 | First six hinted, last three none |
-| 16 | Divider: Special cases | | | |
-| 17 | Two models: nothing in the middle; one number inside the other | Venn, staged | 1 | Nothing shared is a Venn with an empty middle (fine); one inside the other leaves one side empty |
-| 18 | Special-case whiteboards × 3 | Whiteboards | 3 to 4 | |
-| 19 | Divider: Backwards, and from scratch | | | |
-| 20 | **Read a Venn backwards:** what are the two numbers? | Model, then a row of four small filled Venns | 2 | Multiply left and middle; multiply right and middle; answers one click each |
-| 21 | **From the numbers:** tree, tiles, Venn | Tree element beside Venn, staged | 5 | Reuses the factor tree slide piece; whiteboards × 3 with numbers only |
-| 22 | Depth × 2 | Depth | | A tile in the middle that is not in both numbers; can the middle be empty? |
-| 23 | Book work | Plain book, 9 (3 × 3) | 4 to 5 | Mixed, edge cases at the end |
-| 24 | Exit ticket | | | |
-| 25 | Summary | | | |
+### Section 3: HCF from the Venn
 
-## Deck C: HCF and LCM from a Venn
+| # | Slide | Kind | Notes |
+|---|---|---|---|
+| 36 | Divider: HCF | | |
+| 37 | Recap, four quick ones | Quickfire | Build the Venn for two numbers |
+| 38 | **Why the middle?** | Two Venns, placed | 12 and 18 as a Venn of their *factor lists* (overlap 1, 2, 3, 6; the biggest is 6), then of their prime tiles (middle 2 and 3; 2 × 3 = 6). Same answer, and the tile way still works when the lists are long |
+| 39 | **HCF = multiply the tiles in the middle** | Key point + Venn | |
+| 40 | HCF: read the Venn | Grid (4) | |
+| 41 | HCF: tiles given | Questions (6) | |
+| 42 | HCF: the factorisations given | Questions (6) | |
+| 43 | Book work | Plain book (9, 3 × 3) | |
 
-| # | Slide | Kind | Rung | Notes |
-|---|---|---|---|---|
-| 1 | Title | | | |
-| 2 | Objective | | | I can find the HCF and LCM of two numbers from a Venn of their prime factors |
-| 3 | Retrieval: build the Venn, four quick ones | Quickfire | | From Deck B |
-| 4 | Divider: HCF | | | |
-| 5 | **Why the middle?** | Two Venns side by side, staged | 1 | 12 and 18 as a Venn of their factor *lists* (overlap 1, 2, 3, 6; the biggest is 6), then as a Venn of prime tiles (middle 2 and 3, and 2 × 3 = 6): same answer, and the tile way still works when the lists are long |
-| 6 | **Key point: HCF = multiply the tiles in the middle** | Key point + Venn | 1 | The middle is what both numbers are built from |
-| 7 | Model: HCF | Venn, staged | 1 | |
-| 8 | HCF: a row of four small filled Venns | Venn row | 2 | |
-| 9 | HCF whiteboards × 3: tiles given | Whiteboards | 3 | |
-| 10 | HCF whiteboards × 3: factorisations given | Whiteboards | 4 | |
-| 11 | Book work | Plain book, 9 (3 × 3) | 3 to 5 | |
-| 12 | Divider: LCM | | | Pick-up point, recap of four after it |
-| 13 | **Key point: LCM = multiply every tile in the Venn** | Key point + Venn | 1 | The same 12 and 18 Venn as slide 7, so only the multiplying changes. Why: to build both numbers you need every tile, but a shared tile only once |
-| 14 | Discussion | Split discussion | | "LCM of 12 and 18 is 12 × 18 = 216." Is it a common multiple? Is it the lowest? What did multiplying both numbers count twice? |
-| 15 | LCM: a row of four small filled Venns | Venn row | 2 | |
-| 16 | LCM whiteboards × 3: tiles given | Whiteboards | 3 | |
-| 17 | LCM whiteboards × 3: factorisations given | Whiteboards | 4 | |
-| 18 | Book work | Plain book, 9 (3 × 3) | 3 to 5 | |
-| 19 | Divider: Both from one Venn | | | |
-| 20 | **Which one is it?** Claims about HCF and LCM | Split discussion | | "Multiply the middle", "multiply everything", "the answer is always bigger than both numbers" (false for HCF), "the HCF can be one of the numbers" |
-| 21 | Models: nothing shared (HCF 1, LCM the two multiplied) · one inside the other (HCF the smaller, LCM the larger) | Venn, staged | 1 | |
-| 22 | HCF and LCM whiteboards × 3 | Whiteboards | 5 | From the numbers: tree, Venn, both answers |
-| 23 | **Check it:** divide | Key point | | The HCF divides both numbers exactly; the LCM divides exactly by both (calculator or by hand). If time: HCF × LCM = the two numbers multiplied |
-| 24 | Book work | Plain book, 9 (3 × 3) | 5 | Mixed HCF and LCM; edge cases last |
-| 25 | Depth × 2 | Depth | | HCF read from the outer tiles; a Venn with an empty middle |
-| 26 | If time: where does it come up? | Fixed set, 4 | | Two buses leave together then every 12 and 18 minutes (LCM); cut two lengths into equal pieces (HCF) |
-| 27 | Exit ticket | | | An HCF, an LCM, and one Venn asked for both |
-| 28 | Summary | | | |
+### Section 4: LCM from the Venn
 
-If a lesson runs short: cut in this order (Deck C): slide 26, the second Depth, slide 23's extra line, then the book sets, which carry to the next lesson from the dividers.
+| # | Slide | Kind | Notes |
+|---|---|---|---|
+| 44 | Divider: LCM | | |
+| 45 | Recap, four quick ones | Quickfire | HCF |
+| 46 | **LCM = multiply every tile in the Venn** | Key point + Venn | The same 12 and 18 Venn as slide 39, so only the multiplying changes. Why: to build both numbers you need every tile, but a shared tile only once |
+| 47 | Discussion | Split discussion | "LCM of 12 and 18 is 12 × 18 = 216." Is it a common multiple? The lowest? What did it count twice? |
+| 48 | LCM: read the Venn | Grid (4) | |
+| 49 | LCM: tiles given | Questions (6) | |
+| 50 | LCM: the factorisations given | Questions (6) | |
+| 51 | Book work | Plain book (9, 3 × 3) | |
+
+### Section 5: Both from one Venn
+
+| # | Slide | Kind | Notes |
+|---|---|---|---|
+| 52 | Divider: HCF and LCM together | | |
+| 53 | **Which one is it?** | Split discussion | Claims: "multiply the middle", "multiply everything", "the answer is always bigger than both numbers" (false for the HCF), "the HCF can be one of the numbers" |
+| 54 | Models: nothing shared (HCF 1; LCM the two multiplied) · one inside the other (HCF the smaller; LCM the larger) | Drag | |
+| 55 | HCF and LCM from the numbers | Questions (6) | Rung 5: tree, Venn, both answers |
+| 56 | **Check it:** divide | Key point | The HCF divides both numbers exactly; the LCM divides exactly by both (a calculator step). If time: HCF × LCM = the two numbers multiplied |
+| 57 | Book work | Plain book (9, 3 × 3) | Mixed HCF and LCM; edge cases last |
+| 58 | **Worksheet 3** | Pinned worksheet | Printed Venns, with HCF and LCM lines |
+| 59 | Depth | Depth card | HCF read from the outer tiles |
+| 60 | Depth | Depth card | A Venn with an empty middle |
+| 61 | If time: where does it come up? | Questions (4) | Two buses leaving together, then every 12 and 18 minutes (LCM); cutting two lengths into equal pieces (HCF) |
+| 62 | Exit ticket | | An HCF, an LCM, and one Venn asked for both |
+| 63 | Summary | | |
+
+If a lesson runs short: cut in this order: slide 61, the second Depth card in a pair, the extra line on slide 56; the book sets carry over from the dividers.
 
 ---
 
-## The question ladder, the traps, and the numbers
+## The questions: ladder, traps and numbers
 
-**Kinds of Venn (each appears as a model, a whiteboard and a book question).** The numbers come from the build script, which computes every region, the HCF and the LCM and asserts each (a check of the candidates below is in the table; the script draws the full set from these rules).
+The Venn contents, HCF and LCM come from the two numbers, computed by the build script and asserted, and the table below was recomputed by script. The script draws every set from these rules.
 
-| Kind | Rule it tests | Candidate pairs (all recomputed) |
+| Kind | Rule it tests | Candidate pairs (HCF, LCM) |
 |---|---|---|
-| a. One shared prime | One tile in the middle, one leftover each side | 10 & 15 (HCF 5, LCM 30) · 14 & 21 (7, 42) · 6 & 10 (2, 30) |
-| b. Two shared primes | Two different tiles in the middle | 12 & 18 (6, 36) *worked in C* · 20 & 30 (10, 60) · 28 & 42 (14, 84) · 30 & 45 (15, 90) |
+| a. One shared prime | One tile in the middle | 10 & 15 (5, 30) · 14 & 21 (7, 42) · 6 & 10 (2, 30) |
+| b. Two shared primes | Two different tiles in the middle | 12 & 18 (6, 36) *worked* · 20 & 30 (10, 60) · 28 & 42 (14, 84) · 30 & 45 (15, 90) |
 | c. A repeated prime, shared in part | Match one for one | 8 & 12 (4, 24) · 18 & 24 (6, 72) · 45 & 75 (15, 225) |
 | d. A repeated prime, shared in full | The same prime in the middle twice or more | 16 & 24 (8, 48) · 24 & 40 (8, 120) · 50 & 75 (25, 150) |
 | e. Bigger, stretch | Three or four tiles in the middle | 36 & 48 (12, 144) · 60 & 84 (12, 420) · 40 & 100 (20, 200) · 32 & 48 (16, 96) |
 | f. One inside the other | One side empty | 9 & 18 (9, 18) · 6 & 30 (6, 30) · 21 & 63 (21, 63) |
 | g. Nothing shared | Empty middle: HCF 1, LCM the product | 8 & 15 (1, 120) · 15 & 28 (1, 420) |
 
-The ladder climbs a to e, with f and g (the edge cases) at the end of a set, one of each and never several in a row. The first sets use 2, 3, 5 and 7 only; 11 appears once, only beside a small prime (as in the trees deck: 35 & 55 is the example).
+The ladder climbs a to e; f and g go at the end of a set. The early sets use 2, 3, 5 and 7 only; 11 appears once, only beside a small prime (35 & 55). Section 1's contexts are checked by hand for doubtful cards (rat, hen, horse are kept only where a discussion wants them).
 
-**Traps (each has a question where the wrong method gives a different, tempting answer).** New misconception tags in `src/shared/misconceptions.ts`: only the `primes-*` ones exist today, so these are added (names provisional):
+**Traps** (each has a question where the wrong method gives a different, tempting result). New misconception tags in `src/shared/misconceptions.ts` (only `primes-*` exist today; names provisional):
 
-| Trap | Where it bites | Wrong method, example 12 & 18 |
-|---|---|---|
-| `venn-all-copies-middle` Every copy of a shared prime goes in the middle | b, c, d | 8 & 12: all three 2s in the middle |
-| `venn-tile-both-sides` A shared tile is written in both circles and counted twice | b to e | LCM 2 × 2 × 3 × 3 × 2 × 3 or 12 × 18 = 216 |
-| `hcf-multiply-everything` HCF from the whole diagram | any HCF | 36 for the HCF |
-| `lcm-multiply-outsides` LCM from the two leftover sides only | any LCM | 2 × 3 = 6 for the LCM |
-| `venn-empty-middle-zero` Empty middle taken as "no answer" or 0 | g | 8 & 15: HCF 0 |
-| `venn-one-side-lost` One number inside the other: the number "disappears" | f | 9 & 18: HCF 18 |
-| `venn-neither-forgotten` An item in neither is dropped | Deck A | |
+| Trap | Wrong method, for 12 and 18 or as shown |
+|---|---|
+| `venn-all-copies-middle` Every copy of a shared prime goes in the middle | 8 & 12: all three 2s in the middle |
+| `venn-tile-both-sides` A shared tile is written in both circles and counted twice | LCM 12 × 18 = 216 |
+| `hcf-multiply-everything` | HCF 36 |
+| `lcm-multiply-outsides` The LCM from the two leftover sides only | LCM 6 |
+| `venn-empty-middle-zero` An empty middle taken as 0 or "no answer" | 8 & 15: HCF 0 |
+| `venn-one-side-lost` One number inside the other: it "disappears" | 9 & 18: HCF 18 |
+| `venn-neither-forgotten` An item in neither is dropped | section 1 |
 
-**Scale.** Numbers to 100 in the main sets; LCMs reach 420 only in the stretch rows. This is a pitch decision (calculators? open question 3).
+---
+
+## The worksheets (printed, with the Venns on them)
+
+A lesson can pin three worksheets, so **one per section**: sheet 1 sorts items into Venns, sheet 2 places prime factors, sheet 3 finds HCF and LCM. A4, six Venns to a sheet (two across, three down), the Venn large with its labels, the two numbers or items printed above or beside it. They follow the fade within the sheet: the first Venns carry more of the content (some tiles or items already placed, the count in small print), the last few are only the numbers. Sheet 3 has an "HCF =" and "LCM =" line under each Venn. No answers are needed; the script has them if you ever want an answer sheet. Name, date and a one-line instruction as on the shape worksheets.
+
+These are **authored** worksheets (hand-written, not generated), printed through File → Worksheets like the rectilinear and textbook sheets.
 
 ---
 
@@ -176,69 +172,38 @@ The ladder climbs a to e, with f and g (the edge cases) at the end of a set, one
 
 | Need | Exists? | Plan |
 |---|---|---|
-| Factor trees, primes, index form | Yes (deck `prime-factor-trees`, the `factorTree` slide piece) | Reused: the tree beside a Venn on Deck B slide 21 |
-| Number grid, prime colours | Yes | Prime colour palette: **there are two slightly different ones** (`PRIME_COLOURS` in `numberGrid.ts`: 2 blue, 3 green, 5 orange, 7 purple; and `PRIME_TILE_COLORS` in `TeachingDeck.tsx`: sky, emerald, amber, purple, plus 11 and 13). The Venn and the tree must use one, so decide once (the number grid's, since the tree uses it) |
-| Whiteboard, book work, discussion, exit ticket, Depth slides | Yes (`S.whiteboard`, `S.plainBook`, `S.discuss`, `S.exitRows`, authored Depth) | As they are |
-| **A Venn slide element** | **No.** The Teach scene `primeVenn` is retired with the Teach tab and does not run in decks; the `mathsWords` Venn is a decorative icon | **Build**, with draggable cards. See below |
-| Venn pictures inside fixed questions | No (only rectilinear shapes can) | **Not built** (decision 1): Harry draws on the board; where a picture is needed, a slide carries a row of small Venn elements |
-| **Dragging in the player** | Partly: the number grid takes live taps that are not saved, and the swipe and clicker keys already leave a tapped element alone | **Build** for the Venn cards (below) |
-| **A row of prime tiles** (12 = [2][2][3], tiles crossed off) | Only inside the retired Teach scene | **Build**, as part of the Venn element (its source lists) and on its own for Deck B slide 5. It is the "prime factor tiles" piece already on the decks pathway's side-task list |
-| HCF / LCM misconception tags | No | Add (above) |
-| A generator for HCF and LCM | No | **Not built for this sequence.** It is Phase 3 in `specs/decks/primes-and-divisibility.md`; the Skill library's `hcf` skill still has two named consumers waiting (`FractionsOfAmounts`, `RecipesTool`). Build it from the same Venn logic later |
-| Depth cards | No bank | Authored in each deck (claims, named misconceptions, the eight cast) |
-| A printed Venn mat, tile strips | No | Optional, open question 6 |
+| Factor trees, primes, index form | Yes (`factorTree` slide piece) | Reused beside a Venn on slide 30 |
+| Full-width questions, book work, discussion, quickfire, exit ticket, Depth slides, section dividers | Yes | As they are. Full-width is the existing "Full-width" layout |
+| Pinned authored worksheets, printing | Yes for rectilinear shapes and textbook sheets | **Extend with a Venn sheet** (below) |
+| **A Venn slide element, with draggable cards** | **No** (the Teach scene is retired; the word-glossary Venn is an icon) | **Build**: the one new element (below) |
+| A grid of four small Venns | No | A layout helper on the same element |
+| **Prime tiles** (coloured squares) | Only in the retired Teach scene | Built into the Venn element as a card type; also a tile row for slide 16 |
+| Prime colours | **Two slightly different palettes**: `PRIME_COLOURS` (`numberGrid.ts`: 2 blue, 3 green, 5 orange, 7 purple) and `PRIME_TILE_COLORS` (`TeachingDeck.tsx`: sky, emerald, amber, purple, plus 11 and 13) | Use the number grid's, since the tree uses it |
+| Misconception tags | No | Add (above) |
+| A generator for HCF and LCM | No | **Not built for this deck.** It is Phase 3 in `specs/decks/primes-and-divisibility.md`; the Skill library's `hcf` skill has two consumers waiting. It would reuse the same logic later |
+| Depth cards | No bank | Authored in the deck (claims, named misconceptions, the eight cast) |
+| Question answers | Authored questions may require an answer in the saved format | Check when building; if it is required, the computed answers are saved and simply not shown |
 
-### The new pieces in order
+### The new pieces, in order
 
-1. **`src/shared/venn.ts` (pure logic, with tests, no React).** Splits two prime factorisations into left, middle and right (by multiset, so repeats match one for one); HCF and LCM from the regions; region membership from a number rule ("even", "multiple of 3", "prime", "factor of 12"); `vennProblems` (like `treeProblems`: a wrong region cannot be authored). Small and the foundation for everything else; `TeachingDeck`'s `vennParts` is the existing starting point.
-2. **The Venn slide element** (`kind: "venn"`, drawn by `Venn.tsx`, with an editor panel, an entry in Add slide and the library, deck check, normalise and merge). Modes: **categories** (names, shapes, animals: items authored) and **numbers** (membership computed from a rule) and **primes** (give two numbers, the regions are computed). Parts: **draggable cards (below)**, the box with an optional label, two circles with rule labels, region labels ("both", "neither") shown or hidden, items as chips or as prime tiles, source tile lists above the Venn that cross tiles off as they are placed, a lit region, and the reveal lines (**HCF = 2 × 3 = 6**, **LCM = 2 × 2 × 3 × 3 = 36**, the circle check). Staged by click; **Filled in / Structure only / Blank** like the board (Structure only is the default: circles and labels, the given items placed, the rest empty). Works at the phone, tablet and laptop sizes through the normal slide canvas.
-3. **The draggable Venn** (the same element, a `cards` option; see the next section). A layout helper for a **row of small Venns** (three or four, labelled a to d, answers one click each). Both are ordinary elements and slides, so no question format or server check changes.
-4. **Misconception tags and tests**, then the docs: `docs/FEATURES.md`, `docs/design/SLIDE_FEATURES.md`, `docs/reference/pictures.md` (the Venn as a representation; see open question 7) and `docs/reference/decks.md`, then `npm run facts`.
-5. Later, only if wanted: a printable Venn mat and tile strips, the HCF and LCM generator.
+1. **`src/shared/venn.ts`, pure logic with tests, no React.** Splits two numbers' prime factors into left, middle and right (by multiset, so repeats match one for one), HCF and LCM, and the factors-of and multiples-of lists for slide 38. Used by the build script to make and assert the numbers, by the Venn drawings, and by the worksheet. (`TeachingDeck`'s `vennParts` is the starting point.)
+2. **The Venn slide element** (`kind: "venn"`, drawn by `Venn.tsx`; editor panel, Add slide, library, deck check, normalise and merge). A box (optional label), two circles with their labels, and **cards**: words, numbers or prime tiles, each either scattered round the outside (the Drag slides) or **placed** in a region (the Grid slides and the key points). Cards drag with a finger, stylus or mouse and stay where dropped; the position is live and not saved, like the number grid's taps. No checking of any kind. Cards may appear one per click for a model. Full-slide, so it fills the screen at the tablet and laptop sizes. A drag never starts a swipe; with the Pen on, the pen owns the touch (Harry switches it off to drag, as with the number grid). Phones only preview decks.
+3. **The Venn sheet** (`vennWorksheet` in `src/shared/printables.ts`, beside `shapeWorksheet`): an authored worksheet format, `kind: "venn"` in the pinned worksheet data, drawn with the same static Venn drawing as the slide so the two cannot drift. **This is a deck data-format change**, so it merges before the deck content is pushed (the server keeps what only newer code understands, but merge first when you can). One small print check (a sheet must fit one page, as `smoke:deck-print` already counts).
+4. **Misconception tags with tests**, then the docs: `docs/FEATURES.md`, `docs/design/SLIDE_FEATURES.md`, `docs/reference/pictures.md` (whether the Venn is a ninth core representation or part of the prime factor tiles family: my view is a ninth, because it is useful beyond HCF and LCM; recorded in `docs/pathways/core-representations.md`) and `docs/reference/decks.md`, then `npm run facts`.
 
-### The draggable Venn
-
-**What Harry does.** The slide opens with the box, the two circles and their labels, and the cards scattered round the outside (a tray down each side, so the cards never cover the diagram). He drags a card in. **A card stays where it is dropped** and counts as in the region its centre is in: only A, in both (the overlap), only B, or neither (inside the box, outside both circles). A card dropped outside the box springs back to where it started. Wrong placements are allowed, because "why did you put it there?" is the lesson.
-
-**Clicks (one each, so a clicker works).** Next, once the class has finished: **Check** (a right card gets a small tick, a wrong one is outlined in amber, never red; nothing moves) then **Show answers** (the wrong and the unplaced cards slide home). The bar also has **Reset** (scatter them again) and the player's keys keep working. Placement is live in the player and **not saved**, like the number grid's taps, so a slide always opens fresh.
-
-**Where the answers come from.** A card is authored with which circles it belongs to (`inA`, `inB`) and its home is derived, so a card cannot have a different home from what it says. In numbers mode a card's home is computed from the rules ("even", "multiple of 3"); in primes mode from the two numbers. So only the *words* in a category Venn rely on Harry's and my reading; I recompute them by hand (below).
-
-**Touch and the other controls.** Cards use pointer events with `touch-action: none` and 48px or larger targets, so a finger, stylus or mouse all work on the tablet and the laptop. A drag never starts a swipe (the swipe code skips what takes a tap). With the Pen on, the pen owns the touch and cards stay put: Harry switches the Pen off to drag, as with the number grid. Phones only preview decks, so there is no phone layout to design.
-
-**Sets of cards (draft; I recompute each by hand and show you the table).** Each set has twelve cards or fewer, scattered in a fixed order that does not give away the regions.
-
-| Slide | Circles | Both | Only A | Only B | Neither |
-|---|---|---|---|---|---|
-| 4 | Pets · 3-letter words | cat, dog, rat | fish, hamster, rabbit | sun, pen, hat | house, tree, spoon |
-| 8 | Can fly · Has feathers | parrot, owl | bat, wasp | penguin, hen | dog, snake |
-| 14 | Even · Multiple of 3 | 6, 12 | 2, 4, 8, 10 | 3, 9 | 1, 5, 7, 11 |
-
-"Rat" as a pet and "hen" as a bird that does not fly are the only cards open to argument, and they are kept on purpose for the discussion slide (a horse or a goldfish would do as well). Slide 8 needs Harry's eye on the animals (an owl and a wasp fly; a hen flies a very little, so I would swap it for an ostrich, or keep it as the doubtful card).
-
-**The same mechanism helps Deck B.** The rule slide (10 and 15) can use draggable *prime tiles* from the source lists: drag a 5 from each list, and they merge into one tile in the middle. It is the same element with `tiles` as its cards, so it costs very little extra; I would build it in merge 2 and decide when the look card is made.
-
-### Build order (small merges, each green on its own; look card before any deck)
+### Build order (small merges, each green on its own; the look card before the deck)
 
 | Merge | Content | Needs |
 |---|---|---|
-| 1 | Shared logic and tests; misconception tags; the palette decision | Nothing |
-| 2 | Venn element, editor, library, deck check, docs | 1 |
-| 3 | **Deck A** (look card first), then push | 2 |
-| 4 | **Deck B** (look card first) | 2 |
-| 5 | **Deck C** | 4 |
-
-No question-format change is needed, so nothing has to merge ahead of a deck except merge 2 (a new element kind: the server keeps what only newer code understands, but merge it first when you can).
+| 1 | Shared logic and tests; misconception tags; the palette decision | |
+| 2 | The Venn element with cards, editor, library, deck check, docs | 1 |
+| 3 | The Venn worksheet format and print | 1, 2 |
+| 4 | The deck, section by section onto the one deck id (look card of one slide of each kind first; section 1 can go as soon as merge 2 is in, since it needs no sheet until slide 11) | 2, 3 |
 
 ---
 
-## Open questions for Harry
+## Still open (small)
 
-1. **"Tree"** in your note: the Venn, as I assumed, or a factor tree? (Trees already have a deck.)
-2. **Three decks** as above, or one?
-3. **The class and calculators.** The trees deck was a weak group with no calculators; the HCF deck had Casio fx-85s. This sets how big the LCMs can get and whether the check by dividing is a calculator step.
-4. ~~Practice style~~ **Decided:** the question is projected and Harry draws it on the board; cards drag in Deck A (and optionally the tiles in Deck B).
-5. **Open Deck C with the listing Venn** (factors of 12 and 18 as lists, then the tiles) so pupils see why the middle gives the HCF, or go straight to the tiles?
-6. **Printables:** a blank two-circle Venn sheet and cut-out prime tiles would save pupils drawing circles (a weak group loses a lot of time on that). You decided no printables for the trees; is a Venn different? Book sets in Deck A are 6 questions (2 × 3), not 12, because each is a drawn Venn: fine? (They could also be the same draggable Venn, done by the class on paper from the projected cards.)
-7. **Is the Venn a ninth core representation**, or part of the prime factor tiles family? My view: a ninth, because it is useful beyond HCF and LCM (sets, probability, data); a new representation needs a reason (R27) and `docs/pathways/core-representations.md` is where it is recorded.
-8. **Worded problems** (buses, cutting lengths): include as an If time slide, as drawn above, or leave to a later lesson?
+1. **Words:** "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.
+2. **Section 1 contexts** (pets and 3-letter words, can fly and has feathers, four sides and a right angle, even and multiple of 3) are my suggestions; replace any you like.
+3. **Worksheets:** six Venns to an A4 is my default; say if you would rather four larger ones.
