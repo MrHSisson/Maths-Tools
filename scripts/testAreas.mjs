@@ -17,7 +17,7 @@ export const TEST_AREAS = {
   cpa: /^(cpa.*|criticalPathOptions|levelling.*|workerLabels)\.test\.ts$/,
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
-  mechanics: /^(dim|mechanics.*|workDone|energy)\.test\.ts$/,
+  mechanics: /^(dim|mechanics.*|workDone|energy|power)\.test\.ts$/,
   decision: /^(decision|decisionOptions|decisionPairings)\.test\.ts$/,
   decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|vennSheet|vennLayout|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
@@ -57,7 +57,7 @@ export const PATH_RULES = [
 // Which tools a changed file under src/shared/decision/ can affect (for the cross-tool checks). Checked by reading the imports: no Decision topic imports
 // another except the graph topics, which use the flow templates and geometry; the Decision tools reach their topic through the shell, and only
 // Dimensional Analysis (mechanics) imports the dim files directly.
-const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx";
+const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx", POWER = "src/tools/FurtherMechanics/Power.tsx";
 const TOPIC_TOOLS = [
   [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)/, [CPA]],
   [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [FLOW, MST, TSP, ROUTE]],
@@ -67,8 +67,8 @@ const TOPIC_TOOLS = [
   [/^src\/shared\/decision\/routeInspection/, [ROUTE]],
   [/^src\/shared\/decision\/graphBank/, [MST, TSP, ROUTE]],
   [/^src\/shared\/decision\/(dim|DimWorking)/, [DIM]],
-  [/^src\/shared\/decision\/mechSolve/, [WORK, ENERGY]],
-  [/^src\/shared\/mechanics\//, [WORK, ENERGY]],
+  [/^src\/shared\/decision\/mechSolve/, [WORK, ENERGY, POWER]],
+  [/^src\/shared\/mechanics\//, [WORK, ENERGY, POWER]],
 ];
 
 /** The tool file a changed path stands for (the tool itself or its About words), or null for any other file. Read from the generated tool facts. */

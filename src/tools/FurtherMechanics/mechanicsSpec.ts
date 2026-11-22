@@ -133,9 +133,10 @@ export interface MechSubRef { tool: string; sub: string; label: string; /** a to
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
 const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
 const en = (sub: string, label: string): MechSubRef => ({ tool: "energy", sub, label });
+const pw = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "power", sub, label, ...(a2 ? { a2 } : {}) });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy", "power"] };
 
 /** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
@@ -146,6 +147,7 @@ export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   MC2: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy")],
   MC3: [en("workenergy", "Work-energy principle")],
   MC5: [wd("variable", "Variable force")],
+  MC7: [pw("avgpower", "Average power"), pw("forcespeed", "Force and speed"), pw("powerslope", "Power on a slope", true), pw("motion", "Power from motion data")],
 };
 
 /** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
@@ -168,7 +170,6 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
   MB4: [{ label: "Impulse of a variable force" }],
   MC4: [{ label: "Hooke's law" }],
   MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
-  MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],
   MD1: [{ label: "Angular speed, speed and acceleration" }],
   MD2: [{ label: "Angular speed, speed and acceleration" }],
   MD3: [{ label: "Angular speed, speed and acceleration" }],
