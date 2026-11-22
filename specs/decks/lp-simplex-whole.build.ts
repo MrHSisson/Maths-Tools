@@ -82,9 +82,9 @@ function graph(o: GOpts = {}): unknown[] {
     seg(6.2, -0.2, 1.8, 4.2, BLUE, 7), seg(0, 11 / 3, 6.2, 1.6, PURPLE, 7),
     ...ticks(),
   ];
-  if (o.lines !== false) els.push(t(px(1.95), py(4.3), 300, 44, "$x + y = 6$", 28, { colour: BLUE, bold: true, align: "left" }), t(px(4.55), py(2.55), 340, 44, "$x + 3y = 11$", 28, { colour: PURPLE, bold: true, align: "left" }));
+  if (o.lines !== false) els.push(t(px(5.65), py(0.5), 300, 44, "$x + y = 6$", 28, { colour: BLUE, bold: true, align: "left" }), t(px(4.55), py(2.55), 340, 44, "$x + 3y = 11$", 28, { colour: PURPLE, bold: true, align: "left" }));
   if (o.points) for (const [x, y] of lattice) els.push(dot(x, y, "#475569", 7, o.points === true ? 0 : 0));
-  if (o.optimum !== undefined) els.push(dot(3.5, 2.5, ORANGE, 14, o.optimum), tag(3.5, 2.5, "$(\\tfrac{7}{2}, \\tfrac{5}{2})$", ORANGE, "above", o.optimum));
+  if (o.optimum !== undefined) els.push(dot(3.5, 2.5, ORANGE, 14, o.optimum), maths(px(3.5) + 14, py(2.5) - 92, 300, 70, "(\\tfrac{7}{2}, \\tfrac{5}{2})", 30, { colour: ORANGE, align: "left", ...(o.optimum ? { step: o.optimum } : {}) }));
   return els;
 }
 
@@ -126,15 +126,16 @@ const slides: Slide[] = [
   slide(`${P}-best`, "The best practical plan", [
     ...titleEls("The best practical plan", "Nothing above $P = 20$ is a whole-number point"),
     ml(60, 250, 780, 170, "\\begin{array}{l}P = \\tfrac{41}{2} \\text{ at the optimum}\\\\[1.2ex]P \\le 20 \\text{ for a whole-number plan}\\end{array}", 46),
-    t(60, 450, 780, 150, "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.", 42, { bold: true, step: 1 }),
-    t(60, 630, 780, 150, "Rounding every value down gives $(3, 2)$, $P = 17$. It is practical, but not the best.", 40, { step: 2 }),
+    t(60, 440, 780, 150, "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.", 40, { bold: true, step: 1 }),
+    t(60, 600, 780, 110, "The orange sliver is every point with $P > 20$. It holds no whole-number point.", 36, { colour: ORANGE, step: 1 }),
+    t(60, 740, 780, 140, "Rounding every value down gives $(3, 2)$, $P = 17$. It is practical, but not the best.", 38, { step: 2 }),
     ...graph({ points: true, optimum: 0 }),
     // the part of the region with P > 20: a thin sliver at the corner, and no whole-number point in it
-    region([[4, 2], [3.5, 2.5], [3.2, 2.6]], "#fb923c"),
+    { ...(region([[4, 2], [3.5, 2.5], [3.2, 2.6]], "#fb923c") as object), step: 1 },
     seg(2.6, 3.05, 4.6, 1.55, GREEN, 7, 1),
     dot(4, 2, GREEN, 15, 1), dot(3, 2, GREEN, 11, 2),
-    t(px(4.2), py(3.55), 560, 100, "no whole-number point has $P > 20$", 28, { colour: ORANGE, bold: true, align: "left", step: 1 }),
-    seg(4.15, 3.2, 3.55, 2.6, ORANGE, 4, 1),
+    t(px(4.15), py(3.35), 200, 44, "$P > 20$", 30, { colour: ORANGE, bold: true, align: "left", step: 1 }),
+    seg(4.15, 3.2, 3.6, 2.6, ORANGE, 4, 1),
   ], "The region with P above 20 is the thin sliver by the optimum, and it holds no whole-number point: (4, 2), with P = 20, is the best. The green line is P = 20."),
 ];
 
