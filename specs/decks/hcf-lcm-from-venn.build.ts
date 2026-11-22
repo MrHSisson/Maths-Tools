@@ -135,7 +135,7 @@ const buildAsk = (prefix: string, title: string, pairs: Pair[], ask: Ask, brief:
 const HCF_RUN: Pair[] = [[15, 40, "a"], [42, 66, "b"], [32, 56, "c"], [9, 28, "g"]];
 const HCF_RUN_Q = pairSet("ha", HCF_RUN, "hcf", 0);
 const hcfRun = buildAsk("hcf", "HCF: build the Venn", HCF_RUN, "hcf", "Build the Venn from the two numbers, then multiply the tiles in the middle to find the HCF. One shared prime, then two, then a repeated prime, then nothing shared (the HCF is 1, not 0). Four slides, one Venn each; one click shows the HCF line.");
-const HCF_BOOK: Pair[] = [[22, 55, "a"], [15, 70, "a"], [28, 98, "b"], [50, 60, "b"], [52, 78, "b"], [72, 90, "c"], [96, 120, "e"], [27, 81, "f"], [8, 21, "g"]];
+const HCF_BOOK: Pair[] = [[22, 55, "a"], [15, 70, "a"], [28, 98, "b"], [50, 60, "b"], [52, 78, "b"], [88, 132, "c"], [96, 120, "e"], [27, 81, "f"], [8, 21, "g"]];
 const HCF_BOOK_Q = pairSet("hb", HCF_BOOK, "hcf", 6, true);
 
 // Depth cards: one speaker and a "do you agree?"
@@ -163,17 +163,37 @@ const depthLcm = agreeQ(`${P}-dp2`, "Amara", "The LCM of $26$ and $65$ is $26 \\
   ["The shared $13$ is one tile in the middle.", "Every tile once: $2 \\times 13 \\times 5$.", "LCM $= 130$."], "venn-tile-both-sides");
 
 // ---------- section: LCM ----------
-const keyLcm = S.venn(`${P}-key-lcm`, "LCM: everything", "12", "18", placedCards(12, 18), { box: "Prime factors", lines: ["hcf", "lcm"], prompt: "Multiply every tile in the Venn." });
+// Why every tile? 12 and 18 as lists of multiples (the overlap is the common multiples) and as prime tiles (every tile once multiplies to the same number)
+const multiplesOf = (n: number, upTo: number) => Array.from({ length: Math.floor(upTo / n) }, (_, i) => n * (i + 1));
+const m12 = multiplesOf(12, 72), m18 = multiplesOf(18, 72);
+const wm: VennRegions = { left: m12.filter((x) => !m18.includes(x)), middle: m12.filter((x) => m18.includes(x)), right: m18.filter((x) => !m12.includes(x)) };
+must(same(wm, { left: [12, 24, 48, 60], middle: [36, 72], right: [18, 54] }) && wm.middle[0] === lcmOf(w), "the lowest common multiple of 12 and 18 is the LCM");
+const whyLcm = makeSlide(`${P}-why-lcm`, "teach", "Why every tile?", [
+  textEl(70, 36, 1460, 100, "Why every tile?", 56, { bold: true }),
+  vennEl(60, 170, 12, 18, cardsAt(wm, false), "Multiples", 1.15), vennEl(840, 170, 12, 18, cardsAt(w, true), "Prime tiles", 1.15),
+  textEl(60, 690, 700, 80, `Common multiples: ${wm.middle.join(", ")}`, 38, { align: "center" }),
+  textEl(60, 770, 700, 80, `The lowest is ${wm.middle[0]}.`, 38, { bold: true, align: "center" }),
+  textEl(840, 690, 700, 80, "Every tile, a shared one only once", 38, { align: "center" }),
+  textEl(840, 770, 700, 80, `2 × 2 × 3 × 3 = ${lcmOf(w)}`, 38, { bold: true, align: "center" }),
+]);
+const keyLcm =S.venn(`${P}-key-lcm`, "LCM: everything", "12", "18", placedCards(12, 18), { box: "Prime factors", lines: ["hcf", "lcm"], prompt: "Multiply every tile in the Venn." });
 const LCM_RUN: Pair[] = [[6, 10, "a"], [30, 36, "b"], [20, 28, "d"], [22, 66, "f"]];
 const LCM_RUN_Q = pairSet("la", LCM_RUN, "lcm", 0);
 const lcmRun = buildAsk("lcm", "LCM: build the Venn", LCM_RUN, "lcm", "Build the Venn from the two numbers, then multiply every tile to find the LCM. One shared prime, then two, then a repeated prime, then one number inside the other (the LCM is the bigger number). Four slides, one Venn each; one click shows the LCM line.");
-const LCM_BOOK: Pair[] = [[6, 15, "a"], [21, 28, "a"], [24, 30, "b"], [45, 60, "b"], [42, 98, "b"], [36, 54, "c"], [80, 100, "c"], [14, 70, "f"], [9, 32, "g"]];
+const LCM_BOOK: Pair[] = [[6, 15, "a"], [21, 28, "a"], [24, 30, "b"], [45, 60, "b"], [42, 98, "b"], [90, 150, "c"], [80, 100, "c"], [14, 70, "f"], [9, 32, "g"]];
 const LCM_BOOK_Q = pairSet("lb", LCM_BOOK, "lcm", 6, true);
 
 // the worksheets: blank Venns with the numbers and factorisations beside them and an HCF and an LCM line to fill in (no scaffold)
 const sheet = (id: string, title: string, note: string, pairs: Pair[]) => S.vennSheet(id, { title, note, items: pairs.map(([a, b]) => ({ a, b, lines: true })) }, "indices");   // a pinned sheet carries a real tool id
 const sheetHcf = sheet(`${P}-sheet-1`, "Worksheet 1: HCF from a Venn", "Put each prime factor in the right part of the Venn, then find the HCF.", HCF_BOOK);
 const sheetLcm = sheet(`${P}-sheet-2`, "Worksheet 2: LCM from a Venn", "Put each prime factor in the right part of the Venn, then find the LCM.", LCM_BOOK);
+
+// the exit ticket: an HCF, an LCM and one Venn asked for both, on numbers asked nowhere else
+const EXIT_HCF: Pair = [48, 64, "c"], EXIT_LCM: Pair = [33, 39, "a"], EXIT_BOTH: Pair = [35, 49, "a"];
+const exitBothR = checkPair(EXIT_BOTH, "exit both");
+must(hcfOf(exitBothR) === 7 && lcmOf(exitBothR) === 245, "exit: 35 and 49");
+const exitBoth: CuratedQuestion = { ...Q.open(`${P}-x3`, T, "level1", "Find the HCF and the LCM of $35$ and $49$.", `$${ansTex("hcf", exitBothR)}$ and $${ansTex("lcm", exitBothR)}$`, [], []), title: "$35$ and $49$", question: ["Find the HCF and the LCM of $35$ and $49$."] };
+const EXIT_Q = [pairQ(`${P}-x1`, EXIT_HCF, "hcf"), pairQ(`${P}-x2`, EXIT_LCM, "lcm"), exitBoth];
 
 const book = (id: string, qs: CuratedQuestion[], ask: Ask, title: string, brief: string): Slide =>
   ({ ...S.plainBook(id, qs, 3, `Copy into your book. Draw a Venn, then find the ${ask === "hcf" ? "HCF" : "LCM"}.`, title), brief });
@@ -191,16 +211,18 @@ const slides: Slide[] = [
   depthPage(`${P}-depth-1`, depthHcf),
   S.divider(`${P}-d2`, "LCM from the Venn"),
   quick(`${P}-recap-b`, recapB),
+  whyLcm,
   keyLcm,
   ...lcmRun,
   book(`${P}-book-lcm`, LCM_BOOK_Q, "lcm", "Book work: LCM from a Venn", "Nine in a 3 by 3 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply every tile."),
   S.visualiser(`${P}-answers-2`, "Visualiser: worksheet 2 answers"),
   depthPage(`${P}-depth-2`, depthLcm),
+  S.exitRows(`${P}-exit`, EXIT_Q, "Work on your own. Draw a Venn if it helps."),
   S.divider(`${P}-d-sheets`, "Worksheet slides"),
   sheetHcf,
   sheetLcm,
 ];
-must(slides.length === 26, `the deck is 26 slides (is ${slides.length})`);
+must(slides.length === 28, `the deck is 28 slides (is ${slides.length})`);
 must(HCF_BOOK_Q.length === 9 && LCM_BOOK_Q.length === 9 && [...HCF_RUN_Q, ...LCM_RUN_Q].length === 8, "the book sets are nine, 3 x 3; the runs are four each");
 [HCF_BOOK_Q, LCM_BOOK_Q].forEach((set, i) => must(new Set(set.map((q) => q.id)).size === set.length && set.length >= 5, `book set ${i} has at least five distinct questions (R42)`));
 
@@ -208,10 +230,10 @@ must(HCF_BOOK_Q.length === 9 && LCM_BOOK_Q.length === 9 && [...HCF_RUN_Q, ...LCM
 const DEPTH_NUMBERS = [25, 63, 26, 65];
 const allSets: [string, CuratedQuestion[]][] = [["hcf run", HCF_RUN_Q], ["hcf book", HCF_BOOK_Q], ["lcm run", LCM_RUN_Q], ["lcm book", LCM_BOOK_Q]];
 for (const [name, qs] of allSets) for (const q of qs) for (const n of (q.title.match(/\d+/g) ?? []).map(Number)) must(!DEPTH_NUMBERS.includes(n), `${name}: ${q.id} uses a Depth number ${n}`);
-assertFreshNumbers({ worked: WORKED, sections: Object.fromEntries(allSets), exit: [] });
+assertFreshNumbers({ worked: WORKED, sections: Object.fromEntries(allSets), exit: EXIT_Q });
 
 export default () => ({
   id: ID, title: "HCF & LCM from a Venn", strand: "Number", questionVersion: 2,
-  summary: "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Two book sets with printable worksheets, visualiser slides for the answers and two Depth cards. Every question is authored and its answer computed.",
+  summary: "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Each half explains where the answer comes from (common factors, then common multiples, beside the prime tiles). Two book sets with printable worksheets, visualiser slides for the answers, two Depth cards and an exit ticket. Every question is authored and its answer computed.",
   slides,
 });

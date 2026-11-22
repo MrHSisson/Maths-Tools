@@ -212,7 +212,7 @@ The first deck, **Venn Diagrams & Product of Primes** (id `venn-hcf-lcm`, 34 sli
 
 ## Built (2026-11-22): deck 2, `hcf-lcm-from-venn`
 
-Sections 3 and 4 are built as `hcf-lcm-from-venn.build.ts` (26 slides). Differences from the tables above: the two read-the-Venn grids (32, 40) are cut; the 216 discussion is a Depth card; build slides carry the HCF or LCM answer line top right on one click; two book sets (nine each) and two blank worksheets with a visualiser slide per book set; no exit ticket yet.
+Sections 3 and 4 are built as `hcf-lcm-from-venn.build.ts` (28 slides). Differences from the tables above: the two read-the-Venn grids (32, 40) are cut; the 216 discussion is a Depth card; build slides carry the HCF or LCM answer line top right on one click; two book sets (nine each) and two blank worksheets with a visualiser slide per book set; a *Why every tile?* slide (multiples beside prime tiles) and an exit ticket were added after Harry's review.
 
 ## Still open (small)
 
