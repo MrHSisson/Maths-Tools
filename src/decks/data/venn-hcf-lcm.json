@@ -350,157 +350,6 @@
    "built": "18kdpdb"
   },
   {
-   "id": "vh-sort",
-   "family": "teach",
-   "title": "If time: sort into a Venn",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 48,
-     "y": 24,
-     "w": 1504,
-     "h": 852,
-     "size": 56,
-     "items": [
-      {
-       "version": 2,
-       "id": "vh-sort-1",
-       "title": "Sort into a Venn 1",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Even and multiple of 5:",
-        "Where do $7$, $8$, $10$, $15$, $20$ go?"
-       ],
-       "answer": [
-        "In both: $10$, $20$. Even only: $8$. Multiple of 5 only: $15$. Neither: $7$"
-       ],
-       "explanation": [
-        "In both: $10$, $20$",
-        "Even only: $8$",
-        "Multiple of 5 only: $15$",
-        "Neither: $7$"
-       ],
-       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-sort-2",
-       "title": "Sort into a Venn 2",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Multiple of 4 and multiple of 6:",
-        "Where do $6$, $8$, $12$, $18$, $21$ go?"
-       ],
-       "answer": [
-        "In both: $12$. Multiple of 4 only: $8$. Multiple of 6 only: $6$, $18$. Neither: $21$"
-       ],
-       "explanation": [
-        "In both: $12$",
-        "Multiple of 4 only: $8$",
-        "Multiple of 6 only: $6$, $18$",
-        "Neither: $21$"
-       ],
-       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-sort-3",
-       "title": "Sort into a Venn 3",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Odd and square number:",
-        "Where do $4$, $9$, $11$, $16$, $18$ go?"
-       ],
-       "answer": [
-        "In both: $9$. Odd only: $11$. Square number only: $4$, $16$. Neither: $18$"
-       ],
-       "explanation": [
-        "In both: $9$",
-        "Odd only: $11$",
-        "Square number only: $4$, $16$",
-        "Neither: $18$"
-       ],
-       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-sort-4",
-       "title": "Sort into a Venn 4",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Less than 10 and even:",
-        "Where do $3$, $6$, $12$, $14$, $15$ go?"
-       ],
-       "answer": [
-        "In both: $6$. Less than 10 only: $3$. Even only: $12$, $14$. Neither: $15$"
-       ],
-       "explanation": [
-        "In both: $6$",
-        "Less than 10 only: $3$",
-        "Even only: $12$, $14$",
-        "Neither: $15$"
-       ],
-       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "vh-sort-5",
-       "title": "Sort into a Venn 5",
-       "tool": "venn-hcf-lcm",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Factor of 12 and factor of 18:",
-        "Where do $2$, $4$, $6$, $9$, $5$ go?"
-       ],
-       "answer": [
-        "In both: $2$, $6$. Factor of 12 only: $4$. Factor of 18 only: $9$. Neither: $5$"
-       ],
-       "explanation": [
-        "In both: $2$, $6$",
-        "Factor of 12 only: $4$",
-        "Factor of 18 only: $9$",
-        "Neither: $5$"
-       ],
-       "rationale": "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
-     ],
-     "id": "vh-sort-1",
-     "visualiser": false
-    }
-   ],
-   "brief": "Five numbers to sort into a Venn for two rules, full width, with something in both circles and something in neither. Harry works them on the board.",
-   "built": "1ubsx4c"
-  },
-  {
    "id": "vh-d2",
    "family": "structure",
    "title": "Prime factors in a Venn",
@@ -652,70 +501,40 @@
    "els": [
     {
      "kind": "text",
-     "x": 40,
-     "y": 50,
-     "w": 270,
-     "h": 300,
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
      "text": "Prime tiles",
-     "size": 44,
+     "size": 56,
      "colour": "#0f172a",
      "bold": true,
      "id": "vh-tiles-1"
     },
     {
-     "kind": "text",
-     "x": 40,
-     "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "Every prime has its own colour.\n\n12 = 2 × 2 × 3\n\nMake 12 from the tiles.",
-     "size": 32,
-     "colour": "#64748b",
-     "id": "vh-tiles-2"
-    },
-    {
      "kind": "venn",
-     "x": 320,
-     "y": 124,
-     "w": 960,
-     "h": 672,
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
      "left": "",
      "right": "",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "3",
-       "tile": true
-      },
-      {
-       "text": "5",
-       "tile": true
-      },
-      {
-       "text": "5",
-       "tile": true
-      },
-      {
-       "text": "7",
-       "tile": true
-      },
-      {
-       "text": "11",
-       "tile": true
-      }
+     "cards": [],
+     "listing": [
+      12
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
      ],
      "box": "Prime tiles",
-     "id": "vh-tiles-3"
+     "id": "vh-tiles-2"
     }
    ],
-   "built": "mmbbb0"
+   "built": "1l7pjft"
   },
   {
    "id": "vh-tiles-to-number",
@@ -879,62 +698,45 @@
   {
    "id": "vh-rule",
    "family": "teach",
-   "title": "The rule",
+   "title": "The rule: a prime in both goes once in the middle",
    "els": [
     {
      "kind": "text",
-     "x": 40,
-     "y": 50,
-     "w": 270,
-     "h": 300,
-     "text": "The rule",
-     "size": 44,
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "The rule: a prime in both goes once in the middle",
+     "size": 56,
      "colour": "#0f172a",
      "bold": true,
      "id": "vh-rule-1"
     },
     {
-     "kind": "text",
-     "x": 40,
-     "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "10 = 2 × 5\n15 = 3 × 5\n\nA prime in both goes once in the middle.",
-     "size": 32,
-     "colour": "#64748b",
-     "id": "vh-rule-2"
-    },
-    {
      "kind": "venn",
-     "x": 320,
-     "y": 124,
-     "w": 960,
-     "h": 672,
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
      "left": "10",
      "right": "15",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "5",
-       "tile": true
-      },
-      {
-       "text": "3",
-       "tile": true
-      },
-      {
-       "text": "5",
-       "tile": true
-      }
+     "cards": [],
+     "listing": [
+      10,
+      15
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
      ],
      "box": "Prime factors",
-     "id": "vh-rule-3"
+     "id": "vh-rule-2"
     }
    ],
-   "built": "bn7jy4"
+   "built": "103wdtk"
   },
   {
    "id": "vh-check",
@@ -1407,70 +1209,45 @@
   {
    "id": "vh-one-for-one",
    "family": "teach",
-   "title": "Model: 8 and 12",
+   "title": "Model: match the tiles one for one",
    "els": [
     {
      "kind": "text",
-     "x": 40,
-     "y": 50,
-     "w": 270,
-     "h": 300,
-     "text": "Model: 8 and 12",
-     "size": 44,
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 90,
+     "text": "Model: match the tiles one for one",
+     "size": 56,
      "colour": "#0f172a",
      "bold": true,
      "id": "vh-one-for-one-1"
     },
     {
-     "kind": "text",
-     "x": 40,
-     "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "8 = 2 × 2 × 2\n12 = 2 × 2 × 3\n\nMatch the tiles one for one.",
-     "size": 32,
-     "colour": "#64748b",
-     "id": "vh-one-for-one-2"
-    },
-    {
      "kind": "venn",
-     "x": 320,
-     "y": 124,
-     "w": 960,
-     "h": 672,
+     "x": 40,
+     "y": 130,
+     "w": 1520,
+     "h": 748,
      "left": "8",
      "right": "12",
-     "cards": [
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "tile": true
-      },
-      {
-       "text": "3",
-       "tile": true
-      }
+     "cards": [],
+     "listing": [
+      8,
+      12
+     ],
+     "palette": [
+      2,
+      3,
+      5,
+      7,
+      11
      ],
      "box": "Prime factors",
-     "id": "vh-one-for-one-3"
+     "id": "vh-one-for-one-2"
     }
    ],
-   "built": "1rwfh3a"
+   "built": "66w5eb"
   },
   {
    "id": "vh-discuss",

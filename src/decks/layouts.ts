@@ -3,6 +3,7 @@
 // A layout only places ordinary elements: once made, every part of the slide can be moved, edited or deleted.
 import type { BarModelData } from "../shared/barModel";
 import { splitPrimes } from "../shared/venn";
+import { BOX_H, BOX_W, LIST_W, PAL_H } from "./vennLayout";
 import { autoTree, type TreeNode, type TreeReveal } from "../shared/factorTree";
 import type { RatioTableSpec, BoardGrid, VennCard, VennLine, CuratedQuestion, DeckElement, DeckFamily, FillMode, GeneratorPreset, Slide } from "./types";
 
@@ -121,6 +122,16 @@ export const vennSlide = (id: string, title = "Venn diagram", left = "Left rule"
     text(40, 50, 270, 300, title, 44, { bold: true }),
     ...(opts.prompt ? [text(40, 370, 270, 460, opts.prompt, 32, { colour: MUTED })] : []),
     { kind: "venn", x: 320, y: Math.round((900 - h) / 2) + 10, w: 960, h, left, right, cards, ...(opts.box ? { box: opts.box } : {}), ...(opts.staged ? { staged: true } : {}), ...(opts.lines?.length ? { lines: opts.lines } : {}), ...(opts.size ? { size: opts.size } : {}) },
+  ]);
+};
+
+/** The build layout: the numbers listed as prime tiles in the left two fifths, the Venn in the right three fifths, and prime tile buttons along
+ *  the bottom that each add one more tile to drag in (`listing`, `palette` on the Venn). The element is the whole slide width under the title. */
+export const vennBuildSlide = (id: string, title = "Build a Venn", left = "", right = "", numbers: number[] = [], opts: { box?: string; palette?: number[]; cards?: VennCard[] } = {}) => {
+  const w = 1520, h = Math.round((w * (BOX_H + PAL_H)) / (BOX_W + LIST_W));
+  return make(id, "teach", title, [
+    text(70, 36, 1460, 90, title, 56, { bold: true }),
+    { kind: "venn", x: 40, y: 130, w, h, left, right, cards: opts.cards ?? [], listing: numbers, palette: opts.palette ?? [2, 3, 5, 7, 11], ...(opts.box ? { box: opts.box } : {}) },
   ]);
 };
 

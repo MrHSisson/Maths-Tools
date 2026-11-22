@@ -1,4 +1,4 @@
-// Build script for the "Venn diagrams, HCF and LCM" deck (plan: specs/decks/venn-hcf-lcm.md; 46 slides, built one section at a time: sections 1 and 2 so far).
+// Build script for the "Venn diagrams, HCF and LCM" deck (plan: specs/decks/venn-hcf-lcm.md; 45 slides, built one section at a time: sections 1 and 2 so far).
 //   npm run deck -- looks specs/decks/venn-hcf-lcm.build.ts      the look card (one slide of each kind)
 //   npm run deck -- build specs/decks/venn-hcf-lcm.build.ts --replace
 //   npm run deck -- check venn-hcf-lcm --layout ; npm run deck -- review venn-hcf-lcm
@@ -48,32 +48,6 @@ must(same(reds.filter((w) => where(RED.has(w), FRUIT.has(w)) === "neither"), ["c
 const to12 = Array.from({ length: 12 }, (_, i) => i + 1);
 must(same(to12.filter((n) => where(n % 2 === 0, n % 3 === 0) === "middle"), [6, 12]), "even and multiple of 3: middle");
 
-// slide 7 (if time): five sorting questions, full width; the answers are computed and kept (not shown on a click: Harry works them on the board)
-interface Sort { left: string; right: string; inLeft: (n: number) => boolean; inRight: (n: number) => boolean; items: number[] }
-const sorts: Sort[] = [
-  { left: "even", right: "multiple of 5", inLeft: (n) => n % 2 === 0, inRight: (n) => n % 5 === 0, items: [7, 8, 10, 15, 20] },
-  { left: "multiple of 4", right: "multiple of 6", inLeft: (n) => n % 4 === 0, inRight: (n) => n % 6 === 0, items: [6, 8, 12, 18, 21] },
-  { left: "odd", right: "square number", inLeft: (n) => n % 2 === 1, inRight: (n) => Number.isInteger(Math.sqrt(n)), items: [4, 9, 11, 16, 18] },
-  { left: "less than 10", right: "even", inLeft: (n) => n < 10, inRight: (n) => n % 2 === 0, items: [3, 6, 12, 14, 15] },
-  { left: "factor of 12", right: "factor of 18", inLeft: (n) => 12 % n === 0, inRight: (n) => 18 % n === 0, items: [2, 4, 6, 9, 5] },
-];
-const cap = (t: string) => `${t[0].toUpperCase()}${t.slice(1)}`;
-const sortQ = (i: number, s: Sort): CuratedQuestion => {
-  const place = (w: Where) => s.items.filter((n) => where(s.inLeft(n), s.inRight(n)) === w);
-  const parts = ([["middle", "In both"], ["left", `${s.left[0].toUpperCase()}${s.left.slice(1)} only`], ["right", `${s.right[0].toUpperCase()}${s.right.slice(1)} only`], ["neither", "Neither"]] as [Where, string][])
-    .map(([w, label]) => `${label}: ${place(w).length ? place(w).map((n) => `$${n}$`).join(", ") : "nothing"}`);
-  must(place("middle").length > 0 && place("neither").length >= 0, `sort ${i + 1} has something in the middle`);
-  const lines = [`${cap(s.left)} and ${s.right}:`, `Where do ${s.items.map((n) => `$${n}$`).join(", ")} go?`];
-  assertCentred([lines.join(" ")], `sort ${i + 1}`);
-  return { ...Q.open(`${P}-sort-${i + 1}`, T, "level1", lines[0], parts.join(". "), parts), title: `Sort into a Venn ${i + 1}`, question: lines,
-    rationale: "Decide, for each number, whether it is in the left circle, the right circle, both or neither: a number can be in both." };
-};
-const sortSet = sorts.map((s, i) => sortQ(i, s));
-must(sortSet.length >= 5, "at least five sorting questions (R42)");
-// the five sorts together cover every place a number can go
-const allWhere = new Set(sorts.flatMap((s) => s.items.map((n) => where(s.inLeft(n), s.inRight(n)))));
-must(["left", "middle", "right", "neither"].every((w) => allWhere.has(w as Where)), "the sorts use all four places");
-
 const section1: Slide[] = [
   S.title(`${P}-title`, "Venn Diagrams, HCF & LCM", "Sort it. Place it. Multiply."),
   S.objective(`${P}-objective`, "I can put things in the right part of a Venn diagram.", ["Say what each circle is for", "Put a thing in both circles when it fits both", "Put a thing in neither when it fits neither"]),
@@ -81,7 +55,6 @@ const section1: Slide[] = [
   S.venn(`${P}-fly`, "Can fly and has feathers", "Can fly", "Has feathers", cardsOf(flyers), { box: "Animals" }),
   S.venn(`${P}-red`, "Is red and is a fruit", "Is red", "Is a fruit", cardsOf(reds), { box: "Things" }),
   S.venn(`${P}-even3`, "Even and multiple of 3", "Even", "Multiple of 3", cardsOf(to12.map(String)), { box: "1 to 12" }),
-  S.whiteboard(`${P}-sort`, "If time: sort into a Venn", sortSet, "Five numbers to sort into a Venn for two rules, full width, with something in both circles and something in neither. Harry works them on the board."),
 ];
 
 // ---------- section 2: prime factors in a Venn (slides 8 to 27) ----------
@@ -153,7 +126,6 @@ must([9, 21].every((n) => primeFactors(n).length > 1) && [13, 19].every((n) => p
 
 // Venn cards from two numbers: placed (the tiles in their regions) or scattered (to drag)
 const placedCards = (a: number, b: number): VennCard[] => { const r = splitPrimes(a, b); return (["left", "middle", "right"] as const).flatMap((region) => r[region].map((n) => ({ text: String(n), tile: true, region }))); };
-const scatteredCards = (a: number, b: number): VennCard[] => [...primeFactors(a), ...primeFactors(b)].map((n) => ({ text: String(n), tile: true }));
 
 // the worked pairs and models (never asked): 10 and 15 (the rule), 8 and 12 (one for one), 9 and 10 (nothing shared), 4 and 12 (one inside the other)
 const rule = splitPrimes(10, 15), rule8 = splitPrimes(8, 12), none = splitPrimes(9, 10), inside = splitPrimes(4, 12);
@@ -164,12 +136,12 @@ must(none.middle.length === 0 && same(inside, { left: [], middle: [2, 2], right:
 const WORKED = [10, 15, 8, 12, 18, 9, 4];
 
 // slide 10: the prime tiles (colours), slide 12: the rule, slide 13: the check, slide 17: one for one
-const tilesSlide = S.venn(`${P}-tiles`, "Prime tiles", "", "", [2, 2, 3, 5, 5, 7, 11].map((n) => ({ text: String(n), tile: true })), { box: "Prime tiles", prompt: "Every prime has its own colour.\n\n12 = 2 × 2 × 3\n\nMake 12 from the tiles." });
+const tilesSlide = S.vennBuild(`${P}-tiles`, "Prime tiles", "", "", [12], { box: "Prime tiles" });
 must(same(primeFactors(12), [2, 2, 3]), "12 = 2 x 2 x 3");
-const ruleSlide = S.venn(`${P}-rule`, "The rule", "10", "15", scatteredCards(10, 15), { box: "Prime factors", prompt: `10 = ${tex(primeFactors(10)).replace(/\\times/g, "×")}\n15 = ${tex(primeFactors(15)).replace(/\\times/g, "×")}\n\nA prime in both goes once in the middle.` });
+const ruleSlide = S.vennBuild(`${P}-rule`, "The rule: a prime in both goes once in the middle", "10", "15", [10, 15], { box: "Prime factors" });
 const [c10, c15] = circleNumbers(rule);
 const checkSlide = S.venn(`${P}-check`, "The check", String(c10), String(c15), placedCards(10, 15), { box: "Multiply each circle", prompt: `Left circle: ${[...rule.left, ...rule.middle].join(" × ")} = ${c10}\nRight circle: ${[...rule.middle, ...rule.right].join(" × ")} = ${c15}\n\nThe Venn proves itself.` });
-const oneForOne = S.venn(`${P}-one-for-one`, "Model: 8 and 12", "8", "12", scatteredCards(8, 12), { box: "Prime factors", prompt: "8 = 2 × 2 × 2\n12 = 2 × 2 × 3\n\nMatch the tiles one for one." });
+const oneForOne = S.vennBuild(`${P}-one-for-one`, "Model: match the tiles one for one", "8", "12", [8, 12], { box: "Prime factors" });
 
 // slide 18: the one trap worth a discussion (Mei puts every 2 of 8 in the middle)
 const meiRight = circleNumbers({ left: [], middle: [2, 2, 2], right: [3] });
@@ -266,7 +238,7 @@ void allTiles;
 const slides: Slide[] = [...section1, ...section2];
 
 // The fresh-numbers rules (src/decks/deckRules.ts): no number twice inside a section, the worked numbers asked nowhere, no pair twice.
-// The sorting questions reuse small numbers on purpose (each is a different pair of rules), so section 1's are not listed. The Depth numbers
+// Section 1 has no number questions. The Depth numbers
 // (54 and 80, 27 and 32) are asserted unused by every set.
 const DEPTH_NUMBERS = [54, 80, 27, 32];
 const allSets: [string, CuratedQuestion[]][] = [["tiles", tileQs], ["prime factors in a Venn", SET14], ["book work a", BOOK15], ["repeated primes", SET19], ["special cases", SET21], ["book work b", BOOK24]];
