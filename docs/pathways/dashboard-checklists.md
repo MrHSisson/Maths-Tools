@@ -1,6 +1,8 @@
 # The dashboard as checklists
-- **Status:** building
+- **Status:** paused
 - **Updated:** 2026-11-22
+
+**Paused 2026-11-22 (Harry): useful, but there is no time to sort it and a lot of branches are open.** Nothing is half-built: chunk 1 (the facts) is done and safe to merge, chunks 2 to 6 have not been started, and the dashboard is unchanged. To restart, begin at chunk 2; the decisions below still stand.
 
 ## Intention
 The Tools dashboard (`/admin`) should answer one question at a glance: **what is done, and what is left?** Today it shows facts generated from the code, one Review dropdown per tool, and some views over the docs, and its use is unclear (Harry, 2026-11-22). It becomes checklists: every tool, deck and pathway has a list of things that must be true before it is finished, a tick for each, and a progress bar made from the ticks.
