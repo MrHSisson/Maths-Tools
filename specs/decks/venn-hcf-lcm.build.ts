@@ -1,4 +1,4 @@
-// Build script for the "Venn diagrams, HCF and LCM" deck (plan: specs/decks/venn-hcf-lcm.md; 45 slides, built one section at a time: sections 1 and 2 so far).
+// Build script for the "Venn diagrams, HCF and LCM" deck (plan: specs/decks/venn-hcf-lcm.md; sections 1 and 2 built: 34 slides).
 //   npm run deck -- looks specs/decks/venn-hcf-lcm.build.ts      the look card (one slide of each kind)
 //   npm run deck -- build specs/decks/venn-hcf-lcm.build.ts --replace
 //   npm run deck -- check venn-hcf-lcm --layout ; npm run deck -- review venn-hcf-lcm
@@ -70,7 +70,7 @@ const partsSlide = makeSlide(`${P}-parts`, "language", "The parts of a Venn diag
 ]);
 
 const section1: Slide[] = [
-  S.title(`${P}-title`, "Venn Diagrams, HCF & LCM", "Sort it. Place it. Multiply."),
+  S.title(`${P}-title`, "Venn Diagrams & Product of Primes", "Sort it. Place it. Multiply."),
   S.objective(`${P}-objective`, "I can put things in the right part of a Venn diagram.", ["Say what each circle is for", "Put a thing in both circles when it fits both", "Put a thing in neither when it fits neither"]),
   partsSlide,
   S.venn(`${P}-pets`, "Pets and 3-letter words", "Pets", "3-letter words", cardsOf(petWords), { box: "Things", wide: true }),
@@ -273,7 +273,7 @@ for (const [name, qs] of allSets) for (const q of qs) for (const n of (q.title.m
 assertFreshNumbers({ worked: WORKED, sections: Object.fromEntries(allSets), exit: [] });
 
 export default () => ({
-  id: ID, title: "Venn Diagrams, HCF & LCM", strand: "Number", questionVersion: 2,
-  summary: "Pupils meet the Venn diagram with no numbers at all, put the prime factors of two numbers into a Venn, then read the HCF (multiply the middle) and the LCM (multiply everything) off it. Heavy scaffold, with support taken away one step at a time. Every question is authored and its answer computed.",
+  id: ID, title: "Venn Diagrams & Product of Primes", strand: "Number", questionVersion: 2,
+  summary: "Pupils meet the Venn diagram with no numbers at all, then put the prime factors of two numbers into a Venn, building it tile by tile: one shared prime, several, repeated primes, nothing shared and one number inside the other. Two printable worksheets, each with a book-work slide and a visualiser slide for the answers. Every question is authored and its answer computed.",
   slides,
 });
