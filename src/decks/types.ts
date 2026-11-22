@@ -112,6 +112,8 @@ export type DeckElement = Box & (
       labelScale?: number }
   /** A full-width box that pulls the document camera (the visualiser) through: it starts the camera when the slide opens in the player. Nothing else is drawn. */
   | { kind: "visualiser" }
+  /** The graph of sin x (restricted to -π/2 ≤ x ≤ π/2), cos x (0 ≤ x ≤ π) or tan x (-π/2 < x < π/2), reflected in y = x and separated into its inverse, as an animation: four clicks (restrict, mirror line, fold, separate). */
+  | { kind: "inverseTrig"; fn: "sin" | "cos" | "tan" }
   | { kind: "factorTree"; tree: TreeNode; fill?: FillMode; staged?: boolean; reveal?: TreeReveal[]; strip?: boolean; rules?: boolean }
   /** Hand-writing on a slide, drawn with the editor's Pen: one full-slide layer per slide (x 0, y 0, the whole canvas), strokes in slide units. */
   | { kind: "ink"; strokes: InkStroke[] }

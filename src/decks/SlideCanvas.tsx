@@ -29,6 +29,8 @@ import { InkLayer } from "./InkLayer";
 import { sieveSteps } from "../shared/numberGrid";
 import { treeSteps } from "../shared/factorTree";
 import { FactorTreeEl } from "./FactorTree";
+import { InverseTrigEl } from "./InverseTrig";
+import { INVERSE_STAGES } from "../shared/inverseTrig";
 import { SLIDE_BUTTON_PX, slideButton } from "./slideButton";
 import { DepthSlide } from "../shared/components/DepthSlide";
 import type { DepthItem } from "../shared/depth";
@@ -708,6 +710,7 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "numberGrid": return <NumberGridEl el={el} fill={fill ?? el.fill ?? "structure"} stage={stage} live={live} />;
     case "venn": return <VennEl el={el} stage={stage} live={live} />;
     case "visualiser": return <div style={{ width: "100%", height: "100%", padding: 6 }}><WhiteboardWorkspace live={live} visualiser autoStart /></div>;
+    case "inverseTrig": return <InverseTrigEl el={el} stage={stage} live={live} />;
     case "factorTree": return <FactorTreeEl el={el} fill={fill ?? el.fill ?? "filled"} stage={stage} />;
     case "questions": return <QuestionSequence items={el.items} live={live} size={el.size} fixed={el.fixed} reportId={el.id} display={el} depthSlide={depthSlide} />;
     case "practice": return <Practice el={el} live={live} depthSlide={depthSlide} />;
@@ -749,4 +752,4 @@ export function SlideCanvas({ slide, scale, live = false, fills, hidden, upTo, r
 export const slideSteps = (slide: Slide) => Math.max(0, ...slide.els.map((e) => (e.step ?? 0) + stagedClicks(e)));
 
 /** Extra clicks a staged piece takes after the click it appears on: a ratio table one per further row, a bar one per further part and brace. */
-export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : el.kind === "factorTree" && el.staged ? treeSteps(el.tree, el.reveal) : el.kind === "venn" ? (el.staged ? el.cards.length : 0) + (el.lines?.length ?? 0) : 0);
+export const stagedClicks = (el: DeckElement) => (el.kind === "depth" ? 1 : el.kind === "inverseTrig" ? INVERSE_STAGES : el.kind === "ratioTable" && el.staged ? Math.max(0, el.table.rows.length - 1) : el.kind === "bar" && el.staged ? barStages(el.bar) : el.kind === "numberGrid" && el.staged ? sieveSteps(el.stages) : el.kind === "factorTree" && el.staged ? treeSteps(el.tree, el.reveal) : el.kind === "venn" ? (el.staged ? el.cards.length : 0) + (el.lines?.length ?? 0) : 0);

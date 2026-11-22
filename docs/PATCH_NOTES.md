@@ -268,6 +268,33 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `src/tools/Decisio
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: audit applied (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 
+## 2026-11-22 — An animated graph slide piece, and a short deck on y = arcsin x
+
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{types,InverseTrig,SlideCanvas,EditorChrome,layouts,builder}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/arcsin-graph.build.ts`, `src/decks/data/arcsin-graph.json`, docs (FEATURES, `docs/reference/decks.md`).
+
+- **New slide piece `inverseTrig`**: the graph of y = sin x restricted to −π/2 ≤ x ≤ π/2, reflected in y = x and separated into y = arcsin x, as an animation over four clicks: restrict, mirror line, fold (every point swaps x and y, so the copy is exactly y = arcsin x), separate (the copy slides out to its own axes). Back plays it in reverse. The editor, thumbnails and print show the finished state; reduced-motion jumps to each state. x and y are drawn at the same scale so the reflection is a true one.
+- **Layout** `inverseTrigSlide` (`S.inverseTrig`), in Add slide and the slide library.
+- **Deck `arcsin-graph`** (6 slides, no practice): title, objective, a discussion (why sin x must be restricted), the animation, domain and range swap, summary. Pushed to the shared copy only when Harry asks (see below).
+- Only `fn: "sin"` for now; cos and tan are not built.
+- Checked: `npm run deck -- check arcsin-graph --layout`; every click watched frame by frame in the player (no console errors); `inverseTrig.test.ts` checks the fold maths against `Math.asin`.
+- Deliberately not done: the look card step (Harry's yes before building) was skipped because the request was a single animation; no Handoff block or planner Build Log (planner not used this session).
+
+Agent: Claude Code
+Notes: no Build Log block written this session (see above).
+
+## 2026-11-22 — The inverse-graph animation for cos x and tan x, and two more decks
+
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{InverseTrig,types,layouts}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/{arccos,arctan}-graph.build.ts`, `src/decks/data/{arccos,arctan}-graph.json`, docs.
+
+- **`inverseTrig` now takes `fn`: `sin`, `cos` or `tan`.** cos x is restricted to 0 ≤ x ≤ π (filled end points, reflected to y = arccos x with range 0 to π). tan x is restricted to −π/2 < x < π/2 between dashed vertical asymptotes; they fold into the horizontal asymptotes y = ±π/2 of y = arctan x (domain all real x). The other three clicks are the same. `S.inverseTrig(id, fn)`.
+- **Decks `arccos-graph` and `arctan-graph`** (6 slides each, same shape as `arcsin-graph`, no practice). Their discussion slides use cos(π/3) = cos(5π/3) = 0.5 and tan(π/4) = tan(5π/4) = 1.
+- Checked: deck check with layout for all three decks, every click watched in the player, a test that each folded curve equals `Math.asin`, `Math.acos`, `Math.atan` and that each restriction is one-to-one.
+- **Axis labelling** (Harry's feedback): ±π/2 and ±π sit below the x axis and left of the y axis, ±1 on the other side so labels no longer collide; a 0 at the origin; white-edged labels drawn over the curves and asymptotes so none is hidden; end points of sin and cos carry their coordinates, e.g. (π/2, 1) becoming (1, π/2), so the swap of x and y can be read off the graph; the y = x label sits clear of its line.
+- Not on the shared deck service yet (the live site needs this branch merged first).
+
+Agent: Claude Code
+Notes: no Build Log block written this session.
+
 ## 2026-11-21 — Formulating Linear Programmes: "Write a constraint", Level 1 (chunk F1), not live
 
 Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpGen.ts`, `lpSolve.ts`, `LpWorking.tsx` (new); `src/tools/Decision/FormulatingLP.tsx` (new tool, `/lp-formulate`, `enabled: false`); small edits to `src/shared/decision/types.ts` (the `lp` data field and `lpView` step), `DecisionShell.tsx` (picture height for the `lp` field), `src/registry.ts`, and three test lists (`organisation`, `printBasket`, `localExports`-clean).

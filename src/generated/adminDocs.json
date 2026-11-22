@@ -358,6 +358,16 @@
    ]
   },
   {
+   "title": "Inverse graph animation (decks)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x (restricted to −π/2 ≤ x ≤ π/2), y = cos x (0 ≤ x ≤ π) or y = tan x (−π/2 < x < π/2) being reflected in the line y = x and then separating into its own axes as arcsin, arccos or arctan, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse."
+    }
+   ]
+  },
+  {
    "title": "Rectilinear shapes in decks",
    "level": 3,
    "blocks": [
