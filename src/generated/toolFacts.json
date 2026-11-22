@@ -2485,7 +2485,7 @@
    "description": "A 24-door advent calendar (4 rows of 6) with a pupil name, set door by door, (or a greeting) behind each door. The names stay on this device.",
    "category": "Classroom",
    "subject": "Classroom",
-   "enabled": false,
+   "enabled": true,
    "file": "src/tools/TeacherTools/AdventCalendar.tsx",
    "kind": "sandbox",
    "shell": "Standalone",

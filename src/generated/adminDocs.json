@@ -4412,6 +4412,10 @@
   "advent-calendar": {
    "changes": [
     {
+     "date": "2026-11-22",
+     "title": "Advent Calendar: out of Developing-tools mode"
+    },
+    {
      "date": "2026-11-09",
      "title": "Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed"
     },
@@ -4426,10 +4430,6 @@
     {
      "date": "2026-11-07",
      "title": "Advent Calendar: big reveal and doors that open on their date"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
     }
    ]
   }
