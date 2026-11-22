@@ -147,7 +147,7 @@ The ladder climbs a to e; f and g go at the end of a set. The early sets use 2, 
 
 ## The worksheets (printed, with the Venns on them)
 
-Stage 1 has **two**: sheet 1 (slide 25) places prime factors; sheet 2 (slide 44) finds HCF and LCM. A4, six Venns to a sheet (two across, three down), the Venn large with its labels, the two numbers and their factorisations printed with it. They follow the fade within the sheet: the first Venns carry more of the content (some tiles already placed, the count in small print), the last few are only the numbers and factorisations. Sheet 2 has an "HCF =" and "LCM =" line under each Venn. No answers are needed; the script has them if you ever want an answer sheet. A third sheet (the combinations) is possible in stage 2, since a lesson can pin three.
+Stage 1 has **two**: sheet 1 (slide 25) places prime factors; sheet 2 (slide 44) finds HCF and LCM. A4, three Venns to a page (one across, three down; the page is printed scaled to A5, so at most 9 questions over three pages), the Venn large with its labels, the two numbers and their factorisations printed with it. They follow the fade within the sheet: the first Venns carry more of the content (some tiles already placed, the count in small print), the last few are only the numbers and factorisations. Sheet 2 has an "HCF =" and "LCM =" line under each Venn. No answers are needed; the script has them if you ever want an answer sheet. A third sheet (the combinations) is possible in stage 2, since a lesson can pin three.
 
 These are **authored** worksheets (hand-written, not generated), printed through File → Worksheets like the rectilinear and textbook sheets.
 
@@ -191,4 +191,4 @@ These are **authored** worksheets (hand-written, not generated), printed through
 
 1. **Words:** "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.
 2. **Section 1 contexts** (pets and 3-letter words, can fly and has feathers, four sides and a right angle, even and multiple of 3) are my suggestions; replace any you like.
-3. **Worksheets:** six Venns to an A4 is my default; say if you would rather four larger ones.
+3. **Worksheets (decided by Harry):** three Venns per A4 page, larger, printed by Harry scaled from A4 to A5, so a worksheet holds at most 9 questions (three pages). Assumed: up to three pages of three; say if the 9 should sit some other way.
