@@ -125,9 +125,10 @@ function frame(sc: number, ox: number, oy: number) {
     t(px(mx) + 5, py(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(my) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
   ];
   /** a label placed beside a point: below it, or to its left (right-aligned) */
-  const tag = (x: number, y: number, text: string, colour: string, side: "below" | "left" | "above-right", step = 0): unknown => {
+  const tag = (x: number, y: number, text: string, colour: string, side: "below" | "left" | "above-right" | "below-left", step = 0): unknown => {
     const o = { colour, bold: true, ...(step ? { step } : {}) };
     if (side === "left") return t(px(x) - 270, py(y) - 22, 240, 46, text, 30, { ...o, align: "right" });
+    if (side === "below-left") return t(px(x) - 270, py(y) + 34, 240, 46, text, 30, { ...o, align: "right" });
     if (side === "above-right") return t(px(x) + 24, py(y) - 76, 240, 46, text, 30, { ...o, align: "left" });
     return t(px(x) - 30, py(y) + 20, 240, 46, text, 30, { ...o, align: "left" });
   };
@@ -158,7 +159,7 @@ function graphA(o: AOpts = {}): unknown[] {
   if (o.labels !== false) els.push(t(px(2.9), py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(px(4.2), py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }));
   if (o.orange !== undefined && o.orange !== false) {
     const step = typeof o.orange === "number" ? o.orange : 0;
-    els.push(seg(3.4, -0.4, -0.4, 3.4, ORANGE, 7, step), t(px(0.1), py(0.95), 330, 44, "$x + y = 3$", 30, { colour: ORANGE, bold: true, align: "left", ...(step ? { step } : {}) }));
+    els.push(seg(3.4, -0.4, 0, 3, ORANGE, 7, step), t(px(0.1), py(0.95), 330, 44, "$x + y = 3$", 30, { colour: ORANGE, bold: true, align: "left", ...(step ? { step } : {}) }));
   }
   for (const w of o.walk ?? []) els.push(seg(w.from[0], w.from[1], w.to[0], w.to[1], GREEN, 12, w.step ?? 0, true));
   for (const d of o.dots ?? []) {
@@ -260,14 +261,14 @@ const slides: Slide[] = [
     const g = frame(88, 985, 770);
     const els: unknown[] = [
       g.region([[4, 0], [6, 0], [0, 6], [0, 4]]),
-      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, -0.4, 4.4, ORANGE, 7), g.seg(6.4, -0.4, -0.4, 6.4, BLUE, 7),
+      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, 0, 4, ORANGE, 7), g.seg(6.4, -0.4, 0, 6, BLUE, 7),
       t(g.px(0.3), g.py(1.6), 300, 44, "$x + y = 4$", 30, { colour: ORANGE, bold: true, align: "left" }), t(g.px(3.5), g.py(3.7), 300, 44, "$x + y = 6$", 30, { colour: BLUE, bold: true, align: "left" }),
     ];
     // each corner with its C, and (on the next click) its P = -C
     const lab: Array<[number, number, string, string]> = [[4, 0, "12", "-12"], [6, 0, "18", "-18"], [0, 6, "12", "-12"], [0, 4, "8", "-8"]];
     lab.forEach(([x, y, c, p], i) => {
       els.push(g.dot(x, y, LOOK.ink, 1, 11));
-      const lx = i === 2 || i === 3 ? g.px(x) - 270 : g.px(x) - 90, ly = i === 2 || i === 3 ? g.py(y) - 56 : g.py(y) + 18;
+      const lx = i === 2 || i === 3 ? g.px(x) - 310 : g.px(x) - 90, ly = i === 2 || i === 3 ? g.py(y) - 56 : g.py(y) + 18;
       const al = i === 2 || i === 3 ? "right" : "left";
       els.push(t(lx, ly, 250, 46, `$C = ${c}$`, 30, { colour: LOOK.ink, align: al, step: 1 }), t(lx, ly + 40, 250, 46, `$P = ${p}$`, 30, { colour: grey, bold: true, align: al, step: 2 }));
     });
@@ -286,7 +287,7 @@ const slides: Slide[] = [
     const g = frame(88, 985, 770);
     const els: unknown[] = [
       g.region([[4, 0], [6, 0], [0, 6], [0, 4]]),
-      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, -0.4, 4.4, ORANGE, 7), g.seg(6.4, -0.4, -0.4, 6.4, BLUE, 7),
+      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, 0, 4, ORANGE, 7), g.seg(6.4, -0.4, 0, 6, BLUE, 7),
       t(g.px(0.3), g.py(1.6), 300, 44, "$x + y = 4$", 30, { colour: ORANGE, bold: true, align: "left" }), t(g.px(3.5), g.py(3.7), 300, 44, "$x + y = 6$", 30, { colour: BLUE, bold: true, align: "left" }),
       g.dot(0, 0, RED, 0, 15), t(g.px(0.25), g.py(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left" }),
     ];
@@ -304,7 +305,7 @@ const slides: Slide[] = [
     const g = frame(88, 985, 770);
     const els: unknown[] = [
       g.region([[4, 0], [6, 0], [0, 6], [0, 4]]),
-      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, -0.4, 4.4, ORANGE, 7), g.seg(6.4, -0.4, -0.4, 6.4, BLUE, 7),
+      ...g.axes(6.4, 6.4), g.seg(4.4, -0.4, 0, 4, ORANGE, 7), g.seg(6.4, -0.4, 0, 6, BLUE, 7),
       g.seg(0.15, 0, 3.8, 0, GREEN, 12, 0, true), g.seg(3.9, 0.1, 0.1, 3.9, GREEN, 12, 1, true),
       g.dot(4, 0, GREEN, 0, 15), g.dot(0, 4, GREEN, 1, 15),
       t(g.px(4) - 30, g.py(0) + 20, 240, 46, "$(4, 0)$", 30, { colour: GREEN, bold: true, align: "left" }),
@@ -326,9 +327,10 @@ const slides: Slide[] = [
       g.region([[0, 1], [4.5, 1], [4, 2], [0, 4]]),
       ...g.axes(5.4, 4.6), g.seg(5, 0, 2.75, 4.5, BLUE, 7), g.seg(0, 4, 5.3, 1.35, PURPLE, 7), g.seg(-0.2, 1, 5.2, 1, ORANGE, 7),
       t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
-      t(g.px(0.3), g.py(0.7), 330, 44, "$y = 1$", 30, { colour: ORANGE, bold: true, align: "left" }),
+      t(g.px(3.3), g.py(1) + 14, 330, 44, "$y = 1$", 30, { colour: ORANGE, bold: true, align: "left" }),
       g.dot(0, 0, RED, 0, 15), g.dot(0, 1, GREEN, 3, 15),
-      t(g.px(0) - 270, g.py(1) - 22, 240, 46, "new origin", 30, { colour: GREEN, bold: true, align: "right", step: 3 }),
+      t(g.px(0.25), g.py(0) + 22, 420, 46, "$(0, 0)$ is not allowed", 30, { colour: RED, bold: true, align: "left" }),
+      t(g.px(0.25), g.py(1) + 14, 330, 44, "new origin", 30, { colour: GREEN, bold: true, align: "left", step: 3 }),
     ];
     return slide(`${P}-lower`, "A lower bound moves the origin", [
       ...titleEls("A lower bound moves the origin", "Say $y \\ge 1$ on the earlier problem"),
@@ -343,11 +345,11 @@ const slides: Slide[] = [
   (() => {
     const g = frame(100, 985, 790);
     const els: unknown[] = [
-      ...g.axes(5.4, 4.6), g.seg(5, 0, 2.75, 4.5, BLUE, 7), g.seg(0, 4, 5.3, 1.35, PURPLE, 7), g.seg(5.4, -0.4, -0.4, 5.4, ORANGE, 7),
+      ...g.axes(5.4, 4.6), g.seg(5, 0, 2.75, 4.5, BLUE, 7), g.seg(0, 4, 5.3, 1.35, PURPLE, 7), g.seg(5.2, -0.2, 0.4, 4.6, ORANGE, 7),
       t(g.px(2.9), g.py(4.55) - 8, 300, 44, "$2x + y = 10$", 30, { colour: BLUE, bold: true }), t(g.px(4.2), g.py(2.6), 330, 44, "$x + 2y = 8$", 30, { colour: PURPLE, bold: true, align: "left" }),
       t(g.px(0.1), g.py(0.95), 330, 44, "$x + y = 5$", 30, { colour: ORANGE, bold: true, align: "left" }),
       g.seg(2, 3, 5, 0, GREEN, 14, 1), g.dot(2, 3, GREEN, 1, 15), g.dot(5, 0, GREEN, 1, 15),
-      t(g.px(2) - 270, g.py(3) - 22, 240, 46, "$(2, 3)$", 30, { colour: GREEN, bold: true, align: "right", step: 1 }),
+      t(g.px(2) - 270, g.py(3) + 34, 240, 46, "$(2, 3)$", 30, { colour: GREEN, bold: true, align: "right", step: 1 }),
       t(g.px(5) - 30, g.py(0) + 20, 240, 46, "$(5, 0)$", 30, { colour: GREEN, bold: true, align: "left", step: 1 }),
     ];
     return slide(`${P}-equal`, "An equality: the region is a line", [
