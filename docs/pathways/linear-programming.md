@@ -50,6 +50,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (roadmap). The textbook stop-offs are now whole exercises, given only where everything in them can be done (T4 Exercise 4C after stage 6; 4A, 4B and Mixed practice not on this route; T30 30.1A/B not placed); the page shows planned decks for stages 5 and 6 (agreed with Harry: stage 1 needs none, stages 3 and 4 are better practised in the tool).
 
+- 2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck has a plan and a look card Harry likes (`specs/decks/lp-simplex-not-origin.md`, `.build.ts`); three questions are open (reuse the earlier problem, which pivot entry, how much on lower bounds and equalities); not built.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

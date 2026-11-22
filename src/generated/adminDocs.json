@@ -1682,6 +1682,12 @@
        "items": [
         "2026-11-22 (roadmap). The textbook stop-offs are now whole exercises, given only where everything in them can be done (T4 Exercise 4C after stage 6; 4A, 4B and Mixed practice not on this route; T30 30.1A/B not placed); the page shows planned decks for stages 5 and 6 (agreed with Harry: stage 1 needs none, stages 3 and 4 are better practised in the tool)."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck has a plan and a look card Harry likes (`specs/decks/lp-simplex-not-origin.md`, `.build.ts`); three questions are open (reuse the earlier problem, which pivot entry, how much on lower bounds and equalities); not built."
+       ]
       }
      ]
     },
