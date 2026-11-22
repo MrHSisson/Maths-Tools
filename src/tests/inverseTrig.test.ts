@@ -23,7 +23,7 @@ describe("every function's restricted graph folds into its inverse", () => {
   for (const fn of INVERSE_FNS) {
     it(`${fn}: the folded kept curve is y = arc${fn} x, and the restriction is one-to-one`, () => {
       const kept = keptPoints(fn, 60);
-      for (const pt of kept) { const [x, y] = fold(pt, 1); expect(y).toBeCloseTo(inverseOf(fn)(Math.max(-1, Math.min(1, x))), 8); }
+      for (const pt of kept) { const [x, y] = fold(pt, 1); expect(y).toBeCloseTo(inverseOf(fn)(fn === "tan" ? x : Math.max(-1, Math.min(1, x))), 8); }
       const ys = kept.map(([, y]) => y);
       const dir = Math.sign(ys[1] - ys[0]);
       for (let i = 1; i < ys.length; i++) expect(Math.sign(ys[i] - ys[i - 1])).toBe(dir);   // strictly one way: no output repeats
