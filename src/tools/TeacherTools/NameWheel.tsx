@@ -269,14 +269,18 @@ export default function NameWheel() {
     setSpinning(true); setCurrent("");
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const from = rotRef.current;
-    // the wheels turn a few times; the strip slides 40 to 70 cards and stops anywhere along the winning card
-    const to = style === "case" ? from + 40 + Math.random() * 30 : from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
-    const dur = reduce ? 1200 : 5000 + Math.random() * 1800;
+    // Carnival and Case are the long, suspenseful spins: many turns (or 90 to 130 cards), about ten seconds, and a slow crawl at the end.
+    // Classic keeps its shorter spin.
+    const to = style === "case" ? from + 90 + Math.random() * 40
+      : style === "carnival" ? from + TAU * (9 + Math.floor(Math.random() * 5)) + Math.random() * TAU
+      : from + TAU * (5 + Math.floor(Math.random() * 4)) + Math.random() * TAU;
+    const dur = reduce ? 1200 : style === "classic" ? 5000 + Math.random() * 1800 : 9500 + Math.random() * 2500;
+    const ease = style === "classic" ? 4 : 3.2;   // a lower power leaves more of the distance for the final seconds
     const start = performance.now();
     const at = (v: number) => (style === "case" ? stripIndexAt(v, n) : indexAt(v, n, POINTER[style]));
     let last = at(from);
     const step = (now: number) => {
-      const t = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - t, 4);
+      const t = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - t, ease);
       rotRef.current = from + (to - from) * e;
       draw();
       const idx = at(rotRef.current);
