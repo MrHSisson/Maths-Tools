@@ -10,6 +10,9 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpSimplexWhole.t
 - **Designed numbers:** the problem is built so that a vertex with fractions in it is the best point (a positive whole dual-style design with whole objective coefficients, so the optimal value is usually a fraction too), then kept only if a feasible whole-number point reaches the bound. Level 1: two variables, any practical neighbour. Level 2: the best plan is not just everything rounded down. Level 3: also rounding to the nearest breaks a constraint, up to four variables. Standard form only.
 - **Tests:** the best practical plan equals the true best whole-number plan found by trying every point (two and three variables), reaches the bound, and the working renders in both layouts.
 - **Deliberately not done:** problems where no practical point reaches the bound (the best plan then needs a longer check); an unbounded or infeasible problem; practical for the non-standard forms (minimise, ≥, lower bound).
+- **Ties and degenerate cases (Harry's call):** allowed naturally from Level 2. One problem in three is built degenerate. The working names the tied columns or rows (either choice reaches the optimum) and explains a θ of 0. Level 1 stays tie-free. The Pivot Column option is dropped.
+- **Whole Numbers mixed:** on Solve and Read a tableau the optimum may be whole (the answer is "practical") or not; the Is it practical? sub-tool always has a fraction.
+- **Engine:** a tableau records its basis, so a degenerate tableau is read correctly; a tableau given to be read must show one unit column per constraint.
 
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: Simplex, is it practical (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.

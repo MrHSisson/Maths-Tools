@@ -68,7 +68,7 @@ describe("the designed numbers", () => {
         const q = generateSimplex(level, OPT(kind));
         const run = runSpec(q.data.spec);
         expect(nice(run, level)).toBe(true);
-        expect(run.tie).toBe(false);
+        if (level === 1) expect(run.tie).toBe(false);
         const s = pathStats(run);
         expect(s.maxDen).toBeLessThanOrEqual(10);
         expect(BUDGET[level].dens.length).toBeGreaterThan(0);
@@ -146,13 +146,36 @@ describe("whole numbers: is it practical?", () => {
       expect(w3.nearest.ok).toBe(false);
     }
   });
+  it("Solve and Read a tableau ask the whole-number question of any optimum: some are practical as they stand, some are not", () => {
+    let yes = 0, no = 0;
+    for (let i = 0; i < 80; i++) {
+      const q = generateSimplex(2, OPT("solve", { whole: true, forms: ["standard"], context: ["bare"] }));
+      const w = wholeAnalysis(q.data.spec, runSpec(q.data.spec));
+      if (w.frac.length) { no++; expect(q.answerText).toMatch(/best practical plan/); } else { yes++; expect(q.answerText).toMatch(/is practical/); }
+    }
+    expect(yes).toBeGreaterThan(10);
+    expect(no).toBeGreaterThan(10);
+  });
+  it("ties and a θ of 0 turn up naturally from Level 2, and the working says what to do", () => {
+    let ties = 0, zeros = 0, noted = 0;
+    for (let i = 0; i < 500; i++) {
+      const q = generateSimplex(2, OPT("solve", { forms: ["standard"], context: ["bare"] }));
+      const run = runSpec(q.data.spec);
+      if (run.tie) ties++;
+      if (run.iters.some((it) => it.thetas.some((x) => x.value[0] === 0 && x.row === it.row))) zeros++;
+      if (run.tie && solveSimplex(asProblem(q)).some((s) => /same entry|same θ/.test(s.caption))) noted++;
+    }
+    expect(ties).toBeGreaterThan(0);
+    expect(zeros).toBeGreaterThan(0);
+    expect(noted).toBe(ties);
+  });
   it("Solve and Read a tableau can ask the whole-number question too, and the question says so", () => {
     for (const kind of ["solve", "interpret"] as SxKind[]) {
       const q = generateSimplex(2, OPT(kind, { whole: true, forms: ["standard"] }));
       expect(q.prompt).toMatch(/practical/);
       expect(q.data.whole).toBeTruthy();
       const steps = solveSimplex(asProblem(q));
-      expect(steps.map((s) => s.caption).join(" ")).toMatch(/not a practical solution/);
+      expect(steps.map((s) => s.caption).join(" ")).toMatch(/practical solution|is practical/);
     }
   });
   it("when the optimum is not given, the working solves with the simplex algorithm first", () => {

@@ -3,7 +3,7 @@
 // objective from them, so the optimum is whole; then run the real algorithm and KEEP the problem only if every tableau on the way meets the level's niceness
 // budget (the denominators the textbooks use, few non-whole entries, a small number of iterations, no ties). Rejection is cheap: each run is microseconds.
 import { type Fr, fr, fsub, fmul, fdiv } from "./dim";
-import { type SxCon, type SxSpec, type Run, pathStats, readTab, runSpec } from "./lpSimplex";
+import { type SxCon, type SxSpec, type Run, pathStats, readTab, runSpec, unitColumns } from "./lpSimplex";
 import { CONTEXTS, ri, pick, shuffled, unitOf, weighted, list } from "./lpGen";
 import { wholeAnalysis, wholeNice } from "./lpSimplexWhole";
 import { gcdInt } from "./lp";
@@ -46,12 +46,12 @@ const POOLS: Record<number, number[]> = { 1: [0, 1, 1, 2, 2, 3], 2: [0, 1, 1, 2,
 export function nice(run: Run, level: number): boolean {
   const b = BUDGET[level];
   const s = pathStats(run);
-  return !run.tie && s.dens.every((d) => b.dens.includes(d)) && s.iterations >= b.iters[0] && s.iterations <= b.iters[1] && s.maxEntry <= b.entry && s.nonWhole <= b.nonWhole;
+  return (level >= 2 || !run.tie) && s.dens.every((d) => b.dens.includes(d)) && s.iterations >= b.iters[0] && s.iterations <= b.iters[1] && s.maxEntry <= b.entry && s.nonWhole <= b.nonWhole;
 }
 
 // ── Designing a problem from its optimum ─────────────────────────────────────
 interface Base { A: number[][]; b: number[]; c: number[]; xs: number[] }
-function designBase(n: number, m: number, pool: number[]): Base | null {
+function designBase(n: number, m: number, pool: number[], degenerate = false): Base | null {
   const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
@@ -59,7 +59,9 @@ function designBase(n: number, m: number, pool: number[]): Base | null {
   const basicX = shuffled(Array.from({ length: n }, (_, j) => j)).slice(0, kx);
   const xs = Array.from({ length: n }, (_, j) => (basicX.includes(j) ? ri(1, 9) : 0));
   const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, kx);
-  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) ? 0 : ri(1, 9)));
+  // a degenerate start: one more constraint through the optimum than there are basic variables, so a basic variable is 0 at the end and the theta-values tie
+  const extra = degenerate ? shuffled(Array.from({ length: m }, (_, i) => i).filter((i) => !binding.includes(i)))[0] : undefined;
+  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) || i === extra ? 0 : ri(1, 9)));
   const y = A.map((_, i) => (binding.includes(i) ? ri(1, 4) : 0));
   const c = Array.from({ length: n }, (_, j) => {
     const s = A.reduce((t, r, i) => t + y[i] * r[j], 0);
@@ -207,9 +209,11 @@ export interface SxOptions {
   given: boolean;
   layout: "A" | "B";
 }
-function attempt(level: number, o: SxOptions): SxQuestion | null {
+function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
   const whole = kind === "practical" || (o.whole && (kind === "solve" || kind === "interpret"));
+  // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
+  const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
   const n = pick(o.vars.filter((v) => v >= 2 && v <= caps.n).length ? o.vars.filter((v) => v >= 2 && v <= caps.n) : [2]);
   const m = pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [2]);
@@ -219,7 +223,7 @@ function attempt(level: number, o: SxOptions): SxQuestion | null {
     const allowed = (o.forms.length ? o.forms : ["standard"]) as StartForm[];
     form = pick(allowed);
   }
-  const base = whole ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level]);
+  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3);
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
@@ -232,8 +236,10 @@ function attempt(level: number, o: SxOptions): SxQuestion | null {
   try { run = runSpec(sp); } catch { return null; }
   const w = whole ? wholeAnalysis(sp, run) : undefined;
   // when the optimum is handed over the tableaux are never shown, so only the optimum itself has to read well; otherwise every tableau on the way must
-  if (kind === "practical" && o.given && w) { if (run.tie || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, level)) return null;
-  if (w && !wholeNice(w, level)) return null;
+  if (kind === "practical" && o.given && w) { if ((level < 2 && run.tie) || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, level)) return null;
+  if (w && (fractional ? !wholeNice(w, level) : w.frac.length > 0)) return null;
+  // a tableau that is given to be read must show its basic variables: exactly one unit column for each constraint
+  if ((kind === "interpret" || kind === "reverse") && run.tabs.some((t) => unitColumns(t) !== t.m)) return null;
   // the tableau the question gives
   let at = 0;
   if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : ri(0, Math.min(1, run.steps.length - 1));
@@ -255,10 +261,10 @@ function attempt(level: number, o: SxOptions): SxQuestion | null {
       ? `${problem} ${need} ${story ? `Let ${list(vars.map((v, j) => `$${v}$ be the number of ${story.items[j].plural}`))}. ` : ""}The simplex algorithm gives ${solutionText(w!, vars)}. ${ask}`
       : `${problem} ${need} Use the simplex algorithm to solve the problem without the whole-number condition. ${ask}`;
   } else prompt = `${problem} ${PROMPT.solve}`;
-  if (whole && kind === "solve") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}. Explain why the solution is not practical, then find the best practical plan and state its ${story ? "profit" : "value"}.`;
+  if (whole && kind === "solve") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}. Is the solution practical? If not, find the best practical plan and state its ${story ? "profit" : "value"}.`;
   if (whole && kind === "interpret") prompt += ` Only whole numbers ${story ? `of ${list(story.items.slice(0, n).map((it) => it.plural))} can be made` : "make sense"}: is this solution practical? If not, find the best practical plan.`;
   void vars;
-  return { prompt, answerText: w && (kind === "practical" || kind === "solve" || kind === "interpret") ? `${answerPlain(sp, run, kind, at)}; best practical plan ${varNames(n).map((v, j) => `${v} = ${w.best.pt[j]}`).join(", ")}, P = ${w.best.p}` : answerPlain(sp, run, kind, at), data };
+  return { prompt, answerText: w && (kind === "practical" || kind === "solve" || kind === "interpret") ? (w.frac.length ? `${answerPlain(sp, run, kind, at)}; best practical plan ${varNames(n).map((v, j) => `${v} = ${w.best.pt[j]}`).join(", ")}, P = ${w.best.p}` : `${answerPlain(sp, run, kind, at)}; the solution is practical`) : answerPlain(sp, run, kind, at), data };
 }
 
 const fmtFr = (v: Fr): string => (v[1] === 1 ? String(v[0]) : `${v[0]}/${v[1]}`);
@@ -284,8 +290,10 @@ function answerPlain(sp: SxSpec, run: Run, kind: SxKind, at: number): string {
 
 /** The question for a sub-tool at a level. A fixed problem is never used: the rejection loop is bounded, and a failure to find one is an error to fix, not to hide. */
 export function generateSimplex(level: number, o: SxOptions): SxQuestion {
+  // whether a Solve or Read a tableau question with Whole Numbers on has a fraction in its optimum is chosen once, so the rarer kind is not starved by the retries
+  const askFraction = Math.random() < 0.5;
   for (let tries = 0; tries < 400000; tries++) {
-    const q = attempt(level, o);
+    const q = attempt(level, o, askFraction);
     if (q) return q;
   }
   throw new Error(`lpSimplexGen: no problem found for level ${level}, ${o.kind}`);

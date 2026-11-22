@@ -4,7 +4,7 @@
 // column and numbers every row it writes (R5 = R1 + 8 × R6).
 import type { DecisionProblem, LpRow, SolveStep, SxBlock, SxTabView } from "./types";
 import { type Fr, fr, fadd, fneg } from "./dim";
-import { type Run, type Tab, type Iter, basicRowOf, pivotColumn, readTab, runSpec, valueCol } from "./lpSimplex";
+import { type Run, type Tab, type Iter, pivotColumn, readTab, runSpec, valueCol } from "./lpSimplex";
 import { type SxData, termsTex, varNames } from "./lpSimplexGen";
 import { wholeAnalysis } from "./lpSimplexWhole";
 import { list } from "./lpGen";
@@ -69,7 +69,7 @@ function tabBlock(run: Run, k: number, d: SxData, ids: number[][], o: TabOpts = 
     view.labelHead = "Basic variable";
     view.label = t.rows.map((_, i) => {
       if (i === 0) return "P";
-      const j = cols.findIndex((_n, c) => basicRowOf(t, c + 1) === i);
+      const j = t.basis[i - 1] - 1;
       return j < 0 ? "" : cols[j];
     });
     if (!view.ops) { view.ops = ids[k].map((n) => Rn(n)); view.opsHead = "Row"; }
@@ -161,11 +161,15 @@ function iterationSteps(d: SxData, run: Run, k: number, ids: number[][], push: (
     push(`A right-hand side is negative (${mt(t.rows[neg][vc])}), so the origin is not a feasible start. In that row choose a negative entry that makes every right-hand side positive.`, [tabBlock(run, k, d, ids, { pivot: [it.row, it.col] })], 1);
   } else {
     const col = it.col;
-    push(`The most negative entry in the objective row is ${mt(t.rows[0][col])}, in the ${cols[col - 1]} column. That is the pivot column.`, [tabBlock(run, k, d, ids, { hi: col })], 1);
+    const tiedCols = cols.filter((_, c) => c + 1 !== col && t.rows[0][c + 1][0] * t.rows[0][col][1] === t.rows[0][col][0] * t.rows[0][c + 1][1]);
+    push(`The most negative entry in the objective row is ${mt(t.rows[0][col])}, in the $${cols[col - 1]}$ column. That is the pivot column.${tiedCols.length ? ` The ${list(tiedCols.map((c) => `$${c}$`))} column${tiedCols.length > 1 ? "s have" : " has"} the same entry: either choice leads to the same optimum. We take the first.` : ""}`, [tabBlock(run, k, d, ids, { hi: col })], 1);
     const th = it.thetas.map((x) => x.row);
     const ops = t.rows.map((_, i) => { const x = it.thetas.find((y) => y.row === i); return x ? `${frTex(t.rows[i][vc])} \\div ${frTex(t.rows[i][col])} = ${frTex(x.value)}` : ""; });
     void th;
-    push(`Divide each right-hand side by the positive entry in the pivot column. The smallest θ is ${mt(it.thetas.find((x) => x.row === it.row)!.value)}, so row ${it.row + 1} is the pivot row and ${mt(it.pivot)} is the pivot.`, [tabBlock(run, k, d, ids, { hi: col, pivot: [it.row, col], ops, opsHead: "\\theta" })], 1);
+    const best = it.thetas.find((x) => x.row === it.row)!.value;
+    const tiedRows = it.thetas.filter((x) => x.row !== it.row && x.value[0] * best[1] === best[0] * x.value[1]).map((x) => x.row + 1);
+    const tieNote = `${tiedRows.length ? ` Row${tiedRows.length > 1 ? "s" : ""} ${list(tiedRows.map(String))} give${tiedRows.length > 1 ? "" : "s"} the same θ: the tie means a basic variable will be 0 next, and either row can be chosen. We take the first.` : ""}${best[0] === 0 ? " θ = 0 is allowed: the pivot row has a right-hand side of 0, so P does not increase on this iteration." : ""}`;
+    push(`Divide each right-hand side by the positive entry in the pivot column. The smallest θ is ${mt(best)}, so row ${it.row + 1} is the pivot row and ${mt(it.pivot)} is the pivot.${tieNote}`, [tabBlock(run, k, d, ids, { hi: col, pivot: [it.row, col], ops, opsHead: "\\theta" })], 1);
   }
   const ops = opsOf(run, k, d.layout, ids);
   const nm = d.layout === "A" ? "NPR (the new pivot row)" : `R${ids[k + 1][it.row]}`;
@@ -231,6 +235,10 @@ function wholeSteps(d: SxData, run: Run, push: (caption: string, show: SxBlock[]
   const orig = varNames(n);
   const s = d.story;
   const what = s ? `Only whole numbers of ${list(s.items.slice(0, n).map((it) => it.plural))} can be made` : `${list(orig.map((v) => `$${v}$`))} must be whole numbers`;
+  if (!w.frac.length) {
+    push(`${what}. Every variable in the optimal solution is a whole number, so the solution is practical.`, [rowsOf(H("Is it practical?"), ...orig.map((v, j) => T(`${v} = ${frTex(w.x[j])}`)), R("\\text{Practical}"))], 1);
+    return;
+  }
   const bad = w.frac.map((j) => `$${orig[j]} = ${frTex(w.x[j])}$`);
   push(`${what}, but the optimum has ${bad.length > 1 ? "fractions" : "a fraction"} in it (${list(bad)}). So it is not a practical solution.`, [rowsOf(H("Is it practical?"), ...w.frac.map((j) => T(`${orig[j]} = ${frTex(w.x[j])}`)), W("Not a whole number: not practical."))], 1);
   push("A practical plan is also a plan for the linear programme, so its value cannot be more than the optimum. With whole-number coefficients the value of a practical plan is a whole number, so it is at most the whole number just below the optimum.", [rowsOf(H("An upper bound"), T(`P \\le ${frTex(w.p)}`), T(`P \\le ${w.bound}`))], 1);

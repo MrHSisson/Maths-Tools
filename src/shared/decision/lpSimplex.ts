@@ -48,7 +48,13 @@ export function standardise(s: SxSpec): Standard {
 }
 
 // ── The tableau ──────────────────────────────────────────────────────────────
-export interface Tab { n: number; m: number; rows: Fr[][] }
+export interface Tab {
+  n: number;
+  m: number;
+  rows: Fr[][];
+  /** the basic variable of each constraint row (column numbers, 1-based): the slacks to begin with, then the entering column of each pivot */
+  basis: number[];
+}
 /** the number of columns: P, n variables, m slacks, the value */
 export const width = (t: Tab): number => t.n + t.m + 2;
 export const valueCol = (t: Tab): number => t.n + t.m + 1;
@@ -56,7 +62,7 @@ function initialTab(c: readonly Fr[], A: readonly (readonly Fr[])[], b: readonly
   const n = c.length, m = A.length;
   const row0: Fr[] = [ONE, ...c.map((v) => fr(-v[0], v[1])), ...Array.from({ length: m }, () => ZERO), ZERO];
   const rows = [row0, ...A.map((a, i): Fr[] => [ZERO, ...a, ...Array.from({ length: m }, (_, j) => (i === j ? ONE : ZERO)), b[i]])];
-  return { n, m, rows };
+  return { n, m, rows, basis: Array.from({ length: m }, (_, i) => n + i + 1) };
 }
 export const tabOf = (st: Standard): Tab => initialTab(st.c, st.A, st.b);
 
@@ -110,7 +116,7 @@ export function iterate(t: Tab, row: number, col: number, extra: Partial<Iter> =
     ops.push({ row: i, factor: f });
     return r.map((v, k) => fsub(v, fmul(f, npr[k])));
   });
-  return { from: t, col, row, pivot: p, thetas: thetas(t, col), to: { n: t.n, m: t.m, rows }, ops, tie: false, ...extra };
+  return { from: t, col, row, pivot: p, thetas: thetas(t, col), to: { n: t.n, m: t.m, rows, basis: t.basis.map((b, i) => (i === row - 1 ? col : b)) }, ops, tie: false, ...extra };
 }
 
 /** the first pivot when a right-hand side is negative: in the row with the most negative value, a negative entry whose pivot leaves every value non-negative (the first such column) */
@@ -165,15 +171,15 @@ export function runSpec(spec: SxSpec): Run {
 }
 
 // ── Reading a tableau ────────────────────────────────────────────────────────
-/** the row (1 to m) of a basic column: a single 1 in that row and 0 everywhere else, the objective row included; null for a non-basic column */
-export function basicRowOf(t: Tab, col: number): number | null {
-  let one = -1;
-  for (let i = 0; i <= t.m; i++) {
-    const v = t.rows[i][col];
-    if (v[0] === 0) continue;
-    if (i > 0 && v[0] === 1 && v[1] === 1 && one < 0) one = i; else return null;
+/** the number of unit columns (a single 1 in a constraint row, 0 everywhere else, the objective row included): a student reads the basic variables from them, so
+ *  a tableau that is shown to be read has exactly m of them */
+export function unitColumns(t: Tab): number {
+  let k = 0;
+  for (let j = 1; j <= t.n + t.m; j++) {
+    const ones = t.rows.filter((r, i) => i > 0 && r[j][0] === 1 && r[j][1] === 1).length;
+    if (ones === 1 && t.rows.filter((r) => r[j][0] !== 0).length === 1) k++;
   }
-  return one < 0 ? null : one;
+  return k;
 }
 export interface Reading {
   /** the value of each variable then each slack (n + m entries) */
@@ -187,8 +193,8 @@ export function readTab(t: Tab): Reading {
   const values: Fr[] = [];
   const basic: number[] = [];
   for (let j = 1; j <= t.n + t.m; j++) {
-    const r = basicRowOf(t, j);
-    if (r === null) values.push(ZERO); else { values.push(t.rows[r][valueCol(t)]); basic.push(j); }
+    const r = t.basis.indexOf(j) + 1;
+    if (r === 0) values.push(ZERO); else { values.push(t.rows[r][valueCol(t)]); basic.push(j); }
   }
   return { values, basic, p: t.rows[0][valueCol(t)] };
 }
