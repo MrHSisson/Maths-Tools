@@ -174,7 +174,8 @@ const buildSet14: Slide[] = SET14_PAIRS.map(([a, b], i) => {
   const hint = i < 4 ? [textEl(1010, 52, 520, 50, `${mid} tile${mid === 1 ? "" : "s"} in the middle`, 32, { colour: LOOK.grey, align: "right" })] : [];
   return { ...slide, els: [...slide.els, ...hint] as DeckElement[], ...(i === 0 ? { brief: "Given two numbers, put their prime factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet hint that falls away. Six slides, one Venn each, built with the prime buttons." } : {}) };
 });
-const BOOK15 = pairSet("ba", [[14, 35, "a"], [6, 21, "a"], [33, 77, "a"], [30, 105, "b"], [42, 70, "b"], [66, 110, "b"], [28, 63, "a"], [20, 90, "b"], [45, 60, "b"]], 6, true);
+const BOOK15_PAIRS: Pair[] = [[14, 35, "a"], [6, 21, "a"], [33, 77, "a"], [30, 105, "b"], [42, 70, "b"], [66, 110, "b"], [28, 63, "a"], [20, 90, "b"], [45, 60, "b"]];
+const BOOK15 = pairSet("ba", BOOK15_PAIRS, 6, true);
 const SET19 = pairSet("c", [[45, 75, "c"], [20, 30, "c"], [28, 98, "c"], [40, 56, "d"], [36, 63, "d"], [16, 24, "c"]], 3);
 const SET21 = pairSet("d", [[20, 50, "c"], [36, 48, "e"], [75, 100, "d"], [30, 84, "b"], [6, 35, "g"], [21, 63, "f"]], 2);
 const BOOK24 = pairSet("bb", [[14, 22, "a"], [30, 45, "b"], [28, 42, "c"], [63, 105, "c"], [20, 44, "d"], [50, 75, "d"], [60, 84, "e"], [33, 99, "f"], [6, 25, "g"]], 6, true);
@@ -187,7 +188,8 @@ const GRID1 = gridOf([[14, 21, "a"], [35, 55, "a"], [30, 70, "b"], [42, 105, "b"
 const GRID2 = gridOf([[28, 70, "c"], [40, 72, "d"], [14, 42, "f"], [20, 21, "g"]]);
 
 // slide 25: Worksheet 1 (three A4 pages of three Venns; the first Venns carry some tiles, the last only the numbers)
-const SHEET1: [number, number, Kind][] = [[6, 22, "a"], [21, 33, "a"], [20, 70, "b"], [42, 63, "b"], [24, 54, "c"], [30, 50, "c"], [20, 28, "d"], [14, 70, "f"], [6, 55, "g"]];
+// Worksheet 1 carries exactly the nine book questions of the first book set (Harry), so the slide and the sheet match
+const SHEET1: [number, number, Kind][] = BOOK15_PAIRS;
 SHEET1.forEach(([a, b, k]) => must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `sheet ${a} and ${b} kind ${k}`));
 const placedFade: (("left" | "middle" | "right")[] | undefined)[] = [["left", "middle"], ["middle"], ["right"], undefined, undefined, undefined, undefined, undefined, undefined];
 const sheet1 = S.vennSheet(`${P}-sheet-1`, { title: "Worksheet 1: Prime factors in a Venn", note: "Put each prime factor in the right part of the Venn.",

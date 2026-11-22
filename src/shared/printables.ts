@@ -271,9 +271,9 @@ export function vennWorksheet(cells: VennCell[], title: string, note: string | u
   .page{width:210mm;height:297mm;padding:11mm 13mm 9mm;break-after:page;display:flex;flex-direction:column;overflow:hidden} .page:last-child{break-after:auto}
   header{display:flex;justify-content:space-between;align-items:baseline;height:9mm} h1{font-size:16pt;margin:0;font-weight:700;white-space:nowrap} .name{font-size:12.5pt;display:flex;align-items:baseline;gap:2mm} .name i{display:inline-block;width:40mm;border-bottom:.4mm solid #0f172a}
   .note{margin:1.5mm 0 0;font-size:12.5pt;color:#334155}
-  .rows{flex:1;min-height:0;display:grid;grid-template-rows:repeat(${PER},1fr);gap:3.5mm;margin-top:3mm}
-  article{position:relative;display:flex;gap:4mm;align-items:center;border:.35mm solid #94a3b8;border-radius:2.5mm;padding:2mm 4mm 2mm 2mm;min-height:0;overflow:hidden;break-inside:avoid}
-  .n{position:absolute;left:2.5mm;top:1.5mm;font-size:15pt;color:#1e3a8a;z-index:1} .pic{flex:0 0 122mm;height:100%;min-height:0} .pic svg{width:100%;height:100%;display:block}
+  .rows{flex:1;min-height:0;display:grid;grid-template-rows:repeat(${PER},1fr);gap:0;margin-top:3mm}
+  article{position:relative;display:flex;gap:4mm;align-items:center;padding:2mm 4mm 2mm 9mm;min-height:0;overflow:hidden;break-inside:avoid} article+article{border-top:.35mm solid #94a3b8}
+  .n{position:absolute;left:1mm;top:1.5mm;font-size:15pt;color:#1e3a8a;z-index:1} .pic{flex:0 0 122mm;height:100%;min-height:0} .pic svg{width:100%;height:100%;display:block}
   .side{flex:1;min-width:0;display:flex;flex-direction:column;gap:3mm} .f{margin:0;font-size:12.5pt;line-height:1.3}
   .ln{margin:2mm 0 0;font-size:13pt;font-weight:700;display:flex;align-items:flex-end;gap:1.5mm;white-space:nowrap} .ln i{flex:1;min-width:10mm;height:5mm;border-bottom:.35mm solid #0f172a} .ln.key{color:#166534;display:block;white-space:normal;font-size:12pt}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
