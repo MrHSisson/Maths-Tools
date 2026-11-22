@@ -1,10 +1,10 @@
 // Several Forces (several): totals — work by a driving force, against a resistance, by or against gravity, over one or two stages, and the two-step question that finds a
 // distance first. Equations first (R5): the forces and distances are picked and every work derived from them. Brief: specs/further-mechanics-mc.md §5.4.
-import { buildHorizontal, buildIncline, gravityWork, numTex, type GValue, type MechProblemData } from "../../../shared/mechanics";
+import { buildHorizontal, buildIncline, gravityWork, numTex, sfTex, sig, type GValue, type MechProblemData } from "../../../shared/mechanics";
 import { CONTEXTS, inRange, pickContext } from "../../../shared/mechanics/contexts";
 import { cap, L, staged, u, ut, type Common } from "./common";
 
-export type Situation = "two" | "journey" | "twostep" | "stages";
+export type Situation = "two" | "journey" | "twostep" | "stages" | "slope";
 
 interface SeveralInput extends Common {
   situation: Situation;
@@ -21,6 +21,8 @@ interface SeveralInput extends Common {
   d2: number;
   /** two-step: the work done against the resistance (J), given in place of the distance */
   Wres: number;
+  /** the slope situation: the angle of the road to the horizontal (degrees); 0 otherwise */
+  alpha: number;
   /** distances and forces written in kN and km? */
   big: boolean;
 }
@@ -68,6 +70,18 @@ export function buildSeveral(i: SeveralInput): MechProblemData {
     add(W1, "J"); add(Wg, "J"); add(W2, "J");
     // a road that falls is drawn with the finish at the top-left name swapped, so the names run A to B in the direction of travel
     raw = buildIncline({ angle: 14, body: c ? "block" : "particle", bodyLabel: undefined, distance: { label: L(ut(df.v, df.unit)), from: rise ? "A" : "B", to: rise ? "B" : "A" }, height: L(ut(H, "m")) });
+  } else if (i.situation === "slope") {
+    const H = i.d * Math.sin((i.alpha * Math.PI) / 180);
+    const W1 = i.D * i.d, Wg = i.m * i.g * H, W2 = i.R * i.d;
+    prompt = `${subject} of mass ${ut(i.m, "kg")} is driven ${ut(df.v, df.unit)} up a straight road inclined at ${i.alpha}° to the horizontal. The ${eng} is a constant ${ut(Df.v, Df.unit)} and the resistance to motion is a constant ${ut(Rf.v, Rf.unit)}. Take $g = ${i.g}$ m s⁻². Find ${q(["the work done by the " + eng, "the work done against gravity", "the work done against the resistance"])}.`;
+    known.push(`m = ${u(i.m, "kg")}`, `D = ${u(Df.v, Df.unit)}`, `R = ${u(Rf.v, Rf.unit)}`, `d = ${u(df.v, df.unit)}`, `\\alpha = ${i.alpha}^\\circ`);
+    const cv = conv([["D", Df.v, Df.unit, i.D, "N"], ["R", Rf.v, Rf.unit, i.R, "N"], ["d", df.v, df.unit, i.d, "m"]]);
+    if (cv.length) steps.push({ caption: "Convert to SI units first", lines: cv });
+    steps.push({ caption: "(a) Work done by the force = force × distance along the road", lines: ["#(a)", `W_D = ${numTex(i.D)} \\times ${numTex(i.d)}`, `= ${u(W1, "J")}`] });
+    steps.push({ caption: "(b) Gravity acts through the height gained, which is the distance along the road times sin α", lines: ["#(b)", `h = d\\sin\\alpha = ${numTex(i.d)}\\times\\sin ${i.alpha}^\\circ = ${sfTex(H, 6)}\\ \\text{m}`, `W_g = mgh = ${numTex(i.m)} \\times ${numTex(i.g)} \\times ${sfTex(H, 6)}`, `= ${sfTex(Wg, 6)}\\ \\text{J}\\ \\text{against gravity}`, `W_g = ${u(sig(Wg, 3), "J")}\\ (3\\text{ s.f.})`] });
+    steps.push({ caption: "(c) Work done against the resistance = resistance × distance", lines: ["#(c)", `W_R = ${numTex(i.R)} \\times ${numTex(i.d)}`, `= ${u(W2, "J")}`] });
+    add(W1, "J"); add(sig(Wg, 3), "J"); add(W2, "J");
+    raw = buildIncline({ angle: i.alpha, angleLabel: L(`${i.alpha}°`), body: c ? "block" : "particle", forces: [{ kind: "driving", label: L(ut(Df.v, Df.unit)) }, { kind: "resistance", label: L(ut(Rf.v, Rf.unit)) }], distance: { label: L(ut(df.v, df.unit)), from: "A", to: "B" } });
   } else if (i.situation === "twostep") {
     const dist = i.Wres / i.R, W1 = i.D * dist;
     prompt = `${subject} travels along a straight horizontal path against a constant resistance of ${ut(Rf.v, Rf.unit)}. The work done against the resistance is ${ut(i.Wres / 1000, "kJ")}. The ${eng} is a constant ${ut(Df.v, Df.unit)}. Find ${q(["the distance travelled", "the work done by the " + eng])}.`;
@@ -97,13 +111,14 @@ export function buildSeveral(i: SeveralInput): MechProblemData {
   const answerText = results.map((r, k) => `(${String.fromCharCode(97 + k)}) ${r.text}`).join(",  ");
   const answerTex = results.map((r, k) => `\\text{(${String.fromCharCode(97 + k)})}\\ ${r.tex}`).join(",\\ \\ ");
   return {
-    sub: "several", level: i.level, prompt, course: i.course, a2: false, scene: staged(raw, i.display, order), display: i.display, known, steps,
+    sub: "several", level: i.level, prompt, course: i.course, a2: i.situation === "slope", scene: staged(raw, i.display, order), display: i.display, known, steps,
     answer: { value: first.value, unit: first.unit, tex: answerTex, text: answerText }, extra: results.slice(1).map((r) => ({ value: r.value, unit: r.unit })), inputs: { ...i },
   };
 }
 
 export function generateSeveral(level: number, o: { situation: string; units: string; g: GValue; context: string; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
-  const situation = (o.situation.split(",").filter(Boolean)[Math.floor(Math.random() * o.situation.split(",").filter(Boolean).length)] ?? "two") as Situation;
+  let situation = (o.situation.split(",").filter(Boolean)[Math.floor(Math.random() * o.situation.split(",").filter(Boolean).length)] ?? "two") as Situation;
+  if (situation === "slope" && o.course !== "A2") situation = "journey";
   const conv = o.units === "conv";
   const story = o.context === "story";
   const ctx = story ? pickContext("several", conv ? true : undefined) : undefined;
@@ -118,5 +133,14 @@ export function generateSeveral(level: number, o: { situation: string; units: st
   const d2 = big ? inRange([500, 2500, 100]) : inRange([10, 150, 5]);
   const R2 = big ? Math.round(inRange([300, 1500, 100]) / 100) * 100 : inRange([10, 80, 5]);
   const Wres = R * d;
-  return buildSeveral({ level, course: o.course, display: o.display, situation, g: o.g, ctx: ctx?.id ?? "particle", m, D, R, d, h, R2, d2, Wres, big });
+  const alpha = situation === "slope" ? inRange([5, 30, 1]) : 0;
+  if (situation === "slope") {
+    // a force that can really pull the load up the slope: more than the resistance and the weight's component
+    const mm = ctx && ctx.mass[0] >= 500 ? m : ctx ? inRange(ctx.mass) : inRange([20, 200, 10]);
+    const pull = R + mm * o.g * Math.sin((alpha * Math.PI) / 180);
+    const step = big ? 100 : 5;
+    const DD = Math.ceil((pull + inRange([step * 2, step * 12, step])) / step) * step;
+    return buildSeveral({ level, course: o.course, display: o.display, situation, g: o.g, ctx: ctx?.id ?? "particle", m: mm, D: DD, R, d, h, R2, d2, Wres, alpha, big });
+  }
+  return buildSeveral({ level, course: o.course, display: o.display, situation, g: o.g, ctx: ctx?.id ?? "particle", m, D, R, d, h, R2, d2, Wres, alpha: 0, big });
 }

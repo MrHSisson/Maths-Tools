@@ -107,6 +107,7 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
         noSandbox: true,
         levelLabels: {
           hooke: ["Tension or thrust from a length or extension", "The extension, k or the modulus; a hanging mass", "Two strings; a hanging mass"],

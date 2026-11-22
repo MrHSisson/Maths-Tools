@@ -68,13 +68,13 @@ const OPTIONS: ShellOption[] = [
     defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector", sub: "i and j" }],
   },
   {
-    key: "weSetting", label: "Setting", info: "Level ground, or along a slope given by its length and how far it rises or falls.", forSubTools: ["workenergy"],
-    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }],
+    key: "weSetting", label: "Setting", info: "Level ground, along a slope given by its length and how far it rises or falls, a load raised by a rope over a pulley, or (A2) a rough slope given by its angle, where friction is μ times the normal reaction.", forSubTools: ["workenergy"],
+    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }, { value: "pulley", label: "Raised over a pulley" }, { value: "rough", label: "Rough slope (A2)" }],
   },
   {
-    key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force, or the work done by the driving force.", forSubTools: ["workenergy"], multi: true,
+    key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force (or the pulling force over a pulley), the work done by the driving force, or on a rough slope the coefficient of friction.", forSubTools: ["workenergy"], multi: true,
     defaultFor: lv({ 1: "speed,distance", 2: "force", 3: "speed,force,work" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal only" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }],
+    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)" }],
   },
   {
     key: "weForces", label: "Forces", info: "Which forces act along the motion: a driving force only, a resistance only, or both.", forSubTools: ["workenergy"],
@@ -128,6 +128,7 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
         noSandbox: true,
         levelLabels: {
           kepe: ["Find the kinetic or potential energy", "Find the mass, speed or height; with conversions", "Find a gain or loss between two states"],

@@ -40,7 +40,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (sub === "grav") m = generateGrav(level, { ask: opt(o, "gravAsk", "work"), setting: opt(o, "gravSetting", "vertical"), by: opt(o, "gravBy", "against"), g, units, format: opt(o, "format", "j"), method: opt(o, "gravMethod", "vertical"), context, display, course });
   else if (sub === "angle") m = generateAngle(level, { ask: opt(o, "angleAsk", "work"), format: opt(o, "format", "j"), context, display, course });
   else if (sub === "several") m = generateSeveral(level, { situation: opt(o, "sevSituation", "two"), units, g, context, display, course });
-  else if (sub === "variable") m = generateVariable(level, { forms: opt(o, "varForms", "poly,power"), ask: opt(o, "varAsk", "work"), format: opt(o, "varFormat", "decimal"), display, course });
+  else if (sub === "variable") m = generateVariable(level, { forms: opt(o, "varForms", "poly,power"), ask: opt(o, "varAsk", "work"), vehicle: opt(o, "varVehicle", "speed,stop"), format: opt(o, "varFormat", "decimal"), display, course });
   else m = generateFd(level, { ask: opt(o, "fdAsk", "work"), units, force: opt(o, "fdForce", "with"), format: opt(o, "format", "j"), context, display, course });
   return mechProblem(m, `work-${sub}`);
 }
@@ -92,9 +92,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "work", label: "The work done" }, { value: "force", forLevels: [2, 3], label: "The force" }, { value: "distance", forLevels: [2, 3], label: "The distance" }, { value: "angle", forLevels: [3], label: "The angle" }, { value: "power", forLevels: [3], label: "Work, then power" }],
   },
   {
-    key: "sevSituation", label: "Situation", info: "Two forces over one distance; a journey with a height change; the two-step question that finds a distance first; or a journey in two stages.", forSubTools: ["several"], multi: true,
+    key: "sevSituation", label: "Situation", info: "Two forces over one distance; a journey with a height change; the two-step question that finds a distance first; a journey in two stages; or (A2) a road given by its angle, where gravity needs the height gained.", forSubTools: ["several"], multi: true,
     defaultFor: lv({ 1: "two", 2: "journey", 3: "twostep,stages" }),
-    choices: [{ value: "two", label: "Two forces" }, { value: "journey", label: "A journey with a height change" }, { value: "twostep", forLevels: [3], label: "Find a distance first" }, { value: "stages", forLevels: [3], label: "Two stages" }],
+    choices: [{ value: "two", label: "Two forces" }, { value: "journey", label: "A journey with a height change" }, { value: "twostep", forLevels: [3], label: "Find a distance first" }, { value: "stages", forLevels: [3], label: "Two stages" }, { value: "slope", forLevels: [3], label: "Up a slope by its angle (A2)" }],
   },
   {
     key: "varForms", label: "Force Forms", info: "The kind of force to integrate: a polynomial, kx to a power, a square root, a trigonometric force or a reciprocal.", forSubTools: ["variable"], forLevels: [1, 2], multi: true,
@@ -105,6 +105,10 @@ const OPTIONS: ShellOption[] = [
     key: "varAsk", label: "Ask for", info: "What to find: the work done, the constant k in the force, or the upper limit from the work done.", forSubTools: ["variable"], forLevels: [1, 2], multi: true,
     defaultFor: lv({ 1: "work", 2: "work,k,limit" }),
     choices: [{ value: "work", label: "The work done" }, { value: "k", forLevels: [2], label: "A constant k" }, { value: "limit", forLevels: [2], label: "A limit" }],
+  },
+  {
+    key: "varVehicle", label: "Ask for", info: "What to find for a driving force against a resistance that grows with distance: the speed after a given distance, or the distance travelled before it stops.", forSubTools: ["variable"], forLevels: [3], multi: true,
+    defaultFor: () => "speed,stop", choices: [{ value: "speed", label: "The speed" }, { value: "stop", label: "The stopping distance" }],
   },
   {
     key: "varFormat", label: "Answer Format", info: "For a reciprocal force, the work as a decimal or in exact form with ln.", forSubTools: ["variable"], forLevels: [2], tab: "numbers",
@@ -137,13 +141,14 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
         noSandbox: true,
         levelLabels: {
           fd: ["Whole numbers in standard units", "Decimals and conversions, answered in kJ", "Find the force or the distance from the work done"],
           grav: ["Find the work done", "Find the height or the mass", "Worded situations, with slopes at A2"],
           angle: ["Find the work done", "Find the force or the distance", "Find the angle, or the work and then the power"],
           several: ["Two forces over one distance", "A journey with a height change", "Find a distance first, or two stages"],
-          variable: ["A polynomial or kx to a power", "A root, a trigonometric force, a reciprocal; a constant or a limit", "A driving force against a resistance that varies, then the speed"],
+          variable: ["A polynomial or kx to a power", "A root, a trigonometric force, a reciprocal; a constant or a limit", "A driving force against a resistance that varies: the speed, or where it stops"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

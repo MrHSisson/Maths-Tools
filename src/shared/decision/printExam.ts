@@ -52,6 +52,9 @@ const CSS = `
   .answers { columns: 2; column-gap: 10mm; }
   .answers .a { break-inside: avoid; margin-bottom: 3mm; display: grid; grid-template-columns: 9mm 1fr; }
   .answers .a b { color: #1e3a8a; }
+  .worked { margin-top: 1.5mm; font-size: 8.5pt; color: #334155; }
+  .worked .cap { margin-top: 1mm; font-style: italic; color: #64748b; }
+  .worked .lab { font-weight: 600; }
   .part { break-inside: avoid; margin-bottom: 6mm; }
   .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
   .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
@@ -145,6 +148,10 @@ interface SkillPrintQuestion {
   answer: string;
   /** how much room to work in: s, m or l */
   space?: "s" | "m" | "l";
+  /** a picture (static markup) shown under the question: a mechanics diagram */
+  figure?: string;
+  /** the worked answer, a caption and its working lines (TeX rows) at a time, shown with the answer */
+  steps?: { caption: string; lines: string[] }[];
 }
 /** the paper and the answers page of a set of skill questions */
 function skillParts(title: string, subtitle: string | undefined, questions: SkillPrintQuestion[], layout: SkillLayout = { perPage: false, space: "auto" }): { paper: string; answers: string } {
@@ -158,12 +165,12 @@ function skillParts(title: string, subtitle: string | undefined, questions: Skil
     paper: `<div class="paper">
     ${frameHeader(title, subtitle)}
     <div class="meta">${count}</div>
-    ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div>${area(q)}</section>`).join("\n")}
+    ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}${q.figure ? `<div class="fig small" style="margin-top:3mm">${q.figure}</div>` : ""}</div>${area(q)}</section>`).join("\n")}
   </div>`,
     answers: `<div class="markscheme">
     ${frameHeader(title, subtitle, { tag: "answers", who: false })}
     <div class="meta">${count}</div>
-    <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}</div></div>`).join("\n")}</div>
+    <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}${q.steps ? `<div class="worked">${q.steps.map((st) => `<div class="cap">${esc(st.caption)}</div>${st.lines.map((l) => (l.startsWith("#") ? `<div class="lab">${esc(l.slice(1))}</div>` : `<div class="ln">${texHtml(l.replace(/^=\s*/, "= "))}</div>`)).join("")}`).join("")}</div>` : ""}</div></div>`).join("\n")}</div>
   </div>`,
   };
 }

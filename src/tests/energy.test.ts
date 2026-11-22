@@ -117,3 +117,38 @@ describe("Energy: strings, pictures, course and worksheet", () => {
     }
   });
 });
+
+describe("Energy: a rough slope (A2) and a load raised over a pulley", () => {
+  const sin = (d: number) => Math.sin((d * Math.PI) / 180), cos = (d: number) => Math.cos((d * Math.PI) / 180);
+  it("every answer closes the work-energy equation", () => {
+    for (const m of many("workenergy", 3, 150, { weSetting: "rough", weAsk: "speed,distance,mu" })) {
+      const i = m.inputs as { ask: string; setting: string; g: number; m: number; alpha: number; mu: number; d: number; u: number; v: number };
+      expect(i.setting).toBe("rough");
+      const ans = m.answer.value;
+      if (i.ask === "stop") expect(rel(0.5 * i.m * i.u * i.u, i.m * i.g * ans * (sin(i.alpha) + i.mu * cos(i.alpha)))).toBeLessThan(0.0101);
+      else if (i.ask === "speed") expect(rel(ans * ans, i.u * i.u + 2 * i.g * i.d * (sin(i.alpha) - i.mu * cos(i.alpha)))).toBeLessThan(0.0101);
+      else expect(rel(ans, i.mu)).toBeLessThan(0.0211);
+    }
+    for (const m of many("workenergy", 3, 150, { weSetting: "pulley", weAsk: "speed,force" })) {
+      const i = m.inputs as { ask: string; setting: string; g: number; m: number; T: number; h: number; v: number };
+      expect(i.setting).toBe("pulley");
+      const ans = m.answer.value;
+      if (i.ask === "speed") expect(rel(i.T * i.h, i.m * i.g * i.h + 0.5 * i.m * ans * ans)).toBeLessThan(0.0101);
+      else expect(rel(ans * i.h, i.m * i.g * i.h + 0.5 * i.m * sig(i.v, 3) ** 2)).toBeLessThan(0.0051);
+    }
+  });
+  it("a 10 kg particle projected at 6 m s⁻¹ up a 30° plane with μ = 0.2 stops after 2.73 m", () => {
+    const m = draw("workenergy", 3, { weSetting: "rough", weAsk: "distance" });
+    expect(m.answer.unit).toBe("m");
+    const s = 36 / (2 * 9.8 * (sin(30) + 0.2 * cos(30)));
+    expect(sig(s, 3)).toBe(2.73);
+  });
+  it("every KaTeX line renders, every scene validates, and a rough slope is not offered at AS", () => {
+    for (const setting of ["rough", "pulley"]) for (const display of ["given", "build", "hidden"]) for (const m of many("workenergy", 3, 25, { weSetting: setting, weAsk: "speed,distance,force,mu", diagram: display })) {
+      for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), r).not.toThrow();
+      for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
+      if (m.scene) expect(validateScene(m.scene)).toEqual([]);
+    }
+    for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "workenergy", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "workenergy"), course: "AS", weSetting: "rough", weAsk: "speed,mu" } }).mech!.a2).toBe(false);
+  });
+});

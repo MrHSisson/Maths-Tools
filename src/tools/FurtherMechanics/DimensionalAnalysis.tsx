@@ -26,7 +26,7 @@ const SUB_TOOLS = [
   { key: "dims", label: "Find the dimensions", levels: 2, blurb: "A quantity, an expression or a constant", when: [SKILLS] },
   { key: "consistent", label: "Check consistency", levels: 2, blurb: "Is the formula dimensionally consistent?", when: [SKILLS] },
   { key: "powers", label: "Find the powers", levels: 3, blurb: "Equate the powers of M, L and T and solve", when: [SKILLS] },
-  { key: "exAny", label: "Any exam question", levels: 1, blurb: "A mixed multi-part question", when: [EXAM] },
+  { key: "exAny", label: "Exam-style questions", levels: 1, blurb: "A mixed multi-part question", when: [EXAM] },
   { key: "exCircle", label: "Circle your answer", levels: 1, blurb: "Dimensions of a quantity, or the consistent formula", when: [EXAM] },
   { key: "exFind", label: "State the dimensions, then find the powers", levels: 1, blurb: "Dimensions of a quantity, then a model", when: [EXAM] },
   { key: "exConstant", label: "Dimensions of a constant, then predict", levels: 1, blurb: "Show a constant's dimensions, then use them", when: [EXAM] },

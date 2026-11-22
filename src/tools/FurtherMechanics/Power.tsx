@@ -137,6 +137,7 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
         noSandbox: true,
         levelLabels: {
           avgpower: ["Lifting a load: the power", "Work from a power and a time; braking", "A pump, or accelerating at constant power"],

@@ -407,10 +407,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: false, space: "auto" as const }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: roomFor(pr.dim?.kind) })) } : null;
+    // a mechanics question prints with its picture under it and its worked answer on the answers page
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: false, space: "auto" as const }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: pr.mech ? ("m" as const) : roomFor(pr.dim?.kind), ...(pr.mech ? { figure: pr.mech.display === "hidden" || !renderCanvas ? undefined : renderToStaticMarkup(<>{renderCanvas(pr, { caption: "", edgeStates: {}, mechView: { stage: "answer", shown: 99, lines: [], fresh: 0 } })}</>), steps: pr.mech.steps } : {}) })) } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
-      const { renderToStaticMarkup } = await import("react-dom/server");
       inputs = examProblems.map((pr) => {
         // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
         const draw = (view?: unknown) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);

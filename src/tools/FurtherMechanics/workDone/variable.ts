@@ -2,7 +2,7 @@
 // limit; and (Level 3) a constant driving force against a resistance that varies with distance, then the speed by the work-energy principle. Equations first (R5): the force and
 // limits are picked so the antiderivative has whole coefficients, then the integral is evaluated exactly; the validators re-do it numerically. Brief: §5.5.
 import {
-  antiderivative, buildForceDisplacement, buildHorizontal, forceAt, integrate, numTex, sfTex, sig, speedFromKE,
+  antiderivative, bisect, buildForceDisplacement, buildHorizontal, forceAt, integrate, numTex, sfTex, sig, speedFromKE,
   type ForceShape, type ForceTerm, type MechProblemData,
 } from "../../../shared/mechanics";
 import { inRange } from "../../../shared/mechanics/contexts";
@@ -11,7 +11,7 @@ import { L, staged, u, ut, type Common } from "./common";
 export type Form = "poly" | "power" | "sqrt" | "trig" | "recip" | "vehicle";
 interface VariableInput extends Common {
   form: Form;
-  ask: "work" | "k" | "limit" | "speed";
+  ask: "work" | "k" | "limit" | "speed" | "stop";
   /** the force as terms (all forms but the vehicle); the limits a, b; for a trig force, ma and mb count quarter turns (x = m·π/(2k)) */
   terms: ForceTerm[];
   a: number;
@@ -24,6 +24,8 @@ interface VariableInput extends Common {
   r: number;
   n: number;
   X: number;
+  /** the vehicle's speed at the start of a stopping-distance question (m s^-1) */
+  u: number;
 }
 
 const SUP: Record<number, string> = { 1: "", 2: "²", 3: "³" };
@@ -169,7 +171,37 @@ export function buildVariable(i: VariableInput): MechProblemData {
   return { sub: "variable", level: i.level, prompt, course: i.course, a2: false, scene: staged(raw, i.display, ["graph"]), display: i.display, known, steps, answer, inputs: { ...i, terms: JSON.stringify(terms) } };
 }
 
+/** A vehicle moving at speed u against a resistance r·xⁿ (x the distance travelled), with a constant driving force D (0 if the engine is off): how far before it stops? The
+ *  energy equation c·Xⁿ⁺¹ − D·X − ½mu² = 0 (c = r ÷ (n + 1)) has one positive root: a quadratic formula, a cube root, or (n = 2 with a driving force) the cubic solved numerically. */
+function buildStop(i: VariableInput): MechProblemData {
+  const n = i.n, c = i.r / (n + 1), E0 = 0.5 * i.m * i.u * i.u;
+  const f = (x: number): number => E0 + i.D * x - c * x ** (n + 1);
+  let hi = 1;
+  while (f(hi) > 0) hi *= 2;
+  const X = bisect(f, 0, hi);
+  const value = sig(X, 3);
+  const res = `${i.r === 1 ? "" : i.r}x${n === 1 ? "" : `^{${n}}`}`;
+  const engine = i.D > 0 ? `The driving force is a constant ${ut(i.D, "N")}.` : "The driver switches off the engine.";
+  const prompt = `A vehicle of mass ${ut(i.m, "kg")} is moving in a straight line along a horizontal road at ${ut(i.u, "m s⁻¹")}. ${engine} When the vehicle has moved a distance of $x$ metres from this point, the resistance to motion is $${res}$ N. Find the distance the vehicle travels before it comes to rest. Give your answer to 3 significant figures.`;
+  const known = [`m = ${u(i.m, "kg")}`, `u = ${u(i.u, "m s⁻¹")}`, ...(i.D > 0 ? [`D = ${u(i.D, "N")}`] : []), `R = ${res}\\ \\text{N}`];
+  const cc = sfTex(c, 6), cTex = Number.isInteger(c) ? (c === 1 ? "" : numTex(c)) : `\\dfrac{${numTex(i.r)}}{${n + 1}}`, E = sfTex(E0, 6), M = numTex(i.m), U = numTex(i.u);
+  const integral = `W_R = \\displaystyle\\int_{0}^{X} ${res}\\,\\mathrm{d}x = \\left[\\dfrac{${i.r === 1 ? "" : `${i.r}`}x^{${n + 1}}}{${n + 1}}\\right]_{0}^{X} = ${cTex}X^{${n + 1}}`;
+  const steps: MechProblemData["steps"] = [
+    { caption: "Work-energy principle. The vehicle comes to rest, so its final kinetic energy is zero", lines: [i.D > 0 ? "W_D - W_R = 0 - \\tfrac{1}{2}mu^{2}" : "-W_R = 0 - \\tfrac{1}{2}mu^{2}", `\\tfrac{1}{2}mu^{2} = \\tfrac{1}{2}(${M})(${U})^{2} = ${u(Number(E0.toPrecision(12)), "J")}`] },
+    { caption: `${i.D > 0 ? "The driving force is constant, so its work is force × distance. " : ""}The resistance varies with x, so integrate it from 0 to X`, lines: [...(i.D > 0 ? [`W_D = ${numTex(i.D)}X`] : []), integral] },
+    { caption: "Put the work done in the equation", lines: [i.D > 0 ? `${cTex}X^{${n + 1}} - ${numTex(i.D)}X = ${E}` : `${cTex}X^{${n + 1}} = ${E}`, ...(i.D > 0 ? [`${cTex}X^{${n + 1}} - ${numTex(i.D)}X - ${E} = 0`] : [])] },
+  ];
+  if (n === 1 && i.D > 0) steps.push({ caption: "A quadratic in X: use the formula and take the positive root (X is a distance)", lines: [`X = \\dfrac{${numTex(i.D)} + \\sqrt{${numTex(i.D)}^{2} + 4\\times${cc}\\times${E}}}{2\\times${cc}} = ${sfTex(X, 6)}`] });
+  else if (n === 1) steps.push({ caption: "Solve for X (a distance, so the positive root)", lines: [`X^{2} = \\dfrac{${E}}{${cc}} = ${sfTex(E0 / c, 6)}`, `X = ${sfTex(X, 6)}`] });
+  else if (i.D === 0) steps.push({ caption: "Solve for X by taking the cube root", lines: [`X^{3} = \\dfrac{${E}}{${cc}} = ${sfTex(E0 / c, 6)}`, `X = ${sfTex(X, 6)}`] });
+  else steps.push({ caption: "A cubic in X with one positive root: solve it numerically on a calculator", lines: [`X = ${sfTex(X, 6)}`] });
+  steps.push({ caption: "Round to 3 s.f.", lines: [`X = ${u(value, "m")}\\ (3\\text{ s.f.})`] });
+  const raw = buildHorizontal({ body: "block", forces: [...(i.D > 0 ? [{ kind: "driving" as const, label: L(ut(i.D, "N")) }] : []), { kind: "resistance", label: L(`${i.r === 1 ? "" : i.r}x${n === 1 ? "" : SUP[n]} N`) }], velocity: L(ut(i.u, "m s⁻¹")), weightAndNormal: false, distance: { label: L("X", "X"), from: "A", to: "B" } });
+  return { sub: "variable", level: i.level, prompt, course: i.course, a2: false, scene: staged(raw, i.display, ["setting", "forces", "measure"]), display: i.display, known, steps, answer: { value, unit: "m", tex: u(value, "m"), text: ut(value, "m") }, inputs: { ...i, terms: "[]" } };
+}
+
 function buildVehicle(i: VariableInput): MechProblemData {
+  if (i.ask === "stop") return buildStop(i);
   const WD = i.D * i.X;
   const WR = (i.r * i.X ** (i.n + 1)) / (i.n + 1);
   const net = WD - WR;
@@ -189,13 +221,26 @@ function buildVehicle(i: VariableInput): MechProblemData {
 
 const pickOf = <T,>(xs: T[]): T => xs[Math.floor(Math.random() * xs.length)];
 
-export function generateVariable(level: number, o: { forms: string; ask: string; format: string; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
+export function generateVariable(level: number, o: { forms: string; ask: string; vehicle: string; format: string; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
   const forms = o.forms.split(",").filter(Boolean) as Form[];
   const form: Form = level === 3 ? "vehicle" : pickOf<Form>(forms.length ? forms : ["poly"]);
   const asks = o.ask.split(",").filter(Boolean);
   let ask = pickOf(asks.length ? asks : ["work"]) as VariableInput["ask"];
-  const base = { level, course: o.course, display: o.display, exact: o.format === "exact", m: 0, D: 0, r: 0, n: 0, X: 0 };
+  const base = { level, course: o.course, display: o.display, exact: o.format === "exact", m: 0, D: 0, r: 0, n: 0, X: 0, u: 0 };
   if (form === "vehicle") {
+    const vAsks = o.vehicle.split(",").filter((a) => a === "speed" || a === "stop");
+    if ((vAsks.length ? pickOf(vAsks) : "speed") === "stop") {
+      for (let tries = 0; tries < 300; tries++) {
+        const n = pickOf([1, 2]);
+        const m = inRange([400, 1500, 50]), D = Math.random() < 0.5 ? 0 : inRange([100, 600, 50]), X0 = inRange([30, 150, 10]);
+        const r = n === 2 ? inRange([1, 5, 1]) / 100 : inRange([5, 25, 5]) / 10;
+        const E0 = (r * X0 ** (n + 1)) / (n + 1) - D * X0;
+        if (!(E0 > 0)) continue;
+        const uu = sig(Math.sqrt((2 * E0) / m), 3);
+        if (uu < 4 || uu > 35) continue;
+        return buildVariable({ ...base, form: "vehicle", ask: "stop", terms: [], a: 0, b: X0, m, D, r, n, X: X0, u: uu });
+      }
+    }
     for (let tries = 0; tries < 200; tries++) {
       const n = pickOf([1, 2]);
       const m = inRange([400, 1500, 50]), D = inRange([300, 900, 50]), X = inRange([30, 120, 10]);
