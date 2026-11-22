@@ -34,8 +34,10 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (Simplex: pivot given, data as a table). L46 and L80 built: the Pivot option on One pivot (Pivot Given) and Wording: A Table. L85 (mark-style short parts) and L57 (the exam chain) are left to the exam-style pass.
 
+- 2026-11-22 (Formulating: a kind substituted out). `problem` Level 3 gains a style where one kind is exactly a multiple of the others (twice the power smoothies; twice the total of power and energy; equal to their total) and needs no letter: the relation is substituted into the objective and every limit, with an Another way step. The remainder case stays. Both of Harry's cases are now in.
+
 ## Next steps
-- Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling, pence to pounds and the three-variables-reduced case are wanted.
+- Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
 - **Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).

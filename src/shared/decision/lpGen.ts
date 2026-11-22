@@ -33,7 +33,10 @@ type LpInfo =
   | { kind: "problem"; sense: "max" | "min"; name: string; obj: number[]; parts: LpProblemData[]; sing: string[]; integers?: boolean; price?: number[]; cost?: number[]; konst?: number; single?: number;
       table?: { head: string[]; rows: string[][] }; showTable?: boolean;
       pack?: { i: number; k: number; name: string; text: string; item: string }; itemObj?: number[];
-      rem?: { T: number; unit: string; restNoun: string; restSing: string; rest: string; profits: number[]; per: number[]; amount: number; resource: { topic: string; unit: string; verb: string; label: string; of: string } } }
+      rem?: { T: number; unit: string; restNoun: string; restSing: string; rest: string; profits: number[]; per: number[]; amount: number; resource: { topic: string; unit: string; verb: string; label: string; of: string } };
+      /** one kind is exactly a multiple of the others (or of one of them), so it is substituted out: `items` are all the kinds, the last being the one that is fixed; `S` the letters it depends on, `a` the multiple (1 for a plain total) */
+      link?: { dep: { plural: string; singular: string }; items: Array<{ plural: string; singular: string }>; form: "single" | "combined" | "sum"; S: number[]; a: number; profits: number[];
+        resources: Array<{ topic: string; unit: string; verb: string; label: string; of: string; per: number[]; amount: number }> } }
   | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {

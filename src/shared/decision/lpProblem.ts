@@ -5,7 +5,8 @@
 //   Level 1  resource limits and direct comparisons; a profit (or a cost) per item.
 //   Level 2  adds percentages, ratios, decimal amounts, fixed totals; profit as price minus cost; a single-variable objective; a pack variable ("trays of six");
 //            unit conversions (hours to minutes, kg to grams); "integers"; the data as a table.
-//   Level 3  adds either-or limits, blends (minimise the cost of a mix), "exactly half", and a remainder (the rest of a total, substituted out).
+//   Level 3  adds either-or limits, blends (minimise the cost of a mix), "exactly half", a remainder (the rest of a total, substituted out) and a kind that is exactly
+//            a multiple of the others (twice the power smoothies, or the total of power and energy), which is substituted out too.
 // Strict inequalities appear wherever the items are whole numbers (a strict edge has no best point on the real numbers): the question then says so.
 import { fr, fadd, fdiv, ZERO, type Fr } from "./dim";
 import { type Constraint, type Op, type Var, bestVertices, gcdInt, isStrict, vertices } from "./lp";
@@ -302,12 +303,66 @@ function remainder(n: number, strict: boolean): Draft | null {
   };
 }
 
+// ── Level 3: one kind is exactly a multiple of the others, so it is substituted out ──
+const SMOOTHIES: Context = {
+  id: "smoothie", intro: (i) => `A juice bar makes ${list(i)}.`, did: "made",
+  items: [{ plural: "power smoothies", singular: "power smoothie" }, { plural: "energy smoothies", singular: "energy smoothie" }, { plural: "boost smoothies", singular: "boost smoothie" }, { plural: "green smoothies", singular: "green smoothie" }],
+  resources: [{ topic: "preparation time", unit: "minutes", of: "preparation time", verb: "takes", label: "preparation time needed", mode: "use" }, { topic: "blending time", unit: "minutes", of: "blending time", verb: "needs", label: "blending time needed", mode: "use" }],
+};
+/** "the boost smoothies must be exactly twice the number of power smoothies (or of power and energy smoothies together, or the total of them)": the last kind is not a letter of its
+ *  own; the model is written in the others only, and the relation is substituted into the objective and every limit */
+function linked(n: number, strict: boolean): Draft | null {
+  if (n > 3) return null;
+  const ctx = pick([SMOOTHIES, SMOOTHIES, ...CONTEXTS.filter((c) => ["bakery", "print", "workshop"].includes(c.id))]);
+  const picked = shuffled(ctx.items).slice(0, n + 1);
+  const syms = ["x", "y", "z"].slice(0, n);
+  const vars: Var[] = picked.slice(0, n).map((it, i) => ({ sym: syms[i], noun: it.plural, integer: true }));
+  const sing = picked.slice(0, n).map((it) => it.singular);
+  const dep = picked[n];
+  const form = pick(["single", "combined", "combined", "sum"] as const);
+  const S = form === "single" ? [ri(0, n - 1)] : range(n);
+  const a = form === "sum" ? 1 : pick([2, 2, 3]);
+  const profits = picked.map(() => ri(2, 9));
+  const obj = range(n).map((j) => profits[j] + (S.includes(j) ? a * profits[n] : 0));
+  const res = shuffled(ctx.resources.filter((r) => !r.decOnly && r.mode === "use")).slice(0, 2);
+  if (res.length < 2) return null;
+  const parts: Part[] = [];
+  const resS: string[] = [];
+  const rs: Array<{ topic: string; unit: string; verb: string; label: string; of: string; per: number[]; amount: number }> = [];
+  for (const r of res) {
+    const per = picked.map(() => ri(1, 9));
+    const coeffs = range(n).map((j) => per[j] + (S.includes(j) ? a * per[n] : 0));
+    const L = Math.max(...coeffs) * ri(6, 14) + ri(0, 9);
+    if ([...coeffs, L].reduce((h, v) => gcdInt(h, v), 0) !== 1) return null;
+    const spec = { t: "linear" as const, coeffs: coeffs.map((c) => fr(c)), op: "≤" as Op, rhs: fr(L), kind: "resource" as const };
+    parts.push({ prompt: "", sentence: "", data: { kind: "resource", vars, op: "≤", spec, info: { kind: "resource", per: coeffs, amount: L, unit: r.unit, of: r.of, verb: r.verb, label: r.label, topic: r.topic, sing } } });
+    resS.push(`${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} ${r.verb} ${per[i]} ${unitOf(per[i], r.unit)} of ${r.of}` : `each ${it.singular} ${per[i]} ${unitOf(per[i], r.unit)}`))))}. There are ${L} ${r.unit} of ${r.of} available.`);
+    rs.push({ topic: r.topic, unit: r.unit, verb: r.verb, label: r.label, of: r.of, per, amount: L });
+  }
+  if (Math.random() < 0.5) {
+    const fx: Fix = { ctx, vars, sing, ops: cmpOps(strict) };
+    parts.push(Math.random() < 0.6 ? genMultiple(n, fx) : genBound(n, fx));
+  }
+  const times = a === 1 ? "equal to " : a === 2 ? "twice " : `${a} times `;
+  const of = form === "single" ? `the number of ${picked[S[0]].plural}` : `the total number of ${list(S.map((j) => picked[j].plural))}`;
+  const relation = `The number of ${dep.plural} ${ctx.did} must be exactly ${times}${of}.`;
+  const objSentence = `${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} makes a profit of £${profits[i]}` : `each ${it.singular} £${profits[i]}`))))}.`;
+  return {
+    intro: ctx.intro(picked.map((it) => it.plural)), objSentence, parts, prefix: "", vars, sing, obj, sense: "max", name: "P", canInteger: true,
+    extra: [relation, ...resS], closing: "Formulate this as a linear programming problem, to maximise the profit.",
+    info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, profits, resources: rs } },
+  };
+}
+
 // ── The generator ────────────────────────────────────────────────────────────
 function attempt(n: number, sense: "max" | "min", level: number, integersWanted: boolean, showTable: boolean): LpQuestion | null {
   const strict = level === 1 || integersWanted;
   let d: Draft | null;
   if (level >= 3 && sense === "min") d = blendMix(n, level);
-  else if (level >= 3 && Math.random() < 0.3) d = remainder(n, strict);
+  else if (level >= 3) {
+    const r = Math.random();
+    d = r < 0.2 ? remainder(n, strict) : r < 0.45 ? linked(n, strict) : standard(n, sense, level, strict, false);
+  }
   else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2);
   return d ? finalise(d, level, integersWanted, showTable) : null;
 }

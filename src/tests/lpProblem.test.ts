@@ -97,6 +97,45 @@ describe("hand-made models of the Level 2 and 3 kinds", () => {
   });
 });
 
+describe("a kind that is exactly a multiple of the others (substituted out)", () => {
+  it("the model written in the letters only means the same as the full situation, and the wording says the relation", () => {
+    seeded(777);
+    let seen = 0;
+    const forms = new Set<string>();
+    for (let i = 0; i < 400 && seen < 60; i++) {
+      const q = generateProblem(3, { vars: [2, 3], objective: ["max"], integers: true });
+      const info = q.data.info as PInfo;
+      const L = info.link;
+      if (!L) continue;
+      seen++;
+      forms.add(L.form);
+      const n = q.data.vars.length;
+      expect(L.items).toHaveLength(n + 1);
+      expect(q.prompt).toMatch(/must be exactly (twice |3 times |equal to )/);
+      expect(q.prompt).toContain(L.dep.plural);
+      expect(q.data.vars.map((v) => v.noun)).not.toContain(L.dep.plural);
+      const dep = (pt: number[]): number => L.a * L.S.reduce((t, j) => t + pt[j], 0);
+      const ptsOf = (k: number): number[][] => (k === 0 ? [[]] : ptsOf(k - 1).flatMap((q0) => [0, 1, 2, 5, 9].map((v) => [...q0, v])));
+      for (const pt of ptsOf(n)) {
+        const full = [...pt, dep(pt)];
+        // the objective, with the relation put in
+        expect(L.profits.reduce((t, pr, k) => t + pr * full[k], 0)).toBe(info.obj.reduce((t, c, k) => t + c * pt[k], 0));
+        // each resource limit, with the relation put in
+        L.resources.forEach((r, j) => {
+          const c = constraintOf(info.parts[j].spec);
+          const lhs = r.per.reduce((t, a, k) => t + a * full[k], 0);
+          expect(lhs <= r.amount).toBe(c.holds(pt.map((v) => fr(v))));
+        });
+      }
+      for (const st of solveLp({ kind: "problem", level: 3, lp: q.data, prompt: "", answer: { text: "" }, matrixMode: "off" } as never)) {
+        for (const r of st.lpView!.rows) if (r.k === "tex" || r.k === "result") expect(() => katex.renderToString(r.t, { throwOnError: true })).not.toThrow();
+      }
+    }
+    expect(seen).toBeGreaterThan(10);
+    expect(forms.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("random draws (seeded)", () => {
   for (const level of [1, 2, 3]) for (const n of [2, 3, 4]) {
     it(`Level ${level}, ${n} variables, both objectives: a non-empty region, a single best corner, wording that names no variable, working that renders`, () => {
@@ -109,7 +148,7 @@ describe("random draws (seeded)", () => {
         const info = d.info as PInfo;
         senses.add(info.sense);
         const kinds = info.parts.map((p) => p.kind);
-        if (info.rem) seen.add("rem"); if (info.pack) seen.add("pack"); if (info.single !== undefined) seen.add("single"); if (info.price) seen.add("price");
+        if (info.rem) seen.add("rem"); if (info.link) seen.add("link"); if (info.pack) seen.add("pack"); if (info.single !== undefined) seen.add("single"); if (info.price) seen.add("price");
         if (kinds.includes("eitherOr")) seen.add("eitherOr"); if (kinds.includes("blend")) seen.add("blend"); if (info.parts.some((p) => p.info.kind === "resource" && p.info.conv)) seen.add("conv");
         if (kinds.includes("decimal")) seen.add("decimal"); if (kinds.includes("percent")) seen.add("percent"); if (info.parts.some((p) => p.info.kind === "ratio" && p.op === "=")) seen.add("half");
         const nVars = d.vars.length;
@@ -151,6 +190,7 @@ describe("random draws (seeded)", () => {
         if (!info.showTable) {
           if (info.single !== undefined) { /* the aim is a single letter: no profits */ }
           else if (info.rem) for (const pr of info.rem.profits) expect(q.prompt).toContain(`£${pr}`);
+          else if (info.link) for (const pr of info.link.profits) expect(q.prompt).toContain(`£${pr}`);
           else if (info.price && info.cost) for (let k = 0; k < nVars; k++) expect(q.prompt).toContain(`£${info.price[k]} and costs £${info.cost[k]}`);
           else for (const v of info.itemObj ?? info.obj) expect(q.prompt).toContain(`£${v}`);
         } else expect(info.table!.rows.length).toBe(nVars + 1);
@@ -159,7 +199,7 @@ describe("random draws (seeded)", () => {
         else expect(q.prompt).toContain(info.sense === "max" ? "maximise the profit" : "minimise the cost");
         if (info.integers) expect(q.prompt).toMatch(/Only whole numbers of (items can be made|hectares can be used|square metres can be used)\./);
         else expect(q.prompt).not.toContain("Only whole numbers");
-        if (!info.showTable && !info.rem) for (const part of info.parts) {
+        if (!info.showTable && !info.rem && !info.link) for (const part of info.parts) {
           const pi = part.info;
           if (pi.kind === "resource") { for (const a of pi.per) expect(inPrompt(q.prompt, a)).toBe(true); expect(inPrompt(q.prompt, pi.conv ? pi.conv.n : pi.amount)).toBe(true); }
           else if (pi.kind === "difference") expect(inPrompt(q.prompt, pi.k)).toBe(true);
@@ -211,8 +251,9 @@ describe("random draws (seeded)", () => {
       if (info.parts.some((p) => p.info.kind === "resource" && p.info.conv)) seen.add("conv");
       if (info.parts.some((p) => p.info.kind === "ratio" && p.op === "=")) seen.add("half");
       if (info.rem) seen.add("rem");
+      if (info.link) seen.add("link");
     }
-    expect([...seen].sort()).toEqual(["conv", "half", "pack", "rem", "single"]);
+    expect([...seen].sort()).toEqual(["conv", "half", "link", "pack", "rem", "single"]);
   }, 120_000);
   it("Leave Out: with no integers there are no strict inequalities at Levels 2 and 3", () => {
     seeded(55);

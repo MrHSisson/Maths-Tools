@@ -4,7 +4,7 @@
 import type { LpRow, SolveStep, DecisionProblem } from "./types";
 import { type Fr, fr, fmul, fsub, fdiv } from "./dim";
 import { type Constraint, type Op, gcdInt, lcmInt, intercept } from "./lp";
-import { type LpProblemData, constraintOf, constraintText, texN } from "./lpGen";
+import { type LpProblemData, constraintOf, constraintText, texN, unitOf } from "./lpGen";
 import { decStr, isFinite10 } from "./lpGenL23";
 
 const OPTEX: Record<Op, string> = { "≤": "\\le", "≥": "\\ge", "=": "=", "<": "<", ">": ">" };
@@ -502,6 +502,10 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   const push = (caption: string, rows: LpRow[], fresh: number, phase?: string): void => { out.push({ caption, phase, edgeStates: {}, lpView: { rows, fresh } }); };
   const max = info.sense === "max";
   const rem = info.rem;
+  const link = info.link;
+  const nL = d.vars.length;
+  /** the kind that is fixed by the others, as an expression in the letters: 2x, 2(x + y), x + y */
+  const linkE = link ? (link.a === 1 ? link.S.map((j) => syms[j]).join(" + ") : link.S.length === 1 ? `${link.a}${syms[link.S[0]]}` : `${link.a}(${link.S.map((j) => syms[j]).join(" + ")})`) : "";
   const konst = info.konst ?? 0;
   const objTex = polyTex(konst, info.obj, syms);
   const slips: string[] = [];
@@ -510,9 +514,10 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     { k: "head", t: "Variables" },
     ...d.vars.map((v): LpRow => ({ k: "words", t: `Let $${v.sym}$ be the number of ${v.noun}.` })),
     ...(rem ? [{ k: "words", t: `The rest of the ${rem.unit === "hectares" ? "land" : "floor space"} is used for ${rem.rest}: that is $${rem.T} - ${syms.join(" - ")}$ ${rem.unit}, so it needs no letter of its own.` } as LpRow] : []),
+    ...(link ? [{ k: "words", t: `The number of ${link.dep.plural} is exactly $${linkE}$, so they need no letter of their own: the other kinds decide how many there are.` } as LpRow] : []),
   ];
   base = vars;
-  push(rem ? "Nothing is named for you: choose a letter for each use you decide. The last use is whatever is left, so it needs no letter." : "Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
+  push(link ? `Nothing is named for you: choose a letter for each kind you decide. The ${link.dep.plural} are fixed by the others, so they need no letter.` : rem ? "Nothing is named for you: choose a letter for each use you decide. The last use is whatever is left, so it needs no letter." : "Nothing is named for you: choose a letter for each quantity you can decide, and say what it stands for.", base, vars.length, "Variables");
 
   // ── the objective ──
   const money = (i: number): string => (info.price && info.cost ? `£${info.price[i]} − £${info.cost[i]} = £${(info.itemObj ?? info.obj)[i]}` : `£${(info.itemObj ?? info.obj)[i]}`);
@@ -523,6 +528,14 @@ function solveProblem(d: LpProblemData): SolveStep[] {
       { k: "head", t: "Objective" },
       { k: "words", t: `The aim is to make as many ${v.noun} as possible, so the thing to maximise is just the number of them, $${v.sym}$.` },
       { k: "tex", t: `${info.name} = ${v.sym}` },
+    ];
+  } else if (link) {
+    const p = link.profits[nL];
+    objRows = [
+      { k: "head", t: "Objective" },
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `$${v.sym}$ ${v.noun} make $${exprTex([link.profits[i]], [v.sym])}$ pounds.` })),
+      { k: "words", t: `The ${link.dep.plural}, $${linkE}$ of them, make £${p} each: $${p === 1 ? "" : p}(${linkE})$ pounds.` },
+      { k: "tex", t: `${info.name} = ${exprTex(link.profits.slice(0, nL), syms)} + ${p === 1 ? "" : p}(${linkE})` },
     ];
   } else if (rem) {
     const m = d.vars.length;
@@ -550,7 +563,13 @@ function solveProblem(d: LpProblemData): SolveStep[] {
   objRows.push({ k: "words", t: `We want to ${max ? "maximise" : "minimise"} $${info.name}$.` });
   base = [...base, ...objRows];
   push(`The objective is ${info.single !== undefined ? "the number of items wanted" : `the ${max ? "profit" : "cost"}`}: ${info.single !== undefined ? "a single letter" : `add up what each kind of ${rem ? "use" : "item"} ${max ? "makes" : "costs"}`}. It is the thing to ${max ? "maximise" : "minimise"}.`, base, objRows.length, "Objective");
-  if (rem) {
+  if (link) {
+    const p = link.profits[nL];
+    const add = link.S.map((j) => `${link.a * p === 1 ? "" : link.a * p}${syms[j]}`).join(" + ");
+    base = [...base, { k: "tex", t: `${info.name} = ${exprTex(link.profits.slice(0, nL), syms)} + ${add}` }, { k: "tex", t: `${info.name} = ${objTex}` }];
+    push(`Multiply out the bracket and collect the like terms: the ${link.dep.plural} add to the profit from the letters they depend on.`, base, 2, "Collect");
+    slips.push(`Objective. Common slip: leaving out the ${link.dep.plural}, ${info.name} = ${link.profits.slice(0, nL).map((q, i) => `${q}${syms[i]}`).join(" + ")}.`);
+  } else if (rem) {
     const m = d.vars.length;
     const c = rem.profits[m];
     const expanded = `${exprTex(rem.profits.slice(0, m), syms)} + ${rem.T * c} - ${syms.map((s) => `${c === 1 ? "" : c}${s}`).join(" - ")}`;
@@ -608,19 +627,39 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     slips.push(`Constraint 2. Common slip: leaving out the ${rem!.rest}, ${exprTex(per.slice(0, m), syms)} ${part.op === "<" ? "<" : "≤"} ${rem!.amount}, as if only the named uses took ${r.topic}.`.replace(/\\/g, ""));
   };
 
+  const linkPart = (part: LpProblemData, j: number): void => {
+    const r = link!.resources[j];
+    const c = constraintOf(part.spec);
+    const o = opTex(part.op);
+    const head: LpRow = { k: "head", t: `Constraint ${j + 1}` };
+    const pD = r.per[nL];
+    const verb = PLURAL[r.verb] ?? r.verb;
+    const lead = exprTex(r.per.slice(0, nL), syms);
+    const line1 = `${lead} + ${pD === 1 ? "" : pD}(${linkE}) ${o} ${texN(r.amount)}`;
+    const add = link!.S.map((k) => `${link!.a * pD === 1 ? "" : link!.a * pD}${syms[k]}`).join(" + ");
+    const line2 = `${lead} + ${add} ${o} ${texN(r.amount)}`;
+    push(`Constraint ${j + 1}. Add up the ${r.topic}: each kind ${r.verb} an amount, and the ${link!.dep.plural} ($${linkE}$ of them) ${verb} ${pD} ${unitOf(pD, r.unit)} each.`, [...base, head,
+      ...d.vars.map((v, i): LpRow => ({ k: "words", t: `$${v.sym}$ ${v.noun} ${verb} $${exprTex([r.per[i]], [v.sym])}$ ${r.unit}.` })),
+      { k: "words", t: `The ${link!.dep.plural}, $${linkE}$ of them, ${verb} $${pD === 1 ? "" : pD}(${linkE})$ ${r.unit}.` },
+      { k: "tex", t: line1 }], nL + 2, "Add up");
+    push("Multiply out the bracket.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }], 1, "Expand");
+    push("Collect the like terms.", [...base, head, { k: "tex", t: line1 }, { k: "tex", t: line2 }, { k: "result", t: constraintTex(c, syms) }], 1, "The constraint");
+    slips.push(`Constraint ${j + 1}. Common slip: leaving out the ${link!.dep.plural}, ${lead} ${part.op === "<" ? "<" : "≤"} ${r.amount}, as if only the named kinds used the ${r.topic}.`.replace(/\\/g, ""));
+  };
+
   const addLine = (part: LpProblemData, j: number): void => {
     const line = constraintTex(constraintOf(part.spec), syms);
     lines.push(line);
     base = [...base, ...(j === 0 ? [{ k: "head", t: "Constraints" } as LpRow] : []), { k: "tex", t: line }];
   };
   info.parts.forEach((part, j) => {
-    if (rem && j < 2) remainderPart(part, j); else ordinary(part, j);
+    if (rem && j < 2) remainderPart(part, j); else if (link && j < link.resources.length) linkPart(part, j); else ordinary(part, j);
     addLine(part, j);
   });
 
   const nonneg = `${syms.map((s) => `${s} \\ge 0`).join(",\\ ")}`;
   base = [...base, { k: "words", t: `${rem ? "Amounts" : "Numbers of items"} cannot be negative:` }, { k: "tex", t: nonneg }];
-  push(`The ${rem ? "amounts" : "numbers of items"} cannot be negative: each variable is at least 0.`, base, 2, "Non-negativity");
+  push(`The ${rem ? "amounts" : "numbers of items"} cannot be negative: each variable is at least 0.${link ? ` The ${link.dep.plural} then cannot be negative either, so they need no condition of their own.` : ""}`, base, 2, "Non-negativity");
   const strictPart = info.parts.map((p) => constraintOf(p.spec)).find((c) => isStrictOp(c.op));
   const intRow: LpRow = { k: "words", t: `${syms.map((s) => `$${s}$`).join(", ")} ${syms.length > 1 ? "are" : "is"} whole numbers, so they are integers.` };
   const strictRow: LpRow | undefined = strictPart && { k: "note", t: `A strict inequality keeps its sign: points on the boundary are not allowed. For whole numbers, $${exprTex(strictPart.coeffs.map((f) => f[0]), syms)} ${opTex(strictPart.op)} ${texN(strictPart.rhs[0])}$ means $${exprTex(strictPart.coeffs.map((f) => f[0]), syms)} ${strictPart.op === "<" ? "\\le" : "\\ge"} ${texN(strictPart.rhs[0] + (strictPart.op === "<" ? -1 : 1))}$.` };
@@ -638,6 +677,7 @@ function solveProblem(d: LpProblemData): SolveStep[] {
     ...(info.integers ? [intRow] : []),
   ];
   push("That is the model, in the usual layout: the objective, then the constraints, then non-negativity. Any consistent choice of letters is correct.", [...vars, ...model], model.length, "The model");
+  if (link) push(`Another way: keep a letter for the ${link.dep.plural} as well, and write the relation as an equation. It is the same problem with one more letter; substituting the equation out gives the model above.`, [...vars, ...model, { k: "note", t: `For example, with $${nL === 2 ? "z" : "w"}$ the number of ${link.dep.plural}: $${nL === 2 ? "z" : "w"} = ${linkE}$.` }], 1, "Another way");
   if (slips.length) push(`Common slips. ${slips.join(" ")}`, [...vars, ...model], 0, "Common slips");
   return out;
 }
