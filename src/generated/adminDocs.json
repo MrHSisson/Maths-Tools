@@ -1652,6 +1652,12 @@
        "items": [
         "2026-11-22 (Harry's notes from the preview). In Formulating a relation constraint stays a relation (3x ≥ 2y, not 3x − 2y ≥ 0), because a constraint need only be tidied when a simplex is to use it; and ratios are written as ratios (\"the ratio of A to B is at least 2 : 3\", also for two kinds combined), not \"one for every\". Shares of the total stay in words."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say \"using only x and y\"); display toggles for Common Slips and Number Check. Open: the single-variable objective (one Oxford exercise) and the capacity method."
+       ]
       }
      ]
     },
@@ -3922,6 +3928,10 @@
     },
     {
      "date": "2026-11-22",
+     "title": "Formulating: styles regrouped, resource limits, Level 3 situations, display toggles, not live"
+    },
+    {
+     "date": "2026-11-22",
      "title": "Formulating Linear Programmes: a kind that is exactly a multiple of the others, substituted out (problem, Level 3), not live"
     },
     {
@@ -3931,10 +3941,6 @@
     {
      "date": "2026-11-21",
      "title": "Formulating Linear Programmes: \"Write a constraint\", Level 1 (chunk F1), not live"
-    },
-    {
-     "date": "2026-11-21",
-     "title": "Formulating Linear Programmes: strict inequalities in problems, the rest of \"Formulate a problem\" Level 2, and Level 3 (chunks F6 and F7), not live"
     }
    ]
   },

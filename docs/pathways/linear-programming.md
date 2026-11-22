@@ -40,6 +40,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (Harry's notes from the preview). In Formulating a relation constraint stays a relation (3x ≥ 2y, not 3x − 2y ≥ 0), because a constraint need only be tidied when a simplex is to use it; and ratios are written as ratios ("the ratio of A to B is at least 2 : 3", also for two kinds combined), not "one for every". Shares of the total stay in words.
 
+- 2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say "using only x and y"); display toggles for Common Slips and Number Check. Open: the single-variable objective (one Oxford exercise) and the capacity method.
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

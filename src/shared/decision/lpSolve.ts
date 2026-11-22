@@ -46,8 +46,14 @@ const assign = (syms: readonly string[], p: readonly number[]): string => syms.m
 /** "3 + 4 + 5" */
 const sumOf = (xs: readonly number[]): string => xs.join(" + ");
 
-/** the steps of a question, each carrying the whole page so far (the rows the step adds are the last `fresh`) */
+/** the steps of a question, each carrying the whole page so far (the rows the step adds are the last `fresh`); the display options can take out the number check and the common slips */
 export function solveLp(p: DecisionProblem): SolveStep[] {
+  const d = p.lp!;
+  const all = solveLpAll(p);
+  const v = d.view;
+  return v ? all.filter((st) => !((v.checks === false && st.phase === "Check") || (v.slips === false && (st.phase === "Common slip" || st.phase === "Common slips")))) : all;
+}
+function solveLpAll(p: DecisionProblem): SolveStep[] {
   const d = p.lp!;
   if (d.info.kind === "problem") return solveProblem(d);
   const syms = d.vars.map((v) => v.sym);

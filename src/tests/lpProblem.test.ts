@@ -285,3 +285,49 @@ describe("random draws (seeded)", () => {
     }
   });
 });
+
+describe("audit notes: limits, situations, display toggles", () => {
+  it("three resource limits: a florist's roses, tulips and sunflowers, one limit each", () => {
+    seeded(31);
+    let seen = 0;
+    for (let i = 0; i < 60; i++) {
+      const q = generateProblem(2, { vars: [3], objective: ["max"], integers: true, limits: [3] });
+      const info = q.data.info as PInfo;
+      const res = info.parts.filter((p) => p.info.kind === "resource");
+      if (res.length < 3 || !q.prompt.includes("florist")) continue;
+      seen++;
+      expect(q.prompt).toMatch(/roses/);
+      expect(q.prompt).toMatch(/tulips/);
+      expect(q.prompt).toMatch(/sunflowers/);
+      expect(res.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(seen).toBeGreaterThan(10);
+  });
+  it("the Situations option picks the model: a remainder, a relation, and the question says which letters to use", () => {
+    seeded(32);
+    for (let i = 0; i < 25; i++) {
+      const r = generateProblem(3, { vars: [2], objective: ["max"], integers: true, situations: ["remainder"] });
+      expect((r.data.info as PInfo).rem).toBeTruthy();
+      expect(r.prompt).toMatch(/using only x, y|using only x and y/);
+      const l = generateProblem(3, { vars: [2, 3], objective: ["max"], integers: true, situations: ["relation"] });
+      expect((l.data.info as PInfo).link).toBeTruthy();
+      expect(l.prompt).toMatch(/using only x and y|using only x, y and z/);
+      const b = generateProblem(3, { vars: [2], objective: ["max"], integers: true, situations: ["blend"] });
+      expect(b.prompt).toContain("minimise the cost of the mix");
+    }
+  });
+  it("the display toggles take out the number check and the common slips, and nothing else", () => {
+    seeded(33);
+    for (const level of [1, 2, 3]) for (let i = 0; i < 12; i++) {
+      for (const sub of ["constraint", "problem"] as const) {
+        const q = sub === "problem" ? generateProblem(level, { vars: [2], objective: ["max"], integers: true }) : { data: __seed.generate(level, { subTool: "constraint", options: {} }).lp! };
+        const data = q.data as LpProblemData;
+        const all = solveLp({ kind: "x", level, lp: { ...data }, prompt: "", answer: { text: "" }, matrixMode: "off" } as DecisionProblem);
+        const none = solveLp({ kind: "x", level, lp: { ...data, view: { slips: false, checks: false } }, prompt: "", answer: { text: "" }, matrixMode: "off" } as DecisionProblem);
+        expect(none.some((st) => st.phase === "Check" || st.phase === "Common slip" || st.phase === "Common slips")).toBe(false);
+        expect(none.length).toBe(all.filter((st) => st.phase !== "Check" && st.phase !== "Common slip" && st.phase !== "Common slips").length);
+        expect(none[none.length - 1].lpView!.rows.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});

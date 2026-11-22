@@ -25,6 +25,10 @@ interface LpProblemOptions {
   integers?: boolean;
   /** the data of resource limits as a table (display only) */
   table?: boolean;
+  /** how many resource limits a question may have (1 to 3): each question draws one that its situation can supply */
+  limits?: number[];
+  /** Level 3: which kinds of model may be drawn ("standard", "half", "eitherOr", "remainder", "relation", "blend") */
+  situations?: string[];
 }
 
 type Part = { sentence?: string; prompt: string; data: Omit<LpProblemData, "level" | "point"> };
@@ -121,13 +125,18 @@ function genConv(n: number, fx: Fix & { res: Resource }): Part | null {
   return { sentence, prompt: sentence, data: { kind: "resource", vars, op, spec, slip, info: { kind: "resource", per, amount, unit, of: res.of, verb: res.verb, label: res.label, topic: res.topic, sing, conv } } };
 }
 
-function standard(n: number, sense: "max" | "min", level: number, strict: boolean, canPack: boolean): Draft | null {
-  const ctx = sense === "max" ? pick(CONTEXTS.filter((c) => c.id !== "diet")) : CONTEXTS.find((c) => c.id === "diet")!;
+interface StdOpts { limits?: number[]; /** Level 3: force the extra limit ("half", "eitherOr") or none ("none") */ l3?: string }
+function standard(n: number, sense: "max" | "min", level: number, strict: boolean, canPack: boolean, so: StdOpts = {}): Draft | null {
+  const want = pick(so.limits?.length ? so.limits : [1, 2]);
+  const useRes = (c: Context): number => c.resources.filter((r) => !r.decOnly && r.mode === "use").length;
+  const pool = [...CONTEXTS.filter((c) => c.id !== "diet"), FLORIST];
+  const fit = pool.filter((c) => useRes(c) >= want);
+  const ctx = sense === "max" ? pick(fit.length ? fit : pool) : CONTEXTS.find((c) => c.id === "diet")!;
   const picked = pickVars(ctx, n);
   const mode = sense === "max" ? "use" : "supply";
   const resources = ctx.resources.filter((r) => !r.decOnly && r.mode === mode);
   const pack = canPack && sense === "max" && resources.length >= 2;
-  const nRes = pack ? 2 : resources.length >= 2 ? pick([1, 2]) : 1;
+  const nRes = pack ? 2 : sense === "max" ? Math.max(1, Math.min(want, resources.length)) : resources.length >= 2 ? pick([1, 2]) : 1;
   // a pack variable: one kind is counted in trays of k, so its coefficients and its profit are k times an item's
   let vars = picked.vars, sing = picked.sing;
   let packs: number[] | undefined, packText: string[] | undefined, packInfo: Info["pack"];
@@ -143,7 +152,7 @@ function standard(n: number, sense: "max" | "min", level: number, strict: boolea
   const parts: Part[] = shuffled(resources).slice(0, nRes).map((res) => genResource(n, { ...base, res, ops: limit }));
   // Level 2: sometimes a limit is in decimal amounts per item, or its amount is in another unit
   const decRes = ctx.resources.filter((r) => r.decOnly);
-  if (level >= 2 && sense === "max" && !pack) {
+  if (level >= 2 && sense === "max" && !pack && ctx.id !== "florist") {
     const r = Math.random();
     if (r < 0.25 && decRes.length) parts[parts.length - 1] = genDecimal(n, { ...base, res: pick(decRes), ops: limit });
     else if (r < 0.5) {
@@ -152,11 +161,11 @@ function standard(n: number, sense: "max" | "min", level: number, strict: boolea
     }
   }
   // a comparison (always when there is one resource, so there are at least two constraints; never with a pack: its variable is not an item count)
-  if (!pack && (nRes === 1 || Math.random() < (level >= 2 ? 0.7 : 0.5))) {
+  if (!pack && (nRes === 1 || so.l3 === "half" || so.l3 === "eitherOr" || Math.random() < (level >= 2 ? 0.7 : 0.5))) {
     const fx: Fix = { ...base, ops: cmpOps(strict) };
-    if (level >= 3 && Math.random() < 0.6) {
-      if (n >= 2 && Math.random() < 0.5) parts.push(halfPart(n, base));
-      else parts.push(genEitherOr(n, pick(["most", "rate", "perItem"]), "fractions", { ...base, ops: sense === "max" ? (strict ? ["≤", "≤", "<"] : ["≤"]) : ["≥"] }));
+    if (level >= 3 && so.l3 !== "none" && (so.l3 === "half" || so.l3 === "eitherOr" || Math.random() < 0.6)) {
+      if (so.l3 === "half" || (so.l3 !== "eitherOr" && n >= 2 && Math.random() < 0.5)) parts.push(halfPart(n, base));
+      else parts.push(genEitherOr(n, pick(["most", "rate"]), "fractions", { ...base, ops: sense === "max" ? (strict ? ["≤", "≤", "<"] : ["≤"]) : ["≥"] }));
     } else if (level >= 2) {
       const kind = weighted<"percent" | "ratio" | "total" | "multiple">([["percent", 4], ["ratio", 4], ["total", 1], ["multiple", 1]]);
       if (kind === "percent") parts.push(genPercent(n, ["one", "combined", "total", "morless"], fx));
@@ -299,13 +308,24 @@ function remainder(n: number, strict: boolean): Draft | null {
   return {
     intro: rc.lead(T, [...sing.map((s) => s.split(" of ")[1]), rc.rest]),
     objSentence: `${profitS} The rest of the ${rc.total} is used for ${rc.rest}.`, parts, prefix: "", vars, sing, obj, konst: pr * T, sense: "max", name: "P", canInteger: true,
-    integerSentence: `Only whole numbers of ${rc.unit} can be used.`, extra: [resS], closing: "Formulate this as a linear programming problem, to maximise the profit.", info: { rem } as unknown as Partial<Info>,
+    integerSentence: `Only whole numbers of ${rc.unit} can be used.`, extra: [resS], closing: `Formulate this as a linear programming problem, using only ${list(syms)}, to maximise the profit.`, info: { rem } as unknown as Partial<Info>,
   };
 }
 
+/** a florist: the kinds are bouquets and the limits are the flowers (roses, tulips, sunflowers), so a problem can have three resource limits */
+const FLORIST: Context = {
+  id: "florist", device: { noun: "workbench", verb: "make" }, intro: (i) => `A florist makes ${list(i)}.`, did: "made",
+  items: [{ plural: "spring bouquets", singular: "spring bouquet" }, { plural: "summer bouquets", singular: "summer bouquet" }, { plural: "wedding bouquets", singular: "wedding bouquet" }, { plural: "market bouquets", singular: "market bouquet" }],
+  resources: [
+    { topic: "roses", unit: "roses", of: "", verb: "uses", label: "number of roses used", mode: "use" },
+    { topic: "tulips", unit: "tulips", of: "", verb: "uses", label: "number of tulips used", mode: "use" },
+    { topic: "sunflowers", unit: "sunflowers", of: "", verb: "uses", label: "number of sunflowers used", mode: "use" },
+  ],
+};
+
 // ── Level 3: one kind is exactly a multiple of the others, so it is substituted out ──
 const SMOOTHIES: Context = {
-  id: "smoothie", intro: (i) => `A juice bar makes ${list(i)}.`, did: "made",
+  id: "smoothie", device: { noun: "blender", verb: "make" }, intro: (i) => `A juice bar makes ${list(i)}.`, did: "made",
   items: [{ plural: "power smoothies", singular: "power smoothie" }, { plural: "energy smoothies", singular: "energy smoothie" }, { plural: "boost smoothies", singular: "boost smoothie" }, { plural: "green smoothies", singular: "green smoothie" }],
   resources: [{ topic: "preparation time", unit: "minutes", of: "preparation time", verb: "takes", label: "preparation time needed", mode: "use" }, { topic: "blending time", unit: "minutes", of: "blending time", verb: "needs", label: "blending time needed", mode: "use" }],
 };
@@ -366,21 +386,22 @@ function linked(n: number, strict: boolean): Draft | null {
   const objSentence = `${cap(list(picked.map((it, i) => (i === 0 ? `each ${it.singular} makes a profit of £${profits[i]}` : `each ${it.singular} £${profits[i]}`))))}.`;
   return {
     intro: ctx.intro(picked.map((it) => it.plural)), objSentence, parts, prefix: "", vars, sing, obj, ...(c ? { konst: profits[n] * c } : {}), sense: "max", name: "P", canInteger: true,
-    extra: [relation, ...resS], closing: "Formulate this as a linear programming problem, to maximise the profit.",
+    extra: [relation, ...resS], closing: `Formulate this as a linear programming problem, using only ${list(syms)}, to maximise the profit.`,
     info: { link: { dep: { plural: dep.plural, singular: dep.singular }, items: picked.map((it) => ({ plural: it.plural, singular: it.singular })), form, S, a, ...(c ? { c } : {}), ...(reverse ? { reverse } : {}), profits, resources: rs } },
   };
 }
 
 // ── The generator ────────────────────────────────────────────────────────────
-function attempt(n: number, sense: "max" | "min", level: number, integersWanted: boolean, showTable: boolean): LpQuestion | null {
+function attempt(n: number, sense: "max" | "min", level: number, integersWanted: boolean, showTable: boolean, o: LpProblemOptions): LpQuestion | null {
   const strict = level === 1 || integersWanted;
   let d: Draft | null;
-  if (level >= 3 && sense === "min") d = blendMix(n, level);
-  else if (level >= 3) {
-    const r = Math.random();
-    d = r < 0.2 ? remainder(n, strict) : r < 0.45 ? linked(n, strict) : standard(n, sense, level, strict, false);
-  }
-  else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2);
+  if (level >= 3) {
+    const sit = pick(o.situations?.length ? o.situations : ["standard", "half", "eitherOr", "remainder", "relation", "blend"]);
+    if (sit === "blend") d = blendMix(n, level);
+    else if (sit === "remainder") d = remainder(n, strict);
+    else if (sit === "relation") d = linked(n, strict);
+    else d = standard(n, "max", level, strict, false, { limits: o.limits, l3: sit === "standard" ? "none" : sit });
+  } else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2, { limits: o.limits });
   return d ? finalise(d, level, integersWanted, showTable) : null;
 }
 
@@ -389,9 +410,9 @@ export function generateProblem(level: number, o: LpProblemOptions): LpQuestion 
   const counts = o.vars.length ? o.vars : [2];
   const senses = o.objective.length ? o.objective : ["max"];
   const integers = level >= 2 && o.integers !== false;
-  for (let tries = 0; tries < 400; tries++) {
-    const q = attempt(pick(counts), pick(senses) as "max" | "min", level, integers, !!o.table);
+  for (let tries = 0; tries < 2000; tries++) {
+    const q = attempt(pick(counts), pick(senses) as "max" | "min", level, integers, !!o.table, o);
     if (q) return q;
   }
-  throw new Error("lpProblem: no good model was found in 400 tries");
+  throw new Error("lpProblem: no good model was found in 2000 tries");
 }

@@ -40,6 +40,8 @@ type LpInfo =
   | { kind: "eitherOr"; caps: number[]; given: "most" | "rate" | "perItem" | "requirement"; T: number; method: "fractions" | "units" | "both"; sing?: string[] };
 
 export interface LpProblemData {
+  /** display only: whether the working shows the common slips and the check with a number (set by the tool from its display options, never by a generator) */
+  view?: { slips: boolean; checks: boolean };
   kind: LpKind;
   level: number;
   vars: Var[];

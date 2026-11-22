@@ -23,8 +23,10 @@ export const isFinite10 = (f: Fr): boolean => { let d = f[1]; while (d % 2 === 0
 export interface LpGenOptionsFull extends LpGenOptions {
   /** Level 2 percentages: "one", "combined", "total", "morless" */
   pctOf: string[];
-  /** Level 3 either-or: "most", "rate", "perItem", "requirement" */
+  /** Level 3 either-or: "most", "rate" (and, for the Level 2 fractional-amounts style, "perItem", "requirement") */
   capGiven: string;
+  /** Level 2 ratios and shares: which of "ratio" and "share" may be used (both when empty) */
+  ratioForms?: string[];
   /** display only: how the either-or working is shown */
   method: "fractions" | "units" | "both";
 }
@@ -68,11 +70,11 @@ export function genPercent(n: number, forms: string[], fx?: Fix): Gen {
 // ── Level 2: ratios (x : y) and shares of the total ────────────────
 const RATIOS: Array<[number, number]> = [[1, 2], [2, 3], [3, 4], [1, 3], [3, 2], [2, 5], [5, 2], [3, 5], [4, 3], [5, 3], [1, 4]];
 const SHARES: Array<[Fr, string]> = [[fr(1, 2), "half"], [fr(1, 3), "one third"], [fr(1, 4), "one quarter"], [fr(2, 3), "two thirds"], [fr(3, 4), "three quarters"], [fr(1, 5), "one fifth"], [fr(2, 5), "two fifths"], [fr(3, 5), "three fifths"]];
-export function genRatio(n: number, fx?: Fix): Gen {
+export function genRatio(n: number, fx?: Fix, only?: "ratio" | "share"): Gen {
   const ctx = fx?.ctx ?? pick(CONTEXTS);
   const { vars } = fx ?? pickVars(ctx, n);
   const op = opFrom(fx, pickOp);
-  const form = weighted<"ratio" | "share">([["ratio", 7], ["share", 3]]);
+  const form = only ?? weighted<"ratio" | "share">([["ratio", 7], ["share", 3]]);
   const all = vars.map((v) => v.noun);
   const names = (xs: number[]): string => list(xs.map((i) => vars[i].noun));
   const head = `${ctx.intro(all)} ${letDef(vars, ctx.did)}`;
@@ -243,7 +245,8 @@ export function generateConstraint(level: number, o: LpGenOptionsFull): LpQuesti
 function makeOne(level: number, n: number, style: string, o: LpGenOptionsFull): Gen {
   let g: Gen;
   if (style === "percent") g = genPercent(n, o.pctOf.length ? o.pctOf : ["one", "combined", "total", "morless"]);
-  else if (style === "ratio") g = genRatio(n);
+  else if (style === "ratio") g = genRatio(n, undefined, o.ratioForms?.length === 1 ? (o.ratioForms[0] as "ratio" | "share") : undefined);
+  else if (style === "fractional") g = genEitherOr(n, pick(["perItem", "requirement"]), "fractions");
   else if (style === "decimal") g = genDecimal(n);
   else if (style === "blend") g = genBlend(n);
   else g = genEitherOr(n, o.capGiven || "most", o.method);
