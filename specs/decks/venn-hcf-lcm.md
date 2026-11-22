@@ -9,7 +9,7 @@
 
 1. **"Tree" meant the Venn.** Factor trees already have a deck; this one assumes them, with one retrieval step.
 2. **One continuous deck**, sections divided by section dividers (the pick-up points), not three decks.
-3. **Questions are projected full-width and Harry works them on the board.** No workspace at the side, no picture in the question, **no answers needed**: a question slide is just the questions, one at a time, five or six to a set. (The build script still computes every answer, to be sure each question works and to check the numbers; they are not shown.)
+3. **Questions are projected full-width and Harry works them on the board.** No workspace at the side, no picture in the question, **no answers needed**: a question slide is just the questions, one at a time, five or six to a set. **One exception (Harry): the HCF and LCM questions have an answer reveal at the bottom, so he does not have to do the multiplying.** One click shows a single line under the question, computed from the two numbers: "HCF = 2 × 3 = 6", "LCM = 2 × 2 × 3 × 3 = 36". Everywhere else the answers are computed to check the numbers and not shown.
 4. **Drag and drop is the simplest it can be:** cards can be dragged around the Venn and stay where they are dropped. No home regions, no check, no tick, no reset button (leaving the slide and coming back puts them back). Harry decides what is right.
 5. **Worksheets are authored and printed with the Venns on them** (three, one per section: see "The worksheets").
 6. Calculators for the multiplying, so the LCMs can reach about 500.
@@ -91,8 +91,8 @@ Tags are not shown here; as in the trees deck each slide gets **Core**, **If tim
 | 37 | Recap, four quick ones | Quickfire | Build the Venn for two numbers |
 | 38 | **Why the middle?** | Two Venns, placed | 12 and 18 as a Venn of their *factor lists* (overlap 1, 2, 3, 6; the biggest is 6), then of their prime tiles (middle 2 and 3; 2 × 3 = 6). Same answer, and the tile way still works when the lists are long |
 | 39 | **HCF = multiply the tiles in the middle** | Key point + Venn | |
-| 40 | HCF: read the Venn | Grid (4) | |
-| 41 | HCF: tiles given | Questions (6) | |
+| 40 | HCF: read the Venn | Grid (4) | Answer line under each Venn on a click |
+| 41 | HCF: tiles given | Questions (6) | Answer reveal: the multiplication and the HCF |
 | 42 | HCF: the factorisations given | Questions (6) | |
 | 43 | Book work | Plain book (9, 3 × 3) | |
 
@@ -104,8 +104,8 @@ Tags are not shown here; as in the trees deck each slide gets **Core**, **If tim
 | 45 | Recap, four quick ones | Quickfire | HCF |
 | 46 | **LCM = multiply every tile in the Venn** | Key point + Venn | The same 12 and 18 Venn as slide 39, so only the multiplying changes. Why: to build both numbers you need every tile, but a shared tile only once |
 | 47 | Discussion | Split discussion | "LCM of 12 and 18 is 12 × 18 = 216." Is it a common multiple? The lowest? What did it count twice? |
-| 48 | LCM: read the Venn | Grid (4) | |
-| 49 | LCM: tiles given | Questions (6) | |
+| 48 | LCM: read the Venn | Grid (4) | Answer line under each Venn on a click |
+| 49 | LCM: tiles given | Questions (6) | Answer reveal: the multiplication and the LCM |
 | 50 | LCM: the factorisations given | Questions (6) | |
 | 51 | Book work | Plain book (9, 3 × 3) | |
 
@@ -116,7 +116,7 @@ Tags are not shown here; as in the trees deck each slide gets **Core**, **If tim
 | 52 | Divider: HCF and LCM together | | |
 | 53 | **Which one is it?** | Split discussion | Claims: "multiply the middle", "multiply everything", "the answer is always bigger than both numbers" (false for the HCF), "the HCF can be one of the numbers" |
 | 54 | Models: nothing shared (HCF 1; LCM the two multiplied) · one inside the other (HCF the smaller; LCM the larger) | Drag | |
-| 55 | HCF and LCM from the numbers | Questions (6) | Rung 5: tree, Venn, both answers |
+| 55 | HCF and LCM from the numbers | Questions (6) | Rung 5: tree, Venn, both answers. Reveal shows both lines |
 | 56 | **Check it:** divide | Key point | The HCF divides both numbers exactly; the LCM divides exactly by both (a calculator step). If time: HCF × LCM = the two numbers multiplied |
 | 57 | Book work | Plain book (9, 3 × 3) | Mixed HCF and LCM; edge cases last |
 | 58 | **Worksheet 3** | Pinned worksheet | Printed Venns, with HCF and LCM lines |
@@ -182,7 +182,7 @@ These are **authored** worksheets (hand-written, not generated), printed through
 | Misconception tags | No | Add (above) |
 | A generator for HCF and LCM | No | **Not built for this deck.** It is Phase 3 in `specs/decks/primes-and-divisibility.md`; the Skill library's `hcf` skill has two consumers waiting. It would reuse the same logic later |
 | Depth cards | No bank | Authored in the deck (claims, named misconceptions, the eight cast) |
-| Question answers | Authored questions may require an answer in the saved format | Check when building; if it is required, the computed answers are saved and simply not shown |
+| Question answers | The player already has a per-question answer reveal (`a`) | Sections 3 to 5 save the one-line answer ("HCF = 2 × 3 = 6", "LCM = 2 × 2 × 3 × 3 = 36", both for the mixed sets) and show it on that click, kept short so it sits at the bottom of the full-width slide with the question above. Elsewhere any required answer is saved and not shown |
 
 ### The new pieces, in order
 
