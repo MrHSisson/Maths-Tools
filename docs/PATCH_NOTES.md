@@ -31,6 +31,64 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-22 — The Venn worksheet: printed Venns, three to an A4 page (no deck yet)
+
+Branch `claude/venn-hcf-lcm-handoff-zzr94r` (merge 3 of the Venn plan). Area: `src/decks/{vennSheet,types,worksheets,SlideCanvas,deckChecks,builder,vennLayout,Venn}`, `src/shared/printables.ts`, `src/tests/vennSheet.test.ts`, `scripts/testAreas.mjs`, `docs/reference/decks.md`.
+
+- **New pinned worksheet format `vennSheet`**: a sheet of Venns, each only two numbers, so the prime tiles are worked out (never typed) and a printed Venn cannot be wrong. Per Venn: which parts already carry their tiles (`placed`, the fade), the two factorisations beside it, and optional "HCF =" and "LCM =" lines to fill in.
+- **Print**: `vennWorksheet` in `printables.ts`, beside `shapeWorksheet`. A4 pages made to be printed scaled to A5, **three Venns to a page, at most nine a sheet**; a Name line, an optional note, the Venn large on the left with the factorisations and lines beside it. The answer pages draw every tile and fill the lines in. File → Worksheets and the player's Print buttons use it like the textbook sheet.
+- **Same drawing as the slide**: the paper and the slide draw the Venn from one static SVG function using the slide piece's card layout and colours (now exported from `vennLayout.ts`), so they cannot drift. On the slide the sheet shows its Venns in a grid, `a` fills them in.
+- **Deck check** fails a sheet with no Venns, more than nine, or a pair that cannot make a Venn. `S.vennSheet` in the builder.
+- **Checked**: a nine-Venn sheet (questions and answers) in headless Chromium gives six pages (3 + 3), no cell overflowing; one look at page 1. Unit tests for the page count, tiles on question and answer pages, escaping, pinning and the deck check.
+- **Deliberately not done:** the "count in small print" on the fade (placed parts and factorisations cover it for now); the look card and the deck itself (merges 4+); the editor has no Venn-sheet configuration panel yet (sheets are written in the build script, like the textbook sheet); dashboard Review (no tool changed).
+- **Merge before the deck content**: this changes the deck data format (`vennSheet` on a worksheet element).
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/venn-hcf-lcm-handoff-zzr94r".
+
+## 2026-11-22 — The Venn slide element: draggable cards, prime tiles, HCF and LCM lines (no deck yet)
+
+Branch `claude/hcf-lcm-venn-lesson-diz7dz` (merge 2 of the Venn plan). Area: `src/decks/{types,Venn,vennLayout,SlideCanvas,EditorChrome,EditorPanels,Editor,layouts,builder,deckChecks}`, `src/tests/vennLayout.test.ts`, docs (FEATURES, SLIDE_FEATURES, GLOSSARY, `docs/reference/decks.md`).
+
+- **New slide piece `venn`**: a box with an optional label, two circles with rule labels, and cards (words, numbers or coloured prime tiles). A card with a region sits there; a card without one starts scattered round the outside. In the player every card drags with a finger, stylus or mouse and stays where it is dropped: no checking, not saved, put back when the slide is left. The drag does not start a phone swipe; with the Pen on, the pen takes the touch.
+- **Clicks**: cards can appear one per click (`staged`), then an HCF line and/or an LCM line (`lines`), computed from the placed prime tiles with `hcfLine` / `lcmLine`. The diagram is drawn at one size with room kept for the lines, so it does not shift.
+- **Layouts**: `vennSlide` (full slide) and `vennRowSlide` (four small Venns in a row, a to d, with a line under each on a click); both are in Add slide and the slide library, and in the builder's `S`.
+- **Editor**: "Venn diagram" in Add, and a Venn options panel (labels, cards with tile and region, prime tiles for two numbers placed or scattered, one per click, the two lines, card size).
+- **Deck check**: fails prime tiles that are not where the two numbers' factors go (the wrong Venn cannot be authored); warns about an answer line with nothing to multiply, empty cards and more than 12 scattered cards.
+- **Look**: the full-slide Venn takes the middle three fifths of the slide (960 of 1600 wide), centred, with the title and prompt in the side columns; circles, box and answer lines in quiet colours, the tiles slightly desaturated.
+- **Checked** at tablet 1180×820 and laptop 1366×768 in headless Chromium: drag, one-per-click, answer lines, the row of four. A phone only previews decks, so no phone-specific work.
+- **Deliberately not done:** the Venn worksheet print format (merge 3), the deck itself, dashboard Review (no tool changed).
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz".
+
+## 2026-11-22 — Venn diagrams, HCF and LCM: planned, and the shared logic built (nothing teachers see yet)
+
+Branch `claude/hcf-lcm-venn-lesson-diz7dz`. Area: `specs/decks/venn-hcf-lcm.md`, `src/shared/venn.ts`, `src/tests/venn.test.ts`, `src/shared/misconceptions.ts`.
+
+- **The plan** (`specs/decks/venn-hcf-lcm.md`): one continuous deck, 46 slides in stage 1. A short intro of full-screen draggable Venns (words, everyday things, then numbers), then prime factors in a Venn, then HCF (multiply the middle), then LCM (multiply everything), with the factorisations always given and no trees. Questions are projected full-width and worked on the board; the HCF and LCM questions have a one-line answer reveal; two printed Venn worksheets. Stage 2 (the combinations, trees) is listed, not planned.
+- **Shared logic built** (`src/shared/venn.ts`): splits two numbers' prime factors into left, middle and right (repeats matched one for one), gives the HCF and LCM, the answer lines ("HCF = 2 × 3 = 6"), the factor-list Venn, and flags for which pairs catch which trap. Tested for every pair from 2 to 130 and for the plan's candidate pairs.
+- **Seven new misconception tags** (`venn-*`), and the prime tiles take the factor tree's colours, so the Venn and the tree agree.
+- **Deliberately not done:** the Venn slide element and its draggable cards, the Venn worksheet print format, the deck itself, the dashboard Review (no tool changed). No task or pathway added: that waits for Harry.
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (Build Log block to be added when the element lands).
+
+## 2026-11-22 — Venn, HCF and LCM deck: the look card approved, section 1 built (slides 1 to 7)
+
+Branch `claude/venn-hcf-lcm-deck-qmkg07` (merge 4a of the Venn plan). Area: `specs/decks/venn-hcf-lcm.build.ts` (new, the build script), `src/decks/data/venn-hcf-lcm.json` (the deck snapshot), `src/decks/SlideCanvas.tsx` (the Venn sheet slide).
+
+- **Look card approved by Harry** (one slide of each kind: drag, key-point Venn, grid of four, question set, discussion, worksheet). Built as is.
+- **Section 1 of 4, "A first look at a Venn"** (an idea, not a lesson: no worksheet, discussion, book work or Depth): title, objective, four drag slides (pets and 3-letter words, can fly and has feathers, is red and is a fruit with no shapes, even and multiple of 3 for numbers 1 to 12) and an "If time: sort into a Venn" set of five fixed questions (even / multiple of 5, multiple of 4 / 6, odd / square, less than 10 / even, factor of 12 / 18) with something in both circles and something in neither across the set.
+- **Every sort is computed** in the build script and asserted (who goes in the middle, on one side, in neither), and the sorting answers are saved from the same computation (R42; not shown on a click, as in the plan).
+- **The factorisations under each Venn on the worksheet slide** were cramped and ran together along the bottom ("10 = 2 × 5 15 = 3 × 5"). They are now larger, centred and one to a line; the answer lines the same.
+- **Checked:** `deck check venn-hcf-lcm --layout` (no spills, overlaps or runs off the slide), and one contact sheet of every slide.
+- **Deliberately not done:** sections 2 to 4 (slides 8 to 46), the Depth cards (no bank: authored in section 2), a larger grid of four Venns, the "count in small print" on the fade.
+- **Next:** section 2 (slides 8 to 27, with Worksheet 1 as slide 25), then HCF, then LCM.
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (update 2026-11-22, deck session).
+
 ## 2026-11-22 — The Simplex Algorithm: engine, designed numbers and four sub-tools (chunks S0 to S5), not live
 
 Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lpSimplex.ts`, `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `SxWorking.tsx` (new); `src/tools/Decision/SimplexAlgorithm.tsx` (new tool, `/lp-simplex`, `enabled: false`, linked from the Decision hub's DD card); small edits to `types.ts` (the `sx` data field and the `sxView` step), `DecisionShell.tsx` (picture height), `registry.ts`, `decisionSpec.ts` and two test lists.
