@@ -499,6 +499,2338 @@
    ],
    "brief": "Five numbers to sort into a Venn for two rules, full width, with something in both circles and something in neither. Harry works them on the board.",
    "built": "1ubsx4c"
+  },
+  {
+   "id": "vh-d2",
+   "family": "structure",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Prime factors in a Venn",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "vh-d2-1"
+    }
+   ],
+   "built": "1uuobqs"
+  },
+  {
+   "id": "vh-retrieval",
+   "family": "retrieval",
+   "title": "Quickfire",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 60,
+     "w": 1400,
+     "h": 100,
+     "text": "Quickfire",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-retrieval-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 160,
+     "w": 1400,
+     "h": 50,
+     "text": "Four quick ones.",
+     "size": 34,
+     "colour": "#64748b",
+     "id": "vh-retrieval-2"
+    },
+    {
+     "kind": "grid",
+     "x": 100,
+     "y": 230,
+     "w": 1400,
+     "h": 620,
+     "bank": [],
+     "cols": 2,
+     "id": "vh-retrieval-3",
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-r1",
+       "title": "Which of $9, 13, 21, 19$ are prime?",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which of $9, 13, 21, 19$ are prime?"
+       ],
+       "answer": [
+        "$13, 19$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-r2",
+       "title": "Write the first five primes",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Write the first five primes."
+       ],
+       "answer": [
+        "$2, 3, 5, 7, 11$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-r3",
+       "title": "$2 \\times 2 \\times 7 = ?$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$2 \\times 2 \\times 7 = ?$"
+       ],
+       "answer": [
+        "$28$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-r4",
+       "title": "$3 \\times 3 \\times 5 = ?$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$3 \\times 3 \\times 5 = ?$"
+       ],
+       "answer": [
+        "$45$"
+       ],
+       "explanation": [],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ]
+    }
+   ],
+   "built": "35dtv3"
+  },
+  {
+   "id": "vh-tiles",
+   "family": "teach",
+   "title": "Prime tiles",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Prime tiles",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-tiles-1"
+    },
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 370,
+     "w": 270,
+     "h": 460,
+     "text": "Every prime has its own colour.\n\n12 = 2 × 2 × 3\n\nMake 12 from the tiles.",
+     "size": 32,
+     "colour": "#64748b",
+     "id": "vh-tiles-2"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "",
+     "right": "",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "3",
+       "tile": true
+      },
+      {
+       "text": "5",
+       "tile": true
+      },
+      {
+       "text": "5",
+       "tile": true
+      },
+      {
+       "text": "7",
+       "tile": true
+      },
+      {
+       "text": "11",
+       "tile": true
+      }
+     ],
+     "box": "Prime tiles",
+     "id": "vh-tiles-3"
+    }
+   ],
+   "built": "mmbbb0"
+  },
+  {
+   "id": "vh-tiles-to-number",
+   "family": "teach",
+   "title": "Tiles to number",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-tile1",
+       "title": "$21$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$3 \\times 7$"
+       ],
+       "answer": [
+        "$21$"
+       ],
+       "explanation": [
+        "$3 \\times 7 = 21$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-tile2",
+       "title": "$20$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$2 \\times 2 \\times 5$"
+       ],
+       "answer": [
+        "$20$"
+       ],
+       "explanation": [
+        "$2 \\times 2 \\times 5 = 20$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-tile3",
+       "title": "$30$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$2 \\times 3 \\times 5$"
+       ],
+       "answer": [
+        "$30$"
+       ],
+       "explanation": [
+        "$2 \\times 3 \\times 5 = 30$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-tile4",
+       "title": "$63$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$3 \\times 3 \\times 7$"
+       ],
+       "answer": [
+        "$63$"
+       ],
+       "explanation": [
+        "$3 \\times 3 \\times 7 = 63$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-tile5",
+       "title": "$60$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$2 \\times 2 \\times 3 \\times 5$"
+       ],
+       "answer": [
+        "$60$"
+       ],
+       "explanation": [
+        "$2 \\times 2 \\times 3 \\times 5 = 60$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-tile6",
+       "title": "$90$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Which number do these tiles make?",
+        "$2 \\times 3 \\times 3 \\times 5$"
+       ],
+       "answer": [
+        "$90$"
+       ],
+       "explanation": [
+        "$2 \\times 3 \\times 3 \\times 5 = 90$"
+       ],
+       "rationale": "Multiply the tiles; use a calculator for the bigger ones.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-tiles-to-number-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Multiply a set of prime tiles to make the number: the reverse of a factor tree.",
+   "built": "1xxaiah"
+  },
+  {
+   "id": "vh-rule",
+   "family": "teach",
+   "title": "The rule",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "The rule",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-rule-1"
+    },
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 370,
+     "w": 270,
+     "h": 460,
+     "text": "10 = 2 × 5\n15 = 3 × 5\n\nA prime in both goes once in the middle.",
+     "size": 32,
+     "colour": "#64748b",
+     "id": "vh-rule-2"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "10",
+     "right": "15",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "5",
+       "tile": true
+      },
+      {
+       "text": "3",
+       "tile": true
+      },
+      {
+       "text": "5",
+       "tile": true
+      }
+     ],
+     "box": "Prime factors",
+     "id": "vh-rule-3"
+    }
+   ],
+   "built": "bn7jy4"
+  },
+  {
+   "id": "vh-check",
+   "family": "teach",
+   "title": "The check",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "The check",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-check-1"
+    },
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 370,
+     "w": 270,
+     "h": 460,
+     "text": "Left circle: 2 × 5 = 10\nRight circle: 5 × 3 = 15\n\nThe Venn proves itself.",
+     "size": 32,
+     "colour": "#64748b",
+     "id": "vh-check-2"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "10",
+     "right": "15",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "box": "Multiply each circle",
+     "id": "vh-check-3"
+    }
+   ],
+   "built": "5m2i5p"
+  },
+  {
+   "id": "vh-set-a",
+   "family": "teach",
+   "title": "Prime factors in a Venn",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-a1",
+       "title": "$6$ and $14$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$6 = 2 \\times 3$ and $14 = 2 \\times 7$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $2$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-a2",
+       "title": "$21$ and $35$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$21 = 3 \\times 7$ and $35 = 5 \\times 7$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $7$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-a3",
+       "title": "$30$ and $42$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$30 = 2 \\times 3 \\times 5$ and $42 = 2 \\times 3 \\times 7$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $5$. Middle: $2$, $3$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-a4",
+       "title": "$70$ and $105$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$70 = 2 \\times 5 \\times 7$ and $105 = 3 \\times 5 \\times 7$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $5$, $7$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-a5",
+       "title": "$44$ and $66$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$44 = 2 \\times 2 \\times 11$ and $66 = 2 \\times 3 \\times 11$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $11$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 11",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-a6",
+       "title": "$22$ and $55$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$22 = 2 \\times 11$ and $55 = 5 \\times 11$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $11$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-set-a-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Given two numbers with their prime factorisations, put the factors in a Venn: a prime both numbers have goes once in the middle. One shared prime first, then two. The count of middle tiles is a quiet hint that falls away.",
+   "built": "6k36kg"
+  },
+  {
+   "id": "vh-book-a",
+   "family": "retrieval",
+   "title": "Book work: prime factors in a Venn",
+   "els": [
+    {
+     "kind": "text",
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Copy into your book. Draw a Venn and put the prime factors in it.",
+     "size": 38,
+     "colour": "#64748b",
+     "id": "vh-book-a-1"
+    },
+    {
+     "kind": "grid",
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
+     "bank": [],
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-ba1",
+       "title": "$14$ and $35$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$14,\\;35$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!7,\\, 5\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $7$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba2",
+       "title": "$6$ and $21$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$6,\\;21$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3,\\, 3\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $3$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba3",
+       "title": "$33$ and $77$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$33,\\;77$",
+        "$\\textcolor{#64748b}{\\tiny 3\\!\\times\\!11,\\, 7\\!\\times\\!11}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $11$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba4",
+       "title": "$30$ and $105$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$30,\\;105$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3\\!\\times\\!5,\\, 3\\!\\times\\!5\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $3$, $5$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba5",
+       "title": "$42$ and $70$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$42,\\;70$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3\\!\\times\\!7,\\, 2\\!\\times\\!5\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $2$, $7$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba6",
+       "title": "$66$ and $110$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$66,\\;110$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3\\!\\times\\!11,\\, 2\\!\\times\\!5\\!\\times\\!11}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $2$, $11$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba7",
+       "title": "$28$ and $63$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$28,\\;63$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!2\\!\\times\\!7,\\, 3\\!\\times\\!3\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $2$, $2$. Middle: $7$. Right only: $3$, $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba8",
+       "title": "$20$ and $90$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$20,\\;90$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!2\\!\\times\\!5,\\, 2\\!\\times\\!3\\!\\times\\!3\\!\\times\\!5}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $5$. Right only: $3$, $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-ba9",
+       "title": "$45$ and $60$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$45,\\;60$",
+        "$\\textcolor{#64748b}{\\tiny 3\\!\\times\\!3\\!\\times\\!5,\\, 2\\!\\times\\!2\\!\\times\\!3\\!\\times\\!5}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $3$, $5$. Right only: $2$, $2$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "cols": 3,
+     "id": "vh-book-a-2",
+     "align": "center",
+     "fixed": true,
+     "size": 100
+    }
+   ],
+   "brief": "Same kinds as the whiteboards, nine in a 3 by 3 grid: the first six carry a quiet hint, the last three none.",
+   "built": "16ngdku"
+  },
+  {
+   "id": "vh-d3",
+   "family": "structure",
+   "title": "Repeated primes",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Repeated primes",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "vh-d3-1"
+    }
+   ],
+   "built": "ktgl2m"
+  },
+  {
+   "id": "vh-one-for-one",
+   "family": "teach",
+   "title": "Model: 8 and 12",
+   "els": [
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 50,
+     "w": 270,
+     "h": 300,
+     "text": "Model: 8 and 12",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-one-for-one-1"
+    },
+    {
+     "kind": "text",
+     "x": 40,
+     "y": 370,
+     "w": 270,
+     "h": 460,
+     "text": "8 = 2 × 2 × 2\n12 = 2 × 2 × 3\n\nMatch the tiles one for one.",
+     "size": 32,
+     "colour": "#64748b",
+     "id": "vh-one-for-one-2"
+    },
+    {
+     "kind": "venn",
+     "x": 320,
+     "y": 124,
+     "w": 960,
+     "h": 672,
+     "left": "8",
+     "right": "12",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "2",
+       "tile": true
+      },
+      {
+       "text": "3",
+       "tile": true
+      }
+     ],
+     "box": "Prime factors",
+     "id": "vh-one-for-one-3"
+    }
+   ],
+   "built": "1rwfh3a"
+  },
+  {
+   "id": "vh-discuss",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "vh-discuss-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "Mei puts all three 2s of $8$ in the middle, because $2$ is in both numbers.\n\nWhere does the check catch her?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "vh-discuss-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "vh-discuss-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "vh-discuss-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "The right circle should multiply to $12$. Mei's circle is $2 \\times 2 \\times 2 \\times 3$, which is too big. Only the 2s both numbers have go in the middle.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "vh-discuss-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "vh-discuss-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "How many 2s go in the middle for $8$ and $12$?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "vh-discuss-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "vh-discuss-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "2",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "vh-discuss-9"
+    }
+   ],
+   "built": "9igwy9"
+  },
+  {
+   "id": "vh-set-c",
+   "family": "teach",
+   "title": "Repeated primes",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-c1",
+       "title": "$45$ and $75$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$45 = 3 \\times 3 \\times 5$ and $75 = 3 \\times 5 \\times 5$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $3$, $5$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 5, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-c2",
+       "title": "$20$ and $30$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$20 = 2 \\times 2 \\times 5$ and $30 = 2 \\times 3 \\times 5$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $5$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-c3",
+       "title": "$28$ and $98$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$28 = 2 \\times 2 \\times 7$ and $98 = 2 \\times 7 \\times 7$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $7$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 7, 7",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-c4",
+       "title": "$40$ and $56$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$40 = 2 \\times 2 \\times 2 \\times 5$ and $56 = 2 \\times 2 \\times 2 \\times 7$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $5$. Middle: $2$, $2$, $2$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-c5",
+       "title": "$36$ and $63$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$36 = 2 \\times 2 \\times 3 \\times 3$ and $63 = 3 \\times 3 \\times 7$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $2$, $2$. Middle: $3$, $3$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-c6",
+       "title": "$16$ and $24$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$16 = 2 \\times 2 \\times 2 \\times 2$ and $24 = 2 \\times 2 \\times 2 \\times 3$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $2$, $2$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 2, 2",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-set-c-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "A prime that appears more than once in a number: match the copies one for one, so a prime goes in the middle as many times as both numbers have it. The slip of putting every copy in the middle is on the wrong-answer list.",
+   "built": "sfnrua"
+  },
+  {
+   "id": "vh-model-special",
+   "family": "teach",
+   "title": "Model: nothing shared, and one inside the other",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Nothing shared, and one inside the other",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-model-special-1"
+    },
+    {
+     "kind": "venn",
+     "x": 60,
+     "y": 240,
+     "w": 700,
+     "h": 490,
+     "left": "9",
+     "right": "10",
+     "cards": [
+      {
+       "text": "3",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "right"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.2,
+     "id": "vh-model-special-2"
+    },
+    {
+     "kind": "venn",
+     "x": 840,
+     "y": 240,
+     "w": 700,
+     "h": 490,
+     "left": "4",
+     "right": "12",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.2,
+     "id": "vh-model-special-3"
+    },
+    {
+     "kind": "text",
+     "x": 60,
+     "y": 760,
+     "w": 700,
+     "h": 90,
+     "text": "9 = 3 × 3 and 10 = 2 × 5: nothing in the middle. That is fine.",
+     "size": 36,
+     "colour": "#0f172a",
+     "align": "center",
+     "id": "vh-model-special-4"
+    },
+    {
+     "kind": "text",
+     "x": 840,
+     "y": 760,
+     "w": 700,
+     "h": 90,
+     "text": "4 = 2 × 2 and 12 = 2 × 2 × 3: nothing on the left. That is fine.",
+     "size": 36,
+     "colour": "#0f172a",
+     "align": "center",
+     "id": "vh-model-special-5"
+    }
+   ],
+   "built": "hkv33e"
+  },
+  {
+   "id": "vh-set-d",
+   "family": "teach",
+   "title": "Special cases",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-d1",
+       "title": "$20$ and $50$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$20 = 2 \\times 2 \\times 5$ and $50 = 2 \\times 5 \\times 5$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $5$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 5, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-d2",
+       "title": "$36$ and $48$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$36 = 2 \\times 2 \\times 3 \\times 3$ and $48 = 2 \\times 2 \\times 2 \\times 2 \\times 3$",
+        "Put them in a Venn.",
+        "$\\textcolor{#64748b}{\\tiny\\text{3 tiles in the middle}}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $2$, $2$, $3$. Right only: $2$, $2$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 2, 2, 3, 3",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-d3",
+       "title": "$75$ and $100$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$75 = 3 \\times 5 \\times 5$ and $100 = 2 \\times 2 \\times 5 \\times 5$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $5$, $5$. Right only: $2$, $2$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-d4",
+       "title": "$30$ and $84$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$30 = 2 \\times 3 \\times 5$ and $84 = 2 \\times 2 \\times 3 \\times 7$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $5$. Middle: $2$, $3$. Right only: $2$, $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 3",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-d5",
+       "title": "$6$ and $35$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$6 = 2 \\times 3$ and $35 = 5 \\times 7$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: $2$, $3$. Middle: nothing. Right only: $5$, $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-d6",
+       "title": "$21$ and $63$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$21 = 3 \\times 7$ and $63 = 3 \\times 3 \\times 7$",
+        "Put them in a Venn."
+       ],
+       "answer": [
+        "Left only: nothing. Middle: $3$, $7$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 7",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "vh-set-d-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Mixed Venns with the two edge cases (nothing shared; one number inside the other) near the end, one of each.",
+   "built": "g2lo7j"
+  },
+  {
+   "id": "vh-grid-1",
+   "family": "teach",
+   "title": "Read a Venn backwards: what are the two numbers?",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Read a Venn backwards: what are the two numbers?",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-grid-1-1"
+    },
+    {
+     "kind": "venn",
+     "x": 30,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "a",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-1-2"
+    },
+    {
+     "kind": "venn",
+     "x": 418,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "b",
+     "cards": [
+      {
+       "text": "7",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "11",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-1-3"
+    },
+    {
+     "kind": "venn",
+     "x": 806,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "c",
+     "cards": [
+      {
+       "text": "3",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-1-4"
+    },
+    {
+     "kind": "venn",
+     "x": 1194,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "d",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-1-5"
+    }
+   ],
+   "built": "igpl0k"
+  },
+  {
+   "id": "vh-grid-2",
+   "family": "teach",
+   "title": "Read a Venn backwards",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Read a Venn backwards",
+     "size": 56,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "vh-grid-2-1"
+    },
+    {
+     "kind": "venn",
+     "x": 30,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "a",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-2-2"
+    },
+    {
+     "kind": "venn",
+     "x": 418,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "b",
+     "cards": [
+      {
+       "text": "5",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-2-3"
+    },
+    {
+     "kind": "venn",
+     "x": 806,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "c",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-2-4"
+    },
+    {
+     "kind": "venn",
+     "x": 1194,
+     "y": 260,
+     "w": 372,
+     "h": 260,
+     "left": "?",
+     "right": "?",
+     "box": "d",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "5",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      },
+      {
+       "text": "7",
+       "tile": true,
+       "region": "right"
+      }
+     ],
+     "size": 1.5,
+     "id": "vh-grid-2-5"
+    }
+   ],
+   "built": "1borwpc"
+  },
+  {
+   "id": "vh-book-b",
+   "family": "retrieval",
+   "title": "Book work: mixed Venns",
+   "els": [
+    {
+     "kind": "text",
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Copy into your book. Draw a Venn and put the prime factors in it.",
+     "size": 38,
+     "colour": "#64748b",
+     "id": "vh-book-b-1"
+    },
+    {
+     "kind": "grid",
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
+     "bank": [],
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-bb1",
+       "title": "$14$ and $22$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$14,\\;22$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!7,\\, 2\\!\\times\\!11}$"
+       ],
+       "answer": [
+        "Left only: $7$. Middle: $2$. Right only: $11$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb2",
+       "title": "$30$ and $45$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$30,\\;45$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3\\!\\times\\!5,\\, 3\\!\\times\\!3\\!\\times\\!5}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $3$, $5$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 5",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb3",
+       "title": "$28$ and $42$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$28,\\;42$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!2\\!\\times\\!7,\\, 2\\!\\times\\!3\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $2$, $7$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 2, 2, 7",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb4",
+       "title": "$63$ and $105$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$63,\\;105$",
+        "$\\textcolor{#64748b}{\\tiny 3\\!\\times\\!3\\!\\times\\!7,\\, 3\\!\\times\\!5\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $3$. Middle: $3$, $7$. Right only: $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 7",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb5",
+       "title": "$20$ and $44$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$20,\\;44$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!2\\!\\times\\!5,\\, 2\\!\\times\\!2\\!\\times\\!11}$"
+       ],
+       "answer": [
+        "Left only: $5$. Middle: $2$, $2$. Right only: $11$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb6",
+       "title": "$50$ and $75$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$50,\\;75$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!5\\!\\times\\!5,\\, 3\\!\\times\\!5\\!\\times\\!5}$"
+       ],
+       "answer": [
+        "Left only: $2$. Middle: $5$, $5$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb7",
+       "title": "$60$ and $84$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$60,\\;84$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!2\\!\\times\\!3\\!\\times\\!5,\\, 2\\!\\times\\!2\\!\\times\\!3\\!\\times\\!7}$"
+       ],
+       "answer": [
+        "Left only: $5$. Middle: $2$, $2$, $3$. Right only: $7$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb8",
+       "title": "$33$ and $99$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$33,\\;99$",
+        "$\\textcolor{#64748b}{\\tiny 3\\!\\times\\!11,\\, 3\\!\\times\\!3\\!\\times\\!11}$"
+       ],
+       "answer": [
+        "Left only: nothing. Middle: $3$, $11$. Right only: $3$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [
+        {
+         "response": "Middle: 3, 3, 11",
+         "reasoning": "Puts every copy of a shared prime in the middle. Match the copies one for one: the middle takes only as many as both numbers have."
+        }
+       ],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "vh-bb9",
+       "title": "$6$ and $25$",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$6,\\;25$",
+        "$\\textcolor{#64748b}{\\tiny 2\\!\\times\\!3,\\, 5\\!\\times\\!5}$"
+       ],
+       "answer": [
+        "Left only: $2$, $3$. Middle: nothing. Right only: $5$, $5$."
+       ],
+       "explanation": [],
+       "rationale": "Match the primes one for one: a prime both numbers have goes once in the middle, the rest stay on their own side.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "cols": 3,
+     "id": "vh-book-b-2",
+     "align": "center",
+     "fixed": true,
+     "size": 100
+    }
+   ],
+   "brief": "Mixed kinds, nine in a 3 by 3 grid: the first six hinted, the last three (a bigger one, then the two edge cases) not.",
+   "built": "f1r7p2"
+  },
+  {
+   "id": "vh-sheet-1",
+   "family": "practice",
+   "title": "Worksheet 1: Prime factors in a Venn",
+   "els": [
+    {
+     "id": "vh-sheet-1-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "venn-hcf-lcm",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 9,
+     "cols": 3,
+     "pin": {
+      "title": "Worksheet 1: Prime factors in a Venn",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "vennSheet": {
+      "title": "Worksheet 1: Prime factors in a Venn",
+      "note": "Put each prime factor in the right part of the Venn.",
+      "items": [
+       {
+        "a": 6,
+        "b": 22,
+        "placed": [
+         "left",
+         "middle"
+        ]
+       },
+       {
+        "a": 21,
+        "b": 33,
+        "placed": [
+         "middle"
+        ]
+       },
+       {
+        "a": 20,
+        "b": 70,
+        "placed": [
+         "right"
+        ]
+       },
+       {
+        "a": 42,
+        "b": 63
+       },
+       {
+        "a": 24,
+        "b": 54
+       },
+       {
+        "a": 30,
+        "b": 50
+       },
+       {
+        "a": 20,
+        "b": 28
+       },
+       {
+        "a": 14,
+        "b": 70
+       },
+       {
+        "a": 6,
+        "b": 55
+       }
+      ]
+     }
+    }
+   ],
+   "built": "116qdjk"
+  },
+  {
+   "id": "vh-depth-1",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-dp1",
+       "title": "Who is right about $54$ and $80$?",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Ben is right: the middle holds only the tiles both numbers have. $80$ has no $3$, so only a $2$ goes in the middle."
+       ],
+       "explanation": [
+        "The middle is for tiles in both numbers.",
+        "$54$ has three $3$s, but $80$ has none.",
+        "Middle: $2$, so the HCF is $2$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Mei",
+         "text": "$54 = 2 \\times 3 \\times 3 \\times 3$ and $80 = 2 \\times 2 \\times 2 \\times 2 \\times 5$. I put a $2$ and a $3$ in the middle, because $3$ is a factor of $54$."
+        },
+        {
+         "name": "Ben",
+         "text": "Only a $2$ goes in the middle. A tile goes in the middle only if both numbers have it, and $80$ has no $3$."
+        }
+       ],
+       "options": [
+        {
+         "text": "Mei",
+         "correct": false,
+         "reasoning": "Puts a tile in the middle that only one number has. The middle is only for tiles in both numbers."
+        },
+        {
+         "text": "Ben",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "$80$ has no $3$, so a $3$ in the middle makes the right circle multiply to a different number from $80$."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       },
+       "misconception": {
+        "id": "venn-middle-not-shared",
+        "label": "Puts a tile in the middle that only one of the two numbers has, instead of only the tiles both numbers have"
+       }
+      }
+     ],
+     "id": "vh-depth-1-1"
+    }
+   ],
+   "built": "jh5tfj"
+  },
+  {
+   "id": "vh-depth-2",
+   "family": "depth",
+   "title": "Depth",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "presentation": "full",
+     "visualiser": false,
+     "items": [
+      {
+       "version": 2,
+       "id": "vh-dp2",
+       "title": "Can the middle be empty?",
+       "tool": "venn-hcf-lcm",
+       "level": "level1",
+       "purpose": "diagnose",
+       "format": "claims",
+       "question": [
+        "Who is right?"
+       ],
+       "answer": [
+        "Amara is right: $27$ is all $3$s and $32$ is all $2$s, so nothing is in both. An empty middle is a correct answer."
+       ],
+       "explanation": [
+        "Nothing is in both, so nothing goes in the middle.",
+        "The left circle multiplies to $27$ and the right circle to $32$.",
+        "An empty middle is allowed."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready",
+       "claims": [
+        {
+         "name": "Leo",
+         "text": "$27 = 3 \\times 3 \\times 3$ and $32 = 2 \\times 2 \\times 2 \\times 2 \\times 2$ share no tile, so the middle is empty. I must have made a mistake."
+        },
+        {
+         "name": "Amara",
+         "text": "The middle is empty because $27$ and $32$ share no prime. That is fine: some pairs of numbers share nothing."
+        }
+       ],
+       "options": [
+        {
+         "text": "Leo",
+         "correct": false,
+         "reasoning": "Thinks two numbers must always share a tile, so an empty middle has to be a mistake."
+        },
+        {
+         "text": "Amara",
+         "correct": true,
+         "reasoning": ""
+        },
+        {
+         "text": "They are both right",
+         "correct": false,
+         "reasoning": "If the empty middle were a mistake, the circles would have to multiply to something other than $27$ and $32$. They do not."
+        }
+       ],
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       },
+       "misconception": {
+        "id": "venn-empty-middle-error",
+        "label": "Thinks an empty middle must be a mistake, because two numbers always share something"
+       }
+      }
+     ],
+     "id": "vh-depth-2-1"
+    }
+   ],
+   "built": "kbmzm6"
   }
  ]
 }

@@ -193,6 +193,10 @@ These are **authored** worksheets (hand-written, not generated), printed through
 - **Words:** "in both", "neither" and "middle" stay.
 - **Look card approved:** built as is; tweaks as we go.
 
+## Built so far (2026-11-22)
+
+Sections 1 and 2 (slides 1 to 27) are built in `venn-hcf-lcm.build.ts`. Differences from the plan above: book sets (slides 15, 24) show the two numbers big and both factorisations in one small grey line on all nine, with no middle-tile count (it did not fit a cell); the discussion speaker is Mei (the cast), not Ella; slide 20 holds both special pictures side by side; two tags were added (`venn-middle-not-shared`, `venn-empty-middle-error`) for the Depth cards. Pairs used so far are listed in the build script (never reuse a pair there in sections 3 and 4).
+
 ## Still open (small)
 
 1. ~~**Words:**~~ (confirmed above) "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.
