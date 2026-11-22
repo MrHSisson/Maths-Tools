@@ -230,8 +230,13 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
-  const fitting = (o.sizes ?? []).filter(([sn, sm]) => sn >= 2 && sn <= caps.n && sm >= 2 && sm <= caps.m);
-  const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : [2, 2]) : [pick(o.vars.filter((v) => v >= 2 && v <= caps.n).length ? o.vars.filter((v) => v >= 2 && v <= caps.n) : [2]), pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [2])];
+  // each level has its own number of variables: two at Level 1, three at Level 2, three or four at Level 3
+  const ownN = level === 1 ? [2] : level === 2 ? [3] : [3, 4];
+  const okN = (v: number): boolean => v >= 2 && v <= caps.n && ownN.includes(v);
+  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= caps.m);
+  const fallback: [number, number] = level === 1 ? [2, 2] : [3, 3];
+  const nChoices = o.vars.filter(okN);
+  const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : fallback) : [nChoices.length ? pick(nChoices) : fallback[0], pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [fallback[1]])];
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
   if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
@@ -258,7 +263,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   try { run = runSpec(sp); } catch { return null; }
   const w = whole ? wholeAnalysis(sp, run) : undefined;
   // when the optimum is handed over the tableaux are never shown, so only the optimum itself has to read well; otherwise every tableau on the way must
-  if (kind === "practical" && o.given && w) { if ((level < 2 && run.tie) || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, level)) return null;
+  if (kind === "practical" && o.given && w) { if ((level < 2 && run.tie) || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, w && fractional ? Math.min(3, level + 1) : level)) return null; // a fractional optimum puts fractions all through the tableaux: its path is judged by the next level up
   if (w && (fractional ? !wholeNice(w, level) : w.frac.length > 0)) return null;
   // a tableau that is given to be read must show its basic variables: exactly one unit column for each constraint
   if ((kind === "interpret" || kind === "reverse") && run.tabs.some((t) => unitColumns(t) !== t.m)) return null;

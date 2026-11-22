@@ -210,7 +210,7 @@ describe("whole numbers: is it practical?", () => {
     const steps = solveSimplex(asProblem(q));
     const w = wholeAnalysis(q.data.spec, runSpec(q.data.spec));
     expect(steps[steps.length - 1].caption).toContain(`upper bound of ${w.bound}`);
-    expect(steps.map((s) => s.caption).join(" ")).toMatch(/round each fractional variable down and up/);
+    expect(steps.map((s) => s.caption).join(" ")).toMatch(/round each fractional variable down and up|how much room is left/);
   });
 });
 

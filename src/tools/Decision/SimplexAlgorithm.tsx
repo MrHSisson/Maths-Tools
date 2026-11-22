@@ -29,7 +29,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     kind,
     vars: [],
     cons: [],
-    sizes: ticked(o.sxSize, level === 1 ? "2x2" : level === 2 ? "2x3" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
+    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
     // each level has its own questions: Level 3 always needs a change of form first (a negative right-hand side to start, for a pivot)
     forms: level < 3 ? ["standard"] : kind === "pivot" ? ["ge"] : ticked(o.sxForms, "min,ge,lower,eq"),
     method: o.sxMethod === "rows" ? "rows" : "substitute",
@@ -48,10 +48,10 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <SxSolution 
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
-    multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : lv === 2 ? "2x3" : "3x3"),
+    key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Level 1 has two variables, Level 2 has three, and Level 3 has three or four. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
+    forLevels: [1, 3], multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "3x3"),
     choices: [
-      { value: "2x2", label: "2 × 2", forLevels: [1, 2] }, { value: "2x3", label: "2 × 3" }, { value: "3x3", label: "3 × 3", forLevels: [2, 3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
+      { value: "2x2", label: "2 × 2", forLevels: [1] }, { value: "2x3", label: "2 × 3", forLevels: [1] }, { value: "3x3", label: "3 × 3", forLevels: [3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
     ],
   },
   {
@@ -113,11 +113,11 @@ export default function App() {
         skillSheet: true,
         noSandbox: true,
         levelLabels: {
-          setup: ["Two variables, the inequalities given", "A situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
-          pivot: ["The first pivot", "A pivot part-way through the run", "A negative right-hand side to start"],
-          solve: ["Two variables, the inequalities given", "A situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
-          interpret: ["The optimal tableau", "A tableau that is not yet optimal", "The problem the tableau shows"],
-          practical: ["Two variables, the inequalities given", "A situation in words or a table, rounding down is not the best", "Rounding to the nearest breaks a constraint"],
+          setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
+          pivot: ["Two variables, the first pivot", "Three variables, a pivot part-way through the run", "A negative right-hand side to start"],
+          solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
+          interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that is not yet optimal", "The problem the tableau shows"],
+          practical: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Rounding to the nearest breaks a constraint"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,
