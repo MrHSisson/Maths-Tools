@@ -1,260 +1,256 @@
 {
  "id": "hcf-lcm-from-venn",
  "title": "HCF & LCM from a Venn",
- "strand": "Number",
- "questionVersion": 2,
- "summary": "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Two book sets with printable worksheets, visualiser slides for the answers and two Depth cards. Every question is authored and its answer computed.",
  "slides": [
   {
    "id": "hl-title",
-   "family": "structure",
-   "title": "HCF & LCM from a Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 170,
+     "w": 1400,
      "x": 100,
      "y": 290,
-     "w": 1400,
-     "h": 170,
-     "text": "HCF & LCM from a Venn",
-     "size": 120,
-     "colour": "#0f172a",
+     "id": "hl-title-1",
      "bold": true,
+     "kind": "text",
+     "size": 120,
+     "text": "HCF & LCM from a Venn",
      "align": "center",
-     "middle": true,
-     "id": "hl-title-1"
+     "colour": "#0f172a",
+     "middle": true
     },
     {
-     "kind": "text",
+     "h": 90,
+     "w": 1400,
      "x": 100,
      "y": 480,
-     "w": 1400,
-     "h": 90,
-     "text": "Multiply the middle. Multiply the lot.",
+     "id": "hl-title-2",
+     "kind": "text",
      "size": 56,
-     "colour": "#64748b",
+     "text": "Multiply the middle. Multiply the lot.",
      "align": "center",
-     "id": "hl-title-2"
+     "colour": "#64748b"
     }
    ],
-   "built": "14lwmfn"
+   "built": "14lwmfn",
+   "title": "HCF & LCM from a Venn",
+   "family": "structure"
   },
   {
    "id": "hl-objective",
-   "family": "structure",
-   "title": "Learning objective",
    "els": [
     {
-     "kind": "text",
+     "h": 50,
+     "w": 1400,
      "x": 100,
      "y": 100,
-     "w": 1400,
-     "h": 50,
-     "text": "LEARNING OBJECTIVE",
-     "size": 30,
-     "colour": "#64748b",
+     "id": "hl-objective-1",
      "bold": true,
-     "id": "hl-objective-1"
+     "kind": "text",
+     "size": 30,
+     "text": "LEARNING OBJECTIVE",
+     "colour": "#64748b"
     },
     {
-     "kind": "text",
+     "h": 230,
+     "w": 1400,
      "x": 100,
      "y": 170,
-     "w": 1400,
-     "h": 230,
-     "text": "I can find the HCF and the LCM of two numbers from a Venn diagram.",
-     "size": 60,
-     "colour": "#0f172a",
+     "id": "hl-objective-2",
      "bold": true,
-     "id": "hl-objective-2"
+     "kind": "text",
+     "size": 60,
+     "text": "I can find the HCF and the LCM of two numbers from a Venn diagram.",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 380,
+     "w": 1400,
      "x": 100,
      "y": 440,
-     "w": 1400,
-     "h": 380,
-     "text": "•  Build a Venn from the prime factors of two numbers\n•  Multiply the tiles in the middle to get the HCF\n•  Multiply every tile to get the LCM",
+     "id": "hl-objective-3",
+     "kind": "text",
      "size": 44,
-     "colour": "#334155",
-     "id": "hl-objective-3"
+     "text": "•  Build a Venn from the prime factors of two numbers\n•  Multiply the tiles in the middle to get the HCF\n•  Multiply every tile to get the LCM",
+     "colour": "#334155"
     }
    ],
-   "built": "1a6fjzl"
+   "built": "1a6fjzl",
+   "title": "Learning objective",
+   "family": "structure"
   },
   {
    "id": "hl-d1",
-   "family": "structure",
-   "title": "HCF from the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 150,
+     "w": 1400,
      "x": 100,
      "y": 330,
-     "w": 1400,
-     "h": 150,
-     "text": "HCF from the Venn",
-     "size": 96,
-     "colour": "#0f172a",
+     "id": "hl-d1-1",
      "bold": true,
+     "kind": "text",
+     "size": 96,
+     "text": "HCF from the Venn",
      "align": "center",
-     "middle": true,
-     "id": "hl-d1-1"
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "qrlu64"
+   "built": "qrlu64",
+   "title": "HCF from the Venn",
+   "family": "structure"
   },
   {
    "id": "hl-recap-a",
-   "family": "retrieval",
-   "title": "Quickfire",
    "els": [
     {
-     "kind": "text",
+     "h": 100,
+     "w": 1400,
      "x": 100,
      "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Quickfire",
-     "size": 64,
-     "colour": "#0f172a",
+     "id": "hl-recap-a-1",
      "bold": true,
-     "id": "hl-recap-a-1"
+     "kind": "text",
+     "size": 64,
+     "text": "Quickfire",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 50,
+     "w": 1400,
      "x": 100,
      "y": 160,
-     "w": 1400,
-     "h": 50,
-     "text": "Four quick ones.",
+     "id": "hl-recap-a-2",
+     "kind": "text",
      "size": 34,
-     "colour": "#64748b",
-     "id": "hl-recap-a-2"
+     "text": "Four quick ones.",
+     "colour": "#64748b"
     },
     {
-     "kind": "grid",
+     "h": 620,
+     "w": 1400,
      "x": 100,
      "y": 230,
-     "w": 1400,
-     "h": 620,
+     "id": "hl-recap-a-3",
      "bank": [],
      "cols": 2,
-     "id": "hl-recap-a-3",
+     "kind": "grid",
+     "align": "center",
      "items": [
       {
-       "version": 2,
        "id": "hl-r1",
-       "title": "Write $20$ as a product of primes",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write $20$ as a product of primes."
-       ],
+       "title": "Write $20$ as a product of primes",
        "answer": [
         "$2 \\times 2 \\times 5$"
        ],
-       "explanation": [],
-       "rationale": "",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Write $20$ as a product of primes."
+       ],
+       "rationale": "",
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-r2",
-       "title": "Write $84$ as a product of primes",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write $84$ as a product of primes."
-       ],
+       "title": "Write $84$ as a product of primes",
        "answer": [
         "$2 \\times 2 \\times 3 \\times 7$"
        ],
-       "explanation": [],
-       "rationale": "",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Write $84$ as a product of primes."
+       ],
+       "rationale": "",
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-r3",
-       "title": "What goes in the middle of a Venn?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "What goes in the middle of a Venn?"
-       ],
+       "title": "What goes in the middle of a Venn?",
        "answer": [
         "The prime tiles both numbers have."
        ],
-       "explanation": [],
-       "rationale": "",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "What goes in the middle of a Venn?"
+       ],
+       "rationale": "",
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-r4",
-       "title": "$10 = 2 \\times 5$ and $15 = 3 \\times 5$. Which tile is in the middle?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$10 = 2 \\times 5$ and $15 = 3 \\times 5$. Which tile is in the middle?",
+       "answer": [
+        "$5$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$10 = 2 \\times 5$ and $15 = 3 \\times 5$.",
         "Which tile goes in the middle?"
        ],
-       "answer": [
-        "$5$"
-       ],
-       "explanation": [],
        "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "explanation": [],
+       "expectedErrors": []
       }
-     ],
-     "align": "center"
+     ]
     }
    ],
-   "built": "f252sb"
+   "built": "f252sb",
+   "title": "Quickfire",
+   "family": "retrieval"
   },
   {
    "id": "hl-why",
-   "family": "teach",
-   "title": "Why the middle?",
    "els": [
     {
-     "kind": "text",
+     "h": 100,
+     "w": 1460,
      "x": 70,
      "y": 36,
-     "w": 1460,
-     "h": 100,
-     "text": "Why the middle?",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-why-1",
      "bold": true,
-     "id": "hl-why-1"
+     "kind": "text",
+     "size": 56,
+     "text": "Why the middle?",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 490,
+     "w": 700,
      "x": 60,
      "y": 170,
-     "w": 700,
-     "h": 490,
-     "left": "12",
-     "right": "18",
+     "id": "hl-why-2",
      "box": "Factors",
+     "kind": "venn",
+     "left": "12",
+     "size": 1.15,
      "cards": [
       {
        "text": "4",
@@ -289,132 +285,18 @@
        "region": "right"
       }
      ],
-     "size": 1.15,
-     "id": "hl-why-2"
+     "right": "18"
     },
     {
-     "kind": "venn",
+     "h": 490,
+     "w": 700,
      "x": 840,
      "y": 170,
-     "w": 700,
-     "h": 490,
-     "left": "12",
-     "right": "18",
+     "id": "hl-why-3",
      "box": "Prime tiles",
-     "cards": [
-      {
-       "text": "2",
-       "region": "left",
-       "tile": true
-      },
-      {
-       "text": "2",
-       "region": "middle",
-       "tile": true
-      },
-      {
-       "text": "3",
-       "region": "middle",
-       "tile": true
-      },
-      {
-       "text": "3",
-       "region": "right",
-       "tile": true
-      }
-     ],
-     "size": 1.15,
-     "id": "hl-why-3"
-    },
-    {
-     "kind": "text",
-     "x": 60,
-     "y": 690,
-     "w": 700,
-     "h": 80,
-     "text": "Common factors: 1, 2, 3, 6",
-     "size": 38,
-     "colour": "#0f172a",
-     "align": "center",
-     "id": "hl-why-4"
-    },
-    {
-     "kind": "text",
-     "x": 60,
-     "y": 770,
-     "w": 700,
-     "h": 80,
-     "text": "The biggest is 6.",
-     "size": 38,
-     "colour": "#0f172a",
-     "bold": true,
-     "align": "center",
-     "id": "hl-why-5"
-    },
-    {
-     "kind": "text",
-     "x": 840,
-     "y": 690,
-     "w": 700,
-     "h": 80,
-     "text": "The middle: 2 and 3",
-     "size": 38,
-     "colour": "#0f172a",
-     "align": "center",
-     "id": "hl-why-6"
-    },
-    {
-     "kind": "text",
-     "x": 840,
-     "y": 770,
-     "w": 700,
-     "h": 80,
-     "text": "2 × 3 = 6",
-     "size": 38,
-     "colour": "#0f172a",
-     "bold": true,
-     "align": "center",
-     "id": "hl-why-7"
-    }
-   ],
-   "built": "1g979dw"
-  },
-  {
-   "id": "hl-key-hcf",
-   "family": "teach",
-   "title": "HCF: the middle",
-   "els": [
-    {
-     "kind": "text",
-     "x": 40,
-     "y": 50,
-     "w": 270,
-     "h": 300,
-     "text": "HCF: the middle",
-     "size": 44,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "hl-key-hcf-1"
-    },
-    {
-     "kind": "text",
-     "x": 40,
-     "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "Multiply the tiles in the middle.",
-     "size": 32,
-     "colour": "#64748b",
-     "id": "hl-key-hcf-2"
-    },
-    {
      "kind": "venn",
-     "x": 320,
-     "y": 66,
-     "w": 960,
-     "h": 789,
      "left": "12",
-     "right": "18",
+     "size": 1.15,
      "cards": [
       {
        "text": "2",
@@ -437,41 +319,156 @@
        "region": "right"
       }
      ],
+     "right": "18"
+    },
+    {
+     "h": 80,
+     "w": 700,
+     "x": 60,
+     "y": 690,
+     "id": "hl-why-4",
+     "kind": "text",
+     "size": 38,
+     "text": "Common factors: 1, 2, 3, 6",
+     "align": "center",
+     "colour": "#0f172a"
+    },
+    {
+     "h": 80,
+     "w": 700,
+     "x": 60,
+     "y": 770,
+     "id": "hl-why-5",
+     "bold": true,
+     "kind": "text",
+     "size": 38,
+     "text": "The biggest is 6.",
+     "align": "center",
+     "colour": "#0f172a"
+    },
+    {
+     "h": 80,
+     "w": 700,
+     "x": 840,
+     "y": 690,
+     "id": "hl-why-6",
+     "kind": "text",
+     "size": 38,
+     "text": "The middle: 2 and 3",
+     "align": "center",
+     "colour": "#0f172a"
+    },
+    {
+     "h": 80,
+     "w": 700,
+     "x": 840,
+     "y": 770,
+     "id": "hl-why-7",
+     "bold": true,
+     "kind": "text",
+     "size": 38,
+     "text": "2 × 3 = 6",
+     "align": "center",
+     "colour": "#0f172a"
+    }
+   ],
+   "built": "1g979dw",
+   "title": "Why the middle?",
+   "family": "teach"
+  },
+  {
+   "id": "hl-key-hcf",
+   "els": [
+    {
+     "h": 300,
+     "w": 270,
+     "x": 40,
+     "y": 50,
+     "id": "hl-key-hcf-1",
+     "bold": true,
+     "kind": "text",
+     "size": 44,
+     "text": "HCF: the middle",
+     "colour": "#0f172a"
+    },
+    {
+     "h": 460,
+     "w": 270,
+     "x": 40,
+     "y": 370,
+     "id": "hl-key-hcf-2",
+     "kind": "text",
+     "size": 32,
+     "text": "Multiply the tiles in the middle.",
+     "colour": "#64748b"
+    },
+    {
+     "h": 789,
+     "w": 960,
+     "x": 320,
+     "y": 66,
+     "id": "hl-key-hcf-3",
      "box": "Prime factors",
+     "kind": "venn",
+     "left": "12",
+     "cards": [
+      {
+       "text": "2",
+       "tile": true,
+       "region": "left"
+      },
+      {
+       "text": "2",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "middle"
+      },
+      {
+       "text": "3",
+       "tile": true,
+       "region": "right"
+      }
+     ],
      "lines": [
       "hcf"
      ],
-     "id": "hl-key-hcf-3"
+     "right": "18"
     }
    ],
-   "built": "xe7c84"
+   "built": "xe7c84",
+   "title": "HCF: the middle",
+   "family": "teach"
   },
   {
    "id": "hl-hcf-1",
-   "family": "teach",
-   "title": "HCF: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "HCF: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-hcf-1-1",
      "bold": true,
-     "id": "hl-hcf-1-1"
+     "kind": "text",
+     "size": 56,
+     "text": "HCF: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-hcf-1-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "15",
-     "right": "40",
      "cards": [],
+     "right": "40",
      "listing": [
       15,
       40
@@ -482,54 +479,54 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-hcf-1-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "HCF = 5",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "HCF = 5",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
    "brief": "Build the Venn from the two numbers, then multiply the tiles in the middle to find the HCF. One shared prime, then two, then a repeated prime, then nothing shared (the HCF is 1, not 0). Four slides, one Venn each; one click shows the HCF line.",
-   "built": "heltep"
+   "built": "heltep",
+   "title": "HCF: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-hcf-2",
-   "family": "teach",
-   "title": "HCF: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "HCF: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-hcf-2-1",
      "bold": true,
-     "id": "hl-hcf-2-1"
+     "kind": "text",
+     "size": 56,
+     "text": "HCF: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-hcf-2-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "42",
-     "right": "66",
      "cards": [],
+     "right": "66",
      "listing": [
       42,
       66
@@ -540,53 +537,53 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-hcf-2-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "HCF = 2 × 3 = 6",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "HCF = 2 × 3 = 6",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "spfazq"
+   "built": "spfazq",
+   "title": "HCF: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-hcf-3",
-   "family": "teach",
-   "title": "HCF: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "HCF: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-hcf-3-1",
      "bold": true,
-     "id": "hl-hcf-3-1"
+     "kind": "text",
+     "size": 56,
+     "text": "HCF: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-hcf-3-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "32",
-     "right": "56",
      "cards": [],
+     "right": "56",
      "listing": [
       32,
       56
@@ -597,53 +594,53 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-hcf-3-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "HCF = 2 × 2 × 2 = 8",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "HCF = 2 × 2 × 2 = 8",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "1lxer4f"
+   "built": "1lxer4f",
+   "title": "HCF: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-hcf-4",
-   "family": "teach",
-   "title": "HCF: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "HCF: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-hcf-4-1",
      "bold": true,
-     "id": "hl-hcf-4-1"
+     "kind": "text",
+     "size": 56,
+     "text": "HCF: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-hcf-4-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "9",
-     "right": "28",
      "cards": [],
+     "right": "28",
      "listing": [
       9,
       28
@@ -654,273 +651,278 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-hcf-4-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "HCF = 1",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "HCF = 1",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "1goiyuo"
+   "built": "1goiyuo",
+   "title": "HCF: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-book-hcf",
-   "family": "retrieval",
-   "title": "Book work: HCF from a Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 64,
+     "w": 1480,
      "x": 60,
      "y": 46,
-     "w": 1480,
-     "h": 64,
-     "text": "Copy into your book. Draw a Venn, then find the HCF.",
+     "id": "hl-book-hcf-1",
+     "kind": "text",
      "size": 38,
-     "colour": "#64748b",
-     "id": "hl-book-hcf-1"
+     "text": "Copy into your book. Draw a Venn, then find the HCF.",
+     "colour": "#64748b"
     },
     {
-     "kind": "grid",
+     "h": 748,
+     "w": 1480,
      "x": 60,
      "y": 124,
-     "w": 1480,
-     "h": 748,
+     "id": "hl-book-hcf-2",
      "bank": [],
+     "cols": 3,
+     "kind": "grid",
+     "size": 100,
+     "align": "center",
+     "fixed": true,
      "items": [
       {
-       "version": 2,
        "id": "hl-hb1",
-       "title": "$22$ and $55$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$22$ and $55$",
+       "answer": [
+        "$\\mathrm{HCF} = 11$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$22,\\;55$",
         "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 11$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "110",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb2",
-       "title": "$15$ and $70$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$15$ and $70$",
+       "answer": [
+        "$\\mathrm{HCF} = 5$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$15,\\;70$",
         "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 5$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "210",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb3",
-       "title": "$28$ and $98$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$28$ and $98$",
+       "answer": [
+        "$\\mathrm{HCF} = 2 \\times 7 = 14$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$28,\\;98$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 2 \\times 7 = 14$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "196",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb4",
-       "title": "$50$ and $60$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$50$ and $60$",
+       "answer": [
+        "$\\mathrm{HCF} = 2 \\times 5 = 10$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$50,\\;60$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 2 \\times 5 = 10$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "300",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb5",
-       "title": "$52$ and $78$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$52$ and $78$",
+       "answer": [
+        "$\\mathrm{HCF} = 2 \\times 13 = 26$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$52,\\;78$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 2 \\times 13 = 26$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "156",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb6",
-       "title": "$72$ and $90$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$72$ and $90$",
+       "answer": [
+        "$\\mathrm{HCF} = 2 \\times 3 \\times 3 = 18$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$72,\\;90$",
         "$\\textcolor{#64748b}{\\tiny\\text{3 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{HCF} = 2 \\times 3 \\times 3 = 18$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "360",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb7",
-       "title": "$96$ and $120$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$96,\\;120$"
-       ],
+       "title": "$96$ and $120$",
        "answer": [
         "$\\mathrm{HCF} = 2 \\times 2 \\times 2 \\times 3 = 24$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$96,\\;120$"
+       ],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "480",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb8",
-       "title": "$27$ and $81$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$27,\\;81$"
-       ],
+       "title": "$27$ and $81$",
        "answer": [
         "$\\mathrm{HCF} = 3 \\times 3 \\times 3 = 27$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$27,\\;81$"
+       ],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "81",
          "reasoning": "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-hb9",
-       "title": "$8$ and $21$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$8,\\;21$"
-       ],
+       "title": "$8$ and $21$",
        "answer": [
         "$\\mathrm{HCF} = 1$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$8,\\;21$"
+       ],
        "rationale": "Build the Venn, then multiply the tiles in the middle.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "168",
@@ -930,80 +932,63 @@
          "response": "0",
          "reasoning": "Takes an empty middle as 0. Nothing is multiplied, so the HCF is 1."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       }
-     ],
-     "cols": 3,
-     "id": "hl-book-hcf-2",
-     "align": "center",
-     "fixed": true,
-     "size": 100
+     ]
     }
    ],
    "brief": "Nine in a 3 by 3 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply the middle.",
-   "built": "17xjao0"
+   "built": "17xjao0",
+   "title": "Book work: HCF from a Venn",
+   "family": "retrieval"
   },
   {
    "id": "hl-answers-1",
-   "family": "teach",
-   "title": "Visualiser: worksheet 1 answers",
    "els": [
     {
-     "kind": "visualiser",
+     "h": 852,
+     "w": 1552,
      "x": 24,
      "y": 24,
-     "w": 1552,
-     "h": 852,
-     "id": "hl-answers-1-1"
+     "id": "hl-answers-1-1",
+     "kind": "visualiser"
     }
    ],
-   "built": "1aj3hq4"
+   "built": "1aj3hq4",
+   "title": "Visualiser: worksheet 1 answers",
+   "family": "teach"
   },
   {
    "id": "hl-depth-1",
-   "family": "depth",
-   "title": "Depth",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1552,
      "x": 24,
      "y": 24,
-     "w": 1552,
-     "h": 852,
-     "presentation": "full",
-     "visualiser": false,
+     "id": "hl-depth-1-1",
+     "kind": "questions",
      "items": [
       {
-       "version": 2,
        "id": "hl-dp1",
-       "title": "Do you agree with Dev?",
        "tool": "hcf-lcm-from-venn",
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       },
        "level": "level1",
-       "purpose": "diagnose",
-       "format": "claims",
-       "question": [
-        "Do you agree with Dev?"
-       ],
+       "title": "Do you agree with Dev?",
        "answer": [
         "Disagree: an empty middle means the HCF is $1$. Nothing to multiply is $1$, and $1$ divides everything."
        ],
-       "explanation": [
-        "$25 = 5 \\times 5$ and $63 = 3 \\times 3 \\times 7$ share no tile.",
-        "The middle is empty.",
-        "HCF $= 1$."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
        "claims": [
         {
          "name": "Dev",
          "text": "The middle of the Venn for $25$ and $63$ is empty, so the HCF is $0$."
         }
        ],
+       "format": "claims",
+       "status": "ready",
        "options": [
         {
          "text": "I agree",
@@ -1016,206 +1001,217 @@
          "reasoning": ""
         }
        ],
-       "depth": {
-        "prompt": "",
-        "takeaway": ""
-       },
+       "purpose": "diagnose",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Do you agree with Dev?"
+       ],
+       "rationale": "",
+       "explanation": [
+        "$25 = 5 \\times 5$ and $63 = 3 \\times 3 \\times 7$ share no tile.",
+        "The middle is empty.",
+        "HCF $= 1$."
+       ],
        "misconception": {
         "id": "venn-empty-middle-zero",
         "label": "Reads an empty middle as no HCF, or as $0$, instead of $1$"
-       }
+       },
+       "expectedErrors": []
       }
      ],
-     "id": "hl-depth-1-1"
+     "visualiser": false,
+     "presentation": "full"
     }
    ],
-   "built": "183uafd"
+   "built": "183uafd",
+   "title": "Depth",
+   "family": "depth"
   },
   {
    "id": "hl-d2",
-   "family": "structure",
-   "title": "LCM from the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 150,
+     "w": 1400,
      "x": 100,
      "y": 330,
-     "w": 1400,
-     "h": 150,
-     "text": "LCM from the Venn",
-     "size": 96,
-     "colour": "#0f172a",
+     "id": "hl-d2-1",
      "bold": true,
+     "kind": "text",
+     "size": 96,
+     "text": "LCM from the Venn",
      "align": "center",
-     "middle": true,
-     "id": "hl-d2-1"
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "8yljas"
+   "built": "8yljas",
+   "title": "LCM from the Venn",
+   "family": "structure"
   },
   {
    "id": "hl-recap-b",
-   "family": "retrieval",
-   "title": "Quickfire",
    "els": [
     {
-     "kind": "text",
+     "h": 100,
+     "w": 1400,
      "x": 100,
      "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Quickfire",
-     "size": 64,
-     "colour": "#0f172a",
+     "id": "hl-recap-b-1",
      "bold": true,
-     "id": "hl-recap-b-1"
+     "kind": "text",
+     "size": 64,
+     "text": "Quickfire",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 50,
+     "w": 1400,
      "x": 100,
      "y": 160,
-     "w": 1400,
-     "h": 50,
-     "text": "Four quick ones.",
+     "id": "hl-recap-b-2",
+     "kind": "text",
      "size": 34,
-     "colour": "#64748b",
-     "id": "hl-recap-b-2"
+     "text": "Four quick ones.",
+     "colour": "#64748b"
     },
     {
-     "kind": "grid",
+     "h": 620,
+     "w": 1400,
      "x": 100,
      "y": 230,
-     "w": 1400,
-     "h": 620,
+     "id": "hl-recap-b-3",
      "bank": [],
      "cols": 2,
-     "id": "hl-recap-b-3",
+     "kind": "grid",
+     "align": "center",
      "items": [
       {
-       "version": 2,
        "id": "hl-q1",
-       "title": "The middle holds $2, 2, 3$. What is the HCF?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "The middle holds $2, 2, 3$. What is the HCF?",
+       "answer": [
+        "$12$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "The middle holds $2, 2, 3$.",
         "What is the HCF?"
        ],
-       "answer": [
-        "$12$"
-       ],
-       "explanation": [],
        "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-q2",
-       "title": "The middle holds $5, 7$. What is the HCF?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "The middle holds $5, 7$. What is the HCF?",
+       "answer": [
+        "$35$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "The middle holds $5, 7$.",
         "What is the HCF?"
        ],
-       "answer": [
-        "$35$"
-       ],
-       "explanation": [],
        "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-q3",
-       "title": "The middle is empty. What is the HCF?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "The middle is empty. What is the HCF?",
+       "answer": [
+        "$1$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "The middle is empty.",
         "What is the HCF?"
        ],
-       "answer": [
-        "$1$"
-       ],
-       "explanation": [],
        "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "explanation": [],
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "hl-q4",
-       "title": "What is the HCF of $6$ and $9$?",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "What is the HCF of $6$ and $9$?"
-       ],
+       "title": "What is the HCF of $6$ and $9$?",
        "answer": [
         "$3$"
        ],
-       "explanation": [],
-       "rationale": "",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "What is the HCF of $6$ and $9$?"
+       ],
+       "rationale": "",
+       "explanation": [],
+       "expectedErrors": []
       }
-     ],
-     "align": "center"
+     ]
     }
    ],
-   "built": "18llrlg"
+   "built": "18llrlg",
+   "title": "Quickfire",
+   "family": "retrieval"
   },
   {
    "id": "hl-key-lcm",
-   "family": "teach",
-   "title": "LCM: everything",
    "els": [
     {
-     "kind": "text",
+     "h": 300,
+     "w": 270,
      "x": 40,
      "y": 50,
-     "w": 270,
-     "h": 300,
-     "text": "LCM: everything",
-     "size": 44,
-     "colour": "#0f172a",
+     "id": "hl-key-lcm-1",
      "bold": true,
-     "id": "hl-key-lcm-1"
+     "kind": "text",
+     "size": 44,
+     "text": "LCM: everything",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 460,
+     "w": 270,
      "x": 40,
      "y": 370,
-     "w": 270,
-     "h": 460,
-     "text": "Multiply every tile in the Venn.",
+     "id": "hl-key-lcm-2",
+     "kind": "text",
      "size": 32,
-     "colour": "#64748b",
-     "id": "hl-key-lcm-2"
+     "text": "Multiply every tile in the Venn.",
+     "colour": "#64748b"
     },
     {
-     "kind": "venn",
+     "h": 789,
+     "w": 960,
      "x": 320,
      "y": 66,
-     "w": 960,
-     "h": 789,
+     "id": "hl-key-lcm-3",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "12",
-     "right": "18",
      "cards": [
       {
        "text": "2",
@@ -1238,42 +1234,43 @@
        "region": "right"
       }
      ],
-     "box": "Prime factors",
      "lines": [
       "hcf",
       "lcm"
      ],
-     "id": "hl-key-lcm-3"
+     "right": "18"
     }
    ],
-   "built": "1a1zuij"
+   "built": "1a1zuij",
+   "title": "LCM: everything",
+   "family": "teach"
   },
   {
    "id": "hl-lcm-1",
-   "family": "teach",
-   "title": "LCM: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "LCM: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-lcm-1-1",
      "bold": true,
-     "id": "hl-lcm-1-1"
+     "kind": "text",
+     "size": 56,
+     "text": "LCM: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-lcm-1-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "6",
-     "right": "10",
      "cards": [],
+     "right": "10",
      "listing": [
       6,
       10
@@ -1284,54 +1281,54 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-lcm-1-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "LCM = 2 × 3 × 5 = 30",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "LCM = 2 × 3 × 5 = 30",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
    "brief": "Build the Venn from the two numbers, then multiply every tile to find the LCM. One shared prime, then two, then a repeated prime, then one number inside the other (the LCM is the bigger number). Four slides, one Venn each; one click shows the LCM line.",
-   "built": "1g84nnd"
+   "built": "1g84nnd",
+   "title": "LCM: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-lcm-2",
-   "family": "teach",
-   "title": "LCM: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "LCM: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-lcm-2-1",
      "bold": true,
-     "id": "hl-lcm-2-1"
+     "kind": "text",
+     "size": 56,
+     "text": "LCM: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-lcm-2-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "30",
-     "right": "36",
      "cards": [],
+     "right": "36",
      "listing": [
       30,
       36
@@ -1342,53 +1339,53 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-lcm-2-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "LCM = 2 × 2 × 3 × 3 × 5 = 180",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "LCM = 2 × 2 × 3 × 3 × 5 = 180",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "1ox36la"
+   "built": "1ox36la",
+   "title": "LCM: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-lcm-3",
-   "family": "teach",
-   "title": "LCM: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "LCM: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-lcm-3-1",
      "bold": true,
-     "id": "hl-lcm-3-1"
+     "kind": "text",
+     "size": 56,
+     "text": "LCM: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-lcm-3-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "20",
-     "right": "28",
      "cards": [],
+     "right": "28",
      "listing": [
       20,
       28
@@ -1399,53 +1396,53 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-lcm-3-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "LCM = 2 × 2 × 5 × 7 = 140",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "LCM = 2 × 2 × 5 × 7 = 140",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "1fp1dkn"
+   "built": "1fp1dkn",
+   "title": "LCM: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-lcm-4",
-   "family": "teach",
-   "title": "LCM: build the Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 90,
+     "w": 720,
      "x": 70,
      "y": 36,
-     "w": 720,
-     "h": 90,
-     "text": "LCM: build the Venn",
-     "size": 56,
-     "colour": "#0f172a",
+     "id": "hl-lcm-4-1",
      "bold": true,
-     "id": "hl-lcm-4-1"
+     "kind": "text",
+     "size": 56,
+     "text": "LCM: build the Venn",
+     "colour": "#0f172a"
     },
     {
-     "kind": "venn",
+     "h": 748,
+     "w": 1520,
      "x": 40,
      "y": 130,
-     "w": 1520,
-     "h": 748,
+     "id": "hl-lcm-4-2",
+     "box": "Prime factors",
+     "kind": "venn",
      "left": "22",
-     "right": "66",
      "cards": [],
+     "right": "66",
      "listing": [
       22,
       66
@@ -1456,68 +1453,73 @@
       5,
       7,
       11
-     ],
-     "box": "Prime factors",
-     "id": "hl-lcm-4-2"
+     ]
     },
     {
-     "kind": "text",
+     "h": 80,
+     "w": 730,
      "x": 800,
      "y": 48,
-     "w": 730,
-     "h": 80,
-     "text": "LCM = 2 × 3 × 11 = 66",
-     "size": 48,
-     "colour": "#0f172a",
      "bold": true,
+     "kind": "text",
+     "size": 48,
+     "step": 1,
+     "text": "LCM = 2 × 3 × 11 = 66",
      "align": "right",
-     "middle": true,
-     "step": 1
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "1dtdigp"
+   "built": "1dtdigp",
+   "title": "LCM: build the Venn",
+   "family": "teach"
   },
   {
    "id": "hl-book-lcm",
-   "family": "retrieval",
-   "title": "Book work: LCM from a Venn",
    "els": [
     {
-     "kind": "text",
+     "h": 64,
+     "w": 1480,
      "x": 60,
      "y": 46,
-     "w": 1480,
-     "h": 64,
-     "text": "Copy into your book. Draw a Venn, then find the LCM.",
+     "id": "hl-book-lcm-1",
+     "kind": "text",
      "size": 38,
-     "colour": "#64748b",
-     "id": "hl-book-lcm-1"
+     "text": "Copy into your book. Draw a Venn, then find the LCM.",
+     "colour": "#64748b"
     },
     {
-     "kind": "grid",
+     "h": 748,
+     "w": 1480,
      "x": 60,
      "y": 124,
-     "w": 1480,
-     "h": 748,
+     "id": "hl-book-lcm-2",
      "bank": [],
+     "cols": 3,
+     "kind": "grid",
+     "size": 100,
+     "align": "center",
+     "fixed": true,
      "items": [
       {
-       "version": 2,
        "id": "hl-lb1",
-       "title": "$6$ and $15$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$6$ and $15$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 3 \\times 5 = 30$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$6,\\;15$",
         "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 3 \\times 5 = 30$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "3",
@@ -1527,27 +1529,27 @@
          "response": "90",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb2",
-       "title": "$21$ and $28$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$21$ and $28$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 7 = 84$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$21,\\;28$",
         "$\\textcolor{#64748b}{\\tiny\\text{1 tile in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 7 = 84$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "7",
@@ -1557,27 +1559,27 @@
          "response": "588",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb3",
-       "title": "$24$ and $30$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$24$ and $30$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 3 \\times 5 = 120$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$24,\\;30$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 3 \\times 5 = 120$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "6",
@@ -1587,27 +1589,27 @@
          "response": "720",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb4",
-       "title": "$45$ and $60$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$45$ and $60$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 3 \\times 5 = 180$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$45,\\;60$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 3 \\times 5 = 180$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "15",
@@ -1617,27 +1619,27 @@
          "response": "2700",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb5",
-       "title": "$42$ and $98$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$42$ and $98$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 3 \\times 7 \\times 7 = 294$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$42,\\;98$",
         "$\\textcolor{#64748b}{\\tiny\\text{2 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 3 \\times 7 \\times 7 = 294$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "14",
@@ -1647,27 +1649,27 @@
          "response": "4116",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb6",
-       "title": "$36$ and $54$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$36$ and $54$",
+       "answer": [
+        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 3 \\times 3 = 108$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$36,\\;54$",
         "$\\textcolor{#64748b}{\\tiny\\text{3 tiles in the middle}}$"
        ],
-       "answer": [
-        "$\\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 3 \\times 3 = 108$"
-       ],
-       "explanation": [],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "18",
@@ -1677,26 +1679,26 @@
          "response": "1944",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb7",
-       "title": "$80$ and $100$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$80,\\;100$"
-       ],
+       "title": "$80$ and $100$",
        "answer": [
         "$\\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 2 \\times 5 \\times 5 = 400$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$80,\\;100$"
+       ],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "20",
@@ -1706,26 +1708,26 @@
          "response": "8000",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb8",
-       "title": "$14$ and $70$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$14,\\;70$"
-       ],
+       "title": "$14$ and $70$",
        "answer": [
         "$\\mathrm{LCM} = 2 \\times 5 \\times 7 = 70$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$14,\\;70$"
+       ],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "14",
@@ -1735,105 +1737,88 @@
          "response": "980",
          "reasoning": "Multiplies the two numbers, which counts the shared tiles twice."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       },
       {
-       "version": 2,
        "id": "hl-lb9",
-       "title": "$9$ and $32$",
        "tool": "hcf-lcm-from-venn",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "$9,\\;32$"
-       ],
+       "title": "$9$ and $32$",
        "answer": [
         "$\\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 2 \\times 2 \\times 3 \\times 3 = 288$"
        ],
-       "explanation": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "$9,\\;32$"
+       ],
        "rationale": "Build the Venn, then multiply every tile.",
+       "explanation": [],
        "expectedErrors": [
         {
          "response": "1",
          "reasoning": "Multiplies only the middle. That is the HCF: the LCM needs every tile."
         }
-       ],
-       "followUp": "",
-       "status": "ready"
+       ]
       }
-     ],
-     "cols": 3,
-     "id": "hl-book-lcm-2",
-     "align": "center",
-     "fixed": true,
-     "size": 100
+     ]
     }
    ],
    "brief": "Nine in a 3 by 3 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply every tile.",
-   "built": "4pxj50"
+   "built": "4pxj50",
+   "title": "Book work: LCM from a Venn",
+   "family": "retrieval"
   },
   {
    "id": "hl-answers-2",
-   "family": "teach",
-   "title": "Visualiser: worksheet 2 answers",
    "els": [
     {
-     "kind": "visualiser",
+     "h": 852,
+     "w": 1552,
      "x": 24,
      "y": 24,
-     "w": 1552,
-     "h": 852,
-     "id": "hl-answers-2-1"
+     "id": "hl-answers-2-1",
+     "kind": "visualiser"
     }
    ],
-   "built": "1vvxsn3"
+   "built": "1vvxsn3",
+   "title": "Visualiser: worksheet 2 answers",
+   "family": "teach"
   },
   {
    "id": "hl-depth-2",
-   "family": "depth",
-   "title": "Depth",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1552,
      "x": 24,
      "y": 24,
-     "w": 1552,
-     "h": 852,
-     "presentation": "full",
-     "visualiser": false,
+     "id": "hl-depth-2-1",
+     "kind": "questions",
      "items": [
       {
-       "version": 2,
        "id": "hl-dp2",
-       "title": "Do you agree with Amara?",
        "tool": "hcf-lcm-from-venn",
+       "depth": {
+        "prompt": "",
+        "takeaway": ""
+       },
        "level": "level1",
-       "purpose": "diagnose",
-       "format": "claims",
-       "question": [
-        "Do you agree with Amara?"
-       ],
+       "title": "Do you agree with Amara?",
        "answer": [
         "Disagree: $26 \\times 65$ counts the shared $13$ twice. Multiply every tile once: $2 \\times 5 \\times 13 = 130$."
        ],
-       "explanation": [
-        "The shared $13$ is one tile in the middle.",
-        "Every tile once: $2 \\times 13 \\times 5$.",
-        "LCM $= 130$."
-       ],
-       "rationale": "",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready",
        "claims": [
         {
          "name": "Amara",
          "text": "The LCM of $26$ and $65$ is $26 \\times 65 = 1690$, because you multiply the two numbers."
         }
        ],
+       "format": "claims",
+       "status": "ready",
        "options": [
         {
          "text": "I agree",
@@ -1846,70 +1831,79 @@
          "reasoning": ""
         }
        ],
-       "depth": {
-        "prompt": "",
-        "takeaway": ""
-       },
+       "purpose": "diagnose",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Do you agree with Amara?"
+       ],
+       "rationale": "",
+       "explanation": [
+        "The shared $13$ is one tile in the middle.",
+        "Every tile once: $2 \\times 13 \\times 5$.",
+        "LCM $= 130$."
+       ],
        "misconception": {
         "id": "venn-tile-both-sides",
         "label": "Counts a shared tile twice, so the LCM is just the two numbers multiplied"
-       }
+       },
+       "expectedErrors": []
       }
      ],
-     "id": "hl-depth-2-1"
+     "visualiser": false,
+     "presentation": "full"
     }
    ],
-   "built": "uht4g3"
+   "built": "uht4g3",
+   "title": "Depth",
+   "family": "depth"
   },
   {
    "id": "hl-d-sheets",
-   "family": "structure",
-   "title": "Worksheet slides",
    "els": [
     {
-     "kind": "text",
+     "h": 150,
+     "w": 1400,
      "x": 100,
      "y": 330,
-     "w": 1400,
-     "h": 150,
-     "text": "Worksheet slides",
-     "size": 96,
-     "colour": "#0f172a",
+     "id": "hl-d-sheets-1",
      "bold": true,
+     "kind": "text",
+     "size": 96,
+     "text": "Worksheet slides",
      "align": "center",
-     "middle": true,
-     "id": "hl-d-sheets-1"
+     "colour": "#0f172a",
+     "middle": true
     }
    ],
-   "built": "7uy9te"
+   "built": "7uy9te",
+   "title": "Worksheet slides",
+   "family": "structure"
   },
   {
    "id": "hl-sheet-1",
-   "family": "practice",
-   "title": "Worksheet 1: HCF from a Venn",
    "els": [
     {
-     "id": "hl-sheet-1-1",
-     "kind": "worksheet",
+     "h": 840,
+     "w": 1520,
      "x": 40,
      "y": 30,
-     "w": 1520,
-     "h": 840,
+     "id": "hl-sheet-1-1",
+     "pin": {
+      "paper": "A4",
+      "title": "Worksheet 1: HCF from a Venn",
+      "layout": "grid",
+      "borders": false
+     },
+     "cols": 3,
+     "kind": "worksheet",
      "tool": "indices",
+     "count": 9,
      "preset": {
       "sub": "converting",
       "level": "level1"
      },
-     "count": 9,
-     "cols": 3,
-     "pin": {
-      "title": "Worksheet 1: HCF from a Venn",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": false
-     },
      "vennSheet": {
-      "title": "Worksheet 1: HCF from a Venn",
       "note": "Put each prime factor in the right part of the Venn, then find the HCF.",
       "items": [
        {
@@ -1957,39 +1951,39 @@
         "b": 21,
         "lines": true
        }
-      ]
+      ],
+      "title": "Worksheet 1: HCF from a Venn"
      }
     }
    ],
-   "built": "1emjdxb"
+   "built": "1emjdxb",
+   "title": "Worksheet 1: HCF from a Venn",
+   "family": "practice"
   },
   {
    "id": "hl-sheet-2",
-   "family": "practice",
-   "title": "Worksheet 2: LCM from a Venn",
    "els": [
     {
-     "id": "hl-sheet-2-1",
-     "kind": "worksheet",
+     "h": 840,
+     "w": 1520,
      "x": 40,
      "y": 30,
-     "w": 1520,
-     "h": 840,
+     "id": "hl-sheet-2-1",
+     "pin": {
+      "paper": "A4",
+      "title": "Worksheet 2: LCM from a Venn",
+      "layout": "grid",
+      "borders": false
+     },
+     "cols": 3,
+     "kind": "worksheet",
      "tool": "indices",
+     "count": 9,
      "preset": {
       "sub": "converting",
       "level": "level1"
      },
-     "count": 9,
-     "cols": 3,
-     "pin": {
-      "title": "Worksheet 2: LCM from a Venn",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": false
-     },
      "vennSheet": {
-      "title": "Worksheet 2: LCM from a Venn",
       "note": "Put each prime factor in the right part of the Venn, then find the LCM.",
       "items": [
        {
@@ -2037,11 +2031,17 @@
         "b": 32,
         "lines": true
        }
-      ]
+      ],
+      "title": "Worksheet 2: LCM from a Venn"
      }
     }
    ],
-   "built": "cet7qd"
+   "built": "cet7qd",
+   "title": "Worksheet 2: LCM from a Venn",
+   "family": "practice"
   }
- ]
+ ],
+ "strand": "Number",
+ "summary": "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Two book sets with printable worksheets, visualiser slides for the answers and two Depth cards. Every question is authored and its answer computed.",
+ "questionVersion": 2
 }
