@@ -207,7 +207,7 @@ const SHEET1: [number, number, Kind][] = [[6, 22, "a"], [21, 33, "a"], [20, 70, 
 SHEET1.forEach(([a, b, k]) => must(vennProblems(a, b).length === 0 && KIND[k](splitPrimes(a, b)), `sheet ${a} and ${b} kind ${k}`));
 const placedFade: (("left" | "middle" | "right")[] | undefined)[] = [["left", "middle"], ["middle"], ["right"], undefined, undefined, undefined, undefined, undefined, undefined];
 const sheet1 = S.vennSheet(`${P}-sheet-1`, { title: "Worksheet 1: Prime factors in a Venn", note: "Put each prime factor in the right part of the Venn.",
-  items: SHEET1.map(([a, b], i) => ({ a, b, ...(placedFade[i] ? { placed: placedFade[i] } : {}) })) }, T);
+  items: SHEET1.map(([a, b], i) => ({ a, b, ...(placedFade[i] ? { placed: placedFade[i] } : {}) })) }, "indices");   // a pinned sheet carries a real tool id (the deck test draws every worksheet element's tool)
 
 // slides 26 and 27: two authored Depth cards (the eight named cast; every wrong option names its misconception; never three in a row)
 function depthQ(id: string, title: string, claims: { name: string; text: string }[], right: number | "both", correct: string, wrong: Record<string, string>, why: string[], mis: string): CuratedQuestion {

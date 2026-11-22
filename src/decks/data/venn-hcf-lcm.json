@@ -2605,7 +2605,7 @@
      "y": 30,
      "w": 1520,
      "h": 840,
-     "tool": "venn-hcf-lcm",
+     "tool": "indices",
      "preset": {
       "sub": "converting",
       "level": "level1"
@@ -2672,7 +2672,7 @@
      }
     }
    ],
-   "built": "116qdjk"
+   "built": "1g58kmp"
   },
   {
    "id": "vh-depth-1",
