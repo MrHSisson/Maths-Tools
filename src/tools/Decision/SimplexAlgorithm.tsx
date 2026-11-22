@@ -23,14 +23,17 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const key = (ctx?.subTool ?? "solve") as string;
-  const kind: SxKind = key === "interpret" && o.sxDirection === "reverse" ? "reverse" : (key as SxKind);
+  // Level 3 of Read a tableau is the other way round: the tableau is given and the problem it shows is asked for
+  const kind: SxKind = key === "interpret" && level === 3 ? "reverse" : (key as SxKind);
   const q = generateSimplex(level, {
     kind,
     vars: [],
     cons: [],
-    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "2x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
-    forms: kind === "pivot" ? ticked(o.sxStart, "standard").map((v) => (v === "negative" ? "ge" : v)) : ticked(o.sxForms, "standard"),
-    context: ticked(o.sxContext, "bare"),
+    sizes: ticked(o.sxSize, level === 1 ? "2x2" : level === 2 ? "2x3" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
+    // each level has its own questions: Level 3 always needs a change of form first (a negative right-hand side to start, for a pivot)
+    forms: level < 3 ? ["standard"] : kind === "pivot" ? ["ge"] : ticked(o.sxForms, "min,ge,lower,eq"),
+    method: o.sxMethod === "rows" ? "rows" : "substitute",
+    context: ticked(o.sxContext, level === 2 ? "story,table" : "bare"),
     pivotGiven: o.sxPivot === "given",
     whole: o.sxWhole === "on",
     given: o.sxGiven !== "find",
@@ -46,20 +49,15 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <SxSolution 
 const OPTIONS: ShellOption[] = [
   {
     key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
-    multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "2x3"),
+    multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : lv === 2 ? "2x3" : "3x3"),
     choices: [
-      { value: "2x2", label: "2 × 2" }, { value: "2x3", label: "2 × 3" }, { value: "3x3", label: "3 × 3", forLevels: [2, 3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
+      { value: "2x2", label: "2 × 2", forLevels: [1, 2] }, { value: "2x3", label: "2 × 3" }, { value: "3x3", label: "3 × 3", forLevels: [2, 3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
     ],
   },
   {
-    key: "sxDirection", label: "Ask For", info: "Whether the question gives a tableau and asks for what it says (the values, the binding constraints, the meaning of each slack variable), or asks for the problem it represents.",
-    forSubTools: ["interpret"], defaultFor: () => "values",
-    choices: [{ value: "values", label: "What It Says" }, { value: "reverse", label: "The Problem It Shows" }],
-  },
-  {
-    key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation (in sentences or in a table) that must first be turned into them.",
-    forSubTools: ["setup", "solve", "practical"], forLevels: [2, 3], multi: true, defaultFor: () => "bare",
-    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
+    key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation (in sentences or in a table) that must first be turned into them. Level 2 is always a situation: the inequalities are Level 1 and Level 3.",
+    forSubTools: ["setup", "solve", "practical"], forSubToolLevels: { setup: [2], solve: [2], practical: [2, 3] }, multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : "bare"),
+    choices: [{ value: "bare", label: "Inequalities", forLevels: [3] }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
   },
   {
     key: "sxPivot", label: "Pivot", info: "Whether the student chooses the pivot (the column, the θ-values, the row) or is told the pivot and only carries out the row operations.",
@@ -67,20 +65,19 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "choose", label: "Student Chooses" }, { value: "given", label: "Pivot Given" }],
   },
   {
-    key: "sxStart", label: "Start", info: "Whether the tableau is a standard one (every right-hand side positive) or has a negative right-hand side, so that the first pivot is chosen from the negative row. Tick both to mix them.",
-    forSubTools: ["pivot"], forLevels: [3], multi: true, defaultFor: () => "standard",
-    choices: [{ value: "standard", label: "Standard Tableau" }, { value: "negative", label: "A Negative Right-Hand Side" }],
-  },
-  {
-    key: "sxForms", label: "Starting Form", info: "What the problem looks like before the simplex algorithm can start: already in standard form, or needing a change first. Tick any of them and each question draws one.",
-    forSubTools: ["setup", "solve"], forLevels: [3], multi: true, defaultFor: () => "standard",
+    key: "sxForms", label: "Starting Form", info: "What has to change before the simplex algorithm can start: a minimise, a ≥ constraint (a negative right-hand side), a lower bound, or an equality. Every Level 3 question needs one of them. Tick any of them and each question draws one.",
+    forSubTools: ["setup", "solve"], forLevels: [3], multi: true, defaultFor: () => "min,ge,lower,eq",
     choices: [
-      { value: "standard", label: "Standard Form", sub: "maximise, every constraint ≤" },
       { value: "min", label: "Minimise", sub: "maximise P = −C" },
       { value: "ge", label: "A ≥ Constraint", sub: "multiply by −1" },
-      { value: "lower", label: "A Lower Bound", sub: "x ≥ 2, so X = x − 2" },
-      { value: "eq", label: "An Equality", sub: "a ≤ and a ≥" },
+      { value: "lower", label: "A Lower Bound", sub: "y ≥ 4" },
+      { value: "eq", label: "An Equality", sub: "2x + 3y = 15" },
     ],
+  },
+  {
+    key: "sxMethod", label: "Method", info: "How a lower bound and an equality are handled. Substitute And Split: a lower bound y ≥ 4 becomes Y = y − 4, and an equality becomes a ≤ and a ≥ constraint. Use As Rows: y ≥ 4 is one more constraint (−y ≤ −4, a negative right-hand side to start), and an equation goes in as a row with no slack variable, with the first pivot in that row. The answer is the same either way.",
+    forSubTools: ["setup", "solve"], forLevels: [3], defaultFor: () => "substitute",
+    choices: [{ value: "substitute", label: "Substitute And Split", sub: "Y = y − 4; two inequalities" }, { value: "rows", label: "Use As Rows", sub: "−y ≤ −4; an equation as a row" }],
   },
   {
     key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. An asterisk marks an extension that is unlikely to come up.",
@@ -116,11 +113,11 @@ export default function App() {
         skillSheet: true,
         noSandbox: true,
         levelLabels: {
-          setup: ["Two variables, standard form", "Three variables, and a situation in words", "A change of form first: minimise, ≥, a lower bound, an equality"],
-          pivot: ["The first pivot", "Any pivot, three variables", "Including a negative right-hand side to start"],
-          solve: ["Two variables, two iterations", "Three variables, up to three iterations", "Four variables, a change of form, up to four iterations"],
-          interpret: ["The optimal tableau", "Optimal or not, and the slack variables", "Optimal or not, up to four variables"],
-          practical: ["Two variables: round down and up, test, choose", "A situation in words, or three variables; rounding down is not best", "Up to four variables; rounding to the nearest is not allowed"],
+          setup: ["Two variables, the inequalities given", "A situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
+          pivot: ["The first pivot", "A pivot part-way through the run", "A negative right-hand side to start"],
+          solve: ["Two variables, the inequalities given", "A situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
+          interpret: ["The optimal tableau", "A tableau that is not yet optimal", "The problem the tableau shows"],
+          practical: ["Two variables, the inequalities given", "A situation in words or a table, rounding down is not the best", "Rounding to the nearest breaks a constraint"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

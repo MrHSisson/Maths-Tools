@@ -398,13 +398,20 @@ function attempt(n: number, sense: "max" | "min", level: number, integersWanted:
   const strict = level === 1 || integersWanted;
   let d: Draft | null;
   if (level >= 3) {
-    const sit = pick(o.situations?.length ? o.situations : ["standard", "half", "eitherOr", "remainder", "relation", "blend"]);
+    const sit = pick(o.situations?.length ? o.situations : ["half", "eitherOr", "remainder", "relation", "blend"]);
     if (sit === "blend") d = blendMix(n, level);
     else if (sit === "remainder") d = remainder(n, strict);
     else if (sit === "relation") d = linked(n, strict);
     else d = standard(n, "max", level, strict, false, { limits: o.limits, single: o.single, l3: sit === "standard" ? "none" : sit });
   } else d = standard(n, sense, level, strict, level === 2 && Math.random() < 0.2, { limits: o.limits, single: o.single });
+  // each level has its own questions: a Level 2 problem has at least one Level 2 feature, so it is never a Level 1 problem
+  if (d && level === 2 && !hasLevel2Feature(d)) return null;
   return d ? finalise(d, level, integersWanted, showTable) : null;
+}
+/** a percentage, a ratio, a decimal amount, a unit change, a pack, a price minus a cost, or a single aim: what makes a problem Level 2 */
+function hasLevel2Feature(d: Draft): boolean {
+  const inf = d.info as { pack?: unknown; price?: unknown; single?: unknown };
+  return d.parts.some((p) => p.data.kind === "percent" || p.data.kind === "ratio" || p.data.kind === "decimal" || (p.data.info.kind === "resource" && !!p.data.info.conv)) || !!inf.pack || !!inf.price || inf.single !== undefined;
 }
 
 /** The "Formulate a problem" question at Levels 1 to 3. */

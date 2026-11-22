@@ -80,6 +80,19 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `lpSimplexSolve.ts
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: Simplex, pivot given and table (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 
+## 2026-11-22 — Simplex: an equation as a row, a lower bound as a row, and every level has its own questions, not live
+
+Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplex.ts` (the engine), `lpSimplexGen.ts`, `lpSimplexSolve.ts`, `src/tools/Decision/SimplexAlgorithm.tsx`, `lpProblem.ts`, `src/tools/Decision/FormulatingLP.tsx`, the tests.
+
+- **Method (Level 3, Set up and Solve):** **Substitute And Split** (a lower bound y ≥ 4 becomes Y = y − 4; an equality becomes a ≤ and a ≥ constraint) or **Use As Rows**. As rows: **y ≥ 4 is one more constraint**, −y ≤ −4, so the tableau starts with a negative right-hand side and the first pivot is chosen from that row; and **an equation 2x + 3y = 15 goes in as a row with no slack variable**, so no variable is basic in it, and the first pivot is in that row, in a column where that row has the smallest θ (so every right-hand side stays positive). The engine now has rows without a slack column. The answer is the same either way: the tests check both against a brute-force search and against each other. This is the textbook's equality method (corpus L79) as well as the lower bound as a ≥ constraint.
+- **Every level has its own questions.** A higher level must not be able to draw a lower-level question.
+  - **Simplex.** Level 2 Set up, Solve and Is it practical? are always a situation in words or a table (the inequalities are Level 1, and Level 3 where it applies). Level 2 One pivot is part-way through the run (Level 1 is the first pivot); Level 2 Read a tableau is a tableau that is not yet optimal (Level 1 is the optimal one). Level 3 always needs a change of form first (minimise, ≥, a lower bound, an equality: no standard-form choice); Level 3 One pivot is a negative right-hand side; Level 3 Read a tableau is the other way round (the problem the tableau shows). The Start and Ask For options are removed (their choices were each level's own). Sizes: 2 × 2 at Levels 1 and 2, 3 × 3 at Levels 2 and 3, 4 × 4* at Level 3.
+  - **Formulating, Formulate a problem.** A Level 2 problem always has at least one Level 2 feature (a percentage, a ratio, a decimal amount, a unit change, a pack, a price minus a cost); a Level 3 problem is always one of the Situations (Exactly Half, Either-Or Limits, A Remainder, A Relation Between Kinds, A Blend To Minimise): the plain Resource Limits choice is removed from Level 3.
+- **Tests:** an equation as a row (no slack, first pivot in its row, the same optimum as the pair of inequalities and as brute force); a lower bound as a row (negative start); Level 2 is always a situation; Level 1 and Level 2 pivots and tableaux are different; Level 2 and 3 problems always have their level's feature.
+
+Agent: Claude Code
+Notes: Build Log block "Linear Programming: rows for equations and bounds, exclusive levels (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
+
 ## 2026-11-22 — Formulating: relations stay as relations; ratios are written as ratios, not live
 
 Branch `claude/sleepy-sagan-7zueyf`. Area: `src/shared/decision/lp.ts`, `lpGen.ts`, `lpGenL23.ts`, `lpSolve.ts`, the Formulating tests, `src/tools/Decision/FormulatingLP.tsx`. Harry's two notes while previewing.

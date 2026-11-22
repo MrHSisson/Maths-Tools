@@ -17,6 +17,10 @@ export interface SxSpec {
   cons: SxCon[];
   /** lower bounds on the variables (0 where there is none) */
   lower?: number[];
+  /** how an equality is handled: as a row of its own with no slack variable (the first pivot is in that row), not as a pair of inequalities */
+  eqAsRow?: boolean;
+  /** how a lower bound is handled: as a ≥ constraint (−x ≤ −a, so a negative right-hand side to start), not by the substitution X = x − a */
+  lowerAsRow?: boolean;
 }
 /** the problem in the form the simplex needs: maximise Σ c'X subject to A X ≤ b with b ≥ 0 when it can be, X ≥ 0 */
 export interface Standard {
@@ -26,19 +30,25 @@ export interface Standard {
   /** the constant that the shift and the sign add to the objective: P = Σ c'X + konst (max form) */
   konst: number;
   /** each row of A: which constraint of the question it is, and whether it was multiplied by −1 (a ≥ constraint) */
-  rows: Array<{ con: number; flip: boolean }>;
+  rows: Array<{ con: number; flip: boolean; /** an equation kept as a row with no slack variable */ eq?: boolean }>;
   /** the rhs of each question constraint after the shift X = x − lower */
   shifted: number[];
 }
 export function standardise(s: SxSpec): Standard {
   const n = s.c.length;
-  const lower = s.lower ?? Array.from({ length: n }, () => 0);
-  const shifted = s.cons.map((k) => k.b - k.a.reduce((t, v, j) => t + v * lower[j], 0));
+  const zeros = Array.from({ length: n }, () => 0);
+  const given = s.lower ?? zeros;
+  // a lower bound as a row: y ≥ 4 is one more ≥ constraint (the origin is then not feasible), and nothing is shifted
+  const lower = s.lowerAsRow ? zeros : given;
+  const cons: SxCon[] = [...s.cons];
+  if (s.lowerAsRow) given.forEach((a, j) => { if (a > 0) cons.push({ a: zeros.map((_, i) => (i === j ? 1 : 0)), op: "≥", b: a }); });
+  const shifted = cons.map((k) => k.b - k.a.reduce((t, v, j) => t + v * lower[j], 0));
   const rows: Standard["rows"] = [];
   const A: Fr[][] = [];
   const b: Fr[] = [];
-  s.cons.forEach((k, i) => {
+  cons.forEach((k, i) => {
     const row = k.a.map((v) => fr(v));
+    if (k.op === "=" && s.eqAsRow) { A.push(row); b.push(fr(shifted[i])); rows.push({ con: i, flip: false, eq: true }); return; }
     if (k.op === "≤" || k.op === "=") { A.push(row); b.push(fr(shifted[i])); rows.push({ con: i, flip: false }); }
     if (k.op === "≥" || k.op === "=") { A.push(row.map((v) => fr(-v[0], v[1]))); b.push(fr(-shifted[i])); rows.push({ con: i, flip: true }); }
   });
@@ -50,26 +60,33 @@ export function standardise(s: SxSpec): Standard {
 // ── The tableau ──────────────────────────────────────────────────────────────
 export interface Tab {
   n: number;
+  /** the number of constraint rows */
   m: number;
+  /** the number of slack columns (one for each row that is not an equation) */
+  ns: number;
   rows: Fr[][];
   /** the basic variable of each constraint row (column numbers, 1-based): the slacks to begin with, then the entering column of each pivot */
   basis: number[];
 }
-/** the number of columns: P, n variables, m slacks, the value */
-export const width = (t: Tab): number => t.n + t.m + 2;
-export const valueCol = (t: Tab): number => t.n + t.m + 1;
-function initialTab(c: readonly Fr[], A: readonly (readonly Fr[])[], b: readonly Fr[]): Tab {
+/** the number of columns: P, n variables, the slacks, the value */
+export const width = (t: Tab): number => t.n + t.ns + 2;
+export const valueCol = (t: Tab): number => t.n + t.ns + 1;
+function initialTab(c: readonly Fr[], A: readonly (readonly Fr[])[], b: readonly Fr[], eq: readonly boolean[]): Tab {
   const n = c.length, m = A.length;
-  const row0: Fr[] = [ONE, ...c.map((v) => fr(-v[0], v[1])), ...Array.from({ length: m }, () => ZERO), ZERO];
-  const rows = [row0, ...A.map((a, i): Fr[] => [ZERO, ...a, ...Array.from({ length: m }, (_, j) => (i === j ? ONE : ZERO)), b[i]])];
-  return { n, m, rows, basis: Array.from({ length: m }, (_, i) => n + i + 1) };
+  // a slack column for each row that is not an equation
+  const slackOf: number[] = [];
+  let ns = 0;
+  for (let i = 0; i < m; i++) slackOf.push(eq[i] ? -1 : ns++);
+  const row0: Fr[] = [ONE, ...c.map((v) => fr(-v[0], v[1])), ...Array.from({ length: ns }, () => ZERO), ZERO];
+  const rows = [row0, ...A.map((a, i): Fr[] => [ZERO, ...a, ...Array.from({ length: ns }, (_, j) => (slackOf[i] === j ? ONE : ZERO)), b[i]])];
+  return { n, m, ns, rows, basis: slackOf.map((k) => (k < 0 ? 0 : n + k + 1)) };
 }
-export const tabOf = (st: Standard): Tab => initialTab(st.c, st.A, st.b);
+export const tabOf = (st: Standard): Tab => initialTab(st.c, st.A, st.b, st.rows.map((r) => !!r.eq));
 
 /** the pivot column: the most negative entry of the objective row (the earliest on a tie); `tie` says whether another column shares it */
 export function pivotColumn(t: Tab): { col: number; tie: boolean } | null {
   let best = -1, tie = false;
-  for (let j = 1; j <= t.n + t.m; j++) {
+  for (let j = 1; j <= t.n + t.ns; j++) {
     if (t.rows[0][j][0] >= 0) continue;
     if (best < 0) best = j;
     else { const k = cmpFr(t.rows[0][j], t.rows[0][best]); if (k < 0) { best = j; tie = false; } else if (k === 0) tie = true; }
@@ -102,8 +119,10 @@ export interface Iter {
   to: Tab;
   ops: RowOp[];
   tie: boolean;
-  /** the first pivot of a non-standard start (a negative entry in a row with a negative value), not an iteration of the algorithm proper */
+  /** the first pivot of a non-standard start (a negative entry in a row with a negative value, or the row of an equation), not an iteration of the algorithm proper */
   start?: boolean;
+  /** the start pivot is in the row of an equation, which has no slack variable and so no variable basic in it */
+  eqStart?: boolean;
 }
 export function iterate(t: Tab, row: number, col: number, extra: Partial<Iter> = {}): Iter {
   const p = t.rows[row][col];
@@ -116,15 +135,31 @@ export function iterate(t: Tab, row: number, col: number, extra: Partial<Iter> =
     ops.push({ row: i, factor: f });
     return r.map((v, k) => fsub(v, fmul(f, npr[k])));
   });
-  return { from: t, col, row, pivot: p, thetas: thetas(t, col), to: { n: t.n, m: t.m, rows, basis: t.basis.map((b, i) => (i === row - 1 ? col : b)) }, ops, tie: false, ...extra };
+  return { from: t, col, row, pivot: p, thetas: thetas(t, col), to: { n: t.n, m: t.m, ns: t.ns, rows, basis: t.basis.map((b, i) => (i === row - 1 ? col : b)) }, ops, tie: false, ...extra };
 }
 
+/** the first pivot in the row of an equation (no slack variable, so no basic variable yet): a column where that row has the smallest θ, so every right-hand side stays positive */
+function eqStartPivot(t: Tab, row: number): number {
+  const v = t.rows[row][valueCol(t)];
+  for (let j = 1; j <= t.n; j++) {
+    const a = t.rows[row][j];
+    if (a[0] <= 0) continue;
+    const th = fdiv(v, a);
+    let ok = true;
+    for (let i = 1; i <= t.m; i++) {
+      if (i === row || t.rows[i][j][0] <= 0) continue;
+      if (cmpFr(fdiv(t.rows[i][valueCol(t)], t.rows[i][j]), th) < 0) { ok = false; break; }
+    }
+    if (ok) return j;
+  }
+  return -1;
+}
 /** the first pivot when a right-hand side is negative: in the row with the most negative value, a negative entry whose pivot leaves every value non-negative (the first such column) */
 function startPivot(t: Tab): { row: number; col: number } | null {
   let r = -1;
   for (let i = 1; i <= t.m; i++) if (t.rows[i][valueCol(t)][0] < 0 && (r < 0 || cmpFr(t.rows[i][valueCol(t)], t.rows[r][valueCol(t)]) < 0)) r = i;
   if (r < 0) return null;
-  for (let j = 1; j <= t.n + t.m; j++) {
+  for (let j = 1; j <= t.n + t.ns; j++) {
     if (t.rows[r][j][0] >= 0) continue;
     const it = iterate(t, r, j);
     if (it.to.rows.slice(1).every((row) => row[valueCol(t)][0] >= 0)) return { row: r, col: j };
@@ -151,6 +186,14 @@ export function runSpec(spec: SxSpec): Run {
   const tabs = [t];
   const iters: Iter[] = [];
   let tie = false;
+  // an equation is a row with no slack variable: pivot in it first, so that a variable is basic in every row
+  for (let k = 1; k <= t.m; k++) {
+    if (t.basis[k - 1] !== 0) continue;
+    const j = eqStartPivot(t, k);
+    if (j < 0) throw new Error("lpSimplex: no first pivot in an equation");
+    const it = iterate(t, k, j, { start: true, eqStart: true });
+    iters.push(it); tabs.push(it.to); t = it.to;
+  }
   const sp = startPivot(t);
   if (t.rows.slice(1).some((r) => r[valueCol(t)][0] < 0)) {
     if (!sp) throw new Error("lpSimplex: no feasible first pivot");
@@ -175,7 +218,7 @@ export function runSpec(spec: SxSpec): Run {
  *  a tableau that is shown to be read has exactly m of them */
 export function unitColumns(t: Tab): number {
   let k = 0;
-  for (let j = 1; j <= t.n + t.m; j++) {
+  for (let j = 1; j <= t.n + t.ns; j++) {
     const ones = t.rows.filter((r, i) => i > 0 && r[j][0] === 1 && r[j][1] === 1).length;
     if (ones === 1 && t.rows.filter((r) => r[j][0] !== 0).length === 1) k++;
   }
@@ -192,7 +235,7 @@ export interface Reading {
 export function readTab(t: Tab): Reading {
   const values: Fr[] = [];
   const basic: number[] = [];
-  for (let j = 1; j <= t.n + t.m; j++) {
+  for (let j = 1; j <= t.n + t.ns; j++) {
     const r = t.basis.indexOf(j) + 1;
     if (r === 0) values.push(ZERO); else { values.push(t.rows[r][valueCol(t)]); basic.push(j); }
   }

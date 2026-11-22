@@ -220,6 +220,8 @@ export interface SxOptions {
   given: boolean;
   /** One pivot: the pivot is given, not chosen */
   pivotGiven: boolean;
+  /** Level 3: a lower bound and an equality are handled by substitution and as two inequalities ("substitute"), or as rows ("rows") */
+  method?: "substitute" | "rows";
   layout: "A" | "B";
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
@@ -233,17 +235,20 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
   if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
-    const allowed = (o.forms.length ? o.forms : ["standard"]) as StartForm[];
+    const allowed = (o.forms.length ? o.forms : ["min", "ge", "lower", "eq"]) as StartForm[];
     form = pick(allowed);
   }
   const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3, form === "min");
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
+  if (o.method === "rows") { if (form === "lower") sp.lowerAsRow = true; if (form === "eq") sp.eqAsRow = true; }
   let story: SxStory | undefined;
   let table = false;
+  // Level 2 is always a situation in words or a table, never the bare inequalities
   const ctxList = o.context.length ? o.context : ["bare"];
-  const chosen = pick(ctxList);
+  const wordsOnly = level === 2 && (kind === "setup" || kind === "solve" || kind === "practical");
+  const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
   if (level >= 2 && form === "standard" && (chosen === "story" || chosen === "table") && m <= 3) {
     table = chosen === "table";
     story = dress(sp, n, m) ?? undefined;
@@ -259,8 +264,9 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   if ((kind === "interpret" || kind === "reverse") && run.tabs.some((t) => unitColumns(t) !== t.m)) return null;
   // the tableau the question gives
   let at = 0;
-  if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : ri(0, Math.min(1, run.steps.length - 1));
-  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
+  // each level has its own tableau: Level 1 the first pivot and the optimal tableau; Level 2 a pivot part-way through and a tableau that is not yet optimal
+  if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : level === 2 ? ri(1, Math.max(1, run.steps.length - 1)) : ri(0, Math.min(1, run.steps.length - 1));
+  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? Math.max(1, run.tabs.length - 2) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
@@ -279,7 +285,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   } else prompt = `${problem} ${PROMPT.solve}`;
   if (data.pivotGiven) {
     const it = run.iters[at];
-    const names = [...vars, ...Array.from({ length: run.final.m }, (_, i) => `s_${i + 1}`)];
+    const names = [...vars, ...Array.from({ length: run.final.ns }, (_, i) => `s_${i + 1}`)];
     const where = o.layout === "B" ? `in the $${names[it.col - 1]}$ column, in the row of the basic variable $${names[run.tabs[at].basis[it.row - 1] - 1]}$` : `in the $${names[it.col - 1]}$ column of row R${it.row + 1} (R1 is the objective row)`;
     prompt = `${it.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. " : "A simplex tableau for a maximising problem is shown. "}The pivot is the $${fmtFr(it.pivot)}$ ${where}. Carry out one iteration of the simplex algorithm, showing the row operations.`;
   }
@@ -297,7 +303,7 @@ function solutionText(w: { x: Fr[]; p: Fr }, vars: string[]): string {
 /** the answer as plain text (for the printed answers): the values of every variable and slack, and P, from the tableau the question is about */
 function answerPlain(sp: SxSpec, run: Run, kind: SxKind, at: number): string {
   const n = sp.c.length;
-  const names = [...varNames(n), ...Array.from({ length: run.final.m }, (_, i) => `s${i + 1}`)];
+  const names = [...varNames(n), ...Array.from({ length: run.final.ns }, (_, i) => `s${i + 1}`)];
   const fmt = (v: Fr): string => (v[1] === 1 ? String(v[0]) : `${v[0]}/${v[1]}`);
   const tab = kind === "interpret" ? run.tabs[Math.min(at, run.tabs.length - 1)] : run.final;
   if (kind === "setup" || kind === "reverse") return kind === "setup" ? `initial tableau with ${n} variables and ${run.final.m} slack variables` : "the problem the tableau represents";

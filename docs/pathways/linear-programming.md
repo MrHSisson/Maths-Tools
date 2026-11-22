@@ -42,6 +42,8 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 
 - 2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say "using only x and y"); display toggles for Common Slips and Number Check. Decided: the capacity method is fractions only (common units removed); the single-variable aim is an asterisked option, off by default.
 
+- 2026-11-22 (rows, and exclusive levels). Simplex Level 3 Method: Substitute And Split, or Use As Rows (a lower bound as a ≥ constraint; an equation as a row with no slack, pivoted first), answering Harry's questions on why an equation cannot just be a row and why y ≥ 4 is substituted. Every level now has its own questions in both tools: no higher level can draw a lower-level question (Simplex Level 2 is always words or a table; Level 3 always needs a change of form; Formulating problems carry a feature of their level).
+
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.

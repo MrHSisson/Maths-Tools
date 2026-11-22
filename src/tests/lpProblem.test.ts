@@ -345,3 +345,17 @@ describe("the single-variable aim is off unless asked for", () => {
     expect(on).toBeGreaterThan(0);
   }, 120_000);
 });
+
+describe("each level has its own problems", () => {
+  it("a Level 2 problem always has a Level 2 feature, and a Level 3 problem a Level 3 one", () => {
+    seeded(51);
+    for (let i = 0; i < 150; i++) {
+      const l2 = generateProblem(2, { vars: [2, 3], objective: ["max"], integers: true }).data.info as PInfo;
+      const kinds2 = l2.parts.map((p) => p.kind);
+      expect(kinds2.some((k) => k === "percent" || k === "ratio" || k === "decimal") || l2.parts.some((p) => p.info.kind === "resource" && !!p.info.conv) || !!l2.pack || !!l2.price).toBe(true);
+      const l3 = generateProblem(3, { vars: [2, 3], objective: ["max"], integers: true }).data.info as PInfo;
+      const kinds3 = l3.parts.map((p) => p.kind);
+      expect(!!l3.rem || !!l3.link || kinds3.includes("eitherOr") || kinds3.includes("blend") || l3.parts.some((p) => p.info.kind === "ratio" && p.op === "=")).toBe(true);
+    }
+  }, 120_000);
+});

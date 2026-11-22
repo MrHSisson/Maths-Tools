@@ -284,7 +284,7 @@ describe("the written working", () => {
   });
   it("the solve working ends by stating the optimum the engine found", () => {
     for (let i = 0; i < 30; i++) {
-      const q = generateSimplex(2, OPT("solve", { forms: ["standard"], context: ["bare"] }));
+      const q = generateSimplex(1, OPT("solve", { forms: ["standard"], context: ["bare"] }));
       const steps = solveSimplex(asProblem(q));
       const last = steps[steps.length - 1].sxView!.blocks.flatMap(texOf).join(" ");
       const o = objectiveOf(runSpec(q.data.spec), q.data.spec);
@@ -323,5 +323,64 @@ describe("audit changes: minimise, equality, size", () => {
     const q = generateSimplex(2, OPT("reverse", {}));
     expect(q.prompt).toMatch(/Write down the linear programming problem/);
     expect(solveSimplex(asProblem(q)).length).toBeGreaterThan(2);
+  });
+});
+
+describe("an equality and a lower bound handled as rows", () => {
+  it("an equation is a row with no slack variable: the first pivot is in that row, and the optimum is the same as by the pair of inequalities", () => {
+    for (let i = 0; i < 60; i++) {
+      const q = generateSimplex(3, OPT("solve", { forms: ["eq"], method: "rows", context: ["bare"] }));
+      const sp = q.data.spec;
+      expect(sp.eqAsRow).toBe(true);
+      const run = runSpec(sp);
+      const eqs = sp.cons.filter((k) => k.op === "=").length;
+      expect(run.tabs[0].m).toBe(sp.cons.length);
+      expect(run.tabs[0].ns).toBe(sp.cons.length - eqs);
+      expect(run.iters[0].eqStart).toBe(true);
+      const got = objectiveOf(run, sp);
+      expect(got[0] / got[1]).toBeCloseTo(brute(sp), 6);
+      const pair = runSpec({ ...sp, eqAsRow: false });
+      const gp = objectiveOf(pair, { ...sp, eqAsRow: false });
+      expect(gp[0] / gp[1]).toBeCloseTo(got[0] / got[1], 6);
+      const caps = solveSimplex(asProblem(q)).map((s2) => s2.caption).join(" ");
+      expect(caps).toMatch(/is an equation, so it has no slack variable/);
+      for (const st of solveSimplex(asProblem(q))) for (const b of st.sxView!.blocks) for (const t of texOf(b)) expect(bad(t), t).toBe(false);
+    }
+  });
+  it("a lower bound as a row is one more ≥ constraint: a negative right-hand side to start, the same optimum as by the substitution", () => {
+    for (let i = 0; i < 60; i++) {
+      const q = generateSimplex(3, OPT("solve", { forms: ["lower"], method: "rows", context: ["bare"] }));
+      const sp = q.data.spec;
+      expect(sp.lowerAsRow).toBe(true);
+      const run = runSpec(sp);
+      expect(run.iters[0].start).toBe(true);
+      const got = objectiveOf(run, sp);
+      expect(got[0] / got[1]).toBeCloseTo(brute(sp), 6);
+      const sub = { ...sp, lowerAsRow: false };
+      const gs = objectiveOf(runSpec(sub), sub);
+      expect(gs[0] / gs[1]).toBeCloseTo(got[0] / got[1], 6);
+      for (const st of solveSimplex(asProblem(q))) for (const b of st.sxView!.blocks) for (const t of texOf(b)) expect(bad(t), t).toBe(false);
+    }
+  });
+});
+
+describe("each level has its own questions", () => {
+  it("Level 2 setup, solve and practical are always a situation in words or a table", () => {
+    for (const kind of ["setup", "solve", "practical"] as SxKind[]) for (let i = 0; i < 25; i++) {
+      const q = generateSimplex(2, OPT(kind, { context: ["bare", "story", "table"], forms: ["standard"] }));
+      expect(q.data.story).toBeTruthy();
+    }
+  });
+  it("Level 2 pivot is part-way through the run, and Level 2 read a tableau is not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {
+    for (let i = 0; i < 40; i++) {
+      const p2 = generateSimplex(2, OPT("pivot"));
+      expect(p2.data.at).toBeGreaterThanOrEqual(1);
+      const i2 = generateSimplex(2, OPT("interpret"));
+      const r2 = runSpec(i2.data.spec);
+      expect(i2.data.at).toBeLessThan(r2.tabs.length - 1);
+      expect(generateSimplex(1, OPT("pivot")).data.at).toBe(0);
+      const i1 = generateSimplex(1, OPT("interpret"));
+      expect(i1.data.at).toBe(runSpec(i1.data.spec).tabs.length - 1);
+    }
   });
 });

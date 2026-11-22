@@ -1658,6 +1658,12 @@
        "items": [
         "2026-11-22 (more preview notes). Formulating: Percentages Of folded into the styles; Fractional Amounts (time per item, share of a requirement) moved to Level 2; Resource Limits (one to three, with a florist context); Level 3 Situations (including the reduced-letters cases, which now say \"using only x and y\"); display toggles for Common Slips and Number Check. Decided: the capacity method is fractions only (common units removed); the single-variable aim is an asterisked option, off by default."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (rows, and exclusive levels). Simplex Level 3 Method: Substitute And Split, or Use As Rows (a lower bound as a ≥ constraint; an equation as a row with no slack, pivoted first), answering Harry's questions on why an equation cannot just be a row and why y ≥ 4 is substituted. Every level now has its own questions in both tools: no higher level can draw a lower-level question (Simplex Level 2 is always words or a table; Level 3 always needs a change of form; Formulating problems carry a feature of their level)."
+       ]
       }
      ]
     },
@@ -3924,6 +3930,10 @@
    "changes": [
     {
      "date": "2026-11-22",
+     "title": "Simplex: an equation as a row, a lower bound as a row, and every level has its own questions, not live"
+    },
+    {
+     "date": "2026-11-22",
      "title": "Formulating: relations stay as relations; ratios are written as ratios, not live"
     },
     {
@@ -3937,10 +3947,6 @@
     {
      "date": "2026-11-22",
      "title": "Formulating: fractions of capacity only; the single aim is off by default, not live"
-    },
-    {
-     "date": "2026-11-22",
-     "title": "Linear Programming audit applied: balance, arbitrariness, asterisks, not live"
     }
    ]
   },
@@ -3957,6 +3963,10 @@
     {
      "date": "2026-11-22",
      "title": "The Simplex Algorithm: a pivot given, and the data as a table, not live"
+    },
+    {
+     "date": "2026-11-22",
+     "title": "Simplex: an equation as a row, a lower bound as a row, and every level has its own questions, not live"
     },
     {
      "date": "2026-11-22",

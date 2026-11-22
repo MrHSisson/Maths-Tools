@@ -29,7 +29,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (ctx?.subTool === "problem") {
     const q = generateProblem(level, {
       vars, objective: ticked(o.lpObjective, "max"), integers: o.lpIntegers !== "leave", table: o.lpData === "table",
-      limits: ticked(o.lpLimits, "1,2").map(Number), single: o.lpSingle === "on", situations: ticked(o.lpSituations, "standard,half,eitherOr,remainder,relation,blend"),
+      limits: ticked(o.lpLimits, "1,2").map(Number), single: o.lpSingle === "on", situations: ticked(o.lpSituations, "half,eitherOr,remainder,relation,blend"),
     });
     q.data.view = view;
     return { kind: q.data.kind, level, lp: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
@@ -70,10 +70,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "1", label: "One" }, { value: "2", label: "Two" }, { value: "3", label: "Three" }],
   },
   {
-    key: "lpSituations", label: "Situations", info: "Which kinds of model to ask for. Several ask for the model in fewer letters than the situation has kinds (the rest of a total, or one kind that is exactly a multiple of the others): the question then says which letters to use. A blend is the one problem that minimises.",
-    forSubTools: ["problem"], forLevels: [3], multi: true, defaultFor: () => "standard,half,eitherOr,remainder,relation,blend",
+    key: "lpSituations", label: "Situations", info: "Which kinds of model to ask for (each is Level 3: the resource limits on their own are Level 1 and 2). Several ask for the model in fewer letters than the situation has kinds (the rest of a total, or one kind that is exactly a multiple of the others): the question then says which letters to use. A blend is the one problem that minimises.",
+    forSubTools: ["problem"], forLevels: [3], multi: true, defaultFor: () => "half,eitherOr,remainder,relation,blend",
     choices: [
-      { value: "standard", label: "Resource Limits", sub: "and a comparison" },
       { value: "half", label: "Exactly Half", sub: "x is half of all" },
       { value: "eitherOr", label: "Either-Or Limits", sub: "x/60 + y/45 ≤ 1" },
       { value: "remainder", label: "A Remainder", sub: "the rest of the 40 hectares" },

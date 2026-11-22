@@ -62,7 +62,7 @@ interface TabOpts { ops?: string[]; opsHead?: string; pivot?: [number, number]; 
 /** a tableau as a block */
 function tabBlock(run: Run, k: number, d: SxData, ids: number[][], o: TabOpts = {}): SxTabView {
   const t = run.tabs[k];
-  const { cols } = nameLists(d, t.m);
+  const { cols } = nameLists(d, t.ns);
   const B = d.layout === "B";
   const view: SxTabView = { k: "tab", head: ["P", ...cols, B ? "\\text{Value}" : ""], rows: t.rows.map((r) => r.map(frTex)), ...o };
   if (B) {
@@ -83,8 +83,12 @@ const objRow = (c: readonly Fr[], vars: readonly string[]): string => {
   c.forEach((v, j) => { if (v[0] !== 0) s += ` ${v[0] > 0 ? "-" : "+"} ${Math.abs(v[0]) === 1 ? "" : Math.abs(v[0])}${vars[j]}`; });
   return `${s} = 0`;
 };
-const stdLines = (run: Run, vars: readonly string[]): string[] => run.st.A.map((a, i) => `${termsTex(a.map((v) => v[0]), vars)} \\le ${run.st.b[i][0]}`);
-const eqLines = (run: Run, vars: readonly string[]): string[] => run.st.A.map((a, i) => `${termsTex(a.map((v) => v[0]), vars)} + ${sub(i)} = ${run.st.b[i][0]}`);
+const stdLines = (run: Run, vars: readonly string[]): string[] => run.st.A.map((a, i) => `${termsTex(a.map((v) => v[0]), vars)} ${run.st.rows[i].eq ? "=" : "\\le"} ${run.st.b[i][0]}`);
+/** each constraint as an equation: a slack variable in every row that is not an equation (numbered in the order of those rows) */
+const eqLines = (run: Run, vars: readonly string[]): string[] => {
+  let k = 0;
+  return run.st.A.map((a, i) => (run.st.rows[i].eq ? `${termsTex(a.map((v) => v[0]), vars)} = ${run.st.b[i][0]}` : `${termsTex(a.map((v) => v[0]), vars)} + ${sub(k++)} = ${run.st.b[i][0]}`));
+};
 
 interface Part { caption: string; rows: LpRow[] }
 /** the steps that turn the question's wording or its form into the standard problem: maximise, every constraint a ≤ with a non-negative variable */
@@ -92,8 +96,7 @@ function formulate(d: SxData, run: Run): Part[] {
   const sp = d.spec, n = sp.c.length;
   const orig = varNames(n);
   const parts: Part[] = [];
-  const m = run.final.m;
-  const { vars } = nameLists(d, m);
+  const { vars } = nameLists(d, run.final.ns);
   if (d.story) {
     const s = d.story;
     parts.push({
@@ -113,10 +116,18 @@ function formulate(d: SxData, run: Run): Part[] {
     return parts;
   }
   if (sp.sense === "min") parts.push({ caption: "The simplex algorithm maximises. Minimising $C$ is the same as maximising $P = -C$.", rows: [T(`P = -C = ${termsTex(sp.c.map((v) => -v), orig)}`)] });
-  if (sp.cons.some((k) => k.op === "=")) {
+  if (sp.eqAsRow && sp.cons.some((k) => k.op === "=")) {
+    parts.push({ caption: "An equation does not need a slack variable: it goes into the tableau as a row of its own, as it is.", rows: sp.cons.filter((k) => k.op === "=").map((k) => T(`${termsTex(k.a, orig)} = ${k.b}`)) });
+  } else if (sp.cons.some((k) => k.op === "=")) {
     parts.push({ caption: "An equality is both a ≤ and a ≥ constraint, so write it as two inequalities.", rows: sp.cons.filter((k) => k.op === "=").flatMap((k) => [T(`${termsTex(k.a, orig)} \\le ${k.b}`), T(`${termsTex(k.a, orig)} \\ge ${k.b}`)]) });
   }
-  if (sp.lower?.some((v) => v > 0)) {
+  if (sp.lowerAsRow && sp.lower?.some((v) => v > 0)) {
+    const lo = sp.lower;
+    parts.push({
+      caption: "A variable that must be at least a number is one more constraint. Write it with everything on one side, so that it is a ≤ constraint with a negative right-hand side.",
+      rows: orig.flatMap((v, j) => (lo[j] > 0 ? [T(`${v} \\ge ${lo[j]}`), T(`${lo[j]} - ${v} \\le 0`), T(`-${v} \\le -${lo[j]}`)] : [])),
+    });
+  } else if (sp.lower?.some((v) => v > 0)) {
     const lo = sp.lower!;
     parts.push({
       caption: "A variable that must be at least a number: take that number away, so the new variable is at least 0.",
@@ -127,8 +138,8 @@ function formulate(d: SxData, run: Run): Part[] {
       ],
     });
   }
-  if (sp.cons.some((k) => k.op !== "≤")) {
-    const ge = run.st.rows.map((r, i) => ({ r, i })).filter((x) => x.r.flip);
+  if (sp.cons.some((k) => k.op === "≥" || (k.op === "=" && !sp.eqAsRow))) {
+    const ge = run.st.rows.map((r, i) => ({ r, i })).filter((x) => x.r.flip && x.r.con < sp.cons.length);
     parts.push({ caption: "Multiply each ≥ constraint by −1 to make it ≤. A right-hand side can now be negative.", rows: ge.map((x) => T(`${termsTex(run.st.A[x.i].map((v) => v[0]), vars)} \\le ${run.st.b[x.i][0]}`)) });
   }
   return parts;
@@ -136,8 +147,8 @@ function formulate(d: SxData, run: Run): Part[] {
 
 /** the steps up to and including the initial tableau */
 function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string, show: SxBlock[], fresh: number) => void): void {
-  const { vars } = nameLists(d, run.final.m);
-  const m = run.final.m;
+  const { vars } = nameLists(d, run.final.ns);
+  const m = run.final.ns;
   const parts = formulate(d, run);
   const std = stdLines(run, vars);
   parts.forEach((p) => push(p.caption, [rowsOf(...p.rows)], 1));
@@ -145,7 +156,7 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
   const slacks = Array.from({ length: m }, (_, i) => sub(i)).join(", ");
   const eqRows: LpRow[] = [H("Constraints as equations"), ...eqLines(run, vars).map((l) => T(l)), N(`${slacks} ≥ 0`)];
   if (d.story) eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${r.unit})`)));
-  push(`Write each ≤ constraint as an equation by adding a slack variable: ${slacks} take up whatever is left over.${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
+  push(`Write each ≤ constraint as an equation by adding a slack variable: ${slacks} take up whatever is left over.${run.st.rows.some((r) => r.eq) ? " The equation has no slack variable: it stays as it is." : ""}${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
   push("Write the objective with every variable on the left and 0 on the right.", [rowsOf(H("Objective"), T(objRow(run.st.c, vars)))], 1);
   push("Write the equations as a tableau: the objective row first, then a row for each constraint.", [tabBlock(run, 0, d, ids)], 1);
 }
@@ -154,9 +165,12 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
 function iterationSteps(d: SxData, run: Run, k: number, ids: number[][], push: (caption: string, show: SxBlock[], fresh: number) => void, last: boolean, given = false): void {
   const it: Iter = run.iters[k];
   const t = run.tabs[k];
-  const { cols } = nameLists(d, t.m);
+  const { cols } = nameLists(d, t.ns);
   const vc = valueCol(t);
-  if (given) {
+  if (it.eqStart && !given) {
+    const ops = t.rows.map((_, i) => { const x = it.thetas.find((y) => y.row === i); return x ? `${frTex(t.rows[i][vc])} \\div ${frTex(t.rows[i][it.col])} = ${frTex(x.value)}` : ""; });
+    push(`Row ${it.row + 1} is an equation, so it has no slack variable and no variable is basic in it yet. Choose a pivot in that row, in a column where that row has the smallest θ, so that every right-hand side stays positive.`, [tabBlock(run, k, d, ids, { hi: it.col, pivot: [it.row, it.col], ops, opsHead: "\\theta" })], 1);
+  } else if (given) {
     push(`The pivot is given: ${mt(it.pivot)}, in the $${cols[it.col - 1]}$ column and row ${it.row + 1}. Divide the pivot row by the pivot first.`, [tabBlock(run, k, d, ids, { pivot: [it.row, it.col] })], 1);
   } else if (it.start) {
     const neg = t.rows.slice(1).findIndex((r) => r[vc][0] < 0) + 1;
@@ -186,7 +200,7 @@ function iterationSteps(d: SxData, run: Run, k: number, ids: number[][], push: (
 // ── Reading a tableau ────────────────────────────────────────────────────────
 function readRows(d: SxData, run: Run, t: Tab): { values: LpRow[]; tab: Reading } {
   const r = readTab(t);
-  const { cols } = nameLists(d, t.m);
+  const { cols } = nameLists(d, t.ns);
   const basic = r.basic.map((j) => cols[j - 1]);
   const non = cols.filter((_, i) => !r.basic.includes(i + 1));
   const rows: LpRow[] = [
@@ -287,7 +301,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
   const out: SolveStep[] = [];
   const push = (caption: string, show: SxBlock[], fresh: number): void => { out.push({ caption, edgeStates: {}, sxView: { blocks: show, fresh } }); };
   const m = run.final.m;
-  const { cols, vars } = nameLists(d, m);
+  const { cols, vars } = nameLists(d, run.final.ns);
 
   if (d.kind === "setup") {
     setupSteps(d, run, ids, push);
