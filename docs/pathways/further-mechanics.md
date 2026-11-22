@@ -1,5 +1,5 @@
 # Further Mechanics (AQA 7367 MA–ME)
-- **Status:** building (Dimensional Analysis is live; Work Done, Energy and Power are built, behind Developing-tools mode)
+- **Status:** building (Dimensional Analysis, Work Done, Energy, Power and Elastic Strings are live on the hub; flashcards are live; reviews and later passes remain)
 - **Updated:** 2026-11-22
 
 ## Intention
@@ -8,6 +8,7 @@ A place for every chapter of the AQA Further Maths mechanics option (MA Dimensio
 The space is Developing-tools only until a chapter is ready; a chapter goes live on its own when its tool does.
 
 ## Progress
+- 2026-11-22. **All four Work, Energy and Power tools are live on the hub** (`enabled: false` removed at Harry's request, before his own review). The review, a real phone, tablet and printer check and the dashboard Review status are still to do and now matter more: they are checks on live tools.
 - 2026-11-22. **The remaining MC gaps are built.** Energy bars (D14) as an optional working picture in Energy and Elastic; Elastic gained a smooth slope, two strings to two fixed points (A2) and a Show That switch; Force and Speed gained a train with coaches and, at A2, work and power from vectors (S63). What remains for MC: Depth and Teach material, calibration, the real phone / tablet / printer check, review and go-live, and the exam-style pass.
 - 2026-11-22. **Gaps closed in Work Done and Energy.** Several Forces has the slope setting (S97), Variable Force has a stopping-distance ask (a quadratic, a cube root or the cubic solved numerically: S69), and the Work-Energy Principle has a rough slope with friction (A2, including projection up it and finding μ) and the pulley case. Still open: energy-bar pictures (D14), printing, calibration, Depth and Teach material.
 - 2026-11-22. **Elastic Strings and Springs (MC4, MC6) built, behind Developing-tools mode** (`/elastic-strings`): Hooke's Law, Elastic Potential Energy and Elastic Energy Problems on `DecisionShell`; `elastic` stays one sub-tool (its Setting pool has three values: smooth table, dropped on a string, rough table at A2). Acceptance examples reproduced and every answer re-derived in `src/tests/elastic.test.ts`. Not done: two strings to two points A and B (A2 resolving), a slope or rope in the elastic problems, "show that", energy-bar pictures. All four MC tools are now built.
@@ -38,8 +39,8 @@ One tool per chapter, each with a sub-tool per cluster of statements. This is th
 Legacy source for each statement is in the page (M1 for straight-line momentum; M2 for most of work, energy, circles, centres of mass and equilibrium; M3 for dimensions, restitution and impulse).
 
 ## Next steps
-State at 2026-11-22: Dimensional Analysis (MA) is live; Work Done (MC1, MC5), Energy (MC2, MC3), Power (MC7) and Elastic (MC4, MC6) are built behind Developing-tools mode; flashcards for MC and the hub changes are live on merge. What is left, in order:
-- **Harry's review of Work Done, Energy and Power** (D1 to D7 of `specs/further-mechanics-mc.md` were confirmed by Harry on 2026-11-22), a real phone / tablet check and the dashboard Review status, then go-live (remove `enabled: false`).
+State at 2026-11-22: Dimensional Analysis (MA), Work Done (MC1, MC5), Energy (MC2, MC3), Power (MC7) and Elastic (MC4, MC6) are all live; flashcards for MC and the hub changes are live on merge. What is left, in order:
+- **Harry's review of Work Done, Energy, Power and Elastic** (D1 to D7 of `specs/further-mechanics-mc.md` were confirmed by Harry on 2026-11-22; the tools went live the same day, before the review), a real phone / tablet / printer check and the dashboard Review status.
 - **Small known roughnesses.** The angle diagram's `F cos θ` and `F sin θ` labels sit oddly at small angles (the generator only draws 10° and above); the Several Forces picture of a road that falls swaps the A and B names on the rising-slope template to fake the direction (see the comment in `workDone/several.ts`); kinetic-energy-only questions in Energy have no picture (display `hidden`). In Power, the force diagram of Power on a Slope is crowded where the resistance lies over the weight's down-slope component (the diagram template draws both at true direction); a smaller diagram or offset labels would fix it. A proper falling-slope option and a velocity-and-body picture would fix these.
 - **Gaps inside the built tools.** All the gaps found in the brief are built (2026-11-22). Both: calibration of the level ladders (R25, R26), the Depth and Teach material (the brief's section 7).
 - **The MC tools are all built, with their gaps.** A rope in the elastic problems (a string that goes slack) is not a separate case. The corpus (`specs/corpus/mechanics-mc-question-styles.md`) and the brief (§5.9 onwards) say what each holds.
