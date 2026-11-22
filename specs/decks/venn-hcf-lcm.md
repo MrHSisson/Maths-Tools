@@ -107,7 +107,7 @@ Each slide gets **Core**, **If time** or **Overflow** when it is built. A guide 
 | 45 | Exit ticket | | An HCF, an LCM, and one Venn asked for both |
 | 46 | Summary | | |
 
-If a lesson runs short, cut in this order: slide 7, the discussions (18, 39), the Depth cards; the book sets carry over from the dividers.
+If a lesson runs short, cut in this order: the discussions (18, 39), the Depth cards; the book sets carry over from the dividers.
 
 ## Stage 2 (later): the combinations
 
@@ -192,6 +192,23 @@ These are **authored** worksheets (hand-written, not generated), printed through
 - **Worksheets:** three A4 pages of three Venns each (nine at most), printed scaled to A5.
 - **Words:** "in both", "neither" and "middle" stay.
 - **Look card approved:** built as is; tweaks as we go.
+
+## Built so far (2026-11-22)
+
+Sections 1 and 2 are built (34 slides: Harry cut the old slide 7, the If time sort, so every later slide number in the tables above is one lower) in `venn-hcf-lcm.build.ts`. Differences from the plan above: a definition slide (the parts of a Venn, to draw) follows the objective; the three word-sorting Venns have eight cards each; the Depth cards are one speaker and a "do you agree?"; every Venn-making question set (prime factors, repeated primes, special cases) is a run of build slides, one Venn each; one book set only (slide 17); both worksheets are at the end after a "Worksheet slides" divider (Worksheet 1 is the slide 17 questions, blank; Worksheet 2 is nine harder Venns), and the answers are a full-width visualiser slide after each book set (a second book set, Worksheet 2's nine, sits after the special cases); each Venn run is four one-Venn slides; no tiles-to-number slide, no read-backwards grids, no Mei discussion; no Prime tiles slide and no check slide (Harry); the six prime-factors-in-a-Venn questions are build slides, one Venn each; the repeated-primes discussion shows Mei's wrong Venn; the prime tile slides (prime tiles, the rule, 8 and 12) use a build layout, not scattered tiles (Harry): the numbers as prime tiles in the left 2/5, the Venn in the right 3/5, and prime tile buttons along the bottom that each add a tile to drag in; book sets (slides 15, 24) show just the two numbers, big and plain, with the middle-tile count on the first six (Harry: the book questions are written onto the worksheets anyway, so the factorisations are not forced into the cells); the discussion speaker is Mei (the cast), not Ella; slide 20 holds both special pictures side by side; two tags were added (`venn-middle-not-shared`, `venn-empty-middle-error`) for the Depth cards. Pairs used so far are listed in the build script (never reuse a pair there in sections 3 and 4).
+
+## Decision (2026-11-22, Harry): HCF and LCM are a second deck
+
+The first deck, **Venn Diagrams & Product of Primes** (id `venn-hcf-lcm`, 34 slides, built by `venn-hcf-lcm.build.ts`), stops after prime factors in a Venn. Sections 3 and 4 above (HCF from the Venn, LCM from the Venn; original slides 28 to 46) become **a second deck, a separate build script and a new deck id** (suggested `hcf-lcm-from-venn`), starting from the same Venn pieces. It follows the first deck, so it can assume pupils can already build a Venn from two numbers' prime factors.
+
+**What Harry's reviews of the first deck taught us (apply to the second):**
+
+- Every "put these in a Venn" question is a **build slide** (`S.vennBuild`): the numbers listed as prime tiles in the left 2/5, the Venn in the right 3/5, prime tile buttons along the bottom. Not a text question slide, not scattered tiles to drag, not a diagram inside a question set.
+- **One question to a slide, short runs: four, not six.** He thinks there are too many whiteboard questions; slim early.
+- **Book work is plain numbers** (the two numbers only, with the factorisations on the worksheet). Each book set has a matching blank **worksheet** and a full-width **visualiser slide** (`S.visualiser`) for him to do the answers under. Worksheets live on a slide, so they sit at the end under a "Worksheet slides" divider; two worksheets, never one replacing the other; worksheets have **no scaffold** (blank Venns).
+- Keep the answer reveal where the plan asks for it (HCF and LCM lines), but no clutter: no discussion slide that cannot show its diagram; Depth cards are **one speaker and a "do you agree?"** with short text.
+- Do not put containers inside containers (boxes round Venns that already have a box: use a dividing line). Do not tie a worksheet to a slide number he did not ask for. When he says "slide N", count the **live deck's current order** (read it with `npm run deck -- pull`), and ask when two instructions conflict.
+- Look at the deck (`review`, and `sheet` for single slides) before saying it is done, and say plainly what was not checked.
 
 ## Still open (small)
 

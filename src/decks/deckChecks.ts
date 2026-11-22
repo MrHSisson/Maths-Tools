@@ -112,7 +112,7 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
         if (el.cards.filter((c) => !c.region).length > 12) warnings.push(`${where}: more than 12 cards scattered round the outside will not all fit`);
         for (const p of tileProblems(el.cards)) problems.push(`${where}: ${p}`);
         if ((el.lines?.length ?? 0) > 0 && !regionsOf(el.cards)) warnings.push(`${where}: the HCF / LCM line needs every card to be a prime tile placed in a region, or it shows nothing`);
-        if (el.cards.length === 0) warnings.push(`${where}: the Venn has no cards`);
+        if (el.cards.length === 0 && !el.palette?.length && slide.family === "teach") warnings.push(`${where}: the Venn has no cards`);
       }
       if (el.kind === "factorTree") {
         for (const p of treeProblems(el.tree)) problems.push(`${where}: ${p}`);
