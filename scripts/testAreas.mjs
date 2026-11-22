@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 
 /** Test files by area. Patterns are tested against the file name, e.g. "cpaExam.test.ts". */
 export const TEST_AREAS = {
-  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas|testShards)\.test\.ts$/,
+  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|toolFactsTruth|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas|testShards)\.test\.ts$/,
   cpa: /^(cpa.*|criticalPathOptions|levelling.*|workerLabels)\.test\.ts$/,
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
