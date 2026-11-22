@@ -1,17 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { DecisionProblem, LpRow, SolveStep, SxBlock, SxTabView } from "./types";
-import { questionBlocks } from "./lpSimplexSolve";
+import { questionBlocks, solveSimplex } from "./lpSimplexSolve";
+import WorkingPage, { Newest } from "./WorkingPage";
 
 // The picture of a Simplex Algorithm question is the page a student would write: rows of words and lines, and the tableau as a table with the pivot column, the
-// pivot row and the pivot highlighted and the row operations written beside the new tableau. The newest blocks are blue. The page never scrolls: it is scaled
-// to fit its panel. Every cell is KaTeX rendered to a string with inline styles, so the layout holds on every screen.
+// pivot row and the pivot highlighted and the row operations written beside the new tableau. On screen it is an open page that grows downward (WorkingPage): every
+// step so far, each numbered like the step list beside it, the newest in blue and scrolled into view. Every cell is KaTeX rendered to a string with inline styles,
+// so the layout holds on every screen.
 
 const INK = "#0f172a";
 const NEW = "#1d4ed8";
 const GIVEN = "#475569";
-const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 function Tex({ t }: { t: string }) {
   let html: string;
@@ -21,7 +22,6 @@ function Tex({ t }: { t: string }) {
 function Prose({ text }: { text: string }) {
   return <>{text.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? <Tex key={i} t={part.slice(1, -1)} /> : <span key={i}>{part}</span>))}</>;
 }
-const label: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#64748b" };
 
 function Row({ r, colour }: { r: LpRow; colour: string }) {
   if (r.k === "gap") return <div style={{ height: "0.4em" }} />;
@@ -33,7 +33,7 @@ function Row({ r, colour }: { r: LpRow; colour: string }) {
 }
 
 function Tableau({ b, colour }: { b: SxTabView; colour: string }) {
-  const cell: CSSProperties = { padding: "0.18em 0.55em", textAlign: "center", whiteSpace: "nowrap" };
+  const cell: CSSProperties = { padding: "0.18em 0.55em", textAlign: "center", whiteSpace: "nowrap", minWidth: "2.1em" };
   const last = b.head.length - 1;
   return (
     <table style={{ borderCollapse: "collapse", fontSize: "0.85em", color: colour }}>
@@ -68,38 +68,45 @@ function Block({ b, fresh }: { b: SxBlock; fresh: boolean }) {
 }
 
 export default function SxCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
-  const box = useRef<HTMLDivElement>(null);
-  const inner = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const v = step?.sxView;
-  const blocks: SxBlock[] = v ? v.blocks : questionBlocks(p);
-  const fresh = v?.fresh ?? 0;
-  useIso(() => {
-    const bx = box.current, i = inner.current;
-    if (!bx || !i || typeof ResizeObserver === "undefined") return;
-    const fit = () => {
-      const w = i.offsetWidth, h = i.offsetHeight;
-      if (w > 0 && h > 0) setScale(Math.max(0.3, Math.min(1, (bx.clientWidth - 20) / w, bx.clientHeight / h)));
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(bx);
-    return () => ro.disconnect();
-  }, [blocks]);
+  // the page of working so far: every step up to this one, each step's new blocks under the last (the step is found among the problem's own steps, which are deterministic)
+  const all = useMemo(() => (p.sx ? solveSimplex(p) : []), [p]);
+  const idx = useMemo(() => {
+    if (!step?.sxView) return -1;
+    const key = JSON.stringify([step.caption, step.sxView]);
+    return all.findIndex((st) => JSON.stringify([st.caption, st.sxView]) === key);
+  }, [all, step]);
   if (!p.sx) return null;
+  const shown = step?.sxView ? (idx >= 0 ? all.slice(0, idx + 1) : [step]) : [];
+  const given = step ? [] : questionBlocks(p);
+  const span = tabSpan([...given, ...all.flatMap((st) => st.sxView?.blocks ?? [])]);   // the same for every step, so nothing shifts as the page grows
+  const blocksOf = (st: SolveStep): SxBlock[] => { const v = st.sxView; return v ? v.blocks.slice(v.blocks.length - (v.fresh ?? 0)) : []; };
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#fff", overflow: "hidden", containerType: "size" } as CSSProperties}>
-      <div style={{ position: "absolute", top: 12, left: 60, right: 12, ...label }}>{v ? "Your working" : blocks.length ? "The tableau" : "Your working"}</div>
-      <div ref={box} style={{ position: "absolute", top: 40, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
-        <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "60em", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(13px, 4.4cqh, 30px)", color: INK }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.6em" }}>
-            {blocks.map((b, i) => <Block key={i} b={b} fresh={!!v && i >= blocks.length - fresh} />)}
+    <WorkingPage watch={`${p.prompt}|${shown.length}`} heading={!step && given.length ? "The tableau" : "Your working"} hint={!step && !given.length ? "Your working builds up here, one step at a time." : undefined}>
+      {given.map((b, i) => <PageBlock key={`g${i}`} b={b} fresh={false} span={span} />)}
+      {shown.map((st, i) => {
+        const newest = i === shown.length - 1;
+        if (!blocksOf(st).length) return null;   // a step that only says something (the list beside it says it) adds nothing to draw
+        const body = (
+          <div style={{ display: "flex", gap: "0.7em", alignItems: "flex-start" }}>
+            <span style={{ flex: "0 0 auto", width: "1.5em", height: "1.5em", marginTop: "0.15em", borderRadius: "50%", background: newest ? NEW : "#e2e8f0", color: newest ? "#fff" : GIVEN, fontSize: "0.62em", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</span>
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.5em" }}>{blocksOf(st).map((b, j) => <PageBlock key={j} b={b} fresh={newest} span={span} />)}</div>
           </div>
-          {!v && !blocks.length && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500 }}>Your working builds up here, one step at a time.</div>}
-        </div>
-      </div>
-    </div>
+        );
+        return newest ? <Newest key={i}>{body}</Newest> : <div key={i} style={{ display: "contents" }}>{body}</div>;
+      })}
+    </WorkingPage>
   );
+}
+
+/** how wide the widest tableau of a working is, in em (an estimate from its columns): every tableau of a working sits in a box this wide, so they line up with each other */
+export function tabSpan(blocks: SxBlock[]): number {
+  let w = 0;
+  for (const b of blocks) if (b.k === "tab") w = Math.max(w, ((b.head.length + (b.label ? 1.4 : 0)) * 3.1 + (b.ops ? 13 : 0)) * 0.85);
+  return w;
+}
+/** a block on the open page: a tableau goes in the shared box (centred as a box, its own left edge the same as every other tableau's), a run of lines is left-aligned */
+function PageBlock({ b, fresh, span }: { b: SxBlock; fresh: boolean; span: number }) {
+  return <div style={b.k === "tab" ? { alignSelf: "center", width: `${span}em`, maxWidth: "100%", overflowX: "auto" } : undefined}><Block b={b} fresh={fresh} /></div>;
 }
 
 // ── the phone: the whole solution as one open page ──────────────────────────────────────────
@@ -130,6 +137,7 @@ export function SxPrintFigure({ p }: { p: DecisionProblem }) {
   return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.6em", color: INK }}>{blocks.map((b, i) => <Block key={i} b={b} fresh={false} />)}</div>;
 }
 export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
+  const span = tabSpan(steps.flatMap((st) => st.sxView?.blocks ?? []));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
       {steps.map((st, i) => {
@@ -138,7 +146,7 @@ export function SxPrintWorking({ steps }: { steps: SolveStep[] }) {
         return (
           <div key={i} style={{ breakInside: "avoid" }}>
             <div style={{ fontSize: "0.9em", color: GIVEN, lineHeight: 1.4, marginBottom: 2 }}><Prose text={st.caption} /></div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center" } : undefined}><Block b={b} fresh={false} /></div>)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4em", alignItems: "flex-start", color: INK }}>{added.map((b, j) => <div key={j} style={b.k === "tab" ? { alignSelf: "center", width: `${span}em` } : undefined}><Block b={b} fresh={false} /></div>)}</div>
           </div>
         );
       })}
