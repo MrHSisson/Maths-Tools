@@ -31,6 +31,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-23 — Further Mechanics: open to everyone, with a "still in development" banner
+
+Branch `claude/vigilant-cerf-3a5oah`. Area: `src/shared/components/DevNotice.tsx`, `src/shared/decision/` (a `devNotice` setting), `src/tools/FurtherMechanics/`, `SpecLanding.tsx`.
+
+- The Work, Energy and Power range (Work Done, Energy, Power, Elastic Strings and Springs, the flashcards and the MC chapter on the hub) is not dev-gated, but each now opens with an amber **Still in development** banner saying it is open to use but still being built and checked, so questions, wording and pictures may change. The banner can be closed with the cross and stays closed for the rest of the visit in that tab (it comes back on the next visit). It is a new shared piece (`DevNotice`) that any tool can use: a Decision-shell tool sets `config.devNotice`, a hub chapter sets `notice`.
+- Test: `mcNotice.test.ts` (each tool carries the notice and is not dev-gated). Checked in Chromium as a visitor: the banner shows on all four tools, the flashcards and the MC chapter, closes, stays closed on reload, and does not close the other tools' banners; phone width checked.
+- To take the range out of "in development" later: delete the `devNotice` line from the four tools, the `notice` on the chapter and the banner in the flashcards (all use `MC_NOTICE` in `mcNotice.ts`).
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: development banner (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
+
 ## 2026-11-22 — The Venn worksheet: printed Venns, three to an A4 page (no deck yet)
 
 Branch `claude/venn-hcf-lcm-handoff-zzr94r` (merge 3 of the Venn plan). Area: `src/decks/{vennSheet,types,worksheets,SlideCanvas,deckChecks,builder,vennLayout,Venn}`, `src/shared/printables.ts`, `src/tests/vennSheet.test.ts`, `scripts/testAreas.mjs`, `docs/reference/decks.md`.
@@ -318,6 +329,69 @@ Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{InverseTrig,types,layout
 
 Agent: Claude Code
 Notes: no Build Log block written this session.
+
+## 2026-11-22 — Further Mechanics: energy bars and the remaining gaps
+
+Branch `claude/vigilant-cerf-3a5oah`. Area: `src/tools/FurtherMechanics/` (`energy/bars.ts`, `power/train.ts`, `elastic/`), `Energy.tsx`, `Elastic.tsx`, `Power.tsx`, tests and docs.
+
+- **Energy bars as the working picture (D14).** A new "Working Picture" option in Energy (Conservation of Energy and the Work-Energy Principle: level, slope, rough slope, pulley) and Elastic Energy Problems swaps the diagram for energy bars: a Start column and an End column, each stacked from gravitational, elastic and kinetic energy and work done or lost, always the same height so the equation is seen balancing; a dashed line shows what is conserved when only gravity and the spring do work. The bars appear once the energy equation has been written. Read from each question's own inputs, so no builder changed.
+- **Elastic.** A smooth slope (A2) for the dropped string: the same working with g sin α, drawn with the slope-and-string picture (greatest extension, distance, acceleration, greatest speed). Hooke's Law: a particle on two strings fixed at two points on one level (A2): the extensions, the cosine rule for the angles, resolving horizontally for the second modulus and vertically for the mass, drawn with the two-strings picture. A Show That switch gives the answer in the question and the working proves it.
+- **Force and Speed.** A train of an engine and coaches (the acceleration of the whole train, then the tension in the coupling by treating the coaches alone) and, at A2, a constant force and a displacement as vectors: the work as F·d and the average power. Both are options at Level 3.
+- Tests: bars columns are the same height in every setting; the slope, the two-points and the train and vector answers are put back into their equations; every KaTeX line and scene in all three Diagram modes; A2 settings are not offered at AS.
+- Not done: Depth and Teach material, calibration, the real phone, tablet and printer check, Harry's review and go-live, exam-style questions.
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: energy bars and the remaining gaps (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
+
+## 2026-11-22 — Further Mechanics: the Power tool (MC7)
+
+Branch `claude/vigilant-cerf-3a5oah`. Area: `src/tools/FurtherMechanics/Power.tsx` and `power/`, `src/shared/mechanics/contexts.ts` (a `power` tag), `src/tools/FurtherMechanics/mechanicsSpec.ts`, tests and docs.
+
+- **Power (MC7) built, not yet live** (`/power`, `enabled: false`, Developing-tools mode). The fourth Work, Energy and Power tool, built the same way as Work Done and Energy on `DecisionShell` with a mechanics diagram and the written working as its picture. Four sub-tools, each a single skill: **Average Power** (lifting a load: the power, the time, or the work from a power and a time; the average power of brakes; a pump, as three lettered parts: potential energy per second, kinetic energy per second, the power; the time for a vehicle to speed up at constant power), **Force and Speed** (power = force × speed: the power, the driving force, the speed or the resistance at constant speed; the acceleration at an instant from F = ma; the power for a higher constant speed; a resistance proportional to the speed or to its square: k, the maximum speed, the maximum power, the acceleration), **Power on a Slope (A2)** (steady speed, power or resistance up or down a slope, the angle from the power and an acceleration, the time from rest at constant power by work-energy, a resistance kv as a quadratic; the slope can be given by its angle or by sin α = 1/n; drawn as a force diagram with the weight resolved, which draws a descending vehicle's forces correctly) and **Power from Motion Data** (a displacement function s(t), quadratic or cubic, differentiated for v and a; or a speed-time graph, asking the engine while it accelerates, the vehicle at constant speed, or the brakes while it slows).
+- Options: Course, Diagram, Context, Doing the Work, Ask for, Motion, Resistance, Direction, Angle Given As, Data, Phase Asked, Units Given (kW, km h⁻¹, tonnes, minutes), Answer Format (W or kW), g. A given power is rounded to 3 s.f. and the answer recomputed from the shown power, so every printed question is self-consistent.
+- `src/tests/power.test.ts`: the brief's acceptance examples (22.0 kW, 1800 N, 1.0 and 0.8 m s⁻², 59.4 km h⁻¹, 7.44 s, 20.8 W), every generated answer re-derived by another route (put back into work = power × time, P = (R + ma)v, a numerical derivative of s(t) or of the graph), every KaTeX string, every scene in all three Diagram modes, nothing A2-only at AS, and 30 different questions per level at default options. The hub pairs MC7's buttons with the four sub-tools (the Power on a Slope one on the A2 row). The context library gained a `power` tag for the cyclist, car, van, truck, crane and climber.
+- Known roughness: the Power on a Slope force diagram is crowded where the resistance lies over the weight's down-slope component; checked in Chromium at laptop width only (the shell smoke check passes for all three Further Mechanics tools).
+- Not done: a train with coaches and the vector-displacement work (S63) in Force and Speed; the rocket as a separate context; real phone, tablet and printer check; printing a saved question (the tool does not set `skillSheet`); Harry's review and go-live.
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: Power (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
+
+## 2026-11-22 — Further Mechanics: Work Done, Energy, Power and Elastic Strings go live
+
+Branch `claude/vigilant-cerf-3a5oah`. Area: `src/registry.ts`, docs.
+
+- **The four Work, Energy and Power tools are live on the Further Mechanics hub** (`/work-done`, `/energy`, `/power`, `/elastic-strings`): `enabled: false` is removed, so they show for everyone, not just in Developing-tools mode, and every sub-tool button on the hub (MC1 to MC7) is a live link instead of a greyed one. Done at Harry's request, before his own review of the tools; the real phone, tablet and printer check and the dashboard Review status are still to do.
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: tools live (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
+
+## 2026-11-22 — Further Mechanics: gaps in Work Done and Energy, printing, hub tidy-ups
+
+Branch `claude/vigilant-cerf-3a5oah`. Area: `src/tools/FurtherMechanics/workDone/`, `energy/`, `WorkDone.tsx`, `Energy.tsx`, tests and docs.
+
+- **Work Done, Several Forces: a road given by its angle (A2).** A new situation, "Up a slope by its angle": the work done by the driving force, against gravity (the height gained is the distance along the road times sin α, so the working finds it first) and against the resistance. The force is chosen large enough to pull the load up.
+- **Work Done, Variable Force: a stopping distance.** At Level 3 a vehicle moving at a given speed, with the engine off or a constant driving force, against a resistance that grows with distance, is asked how far it travels before it stops. The energy equation gives a quadratic (formula), a cube root, or, for a resistance in x² with a driving force, the cubic that has to be solved numerically. A new "Ask for" option at Level 3 chooses the speed or the stopping distance.
+- **Energy, Work-Energy Principle: a rough slope (A2) and a pulley.** Setting gained "Rough slope (A2)" (a slope given by its angle, with friction μ times the normal reaction: the speed after sliding down it, the distance a particle projected up it travels before it stops, or the coefficient of friction from a speed) drawn as a force diagram with the weight resolved, and "Raised over a pulley" (a load raised from rest by a constant pulling force: the speed at the top, or the force from the speed), drawn with the pulley picture. At AS the rough slope falls back to the ordinary slope.
+- Tests extended in `workDone.test.ts` and `energy.test.ts` (the stopping distance put back into the energy equation with a numerical integral; the friction and pulley answers closed against their equations; KaTeX, scenes and the Course setting).
+- Not done: energy-bar pictures as the working picture (D14), a descending slope in the pulley-free picture, the real phone, tablet and printer check, Harry's review and go-live.
+
+- **A saved mechanics question now prints with its picture** (all four Work, Energy and Power tools). They set `skillSheet` and `skillPrint` (the shell hook, from `mcPrint.ts`): the saved-question print puts the diagram under each question (with a working box) and prints the worked answer (each step's caption and lines) on the answers page; a question with Diagram set to None prints without a picture. Checked in Chromium: save a question, Print saved questions, Print both.
+- **Hub.** The Dimensional Analysis tile "Any exam question" is now "Exam-style questions", and kinetic and potential energy and conservation of energy are listed under both MC2 and MC3 (the pairing test now forbids a sub-tool twice under one statement instead of twice anywhere).
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: Work Done and Energy gaps (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
+
+## 2026-11-22 — Further Mechanics: the Elastic Strings and Springs tool (MC4, MC6)
+
+Branch `claude/vigilant-cerf-3a5oah` (on top of the Power commit). Area: `src/tools/FurtherMechanics/Elastic.tsx` and `elastic/`, `mechanicsSpec.ts`, tests and docs.
+
+- **Elastic Strings and Springs built, not yet live** (`/elastic-strings`, `enabled: false`, Developing-tools mode). The last of the four Work, Energy and Power tools, on `DecisionShell` with the mechanics diagrams and the written working. Three sub-tools: **Hooke's Law** (the tension or thrust from a length or an extension; the extension, the stiffness k or the modulus; a mass hanging in equilibrium: extension, length, modulus or mass; a particle between two vertical strings), **Elastic Potential Energy** (the energy stored from a length or an extension, the work done between two lengths, the modulus or the length from the energy) and **Elastic Energy Problems** (a spring or string released on a smooth table: the energy stored then the speed at the natural length or at a given extension; a particle dropped from the support of a string: the greatest extension, the distance below the support, the acceleration at the lowest point, the greatest speed; and at A2 a rough table: the speed, or how far it slides after the string goes slack). `elastic` stays one sub-tool, because its Setting pool has three values.
+- Options: Course, Diagram, Spring or String, Setting, Ask for, Given As (the new length or the extension), Units Given (lengths in cm), g. A given force or energy is rounded to 3 s.f. and the answer recomputed from the shown value.
+- `src/tests/elastic.test.ts`: the brief's acceptance examples (24 N, 0.118 m, 7.875 J, 4.8 J and 4.0 m s⁻¹, 0.790 m, 39.6 m s⁻², 5.01 m s⁻¹), every generated answer put back into its law or energy equation (the drop's quadratic root found independently by bisection), every KaTeX string and scene in all three Diagram modes, the Course setting, and 30 different questions per level. The hub pairs MC4 and MC6 with the sub-tools.
+- Not done: two strings to two points A and B (A2 resolving), a slope or rope in the elastic problems, "show that" mode, energy-bar pictures, friction drawn on the table picture, a real phone, tablet and printer check, printing a saved question, Harry's review and go-live.
+
+Agent: Claude Code
+Notes: Build Log block "Further Mechanics: Elastic (Claude Code)" (tag agent:claude-code), branch `claude/vigilant-cerf-3a5oah`.
 
 ## 2026-11-22 — Advent Calendar: out of Developing-tools mode
 

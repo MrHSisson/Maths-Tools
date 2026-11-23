@@ -337,6 +337,8 @@ export interface DecisionShellProps {
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
     /** Print hand-selected skill questions from the saved list with working boxes and a separate answers page. */
     skillSheet?: boolean;
+    /** a banner under the top bar for a tool that is open to everyone but not in its final form: what to tell the teacher (it can be closed for the visit) */
+    devNotice?: string;
     /** a trial (laptop only): before the steps start, the question is shown large and centred over the tool, then shrinks to the question card as the first step begins; `hasFigure` says whether the picture (a tableau, a table of data) is drawn under it */
     questionStage?: { hasFigure?: (p: DecisionProblem) => boolean; /** the picture drawn under the question in the stage, as ordinary flowing content that fits its width (never a scrolling box); without it the tool's own picture is shown in a box */ figure?: (p: DecisionProblem) => ReactNode };
     /** what a printed skill question adds to its words: `figure` is drawn under the prompt (the tableau or table the question gives), `working` is the model working on the answers page (given the steps `solve` returns), `perPage` puts one question on each page with a large working area, `dots` fills that area with a dot grid to draw tables on */
