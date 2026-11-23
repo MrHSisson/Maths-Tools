@@ -1035,6 +1035,374 @@
    "built": "ijq3yj"
   },
   {
+   "id": "it-solve-cos",
+   "family": "practice",
+   "title": "Solve: cos, 0 to 2π",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": false,
+       "cos": true,
+       "tan": false,
+       "r360": true,
+       "r720": false,
+       "rSym180": false,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 6,
+     "id": "it-solve-cos-1"
+    }
+   ],
+   "built": "yp135g"
+  },
+  {
+   "id": "it-solve-sin",
+   "family": "practice",
+   "title": "Solve: sin, 0 to 2π",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": true,
+       "cos": false,
+       "tan": false,
+       "r360": true,
+       "r720": false,
+       "rSym180": false,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 6,
+     "id": "it-solve-sin-1"
+    }
+   ],
+   "built": "1bzzcoz"
+  },
+  {
+   "id": "it-solve-tan",
+   "family": "practice",
+   "title": "Solve: tan, 0 to 2π",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": false,
+       "cos": false,
+       "tan": true,
+       "r360": true,
+       "r720": false,
+       "rSym180": false,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 3,
+     "id": "it-solve-tan-1"
+    }
+   ],
+   "built": "3uywmj"
+  },
+  {
+   "id": "it-solve-neg",
+   "family": "practice",
+   "title": "Solve: −π to π",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": true,
+       "cos": true,
+       "tan": true,
+       "r360": false,
+       "r720": false,
+       "rSym180": true,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 11,
+     "id": "it-solve-neg-1"
+    }
+   ],
+   "built": "qtqovn"
+  },
+  {
+   "id": "it-solve-long",
+   "family": "practice",
+   "title": "Solve: 0 to 4π",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": true,
+       "cos": true,
+       "tan": true,
+       "r360": false,
+       "r720": true,
+       "rSym180": false,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 6,
+     "id": "it-solve-long-1"
+    }
+   ],
+   "built": "cneyjp"
+  },
+  {
+   "id": "it-solve-dec",
+   "family": "practice",
+   "title": "Solve: calculator values",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": true,
+       "cos": true,
+       "tan": true,
+       "r360": true,
+       "r720": false,
+       "rSym180": true,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": false,
+       "decimal": true,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 8,
+     "id": "it-solve-dec-1"
+    }
+   ],
+   "built": "1hnjgxz"
+  },
+  {
+   "id": "it-solve-rearr",
+   "family": "practice",
+   "title": "Solve: rearrange first",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level1",
+      "multiSelect": {
+       "sin": true,
+       "cos": true,
+       "tan": false,
+       "r360": true,
+       "r720": false,
+       "rSym180": true,
+       "rSym360": false,
+       "direct": false,
+       "scaled": true,
+       "shifted": true,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": false,
+       "w180": false,
+       "w720": false,
+       "wSym180": false,
+       "multiple": false,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 4,
+     "id": "it-solve-rearr-1"
+    }
+   ],
+   "built": "skjsx4"
+  },
+  {
+   "id": "it-solve-multi",
+   "family": "practice",
+   "title": "Solve: a multiple of θ",
+   "els": [
+    {
+     "kind": "generator",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "level": "level2",
+      "multiSelect": {
+       "sin": false,
+       "cos": false,
+       "tan": true,
+       "r360": false,
+       "r720": false,
+       "rSym180": false,
+       "rSym360": false,
+       "direct": true,
+       "scaled": false,
+       "shifted": false,
+       "negative": false,
+       "deg": false,
+       "rad": true,
+       "exact": true,
+       "decimal": false,
+       "w360": true,
+       "w180": true,
+       "w720": false,
+       "wSym180": false,
+       "multiple": true,
+       "half": false,
+       "shift": false,
+       "both": false
+      }
+     },
+     "seed": 1,
+     "id": "it-solve-multi-1"
+    }
+   ],
+   "built": "1e87e5m"
+  },
+  {
    "id": "it-summary",
    "family": "structure",
    "title": "Summary",

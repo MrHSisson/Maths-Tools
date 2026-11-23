@@ -3,6 +3,7 @@ import { RatioTable } from "../shared/components/RatioTable";
 import { BarModel } from "../shared/components/BarModel";
 import { rowsBarNatural, type BarModelData } from "../shared/barModel";
 import type { RatioTableData } from "../shared";
+import { graphStepVisual } from "../shared/grapher/SmartGrapher";
 
 // The pictures in a question's working: a ratio table growing row by row, or the fraction bar model. A generator slide draws them
 // from the question's working steps; a fixed question carries them in its explanation lines as `caption\n@ratiotable {json}` or
@@ -26,8 +27,9 @@ export function FitWidth({ w, h, children }: { w: number; h: number; children: R
 
 type WorkedKind = "ratioTable" | "bar";
 
-/** One working picture, with its caption above it. */
-export function WorkedPicture({ type, data, caption }: { type: WorkedKind; data: unknown; caption?: string }) {
+/** One working picture, with its caption above it. `graph` is a graph that builds up beside the working (the Solving Trig Equations tool's), drawn from a step's `graphBuild` data. */
+export function WorkedPicture({ type, data, caption }: { type: WorkedKind | "graph"; data: unknown; caption?: string }) {
+  if (type === "graph") return <div style={{ width: "100%" }}>{graphStepVisual({ extra: data } as Parameters<typeof graphStepVisual>[0])}</div>;
   if (type === "ratioTable") return <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{caption && <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{caption}</div>}<RatioTable data={data as RatioTableData} scale={1.5} /></div>;
   const bar = data as BarModelData, size = 30, { w, h } = rowsBarNatural(bar, size);
   return (

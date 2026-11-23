@@ -247,7 +247,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const total = q.working.length;
   const whiteboard = workspace;
   /** The working's ratio table or bar model: with one, full-width shows it developing beside the steps. */
-  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : null;
+  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : (w.extra as { kind?: string } | undefined)?.kind === "graphBuild" ? { type: "graph" as const, data: w.extra, caption: undefined } : null;
   const hasPicture = !whiteboard && q.working.some((w) => pictureOf(w));
   const latest = [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
