@@ -358,6 +358,16 @@
    ]
   },
   {
+   "title": "Inverse graph animation (decks)",
+   "level": 3,
+   "blocks": [
+    {
+     "t": "p",
+     "s": "**For:** showing where the graph of an inverse function comes from. **How it works:** a slide piece that animates y = sin x (restricted to −π/2 ≤ x ≤ π/2), y = cos x (0 ≤ x ≤ π) or y = tan x (−π/2 < x < π/2) being reflected in the line y = x and then separating into its own axes as arcsin, arccos or arctan, one click at a time (restrict, mirror line, fold, separate). Back plays it in reverse."
+    }
+   ]
+  },
+  {
    "title": "Rectilinear shapes in decks",
    "level": 3,
    "blocks": [
@@ -1083,6 +1093,172 @@
    ]
   },
   {
+   "id": "dashboard-checklists",
+   "title": "The dashboard as checklists",
+   "status": "paused",
+   "measure": "",
+   "updated": "2026-11-22",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "The Tools dashboard (`/admin`) should answer one question at a glance: **what is done, and what is left?** Today it shows facts generated from the code, one Review dropdown per tool, and some views over the docs, and its use is unclear (Harry, 2026-11-22). It becomes checklists: every tool, deck and pathway has a list of things that must be true before it is finished, a tick for each, and a progress bar made from the ticks."
+      },
+      {
+       "t": "p",
+       "s": "Decided with Harry (2026-11-22):"
+      },
+      {
+       "t": "ul",
+       "items": [
+        "**Scope:** tools, decks and pathways all become checklists.",
+        "**Only Harry or Claude tick.** Nothing ticks itself from the code. A tick is a deliberate statement that the thing is done, made by Harry on the dashboard or by Claude through the notes API at the end of a session, and kept in the shared notes. (An earlier version of this plan had the code tick what it could prove; Harry decided against it.)",
+        "**The code's facts stay, as evidence only.** Beside each item the dashboard shows what the code finds (for example \"a brief found: specs/linear-programming-simplex.md\", \"tests found\"), so a person ticking can see it. If a tick and the evidence disagree (ticked \"covered by tests\" but the code finds none), the item shows a warning; it never changes the tick.",
+        "**The front page is a grid of tools with progress:** one row per tool with a progress bar and its open items, so scanning down shows where everything stands. A tool's full checklist opens from its row."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "The checklists (a first version, to be adjusted as they are used)",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "**A tool (\"ready to go live\").** Progress counts the ticks on the items that apply to that tool; an item that does not apply (calibration for a Decision tool) is left out, not unticked."
+      },
+      {
+       "t": "table",
+       "head": [
+        "Item",
+        "Evidence the dashboard shows",
+        "Applies to"
+       ],
+       "rows": [
+        [
+         "A brief exists in `specs/`",
+         "the brief found, if any",
+         "every tool"
+        ],
+        [
+         "Covered by tests",
+         "the tests found, if any",
+         "every tool"
+        ],
+        [
+         "Explains itself (About text)",
+         "the About file or purpose found, if any",
+         "every tool"
+        ],
+        [
+         "Difficulty calibrated",
+         "the calibration found, if any",
+         "ToolShell tools"
+        ],
+        [
+         "Can be printed",
+         "the print routes found",
+         "tools that are not ToolShell (a ToolShell tool always prints a worksheet)"
+        ],
+        [
+         "Checked on a phone",
+         "nothing (a person judges)",
+         "every tool"
+        ],
+        [
+         "Checked on a tablet",
+         "nothing",
+         "every tool"
+        ],
+        [
+         "Checked on a laptop",
+         "nothing",
+         "every tool"
+        ],
+        [
+         "Printed on a real printer",
+         "nothing",
+         "tools that print"
+        ],
+        [
+         "Answers checked (against the book or the exam)",
+         "nothing",
+         "every tool"
+        ],
+        [
+         "Reviewed by Harry",
+         "nothing (replaces the Review dropdown)",
+         "every tool"
+        ],
+        [
+         "Switched on (live)",
+         "whether the registry has it enabled",
+         "every tool"
+        ]
+       ]
+      },
+      {
+       "t": "p",
+       "s": "Extras that never count against a tool, shown beside the list: Depth bank, lessons, Teach deck, a lesson deck (with its name), printable sheets."
+      },
+      {
+       "t": "p",
+       "s": "**A deck.** The plan is written; the plan is agreed; the look card is approved; the deck is built; layout checked; pushed to the shared copy; published; used in a lesson. Evidence: the plan file, the deck's data file, and (where the service can be read) whether it is pushed and published."
+      },
+      {
+       "t": "p",
+       "s": "**A pathway.** Its `## Next steps` become a checklist: write each as `- [ ] step`, tick it by changing it to `- [x]` in the pathway file (Claude does this at the end of a session; the dashboard shows it). Harry can also tick one on the dashboard (kept in the shared notes, keyed by the step's text)."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22. Decided with Harry (above), including that only Harry or Claude tick. Found that the generated facts are wrong for the tools built lately: the Simplex tool showed no brief, no tests and no sub-tools, because the checks only matched a brief named exactly like the tool, a `__test` export and ToolShell sub-tools. The evidence has to be true even though it no longer ticks anything, so the facts were fixed first (chunk 1, done): briefs are found by their header, tests by a test file that imports the tool, sub-tools and levels are read for Decision tools, and About text and lesson decks are detected; `src/tests/toolFactsTruth.test.ts` pins them."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "[x] **Chunk 1: make the facts true** (the evidence). Done 2026-11-22.",
+        "[ ] **Chunk 2: the checklist module** (`src/admin/checklist.ts`): the items above as data, which apply to which tool, the evidence for each, the warning when a tick and the evidence disagree, and the progress from the ticks; pure functions with unit tests.",
+        "[ ] **Chunk 3: the ticks in the shared notes** (`checks` on a tool's note: `api/_notes.ts`, `notesApi.ts`, the local fallback), written by Harry on the dashboard and by Claude through the notes API. This changes the notes API, so it merges before the dashboard uses it.",
+        "[ ] **Chunk 4: the front page grid** (a row per tool with a progress bar and open items) and a tool's checklist panel in place of the Review dropdown.",
+        "[ ] **Chunk 5: decks** (a Decks checklist, evidence from the decks and `specs/decks/`) and **pathways** (the `- [ ]` steps), then retire the views the checklists replace.",
+        "[ ] **Chunk 6: the routine.** `AGENTS.md` and `CLAUDE.md` change the end-of-session step from \"set Review\" to \"tick what is now true\", and the three-source table is updated."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "`src/admin/` (the dashboard), `scripts/toolFacts.mjs` (the facts, now the evidence), `src/generated/toolFacts.json`, `api/_notes.ts` (the shared notes).",
+        "`AGENTS.md`, \"The Tools dashboard (`/admin`) and its notes API\"."
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "decision-exam-questions",
    "title": "Decision exam-style questions",
    "status": "building",
@@ -1664,6 +1840,30 @@
        "items": [
         "2026-11-22 (rows, and exclusive levels). Simplex Level 3 Method: Substitute And Split, or Use As Rows (a lower bound as a ≥ constraint; an equation as a row with no slack, pivoted first), answering Harry's questions on why an equation cannot just be a row and why y ≥ 4 is substituted. Every level now has its own questions in both tools: no higher level can draw a lower-level question (Simplex Level 2 is always words or a table; Level 3 always needs a change of form; Formulating problems carry a feature of their level)."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (print, and the roadmap as a page). The Simplex print now carries the tableau or data table under each question, a page to work in, and the model working on the answers page (`config.skillPrint`; before, only the words printed). The roadmap is a page, `/lp-roadmap` (`SimplexRoadmap.tsx`, `enabled: false`), each practice button opening the tool on the right sub-tool, level and option."
+       ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (display). The working is an open page on screen (`WorkingPage`: full-size text, centred, every step so far, tableaux aligned), and a question stage is on trial in both LP tools (`config.questionStage`): the question large and centred before the steps, shrinking to its card when they start. To go shell-wide once Harry has tried it."
+       ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (roadmap). The textbook stop-offs are now whole exercises, given only where everything in them can be done (T4 Exercise 4C after stage 6; 4A, 4B and Mixed practice not on this route; T30 30.1A/B not placed); the page shows planned decks for stages 5 and 6 (agreed with Harry: stage 1 needs none, stages 3 and 4 are better practised in the tool)."
+       ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck `lp-simplex-not-origin` is built (17 slides; plan and decisions in `specs/decks/lp-simplex-not-origin.md`) and pushed, unpublished."
+       ]
       }
      ]
     },
@@ -1676,7 +1876,8 @@
        "items": [
         "Confirm the `problem` section of the brief against what is built (strict inequalities with \"integers\", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).",
         "**F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.",
-        "**Simplex:** check on a tablet and a printer, have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.",
+        "**Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.",
+        "**Roadmap decks:** stage 6 is built (`lp-simplex-not-origin`); the stage 5 deck \"Why rounding fails\" is still to do (what it covers is in `docs/roadmaps/linear-programming.md`). Order: a short brief in `specs/decks/`, the look card, Harry's yes, then the build. Also: place Oxford 30.1A and 30.1B once Harry has checked their questions against the book; add which Level 1 questions to run before and after the deck; publish `lp-simplex-process` so the page's deck button works.",
         "Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).",
         "Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built."
        ]
@@ -4211,6 +4412,10 @@
   "advent-calendar": {
    "changes": [
     {
+     "date": "2026-11-22",
+     "title": "Advent Calendar: out of Developing-tools mode"
+    },
+    {
      "date": "2026-11-09",
      "title": "Saved questions: named lists that mix tools; pins and the print basket are one saved list; Advent Calendar names backup; every generator rebuilds from its seed"
     },
@@ -4225,10 +4430,6 @@
     {
      "date": "2026-11-07",
      "title": "Advent Calendar: big reveal and doors that open on their date"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Name Wheel and Advent Calendar (Classroom, dev-gated)"
     }
    ]
   }

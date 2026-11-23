@@ -9,9 +9,14 @@ import type { SpecChapter, SpecResource, SpecStatement } from "../../shared/comp
 // A sub-tool is named by its tool (a registry id), its key in that tool and the course and kind of practice that show it (Critical Path's
 // course and practice switches). `label` is the name the tool gives it, so a test can check it still matches. `as` is whether it is part
 // of the AS course (an A-level-only sub-tool is `as: false`). The hub turns each into a link that opens the tool on that sub-tool.
-export interface SubToolRef { tool: string; sub: string; label: string; course: "as" | "a"; practice: "skills" | "exam"; as: boolean }
+export interface SubToolRef { tool: string; sub: string; label: string; course?: "as" | "a"; practice?: "skills" | "exam"; as: boolean }
 const cpa = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef =>
   ({ tool: "critical-path", sub, label, course, practice, as: course === "as" });
+/** Network Flows has the same course and practice switches as Critical Path */
+const nf = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef =>
+  ({ tool: "network-flows", sub, label, course, practice, as: course === "as" });
+/** a sub-tool of a tool with no course or practice switch (the label is the tool's own name for it; `as` is whether it is in the AS course) */
+const plain = (tool: string, sub: string, label: string, as: boolean): SubToolRef => ({ tool, sub, label, as });
 
 const P = "https://pmt.physicsandmathstutor.com/download/Maths/A-level/";
 const enc = (path: string) => P + path.split("/").map(encodeURIComponent).join("/");
@@ -68,7 +73,7 @@ export const DECISION_CHAPTERS: DecisionChapter[] = [
     ],
   },
   {
-    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-simplex"],
+    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-simplex", "lp-roadmap"],
     resources: [
       aqa("D1", "D1 Linear Programming"), aqa("D2", "D2 Simplex Algorithm"), aqa("D2", "D2 Simplex Algorithm MS"),
       edx("D1", "D1 Linear programming - Formation of problems"), edx("D1", "D1 Linear programming - Graphical"),
@@ -159,6 +164,24 @@ export const DECISION_CHECK_NOTES = {
 
 /** The sub-tools that address each statement (by statement ref). Each sub-tool is listed under one statement only. */
 export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
+  // DB: the three network tools. DB1 (the language of networks) and DB5 (refining models) are skills within them, not sub-tools of their own.
+  DB2: [plain("minimum-spanning-tree", "kruskal", "Kruskal's algorithm", true), plain("minimum-spanning-tree", "primNetwork", "Prim's algorithm", true), plain("minimum-spanning-tree", "primMatrix", "Prim's on a table", true)],
+  DB3: [plain("route-inspection", "classify", "Degrees & type", true), plain("route-inspection", "closed", "Closed route", true), plain("route-inspection", "open", "Start and finish", true)],
+  DB4: [plain("travelling-salesperson", "upper", "Nearest neighbour", true), plain("travelling-salesperson", "lower", "Lower bound", true), plain("travelling-salesperson", "bounds", "Both bounds", true), plain("travelling-salesperson", "table", "Table of least distances", true)],
+  // DC: network flows. The skills in each statement come first; the exam-style kinds are in DECISION_GROUPS and DECISION_EXAM.
+  DC1: [nf("initialFind", "Find a flow", "as"), nf("missingFlow", "Missing flow", "as")],
+  DC2: [nf("cutValue", "Cut values", "as"), nf("cutTable", "Table of cuts", "as")],
+  DC3: [nf("maxInspect", "Max flow by inspection", "as"), nf("maxCut", "Max flow = min cut", "as"), nf("maxFlow", "Max flow & min cut", "a")],
+  DC4: [nf("superAS", "Supersource / supersink", "as"), nf("superST", "Supersource / supersink", "a")],
+  DC5: [nf("potentials", "Flow from potentials", "a"), nf("augment", "Augment flow", "a")],
+  DC6: [nf("examLower", "Lower capacities, claims and upgrades", "a", "exam")],
+  DC7: [nf("nodeCap", "Node capacities", "a")],
+  // DD: linear programming. DD2 (graphical methods) has no tool yet. The roadmap page is listed on the chapter card, not under a statement.
+  DD1: [plain("lp-formulate", "constraint", "Write a constraint", true), plain("lp-formulate", "problem", "Formulate a problem", true)],
+  DD3: [plain("lp-simplex", "setup", "Set up the tableau", false), plain("lp-simplex", "pivot", "One pivot", false), plain("lp-simplex", "solve", "Solve a problem", false), plain("lp-simplex", "practical", "Is it practical?", false)],
+  DD4: [plain("lp-simplex", "interpret", "Read a tableau", false)],
+  // DF: game theory
+  DF5: [plain("mixed-strategies", "mixed", "Mixed Strategies", true)],
   DE1: [cpa("network", "Network from a table", "as"), cpa("table", "Table from a network", "as")],
   // DE2 asks for earliest and latest times: Forward pass is the earliest, Backward pass the latest (Missing time uses both)
   DE2: [cpa("forward", "Forward pass", "as"), cpa("backward", "Backward pass", "as"), cpa("unknown", "Missing time", "as")],
@@ -171,6 +194,19 @@ export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
 
 /** Sub-tools that belong to a chapter but to no single statement: exam-style questions span several, and some come from the older papers only. */
 export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRef[]; devOnly?: boolean; /** placed here so every sub-tool has one home, but not shown on the hub page */ hidden?: boolean }[]> = {
+  DC: [
+    { heading: "Across the chapter", links: [nf("reason", "Explain and justify", "as")] },
+    {
+      // the public page offers the one mixed exam question (DECISION_EXAM); these particular kinds stay in the tool
+      heading: "Particular kinds of exam question",
+      devOnly: true,
+      hidden: true,
+      links: [
+        nf("examCut", "Cuts and bounds", "as", "exam"), nf("examFlow", "Flow in = flow out", "as", "exam"), nf("examSuper", "Supersource / supersink", "as", "exam"), nf("examTable", "Table of cuts", "as", "exam"),
+        nf("examAug", "Augment and prove", "a", "exam"), nf("examAugSuper", "Supersink, augment and prove", "a", "exam"), nf("examForced", "Forced flows, then augment", "a", "exam"),
+      ],
+    },
+  ],
   DE: [
     {
       // the public page offers the one mixed exam question (DECISION_EXAM); these particular kinds stay in the tool and in Developing-tools mode
@@ -190,5 +226,6 @@ export const DECISION_GROUPS: Record<string, { heading: string; links: SubToolRe
 
 /** A chapter's exam-style practice: the one mixed generator its page opens from the exam card (placed nowhere else, like every sub-tool). */
 export const DECISION_EXAM: Record<string, { text: string; ref: SubToolRef }> = {
+  DC: { text: "Multi-part questions in the style of the paper, mixing everything in the chapter: flows, cuts, supersources and augmenting.", ref: nf("examAny", "Any exam question", "as", "exam") },
   DE: { text: "Multi-part questions in the style of the paper, mixing everything in the chapter: build the network, find the times, then a change or a claim.", ref: cpa("exAlAny", "Any A-level exam question", "a", "exam") },
 };

@@ -54,6 +54,7 @@ const STANDALONE_BY_DESIGN = [
   "Decision/CriticalPath",
   "Decision/FormulatingLP",
   "Decision/SimplexAlgorithm",
+  "Decision/SimplexRoadmap",
   "Decision/DecisionOverview",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkFlows",
