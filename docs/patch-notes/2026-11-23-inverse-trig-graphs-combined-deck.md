@@ -1,10 +1,14 @@
-Strand: Maths 
- 
-Added one combined deck, "Inverse trigonometric graphs: arcsin, arccos and arctan" (`inverse-trig-graphs`, 20 slides): one title, objective, discussion and summary, then the animation, the domain-and-range slide and a "finding the other solutions" slide (alternative angle, then + 2kπ, or + kπ for tan) for arcsin, arccos and arctan in that order, with a "do they undo each other?" slide for each (f(f⁻¹ x) = x always, f⁻¹(f x) = x only on the restricted domain). The original three decks are untouched. 
- 
-Also: three whiteboard slides (exact values, function then inverse, solving inverse equations; three questions each, authored, every answer recomputed in the build) and a pinned textbook sheet in the same three styles (8, 6 and 6 parts) with an answer page.
+Strand: Maths
 
-Agent: Claude Code 
-Notes: no Build Log block (small change). 
+## 2026-11-23 — One inverse trig deck, with practice and a live solving-trig flow
 
-Also: a generator slide in the full-width layout now draws a step's `graphBuild` graph beside the working (shared deck code: `WorkedPicture` / `SlideCanvas`), so the Solving Trig Equations tool's building graph shows in a deck. The inverse-trig deck ends with a flow of eight live Solving Trig Equations slides (cos, sin, tan 0 to 2π; −π to π; 0 to 4π; calculator values; rearranging; a multiple of θ), all in radians, each opening on a chosen question by seed. Merge the shared code before pushing the deck.
+Branch `ccr-038baa8d-pooiut`. Area: `specs/decks/inverse-trig-*.ts`, `src/decks/{SlideCanvas,WorkedPicture}.tsx`, `src/decks/data/inverse-trig-graphs.json`.
+
+The three decks for arcsin, arccos and arctan are now one deck, `inverse-trig-graphs` (28 slides): one title, objective, discussion and summary; then for each function the animation, the domain-and-range slide, a "finding the other solutions" slide (the alternative angle, then + 2kπ, or + kπ for tan) and a "do they undo each other?" slide (f(f⁻¹ x) = x always, f⁻¹(f x) = x only on the restricted domain). The original three decks are untouched.
+
+Practice: three whiteboard slides (exact values, function then inverse, solving inverse equations; three authored questions each, every answer recomputed in the build) and a pinned textbook sheet in the same three styles (8, 6 and 6 parts) with an answer page. Their numbers differ from Exercise 7B questions 2 to 4.
+
+A live flow follows: eight Solving Trig Equations generator slides, all in radians (cos, sin and tan from 0 to 2π; −π to π; 0 to 4π; calculator values; rearranging first; a multiple of θ), each opening on a question chosen by seed. To make the graph show, a generator slide in the full-width layout now draws a step's `graphBuild` graph beside the working (shared deck code: `WorkedPicture` type `graph`, `SlideCanvas`). Merge that code before pushing the deck, since the live site runs main. A seed only gives the same question while the tool and its options are unchanged.
+
+Agent: Claude Code
+Notes: no Build Log block (small change).
