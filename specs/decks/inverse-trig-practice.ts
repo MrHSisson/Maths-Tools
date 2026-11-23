@@ -95,6 +95,74 @@ const solveQs = [
     ["arccos only gives angles from $0$ to $\\pi$.", "$-\\frac{\\pi}{4}$ is outside that range, so no value of $x$ works."]),
 ];
 
+// ---------- solving in an interval, counter-examples, rearranging: answers found by scanning for roots, not by the symmetry the pupils use ----------
+/** Every root of f on [lo, hi] (a sign change between neighbouring points, not across a tan asymptote), sorted. */
+const roots = (f: (x: number) => number, lo: number, hi: number): number[] => {
+  const out: number[] = [], N = 40000;
+  let a = lo, fa = f(a);
+  for (let i = 1; i <= N; i++) {
+    const b = lo + (hi - lo) * i / N, fb = f(b);
+    if (Math.abs(fa) < 1e-12) out.push(a);
+    else if (fa * fb < 0 && Math.abs(fa) < 50 && Math.abs(fb) < 50) { let l = a, h = b; for (let k = 0; k < 60; k++) { const m = (l + h) / 2; if (f(l) * f(m) <= 0) h = m; else l = m; } out.push((l + h) / 2); }
+    a = b; fa = fb;
+  }
+  if (Math.abs(fa) < 1e-12) out.push(a);
+  return out.filter((r, i) => i === 0 || Math.abs(r - out[i - 1]) > 1e-6);
+};
+/** x as a multiple of π, written in KaTeX (denominators 1, 2, 3, 4 or 6 only). */
+const piTex = (x: number): string => {
+  const n = x / PI;
+  for (const q of [1, 2, 3, 4, 6]) {
+    const p = Math.round(n * q);
+    if (Math.abs(n * q - p) > 1e-6) continue;
+    if (p === 0) return "0";
+    const sign = p < 0 ? "-" : "", m = Math.abs(p);
+    if (q === 1) return `${sign}${m === 1 ? "" : m}\\pi`;
+    return `${sign}\\frac{${m === 1 ? "" : m}\\pi}{${q}}`;
+  }
+  throw new Error(`inverse trig: ${x} is not a simple multiple of π`);
+};
+const INTERVAL = (lo: number, hi: number) => `${piTex(lo)} \\le x \\le ${piTex(hi)}`;
+type Solve = [string, (x: number) => number, number, number];   // the equation, its left side minus its right side, the interval
+const solveIn = (rows: Solve[]) => ({
+  parts: rows.map(([eq, , lo, hi]) => `${eq}, \\quad ${INTERVAL(lo, hi)}`),
+  answers: rows.map(([eq, f, lo, hi]) => { const r = roots(f, lo, hi); if (!r.length) throw new Error(`inverse trig: ${eq} has no solution in the interval`); return `x = ${r.map(piTex).join(",\\ ")}`; }),
+});
+const R2 = sqrt(2), R3 = sqrt(3);
+const intervalSheet = solveIn([
+  ["\\sin x = -\\frac{1}{2}", (x) => sin(x) + 1 / 2, 0, 2 * PI],
+  ["\\cos x = -\\frac{\\sqrt{2}}{2}", (x) => cos(x) + R2 / 2, 0, 2 * PI],
+  ["\\tan x = \\sqrt{3}", (x) => tan(x) - R3, 0, 2 * PI],
+  ["\\sin x = \\frac{1}{2}", (x) => sin(x) - 1 / 2, -PI, PI],
+  ["\\cos x = \\frac{1}{2}", (x) => cos(x) - 1 / 2, -PI, PI],
+  ["\\tan x = -\\sqrt{3}", (x) => tan(x) + R3, -PI, PI],
+  ["\\sin x = -\\frac{\\sqrt{3}}{2}", (x) => sin(x) + R3 / 2, 0, 4 * PI],
+]);
+const rearrangeSheet = solveIn([
+  ["2\\cos x - 1 = 0", (x) => 2 * cos(x) - 1, 0, 2 * PI],
+  ["2\\sin x + \\sqrt{3} = 0", (x) => 2 * sin(x) + R3, 0, 2 * PI],
+  ["3\\tan x = \\sqrt{3}", (x) => 3 * tan(x) - R3, 0, 2 * PI],
+  ["\\sqrt{2}\\sin x = 1", (x) => R2 * sin(x) - 1, -PI, PI],
+  ["2\\tan x + 2 = 0", (x) => 2 * tan(x) + 2, -PI, PI],
+  ["4\\cos x + 2\\sqrt{2} = 0", (x) => 4 * cos(x) + 2 * R2, -PI, PI],
+]);
+// counter-examples: [the false statement, the value x it fails at, what the left side really is (as a number and in KaTeX), the right side x]
+type Counter = [string, string, number, string, number, string, number];
+const counterSheet = ((rows: Counter[]) => ({
+  parts: rows.map((r) => r[0]),
+  answers: rows.map(([, xTex, x, fn, lhs, lhsTex]) => {
+    if (fn !== "undefined" && Math.abs(lhs - { arcsinsin: asin(sin(x)), arccoscos: acos(cos(x)), arctantan: atan(tan(x)) }[fn]!) > 1e-9) throw new Error(`inverse trig: counter-example ${fn} at ${xTex} is not ${lhsTex}`);
+    if (Math.abs(lhs - x) < 1e-9) throw new Error(`inverse trig: ${xTex} is not a counter-example`);
+    return `x = ${xTex}: \\text{ the left side is } ${lhsTex}`;
+  }),
+}))([
+  ["\\arcsin(\\sin x) = x \\text{ for all } x", "\\pi", PI, "arcsinsin", 0, "0", 0],
+  ["\\arccos(\\cos x) = x \\text{ for } -\\pi \\le x \\le \\pi", "-\\frac{\\pi}{2}", -PI / 2, "arccoscos", PI / 2, "\\frac{\\pi}{2}", 0],
+  ["\\arctan(\\tan x) = x \\text{ for all } x", "\\frac{3\\pi}{4}", 3 * PI / 4, "arctantan", -PI / 4, "-\\frac{\\pi}{4}", 0],
+  ["\\arcsin(\\sin x) = x \\text{ for } 0 \\le x \\le \\pi", "\\frac{2\\pi}{3}", 2 * PI / 3, "arcsinsin", PI / 3, "\\frac{\\pi}{3}", 0],
+  ["\\arccos(\\cos x) = x \\text{ for } 0 \\le x \\le 2\\pi", "\\frac{3\\pi}{2}", 3 * PI / 2, "arccoscos", PI / 2, "\\frac{\\pi}{2}", 0],
+]);
+
 const sheet = {
   title: "Inverse trigonometric functions",
   note: "Write your answers in your book. Show your working.",
@@ -105,6 +173,20 @@ const sheet = {
       parts: [...solveSheet.map((r) => r[0]), "\\arcsin x = \\frac{2\\pi}{3}"], answers: [...solveSheet.map((r) => r[2]), "\\text{no solution}"] },
   ],
 };
+
+// Questions 4 to 6 of the same worksheet, on their own sheet (so each slide and each printed page is a size that can be read): used after the live solving flow.
+const sheet2 = {
+  title: "Solving trigonometric equations",
+  note: "Write your answers in your book. Sketch a graph first.",
+  firstQuestion: 4,
+  blocks: [
+    { instruction: "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.", cols: 2, ...intervalSheet },
+    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 2, ...counterSheet },
+    { instruction: "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.", cols: 2, ...rearrangeSheet },
+  ],
+};
+
+export const solvingSheetSlide = () => S.textbookSheet("it-sheet-solve", sheet2, T);
 
 export const practiceSlides = () => [
   S.whiteboard("it-wb-exact", "Exact values", exactQs, "Three to talk through: a positive value, a negative one, and arccos of a negative (never a negative angle)."),

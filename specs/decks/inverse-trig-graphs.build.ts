@@ -7,7 +7,7 @@ import { S } from "/src/decks/builder";
 import arcsin from "./arcsin-graph.build";
 import arccos from "./arccos-graph.build";
 import arctan from "./arctan-graph.build";
-import { practiceSlides } from "./inverse-trig-practice";
+import { practiceSlides, solvingSheetSlide } from "./inverse-trig-practice";
 import { flowSlides } from "./inverse-trig-flow";
 
 const part = (d: ReturnType<typeof arcsin>, kind: "animation" | "facts") => d.slides.find((s) => s.id.endsWith(`-${kind}`))!;
@@ -52,6 +52,7 @@ export default () => ({
       "$\\arctan\\left(\\tan\\frac{5\\pi}{4}\\right) = \\frac{\\pi}{4}$\n\nThis is not $\\frac{5\\pi}{4}$."),
     ...practiceSlides(),
     ...flowSlides(),
+    solvingSheetSlide(),
     S.summary("it-summary", "Summary", [
       "sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.",
       "Reflecting in y = x swaps the x and y values of every point.",

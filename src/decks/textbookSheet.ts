@@ -22,6 +22,8 @@ export interface TextbookSheet {
   note?: string;
   blocks: TextbookBlock[];
   cols?: number;
+  /** The number of the first question (1 when absent), so one worksheet can run across two sheets (Questions 1 to 3, then 4 to 6). */
+  firstQuestion?: number;
 }
 
 /** (a) ... (z), then (aa), (ab) ... */
@@ -49,7 +51,7 @@ export function textbookSheetHtml(sheet: TextbookSheet, mode: PrintMode, paper: 
   const section = (answers: boolean) => `<section class="page${answers ? " ans" : ""}">
   <h1>${esc(sheet.title)}${answers ? " <span>Answers</span>" : ""}</h1>
   ${!answers && sheet.note ? `<p class="note">${esc(sheet.note)}</p>` : ""}
-  ${sheet.blocks.map((b, bi) => `<div class="q"><p class="qh"><b>Question ${bi + 1}:</b> ${esc(b.instruction)}</p>
+  ${sheet.blocks.map((b, bi) => `<div class="q"><p class="qh"><b>Question ${(sheet.firstQuestion ?? 1) + bi}:</b> ${esc(b.instruction)}</p>
     <div class="parts" style="grid-template-columns:repeat(${blockCols(sheet, b)},1fr)">${b.parts.map((part, i) => `<div class="part"><span class="l">(${partLetter(i)})</span>${maths(answers ? b.answers[i] : part)}</div>`).join("")}</div></div>`).join("")}
 </section>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(sheet.title)}</title>

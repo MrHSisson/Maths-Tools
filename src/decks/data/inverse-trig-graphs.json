@@ -1419,6 +1419,102 @@
    "built": "1e87e5m"
   },
   {
+   "id": "it-sheet-solve",
+   "family": "retrieval",
+   "title": "Solving trigonometric equations",
+   "els": [
+    {
+     "id": "it-sheet-solve-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "inverse-trig-graphs",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 18,
+     "cols": 4,
+     "pin": {
+      "title": "Solving trigonometric equations",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "textbook": {
+      "title": "Solving trigonometric equations",
+      "note": "Write your answers in your book. Sketch a graph first.",
+      "firstQuestion": 4,
+      "blocks": [
+       {
+        "instruction": "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.",
+        "cols": 2,
+        "parts": [
+         "\\sin x = -\\frac{1}{2}, \\quad 0 \\le x \\le 2\\pi",
+         "\\cos x = -\\frac{\\sqrt{2}}{2}, \\quad 0 \\le x \\le 2\\pi",
+         "\\tan x = \\sqrt{3}, \\quad 0 \\le x \\le 2\\pi",
+         "\\sin x = \\frac{1}{2}, \\quad -\\pi \\le x \\le \\pi",
+         "\\cos x = \\frac{1}{2}, \\quad -\\pi \\le x \\le \\pi",
+         "\\tan x = -\\sqrt{3}, \\quad -\\pi \\le x \\le \\pi",
+         "\\sin x = -\\frac{\\sqrt{3}}{2}, \\quad 0 \\le x \\le 4\\pi"
+        ],
+        "answers": [
+         "x = \\frac{7\\pi}{6},\\ \\frac{11\\pi}{6}",
+         "x = \\frac{3\\pi}{4},\\ \\frac{5\\pi}{4}",
+         "x = \\frac{\\pi}{3},\\ \\frac{4\\pi}{3}",
+         "x = \\frac{\\pi}{6},\\ \\frac{5\\pi}{6}",
+         "x = -\\frac{\\pi}{3},\\ \\frac{\\pi}{3}",
+         "x = -\\frac{\\pi}{3},\\ \\frac{2\\pi}{3}",
+         "x = \\frac{4\\pi}{3},\\ \\frac{5\\pi}{3},\\ \\frac{10\\pi}{3},\\ \\frac{11\\pi}{3}"
+        ]
+       },
+       {
+        "instruction": "Each statement is false. Give a counter-example to show this.",
+        "cols": 2,
+        "parts": [
+         "\\arcsin(\\sin x) = x \\text{ for all } x",
+         "\\arccos(\\cos x) = x \\text{ for } -\\pi \\le x \\le \\pi",
+         "\\arctan(\\tan x) = x \\text{ for all } x",
+         "\\arcsin(\\sin x) = x \\text{ for } 0 \\le x \\le \\pi",
+         "\\arccos(\\cos x) = x \\text{ for } 0 \\le x \\le 2\\pi"
+        ],
+        "answers": [
+         "x = \\pi: \\text{ the left side is } 0",
+         "x = -\\frac{\\pi}{2}: \\text{ the left side is } \\frac{\\pi}{2}",
+         "x = \\frac{3\\pi}{4}: \\text{ the left side is } -\\frac{\\pi}{4}",
+         "x = \\frac{2\\pi}{3}: \\text{ the left side is } \\frac{\\pi}{3}",
+         "x = \\frac{3\\pi}{2}: \\text{ the left side is } \\frac{\\pi}{2}"
+        ]
+       },
+       {
+        "instruction": "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.",
+        "cols": 2,
+        "parts": [
+         "2\\cos x - 1 = 0, \\quad 0 \\le x \\le 2\\pi",
+         "2\\sin x + \\sqrt{3} = 0, \\quad 0 \\le x \\le 2\\pi",
+         "3\\tan x = \\sqrt{3}, \\quad 0 \\le x \\le 2\\pi",
+         "\\sqrt{2}\\sin x = 1, \\quad -\\pi \\le x \\le \\pi",
+         "2\\tan x + 2 = 0, \\quad -\\pi \\le x \\le \\pi",
+         "4\\cos x + 2\\sqrt{2} = 0, \\quad -\\pi \\le x \\le \\pi"
+        ],
+        "answers": [
+         "x = \\frac{\\pi}{3},\\ \\frac{5\\pi}{3}",
+         "x = \\frac{4\\pi}{3},\\ \\frac{5\\pi}{3}",
+         "x = \\frac{\\pi}{6},\\ \\frac{7\\pi}{6}",
+         "x = \\frac{\\pi}{4},\\ \\frac{3\\pi}{4}",
+         "x = -\\frac{\\pi}{4},\\ \\frac{3\\pi}{4}",
+         "x = -\\frac{3\\pi}{4},\\ \\frac{3\\pi}{4}"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "built": "cevico"
+  },
+  {
    "id": "it-summary",
    "family": "structure",
    "title": "Summary",
