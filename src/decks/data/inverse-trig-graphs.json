@@ -1,0 +1,1306 @@
+{
+ "id": "inverse-trig-graphs",
+ "title": "Inverse trigonometric graphs",
+ "summary": "Why sin x, cos x and tan x are each restricted, then an animation for each: reflect the graph in y = x and separate it into y = arcsin x, y = arccos x and y = arctan x.",
+ "slides": [
+  {
+   "id": "it-title",
+   "family": "structure",
+   "title": "Inverse trigonometric functions",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Inverse trigonometric functions",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "The graphs of arcsin x, arccos x and arctan x",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-title-2"
+    }
+   ],
+   "built": "10ylmn4"
+  },
+  {
+   "id": "it-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "it-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Sketch y = arcsin x, y = arccos x and y = arctan x by reflecting the restricted graph in the line y = x.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "it-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Say why sin x, cos x and tan x must be restricted before they have an inverse\n•  Give the restricted domain and the range of each\n•  State the domain and range of each inverse function",
+     "size": 44,
+     "colour": "#334155",
+     "id": "it-objective-3"
+    }
+   ],
+   "built": "g3q7dp"
+  },
+  {
+   "id": "as-discuss",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "as-discuss-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "$\\sin \\frac{\\pi}{6} = 0.5$ and $\\sin \\frac{5\\pi}{6} = 0.5$. If $\\arcsin 0.5$ gave both angles, what would be wrong with it?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "as-discuss-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "as-discuss-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "as-discuss-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "A function gives exactly one output for each input. So we keep just one section of the sine graph that does not repeat any output.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "as-discuss-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "as-discuss-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Which section of $y = \\sin x$ do we keep?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "as-discuss-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "as-discuss-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "as-discuss-9"
+    }
+   ],
+   "built": "19hkes0"
+  },
+  {
+   "id": "as-animation",
+   "family": "teach",
+   "title": "Inverse of sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Inverse of sin x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-animation-1"
+    },
+    {
+     "kind": "inverseTrig",
+     "fn": "sin",
+     "x": 70,
+     "y": 150,
+     "w": 1460,
+     "h": 720,
+     "id": "as-animation-2"
+    }
+   ],
+   "built": "58s9k2"
+  },
+  {
+   "id": "as-facts",
+   "family": "teach",
+   "title": "Domain and range swap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Domain and range swap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-facts-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\sin x$ (restricted)\n\nDomain: $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$\n\nRange: $-1 \\le y \\le 1$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-facts-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\arcsin x$\n\nDomain: $-1 \\le x \\le 1$\n\nRange: $-\\frac{\\pi}{2} \\le y \\le \\frac{\\pi}{2}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-facts-3"
+    }
+   ],
+   "built": "16fn2d9"
+  },
+  {
+   "id": "as-others",
+   "family": "teach",
+   "title": "Finding the other solutions: sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: sin x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arcsin c$\n\nAlternative: $\\pi - \\theta$\n\n$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + 2k\\pi$\n\n$x = \\pi - \\theta + 2k\\pi$\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-others-3"
+    }
+   ],
+   "built": "bdzd40"
+  },
+  {
+   "id": "as-undo",
+   "family": "teach",
+   "title": "Do they undo each other? sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Do they undo each other? sin x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-undo-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\sin(\\arcsin\\,x) = x$\n\nAlways, for $-1 \\le x \\le 1$.\n\n$\\sin(\\arcsin\\,0.5) = 0.5$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-undo-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\arcsin(\\sin\\,x) = x$\n\nOnly if $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$.\n\n$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$\n\nThis is not $\\frac{5\\pi}{6}$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-undo-3"
+    }
+   ],
+   "built": "acbbwd"
+  },
+  {
+   "id": "ac-animation",
+   "family": "teach",
+   "title": "Inverse of cos x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Inverse of cos x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "ac-animation-1"
+    },
+    {
+     "kind": "inverseTrig",
+     "fn": "cos",
+     "x": 70,
+     "y": 150,
+     "w": 1460,
+     "h": 720,
+     "id": "ac-animation-2"
+    }
+   ],
+   "built": "1q0xsgz"
+  },
+  {
+   "id": "ac-facts",
+   "family": "teach",
+   "title": "Domain and range swap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Domain and range swap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "ac-facts-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\cos x$ (restricted)\n\nDomain: $0 \\le x \\le \\pi$\n\nRange: $-1 \\le y \\le 1$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-facts-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\arccos x$\n\nDomain: $-1 \\le x \\le 1$\n\nRange: $0 \\le y \\le \\pi$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-facts-3"
+    }
+   ],
+   "built": "1kedxdr"
+  },
+  {
+   "id": "ac-others",
+   "family": "teach",
+   "title": "Finding the other solutions: cos x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: cos x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "ac-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arccos c$\n\nAlternative: $2\\pi - \\theta$\n\n$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + 2k\\pi$\n\n$x = 2\\pi - \\theta + 2k\\pi$\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-others-3"
+    }
+   ],
+   "built": "rqsvu2"
+  },
+  {
+   "id": "ac-undo",
+   "family": "teach",
+   "title": "Do they undo each other? cos x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Do they undo each other? cos x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "ac-undo-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\cos(\\arccos\\,x) = x$\n\nAlways, for $-1 \\le x \\le 1$.\n\n$\\cos(\\arccos\\,0.5) = 0.5$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-undo-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\arccos(\\cos\\,x) = x$\n\nOnly if $0 \\le x \\le \\pi$.\n\n$\\arccos\\left(\\cos\\frac{5\\pi}{3}\\right) = \\frac{\\pi}{3}$\n\nThis is not $\\frac{5\\pi}{3}$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-undo-3"
+    }
+   ],
+   "built": "14pr9oo"
+  },
+  {
+   "id": "at-animation",
+   "family": "teach",
+   "title": "Inverse of tan x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Inverse of tan x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "at-animation-1"
+    },
+    {
+     "kind": "inverseTrig",
+     "fn": "tan",
+     "x": 70,
+     "y": 150,
+     "w": 1460,
+     "h": 720,
+     "id": "at-animation-2"
+    }
+   ],
+   "built": "koer3k"
+  },
+  {
+   "id": "at-facts",
+   "family": "teach",
+   "title": "Domain and range swap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Domain and range swap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "at-facts-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\tan x$ (restricted)\n\nDomain: $-\\frac{\\pi}{2} < x < \\frac{\\pi}{2}$\n\nRange: all real $y$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-facts-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\arctan x$\n\nDomain: all real $x$\n\nRange: $-\\frac{\\pi}{2} < y < \\frac{\\pi}{2}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-facts-3"
+    }
+   ],
+   "built": "mxsa8n"
+  },
+  {
+   "id": "at-others",
+   "family": "teach",
+   "title": "Finding the other solutions: tan x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: tan x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "at-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arctan c$\n\nAlternative: $\\pi + \\theta$\n\n$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + k\\pi$\n\nThe graph repeats every $\\pi$, so one formula covers both.\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-others-3"
+    }
+   ],
+   "built": "1s6akmi"
+  },
+  {
+   "id": "at-undo",
+   "family": "teach",
+   "title": "Do they undo each other? tan x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Do they undo each other? tan x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "at-undo-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\tan(\\arctan\\,x) = x$\n\nAlways, for all real $x$.\n\n$\\tan(\\arctan\\,0.5) = 0.5$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-undo-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\arctan(\\tan\\,x) = x$\n\nOnly if $-\\frac{\\pi}{2} < x < \\frac{\\pi}{2}$.\n\n$\\arctan\\left(\\tan\\frac{5\\pi}{4}\\right) = \\frac{\\pi}{4}$\n\nThis is not $\\frac{5\\pi}{4}$.",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-undo-3"
+    }
+   ],
+   "built": "1r9gcnr"
+  },
+  {
+   "id": "it-wb-exact",
+   "family": "teach",
+   "title": "Exact values",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 44,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-ex-1",
+       "title": "Find the exact value of \\arctan\\sqrt{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arctan\\sqrt{3}$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{3}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. Where does it reach $\\sqrt{3}$?",
+        "$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is on that part of the graph.",
+        "$\\arctan\\sqrt{3} = \\frac{\\pi}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-ex-2",
+       "title": "Find the exact value of \\arcsin\\left(-\\frac{1}{2}\\right).",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arcsin\\left(-\\frac{1}{2}\\right)$."
+       ],
+       "answer": [
+        "$-\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\sin x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. It has half-turn symmetry about the origin.",
+        "So $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\sin\\frac{\\pi}{6} = -\\frac{1}{2}$.",
+        "$\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-ex-3",
+       "title": "Find the exact value of \\arccos\\left(-\\frac{1}{2}\\right).",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arccos\\left(-\\frac{1}{2}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{2\\pi}{3}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\cos x$ between $0$ and $\\pi$: only angles from $0$ to $\\pi$, so the answer cannot be negative.",
+        "The curve has half-turn symmetry about $\\left(\\frac{\\pi}{2}, 0\\right)$, so $\\cos(\\pi - \\theta) = -\\cos\\theta$.",
+        "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\frac{2\\pi}{3} = -\\frac{1}{2}$ and $\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-exact-1",
+     "visualiser": true,
+     "presentation": "whiteboard"
+    }
+   ],
+   "brief": "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle).",
+   "built": "1p9v1l5"
+  },
+  {
+   "id": "it-wb-undo",
+   "family": "teach",
+   "title": "Function, then its inverse",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 44,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-un-1",
+       "title": "Find the exact value of \\arctan\\left(\\tan\\frac{\\pi}{6}\\right",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arctan\\left(\\tan\\frac{\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. $\\frac{\\pi}{6}$ is already on that part of the graph.",
+        "$\\arctan\\left(\\tan\\frac{\\pi}{6}\\right) = \\frac{\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-un-2",
+       "title": "Find the exact value of \\arcsin\\left(\\sin\\frac{5\\pi}{6}\\righ",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\sin x$. $\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$, but $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$.",
+        "The curve is symmetrical about $x = \\frac{\\pi}{2}$, so the same height is at $\\pi - \\frac{5\\pi}{6} = \\frac{\\pi}{6}$, which is inside.",
+        "$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-un-3",
+       "title": "Find the exact value of \\arccos\\left(\\cos\\frac{7\\pi}{6}\\righ",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{5\\pi}{6}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\cos x$. $\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$, but $\\frac{7\\pi}{6}$ is outside $0$ to $\\pi$.",
+        "The curve is symmetrical about $x = \\pi$, so the same height is at $2\\pi - \\frac{7\\pi}{6} = \\frac{5\\pi}{6}$, which is inside.",
+        "$\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right) = \\frac{5\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-undo-1",
+     "visualiser": true,
+     "presentation": "whiteboard"
+    }
+   ],
+   "brief": "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first.",
+   "built": "1km3uds"
+  },
+  {
+   "id": "it-wb-solve",
+   "family": "teach",
+   "title": "Solving inverse equations",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 24,
+     "y": 24,
+     "w": 1552,
+     "h": 852,
+     "size": 44,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-so-1",
+       "title": "Solve \\arccos x = \\frac{\\pi}{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arccos x = \\frac{\\pi}{3}$."
+       ],
+       "answer": [
+        "$x = \\frac{1}{2}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\arccos x$: its heights run from $0$ to $\\pi$, so $\\frac{\\pi}{3}$ is possible.",
+        "Take cos of both sides: $x = \\cos\\frac{\\pi}{3}$.",
+        "$x = \\frac{1}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-so-2",
+       "title": "Solve \\arctan 2x = \\frac{\\pi}{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arctan 2x = \\frac{\\pi}{3}$."
+       ],
+       "answer": [
+        "$x = \\frac{\\sqrt{3}}{2}$"
+       ],
+       "explanation": [
+        "Sketch $y = \\arctan x$: its heights are between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$, so $\\frac{\\pi}{3}$ is possible.",
+        "Take tan of both sides: $2x = \\tan\\frac{\\pi}{3} = \\sqrt{3}$.",
+        "$x = \\frac{\\sqrt{3}}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-so-3",
+       "title": "Solve \\arccos x = -\\frac{\\pi}{4}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arccos x = -\\frac{\\pi}{4}$."
+       ],
+       "answer": [
+        "No solution"
+       ],
+       "explanation": [
+        "Sketch $y = \\arccos x$: its heights only run from $0$ to $\\pi$.",
+        "$-\\frac{\\pi}{4}$ is below the whole graph, so no value of $x$ works."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-solve-1",
+     "visualiser": true,
+     "presentation": "whiteboard"
+    }
+   ],
+   "brief": "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution.",
+   "built": "1czinti"
+  },
+  {
+   "id": "it-ph-sheet-1",
+   "family": "structure",
+   "title": "Worksheet 1",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheet 1",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-ph-sheet-1-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Inverse trigonometric functions: at the back of this deck",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-ph-sheet-1-2"
+    }
+   ],
+   "built": "x2h1wq"
+  },
+  {
+   "id": "it-ph-sheet-2",
+   "family": "structure",
+   "title": "Worksheet 2",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheet 2",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-ph-sheet-2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Solving trigonometric equations: at the back of this deck",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-ph-sheet-2-2"
+    }
+   ],
+   "built": "sa5kl"
+  },
+  {
+   "id": "it-summary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "it-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.\n•  Reflecting in y = x swaps the x and y values of every point.\n•  The domain of each inverse is the range of the restricted function, and its range is the restricted domain.",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "it-summary-2"
+    }
+   ],
+   "built": "142d1d0"
+  },
+  {
+   "id": "it-worksheets",
+   "family": "structure",
+   "title": "Worksheets",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheets",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-worksheets-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Print these, or put them on the board.",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-worksheets-2"
+    }
+   ],
+   "built": "a6w2qd"
+  },
+  {
+   "id": "it-sheet",
+   "family": "retrieval",
+   "title": "Inverse trigonometric functions",
+   "els": [
+    {
+     "id": "it-sheet-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 28,
+     "cols": 4,
+     "pin": {
+      "title": "Inverse trigonometric functions",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "textbook": {
+      "title": "Inverse trigonometric functions",
+      "note": "Write your answers in your book. Show your working.",
+      "blocks": [
+       {
+        "instruction": "Without using a calculator, find the exact value in radians.",
+        "cols": 3,
+        "parts": [
+         "\\arccos\\frac{1}{2}",
+         "\\arctan\\frac{1}{\\sqrt{3}}",
+         "\\arcsin\\frac{\\sqrt{2}}{2}",
+         "\\arccos 0",
+         "\\arcsin\\left(-\\frac{\\sqrt{3}}{2}\\right)",
+         "\\arctan(-1)",
+         "\\arctan\\left(-\\frac{1}{\\sqrt{3}}\\right)",
+         "\\arccos\\left(-\\frac{\\sqrt{3}}{2}\\right)",
+         "\\arccos(-1)"
+        ],
+        "answers": [
+         "\\frac{\\pi}{3}",
+         "\\frac{\\pi}{6}",
+         "\\frac{\\pi}{4}",
+         "\\frac{\\pi}{2}",
+         "-\\frac{\\pi}{3}",
+         "-\\frac{\\pi}{4}",
+         "-\\frac{\\pi}{6}",
+         "\\frac{5\\pi}{6}",
+         "\\pi"
+        ]
+       },
+       {
+        "instruction": "Without using a calculator, find the exact value.",
+        "cols": 3,
+        "parts": [
+         "\\arcsin\\left(\\sin\\left(-\\frac{\\pi}{6}\\right)\\right)",
+         "\\arccos\\left(\\cos\\frac{\\pi}{4}\\right)",
+         "\\arctan\\left(\\tan\\left(-\\frac{\\pi}{3}\\right)\\right)",
+         "\\arcsin\\left(\\sin\\frac{3\\pi}{4}\\right)",
+         "\\arccos\\left(\\cos\\frac{4\\pi}{3}\\right)",
+         "\\arctan\\left(\\tan\\frac{3\\pi}{4}\\right)",
+         "\\arccos\\left(\\cos\\left(-\\frac{\\pi}{3}\\right)\\right)",
+         "\\arctan\\left(\\tan\\frac{4\\pi}{3}\\right)",
+         "\\arcsin\\left(\\sin\\frac{5\\pi}{4}\\right)"
+        ],
+        "answers": [
+         "-\\frac{\\pi}{6}",
+         "\\frac{\\pi}{4}",
+         "-\\frac{\\pi}{3}",
+         "\\frac{\\pi}{4}",
+         "\\frac{2\\pi}{3}",
+         "-\\frac{\\pi}{4}",
+         "\\frac{\\pi}{3}",
+         "\\frac{\\pi}{3}",
+         "-\\frac{\\pi}{4}"
+        ]
+       },
+       {
+        "instruction": "Without using a calculator, solve each equation. If there is no solution, say so.",
+        "cols": 2,
+        "parts": [
+         "\\arcsin x = \\frac{\\pi}{6}",
+         "\\arccos x = \\frac{\\pi}{4}",
+         "\\arctan x = \\frac{\\pi}{4}",
+         "\\arctan x = \\frac{\\pi}{6}",
+         "\\arcsin 3x = \\frac{\\pi}{2}",
+         "\\arccos 2x = \\frac{\\pi}{3}",
+         "\\arctan 3x = -\\frac{\\pi}{4}",
+         "\\arccos(x + 1) = \\frac{2\\pi}{3}",
+         "\\arctan(2x + 1) = -\\frac{\\pi}{3}",
+         "\\arcsin x = \\frac{2\\pi}{3}"
+        ],
+        "answers": [
+         "\\frac{1}{2}",
+         "\\frac{\\sqrt{2}}{2}",
+         "1",
+         "\\frac{\\sqrt{3}}{3}",
+         "\\frac{1}{3}",
+         "\\frac{1}{4}",
+         "-\\frac{1}{3}",
+         "-\\frac{3}{2}",
+         "\\frac{-1 - \\sqrt{3}}{2}",
+         "\\text{no solution}"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "built": "13x7ffa"
+  },
+  {
+   "id": "it-sheet-solve",
+   "family": "retrieval",
+   "title": "Solving trigonometric equations",
+   "els": [
+    {
+     "id": "it-sheet-solve-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "solving-trig-equations",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 20,
+     "cols": 4,
+     "pin": {
+      "title": "Solving trigonometric equations",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "textbook": {
+      "title": "Solving trigonometric equations",
+      "note": "Write your answers in your book. Sketch a graph first, then use symmetry. Give exact answers.",
+      "blocks": [
+       {
+        "instruction": "Find every solution in the given interval.",
+        "cols": 2,
+        "parts": [
+         "\\sin x = -\\dfrac{1}{2}, \\qquad 0 \\le x \\le 2\\pi",
+         "\\cos x = -\\dfrac{\\sqrt{2}}{2}, \\qquad 0 \\le x \\le 2\\pi",
+         "\\tan x = \\sqrt{3}, \\qquad 0 \\le x \\le 2\\pi",
+         "\\tan x = -\\dfrac{\\sqrt{3}}{3}, \\qquad 0 \\le x \\le 2\\pi",
+         "\\sin x = \\dfrac{1}{2}, \\qquad -\\pi \\le x \\le \\pi",
+         "\\cos x = \\dfrac{1}{2}, \\qquad -\\pi \\le x \\le \\pi",
+         "\\tan x = -\\sqrt{3}, \\qquad -\\pi \\le x \\le \\pi",
+         "\\cos x = 0, \\qquad -\\pi \\le x \\le \\pi",
+         "\\sin x = -\\dfrac{\\sqrt{3}}{2}, \\qquad 0 \\le x \\le 4\\pi",
+         "\\sin x = -\\dfrac{\\sqrt{2}}{2}, \\qquad -2\\pi \\le x \\le 2\\pi"
+        ],
+        "answers": [
+         "x = \\dfrac{7\\pi}{6},\\ \\dfrac{11\\pi}{6}",
+         "x = \\dfrac{3\\pi}{4},\\ \\dfrac{5\\pi}{4}",
+         "x = \\dfrac{\\pi}{3},\\ \\dfrac{4\\pi}{3}",
+         "x = \\dfrac{5\\pi}{6},\\ \\dfrac{11\\pi}{6}",
+         "x = \\dfrac{\\pi}{6},\\ \\dfrac{5\\pi}{6}",
+         "x = -\\dfrac{\\pi}{3},\\ \\dfrac{\\pi}{3}",
+         "x = -\\dfrac{\\pi}{3},\\ \\dfrac{2\\pi}{3}",
+         "x = -\\dfrac{\\pi}{2},\\ \\dfrac{\\pi}{2}",
+         "x = \\dfrac{4\\pi}{3},\\ \\dfrac{5\\pi}{3},\\ \\dfrac{10\\pi}{3},\\ \\dfrac{11\\pi}{3}",
+         "x = -\\dfrac{3\\pi}{4},\\ -\\dfrac{\\pi}{4},\\ \\dfrac{5\\pi}{4},\\ \\dfrac{7\\pi}{4}"
+        ]
+       },
+       {
+        "instruction": "Rearrange, then find every solution in the given interval.",
+        "cols": 2,
+        "few": true,
+        "parts": [
+         "2\\cos x - 1 = 0, \\qquad 0 \\le x \\le 2\\pi",
+         "2\\sin x + \\sqrt{3} = 0, \\qquad 0 \\le x \\le 2\\pi",
+         "\\sqrt{3}\\tan x - 1 = 0, \\qquad 0 \\le x \\le 2\\pi",
+         "2\\tan x + 2 = 0, \\qquad -\\pi \\le x \\le \\pi"
+        ],
+        "answers": [
+         "x = \\dfrac{\\pi}{3},\\ \\dfrac{5\\pi}{3}",
+         "x = \\dfrac{4\\pi}{3},\\ \\dfrac{5\\pi}{3}",
+         "x = \\dfrac{\\pi}{6},\\ \\dfrac{7\\pi}{6}",
+         "x = -\\dfrac{\\pi}{4},\\ \\dfrac{3\\pi}{4}"
+        ]
+       },
+       {
+        "instruction": "Write down the interval for the angle inside the brackets first, then find every solution.",
+        "cols": 2,
+        "few": true,
+        "parts": [
+         "\\sin 2\\theta = \\dfrac{1}{2}, \\qquad 0 \\le \\theta \\le 2\\pi",
+         "\\tan 2\\theta = 1, \\qquad 0 \\le \\theta \\le \\pi",
+         "\\cos 3\\theta = \\dfrac{1}{2}, \\qquad 0 \\le \\theta \\le \\pi",
+         "\\sin 3\\theta = \\dfrac{\\sqrt{3}}{2}, \\qquad 0 \\le \\theta \\le 2\\pi"
+        ],
+        "answers": [
+         "\\theta = \\dfrac{\\pi}{12},\\ \\dfrac{5\\pi}{12},\\ \\dfrac{13\\pi}{12},\\ \\dfrac{17\\pi}{12}",
+         "\\theta = \\dfrac{\\pi}{8},\\ \\dfrac{5\\pi}{8}",
+         "\\theta = \\dfrac{\\pi}{9},\\ \\dfrac{5\\pi}{9},\\ \\dfrac{7\\pi}{9}",
+         "\\theta = \\dfrac{\\pi}{9},\\ \\dfrac{2\\pi}{9},\\ \\dfrac{7\\pi}{9},\\ \\dfrac{8\\pi}{9},\\ \\dfrac{13\\pi}{9},\\ \\dfrac{14\\pi}{9}"
+        ]
+       },
+       {
+        "instruction": "Each statement is false. Give a counter-example.",
+        "cols": 2,
+        "few": true,
+        "parts": [
+         "\\arcsin(\\sin x) = x \\text{ for all } x",
+         "\\arccos(\\cos x) = x \\text{ for all } x"
+        ],
+        "answers": [
+         "x = \\pi: \\text{ the left side is } 0",
+         "x = 2\\pi: \\text{ the left side is } 0"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "built": "1p6ugs0"
+  }
+ ],
+ "questionVersion": 2
+}

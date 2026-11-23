@@ -150,7 +150,9 @@ function BarEl({ el, fill, stage }: { el: Extract<DeckElement, { kind: "bar" }>;
 
 export const FILL_LABELS: [FillMode, string][] = [["filled", "Filled in"], ["structure", "Structure only"], ["blank", "Blank"]];
 
-interface Shown { drawing?: Drawing; focuses?: (Focus | undefined)[]; latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string }
+interface Shown { drawing?: Drawing; focuses?: (Focus | undefined)[]; latex: string; lines?: string[]; answer: string; suffix?: string; working: { label: string; latex: string; type?: string; plain?: string; extra?: unknown }[]; source: string;
+  /** The picture of a closing "Answer:" step that was left out because it only repeats the answer (see `withoutRepeatedAnswer`). */
+  answerPicture?: unknown }
 export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   latex: q.kind === "simple" ? (q.displayLatex ?? q.display) : "",
   lines: q.kind === "worded" ? q.lines : undefined,
@@ -161,6 +163,15 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
   drawing: extras(q)._diagram as Drawing | undefined,
   focuses: extras(q)._stepFocus as (Focus | undefined)[] | undefined,
 });
+
+/** A working that ends with an "Answer:" step saying exactly what the answer box says would print it twice (the tool pages hide that step for the same reason):
+ *  drop the step and keep its picture, if it has one, for when the answer is shown. */
+const tidy = (x: string) => x.replace(/\s+/g, "");
+export function withoutRepeatedAnswer(q: Shown): Shown {
+  const last = q.working[q.working.length - 1];
+  if (q.working.length < 2 || !last || !/^answer\b/i.test(last.label) || tidy(last.latex) !== tidy(q.answer)) return q;
+  return { ...q, working: q.working.slice(0, -1), answerPicture: last.extra };
+}
 
 /** A question as the class sees it: maths, or a worded question's lines (smaller, so a paragraph fits). */
 /** An instruction such as "Write as a power of $b$:" (it ends in a colon), set the same whether or not it holds a variable. */
@@ -197,6 +208,25 @@ function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth"
 
 const pill: CSSProperties = slideButton;
 
+/** A maths question kept on one line: a range such as "0 \\le \\theta \\le 2\\pi" is never split across two lines, so when the line is wider than its
+ *  box the whole line is scaled down to fit. */
+function FitLine({ children }: { children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
+  const [k, setK] = useState(1), [h, setH] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const measure = () => { const w = i.scrollWidth, f = w ? Math.min(1, o.clientWidth / w) : 1; setK(f); setH(i.offsetHeight * f); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o); ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  return <div ref={outer} style={{ width: "100%", textAlign: "center", height: h, contain: "inline-size" }}><div ref={inner} style={{ display: "inline-block", whiteSpace: "nowrap", transform: `scale(${k})`, transformOrigin: "top left" }}>{children}</div></div>;
+}
+/** A question whose maths line has an explicit gap in it (`\\quad`, between an equation and its range) is shown on one line. */
+const oneLine = (latex: string) => latex.includes("\\quad");
+
 /** The tool's generator running live, like its Whiteboard: opens on the question its seed gives (the same every time
  *  the slide is shown), New question draws a fresh one, and the working comes one step at a time. Keys: n, a, s. */
 const workspaceLike = (el: { presentation?: string }) => el.presentation === "whiteboard" || el.presentation === "whiteboard-inverted";
@@ -209,7 +239,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const seen = useMemo(() => new Set<string>(), []);
   useEffect(() => {
     let on = true;
-    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) { reset(); setQ(x ? fromGenerated(x, "Generated") : null); } });
+    void generateFrom(el.tool, el.preset, el.seed ?? 1).then((x) => { if (on) { reset(); setQ(x ? withoutRepeatedAnswer(fromGenerated(x, "Generated")) : null); } });
     setPrompt(el.prompt ?? "");
     if (!el.prompt) void loadConfig(el.tool).then((c) => { if (on && c) setPrompt(instructionOf(c, el.preset.sub)); });
     return () => { on = false; };
@@ -221,7 +251,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
       const x = await generateFrom(el.tool, el.preset);
       if (!x) return;
       const key = x.key.replace(/-\d+$/, "");
-      if (!seen.has(key) || i === 19) { seen.add(key); setQ(fromGenerated(x)); return; }
+      if (!seen.has(key) || i === 19) { seen.add(key); setQ(withoutRepeatedAnswer(fromGenerated(x))); return; }
     }
   }, [el.tool, el.preset, workspace, seen, reset]);
   useEffect(() => {
@@ -247,11 +277,12 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const total = q.working.length;
   const whiteboard = workspace;
   /** The working's ratio table or bar model: with one, full-width shows it developing beside the steps. */
-  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : null;
+  const pictureOf = (w: Shown["working"][number]) => w.type === "ratioTable" ? { type: "ratioTable" as const, data: w.extra, caption: w.plain } : w.type === "fracBar" ? { type: "bar" as const, data: w.extra, caption: w.plain } : (w.extra as { kind?: string } | undefined)?.kind === "graphBuild" ? { type: "graph" as const, data: w.extra, caption: undefined } : null;
   const hasPicture = !whiteboard && q.working.some((w) => pictureOf(w));
-  const latest = [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
+  const finalPicture = q.answerPicture ? pictureOf({ label: "", latex: "", extra: q.answerPicture }) : null;
+  const latest = (solution.answer && finalPicture) || [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
-    question={q.drawing ? <ShapeQuestion drawing={q.drawing} focuses={q.focuses} shown={solution.all ? total : solution.shown} answer={solution.answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    question={q.drawing ? <ShapeQuestion drawing={q.drawing} focuses={q.focuses} shown={solution.all ? total : solution.shown} answer={solution.answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : oneLine(q.latex) ? <FitLine><MathRenderer latex={q.latex} style={{ fontSize: "1em" }} /></FitLine> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
     steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={workingSize} questionFontSize={questionSize} layout={whiteboard ? "stacked" : "split"}
   />;
@@ -448,7 +479,8 @@ function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet"
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
+  // a row of fractions or roots is taller than a row of plain text, so a block that has them counts as taller rows
+  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)) * (b.parts.some((p) => /\\(frac|sqrt)/.test(p)) ? 1.2 : 1), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
   const size = Math.max(22, Math.min(56, Math.floor(el.h / (lines * 1.5))));
   const answers = shown || forced;
   return (
@@ -456,7 +488,7 @@ function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet"
       <div style={{ flex: 1, minHeight: 0 }}>
         {tb.blocks.map((b, bi) => (
           <div key={bi} style={{ marginBottom: size * 0.5 }}>
-            <div style={{ fontSize: size * 0.62, color: "#64748b", marginBottom: size * 0.2 }}><b>Question {bi + 1}:</b> {b.instruction}</div>
+            <div style={{ fontSize: size * 0.62, color: "#64748b", marginBottom: size * 0.2 }}><b>Question {(tb.firstQuestion ?? 1) + bi}:</b> {b.instruction}</div>
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${blockCols(tb, b)}, 1fr)`, columnGap: 24, rowGap: size * 0.22 }}>
               {b.parts.map((part, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "baseline", gap: size * 0.3, fontSize: size, whiteSpace: "nowrap", color: answers ? "#1e3a8a" : "#0f172a" }}>

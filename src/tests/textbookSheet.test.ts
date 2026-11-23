@@ -20,6 +20,11 @@ describe("textbook sheet", () => {
     const bad = sheet(); bad.blocks[0].answers.pop();
     expect(textbookProblems(bad).join(" ")).toContain("6 parts but 5 answers");
     expect(textbookProblems(sheet(4)).join(" ")).toContain("the least is 5");
+    const few = sheet(2); few.blocks[0].few = true;
+    expect(textbookProblems(few)).toEqual([]);
+  });
+  it("numbers the questions from firstQuestion", () => {
+    expect(textbookSheetHtml({ ...sheet(), firstQuestion: 4 }, "questions")).toContain("<b>Question 4:</b>");
   });
   it("prints the questions, the answers, or both on separate pages", () => {
     const q = textbookSheetHtml(sheet(), "questions"), a = textbookSheetHtml(sheet(), "answers"), both = textbookSheetHtml(sheet(), "both");
