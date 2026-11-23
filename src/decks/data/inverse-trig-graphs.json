@@ -664,6 +664,379 @@
    "built": "1r9gcnr"
   },
   {
+   "id": "it-wb-exact",
+   "family": "teach",
+   "title": "Exact values",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-ex-1",
+       "title": "Find the exact value of \\arctan\\sqrt{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arctan\\sqrt{3}$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{3}$"
+       ],
+       "explanation": [
+        "$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is in the range of arctan.",
+        "$\\arctan\\sqrt{3} = \\frac{\\pi}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-ex-2",
+       "title": "Find the exact value of \\arcsin\\left(-\\frac{1}{2}\\right).",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arcsin\\left(-\\frac{1}{2}\\right)$."
+       ],
+       "answer": [
+        "$-\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "$\\sin\\frac{\\pi}{6} = \\frac{1}{2}$, so $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\frac{1}{2}$.",
+        "$-\\frac{\\pi}{6}$ is in the range of arcsin, so $\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-ex-3",
+       "title": "Find the exact value of \\arccos\\left(-\\frac{1}{2}\\right).",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arccos\\left(-\\frac{1}{2}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{2\\pi}{3}$"
+       ],
+       "explanation": [
+        "arccos only gives angles from $0$ to $\\pi$, so the answer cannot be negative.",
+        "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\left(\\pi - \\frac{\\pi}{3}\\right) = -\\frac{1}{2}$.",
+        "$\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-exact-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Three to talk through: a positive value, a negative one, and arccos of a negative (never a negative angle).",
+   "built": "1odt48j"
+  },
+  {
+   "id": "it-wb-undo",
+   "family": "teach",
+   "title": "Function, then its inverse",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-un-1",
+       "title": "Find the exact value of \\arctan\\left(\\tan\\frac{\\pi}{6}\\right",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arctan\\left(\\tan\\frac{\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "$\\frac{\\pi}{6}$ is already between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$.",
+        "$\\arctan\\left(\\tan\\frac{\\pi}{6}\\right) = \\frac{\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-un-2",
+       "title": "Find the exact value of \\arcsin\\left(\\sin\\frac{5\\pi}{6}\\righ",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{\\pi}{6}$"
+       ],
+       "explanation": [
+        "$\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$.",
+        "$\\arcsin\\frac{1}{2} = \\frac{\\pi}{6}$, because $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-un-3",
+       "title": "Find the exact value of \\arccos\\left(\\cos\\frac{7\\pi}{6}\\righ",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Find the exact value of $\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right)$."
+       ],
+       "answer": [
+        "$\\frac{5\\pi}{6}$"
+       ],
+       "explanation": [
+        "$\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$.",
+        "The angle from $0$ to $\\pi$ with that cosine is $\\frac{5\\pi}{6}$.",
+        "$\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right) = \\frac{5\\pi}{6}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-undo-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Three to talk through: inside the range, outside it (sin), outside it (cos). Bring the angle into the restricted domain first.",
+   "built": "5h7bvz"
+  },
+  {
+   "id": "it-wb-solve",
+   "family": "teach",
+   "title": "Solving inverse equations",
+   "els": [
+    {
+     "kind": "questions",
+     "x": 48,
+     "y": 24,
+     "w": 1504,
+     "h": 852,
+     "size": 56,
+     "items": [
+      {
+       "version": 2,
+       "id": "it-so-1",
+       "title": "Solve \\arccos x = \\frac{\\pi}{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arccos x = \\frac{\\pi}{3}$."
+       ],
+       "answer": [
+        "$x = \\frac{1}{2}$"
+       ],
+       "explanation": [
+        "Take cos of both sides: $x = \\cos\\frac{\\pi}{3}$.",
+        "$x = \\frac{1}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-so-2",
+       "title": "Solve \\arctan 2x = \\frac{\\pi}{3}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arctan 2x = \\frac{\\pi}{3}$."
+       ],
+       "answer": [
+        "$x = \\frac{\\sqrt{3}}{2}$"
+       ],
+       "explanation": [
+        "Take tan of both sides: $2x = \\tan\\frac{\\pi}{3} = \\sqrt{3}$.",
+        "$x = \\frac{\\sqrt{3}}{2}$"
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "it-so-3",
+       "title": "Solve \\arccos x = -\\frac{\\pi}{4}.",
+       "tool": "inverse-trig-graphs",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "Solve $\\arccos x = -\\frac{\\pi}{4}$."
+       ],
+       "answer": [
+        "No solution"
+       ],
+       "explanation": [
+        "arccos only gives angles from $0$ to $\\pi$.",
+        "$-\\frac{\\pi}{4}$ is outside that range, so no value of $x$ works."
+       ],
+       "rationale": "",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
+     "id": "it-wb-solve-1",
+     "visualiser": false
+    }
+   ],
+   "brief": "Three to talk through: take the function of both sides; the last has no solution because the angle is outside the range.",
+   "built": "h6yir9"
+  },
+  {
+   "id": "it-sheet",
+   "family": "retrieval",
+   "title": "Inverse trigonometric functions",
+   "els": [
+    {
+     "id": "it-sheet-1",
+     "kind": "worksheet",
+     "x": 40,
+     "y": 30,
+     "w": 1520,
+     "h": 840,
+     "tool": "inverse-trig-graphs",
+     "preset": {
+      "sub": "converting",
+      "level": "level1"
+     },
+     "count": 21,
+     "cols": 4,
+     "pin": {
+      "title": "Inverse trigonometric functions",
+      "paper": "A4",
+      "layout": "grid",
+      "borders": false
+     },
+     "textbook": {
+      "title": "Inverse trigonometric functions",
+      "note": "Write your answers in your book. Show your working.",
+      "blocks": [
+       {
+        "instruction": "Without using a calculator, find the exact value in radians.",
+        "cols": 4,
+        "parts": [
+         "\\arccos\\frac{1}{2}",
+         "\\arctan\\frac{1}{\\sqrt{3}}",
+         "\\arcsin\\frac{\\sqrt{2}}{2}",
+         "\\arcsin\\left(-\\frac{\\sqrt{3}}{2}\\right)",
+         "\\arctan(-1)",
+         "\\arccos\\left(-\\frac{\\sqrt{3}}{2}\\right)",
+         "\\arccos(-1)"
+        ],
+        "answers": [
+         "\\frac{\\pi}{3}",
+         "\\frac{\\pi}{6}",
+         "\\frac{\\pi}{4}",
+         "-\\frac{\\pi}{3}",
+         "-\\frac{\\pi}{4}",
+         "\\frac{5\\pi}{6}",
+         "\\pi"
+        ]
+       },
+       {
+        "instruction": "Without using a calculator, find the exact value.",
+        "cols": 3,
+        "parts": [
+         "\\arcsin\\left(\\sin\\left(-\\frac{\\pi}{6}\\right)\\right)",
+         "\\arccos\\left(\\cos\\frac{\\pi}{4}\\right)",
+         "\\arctan\\left(\\tan\\left(-\\frac{\\pi}{3}\\right)\\right)",
+         "\\arcsin\\left(\\sin\\frac{3\\pi}{4}\\right)",
+         "\\arccos\\left(\\cos\\frac{4\\pi}{3}\\right)",
+         "\\arctan\\left(\\tan\\frac{3\\pi}{4}\\right)",
+         "\\arcsin\\left(\\sin\\frac{5\\pi}{4}\\right)"
+        ],
+        "answers": [
+         "-\\frac{\\pi}{6}",
+         "\\frac{\\pi}{4}",
+         "-\\frac{\\pi}{3}",
+         "\\frac{\\pi}{4}",
+         "\\frac{2\\pi}{3}",
+         "-\\frac{\\pi}{4}",
+         "-\\frac{\\pi}{4}"
+        ]
+       },
+       {
+        "instruction": "Without using a calculator, solve each equation. If there is no solution, say so.",
+        "cols": 3,
+        "parts": [
+         "\\arcsin x = \\frac{\\pi}{6}",
+         "\\arccos x = \\frac{\\pi}{4}",
+         "\\arctan x = \\frac{\\pi}{4}",
+         "\\arcsin 3x = \\frac{\\pi}{2}",
+         "\\arccos(x + 1) = \\frac{2\\pi}{3}",
+         "\\arctan(2x + 1) = -\\frac{\\pi}{3}",
+         "\\arcsin x = \\frac{2\\pi}{3}"
+        ],
+        "answers": [
+         "\\frac{1}{2}",
+         "\\frac{\\sqrt{2}}{2}",
+         "1",
+         "\\frac{1}{3}",
+         "-\\frac{3}{2}",
+         "\\frac{-1 - \\sqrt{3}}{2}",
+         "\\text{no solution}"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "built": "walscs"
+  },
+  {
    "id": "it-summary",
    "family": "structure",
    "title": "Summary",
