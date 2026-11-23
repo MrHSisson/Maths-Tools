@@ -4,6 +4,8 @@ import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { FlashcardDeck } from "../../shared/flashcards";
 import { MECHANICS_MC } from "../../flashcards/mechanicsMC";
+import DevNotice from "../../shared/components/DevNotice";
+import { MC_NOTICE } from "./mcNotice";
 
 // Further Maths flashcards, opened from the Further Mechanics hub. The cards for each chapter are data (src/flashcards/), the study screen is the shared FlashcardDeck
 // (src/shared/flashcards/), and what a student has rated is kept on their own device. Today there is one set, Mechanics MC (work, energy and power); a chooser appears when
@@ -19,6 +21,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   return (
     <div className="min-h-screen" style={{ background: PAGE_BG }}>
+      <DevNotice id="/further-maths-flashcards" text={MC_NOTICE} />
       <div className={`mx-auto max-w-3xl ${phone ? "px-4 py-4" : "px-6 py-8"}`}>
         <div className="mb-3 flex items-center gap-4">
           <button onClick={() => { window.location.href = "/"; }} className="inline-flex items-center gap-2 rounded-xl py-1 pr-2 text-sm font-semibold text-slate-600 hover:text-slate-900">

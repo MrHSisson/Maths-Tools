@@ -63,6 +63,8 @@ const STANDALONE_BY_DESIGN = [
   "FurtherMechanics/DimensionalAnalysis",
   "FurtherMechanics/WorkDone",
   "FurtherMechanics/Energy",
+  "FurtherMechanics/Power",
+  "FurtherMechanics/Elastic",
   "FurtherMechanics/Flashcards",
   "FurtherMechanics/FurtherMechanics",
   "Generators/FunctionalSkillsGenerator",

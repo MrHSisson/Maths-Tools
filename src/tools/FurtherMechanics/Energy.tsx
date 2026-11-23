@@ -1,7 +1,10 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MC_NOTICE } from "./mcNotice";
+import { MC_PRINT } from "./mcPrint";
 import { generateKepe } from "./energy/kepe";
+import { withEnergyBars } from "./energy/bars";
 import { generateWorkEnergy } from "./energy/workenergy";
 import { generateConserve } from "./energy/conserve";
 
@@ -36,6 +39,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   if (sub === "workenergy") m = generateWorkEnergy(level, { setting: opt(o, "weSetting", "horizontal"), ask: opt(o, "weAsk", "speed"), forces: opt(o, "weForces", "both"), method: opt(o, "weMethod", "work"), units, context, g, display, course });
   else if (sub === "conserve") m = generateConserve(level, { setting: opt(o, "cvSetting", "vertical"), starts: opt(o, "cvStarts", "rest"), ask: opt(o, "cvAsk", "speed"), parts: opt(o, "cvParts", "one"), context, g, display, course });
   else m = generateKepe(level, { energy: opt(o, "keEnergy", "ke,gpe"), ask: opt(o, "keAsk", "energy"), units, format: opt(o, "format", "j"), velocity: opt(o, "keVelocity", "speed"), context, g, display, course });
+  if (opt(o, "picture", "diagram") === "bars") m = withEnergyBars(m);
   return mechProblem(m, `energy-${sub}`);
 }
 
@@ -53,6 +57,10 @@ const OPTIONS: ShellOption[] = [
     displayOnly: true, tab: "display", defaultFor: () => "given",
     choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
+  {
+    key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["workenergy", "conserve"],
+    displayOnly: true, tab: "display", defaultFor: () => "diagram", choices: [{ value: "diagram", label: "The diagram" }, { value: "bars", label: "Energy bars" }],
+  },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a car, a ball, a skier) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "keEnergy", label: "Energy", info: "Kinetic energy, gravitational potential energy, or both mixed.", forSubTools: ["kepe"], multi: true, defaultFor: () => "ke,gpe",
@@ -68,13 +76,13 @@ const OPTIONS: ShellOption[] = [
     defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector", sub: "i and j" }],
   },
   {
-    key: "weSetting", label: "Setting", info: "Level ground, or along a slope given by its length and how far it rises or falls.", forSubTools: ["workenergy"],
-    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }],
+    key: "weSetting", label: "Setting", info: "Level ground, along a slope given by its length and how far it rises or falls, a load raised by a rope over a pulley, or (A2) a rough slope given by its angle, where friction is μ times the normal reaction.", forSubTools: ["workenergy"],
+    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }, { value: "pulley", label: "Raised over a pulley" }, { value: "rough", label: "Rough slope (A2)" }],
   },
   {
-    key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force, or the work done by the driving force.", forSubTools: ["workenergy"], multi: true,
+    key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force (or the pulling force over a pulley), the work done by the driving force, or on a rough slope the coefficient of friction.", forSubTools: ["workenergy"], multi: true,
     defaultFor: lv({ 1: "speed,distance", 2: "force", 3: "speed,force,work" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal only" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }],
+    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)" }],
   },
   {
     key: "weForces", label: "Forces", info: "Which forces act along the motion: a driving force only, a resistance only, or both.", forSubTools: ["workenergy"],
@@ -128,6 +136,9 @@ export default function App() {
         levels: 3,
         levelInfo: true,
         hideMatrix: true,
+        skillSheet: true,
+        skillPrint: MC_PRINT,
+        devNotice: MC_NOTICE,
         noSandbox: true,
         levelLabels: {
           kepe: ["Find the kinetic or potential energy", "Find the mass, speed or height; with conversions", "Find a gain or loss between two states"],

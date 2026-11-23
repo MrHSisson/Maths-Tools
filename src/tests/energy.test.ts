@@ -117,3 +117,62 @@ describe("Energy: strings, pictures, course and worksheet", () => {
     }
   });
 });
+
+describe("Energy: a rough slope (A2) and a load raised over a pulley", () => {
+  const sin = (d: number) => Math.sin((d * Math.PI) / 180), cos = (d: number) => Math.cos((d * Math.PI) / 180);
+  it("every answer closes the work-energy equation", () => {
+    for (const m of many("workenergy", 3, 150, { weSetting: "rough", weAsk: "speed,distance,mu" })) {
+      const i = m.inputs as { ask: string; setting: string; g: number; m: number; alpha: number; mu: number; d: number; u: number; v: number };
+      expect(i.setting).toBe("rough");
+      const ans = m.answer.value;
+      if (i.ask === "stop") expect(rel(0.5 * i.m * i.u * i.u, i.m * i.g * ans * (sin(i.alpha) + i.mu * cos(i.alpha)))).toBeLessThan(0.0101);
+      else if (i.ask === "speed") expect(rel(ans * ans, i.u * i.u + 2 * i.g * i.d * (sin(i.alpha) - i.mu * cos(i.alpha)))).toBeLessThan(0.0101);
+      else expect(rel(ans, i.mu)).toBeLessThan(0.0211);
+    }
+    for (const m of many("workenergy", 3, 150, { weSetting: "pulley", weAsk: "speed,force" })) {
+      const i = m.inputs as { ask: string; setting: string; g: number; m: number; T: number; h: number; v: number };
+      expect(i.setting).toBe("pulley");
+      const ans = m.answer.value;
+      if (i.ask === "speed") expect(rel(i.T * i.h, i.m * i.g * i.h + 0.5 * i.m * ans * ans)).toBeLessThan(0.0101);
+      else expect(rel(ans * i.h, i.m * i.g * i.h + 0.5 * i.m * sig(i.v, 3) ** 2)).toBeLessThan(0.0051);
+    }
+  });
+  it("a 10 kg particle projected at 6 m s⁻¹ up a 30° plane with μ = 0.2 stops after 2.73 m", () => {
+    const m = draw("workenergy", 3, { weSetting: "rough", weAsk: "distance" });
+    expect(m.answer.unit).toBe("m");
+    const s = 36 / (2 * 9.8 * (sin(30) + 0.2 * cos(30)));
+    expect(sig(s, 3)).toBe(2.73);
+  });
+  it("every KaTeX line renders, every scene validates, and a rough slope is not offered at AS", () => {
+    for (const setting of ["rough", "pulley"]) for (const display of ["given", "build", "hidden"]) for (const m of many("workenergy", 3, 25, { weSetting: setting, weAsk: "speed,distance,force,mu", diagram: display })) {
+      for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), r).not.toThrow();
+      for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
+      if (m.scene) expect(validateScene(m.scene)).toEqual([]);
+    }
+    for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "workenergy", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "workenergy"), course: "AS", weSetting: "rough", weAsk: "speed,mu" } }).mech!.a2).toBe(false);
+  });
+});
+
+describe("Energy: energy bars as the working picture", () => {
+  const total = (c: { gpe?: number; epe?: number; ke?: number; work?: number }) => (c.gpe ?? 0) + (c.epe ?? 0) + (c.ke ?? 0) + (c.work ?? 0);
+  it("the two columns are the same height, the scene is sound, and the bars wait for the equation", () => {
+    const cases: Array<[string, number, Record<string, string>]> = [
+      ["conserve", 1, { cvSetting: "vertical", cvAsk: "speed,max" }], ["conserve", 3, { cvSetting: "slope", cvAsk: "speed,stop" }], ["conserve", 2, { cvStarts: "rest,down,up", cvAsk: "speed,max" }],
+      ["workenergy", 1, { weSetting: "horizontal", weAsk: "speed,distance,force" }], ["workenergy", 3, { weSetting: "slope", weAsk: "speed,force,work" }],
+      ["workenergy", 3, { weSetting: "rough", weAsk: "speed,distance,mu" }], ["workenergy", 3, { weSetting: "pulley", weAsk: "speed,force" }],
+    ];
+    for (const [sub, level, over] of cases) for (const m of many(sub, level, 60, { ...over, picture: "bars" })) {
+      expect(m.scene, sub).toBeDefined();
+      expect(validateScene(m.scene!)).toEqual([]);
+      const bars = m.scene!.elements.find((e) => e.type === "bars") as unknown as { columns: Array<{ gpe?: number; epe?: number; ke?: number; work?: number }>; reveal?: number };
+      expect(bars.columns.length).toBe(2);
+      expect(rel(total(bars.columns[0]), total(bars.columns[1])), `${sub} ${JSON.stringify(over)}`).toBeLessThan(0.0101);
+      expect(bars.reveal).toBe(2);
+    }
+  });
+  it("without the option the diagram is untouched, and a question with no picture stays without one", () => {
+    const m = draw("conserve", 1);
+    expect(m.scene!.elements.some((e) => e.type === "bars")).toBe(false);
+    expect(draw("conserve", 1, { picture: "bars", diagram: "hidden" }).display).toBe("hidden");
+  });
+});

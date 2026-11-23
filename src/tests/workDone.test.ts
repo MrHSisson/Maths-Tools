@@ -47,16 +47,16 @@ describe("Work Done: acceptance examples", () => {
     expect(m.answer.value).toBe(41.4);
   });
   it("several: the 1400 kg van gives 2 160 000 J, 205 800 J and 840 000 J", () => {
-    const m = buildSeveral({ ...base, situation: "journey", g: 9.8, ctx: "van", m: 1400, D: 900, R: 350, d: 2400, h: -15, R2: 0, d2: 0, Wres: 0, big: true });
+    const m = buildSeveral({ ...base, situation: "journey", g: 9.8, ctx: "van", m: 1400, D: 900, R: 350, d: 2400, h: -15, R2: 0, d2: 0, Wres: 0, alpha: 0, big: true });
     expect([m.answer.value, ...(m.extra ?? []).map((e) => e.value)]).toEqual([2160000, 205800, 840000]);
   });
   it("variable: ∫ (3x² + 2) from 1 to 4 is 69 J", () => {
-    const m = buildVariable({ ...base, form: "poly", ask: "work", terms: [{ kind: "pow", c: 3, p: 2 }, { kind: "pow", c: 2, p: 0 }], a: 1, b: 4, exact: false, m: 0, D: 0, r: 0, n: 0, X: 0 });
+    const m = buildVariable({ ...base, form: "poly", ask: "work", terms: [{ kind: "pow", c: 3, p: 2 }, { kind: "pow", c: 2, p: 0 }], a: 1, b: 4, exact: false, m: 0, D: 0, r: 0, n: 0, X: 0, u: 0 });
     expect(m.answer.value).toBe(69);
     expect(m.steps.flatMap((s) => s.lines).join("")).toContain("69");
   });
   it("variable: the 800 kg vehicle reaches 11.1 m s⁻¹", () => {
-    const m = buildVariable({ ...base, level: 3, form: "vehicle", ask: "speed", terms: [], a: 0, b: 90, exact: false, m: 800, D: 600, r: 0.02, n: 2, X: 90 });
+    const m = buildVariable({ ...base, level: 3, form: "vehicle", ask: "speed", terms: [], a: 0, b: 90, exact: false, m: 800, D: 600, r: 0.02, n: 2, X: 90, u: 0 });
     expect(m.answer.value).toBe(11.1);
     expect(m.steps.flatMap((s) => s.lines).join("")).toContain("54{,}000");
     expect(m.steps.flatMap((s) => s.lines).join("")).toContain("4{,}860");
@@ -113,20 +113,27 @@ describe("Work Done: independent re-derivation of every answer", () => {
     }
   });
   it("several", () => {
-    for (const level of [1, 2, 3]) for (const m of many("several", level, 80, { sevSituation: "two,journey,twostep,stages" })) {
-      const i = m.inputs as { situation: string; g: number; m: number; D: number; R: number; d: number; h: number; R2: number; d2: number; Wres: number };
+    for (const level of [1, 2, 3]) for (const m of many("several", level, 80, { sevSituation: "two,journey,twostep,stages,slope" })) {
+      const i = m.inputs as { situation: string; g: number; m: number; D: number; R: number; d: number; h: number; R2: number; d2: number; Wres: number; alpha: number };
       const got = [m.answer.value, ...(m.extra ?? []).map((e) => e.value)];
       const want = i.situation === "two" ? [i.D * i.d, i.R * i.d]
         : i.situation === "journey" ? [i.D * i.d, i.m * i.g * Math.abs(i.h), i.R * i.d]
+          : i.situation === "slope" ? [i.D * i.d, i.m * i.g * i.d * Math.sin((i.alpha * Math.PI) / 180), i.R * i.d]
           : i.situation === "twostep" ? [i.Wres / i.R, i.D * (i.Wres / i.R)]
             : [i.R * i.d + i.R2 * i.d2, i.D * (i.d + i.d2)];
       expect(got.length).toBe(want.length);
-      got.forEach((g, k) => near(g, want[k]));
+      got.forEach((g, k) => (i.situation === "slope" && k === 1 ? expect(Math.abs(g - want[k]) / want[k]).toBeLessThan(0.0051) : near(g, want[k])));
     }
   });
   it("variable: the integral is checked numerically, k and the limit by their own integral", () => {
-    for (const level of [1, 2, 3]) for (const m of many("variable", level, 100, { varForms: "poly,power,sqrt,trig,recip", varAsk: "work,k,limit" })) {
-      const i = m.inputs as { form: string; ask: string; terms: string; a: number; b: number; m: number; D: number; r: number; n: number; X: number };
+    for (const level of [1, 2, 3]) for (const m of many("variable", level, 100, { varForms: "poly,power,sqrt,trig,recip", varAsk: "work,k,limit", varVehicle: "speed,stop" })) {
+      const i = m.inputs as { form: string; ask: string; terms: string; a: number; b: number; m: number; D: number; r: number; n: number; X: number; u: number };
+      if (i.form === "vehicle" && i.ask === "stop") {
+        // put the stopping distance back: the energy at the start plus the driving force's work equals the (numerically integrated) work against the resistance
+        const wr = integrateNumerically((x) => i.r * x ** i.n, 0, m.answer.value);
+        expect(Math.abs(kineticEnergy(i.m, i.u) + i.D * m.answer.value - wr)).toBeLessThan(0.011 * wr);
+        continue;
+      }
       if (i.form === "vehicle") {
         const wr = integrateNumerically((x) => i.r * x ** i.n, 0, i.X);
         const v = Math.sqrt((2 * (i.D * i.X - wr)) / i.m);

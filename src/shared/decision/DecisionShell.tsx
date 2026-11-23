@@ -31,6 +31,7 @@ import { PAGE_BG, getQuestionBg } from "../colors";
 import { GlossCaption, glossSegments } from "./glossary";
 import StepCascade, { StepDots, type StepMeta } from "./StepCascade";
 import PrintTemplates from "./PrintTemplates";
+import DevNotice from "../components/DevNotice";
 import { LevelInfoDialog, LevelInfoButton } from "../components/LevelInfoDialog";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -454,6 +455,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
 
   // ── pieces ────────────────────────────────────────────────────────────────────
   const navBar = (
+    <>
     <div className="bg-blue-900 shadow-lg">
       <div className="max-w-[1500px] mx-auto px-2 sm:px-8 py-1.5 sm:py-3 flex justify-between items-center gap-2">
         <button onClick={() => { window.location.href = "/"; }} aria-label="Home" className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-2 min-h-[40px] sm:px-4 rounded-lg transition-colors">
@@ -491,6 +493,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         </div>
       </div>
     </div>
+    {config.devNotice && <DevNotice id={window.location.pathname} text={config.devNotice} />}
+    </>
   );
 
   const tabBtn = (active: boolean) =>

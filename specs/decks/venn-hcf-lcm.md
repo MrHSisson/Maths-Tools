@@ -210,6 +210,10 @@ The first deck, **Venn Diagrams & Product of Primes** (id `venn-hcf-lcm`, 34 sli
 - Do not put containers inside containers (boxes round Venns that already have a box: use a dividing line). Do not tie a worksheet to a slide number he did not ask for. When he says "slide N", count the **live deck's current order** (read it with `npm run deck -- pull`), and ask when two instructions conflict.
 - Look at the deck (`review`, and `sheet` for single slides) before saying it is done, and say plainly what was not checked.
 
+## Built (2026-11-22): deck 2, `hcf-lcm-from-venn`
+
+Sections 3 and 4 are built as `hcf-lcm-from-venn.build.ts` (25 slides after Harry's second review: one book set of twelve and one worksheet on the tall 2 × 2 page, asking for the HCF and the LCM together). Differences from the tables above: the two read-the-Venn grids (32, 40) are cut; the 216 discussion is a Depth card; build slides carry the HCF or LCM answer line top right on one click; two book sets (nine each) and two blank worksheets with a visualiser slide per book set; a *Why every tile?* slide (multiples beside prime tiles) and an exit ticket were added after Harry's review.
+
 ## Still open (small)
 
 1. ~~**Words:**~~ (confirmed above) "in both" for the overlap and "neither" for outside the circles inside the box; "middle" for the overlap once prime tiles are in. Say if you use other words.

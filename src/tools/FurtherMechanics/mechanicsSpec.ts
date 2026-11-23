@@ -128,24 +128,29 @@ export const CHECK_NOTES = {
 
 // ── The tools built for each chapter, and which of their sub-tools practise which statement ───────────────────────────────────────────────────
 // The page reads each tool's name, address and whether it is live from the registry (FurtherMechanics.tsx), so none of that is typed here.
-// Every sub-tool of a tool is placed exactly once (src/tests/mechanicsPairings.test.ts), as for the Decision hub.
+// Every sub-tool of a tool is placed at least once, and never twice under one statement (src/tests/mechanicsPairings.test.ts); one that serves two statements is listed under both.
 export interface MechSubRef { tool: string; sub: string; label: string; /** a tool with a Skills / Exam style switch says which (Dimensional Analysis); others leave it out */ practice?: "skills" | "exam"; /** beyond AS: shown on the A2 row */ a2?: boolean }
 const da = (sub: string, label: string, practice: "skills" | "exam" = "skills"): MechSubRef => ({ tool: "dimensional-analysis", sub, label, practice });
 const wd = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "work-done", sub, label, ...(a2 ? { a2 } : {}) });
 const en = (sub: string, label: string): MechSubRef => ({ tool: "energy", sub, label });
+const el = (sub: string, label: string): MechSubRef => ({ tool: "elastic-strings", sub, label });
+const pw = (sub: string, label: string, a2?: boolean): MechSubRef => ({ tool: "power", sub, label, ...(a2 ? { a2 } : {}) });
 
 /** registry ids of the tools built for each chapter */
-export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy"] };
+export const MECHANICS_TOOLS: Record<string, string[]> = { MA: ["dimensional-analysis"], MC: ["work-done", "energy", "power", "elastic-strings"] };
 
 /** the sub-tools that practise each statement */
 export const MECHANICS_PAIRINGS: Record<string, MechSubRef[]> = {
   MA1: [da("dims", "Find the dimensions"), da("consistent", "Check consistency")],
   MA2: [da("powers", "Find the powers")],
   MC1: [wd("fd", "Force and distance"), wd("grav", "Work and gravity"), wd("several", "Several forces"), wd("angle", "Force at an angle", true)],
-  // kinetic and potential energy and conservation practise both MC2 and MC3; each sub-tool is placed once, under the first statement it serves
+  // MC2 is gravitational potential energy and MC3 kinetic energy: kinetic and potential energy and conservation of energy practise both, so they are listed under both
   MC2: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy")],
-  MC3: [en("workenergy", "Work-energy principle")],
+  MC3: [en("kepe", "Kinetic and potential energy"), en("conserve", "Conservation of energy"), en("workenergy", "Work-energy principle")],
+  MC4: [el("hooke", "Hooke's law")],
   MC5: [wd("variable", "Variable force")],
+  MC6: [el("epe", "Elastic potential energy"), el("elastic", "Elastic energy problems")],
+  MC7: [pw("avgpower", "Average power"), pw("forcespeed", "Force and speed"), pw("powerslope", "Power on a slope", true), pw("motion", "Power from motion data")],
 };
 
 /** sub-tools that belong to a chapter but to no one statement, shown in Developing-tools mode only */
@@ -166,9 +171,6 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
   MB2: [{ label: "Restitution and impacts" }],
   MB3: [{ label: "Impulse and momentum" }],
   MB4: [{ label: "Impulse of a variable force" }],
-  MC4: [{ label: "Hooke's law" }],
-  MC6: [{ label: "Elastic potential energy" }, { label: "Elastic energy problems" }],
-  MC7: [{ label: "Average power" }, { label: "Force and speed" }, { label: "Power on a slope", a2: true }, { label: "Power from motion data" }],
   MD1: [{ label: "Angular speed, speed and acceleration" }],
   MD2: [{ label: "Angular speed, speed and acceleration" }],
   MD3: [{ label: "Angular speed, speed and acceleration" }],
@@ -185,5 +187,5 @@ export const MECHANICS_PLANNED: Record<string, { label: string; a2?: boolean }[]
 
 /** a chapter's exam-style practice: the one mixed question its page opens from the exam card */
 export const MECHANICS_EXAM: Record<string, { text: string; ref: MechSubRef }> = {
-  MA: { text: "A short multi-part question in the style of the paper: state or show dimensions, check a formula, or find the powers in a model.", ref: da("exAny", "Any exam question", "exam") },
+  MA: { text: "A short multi-part question in the style of the paper: state or show dimensions, check a formula, or find the powers in a model.", ref: da("exAny", "Exam-style questions", "exam") },
 };

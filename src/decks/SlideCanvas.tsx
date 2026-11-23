@@ -447,14 +447,14 @@ function VennSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  const answers = shown || forced, cols = Math.min(3, cells.length), rows = Math.ceil(cells.length / cols);
+  const answers = shown || forced, cols = Math.min(sheet.grid ? 4 : 3, cells.length), rows = Math.ceil(cells.length / cols), small = !!sheet.grid;   // the tall sheet: twelve go four across, three down
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`, gap: 16 }}>
         {cells.map((c, i) => (
           <div key={i} style={{ minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ flex: 1, minHeight: 0, width: "100%" }} dangerouslySetInnerHTML={{ __html: (answers ? c.answerSvg : c.svg).replace("<svg ", '<svg style="width:100%;height:100%;display:block" ') }} />
-            <div style={{ fontSize: 30, lineHeight: 1.25, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: 76, textAlign: "center", paddingTop: 6 }}>
+            <div style={{ fontSize: small ? 24 : 30, lineHeight: 1.25, color: answers && c.lines ? "#166534" : "#334155", fontWeight: 600, minHeight: small ? 62 : 76, textAlign: "center", paddingTop: 6 }}>
               {(answers && c.lines ? c.answers : c.factors).map((t, k) => <div key={k}>{t}</div>)}
             </div>
           </div>
