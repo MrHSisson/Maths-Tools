@@ -479,7 +479,8 @@ function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet"
     return () => window.removeEventListener("keydown", h);
   }, [live]);
   const B = live ? "button" : "span";
-  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
+  // a row of fractions or roots is taller than a row of plain text, so a block that has them counts as taller rows
+  const rows = tb.blocks.reduce((n, b) => n + Math.ceil(b.parts.length / blockCols(tb, b)) * (b.parts.some((p) => /\\(frac|sqrt)/.test(p)) ? 1.2 : 1), 0), lines = rows + tb.blocks.length * 1.6 + 0.8;
   const size = Math.max(22, Math.min(56, Math.floor(el.h / (lines * 1.5))));
   const answers = shown || forced;
   return (

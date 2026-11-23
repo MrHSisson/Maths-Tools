@@ -2,7 +2,7 @@
 // styles with different numbers. Every answer is recomputed from scratch below, and the build stops if one disagrees.
 //   A: exact values   B: function then inverse   C: solving inverse equations
 import { Q, S } from "/src/decks/builder";
-import type { CuratedQuestion } from "/src/decks/types";
+import type { CuratedQuestion, Slide } from "/src/decks/types";
 
 const T = "inverse-trig-graphs";
 const { PI, sin, cos, tan, asin, acos, atan, sqrt } = Math;
@@ -134,10 +134,13 @@ const intervalSheet = solveIn([
   ["\\sin x = -\\frac{1}{2}", (x) => sin(x) + 1 / 2, 0, 2 * PI],
   ["\\cos x = -\\frac{\\sqrt{2}}{2}", (x) => cos(x) + R2 / 2, 0, 2 * PI],
   ["\\tan x = \\sqrt{3}", (x) => tan(x) - R3, 0, 2 * PI],
+  ["\\tan x = -\\frac{\\sqrt{3}}{3}", (x) => tan(x) + R3 / 3, 0, 2 * PI],
   ["\\sin x = \\frac{1}{2}", (x) => sin(x) - 1 / 2, -PI, PI],
   ["\\cos x = \\frac{1}{2}", (x) => cos(x) - 1 / 2, -PI, PI],
   ["\\tan x = -\\sqrt{3}", (x) => tan(x) + R3, -PI, PI],
+  ["\\cos x = 0", (x) => cos(x), -PI, PI],
   ["\\sin x = -\\frac{\\sqrt{3}}{2}", (x) => sin(x) + R3 / 2, 0, 4 * PI],
+  ["\\sin x = -\\frac{\\sqrt{2}}{2}", (x) => sin(x) + R2 / 2, -2 * PI, 2 * PI],
 ]);
 const rearrangeSheet = solveIn([
   ["2\\cos x - 1 = 0", (x) => 2 * cos(x) - 1, 0, 2 * PI],
@@ -147,10 +150,8 @@ const rearrangeSheet = solveIn([
 // a multiple of the angle: the interval for the angle inside the brackets is wider (e.g. 0 to 2π becomes 0 to 6π for 3θ)
 const multipleSheet = solveIn([
   ["\\sin 2\\theta = \\frac{1}{2}", (t) => sin(2 * t) - 1 / 2, 0, 2 * PI],
-  ["\\cos 2\\theta = -\\frac{\\sqrt{3}}{2}", (t) => cos(2 * t) + R3 / 2, 0, 2 * PI],
   ["\\tan 2\\theta = 1", (t) => tan(2 * t) - 1, 0, PI],
   ["\\cos 3\\theta = \\frac{1}{2}", (t) => cos(3 * t) - 1 / 2, 0, PI],
-  ["\\sin 2\\theta = -\\frac{\\sqrt{2}}{2}", (t) => sin(2 * t) + R2 / 2, -PI, PI],
   ["\\sin 3\\theta = \\frac{\\sqrt{3}}{2}", (t) => sin(3 * t) - R3 / 2, 0, 2 * PI],
 ], "\\theta");
 // counter-examples: [the false statement, the value x it fails at, what the left side really is (as a number and in KaTeX), the right side x]
@@ -171,31 +172,35 @@ const sheet = {
   title: "Inverse trigonometric functions",
   note: "Write your answers in your book. Show your working.",
   blocks: [
-    { instruction: "Without using a calculator, find the exact value in radians.", cols: 5, parts: exactSheet.map((r) => r[0]), answers: exactSheet.map((r) => r[2]) },
+    { instruction: "Without using a calculator, find the exact value in radians.", cols: 3, parts: exactSheet.map((r) => r[0]), answers: exactSheet.map((r) => r[2]) },
     { instruction: "Without using a calculator, find the exact value.", cols: 3, parts: undoSheet.map((r) => r[0]), answers: undoSheet.map((r) => r[2]) },
-    { instruction: "Without using a calculator, solve each equation. If there is no solution, say so.", cols: 3,
+    { instruction: "Without using a calculator, solve each equation. If there is no solution, say so.", cols: 2,
       parts: [...solveSheet.map((r) => r[0]), "\\arcsin x = \\frac{2\\pi}{3}"], answers: [...solveSheet.map((r) => r[2]), "\\text{no solution}"] },
   ],
 };
 
-// Questions 4 to 7 of the same worksheet, on their own sheet (so each slide and each printed page is a size that can be read).
+// The second worksheet: solving in an interval, rearranging, a multiple of the angle, then counter-examples last.
 const sheet2 = {
   title: "Solving trigonometric equations",
   note: "Write your answers in your book. Sketch a graph first.",
-  firstQuestion: 4,
   blocks: [
     { instruction: "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.", cols: 2, ...intervalSheet },
-    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 1, few: true, ...counterSheet },
     { instruction: "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.", cols: 3, few: true, ...rearrangeSheet },
-    { instruction: "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.", cols: 2, ...multipleSheet },
+    { instruction: "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.", cols: 2, few: true, ...multipleSheet },
+    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 1, few: true, ...counterSheet },
   ],
 };
 
-export const solvingSheetSlide = () => S.textbookSheet("it-sheet-solve", sheet2, T);
+export const worksheetSlides = () => [S.textbookSheet("it-sheet", sheet, T), S.textbookSheet("it-sheet-solve", sheet2, T)];
+
+/** Question left, writing and drawing space right (only the answer is revealed, so the working is the pupils' and the teacher's to draw). */
+const split = (id: string, title: string, qs: CuratedQuestion[], brief: string): Slide => {
+  const s = S.whiteboard(id, title, qs, brief);
+  return { ...s, els: s.els.map((e) => (e.kind === "questions" ? { ...e, x: 24, y: 24, w: 1552, h: 852, presentation: "whiteboard", visualiser: true, size: 44 } : e)) as Slide["els"] };
+};
 
 export const practiceSlides = () => [
-  S.whiteboard("it-wb-exact", "Exact values", exactQs, "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle)."),
-  S.whiteboard("it-wb-undo", "Function, then its inverse", undoQs, "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first."),
-  S.whiteboard("it-wb-solve", "Solving inverse equations", solveQs, "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution."),
-  S.textbookSheet("it-sheet", sheet, T),
+  split("it-wb-exact", "Exact values", exactQs, "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle)."),
+  split("it-wb-undo", "Function, then its inverse", undoQs, "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first."),
+  split("it-wb-solve", "Solving inverse equations", solveQs, "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution."),
 ];

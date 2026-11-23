@@ -292,7 +292,7 @@
      "y": 230,
      "w": 670,
      "h": 590,
-     "text": "Calculator: $\\theta = \\arcsin k$\n\nAlternative: $\\pi - \\theta$\n\n$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
+     "text": "Calculator: $\\theta = \\arcsin c$\n\nAlternative: $\\pi - \\theta$\n\n$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
      "size": 44,
      "colour": "#0f172a",
      "id": "as-others-2"
@@ -309,7 +309,7 @@
      "id": "as-others-3"
     }
    ],
-   "built": "rmixpk"
+   "built": "bdzd40"
   },
   {
    "id": "as-undo",
@@ -447,7 +447,7 @@
      "y": 230,
      "w": 670,
      "h": 590,
-     "text": "Calculator: $\\theta = \\arccos k$\n\nAlternative: $2\\pi - \\theta$\n\n$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
+     "text": "Calculator: $\\theta = \\arccos c$\n\nAlternative: $2\\pi - \\theta$\n\n$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
      "size": 44,
      "colour": "#0f172a",
      "id": "ac-others-2"
@@ -464,7 +464,7 @@
      "id": "ac-others-3"
     }
    ],
-   "built": "nhtc1e"
+   "built": "rqsvu2"
   },
   {
    "id": "ac-undo",
@@ -602,7 +602,7 @@
      "y": 230,
      "w": 670,
      "h": 590,
-     "text": "Calculator: $\\theta = \\arctan k$\n\nAlternative: $\\pi + \\theta$\n\n$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
+     "text": "Calculator: $\\theta = \\arctan c$\n\nAlternative: $\\pi + \\theta$\n\n$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
      "size": 44,
      "colour": "#0f172a",
      "id": "at-others-2"
@@ -619,7 +619,7 @@
      "id": "at-others-3"
     }
    ],
-   "built": "axtfxu"
+   "built": "1s6akmi"
   },
   {
    "id": "at-undo",
@@ -670,11 +670,11 @@
    "els": [
     {
      "kind": "questions",
-     "x": 48,
+     "x": 24,
      "y": 24,
-     "w": 1504,
+     "w": 1552,
      "h": 852,
-     "size": 56,
+     "size": 44,
      "items": [
       {
        "version": 2,
@@ -750,11 +750,12 @@
       }
      ],
      "id": "it-wb-exact-1",
-     "visualiser": false
+     "visualiser": true,
+     "presentation": "whiteboard"
     }
    ],
    "brief": "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle).",
-   "built": "i0t9c7"
+   "built": "1p9v1l5"
   },
   {
    "id": "it-wb-undo",
@@ -763,11 +764,11 @@
    "els": [
     {
      "kind": "questions",
-     "x": 48,
+     "x": 24,
      "y": 24,
-     "w": 1504,
+     "w": 1552,
      "h": 852,
-     "size": 56,
+     "size": 44,
      "items": [
       {
        "version": 2,
@@ -842,11 +843,12 @@
       }
      ],
      "id": "it-wb-undo-1",
-     "visualiser": false
+     "visualiser": true,
+     "presentation": "whiteboard"
     }
    ],
    "brief": "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first.",
-   "built": "1mcn7wu"
+   "built": "1km3uds"
   },
   {
    "id": "it-wb-solve",
@@ -855,11 +857,11 @@
    "els": [
     {
      "kind": "questions",
-     "x": 48,
+     "x": 24,
      "y": 24,
-     "w": 1504,
+     "w": 1552,
      "h": 852,
-     "size": 56,
+     "size": 44,
      "items": [
       {
        "version": 2,
@@ -934,11 +936,145 @@
       }
      ],
      "id": "it-wb-solve-1",
-     "visualiser": false
+     "visualiser": true,
+     "presentation": "whiteboard"
     }
    ],
    "brief": "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution.",
-   "built": "qtv2es"
+   "built": "1czinti"
+  },
+  {
+   "id": "it-ph-sheet-1",
+   "family": "structure",
+   "title": "Worksheet 1",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheet 1",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-ph-sheet-1-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Inverse trigonometric functions: at the back of this deck",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-ph-sheet-1-2"
+    }
+   ],
+   "built": "x2h1wq"
+  },
+  {
+   "id": "it-ph-sheet-2",
+   "family": "structure",
+   "title": "Worksheet 2",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheet 2",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-ph-sheet-2-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Solving trigonometric equations: at the back of this deck",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-ph-sheet-2-2"
+    }
+   ],
+   "built": "sa5kl"
+  },
+  {
+   "id": "it-summary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "it-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.\n•  Reflecting in y = x swaps the x and y values of every point.\n•  The domain of each inverse is the range of the restricted function, and its range is the restricted domain.",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "it-summary-2"
+    }
+   ],
+   "built": "142d1d0"
+  },
+  {
+   "id": "it-worksheets",
+   "family": "structure",
+   "title": "Worksheets",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 330,
+     "w": 1400,
+     "h": 150,
+     "text": "Worksheets",
+     "size": 96,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "it-worksheets-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 500,
+     "w": 1400,
+     "h": 80,
+     "text": "Print these, or put them on the board.",
+     "size": 48,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "it-worksheets-2"
+    }
+   ],
+   "built": "a6w2qd"
   },
   {
    "id": "it-sheet",
@@ -971,7 +1107,7 @@
       "blocks": [
        {
         "instruction": "Without using a calculator, find the exact value in radians.",
-        "cols": 5,
+        "cols": 3,
         "parts": [
          "\\arccos\\frac{1}{2}",
          "\\arctan\\frac{1}{\\sqrt{3}}",
@@ -1023,7 +1159,7 @@
        },
        {
         "instruction": "Without using a calculator, solve each equation. If there is no solution, say so.",
-        "cols": 3,
+        "cols": 2,
         "parts": [
          "\\arcsin x = \\frac{\\pi}{6}",
          "\\arccos x = \\frac{\\pi}{4}",
@@ -1053,7 +1189,7 @@
      }
     }
    ],
-   "built": "r5122n"
+   "built": "1isxnng"
   },
   {
    "id": "it-sheet-solve",
@@ -1072,7 +1208,7 @@
       "sub": "converting",
       "level": "level1"
      },
-     "count": 18,
+     "count": 19,
      "cols": 4,
      "pin": {
       "title": "Solving trigonometric equations",
@@ -1083,7 +1219,6 @@
      "textbook": {
       "title": "Solving trigonometric equations",
       "note": "Write your answers in your book. Sketch a graph first.",
-      "firstQuestion": 4,
       "blocks": [
        {
         "instruction": "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.",
@@ -1092,32 +1227,25 @@
          "\\sin x = -\\frac{1}{2}, \\quad 0 \\le x \\le 2\\pi",
          "\\cos x = -\\frac{\\sqrt{2}}{2}, \\quad 0 \\le x \\le 2\\pi",
          "\\tan x = \\sqrt{3}, \\quad 0 \\le x \\le 2\\pi",
+         "\\tan x = -\\frac{\\sqrt{3}}{3}, \\quad 0 \\le x \\le 2\\pi",
          "\\sin x = \\frac{1}{2}, \\quad -\\pi \\le x \\le \\pi",
          "\\cos x = \\frac{1}{2}, \\quad -\\pi \\le x \\le \\pi",
          "\\tan x = -\\sqrt{3}, \\quad -\\pi \\le x \\le \\pi",
-         "\\sin x = -\\frac{\\sqrt{3}}{2}, \\quad 0 \\le x \\le 4\\pi"
+         "\\cos x = 0, \\quad -\\pi \\le x \\le \\pi",
+         "\\sin x = -\\frac{\\sqrt{3}}{2}, \\quad 0 \\le x \\le 4\\pi",
+         "\\sin x = -\\frac{\\sqrt{2}}{2}, \\quad -2\\pi \\le x \\le 2\\pi"
         ],
         "answers": [
          "x = \\frac{7\\pi}{6},\\ \\frac{11\\pi}{6}",
          "x = \\frac{3\\pi}{4},\\ \\frac{5\\pi}{4}",
          "x = \\frac{\\pi}{3},\\ \\frac{4\\pi}{3}",
+         "x = \\frac{5\\pi}{6},\\ \\frac{11\\pi}{6}",
          "x = \\frac{\\pi}{6},\\ \\frac{5\\pi}{6}",
          "x = -\\frac{\\pi}{3},\\ \\frac{\\pi}{3}",
          "x = -\\frac{\\pi}{3},\\ \\frac{2\\pi}{3}",
-         "x = \\frac{4\\pi}{3},\\ \\frac{5\\pi}{3},\\ \\frac{10\\pi}{3},\\ \\frac{11\\pi}{3}"
-        ]
-       },
-       {
-        "instruction": "Each statement is false. Give a counter-example to show this.",
-        "cols": 1,
-        "few": true,
-        "parts": [
-         "\\arcsin(\\sin x) = x \\text{ for all } x",
-         "\\arccos(\\cos x) = x \\text{ for all } x"
-        ],
-        "answers": [
-         "x = \\pi: \\text{ the left side is } 0",
-         "x = 2\\pi: \\text{ the left side is } 0"
+         "x = -\\frac{\\pi}{2},\\ \\frac{\\pi}{2}",
+         "x = \\frac{4\\pi}{3},\\ \\frac{5\\pi}{3},\\ \\frac{10\\pi}{3},\\ \\frac{11\\pi}{3}",
+         "x = -\\frac{3\\pi}{4},\\ -\\frac{\\pi}{4},\\ \\frac{5\\pi}{4},\\ \\frac{7\\pi}{4}"
         ]
        },
        {
@@ -1138,59 +1266,38 @@
        {
         "instruction": "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.",
         "cols": 2,
+        "few": true,
         "parts": [
          "\\sin 2\\theta = \\frac{1}{2}, \\quad 0 \\le \\theta \\le 2\\pi",
-         "\\cos 2\\theta = -\\frac{\\sqrt{3}}{2}, \\quad 0 \\le \\theta \\le 2\\pi",
          "\\tan 2\\theta = 1, \\quad 0 \\le \\theta \\le \\pi",
          "\\cos 3\\theta = \\frac{1}{2}, \\quad 0 \\le \\theta \\le \\pi",
-         "\\sin 2\\theta = -\\frac{\\sqrt{2}}{2}, \\quad -\\pi \\le \\theta \\le \\pi",
          "\\sin 3\\theta = \\frac{\\sqrt{3}}{2}, \\quad 0 \\le \\theta \\le 2\\pi"
         ],
         "answers": [
          "\\theta = \\frac{\\pi}{12},\\ \\frac{5\\pi}{12},\\ \\frac{13\\pi}{12},\\ \\frac{17\\pi}{12}",
-         "\\theta = \\frac{5\\pi}{12},\\ \\frac{7\\pi}{12},\\ \\frac{17\\pi}{12},\\ \\frac{19\\pi}{12}",
          "\\theta = \\frac{\\pi}{8},\\ \\frac{5\\pi}{8}",
          "\\theta = \\frac{\\pi}{9},\\ \\frac{5\\pi}{9},\\ \\frac{7\\pi}{9}",
-         "\\theta = -\\frac{3\\pi}{8},\\ -\\frac{\\pi}{8},\\ \\frac{5\\pi}{8},\\ \\frac{7\\pi}{8}",
          "\\theta = \\frac{\\pi}{9},\\ \\frac{2\\pi}{9},\\ \\frac{7\\pi}{9},\\ \\frac{8\\pi}{9},\\ \\frac{13\\pi}{9},\\ \\frac{14\\pi}{9}"
+        ]
+       },
+       {
+        "instruction": "Each statement is false. Give a counter-example to show this.",
+        "cols": 1,
+        "few": true,
+        "parts": [
+         "\\arcsin(\\sin x) = x \\text{ for all } x",
+         "\\arccos(\\cos x) = x \\text{ for all } x"
+        ],
+        "answers": [
+         "x = \\pi: \\text{ the left side is } 0",
+         "x = 2\\pi: \\text{ the left side is } 0"
         ]
        }
       ]
      }
     }
    ],
-   "built": "xcin3y"
-  },
-  {
-   "id": "it-summary",
-   "family": "structure",
-   "title": "Summary",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 1400,
-     "h": 110,
-     "text": "Summary",
-     "size": 72,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "it-summary-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 260,
-     "w": 1400,
-     "h": 560,
-     "text": "•  sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.\n•  Reflecting in y = x swaps the x and y values of every point.\n•  The domain of each inverse is the range of the restricted function, and its range is the restricted domain.",
-     "size": 50,
-     "colour": "#0f172a",
-     "id": "it-summary-2"
-    }
-   ],
-   "built": "142d1d0"
+   "built": "1tc62u5"
   }
  ],
  "questionVersion": 2

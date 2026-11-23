@@ -7,7 +7,7 @@ import { S } from "/src/decks/builder";
 import arcsin from "./arcsin-graph.build";
 import arccos from "./arccos-graph.build";
 import arctan from "./arctan-graph.build";
-import { practiceSlides, solvingSheetSlide } from "./inverse-trig-practice";
+import { practiceSlides, worksheetSlides } from "./inverse-trig-practice";
 
 const part = (d: ReturnType<typeof arcsin>, kind: "animation" | "facts") => d.slides.find((s) => s.id.endsWith(`-${kind}`))!;
 // "Finding the other solutions": the calculator gives one angle, the symmetry of the graph gives a second, then + 2kπ (or + kπ for tan).
@@ -35,26 +35,29 @@ export default () => ({
     ]),
     sin.slides.find((s) => s.id === "as-discuss")!,
     part(sin, "animation"), part(sin, "facts"),
-    others("as-others", "sin x", "\\arcsin k", "\\pi - \\theta", "$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
+    others("as-others", "sin x", "\\arcsin c", "\\pi - \\theta", "$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
       "$x = \\theta + 2k\\pi$\n\n$x = \\pi - \\theta + 2k\\pi$"),
     undo("as-undo", "\\sin", "\\arcsin", "$-1 \\le x \\le 1$", "$-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$",
       "$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$\n\nThis is not $\\frac{5\\pi}{6}$."),
     part(cos, "animation"), part(cos, "facts"),
-    others("ac-others", "cos x", "\\arccos k", "2\\pi - \\theta", "$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
+    others("ac-others", "cos x", "\\arccos c", "2\\pi - \\theta", "$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
       "$x = \\theta + 2k\\pi$\n\n$x = 2\\pi - \\theta + 2k\\pi$"),
     undo("ac-undo", "\\cos", "\\arccos", "$-1 \\le x \\le 1$", "$0 \\le x \\le \\pi$",
       "$\\arccos\\left(\\cos\\frac{5\\pi}{3}\\right) = \\frac{\\pi}{3}$\n\nThis is not $\\frac{5\\pi}{3}$."),
     part(tan, "animation"), part(tan, "facts"),
-    others("at-others", "tan x", "\\arctan k", "\\pi + \\theta", "$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
+    others("at-others", "tan x", "\\arctan c", "\\pi + \\theta", "$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
       "$x = \\theta + k\\pi$\n\nThe graph repeats every $\\pi$, so one formula covers both."),
     undo("at-undo", "\\tan", "\\arctan", "all real $x$", "$-\\frac{\\pi}{2} < x < \\frac{\\pi}{2}$",
       "$\\arctan\\left(\\tan\\frac{5\\pi}{4}\\right) = \\frac{\\pi}{4}$\n\nThis is not $\\frac{5\\pi}{4}$."),
     ...practiceSlides(),
-    solvingSheetSlide(),
+    S.divider("it-ph-sheet-1", "Worksheet 1", "Inverse trigonometric functions: at the back of this deck"),
+    S.divider("it-ph-sheet-2", "Worksheet 2", "Solving trigonometric equations: at the back of this deck"),
     S.summary("it-summary", "Summary", [
       "sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.",
       "Reflecting in y = x swaps the x and y values of every point.",
       "The domain of each inverse is the range of the restricted function, and its range is the restricted domain.",
     ]),
+    S.divider("it-worksheets", "Worksheets", "Print these, or put them on the board."),
+    ...worksheetSlides(),
   ],
 });
