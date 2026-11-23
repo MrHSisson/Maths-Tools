@@ -125,9 +125,11 @@ const piTex = (x: number): string => {
 };
 const INTERVAL = (v: string, lo: number, hi: number) => `${piTex(lo)} \\le ${v} \\le ${piTex(hi)}`;
 type Solve = [string, (x: number) => number, number, number];   // the equation, its left side minus its right side, the interval
+// fractions are set full size (\dfrac) so they read as clearly as on worksheet 1
+const big = (t: string) => t.replace(/\\frac/g, "\\dfrac");
 const solveIn = (rows: Solve[], v = "x") => ({
-  parts: rows.map(([eq, , lo, hi]) => `${eq}, \\quad ${INTERVAL(v, lo, hi)}`),
-  answers: rows.map(([eq, f, lo, hi]) => { const r = roots(f, lo, hi); if (!r.length) throw new Error(`inverse trig: ${eq} has no solution in the interval`); return `${v} = ${r.map(piTex).join(",\\ ")}`; }),
+  parts: rows.map(([eq, , lo, hi]) => big(`${eq}, \\qquad ${INTERVAL(v, lo, hi)}`)),
+  answers: rows.map(([eq, f, lo, hi]) => { const r = roots(f, lo, hi); if (!r.length) throw new Error(`inverse trig: ${eq} has no solution in the interval`); return big(`${v} = ${r.map(piTex).join(",\\ ")}`); }),
 });
 const R2 = sqrt(2), R3 = sqrt(3);
 const intervalSheet = solveIn([
@@ -145,6 +147,7 @@ const intervalSheet = solveIn([
 const rearrangeSheet = solveIn([
   ["2\\cos x - 1 = 0", (x) => 2 * cos(x) - 1, 0, 2 * PI],
   ["2\\sin x + \\sqrt{3} = 0", (x) => 2 * sin(x) + R3, 0, 2 * PI],
+  ["\\sqrt{3}\\tan x - 1 = 0", (x) => R3 * tan(x) - 1, 0, 2 * PI],
   ["2\\tan x + 2 = 0", (x) => 2 * tan(x) + 2, -PI, PI],
 ]);
 // a multiple of the angle: the interval for the angle inside the brackets is wider (e.g. 0 to 2π becomes 0 to 6π for 3θ)
@@ -182,12 +185,12 @@ const sheet = {
 // The second worksheet: solving in an interval, rearranging, a multiple of the angle, then counter-examples last.
 const sheet2 = {
   title: "Solving trigonometric equations",
-  note: "Write your answers in your book. Sketch a graph first.",
+  note: "Write your answers in your book. Sketch a graph first, then use symmetry. Give exact answers.",
   blocks: [
-    { instruction: "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.", cols: 2, ...intervalSheet },
-    { instruction: "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.", cols: 3, few: true, ...rearrangeSheet },
-    { instruction: "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.", cols: 2, few: true, ...multipleSheet },
-    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 1, few: true, ...counterSheet },
+    { instruction: "Find every solution in the given interval.", cols: 2, ...intervalSheet },
+    { instruction: "Rearrange, then find every solution in the given interval.", cols: 2, few: true, ...rearrangeSheet },
+    { instruction: "Write down the interval for the angle inside the brackets first, then find every solution.", cols: 2, few: true, ...multipleSheet },
+    { instruction: "Each statement is false. Give a counter-example.", cols: 2, few: true, ...counterSheet },
   ],
 };
 
