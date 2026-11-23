@@ -4,7 +4,7 @@ import { buildInOrder, numTex, numText, type DiagramDisplay, type Lbl, type Scen
 export const L = (text: string, ask?: string): Lbl => (ask ? { text, ask } : { text });
 
 /** a unit as KaTeX text: `m s⁻¹` becomes `\text{m s}^{-1}` */
-export const unitTex = (unit: string): string => (unit === "m s⁻¹" ? "\\text{m s}^{-1}" : unit === "km h⁻¹" ? "\\text{km h}^{-1}" : unit === "N m⁻¹" ? "\\text{N m}^{-1}" : `\\text{${unit}}`);
+export const unitTex = (unit: string): string => (unit === "m s⁻¹" ? "\\text{m s}^{-1}" : unit === "km h⁻¹" ? "\\text{km h}^{-1}" : unit === "N m⁻¹" ? "\\text{N m}^{-1}" : unit === "N s m⁻¹" ? "\\text{N s m}^{-1}" : unit === "N s² m⁻²" ? "\\text{N s}^{2}\\text{ m}^{-2}" : unit === "m s⁻²" ? "\\text{m s}^{-2}" : `\\text{${unit}}`);
 /** a value with its unit, for a working line */
 export const u = (x: number, unit: string): string => `${numTex(x)}\\ ${unitTex(unit)}`;
 /** a value with its unit, in a sentence */

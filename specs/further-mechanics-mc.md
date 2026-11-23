@@ -37,7 +37,7 @@ The textbook exercises are the **source of the skill list and the difficulty lad
 
 ### 2.2 Decisions for Harry (recommended answer first)
 
-**Built on the recommendations (2026-11-21).** Harry asked for the first tool to be built without answering D1 to D7 one by one, so Work Done and Energy follow every recommended answer below (D1 `DecisionShell`, D2 a Course setting, D3 a g option, D4 3 s.f., D5 blocks and particles only, D6 the Method option in Work-Energy, D7 Work Done first). Each is cheap to change now and gets dearer with every tool: Harry should confirm or amend them when he reviews the first two tools.
+**Confirmed by Harry as built (2026-11-22).** **Built on the recommendations (2026-11-21).** Harry asked for the first tool to be built without answering D1 to D7 one by one, so Work Done and Energy follow every recommended answer below (D1 `DecisionShell`, D2 a Course setting, D3 a g option, D4 3 s.f., D5 blocks and particles only, D6 the Method option in Work-Energy, D7 Work Done first). Each is cheap to change now and gets dearer with every tool: Harry should confirm or amend them when he reviews the first two tools.
 
 | # | Decision | Recommended | Why it matters |
 |---|---|---|---|
@@ -436,7 +436,7 @@ Each stage ends with something Harry can look at. Nothing goes live until the go
 | 7 | Depth and deck items (section 7) | the cards |
 | 8 | context glyphs (cars, cyclists, trains), polish, calibration, the phone / tablet / laptop check, go-live | the go-live decision |
 
-**Built so far (2026-11-21).** Stage 0 (the core, `src/shared/mechanics/core.ts` and `contexts.ts`) and stage 1 (the diagram system) are done, and **Tool 1 Work Done** is built with all five sub-tools (stages 2, 3 and the `variable` part of 4), behind Developing-tools mode (`/work-done`). **Tool 2 Energy** (`kepe`, `workenergy`, `conserve`) is built too, behind Developing-tools mode (`/energy`); its pulley case, A2 friction on a slope and energy-bar pictures are not yet in. Not yet in Work Done: the slope setting of Several Forces (S97), the cubic stopping-point question (S69) and a stopping-distance ask.
+**Built so far (2026-11-21).** Stage 0 (the core, `src/shared/mechanics/core.ts` and `contexts.ts`) and stage 1 (the diagram system) are done, and **Tool 1 Work Done** is built with all five sub-tools (stages 2, 3 and the `variable` part of 4), behind Developing-tools mode (`/work-done`). **Tool 4 Power** (`avgpower`, `forcespeed`, `powerslope`, `motion`) is built too (2026-11-22, `/power`, behind Developing-tools mode). **Tool 2 Energy** (`kepe`, `workenergy`, `conserve`) is built too, behind Developing-tools mode (`/energy`); its pulley case, A2 friction on a slope and energy-bar pictures are not yet in. Not yet in Work Done: the slope setting of Several Forces (S97), the cubic stopping-point question (S69) and a stopping-distance ask.
 
 **Sizing.** The core library and the diagram foundation are the largest single pieces; each tool after that is a smaller, repeatable build, because the generators sit on the same library and the same renderer. The diagrams are the biggest risk to the timetable (see their plan, section 9).
 

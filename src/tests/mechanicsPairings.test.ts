@@ -9,6 +9,8 @@ const MODS: Record<string, any> = {
   "dimensional-analysis": await import("../tools/FurtherMechanics/DimensionalAnalysis"),
   "work-done": await import("../tools/FurtherMechanics/WorkDone"),
   "energy": await import("../tools/FurtherMechanics/Energy"),
+  "power": await import("../tools/FurtherMechanics/Power"),
+  "elastic-strings": await import("../tools/FurtherMechanics/Elastic"),
 };
 const subsOf = (tool: string): Sub[] => MODS[tool].__seed.subTools.map((s: Sub) => ({ ...s, when: s.when ?? [] }));
 const everyRef = (): MechSubRef[] => [...Object.values(MECHANICS_PAIRINGS).flat(), ...Object.values(MECHANICS_GROUPS).flatMap((gs) => gs.flatMap((g) => g.links)), ...Object.values(MECHANICS_EXAM).map((e) => e.ref)];
@@ -28,7 +30,7 @@ describe("Further Mechanics pairings", () => {
     for (const tool of Object.keys(MODS)) for (const r of all(tool)) {
       const s = subsOf(tool).find((x) => x.key === r.sub);
       if (!s) { problems.push(`${r.sub}: no such sub-tool`); continue; }
-      if (plain(s.label) !== plain(r.label) && !(r.sub === "exAny" && s.label === "Any exam question")) problems.push(`${r.sub}: the tool calls it "${s.label}", the pairing "${r.label}"`);
+      if (plain(s.label) !== plain(r.label) ) problems.push(`${r.sub}: the tool calls it "${s.label}", the pairing "${r.label}"`);
       const practice = s.when.find((w) => w.key === "practice")?.values[0];
       if (practice !== r.practice) problems.push(`${r.sub}: practice is ${practice}, the pairing says ${r.practice}`);
       // a sub-tool that is only offered at A2 is shown on the A2 row
@@ -37,11 +39,18 @@ describe("Further Mechanics pairings", () => {
     }
     expect(problems).toEqual([]);
   });
-  it("every sub-tool of a built tool is placed once", () => {
+  it("every sub-tool of a built tool is placed, and none twice under one statement (one that serves two statements is listed under both)", () => {
     for (const tool of Object.keys(MODS)) {
       const placed = all(tool).map((x) => x.sub);
       expect(subsOf(tool).map((s) => s.key).filter((k) => !placed.includes(k)), tool).toEqual([]);
-      expect(placed.filter((k, i) => placed.indexOf(k) !== i), tool).toEqual([]);
+    }
+    for (const [ref, list] of Object.entries(MECHANICS_PAIRINGS)) {
+      const keys = list.map((x) => `${x.tool}/${x.sub}`);
+      expect(keys.filter((k, i) => keys.indexOf(k) !== i), ref).toEqual([]);
+    }
+    for (const gs of Object.values(MECHANICS_GROUPS)) for (const g of gs) {
+      const keys = g.links.map((x) => `${x.tool}/${x.sub}`);
+      expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
     }
   });
 

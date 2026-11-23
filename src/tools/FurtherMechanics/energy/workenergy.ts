@@ -5,6 +5,7 @@ import { buildHorizontal, buildIncline, gravityWork, kineticEnergy, numTex, sfTe
 import { CONTEXTS, inRange, pickContext } from "../../../shared/mechanics/contexts";
 import { cap, L, staged, u, ut, type Common } from "../workDone/common";
 import { massIn, speedIn, speedText, type MassUnit, type SpeedUnit } from "./common";
+import { generatePulleyEnergy, generateRough } from "./special";
 
 interface WorkEnergyInput extends Common {
   setting: "horizontal" | "slope";
@@ -119,8 +120,10 @@ export function buildWorkEnergy(i: WorkEnergyInput): MechProblemData {
 }
 
 export function generateWorkEnergy(level: number, o: { setting: string; ask: string; forces: string; method: string; units: string; context: string; g: GValue; display: Common["display"]; course: "AS" | "A2" }): MechProblemData {
-  const asks = o.ask.split(",").filter(Boolean);
-  const slope = o.setting === "slope";
+  if (o.setting === "rough" && o.course === "A2") return generateRough(level, o);
+  if (o.setting === "pulley") return generatePulleyEnergy(level, o);
+  const asks = o.ask.split(",").filter((a) => a !== "mu");
+  const slope = o.setting === "slope" || o.setting === "rough";
   let ask = (asks[Math.floor(Math.random() * asks.length)] ?? "speed") as WorkEnergyInput["ask"];
   if (slope && ask === "distance") ask = "speed";
   const conv = o.units === "conv";

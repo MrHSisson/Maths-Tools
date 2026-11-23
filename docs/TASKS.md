@@ -12,16 +12,12 @@ Nothing at the moment.
 
 ## Open
 
-### Mechanics tools: print a saved question with its picture
-Suggested 2026-11-21, approved by Harry. Work Done and Energy do not set `skillSheet`, so a question saved with the pin cannot be printed, and the Decision shell's print draws pictures only for Dimensional Analysis. Make the saved-question basket print a mechanics question with its diagram and a worked answer.
-Links: `src/tools/FurtherMechanics/WorkDone.tsx`, `Energy.tsx`, `src/shared/decision/DecisionShell.tsx`, `src/shared/decision/printBasket.ts`, `docs/pathways/further-mechanics.md`.
-
 ### Further Mechanics hub: tidy-ups
-Suggested 2026-11-21, approved by Harry. Remove the legacy tags and the "How the legacy map was checked" panel; rename the tools' own "Any exam question" tiles to "Exam-style questions"; let a sub-tool that serves two statements (kinetic and potential energy, conservation of energy serve both MC2 and MC3) show under both (the pairing test places each sub-tool once).
+Suggested 2026-11-21, approved by Harry. Done 2026-11-22: the Dimensional Analysis tile is "Exam-style questions", and kinetic and potential energy and conservation of energy now show under both MC2 and MC3. Still to do: remove the legacy tags and the "How the legacy map was checked" panel (Developing-tools mode only, in `SpecLanding.tsx`, which Decision Maths shares, so check both hubs).
 Links: `src/tools/FurtherMechanics/mechanicsSpec.ts`, `FurtherMechanics.tsx`, `src/shared/components/SpecLanding.tsx`, `src/tests/mechanicsPairings.test.ts`.
 
 ### Dashboard Review for the Further Mechanics tools
-Suggested 2026-11-21, approved by Harry. Set the Review status and notes on the Tools dashboard for Flashcards, Work Done and Energy once Harry has looked at them (none is set yet), then the go-live check for Work Done and Energy: a real phone, tablet and printer check, then remove `enabled: false`.
+Suggested 2026-11-21, approved by Harry. Set the Review status and notes on the Tools dashboard for Flashcards, Work Done, Energy, Power and Elastic Strings once Harry has looked at them (none is set yet), then the go-live check for the four Work, Energy and Power tools: a real phone, tablet and printer check, then remove `enabled: false`.
 Links: `/admin`, `docs/pathways/further-mechanics.md`.
 
 
