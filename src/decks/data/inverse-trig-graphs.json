@@ -538,6 +538,48 @@
    "built": "axtfxu"
   },
   {
+   "id": "it-compose",
+   "family": "teach",
+   "title": "Do they undo each other?",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Do they undo each other?",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "it-compose-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\sin(\\arcsin x) = x$\n\nAlways, for $-1 \\le x \\le 1$.\n\n$\\sin(\\arcsin 0.5) = \\sin\\frac{\\pi}{6} = 0.5$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "it-compose-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$\\arcsin(\\sin x) = x$\n\nOnly if $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$.\n\n$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$\n\nThis is not $\\frac{5\\pi}{6}$. The same goes for cos and tan: each only undoes itself on its restricted domain.",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "it-compose-3"
+    }
+   ],
+   "built": "1kqbisg"
+  },
+  {
    "id": "it-summary",
    "family": "structure",
    "title": "Summary",

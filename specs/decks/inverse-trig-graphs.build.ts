@@ -36,6 +36,9 @@ export default () => ({
     part(tan, "animation"), part(tan, "facts"),
     others("at-others", "tan x", "\\arctan k", "\\pi + \\theta", "$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
       "$x = \\theta + k\\pi$\n\nThe graph repeats every $\\pi$, so one formula covers both."),
+    S.twoColumn("it-compose", "Do they undo each other?",
+      "$\\sin(\\arcsin x) = x$\n\nAlways, for $-1 \\le x \\le 1$.\n\n$\\sin(\\arcsin 0.5) = \\sin\\frac{\\pi}{6} = 0.5$",
+      "$\\arcsin(\\sin x) = x$\n\nOnly if $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$.\n\n$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$\n\nThis is not $\\frac{5\\pi}{6}$. The same goes for cos and tan: each only undoes itself on its restricted domain."),
     S.summary("it-summary", "Summary", [
       "sin x, cos x and tan x repeat their outputs, so each is restricted to one section first.",
       "Reflecting in y = x swaps the x and y values of every point.",
