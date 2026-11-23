@@ -194,7 +194,7 @@ const sheet2 = {
   ],
 };
 
-export const worksheetSlides = () => [S.textbookSheet("it-sheet", sheet, T), S.textbookSheet("it-sheet-solve", sheet2, T)];
+export const worksheetSlides = () => [S.textbookSheet("it-sheet", sheet, "solving-trig-equations"), S.textbookSheet("it-sheet-solve", sheet2, "solving-trig-equations")];
 
 /** Question left, writing and drawing space right (only the answer is revealed, so the working is the pupils' and the teacher's to draw). */
 const split = (id: string, title: string, qs: CuratedQuestion[], brief: string): Slide => {
