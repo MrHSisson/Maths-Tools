@@ -25,9 +25,14 @@ export interface VennSheet {
   /** A line under the title, such as "Put each prime factor in the right part of the Venn." */
   note?: string;
   items: VennSheetItem[];
+  /** The tall page: four Venns to an A4 page in a 2 × 2 grid, each with the Venn on top, the two factorisations under it and a working line each for the HCF and the LCM. At most twelve (three pages). */
+  grid?: boolean;
 }
 
 export const MAX_VENN_ITEMS = 9;
+/** The most Venns on a 2 × 2 sheet: three pages of four. */
+export const MAX_VENN_GRID_ITEMS = 12;
+const maxVennItems = (sheet: Pick<VennSheet, "grid">): number => (sheet.grid ? MAX_VENN_GRID_ITEMS : MAX_VENN_ITEMS);
 
 const regionsFor = (it: VennSheetItem): VennRegions => splitPrimes(it.a, it.b);
 
@@ -35,7 +40,8 @@ const regionsFor = (it: VennSheetItem): VennRegions => splitPrimes(it.a, it.b);
 export function vennSheetProblems(sheet: VennSheet): string[] {
   const problems: string[] = [];
   if (!sheet.items.length) problems.push("the sheet has no Venns");
-  if (sheet.items.length > MAX_VENN_ITEMS) problems.push(`the sheet has ${sheet.items.length} Venns; the most is ${MAX_VENN_ITEMS} (three to a page, three pages, printed scaled to A5)`);
+  const most = maxVennItems(sheet);
+  if (sheet.items.length > most) problems.push(`the sheet has ${sheet.items.length} Venns; the most is ${most} (${sheet.grid ? "four" : "three"} to a page, three pages, printed scaled to A5)`);
   sheet.items.forEach((it, i) => vennProblems(it.a, it.b).forEach((p) => problems.push(`Venn ${i + 1}: ${p}`)));
   return problems;
 }
@@ -72,7 +78,7 @@ export function vennSheetCells(sheet: VennSheet) {
   });
 }
 
-export const vennSheetHtml = (sheet: VennSheet, mode: PrintMode): string => vennWorksheet(vennSheetCells(sheet), sheet.title, sheet.note, mode);
+export const vennSheetHtml = (sheet: VennSheet, mode: PrintMode): string => vennWorksheet(vennSheetCells(sheet), sheet.title, sheet.note, mode, !!sheet.grid);
 
 /** Opens the print window from the print button (nothing asynchronous before it, so the browser allows it). */
 export function printVennSheet(sheet: VennSheet, mode: PrintMode): void {

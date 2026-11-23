@@ -110,6 +110,30 @@ Branch `claude/venn-hcf-lcm-deck-qmkg07` (merge 4a of the Venn plan). Area: `spe
 Agent: Claude Code
 Notes: Maths Tools — Handoff block "claude/hcf-lcm-venn-lesson-diz7dz" (update 2026-11-22, deck session).
 
+## 2026-11-22 — Simplex: the print carries the tableau and the working; the roadmap as a page
+
+Branch `claude/beautiful-noether-aczmnn`. Area: `src/shared/decision/{printExam,types,DecisionShell,SxWorking}.ts(x)`, `src/tools/Decision/{SimplexAlgorithm,SimplexRoadmap,decisionSpec}`, `src/registry.ts`, `src/tests/simplexPrint.test.ts`, `docs/roadmaps/linear-programming.md`.
+
+- **Printing a Simplex question was unusable** (found by generating every sub-tool and level): the pin's "Print saved questions" printed only the words and a blank box, so "a tableau is shown" printed with no tableau, a table of data did not print, and the answers page was one line ("pivot: row 2, column x"). Now a new `config.skillPrint` (`figure`, `working`, `perPage`) lets a Decision tool add to a printed skill question: the tableau or table of data is drawn under the question, each question has a page to work in (a large Working box), and the answers page has the whole model working (the stepped solution, every tableau and row operation). `SxPrintFigure` and `SxPrintWorking` in `SxWorking.tsx` (flow layout, inline styles, so they hold in a print window). Other Decision tools are unchanged.
+- **How to print**: pin the questions (the pin beside New Question), open its panel, Print saved questions, choose Print questions, Print answers or Print both.
+- **The roadmap as a page**: `/lp-roadmap` (Simplex Roadmap, `enabled: false`, listed under the Decision hub's DD card in Developing-tools mode). Six stages from `docs/roadmaps/linear-programming.md`, each with what students can do, one button per piece of practice (opens the Simplex tool on the right sub-tool, level and option through the `?tool=&level=&o_…` link), the deck link, the textbook stop-offs, and a Mark done tick kept on the device.
+- **Print, second pass** (Harry's notes): the tableau under each question is centred, and the working space is a dot grid (5 mm) to draw tables on (`config.skillPrint.dots`, a `dots` working area in `printExam.ts`, set to keep its colour when printed). On the answers page every tableau sits in a box as wide as the widest one, so they line up with each other.
+- **The working on screen is an open page** (laptop and tablet, Simplex and Formulating): new `WorkingPage` (`src/shared/decision/WorkingPage.tsx`) replaces the shrink-to-fit canvas in the corner. Text stays full size, the column is centred and the panel scrolls; every step so far is on the page, numbered like the step list beside it, the newest in blue and scrolled into view; every tableau of a solution sits in a box of the same width, so the columns line up from step to step. Steps that only say something add nothing to draw. The phone's open page is unchanged.
+- **Larger working text, and a question stage (a trial, laptop only)**: the open page's text is larger (`WorkingPage`). `config.questionStage` (opt-in; Simplex and Formulating use it) shows the question large and centred over the working area, with its tableau or table of data under it. It is never open on arrival: the enlarge button on the question card (which replaces the fold chevron: with the stage on, the card stays one line and a click on it opens the stage) opens it (at the question and while stepping, in the page and in fullscreen), and Close, Show working (at the question), Back to the working, any step, or a new question closes it; opening it grows from the question card and closing shrinks back to it. It covers the working card only, so Level, Options and New Question stay usable; the tablet and phone layouts are unchanged. `figure` draws the picture under the question as flowing content that fits its width (`SxStageFigure`, `LpStageFigure`). The plan is to make this a shell-wide feature once Harry has tried it. The shell smoke script dismisses an open question stage before it clicks Fullscreen.
+- **Corners and icon**: for the tools that draw written working (those with `config.questionStage`), the working container's Fullscreen (and Exit fullscreen) button is at the top right, and the question's enlarge button uses a popover icon (picture-in-picture) instead of the two arrows; every other Decision tool keeps its Fullscreen button at the top left.
+- **Tableaux never scroll**: a tableau is sized to the width it is given (`FitTab` in `SxWorking.tsx`: text at its normal size unless the column is too narrow, then smaller so the whole tableau shows), the same size for every tableau of a working; each is centred on its own width and the row-operations / θ column hangs outside it, so every tableau's columns line up from step to step whether or not it has that column (print does the same) (a lone table, such as the data a question gives, is centred on its own width; the width estimate reads the real labels and headings); the open page, the phone's solution and the stage all use it. Before, a wide tableau (a 4 × 4 problem, or the Oxford layout) got a sideways scroll bar.
+- **The question laid out as a page** (the stage): `QuestionText.tsx` splits a prompt into short paragraphs (the story's opening, then one limit or fact each, the task in its own bold paragraph) and lays an "optimise subject to" statement out as a grid, the constraints one to a line with the ≤, ≥ and = signs lined up and the non-negativity line greyed. It works from the prompt text, so any tool can use it.
+- **A lower bound renames only that variable**: taking out `z ≥ 2` now writes `Z = z − 2` and keeps `x` and `y` as they are (before, every variable became a capital, which only added clutter). The back-substitution at the end already named only the shifted ones.
+- **Known**: on a 768-pixel-high screen a tall tableau (a 4 × 4 problem) scrolls inside the stage; hiding the page title and tabs while the stage is up would give it more room.
+- **The roadmap page reads as one climb**: an overview strip at the top (the six stages, each with a line, jumping to it, and how many are done); each stage now has its scale (how many variables, and what the student is given), a short account of what the stage is doing, and a "builds towards" bridge to the next stage; the practice buttons are grouped under small headings (Stage 6's seven buttons became three groups).
+- **Textbook stop-offs are whole exercises** (Harry): the per-question stop-offs are gone; the page and the roadmap give whole exercises, only where everything in them can be done (Cambridge Exercise 4C after stage 6; 4A, 4B and Mixed practice are not on this route; Oxford 30.1A and 30.1B are not placed, because the questions recorded from them are incomplete and 30.1B has an error-analysis question the tools do not cover). Stages 5 and 6 show a planned deck, greyed (agreed with Harry; stage 1 needs none).
+- **The simplex process deck, revised** (Harry): the tables no longer have a basic-variable column (a variable's value is read from its column of a single 1, and four sentences that pointed at "the first column" say so), a new slide 9 explains why the ratio test uses positive entries only, and graph and text clashes were tidied (the (0, 4) label, the journey table, room for the row operations). The shared deck was pushed (18 slides). **The stage 6 deck is built**: `lp-simplex-not-origin`, 18 slides (the earlier problem with "at least 3 in total": why the origin is not allowed, the first pivot onto the region, minimising by maximising −C, a lower bound with its own slide redrawing the graph with Y measured from the line y = 1 so it starts at 0, and an equality), every number asserted against the engine, layout checked, pushed to the shared service (unpublished). Plan and decisions: `specs/decks/lp-simplex-not-origin.md`.
+- **Checked**: every sub-tool and level printed to PDF in headless Chromium; the real flow (pin, Print both) on One pivot; the roadmap at laptop and phone width (no overflow, no console errors, links land on the right sub-tool and level, the tick survives a reload). A test checks that every question that says a tableau or table is shown prints one.
+- **Deliberately not done:** a check on a real printer and on a tablet (still open); the deck `lp-simplex-process` is unpublished, so its roadmap button needs it published first; the textbook exercise numbers are still those recorded when the chapters were read, to be checked against Harry's copies; Review is not changed (the tool stays "in progress").
+
+Agent: Claude Code
+Notes: Maths Tools — Handoff block "claude/beautiful-noether-aczmnn".
+
 ## 2026-11-22 — Name Wheel: three spin styles
 
 The Name Wheel can now spin in three ways, chosen per wheel under **Wheel settings → Spin style** and saved with that wheel:
@@ -268,13 +292,41 @@ Branch `claude/sleepy-sagan-7zueyf`. Area: `lpSimplexGen.ts`, `src/tools/Decisio
 Agent: Claude Code
 Notes: Build Log block "Linear Programming: audit applied (Claude Code)" (tag agent:claude-code), branch `claude/sleepy-sagan-7zueyf`.
 
-## 2026-11-22 — HCF & LCM from a Venn: the second Venn deck (28 slides)
+## 2026-11-22 — An animated graph slide piece, and a short deck on y = arcsin x
 
-Branch `claude/gracious-fermat-ryi4y3` (from main 6224570). Area: `specs/decks/hcf-lcm-from-venn.build.ts`, `src/decks/data/hcf-lcm-from-venn.json`, `scripts/deck.mjs` and `scripts/deckReview.mjs` (small), `specs/decks/venn-hcf-lcm.md`.
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{types,InverseTrig,SlideCanvas,EditorChrome,layouts,builder}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/arcsin-graph.build.ts`, `src/decks/data/arcsin-graph.json`, docs (FEATURES, `docs/reference/decks.md`).
+
+- **New slide piece `inverseTrig`**: the graph of y = sin x restricted to −π/2 ≤ x ≤ π/2, reflected in y = x and separated into y = arcsin x, as an animation over four clicks: restrict, mirror line, fold (every point swaps x and y, so the copy is exactly y = arcsin x), separate (the copy slides out to its own axes). Back plays it in reverse. The editor, thumbnails and print show the finished state; reduced-motion jumps to each state. x and y are drawn at the same scale so the reflection is a true one.
+- **Layout** `inverseTrigSlide` (`S.inverseTrig`), in Add slide and the slide library.
+- **Deck `arcsin-graph`** (6 slides, no practice): title, objective, a discussion (why sin x must be restricted), the animation, domain and range swap, summary. Pushed to the shared copy only when Harry asks (see below).
+- Only `fn: "sin"` for now; cos and tan are not built.
+- Checked: `npm run deck -- check arcsin-graph --layout`; every click watched frame by frame in the player (no console errors); `inverseTrig.test.ts` checks the fold maths against `Math.asin`.
+- Deliberately not done: the look card step (Harry's yes before building) was skipped because the request was a single animation; no Handoff block or planner Build Log (planner not used this session).
+
+Agent: Claude Code
+Notes: no Build Log block written this session (see above).
+
+## 2026-11-22 — The inverse-graph animation for cos x and tan x, and two more decks
+
+Branch `claude/upbeat-cannon-alffb7`. Area: `src/decks/{InverseTrig,types,layouts}`, `src/shared/inverseTrig.ts`, `src/tests/inverseTrig.test.ts`, `specs/decks/{arccos,arctan}-graph.build.ts`, `src/decks/data/{arccos,arctan}-graph.json`, docs.
+
+- **`inverseTrig` now takes `fn`: `sin`, `cos` or `tan`.** cos x is restricted to 0 ≤ x ≤ π (filled end points, reflected to y = arccos x with range 0 to π). tan x is restricted to −π/2 < x < π/2 between dashed vertical asymptotes; they fold into the horizontal asymptotes y = ±π/2 of y = arctan x (domain all real x). The other three clicks are the same. `S.inverseTrig(id, fn)`.
+- **Decks `arccos-graph` and `arctan-graph`** (6 slides each, same shape as `arcsin-graph`, no practice). Their discussion slides use cos(π/3) = cos(5π/3) = 0.5 and tan(π/4) = tan(5π/4) = 1.
+- Checked: deck check with layout for all three decks, every click watched in the player, a test that each folded curve equals `Math.asin`, `Math.acos`, `Math.atan` and that each restriction is one-to-one.
+- **Axis labelling** (Harry's feedback): ±π/2 and ±π sit below the x axis and left of the y axis, ±1 on the other side so labels no longer collide; a 0 at the origin; white-edged labels drawn over the curves and asymptotes so none is hidden; end points of sin and cos carry their coordinates, e.g. (π/2, 1) becoming (1, π/2), so the swap of x and y can be read off the graph; the y = x label sits clear of its line.
+- Not on the shared deck service yet (the live site needs this branch merged first).
+
+Agent: Claude Code
+Notes: no Build Log block written this session.
+
+## 2026-11-22 — HCF & LCM from a Venn: the second Venn deck (25 slides)
+
+Branch `claude/gracious-fermat-ryi4y3` (from main 6224570). Area: `specs/decks/hcf-lcm-from-venn.build.ts`, `src/decks/data/hcf-lcm-from-venn.json`, `scripts/deck.mjs` and `scripts/deckReview.mjs` (small), `src/decks/vennSheet.ts`, `src/shared/printables.ts`, `src/decks/SlideCanvas.tsx`, `src/tests/vennSheet.test.ts`, `docs/reference/decks.md`, `specs/decks/venn-hcf-lcm.md`.
 
 - **A new deck, `hcf-lcm-from-venn`** (sections 3 and 4 of the Venn plan; it follows "Venn Diagrams & Product of Primes"). Title, objective; **HCF from the Venn** (divider, quickfire recap, *Why the middle?* with 12 and 18 as lists of factors beside prime tiles, the key point with the HCF line on a click, four build slides, book work of nine with a visualiser slide for the answers, a Depth card); **LCM from the Venn** (the same shape, the key point shows the HCF and then the LCM line for 12 and 18, four build slides, book work of nine, visualiser slide, a Depth card); then the **Worksheet slides** divider and two blank worksheets (HCF, LCM: nine Venns each, with the numbers, factorisations and an HCF and an LCM line under each).
-- **The look that is new:** the build slides (numbers as prime tiles, Venn, prime buttons) now carry the **answer line top right on one click** ("HCF = 2 × 3 = 6", "LCM = 2 × 2 × 3 × 3 × 5 = 180"), computed from the two numbers. Harry approved it and the deck is pushed to the shared service (slide order changed, so `push --replace-whole` with the base moved aside, then pulled back).
-- **Added after Harry's review:** a *Why every tile?* slide before the LCM key slide (12 and 18 as lists of multiples, common multiples 36 and 72, lowest 36, beside the prime tiles: every tile, a shared one only once, 2 × 2 × 3 × 3 = 36), mirroring *Why the middle?*; and an **exit ticket** (an HCF of 48 and 64, an LCM of 33 and 39, and both for 35 and 49, numbers asked nowhere else). Two book pairs changed (88 and 132; 90 and 150) because the new slide shows 72 and 36.
+- **The look that is new:** the build slides (numbers as prime tiles, Venn, prime buttons) now carry the **answer line top right on one click** ("HCF = 2 × 3 = 6", "LCM = 2 × 2 × 3 × 3 × 5 = 180"), computed from the two numbers. Harry approved it. The 28-slide version was pushed to the shared service; the 25-slide version below is NOT pushed yet (it needs the `grid` code merged first).
+- **Added after Harry's review:** a *Why every tile?* slide before the LCM key slide (12 and 18 as lists of multiples, common multiples 36 and 72, lowest 36, beside the prime tiles: every tile, a shared one only once, 2 × 2 × 3 × 3 = 36), mirroring *Why the middle?*; and an **exit ticket** (an HCF of 48 and 64, an LCM of 33 and 39, and both for 35 and 49, numbers asked nowhere else). 
+- **One worksheet, twelve questions, both answers (Harry, 2026-11-23 review):** the HCF-only and LCM-only book sets, visualiser slides and two worksheets are replaced by **one book set of twelve** (3 × 4, plain numbers, asking for the HCF and the LCM together; numbers all different, a ladder of one shared prime, two, a repeated prime, three or more, then one inside the other, then nothing shared), **one visualiser slide** and **one worksheet of the same twelve** on a new **tall page**: `grid: true` on a Venn sheet prints four Venns to an A4 page in a 2 × 2 grid, each cell the Venn on top, the two factorisations under it, then a working line each for the HCF and the LCM (dividing lines, not boxes), at most twelve (three pages). The old three-to-a-page sheet is untouched, so deck 1's worksheets are unchanged. The slide shows twelve four across and three down. **This is a deck data-format change** (`grid` on `vennSheet`): merge before pushing the deck to the shared service. The deck is 25 slides.
 - **Slimmed on purpose (Harry's reviews of deck 1):** four build slides a run, no read-the-Venn grids (the plan's slides 32 and 40 are cut: the row of four small Venns looked thin), no Mei-style discussion slide, the 216 discussion became a Depth card ("Do you agree with Amara? 26 and 65: LCM = 26 × 65"), Depth cards one speaker and "do you agree?", never two on one stretch, no summary slide.
 - **Every pair is computed and asserted** (`venn.ts`): the kind it must be, an LCM of at most 500, the HCF and LCM from the Venn equal the arithmetic, never asked twice in this deck or in deck 1; `assertFreshNumbers` keeps 12 and 18 (worked) and 25, 63, 26, 65 (Depth) out of every set. Wrong answers are run and checked to differ (HCF: multiplying every tile; 0 for an empty middle; LCM: multiplying only the middle; a × b).
 - **Tooling:** the `review` and `sheet` commands now press Next for a Venn's staged cards and HCF/LCM lines, so those clicks show in the contact sheets.
@@ -283,6 +335,16 @@ Branch `claude/gracious-fermat-ryi4y3` (from main 6224570). Area: `specs/decks/h
 
 Agent: Claude Code
 Notes: Maths Tools — Build Log, "HCF & LCM from a Venn (Claude Code)".
+
+## 2026-11-22 — Advent Calendar: out of Developing-tools mode
+
+Branch `claude/beautiful-noether-aczmnn`. Area: `src/registry.ts` (the Advent Calendar entry), `src/generated/toolFacts.json`.
+
+- **The Advent Calendar is live** (Harry): `enabled: false` is gone from its registry entry, so it appears for everyone, not only in Developing-tools mode. Its own teacher-controls password (the one that protects setting the names) is unchanged: that is a separate gate on editing the calendar, not the Developing-tools gate.
+- **Not done:** nothing else about the tool changed.
+
+Agent: Claude Code
+Notes: the merge of this branch is recorded in `2026-11-22-simplex-print-and-roadmap-page.md`; no separate planner block (the planner tools were not connected).
 
 ## 2026-11-21 — Formulating Linear Programmes: "Write a constraint", Level 1 (chunk F1), not live
 

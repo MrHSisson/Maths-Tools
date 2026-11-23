@@ -48,34 +48,36 @@ function checkPair([a, b, kind]: Pair, where: string): VennRegions {
 }
 const placedCards = (a: number, b: number): VennCard[] => { const r = splitPrimes(a, b); return (["left", "middle", "right"] as const).flatMap((region) => r[region].map((n) => ({ text: String(n), tile: true, region }))); };
 
-type Ask = "hcf" | "lcm";
+type Ask = "hcf" | "lcm" | "both";
 const ansTex = (ask: Ask, r: VennRegions): string => {
+  if (ask === "both") return `\\begin{array}{c}${ansTex("hcf", r)} \\\\ ${ansTex("lcm", r)}\\end{array}`;   // HCF over LCM, so a cell of twelve stays narrow
   if (ask === "hcf") return r.middle.length === 0 ? "\\mathrm{HCF} = 1" : r.middle.length === 1 ? `\\mathrm{HCF} = ${r.middle[0]}` : `\\mathrm{HCF} = ${tex(r.middle)} = ${hcfOf(r)}`;
   const all = [...r.left, ...r.middle, ...r.right].sort((x, y) => x - y);
   return all.length === 1 ? `\\mathrm{LCM} = ${all[0]}` : `\\mathrm{LCM} = ${tex(all)} = ${lcmOf(r)}`;
 };
-const lineOf = (ask: Ask, r: VennRegions) => (ask === "hcf" ? hcfLine(r) : lcmLine(r));
+const lineOf = (ask: Ask, r: VennRegions) => (ask === "hcf" ? hcfLine(r) : ask === "lcm" ? lcmLine(r) : `${hcfLine(r)}   ${lcmLine(r)}`);
 
 /** A question: the two numbers (as the book work or whiteboard shows them), the answer line computed and kept, and the tempting wrong answers. */
 function pairQ(id: string, p: Pair, ask: Ask, o: { hint?: boolean; book?: boolean } = {}): CuratedQuestion {
   const [a, b] = p;
   const r = checkPair(p, id);
-  const word = ask === "hcf" ? "HCF" : "LCM";
+  const word = ask === "hcf" ? "HCF" : ask === "lcm" ? "LCM" : "HCF and the LCM";
   const hint = o.hint && r.middle.length > 0 ? [hintLine(`${r.middle.length} tile${r.middle.length === 1 ? "" : "s"} in the middle`)] : [];
   const lines = o.book ? [`$${a},\\;${b}$`, ...hint] : [`Find the ${word} of $${a}$ and $${b}$.`];
   if (!o.book) assertCentred(lines, id);
-  const right = ask === "hcf" ? hcfOf(r) : lcmOf(r);
   const mistakes: { response: string; reasoning: string }[] = [];
-  const addWrong = (response: number, reasoning: string) => { must(response !== right, `${id}: the wrong answer ${response} is the right one`); mistakes.push({ response: String(response), reasoning }); };
-  if (ask === "hcf") {
-    addWrong(lcmOf(r), "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle.");
-    if (r.middle.length === 0) addWrong(0, "Takes an empty middle as 0. Nothing is multiplied, so the HCF is 1.");
-  } else {
-    addWrong(hcfOf(r), "Multiplies only the middle. That is the HCF: the LCM needs every tile.");
-    if (r.middle.length > 0) addWrong(a * b, "Multiplies the two numbers, which counts the shared tiles twice.");
+  // each wrong answer is run, and checked to differ from the right one it replaces (the HCF slips against the HCF, the LCM slips against the LCM)
+  const addWrong = (response: number, right: number, reasoning: string) => { must(response !== right, `${id}: the wrong answer ${response} is the right one`); mistakes.push({ response: String(response), reasoning }); };
+  if (ask !== "lcm") {
+    addWrong(lcmOf(r), hcfOf(r), "Multiplies every tile in the Venn. That is the LCM: the HCF is only the middle.");
+    if (r.middle.length === 0) addWrong(0, hcfOf(r), "Takes an empty middle as 0. Nothing is multiplied, so the HCF is 1.");
+  }
+  if (ask !== "hcf") {
+    addWrong(hcfOf(r), lcmOf(r), "Multiplies only the middle. That is the HCF: the LCM needs every tile.");
+    if (r.middle.length > 0) addWrong(a * b, lcmOf(r), "Multiplies the two numbers, which counts the shared tiles twice.");
   }
   return { ...Q.open(id, T, "level1", lines[0], `$${ansTex(ask, r)}$`, [], mistakes), title: `$${a}$ and $${b}$`, question: lines,
-    rationale: ask === "hcf" ? "Build the Venn, then multiply the tiles in the middle." : "Build the Venn, then multiply every tile." };
+    rationale: ask === "hcf" ? "Build the Venn, then multiply the tiles in the middle." : ask === "lcm" ? "Build the Venn, then multiply every tile." : "Build the Venn: the middle gives the HCF, every tile gives the LCM." };
 }
 const pairSet = (prefix: string, pairs: Pair[], ask: Ask, hints: number, book = false) => pairs.map((p, i) => pairQ(`${P}-${prefix}${i + 1}`, p, ask, { hint: i < hints, book }));
 
@@ -135,8 +137,6 @@ const buildAsk = (prefix: string, title: string, pairs: Pair[], ask: Ask, brief:
 const HCF_RUN: Pair[] = [[15, 40, "a"], [42, 66, "b"], [32, 56, "c"], [9, 28, "g"]];
 const HCF_RUN_Q = pairSet("ha", HCF_RUN, "hcf", 0);
 const hcfRun = buildAsk("hcf", "HCF: build the Venn", HCF_RUN, "hcf", "Build the Venn from the two numbers, then multiply the tiles in the middle to find the HCF. One shared prime, then two, then a repeated prime, then nothing shared (the HCF is 1, not 0). Four slides, one Venn each; one click shows the HCF line.");
-const HCF_BOOK: Pair[] = [[22, 55, "a"], [15, 70, "a"], [28, 98, "b"], [50, 60, "b"], [52, 78, "b"], [88, 132, "c"], [96, 120, "e"], [27, 81, "f"], [8, 21, "g"]];
-const HCF_BOOK_Q = pairSet("hb", HCF_BOOK, "hcf", 6, true);
 
 // Depth cards: one speaker and a "do you agree?"
 type Mistake = { response: string; reasoning: string };
@@ -180,13 +180,14 @@ const keyLcm =S.venn(`${P}-key-lcm`, "LCM: everything", "12", "18", placedCards(
 const LCM_RUN: Pair[] = [[6, 10, "a"], [30, 36, "b"], [20, 28, "d"], [22, 66, "f"]];
 const LCM_RUN_Q = pairSet("la", LCM_RUN, "lcm", 0);
 const lcmRun = buildAsk("lcm", "LCM: build the Venn", LCM_RUN, "lcm", "Build the Venn from the two numbers, then multiply every tile to find the LCM. One shared prime, then two, then a repeated prime, then one number inside the other (the LCM is the bigger number). Four slides, one Venn each; one click shows the LCM line.");
-const LCM_BOOK: Pair[] = [[6, 15, "a"], [21, 28, "a"], [24, 30, "b"], [45, 60, "b"], [42, 98, "b"], [90, 150, "c"], [80, 100, "c"], [14, 70, "f"], [9, 32, "g"]];
-const LCM_BOOK_Q = pairSet("lb", LCM_BOOK, "lcm", 6, true);
+// Book work and the worksheet: twelve Venns, the same twelve, asking for the HCF and the LCM together. The ladder climbs one shared prime, two, a repeated
+// prime, three or more in the middle, then the edge cases at the end (one number inside the other, then nothing shared); the numbers are all different.
+const BOOK12: Pair[] = [[22, 55, "a"], [6, 15, "a"], [21, 28, "a"], [50, 60, "b"], [52, 78, "b"], [24, 30, "b"], [42, 98, "b"], [88, 132, "c"], [90, 150, "c"], [96, 120, "e"], [27, 81, "f"], [9, 32, "g"]];
+const BOOK12_Q = pairSet("b", BOOK12, "both", 0, true);
 
-// the worksheets: blank Venns with the numbers and factorisations beside them and an HCF and an LCM line to fill in (no scaffold)
-const sheet = (id: string, title: string, note: string, pairs: Pair[]) => S.vennSheet(id, { title, note, items: pairs.map(([a, b]) => ({ a, b, lines: true })) }, "indices");   // a pinned sheet carries a real tool id
-const sheetHcf = sheet(`${P}-sheet-1`, "Worksheet 1: HCF from a Venn", "Put each prime factor in the right part of the Venn, then find the HCF.", HCF_BOOK);
-const sheetLcm = sheet(`${P}-sheet-2`, "Worksheet 2: LCM from a Venn", "Put each prime factor in the right part of the Venn, then find the LCM.", LCM_BOOK);
+// the worksheet: the tall 2 x 2 page (Venn on top, the two factorisations under it, a working line each for the HCF and the LCM), blank, no scaffold
+const sheet = S.vennSheet(`${P}-sheet`, { title: "Worksheet: HCF and LCM from a Venn", note: "Put each prime factor in the right part of the Venn, then find the HCF and the LCM.", grid: true,
+  items: BOOK12.map(([a, b]) => ({ a, b, lines: true })) }, "indices");   // the tall 2 x 2 page, four to a sheet; a pinned sheet carries a real tool id
 
 // the exit ticket: an HCF, an LCM and one Venn asked for both, on numbers asked nowhere else
 const EXIT_HCF: Pair = [48, 64, "c"], EXIT_LCM: Pair = [33, 39, "a"], EXIT_BOTH: Pair = [35, 49, "a"];
@@ -195,8 +196,8 @@ must(hcfOf(exitBothR) === 7 && lcmOf(exitBothR) === 245, "exit: 35 and 49");
 const exitBoth: CuratedQuestion = { ...Q.open(`${P}-x3`, T, "level1", "Find the HCF and the LCM of $35$ and $49$.", `$${ansTex("hcf", exitBothR)}$ and $${ansTex("lcm", exitBothR)}$`, [], []), title: "$35$ and $49$", question: ["Find the HCF and the LCM of $35$ and $49$."] };
 const EXIT_Q = [pairQ(`${P}-x1`, EXIT_HCF, "hcf"), pairQ(`${P}-x2`, EXIT_LCM, "lcm"), exitBoth];
 
-const book = (id: string, qs: CuratedQuestion[], ask: Ask, title: string, brief: string): Slide =>
-  ({ ...S.plainBook(id, qs, 3, `Copy into your book. Draw a Venn, then find the ${ask === "hcf" ? "HCF" : "LCM"}.`, title), brief });
+const book = (id: string, qs: CuratedQuestion[], title: string, brief: string): Slide => { const b = S.plainBook(id, qs, 3, "Copy into your book. Draw a Venn, then find the HCF and the LCM.", title);
+    return { ...b, els: b.els.map((e) => (e.kind === "grid" ? { ...e, size: 56 } : e)) as DeckElement[], brief }; };   // twelve in four rows: a little smaller than the nine of deck 1
 
 const slides: Slide[] = [
   S.title(`${P}-title`, "HCF & LCM from a Venn", "Multiply the middle. Multiply the lot."),
@@ -206,34 +207,31 @@ const slides: Slide[] = [
   whySlide,
   keyHcf,
   ...hcfRun,
-  book(`${P}-book-hcf`, HCF_BOOK_Q, "hcf", "Book work: HCF from a Venn", "Nine in a 3 by 3 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply the middle."),
-  S.visualiser(`${P}-answers-1`, "Visualiser: worksheet 1 answers"),
   depthPage(`${P}-depth-1`, depthHcf),
   S.divider(`${P}-d2`, "LCM from the Venn"),
   quick(`${P}-recap-b`, recapB),
   whyLcm,
   keyLcm,
   ...lcmRun,
-  book(`${P}-book-lcm`, LCM_BOOK_Q, "lcm", "Book work: LCM from a Venn", "Nine in a 3 by 3 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply every tile."),
-  S.visualiser(`${P}-answers-2`, "Visualiser: worksheet 2 answers"),
+  book(`${P}-book`, BOOK12_Q, "Book work: HCF and LCM from a Venn", "Twelve in a 3 by 4 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply the middle for the HCF and every tile for the LCM. The same twelve are on the worksheet."),
+  S.visualiser(`${P}-answers`, "Visualiser: worksheet answers"),
   depthPage(`${P}-depth-2`, depthLcm),
   S.exitRows(`${P}-exit`, EXIT_Q, "Work on your own. Draw a Venn if it helps."),
   S.divider(`${P}-d-sheets`, "Worksheet slides"),
-  sheetHcf,
-  sheetLcm,
+  sheet,
 ];
-must(slides.length === 28, `the deck is 28 slides (is ${slides.length})`);
-must(HCF_BOOK_Q.length === 9 && LCM_BOOK_Q.length === 9 && [...HCF_RUN_Q, ...LCM_RUN_Q].length === 8, "the book sets are nine, 3 x 3; the runs are four each");
-[HCF_BOOK_Q, LCM_BOOK_Q].forEach((set, i) => must(new Set(set.map((q) => q.id)).size === set.length && set.length >= 5, `book set ${i} has at least five distinct questions (R42)`));
+must(slides.length === 25, `the deck is 25 slides (is ${slides.length})`);
+must(BOOK12_Q.length === 12 && [...HCF_RUN_Q, ...LCM_RUN_Q].length === 8, "the book set is twelve, 3 x 4; the runs are four each");
+must(new Set(BOOK12_Q.map((q) => q.id)).size === BOOK12_Q.length, "the book questions are distinct (R42)");
 
 // The fresh-numbers rules (src/decks/deckRules.ts): the worked numbers asked nowhere, no number twice inside a set, the Depth numbers asked nowhere.
 const DEPTH_NUMBERS = [25, 63, 26, 65];
-const allSets: [string, CuratedQuestion[]][] = [["hcf run", HCF_RUN_Q], ["hcf book", HCF_BOOK_Q], ["lcm run", LCM_RUN_Q], ["lcm book", LCM_BOOK_Q]];
+const allSets: [string, CuratedQuestion[]][] = [["hcf run", HCF_RUN_Q], ["lcm run", LCM_RUN_Q], ["book work", BOOK12_Q]];
 for (const [name, qs] of allSets) for (const q of qs) for (const n of (q.title.match(/\d+/g) ?? []).map(Number)) must(!DEPTH_NUMBERS.includes(n), `${name}: ${q.id} uses a Depth number ${n}`);
 assertFreshNumbers({ worked: WORKED, sections: Object.fromEntries(allSets), exit: EXIT_Q });
 
 export default () => ({
   id: ID, title: "HCF & LCM from a Venn", strand: "Number", questionVersion: 2,
-  summary: "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Each half explains where the answer comes from (common factors, then common multiples, beside the prime tiles). Two book sets with printable worksheets, visualiser slides for the answers, two Depth cards and an exit ticket. Every question is authored and its answer computed.",
+  summary: "Follows Venn Diagrams & Product of Primes. Pupils see why the middle of a Venn gives the HCF (the common factors, then the prime tiles), then build a Venn tile by tile and multiply the middle for the HCF, and every tile for the LCM, with the answer line on a click. Each half explains where the answer comes from (common factors, then common multiples, beside the prime tiles). One book set of twelve and a matching worksheet (a tall 2 × 2 page, asking for the HCF and the LCM together), a visualiser slide for the answers, two Depth cards and an exit ticket. Every question is authored and its answer computed.",
   slides,
 });

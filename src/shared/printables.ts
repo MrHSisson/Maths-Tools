@@ -193,6 +193,12 @@ export function diagramPracticeSheet(cells: { svg: string; answerSvg: string; pr
   .page{width:${paper === "A4" ? 190 : 128}mm;height:${paper === "A4" ? 277 : 190}mm;break-after:page;display:flex;flex-direction:column}
   .page:last-child{break-after:auto} h1{font-size:16px;height:10mm;margin:0} .grid{display:grid;grid-template-columns:repeat(${paper === "A4" ? 2 : 1},1fr);grid-template-rows:repeat(${paper === "A4" ? perPage / 2 : 2},1fr);gap:4mm;flex:1;min-height:0}
   article{border:1px solid #cbd5e1;padding:2mm;min-width:0;min-height:0;display:flex;flex-direction:column;break-inside:avoid} h2{font-size:12px;margin:0}.diagram{height:46mm;flex-shrink:0}.diagram svg{width:100%!important;height:100%!important}.work{font-size:11px;line-height:1.25;flex:1;min-height:0}.work p{margin:1.3mm 0}
+  /* the tall page: 2 x 2, each cell the Venn on top, the factorisations under it, then a working line each for the HCF and the LCM; dividing lines, not boxes */
+  .rows.grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr)}
+  .grid article{flex-direction:column;align-items:stretch;justify-content:center;gap:2mm;padding:2mm 4mm 2mm 9mm} .grid article+article{border-top:0}
+  .grid article:nth-child(even){border-left:.35mm solid #94a3b8} .grid article:nth-child(n+3){border-top:.35mm solid #94a3b8}
+  .grid .pic{flex:0 0 auto;height:auto;aspect-ratio:1000/700} .grid .side{flex:0 0 auto;gap:1.5mm} .grid .f{font-size:12pt}
+  .grid .ln{margin:3mm 0 0;font-size:13pt} .grid .ln i{height:7mm}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
@@ -247,6 +253,12 @@ export function shapeWorksheet(cells: ShapeCell[], title: string, mode: "questio
   .blank{display:inline-block;width:9mm;height:5mm;border-bottom:.35mm solid #0f172a;flex:none} .blank.long{flex:1;min-width:30mm} .final{margin-top:auto!important;font-weight:700;font-size:14pt!important}
   .space{flex:1;min-height:12mm;margin-bottom:3mm;border-radius:1.5mm;background:repeating-linear-gradient(transparent 0 7.4mm,#cbd5e1 7.4mm 7.8mm)} .space span{font-size:10.5pt;color:#94a3b8} .note{margin:0;padding:0 4mm 2.5mm;font-size:11.5pt;color:#166534}
   .step{margin-bottom:1.6mm} .step h3{margin:0 0 1mm;font-size:11.5pt;color:#1e3a8a;display:flex;align-items:center;gap:1.8mm} .step h3 i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:5mm;height:5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-size:10.5pt;flex:none} .big .step p{margin:0 0 1.5mm 6.8mm;font-size:12pt}
+  /* the tall page: 2 x 2, each cell the Venn on top, the factorisations under it, then a working line each for the HCF and the LCM; dividing lines, not boxes */
+  .rows.grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr)}
+  .grid article{flex-direction:column;align-items:stretch;justify-content:center;gap:2mm;padding:2mm 4mm 2mm 9mm} .grid article+article{border-top:0}
+  .grid article:nth-child(even){border-left:.35mm solid #94a3b8} .grid article:nth-child(n+3){border-top:.35mm solid #94a3b8}
+  .grid .pic{flex:0 0 auto;height:auto;aspect-ratio:1000/700} .grid .side{flex:0 0 auto;gap:1.5mm} .grid .f{font-size:12pt}
+  .grid .ln{margin:3mm 0 0;font-size:13pt} .grid .ln i{height:7mm}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
@@ -259,12 +271,12 @@ interface VennCell { a: number; b: number; svg: string; answerSvg: string; facto
  * down), so a sheet holds at most nine. The Venn is large on the left with the two numbers' factorisations beside it, and, where the sheet
  * asks for them, "HCF =" and "LCM =" lines to fill in. The answer pages draw every tile and fill the lines in.
  */
-export function vennWorksheet(cells: VennCell[], title: string, note: string | undefined, mode: "questions" | "answers" | "both"): string {
+export function vennWorksheet(cells: VennCell[], title: string, note: string | undefined, mode: "questions" | "answers" | "both", grid = false): string {
   const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-  const PER = 3;
+  const PER = grid ? 4 : 3;
   const pages = (answers: boolean) => Array.from({ length: Math.ceil(cells.length / PER) }, (_, page) => {
     const rows = cells.slice(page * PER, (page + 1) * PER).map((c, i) => `<article><b class="n">${page * PER + i + 1}</b><div class="pic">${answers ? c.answerSvg : c.svg}</div><div class="side">${c.factors.map(f => `<p class="f">${esc(f)}</p>`).join("")}${c.lines ? (answers ? c.answers.map(t => `<p class="ln key">${esc(t)}</p>`) : ["HCF", "LCM"].map(t => `<p class="ln">${t} = <i></i></p>`)).join("") : ""}</div></article>`).join("");
-    return `<section class="page"><header><h1>${esc(title)}${answers ? " — answers" : ""}</h1>${answers ? "" : '<span class="name">Name <i></i></span>'}</header>${!answers && note ? `<p class="note">${esc(note)}</p>` : ""}<div class="rows">${rows}</div></section>`;
+    return `<section class="page"><header><h1>${esc(title)}${answers ? " — answers" : ""}</h1>${answers ? "" : '<span class="name">Name <i></i></span>'}</header>${!answers && note ? `<p class="note">${esc(note)}</p>` : ""}<div class="rows${grid ? " grid" : ""}">${rows}</div></section>`;
   }).join("");
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
   *{box-sizing:border-box} @page{size:A4 portrait;margin:0} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a}
@@ -276,6 +288,12 @@ export function vennWorksheet(cells: VennCell[], title: string, note: string | u
   .n{position:absolute;left:1mm;top:1.5mm;font-size:15pt;color:#1e3a8a;z-index:1} .pic{flex:0 0 122mm;height:100%;min-height:0} .pic svg{width:100%;height:100%;display:block}
   .side{flex:1;min-width:0;display:flex;flex-direction:column;gap:3mm} .f{margin:0;font-size:12.5pt;line-height:1.3}
   .ln{margin:2mm 0 0;font-size:13pt;font-weight:700;display:flex;align-items:flex-end;gap:1.5mm;white-space:nowrap} .ln i{flex:1;min-width:10mm;height:5mm;border-bottom:.35mm solid #0f172a} .ln.key{color:#166534;display:block;white-space:normal;font-size:12pt}
+  /* the tall page: 2 x 2, each cell the Venn on top, the factorisations under it, then a working line each for the HCF and the LCM; dividing lines, not boxes */
+  .rows.grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr)}
+  .grid article{flex-direction:column;align-items:stretch;justify-content:center;gap:2mm;padding:2mm 4mm 2mm 9mm} .grid article+article{border-top:0}
+  .grid article:nth-child(even){border-left:.35mm solid #94a3b8} .grid article:nth-child(n+3){border-top:.35mm solid #94a3b8}
+  .grid .pic{flex:0 0 auto;height:auto;aspect-ratio:1000/700} .grid .side{flex:0 0 auto;gap:1.5mm} .grid .f{font-size:12pt}
+  .grid .ln{margin:3mm 0 0;font-size:13pt} .grid .ln i{height:7mm}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
