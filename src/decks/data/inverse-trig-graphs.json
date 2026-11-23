@@ -270,6 +270,48 @@
    "built": "16fn2d9"
   },
   {
+   "id": "as-others",
+   "family": "teach",
+   "title": "Finding the other solutions: sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: sin x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arcsin k$\n\nAlternative: $\\pi - \\theta$\n\n$\\sin x = 0.5$: $x = \\frac{\\pi}{6}$ or $\\frac{5\\pi}{6}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + 2k\\pi$\n\n$x = \\pi - \\theta + 2k\\pi$\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-others-3"
+    }
+   ],
+   "built": "rmixpk"
+  },
+  {
    "id": "ac-animation",
    "family": "teach",
    "title": "Inverse of cos x",
@@ -341,6 +383,48 @@
    "built": "1kedxdr"
   },
   {
+   "id": "ac-others",
+   "family": "teach",
+   "title": "Finding the other solutions: cos x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: cos x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "ac-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arccos k$\n\nAlternative: $2\\pi - \\theta$\n\n$\\cos x = 0.5$: $x = \\frac{\\pi}{3}$ or $\\frac{5\\pi}{3}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + 2k\\pi$\n\n$x = 2\\pi - \\theta + 2k\\pi$\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "ac-others-3"
+    }
+   ],
+   "built": "nhtc1e"
+  },
+  {
    "id": "at-animation",
    "family": "teach",
    "title": "Inverse of tan x",
@@ -410,6 +494,48 @@
     }
    ],
    "built": "mxsa8n"
+  },
+  {
+   "id": "at-others",
+   "family": "teach",
+   "title": "Finding the other solutions: tan x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Finding the other solutions: tan x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "at-others-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Calculator: $\\theta = \\arctan k$\n\nAlternative: $\\pi + \\theta$\n\n$\\tan x = 1$: $x = \\frac{\\pi}{4}$ or $\\frac{5\\pi}{4}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-others-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "Every solution:\n\n$x = \\theta + k\\pi$\n\nThe graph repeats every $\\pi$, so one formula covers both.\n\n$k$ is any integer",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "at-others-3"
+    }
+   ],
+   "built": "axtfxu"
   },
   {
    "id": "it-summary",
