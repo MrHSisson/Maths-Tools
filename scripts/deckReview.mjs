@@ -34,7 +34,7 @@ try {
     await page.goto(`${base}/decks/${id}?s=${n}`);
     await page.waitForFunction(() => [...document.querySelectorAll("div")].some((d) => d.style.width === "1600px" && d.style.height === "900px"), null, { timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(900);
-    const steps = Math.max(0, ...s.els.map((e) => e.step ?? 0));
+    const steps = Math.max(0, ...s.els.map((e) => e.step ?? 0), ...s.els.filter((e) => e.kind === "venn").map((e) => (e.staged ? e.cards.length : 0) + (e.lines?.length ?? 0)));   // a Venn's staged cards and answer lines are clicks too
     for (let i = 0; i < steps; i++) { await page.keyboard.press("ArrowRight"); await page.waitForTimeout(220); }
     const items = s.els.find((e) => e.kind === "questions")?.items?.length ?? 0;
     const title = (s.title || s.id).slice(0, 38);

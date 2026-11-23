@@ -1,6 +1,6 @@
 // Printed Venn sheets pinned to a lesson (src/decks/vennSheet.ts, vennWorksheet in src/shared/printables.ts).
 import { describe, expect, it } from "vitest";
-import { MAX_VENN_ITEMS, factorisation, vennItemSvg, vennSheetCells, vennSheetHtml, vennSheetProblems, vennSheetSlide, type VennSheet } from "../decks/vennSheet";
+import { MAX_VENN_GRID_ITEMS, MAX_VENN_ITEMS, factorisation, vennItemSvg, vennSheetCells, vennSheetHtml, vennSheetProblems, vennSheetSlide, type VennSheet } from "../decks/vennSheet";
 import { buildDeck } from "../decks/builder";
 import { checkDeckContent } from "../decks/deckChecks";
 import { pinnedSheets } from "../decks/worksheets";
@@ -17,6 +17,19 @@ describe("Venn sheet", () => {
     expect(vennSheetProblems(sheet(9))).toEqual([]);
     expect(vennSheetProblems({ ...sheet(9), items: [...sheet(9).items, { a: 6, b: 10 }] }).join(" ")).toContain("the most is 9");
     expect(vennSheetProblems({ title: "x", items: [] })).toContain("the sheet has no Venns");
+  });
+  it("the tall 2 x 2 sheet is four to a page, up to twelve, with a working line each for the HCF and the LCM", () => {
+    const more = (n: number): VennSheet => ({ title: "Tall", grid: true, items: Array.from({ length: n }, (_, i) => ({ a: 12, b: 18 + i * 0, lines: true })) });
+    expect([1, 4, 5, 8, 12].map((n) => pages(vennSheetHtml(more(n), "questions")))).toEqual([1, 1, 2, 2, 3]);
+    expect(MAX_VENN_GRID_ITEMS).toBe(12);
+    expect(vennSheetProblems(more(12))).toEqual([]);
+    expect(vennSheetProblems(more(13)).join(" ")).toContain("the most is 12");
+    expect(vennSheetProblems({ ...more(10), grid: false }).join(" ")).toContain("the most is 9");
+    const q = vennSheetHtml(more(4), "questions");
+    expect(q).toContain('class="rows grid"');
+    expect(q).toContain("HCF = <i></i>");
+    expect(q).toContain("LCM = <i></i>");
+    expect(vennSheetHtml(sheet(3), "questions")).not.toContain("rows grid");
   });
   it("rejects a pair that cannot make a Venn", () => {
     expect(vennSheetProblems({ title: "x", items: [{ a: 1, b: 6 }] }).join(" ")).toContain("cannot go in a Venn");
