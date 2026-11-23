@@ -3,6 +3,7 @@ import { Home, ChevronLeft, ChevronRight, Info, FileText, ExternalLink, Lock } f
 import { PAGE_BG } from "../colors";
 import { useLayoutMode } from "../layoutMode";
 import { useDevMode, setDevMode } from "../../devMode";
+import DevNotice from "./DevNotice";
 import { checkDevPassword } from "../../devAccess";
 
 // A landing page for one specification option (Further Mechanics, Decision): the chapters, each chapter's generators and
@@ -60,6 +61,8 @@ export interface SpecChapter {
   groups?: { heading: string; links: SpecLink[]; /** shown in Developing-tools mode only */ devOnly?: boolean }[];
   /** the chapter's exam-style practice: one prominent card, with the one generator it opens */
   exam?: { text: string; link: SpecLink };
+  /** a "still in development" notice under the chapter heading: the chapter is open to everyone but not in its final form */
+  notice?: string;
 }
 
 interface SpecLandingProps {
@@ -305,6 +308,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
               <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
             </div>
+            {chapter.notice && <div className="mt-3 overflow-hidden rounded-xl border border-amber-200"><DevNotice id={`/hub/${chapter.id}`} text={chapter.notice} /></div>}
             {chapter.exam && (planning || chapter.exam.link.live) && (
               <a href={chapter.exam.link.href} className={`${card} group mt-4 flex items-center justify-between gap-4 border-l-4 border-l-blue-900 p-4 hover:shadow-lift sm:p-5`}>
                 <span className="min-w-0">

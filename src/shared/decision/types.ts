@@ -337,6 +337,8 @@ export interface DecisionShellProps {
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
     /** Print hand-selected skill questions from the saved list with working boxes and a separate answers page. */
     skillSheet?: boolean;
+    /** a banner under the top bar for a tool that is open to everyone but not in its final form: what to tell the teacher (it can be closed for the visit) */
+    devNotice?: string;
     /** this tool's exam-style questions print as papers with mark schemes (so a saved exam-style question can be printed from the basket) */
     examSheet?: boolean;
     noSandbox?: boolean; // hide the Sandbox button (tools whose picture is not a network of movable vertices)

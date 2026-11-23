@@ -1,5 +1,6 @@
 import { SpecLanding, type SpecChapter, type SpecLink } from "../../shared/components/SpecLanding";
 import { ALL_TOOLS } from "../../registry";
+import { MC_NOTICE } from "./mcNotice";
 import { CHAPTERS, GENERAL_RESOURCES, CHECK_NOTES, MECHANICS_TOOLS, MECHANICS_PAIRINGS, MECHANICS_PLANNED, MECHANICS_GROUPS, MECHANICS_EXAM, type MechSubRef } from "./mechanicsSpec";
 
 // Further Mechanics: the landing page for the AQA 7367 mechanics option (MA–ME). The look and behaviour are the shared
@@ -15,6 +16,7 @@ const linkOf = (r: MechSubRef): SpecLink[] => {
 
 const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
   ...c,
+  notice: c.id === "MC" ? MC_NOTICE : undefined,
   statements: c.statements.map((s) => ({
     ...s,
     links: [

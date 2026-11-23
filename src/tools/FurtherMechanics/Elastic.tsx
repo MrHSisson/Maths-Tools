@@ -1,6 +1,7 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MC_NOTICE } from "./mcNotice";
 import { generateHooke } from "./elastic/hooke";
 import { withEnergyBars } from "./energy/bars";
 import { generateEpe } from "./elastic/epe";
@@ -118,6 +119,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        devNotice: MC_NOTICE,
         noSandbox: true,
         levelLabels: {
           hooke: ["Tension or thrust from a length or extension", "The extension, k or the modulus; a hanging mass", "Two strings; a hanging mass"],

@@ -1,6 +1,7 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type MechProblemData, type DiagramDisplay } from "../../shared/mechanics";
+import { MC_NOTICE } from "./mcNotice";
 import { generateFd } from "./workDone/fd";
 import { generateGrav } from "./workDone/grav";
 import { generateAngle } from "./workDone/angle";
@@ -142,6 +143,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        devNotice: MC_NOTICE,
         noSandbox: true,
         levelLabels: {
           fd: ["Whole numbers in standard units", "Decimals and conversions, answered in kJ", "Find the force or the distance from the work done"],

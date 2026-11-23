@@ -1,6 +1,7 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MC_NOTICE } from "./mcNotice";
 import { generateAvgPower } from "./power/avgpower";
 import { generateForceSpeed } from "./power/forcespeed";
 import { generatePowerSlope } from "./power/powerslope";
@@ -142,6 +143,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        devNotice: MC_NOTICE,
         noSandbox: true,
         levelLabels: {
           avgpower: ["Lifting a load: the power", "Work from a power and a time; braking", "A pump, or accelerating at constant power"],
