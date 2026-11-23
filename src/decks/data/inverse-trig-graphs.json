@@ -691,7 +691,8 @@
         "$\\frac{\\pi}{3}$"
        ],
        "explanation": [
-        "$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is in the range of arctan.",
+        "Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. Where does it reach $\\sqrt{3}$?",
+        "$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is on that part of the graph.",
         "$\\arctan\\sqrt{3} = \\frac{\\pi}{3}$"
        ],
        "rationale": "",
@@ -714,8 +715,9 @@
         "$-\\frac{\\pi}{6}$"
        ],
        "explanation": [
-        "$\\sin\\frac{\\pi}{6} = \\frac{1}{2}$, so $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\frac{1}{2}$.",
-        "$-\\frac{\\pi}{6}$ is in the range of arcsin, so $\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"
+        "Sketch $y = \\sin x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. It has half-turn symmetry about the origin.",
+        "So $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\sin\\frac{\\pi}{6} = -\\frac{1}{2}$.",
+        "$\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -737,9 +739,9 @@
         "$\\frac{2\\pi}{3}$"
        ],
        "explanation": [
-        "arccos only gives angles from $0$ to $\\pi$, so the answer cannot be negative.",
-        "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\left(\\pi - \\frac{\\pi}{3}\\right) = -\\frac{1}{2}$.",
-        "$\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"
+        "Sketch $y = \\cos x$ between $0$ and $\\pi$: only angles from $0$ to $\\pi$, so the answer cannot be negative.",
+        "The curve has half-turn symmetry about $\\left(\\frac{\\pi}{2}, 0\\right)$, so $\\cos(\\pi - \\theta) = -\\cos\\theta$.",
+        "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\frac{2\\pi}{3} = -\\frac{1}{2}$ and $\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -751,8 +753,8 @@
      "visualiser": false
     }
    ],
-   "brief": "Three to talk through: a positive value, a negative one, and arccos of a negative (never a negative angle).",
-   "built": "1odt48j"
+   "brief": "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle).",
+   "built": "i0t9c7"
   },
   {
    "id": "it-wb-undo",
@@ -782,7 +784,7 @@
         "$\\frac{\\pi}{6}$"
        ],
        "explanation": [
-        "$\\frac{\\pi}{6}$ is already between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$.",
+        "Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. $\\frac{\\pi}{6}$ is already on that part of the graph.",
         "$\\arctan\\left(\\tan\\frac{\\pi}{6}\\right) = \\frac{\\pi}{6}$"
        ],
        "rationale": "",
@@ -805,8 +807,9 @@
         "$\\frac{\\pi}{6}$"
        ],
        "explanation": [
-        "$\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$.",
-        "$\\arcsin\\frac{1}{2} = \\frac{\\pi}{6}$, because $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$."
+        "Sketch $y = \\sin x$. $\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$, but $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$.",
+        "The curve is symmetrical about $x = \\frac{\\pi}{2}$, so the same height is at $\\pi - \\frac{5\\pi}{6} = \\frac{\\pi}{6}$, which is inside.",
+        "$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$"
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -828,8 +831,8 @@
         "$\\frac{5\\pi}{6}$"
        ],
        "explanation": [
-        "$\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$.",
-        "The angle from $0$ to $\\pi$ with that cosine is $\\frac{5\\pi}{6}$.",
+        "Sketch $y = \\cos x$. $\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$, but $\\frac{7\\pi}{6}$ is outside $0$ to $\\pi$.",
+        "The curve is symmetrical about $x = \\pi$, so the same height is at $2\\pi - \\frac{7\\pi}{6} = \\frac{5\\pi}{6}$, which is inside.",
         "$\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right) = \\frac{5\\pi}{6}$"
        ],
        "rationale": "",
@@ -842,8 +845,8 @@
      "visualiser": false
     }
    ],
-   "brief": "Three to talk through: inside the range, outside it (sin), outside it (cos). Bring the angle into the restricted domain first.",
-   "built": "5h7bvz"
+   "brief": "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first.",
+   "built": "1mcn7wu"
   },
   {
    "id": "it-wb-solve",
@@ -873,6 +876,7 @@
         "$x = \\frac{1}{2}$"
        ],
        "explanation": [
+        "Sketch $y = \\arccos x$: its heights run from $0$ to $\\pi$, so $\\frac{\\pi}{3}$ is possible.",
         "Take cos of both sides: $x = \\cos\\frac{\\pi}{3}$.",
         "$x = \\frac{1}{2}$"
        ],
@@ -896,6 +900,7 @@
         "$x = \\frac{\\sqrt{3}}{2}$"
        ],
        "explanation": [
+        "Sketch $y = \\arctan x$: its heights are between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$, so $\\frac{\\pi}{3}$ is possible.",
         "Take tan of both sides: $2x = \\tan\\frac{\\pi}{3} = \\sqrt{3}$.",
         "$x = \\frac{\\sqrt{3}}{2}$"
        ],
@@ -919,8 +924,8 @@
         "No solution"
        ],
        "explanation": [
-        "arccos only gives angles from $0$ to $\\pi$.",
-        "$-\\frac{\\pi}{4}$ is outside that range, so no value of $x$ works."
+        "Sketch $y = \\arccos x$: its heights only run from $0$ to $\\pi$.",
+        "$-\\frac{\\pi}{4}$ is below the whole graph, so no value of $x$ works."
        ],
        "rationale": "",
        "expectedErrors": [],
@@ -932,8 +937,8 @@
      "visualiser": false
     }
    ],
-   "brief": "Three to talk through: take the function of both sides; the last has no solution because the angle is outside the range.",
-   "built": "h6yir9"
+   "brief": "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution.",
+   "built": "qtv2es"
   },
   {
    "id": "it-sheet",
@@ -1051,374 +1056,6 @@
    "built": "r5122n"
   },
   {
-   "id": "it-solve-cos",
-   "family": "practice",
-   "title": "Solve: cos, 0 to 2π",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": false,
-       "cos": true,
-       "tan": false,
-       "r360": true,
-       "r720": false,
-       "rSym180": false,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 6,
-     "id": "it-solve-cos-1"
-    }
-   ],
-   "built": "yp135g"
-  },
-  {
-   "id": "it-solve-sin",
-   "family": "practice",
-   "title": "Solve: sin, 0 to 2π",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": true,
-       "cos": false,
-       "tan": false,
-       "r360": true,
-       "r720": false,
-       "rSym180": false,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 6,
-     "id": "it-solve-sin-1"
-    }
-   ],
-   "built": "1bzzcoz"
-  },
-  {
-   "id": "it-solve-tan",
-   "family": "practice",
-   "title": "Solve: tan, 0 to 2π",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": false,
-       "cos": false,
-       "tan": true,
-       "r360": true,
-       "r720": false,
-       "rSym180": false,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 3,
-     "id": "it-solve-tan-1"
-    }
-   ],
-   "built": "3uywmj"
-  },
-  {
-   "id": "it-solve-neg",
-   "family": "practice",
-   "title": "Solve: −π to π",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": true,
-       "cos": true,
-       "tan": true,
-       "r360": false,
-       "r720": false,
-       "rSym180": true,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 11,
-     "id": "it-solve-neg-1"
-    }
-   ],
-   "built": "qtqovn"
-  },
-  {
-   "id": "it-solve-long",
-   "family": "practice",
-   "title": "Solve: 0 to 4π",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": true,
-       "cos": true,
-       "tan": true,
-       "r360": false,
-       "r720": true,
-       "rSym180": false,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 6,
-     "id": "it-solve-long-1"
-    }
-   ],
-   "built": "cneyjp"
-  },
-  {
-   "id": "it-solve-dec",
-   "family": "practice",
-   "title": "Solve: calculator values",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": true,
-       "cos": true,
-       "tan": true,
-       "r360": true,
-       "r720": false,
-       "rSym180": true,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": false,
-       "decimal": true,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 8,
-     "id": "it-solve-dec-1"
-    }
-   ],
-   "built": "1hnjgxz"
-  },
-  {
-   "id": "it-solve-rearr",
-   "family": "practice",
-   "title": "Solve: rearrange first",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level1",
-      "multiSelect": {
-       "sin": true,
-       "cos": true,
-       "tan": false,
-       "r360": true,
-       "r720": false,
-       "rSym180": true,
-       "rSym360": false,
-       "direct": false,
-       "scaled": true,
-       "shifted": true,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": false,
-       "w180": false,
-       "w720": false,
-       "wSym180": false,
-       "multiple": false,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 4,
-     "id": "it-solve-rearr-1"
-    }
-   ],
-   "built": "skjsx4"
-  },
-  {
-   "id": "it-solve-multi",
-   "family": "practice",
-   "title": "Solve: a multiple of θ",
-   "els": [
-    {
-     "kind": "generator",
-     "x": 24,
-     "y": 24,
-     "w": 1552,
-     "h": 852,
-     "tool": "solving-trig-equations",
-     "preset": {
-      "level": "level2",
-      "multiSelect": {
-       "sin": false,
-       "cos": false,
-       "tan": true,
-       "r360": false,
-       "r720": false,
-       "rSym180": false,
-       "rSym360": false,
-       "direct": true,
-       "scaled": false,
-       "shifted": false,
-       "negative": false,
-       "deg": false,
-       "rad": true,
-       "exact": true,
-       "decimal": false,
-       "w360": true,
-       "w180": true,
-       "w720": false,
-       "wSym180": false,
-       "multiple": true,
-       "half": false,
-       "shift": false,
-       "both": false
-      }
-     },
-     "seed": 1,
-     "id": "it-solve-multi-1"
-    }
-   ],
-   "built": "1e87e5m"
-  },
-  {
    "id": "it-sheet-solve",
    "family": "retrieval",
    "title": "Solving trigonometric equations",
@@ -1472,47 +1109,57 @@
        },
        {
         "instruction": "Each statement is false. Give a counter-example to show this.",
-        "cols": 2,
+        "cols": 1,
+        "few": true,
         "parts": [
          "\\arcsin(\\sin x) = x \\text{ for all } x",
-         "\\arccos(\\cos x) = x \\text{ for } -\\pi \\le x \\le \\pi",
-         "\\arctan(\\tan x) = x \\text{ for all } x",
-         "\\arcsin(\\sin x) = x \\text{ for } 0 \\le x \\le \\pi",
-         "\\arccos(\\cos x) = x \\text{ for } 0 \\le x \\le 2\\pi"
+         "\\arccos(\\cos x) = x \\text{ for all } x"
         ],
         "answers": [
          "x = \\pi: \\text{ the left side is } 0",
-         "x = -\\frac{\\pi}{2}: \\text{ the left side is } \\frac{\\pi}{2}",
-         "x = \\frac{3\\pi}{4}: \\text{ the left side is } -\\frac{\\pi}{4}",
-         "x = \\frac{2\\pi}{3}: \\text{ the left side is } \\frac{\\pi}{3}",
-         "x = \\frac{3\\pi}{2}: \\text{ the left side is } \\frac{\\pi}{2}"
+         "x = 2\\pi: \\text{ the left side is } 0"
         ]
        },
        {
         "instruction": "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.",
-        "cols": 2,
+        "cols": 3,
+        "few": true,
         "parts": [
          "2\\cos x - 1 = 0, \\quad 0 \\le x \\le 2\\pi",
          "2\\sin x + \\sqrt{3} = 0, \\quad 0 \\le x \\le 2\\pi",
-         "3\\tan x = \\sqrt{3}, \\quad 0 \\le x \\le 2\\pi",
-         "\\sqrt{2}\\sin x = 1, \\quad -\\pi \\le x \\le \\pi",
-         "2\\tan x + 2 = 0, \\quad -\\pi \\le x \\le \\pi",
-         "4\\cos x + 2\\sqrt{2} = 0, \\quad -\\pi \\le x \\le \\pi"
+         "2\\tan x + 2 = 0, \\quad -\\pi \\le x \\le \\pi"
         ],
         "answers": [
          "x = \\frac{\\pi}{3},\\ \\frac{5\\pi}{3}",
          "x = \\frac{4\\pi}{3},\\ \\frac{5\\pi}{3}",
-         "x = \\frac{\\pi}{6},\\ \\frac{7\\pi}{6}",
-         "x = \\frac{\\pi}{4},\\ \\frac{3\\pi}{4}",
-         "x = -\\frac{\\pi}{4},\\ \\frac{3\\pi}{4}",
-         "x = -\\frac{3\\pi}{4},\\ \\frac{3\\pi}{4}"
+         "x = -\\frac{\\pi}{4},\\ \\frac{3\\pi}{4}"
+        ]
+       },
+       {
+        "instruction": "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.",
+        "cols": 2,
+        "parts": [
+         "\\sin 2\\theta = \\frac{1}{2}, \\quad 0 \\le \\theta \\le 2\\pi",
+         "\\cos 2\\theta = -\\frac{\\sqrt{3}}{2}, \\quad 0 \\le \\theta \\le 2\\pi",
+         "\\tan 2\\theta = 1, \\quad 0 \\le \\theta \\le \\pi",
+         "\\cos 3\\theta = \\frac{1}{2}, \\quad 0 \\le \\theta \\le \\pi",
+         "\\sin 2\\theta = -\\frac{\\sqrt{2}}{2}, \\quad -\\pi \\le \\theta \\le \\pi",
+         "\\sin 3\\theta = \\frac{\\sqrt{3}}{2}, \\quad 0 \\le \\theta \\le 2\\pi"
+        ],
+        "answers": [
+         "\\theta = \\frac{\\pi}{12},\\ \\frac{5\\pi}{12},\\ \\frac{13\\pi}{12},\\ \\frac{17\\pi}{12}",
+         "\\theta = \\frac{5\\pi}{12},\\ \\frac{7\\pi}{12},\\ \\frac{17\\pi}{12},\\ \\frac{19\\pi}{12}",
+         "\\theta = \\frac{\\pi}{8},\\ \\frac{5\\pi}{8}",
+         "\\theta = \\frac{\\pi}{9},\\ \\frac{5\\pi}{9},\\ \\frac{7\\pi}{9}",
+         "\\theta = -\\frac{3\\pi}{8},\\ -\\frac{\\pi}{8},\\ \\frac{5\\pi}{8},\\ \\frac{7\\pi}{8}",
+         "\\theta = \\frac{\\pi}{9},\\ \\frac{2\\pi}{9},\\ \\frac{7\\pi}{9},\\ \\frac{8\\pi}{9},\\ \\frac{13\\pi}{9},\\ \\frac{14\\pi}{9}"
         ]
        }
       ]
      }
     }
    ],
-   "built": "cevico"
+   "built": "xcin3y"
   },
   {
    "id": "it-summary",

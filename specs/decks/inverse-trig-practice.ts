@@ -67,19 +67,20 @@ const solveBoard = checked([
   ["\\arctan 2x = \\frac{\\pi}{3}", tan(PI / 3) / 2, "\\frac{\\sqrt{3}}{2}", sqrt(3) / 2],
 ]);
 
+// The working starts from a sketch of the restricted graph, then uses its symmetry: the habit the equations in the lesson need.
 const WORK_EXACT: string[][] = [
-  ["$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is in the range of arctan.", "$\\arctan\\sqrt{3} = \\frac{\\pi}{3}$"],
-  ["$\\sin\\frac{\\pi}{6} = \\frac{1}{2}$, so $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\frac{1}{2}$.", "$-\\frac{\\pi}{6}$ is in the range of arcsin, so $\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"],
-  ["arccos only gives angles from $0$ to $\\pi$, so the answer cannot be negative.", "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\left(\\pi - \\frac{\\pi}{3}\\right) = -\\frac{1}{2}$.", "$\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"],
+  ["Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. Where does it reach $\\sqrt{3}$?", "$\\tan\\frac{\\pi}{3} = \\sqrt{3}$, and $\\frac{\\pi}{3}$ is on that part of the graph.", "$\\arctan\\sqrt{3} = \\frac{\\pi}{3}$"],
+  ["Sketch $y = \\sin x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. It has half-turn symmetry about the origin.", "So $\\sin\\left(-\\frac{\\pi}{6}\\right) = -\\sin\\frac{\\pi}{6} = -\\frac{1}{2}$.", "$\\arcsin\\left(-\\frac{1}{2}\\right) = -\\frac{\\pi}{6}$"],
+  ["Sketch $y = \\cos x$ between $0$ and $\\pi$: only angles from $0$ to $\\pi$, so the answer cannot be negative.", "The curve has half-turn symmetry about $\\left(\\frac{\\pi}{2}, 0\\right)$, so $\\cos(\\pi - \\theta) = -\\cos\\theta$.", "$\\cos\\frac{\\pi}{3} = \\frac{1}{2}$, so $\\cos\\frac{2\\pi}{3} = -\\frac{1}{2}$ and $\\arccos\\left(-\\frac{1}{2}\\right) = \\frac{2\\pi}{3}$"],
 ];
 const WORK_UNDO: string[][] = [
-  ["$\\frac{\\pi}{6}$ is already between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$.", "$\\arctan\\left(\\tan\\frac{\\pi}{6}\\right) = \\frac{\\pi}{6}$"],
-  ["$\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$.", "$\\arcsin\\frac{1}{2} = \\frac{\\pi}{6}$, because $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$."],
-  ["$\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$.", "The angle from $0$ to $\\pi$ with that cosine is $\\frac{5\\pi}{6}$.", "$\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right) = \\frac{5\\pi}{6}$"],
+  ["Sketch $y = \\tan x$ between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$. $\\frac{\\pi}{6}$ is already on that part of the graph.", "$\\arctan\\left(\\tan\\frac{\\pi}{6}\\right) = \\frac{\\pi}{6}$"],
+  ["Sketch $y = \\sin x$. $\\sin\\frac{5\\pi}{6} = \\frac{1}{2}$, but $\\frac{5\\pi}{6}$ is outside $-\\frac{\\pi}{2}$ to $\\frac{\\pi}{2}$.", "The curve is symmetrical about $x = \\frac{\\pi}{2}$, so the same height is at $\\pi - \\frac{5\\pi}{6} = \\frac{\\pi}{6}$, which is inside.", "$\\arcsin\\left(\\sin\\frac{5\\pi}{6}\\right) = \\frac{\\pi}{6}$"],
+  ["Sketch $y = \\cos x$. $\\cos\\frac{7\\pi}{6} = -\\frac{\\sqrt{3}}{2}$, but $\\frac{7\\pi}{6}$ is outside $0$ to $\\pi$.", "The curve is symmetrical about $x = \\pi$, so the same height is at $2\\pi - \\frac{7\\pi}{6} = \\frac{5\\pi}{6}$, which is inside.", "$\\arccos\\left(\\cos\\frac{7\\pi}{6}\\right) = \\frac{5\\pi}{6}$"],
 ];
 const WORK_SOLVE: string[][] = [
-  ["Take cos of both sides: $x = \\cos\\frac{\\pi}{3}$.", "$x = \\frac{1}{2}$"],
-  ["Take tan of both sides: $2x = \\tan\\frac{\\pi}{3} = \\sqrt{3}$.", "$x = \\frac{\\sqrt{3}}{2}$"],
+  ["Sketch $y = \\arccos x$: its heights run from $0$ to $\\pi$, so $\\frac{\\pi}{3}$ is possible.", "Take cos of both sides: $x = \\cos\\frac{\\pi}{3}$.", "$x = \\frac{1}{2}$"],
+  ["Sketch $y = \\arctan x$: its heights are between $-\\frac{\\pi}{2}$ and $\\frac{\\pi}{2}$, so $\\frac{\\pi}{3}$ is possible.", "Take tan of both sides: $2x = \\tan\\frac{\\pi}{3} = \\sqrt{3}$.", "$x = \\frac{\\sqrt{3}}{2}$"],
 ];
 
 const boardQ = (id: string, ask: string, q: string, answer: string, working: string[]): CuratedQuestion => {
@@ -92,7 +93,7 @@ const undoQs = undoBoard.map(([q, , a], i) => boardQ(`un-${i + 1}`, FIND, q, `$$
 const solveQs = [
   ...solveBoard.map(([q, , a], i) => boardQ(`so-${i + 1}`, "Solve $@$.", q, `$x = ${a}$`, WORK_SOLVE[i])),
   boardQ("so-3", "Solve $@$.", "\\arccos x = -\\frac{\\pi}{4}", "No solution",
-    ["arccos only gives angles from $0$ to $\\pi$.", "$-\\frac{\\pi}{4}$ is outside that range, so no value of $x$ works."]),
+    ["Sketch $y = \\arccos x$: its heights only run from $0$ to $\\pi$.", "$-\\frac{\\pi}{4}$ is below the whole graph, so no value of $x$ works."]),
 ];
 
 // ---------- solving in an interval, counter-examples, rearranging: answers found by scanning for roots, not by the symmetry the pupils use ----------
@@ -109,10 +110,10 @@ const roots = (f: (x: number) => number, lo: number, hi: number): number[] => {
   if (Math.abs(fa) < 1e-12) out.push(a);
   return out.filter((r, i) => i === 0 || Math.abs(r - out[i - 1]) > 1e-6);
 };
-/** x as a multiple of π, written in KaTeX (denominators 1, 2, 3, 4 or 6 only). */
+/** x as a multiple of π, written in KaTeX (denominators 1, 2, 3, 4, 6, 8, 9 or 12 only). */
 const piTex = (x: number): string => {
   const n = x / PI;
-  for (const q of [1, 2, 3, 4, 6]) {
+  for (const q of [1, 2, 3, 4, 6, 8, 9, 12]) {
     const p = Math.round(n * q);
     if (Math.abs(n * q - p) > 1e-6) continue;
     if (p === 0) return "0";
@@ -122,11 +123,11 @@ const piTex = (x: number): string => {
   }
   throw new Error(`inverse trig: ${x} is not a simple multiple of π`);
 };
-const INTERVAL = (lo: number, hi: number) => `${piTex(lo)} \\le x \\le ${piTex(hi)}`;
+const INTERVAL = (v: string, lo: number, hi: number) => `${piTex(lo)} \\le ${v} \\le ${piTex(hi)}`;
 type Solve = [string, (x: number) => number, number, number];   // the equation, its left side minus its right side, the interval
-const solveIn = (rows: Solve[]) => ({
-  parts: rows.map(([eq, , lo, hi]) => `${eq}, \\quad ${INTERVAL(lo, hi)}`),
-  answers: rows.map(([eq, f, lo, hi]) => { const r = roots(f, lo, hi); if (!r.length) throw new Error(`inverse trig: ${eq} has no solution in the interval`); return `x = ${r.map(piTex).join(",\\ ")}`; }),
+const solveIn = (rows: Solve[], v = "x") => ({
+  parts: rows.map(([eq, , lo, hi]) => `${eq}, \\quad ${INTERVAL(v, lo, hi)}`),
+  answers: rows.map(([eq, f, lo, hi]) => { const r = roots(f, lo, hi); if (!r.length) throw new Error(`inverse trig: ${eq} has no solution in the interval`); return `${v} = ${r.map(piTex).join(",\\ ")}`; }),
 });
 const R2 = sqrt(2), R3 = sqrt(3);
 const intervalSheet = solveIn([
@@ -141,11 +142,17 @@ const intervalSheet = solveIn([
 const rearrangeSheet = solveIn([
   ["2\\cos x - 1 = 0", (x) => 2 * cos(x) - 1, 0, 2 * PI],
   ["2\\sin x + \\sqrt{3} = 0", (x) => 2 * sin(x) + R3, 0, 2 * PI],
-  ["3\\tan x = \\sqrt{3}", (x) => 3 * tan(x) - R3, 0, 2 * PI],
-  ["\\sqrt{2}\\sin x = 1", (x) => R2 * sin(x) - 1, -PI, PI],
   ["2\\tan x + 2 = 0", (x) => 2 * tan(x) + 2, -PI, PI],
-  ["4\\cos x + 2\\sqrt{2} = 0", (x) => 4 * cos(x) + 2 * R2, -PI, PI],
 ]);
+// a multiple of the angle: the interval for the angle inside the brackets is wider (e.g. 0 to 2π becomes 0 to 6π for 3θ)
+const multipleSheet = solveIn([
+  ["\\sin 2\\theta = \\frac{1}{2}", (t) => sin(2 * t) - 1 / 2, 0, 2 * PI],
+  ["\\cos 2\\theta = -\\frac{\\sqrt{3}}{2}", (t) => cos(2 * t) + R3 / 2, 0, 2 * PI],
+  ["\\tan 2\\theta = 1", (t) => tan(2 * t) - 1, 0, PI],
+  ["\\cos 3\\theta = \\frac{1}{2}", (t) => cos(3 * t) - 1 / 2, 0, PI],
+  ["\\sin 2\\theta = -\\frac{\\sqrt{2}}{2}", (t) => sin(2 * t) + R2 / 2, -PI, PI],
+  ["\\sin 3\\theta = \\frac{\\sqrt{3}}{2}", (t) => sin(3 * t) - R3 / 2, 0, 2 * PI],
+], "\\theta");
 // counter-examples: [the false statement, the value x it fails at, what the left side really is (as a number and in KaTeX), the right side x]
 type Counter = [string, string, number, string, number, string, number];
 const counterSheet = ((rows: Counter[]) => ({
@@ -157,10 +164,7 @@ const counterSheet = ((rows: Counter[]) => ({
   }),
 }))([
   ["\\arcsin(\\sin x) = x \\text{ for all } x", "\\pi", PI, "arcsinsin", 0, "0", 0],
-  ["\\arccos(\\cos x) = x \\text{ for } -\\pi \\le x \\le \\pi", "-\\frac{\\pi}{2}", -PI / 2, "arccoscos", PI / 2, "\\frac{\\pi}{2}", 0],
-  ["\\arctan(\\tan x) = x \\text{ for all } x", "\\frac{3\\pi}{4}", 3 * PI / 4, "arctantan", -PI / 4, "-\\frac{\\pi}{4}", 0],
-  ["\\arcsin(\\sin x) = x \\text{ for } 0 \\le x \\le \\pi", "\\frac{2\\pi}{3}", 2 * PI / 3, "arcsinsin", PI / 3, "\\frac{\\pi}{3}", 0],
-  ["\\arccos(\\cos x) = x \\text{ for } 0 \\le x \\le 2\\pi", "\\frac{3\\pi}{2}", 3 * PI / 2, "arccoscos", PI / 2, "\\frac{\\pi}{2}", 0],
+  ["\\arccos(\\cos x) = x \\text{ for all } x", "2\\pi", 2 * PI, "arccoscos", 0, "0", 0],
 ]);
 
 const sheet = {
@@ -174,23 +178,24 @@ const sheet = {
   ],
 };
 
-// Questions 4 to 6 of the same worksheet, on their own sheet (so each slide and each printed page is a size that can be read): used after the live solving flow.
+// Questions 4 to 7 of the same worksheet, on their own sheet (so each slide and each printed page is a size that can be read).
 const sheet2 = {
   title: "Solving trigonometric equations",
   note: "Write your answers in your book. Sketch a graph first.",
   firstQuestion: 4,
   blocks: [
     { instruction: "Sketch the graph, then use symmetry to find every solution in the given interval. Give exact answers.", cols: 2, ...intervalSheet },
-    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 2, ...counterSheet },
-    { instruction: "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.", cols: 2, ...rearrangeSheet },
+    { instruction: "Each statement is false. Give a counter-example to show this.", cols: 1, few: true, ...counterSheet },
+    { instruction: "Rearrange, sketch the graph, then use symmetry to find every solution in the given interval.", cols: 3, few: true, ...rearrangeSheet },
+    { instruction: "Find every solution in the given interval. First write down the interval for the angle inside the brackets, then sketch the graph and use symmetry.", cols: 2, ...multipleSheet },
   ],
 };
 
 export const solvingSheetSlide = () => S.textbookSheet("it-sheet-solve", sheet2, T);
 
 export const practiceSlides = () => [
-  S.whiteboard("it-wb-exact", "Exact values", exactQs, "Three to talk through: a positive value, a negative one, and arccos of a negative (never a negative angle)."),
-  S.whiteboard("it-wb-undo", "Function, then its inverse", undoQs, "Three to talk through: inside the range, outside it (sin), outside it (cos). Bring the angle into the restricted domain first."),
-  S.whiteboard("it-wb-solve", "Solving inverse equations", solveQs, "Three to talk through: take the function of both sides; the last has no solution because the angle is outside the range."),
+  S.whiteboard("it-wb-exact", "Exact values", exactQs, "Three to talk through, each starting from a sketch of the restricted graph: a positive value, a negative one (symmetry about the origin), and arccos of a negative (never a negative angle)."),
+  S.whiteboard("it-wb-undo", "Function, then its inverse", undoQs, "Three to talk through, each from a sketch: inside the range, outside it (sin, symmetry about x = π/2), outside it (cos, symmetry about x = π). Bring the angle into the restricted domain first."),
+  S.whiteboard("it-wb-solve", "Solving inverse equations", solveQs, "Three to talk through: sketch the inverse graph to see which heights are possible, then take the function of both sides; the last has no solution."),
   S.textbookSheet("it-sheet", sheet, T),
 ];

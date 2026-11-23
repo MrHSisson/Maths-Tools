@@ -208,6 +208,25 @@ function DepthEl({ el, live, stage }: { el: Extract<DeckElement, { kind: "depth"
 
 const pill: CSSProperties = slideButton;
 
+/** A maths question kept on one line: a range such as "0 \\le \\theta \\le 2\\pi" is never split across two lines, so when the line is wider than its
+ *  box the whole line is scaled down to fit. */
+function FitLine({ children }: { children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null), inner = useRef<HTMLDivElement>(null);
+  const [k, setK] = useState(1), [h, setH] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const measure = () => { const w = i.scrollWidth, f = w ? Math.min(1, o.clientWidth / w) : 1; setK(f); setH(i.offsetHeight * f); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o); ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  return <div ref={outer} style={{ width: "100%", textAlign: "center", height: h, contain: "inline-size" }}><div ref={inner} style={{ display: "inline-block", whiteSpace: "nowrap", transform: `scale(${k})`, transformOrigin: "top left" }}>{children}</div></div>;
+}
+/** A question whose maths line has an explicit gap in it (`\\quad`, between an equation and its range) is shown on one line. */
+const oneLine = (latex: string) => latex.includes("\\quad");
+
 /** The tool's generator running live, like its Whiteboard: opens on the question its seed gives (the same every time
  *  the slide is shown), New question draws a fresh one, and the working comes one step at a time. Keys: n, a, s. */
 const workspaceLike = (el: { presentation?: string }) => el.presentation === "whiteboard" || el.presentation === "whiteboard-inverted";
@@ -263,7 +282,7 @@ function GeneratorEl({ el, live }: { el: Extract<DeckElement, { kind: "generator
   const finalPicture = q.answerPicture ? pictureOf({ label: "", latex: "", extra: q.answerPicture }) : null;
   const latest = (solution.answer && finalPicture) || [...q.working.slice(0, solution.all ? q.working.length : solution.shown)].reverse().map(pictureOf).find(Boolean);
   const content = <SolutionStepper
-    question={q.drawing ? <ShapeQuestion drawing={q.drawing} focuses={q.focuses} shown={solution.all ? total : solution.shown} answer={solution.answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
+    question={q.drawing ? <ShapeQuestion drawing={q.drawing} focuses={q.focuses} shown={solution.all ? total : solution.shown} answer={solution.answer} /> : <div style={{ display: "flex", flexDirection: "column", gap: 16, textAlign: "center" }}>{prompt && <div style={{ fontSize: "0.6em", color: "#64748b" }}><InlineMath text={prompt} /></div>}{q.lines?.length ? <QuestionText lines={q.lines} /> : oneLine(q.latex) ? <FitLine><MathRenderer latex={q.latex} style={{ fontSize: "1em" }} /></FitLine> : <MathRenderer latex={q.latex} style={{ fontSize: "1em" }} />}</div>}
     steps={whiteboard ? [] : q.working.map((w, i) => <div key={i}>{w.label && <div style={{ fontSize: "0.75em", color: "#64748b", marginBottom: 8 }}>{w.label}</div>}{w.type === "roundDigits" ? <RoundDigits {...(w.extra as { numStr: string; e: number; sf: boolean })} /> : w.type === "tStep" ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : w.type === "ratioTable" || w.type === "fracBar" ? (hasPicture ? (w.plain && w.plain !== w.label ? <div style={{ fontSize: "0.75em", lineHeight: 1.4 }}>{w.plain}</div> : null) : <WorkedPicture type={w.type === "ratioTable" ? "ratioTable" : "bar"} data={w.extra} caption={w.type === "fracBar" ? w.plain : undefined} />) : <MathRenderer latex={w.latex} style={{ fontSize: "1em" }} />}</div>)}
     answer={<AnswerView q={q} />} state={solution} live={live} flip={el.presentation === "full-inverted"} picture={hasPicture ? (latest ? <WorkedPicture type={latest.type} data={latest.data} caption={latest.caption} /> : null) : undefined} fontSize={workingSize} questionFontSize={questionSize} layout={whiteboard ? "stacked" : "split"}
   />;

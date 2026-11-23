@@ -15,6 +15,8 @@ interface TextbookBlock {
   answers: string[];
   /** Columns for this question; the sheet's `cols` (default 4) when absent. */
   cols?: number;
+  /** A question that deliberately has fewer than five parts (a single counter-example, say). */
+  few?: boolean;
 }
 export interface TextbookSheet {
   title: string;
@@ -36,7 +38,7 @@ export function textbookProblems(sheet: TextbookSheet): string[] {
   if (!sheet.blocks.length) problems.push("the sheet has no questions");
   sheet.blocks.forEach((b, i) => {
     if (!b.instruction.trim()) problems.push(`question ${i + 1} has no instruction`);
-    if (b.parts.length < 5) problems.push(`question ${i + 1} has ${b.parts.length} parts; the least is 5`);
+    if (b.parts.length < 5 && !b.few) problems.push(`question ${i + 1} has ${b.parts.length} parts; the least is 5`);
     if (b.parts.length !== b.answers.length) problems.push(`question ${i + 1} has ${b.parts.length} parts but ${b.answers.length} answers`);
     if ([...b.parts, ...b.answers].some((s) => !s.trim())) problems.push(`question ${i + 1} has an empty part or answer`);
   });
