@@ -24,7 +24,7 @@ const [sin, cos, tan] = [arcsin(), arccos(), arctan()];
 
 export default () => ({
   id: "inverse-trig-graphs",
-  title: "Inverse trigonometric graphs: arcsin, arccos and arctan",
+  title: "Inverse trigonometric graphs",
   summary: "Why sin x, cos x and tan x are each restricted, then an animation for each: reflect the graph in y = x and separate it into y = arcsin x, y = arccos x and y = arctan x.",
   slides: [
     S.title("it-title", "Inverse trigonometric functions", "The graphs of arcsin x, arccos x and arctan x"),

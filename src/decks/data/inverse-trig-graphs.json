@@ -1,7 +1,8 @@
 {
  "id": "inverse-trig-graphs",
- "title": "Inverse trigonometric graphs: arcsin, arccos and arctan",
+ "title": "Inverse trigonometric graphs",
  "summary": "Why sin x, cos x and tan x are each restricted, then an animation for each: reflect the graph in y = x and separate it into y = arcsin x, y = arccos x and y = arctan x.",
+ "questionVersion": 2,
  "slides": [
   {
    "id": "it-title",
@@ -1195,6 +1196,7 @@
    "id": "it-sheet-solve",
    "family": "retrieval",
    "title": "Solving trigonometric equations",
+   "built": "1bazzyu",
    "els": [
     {
      "id": "it-sheet-solve-1",
@@ -1298,9 +1300,7 @@
       ]
      }
     }
-   ],
-   "built": "1bazzyu"
+   ]
   }
- ],
- "questionVersion": 2
+ ]
 }
