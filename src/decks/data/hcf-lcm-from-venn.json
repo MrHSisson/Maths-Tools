@@ -1361,7 +1361,7 @@
      "bank": [],
      "cols": 3,
      "kind": "grid",
-     "size": 56,
+     "size": 80,
      "align": "center",
      "fixed": true,
      "items": [
@@ -1371,7 +1371,7 @@
        "level": "level1",
        "title": "$22$ and $55$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 11 \\\\ \\mathrm{LCM} = 2 \\times 5 \\times 11 = 110\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 11 \\\\ \\mathrm{LCM} = 110\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1404,7 +1404,7 @@
        "level": "level1",
        "title": "$6$ and $15$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 3 \\\\ \\mathrm{LCM} = 2 \\times 3 \\times 5 = 30\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 3 \\\\ \\mathrm{LCM} = 30\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1437,7 +1437,7 @@
        "level": "level1",
        "title": "$21$ and $28$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 7 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 7 = 84\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 7 \\\\ \\mathrm{LCM} = 84\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1470,7 +1470,7 @@
        "level": "level1",
        "title": "$50$ and $60$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 5 = 10 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 5 \\times 5 = 300\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 10 \\\\ \\mathrm{LCM} = 300\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1503,7 +1503,7 @@
        "level": "level1",
        "title": "$52$ and $78$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 13 = 26 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 3 \\times 13 = 156\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 26 \\\\ \\mathrm{LCM} = 156\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1536,7 +1536,7 @@
        "level": "level1",
        "title": "$24$ and $30$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 3 = 6 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 3 \\times 5 = 120\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 6 \\\\ \\mathrm{LCM} = 120\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1569,7 +1569,7 @@
        "level": "level1",
        "title": "$42$ and $98$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 7 = 14 \\\\ \\mathrm{LCM} = 2 \\times 3 \\times 7 \\times 7 = 294\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 14 \\\\ \\mathrm{LCM} = 294\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1602,7 +1602,7 @@
        "level": "level1",
        "title": "$88$ and $132$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 2 \\times 11 = 44 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 3 \\times 11 = 264\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 44 \\\\ \\mathrm{LCM} = 264\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1635,7 +1635,7 @@
        "level": "level1",
        "title": "$90$ and $150$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 3 \\times 5 = 30 \\\\ \\mathrm{LCM} = 2 \\times 3 \\times 3 \\times 5 \\times 5 = 450\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 30 \\\\ \\mathrm{LCM} = 450\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1668,7 +1668,7 @@
        "level": "level1",
        "title": "$96$ and $120$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 2 \\times 2 \\times 2 \\times 3 = 24 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 2 \\times 2 \\times 3 \\times 5 = 480\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 24 \\\\ \\mathrm{LCM} = 480\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1701,7 +1701,7 @@
        "level": "level1",
        "title": "$27$ and $81$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 3 \\times 3 \\times 3 = 27 \\\\ \\mathrm{LCM} = 3 \\times 3 \\times 3 \\times 3 = 81\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 27 \\\\ \\mathrm{LCM} = 81\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1734,7 +1734,7 @@
        "level": "level1",
        "title": "$9$ and $32$",
        "answer": [
-        "$\\begin{array}{c}\\mathrm{HCF} = 1 \\\\ \\mathrm{LCM} = 2 \\times 2 \\times 2 \\times 2 \\times 2 \\times 3 \\times 3 = 288\\end{array}$"
+        "$\\begin{array}{c}\\mathrm{HCF} = 1 \\\\ \\mathrm{LCM} = 288\\end{array}$"
        ],
        "format": "open",
        "status": "ready",
@@ -1765,7 +1765,7 @@
     }
    ],
    "brief": "Twelve in a 3 by 4 grid, plain numbers: the first six carry a quiet count of the middle tiles. Draw the Venn, multiply the middle for the HCF and every tile for the LCM. The same twelve are on the worksheet.",
-   "built": "1us0lby",
+   "built": "1trnnwn",
    "title": "Book work: HCF and LCM from a Venn",
    "family": "retrieval"
   },

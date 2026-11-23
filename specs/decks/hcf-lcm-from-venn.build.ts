@@ -76,7 +76,9 @@ function pairQ(id: string, p: Pair, ask: Ask, o: { hint?: boolean; book?: boolea
     addWrong(hcfOf(r), lcmOf(r), "Multiplies only the middle. That is the HCF: the LCM needs every tile.");
     if (r.middle.length > 0) addWrong(a * b, lcmOf(r), "Multiplies the two numbers, which counts the shared tiles twice.");
   }
-  return { ...Q.open(id, T, "level1", lines[0], `$${ansTex(ask, r)}$`, [], mistakes), title: `$${a}$ and $${b}$`, question: lines,
+  // book work shows just the two answers, big (the products are on the worksheet's answer pages): HCF = 11 over LCM = 110
+  const answer = o.book && ask === "both" ? `\\begin{array}{c}\\mathrm{HCF} = ${hcfOf(r)} \\\\ \\mathrm{LCM} = ${lcmOf(r)}\\end{array}` : ansTex(ask, r);
+  return { ...Q.open(id, T, "level1", lines[0], `$${answer}$`, [], mistakes), title: `$${a}$ and $${b}$`, question: lines,
     rationale: ask === "hcf" ? "Build the Venn, then multiply the tiles in the middle." : ask === "lcm" ? "Build the Venn, then multiply every tile." : "Build the Venn: the middle gives the HCF, every tile gives the LCM." };
 }
 const pairSet = (prefix: string, pairs: Pair[], ask: Ask, hints: number, book = false) => pairs.map((p, i) => pairQ(`${P}-${prefix}${i + 1}`, p, ask, { hint: i < hints, book }));
@@ -197,7 +199,7 @@ const exitBoth: CuratedQuestion = { ...Q.open(`${P}-x3`, T, "level1", "Find the 
 const EXIT_Q = [pairQ(`${P}-x1`, EXIT_HCF, "hcf"), pairQ(`${P}-x2`, EXIT_LCM, "lcm"), exitBoth];
 
 const book = (id: string, qs: CuratedQuestion[], title: string, brief: string): Slide => { const b = S.plainBook(id, qs, 3, "Copy into your book. Draw a Venn, then find the HCF and the LCM.", title);
-    return { ...b, els: b.els.map((e) => (e.kind === "grid" ? { ...e, size: 56 } : e)) as DeckElement[], brief }; };   // twelve in four rows: a little smaller than the nine of deck 1
+    return { ...b, els: b.els.map((e) => (e.kind === "grid" ? { ...e, size: 80 } : e)) as DeckElement[], brief }; };   // twelve in four rows: a little smaller than the nine of deck 1
 
 const slides: Slide[] = [
   S.title(`${P}-title`, "HCF & LCM from a Venn", "Multiply the middle. Multiply the lot."),
