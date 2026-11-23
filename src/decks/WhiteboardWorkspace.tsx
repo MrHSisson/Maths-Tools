@@ -3,12 +3,13 @@ import { MoreHorizontal, Video, VideoOff } from "lucide-react";
 import { useVisualiser } from "../shared/useVisualiser";
 
 /** Camera controls are a single quiet menu; previews never request camera access. */
-export function WhiteboardWorkspace({ live, visualiser }: { live: boolean; visualiser: boolean }) {
+export function WhiteboardWorkspace({ live, visualiser, autoStart = false }: { live: boolean; visualiser: boolean; autoStart?: boolean }) {
   const camera = useVisualiser(live);
   const cameraId = useId();
   const menu = useRef<HTMLDetailsElement>(null);
   const { setPresenterMode } = camera;
   useEffect(() => { if (!live || !visualiser) setPresenterMode(false); }, [live, visualiser, setPresenterMode]);
+  useEffect(() => { if (live && visualiser && autoStart) setPresenterMode(true); }, [live, visualiser, autoStart, setPresenterMode]);
   const active = live && camera.presenterMode;
   return <section className="whiteboard-workspace" aria-label="Writing space" data-camera-active={active}>
     <div className="whiteboard-workspace-body">

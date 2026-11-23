@@ -7,6 +7,8 @@ import type { VennCard, VennRegion } from "./types";
 export const BOX_W = 1000, BOX_H = 700;
 export const CIRCLE_R = 235, CIRCLE_Y = 335, LEFT_X = 345, RIGHT_X = 655;
 export const GAP = 10;
+/** Build mode: the list of numbers takes two fifths of the slide (so it is 2/3 of the diagram's width again to the left of it) and the prime buttons a strip under the box. */
+export const LIST_W = Math.round((BOX_W * 2) / 3), PAL_H = 120;
 /** The drawing's colours, shared by the slide piece and the printed sheet so the two cannot drift. */
 export const INK = "#1e293b", LEFT_C = "#6683a8", RIGHT_C = "#a58b66";   // quiet colours: the cards carry the colour, not the circles
 /** The room each part of the diagram gives its cards: the centre and the widest a row of cards may be. */

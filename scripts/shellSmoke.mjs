@@ -48,6 +48,8 @@ const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { execut
 for (const tool of TOOLS) {
   for (const [name, qs] of LAPTOP) await visit(browser, { width: 1366, height: 768 }, `laptop ${name}`, tool + qs);
   await visit(browser, { width: 1366, height: 768 }, "laptop worksheet fullscreen", `${tool}?mode=worksheet&n=6`, async p => {
+    // a tool with a question stage shows it over the working card until the working starts: start the working first
+    const stage = p.locator('[data-question-stage][aria-hidden="false"] button'); if (await stage.count()) { await stage.first().click(); await p.waitForTimeout(600); }
     const b = p.locator('button[title="Fullscreen"]'); if (await b.count()) { await b.first().click(); await p.waitForTimeout(1500); }
   });
   await visit(browser, { width: 390, height: 800 }, "phone start screens", tool);

@@ -10,7 +10,7 @@ Branch `claude/vigilant-cerf-3a5oah`. Area: `src/tools/FurtherMechanics/workDone
 - Tests extended in `workDone.test.ts` and `energy.test.ts` (the stopping distance put back into the energy equation with a numerical integral; the friction and pulley answers closed against their equations; KaTeX, scenes and the Course setting).
 - Not done: energy-bar pictures as the working picture (D14), a descending slope in the pulley-free picture, the real phone, tablet and printer check, Harry's review and go-live.
 
-- **A saved mechanics question now prints with its picture** (all four Work, Energy and Power tools). They set `skillSheet`; the Decision shell's saved-question print puts the diagram under each question (with a working box) and prints the worked answer (each step's caption and lines) on the answers page; a question with Diagram set to None prints without a picture. Checked in Chromium: save a question, Print saved questions, Print both.
+- **A saved mechanics question now prints with its picture** (all four Work, Energy and Power tools). They set `skillSheet` and `skillPrint` (the shell hook, from `mcPrint.ts`): the saved-question print puts the diagram under each question (with a working box) and prints the worked answer (each step's caption and lines) on the answers page; a question with Diagram set to None prints without a picture. Checked in Chromium: save a question, Print saved questions, Print both.
 - **Hub.** The Dimensional Analysis tile "Any exam question" is now "Exam-style questions", and kinetic and potential energy and conservation of energy are listed under both MC2 and MC3 (the pairing test now forbids a sub-tool twice under one statement instead of twice anywhere).
 
 Agent: Claude Code

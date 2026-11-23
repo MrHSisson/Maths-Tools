@@ -23,10 +23,9 @@ const H = (t: string): LpRow => ({ k: "head", t });
 const R = (t: string): LpRow => ({ k: "result", t });
 const rowsOf = (...r: LpRow[]): SxBlock => ({ k: "rows", rows: r });
 
-/** the names of the columns: the variables (capitals once a lower bound has been taken out), then the slacks */
+/** the names of the columns: the variables (a variable that had a lower bound taken out becomes a capital; the others keep their names), then the slacks */
 function nameLists(d: SxData, m: number): { vars: string[]; cols: string[] } {
-  const shifted = !!d.spec.lower?.some((v) => v > 0);
-  const vars = varNames(d.spec.c.length).map((v) => (shifted ? v.toUpperCase() : v));
+  const vars = varNames(d.spec.c.length).map((v, j) => ((d.spec.lower?.[j] ?? 0) > 0 ? v.toUpperCase() : v));
   return { vars, cols: [...vars, ...Array.from({ length: m }, (_, i) => sub(i))] };
 }
 /** the row numbers of every tableau (layout B): the first tableau is R1 (the objective row) to R(m+1); each pivot writes new rows, numbered on from there */

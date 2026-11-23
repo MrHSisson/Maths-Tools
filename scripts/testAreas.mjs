@@ -13,12 +13,12 @@ import { readFileSync } from "node:fs";
 
 /** Test files by area. Patterns are tested against the file name, e.g. "cpaExam.test.ts". */
 export const TEST_AREAS = {
-  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas|testShards)\.test\.ts$/,
+  docs: /^(claudeDocs|glossary|adminNotes|dashboardCounts|toolFactsTruth|registryIds|levelLabels|prompts|aboutTool|patchNotes|testAreas|testShards)\.test\.ts$/,
   cpa: /^(cpa.*|criticalPathOptions|levelling.*|workerLabels)\.test\.ts$/,
   flow: /^(flow(?!chart).*|superFlow)\.test\.ts$/,
   graphs: /^(mst|routeInspection|tsp.*|graphBank|decisionRandomNetwork|decisionTsp)\.test\.ts$/,
   mechanics: /^(dim|mechanics.*|workDone|energy|power|elastic)\.test\.ts$/,
-  decision: /^(decision|decisionOptions|decisionPairings)\.test\.ts$/,
+  decision: /^(decision|decisionOptions|decisionPairings|decisionPairingsTools)\.test\.ts$/,
   decks: /^(deck.*|decks.*|slidePrint|relayout|splitLayout|whiteboardDeck|rectilinear.*|migrateDecks|curatedQuestion.*|flowchart|playerBar|textbookSheet|vennSheet|vennLayout|ratioDeckQuestions|printFrame|printBasket|newerCode)\.test\.ts$/,
   cs: /^(cs-topics|binaryTools|dataUnits|fileSizes.*|placeValueBases|wordsBingo)\.test\.ts$/,
   // the checks that run over every tool

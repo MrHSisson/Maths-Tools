@@ -47,14 +47,17 @@ const CSS = `
   .skillq .box.s { height: 26mm; } .skillq .box.m { height: 36mm; } .skillq .box.l { height: 48mm; }
   .skillq .box.lines { background: repeating-linear-gradient(to bottom, #fff 0, #fff 7.6mm, #9ca3af 7.6mm, #9ca3af 7.85mm); border-color: #cbd5e1; }
   .skillq .box.grid { background-color: #fff; background-image: linear-gradient(#e5e7eb 0.2mm, transparent 0.2mm), linear-gradient(90deg, #e5e7eb 0.2mm, transparent 0.2mm); background-size: 5mm 5mm; }
+  .skillq .box.dots { background-color: #fff; background-image: radial-gradient(circle, #6b7280 0.28mm, transparent 0.34mm); background-size: 5mm 5mm; background-position: 2.5mm 2.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .skillq .skillfig { display: flex; justify-content: center; }
   .skillq.single { break-after: page; align-content: start; }
   .skillq.single .box.s { height: 90mm; } .skillq.single .box.m { height: 130mm; } .skillq.single .box.l { height: 170mm; }
+  .skillq .skillfig { grid-column: 2; margin-top: 3mm; font-size: 14pt; }
   .answers { columns: 2; column-gap: 10mm; }
+  .answers.wide { columns: 1; }
+  .answers .working { margin-top: 2mm; font-size: 10.5pt; }
+  .answers.wide .a { break-inside: auto; margin-bottom: 6mm; }
   .answers .a { break-inside: avoid; margin-bottom: 3mm; display: grid; grid-template-columns: 9mm 1fr; }
   .answers .a b { color: #1e3a8a; }
-  .worked { margin-top: 1.5mm; font-size: 8.5pt; color: #334155; }
-  .worked .cap { margin-top: 1mm; font-style: italic; color: #64748b; }
-  .worked .lab { font-weight: 600; }
   .part { break-inside: avoid; margin-bottom: 6mm; }
   .prompt { display: grid; grid-template-columns: 9mm 1fr auto; gap: 2mm; align-items: baseline; }
   .prompt em { font-style: normal; font-weight: 700; color: #4b5563; white-space: nowrap; }
@@ -140,7 +143,7 @@ const PRINT_SCRIPT = `<script>
 interface SkillLayout {
   perPage: boolean;
   /** "auto" gives each kind of question the room it needs; the others make every working area that kind */
-  space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "none";
+  space: "auto" | "s" | "m" | "l" | "lines" | "grid" | "dots" | "none";
 }
 interface SkillPrintQuestion {
   prompt: string;
@@ -148,29 +151,29 @@ interface SkillPrintQuestion {
   answer: string;
   /** how much room to work in: s, m or l */
   space?: "s" | "m" | "l";
-  /** a picture (static markup) shown under the question: a mechanics diagram */
+  /** what the question shows besides its words (a tableau, a table of data), already typeset as HTML, drawn under the prompt */
   figure?: string;
-  /** the worked answer, a caption and its working lines (TeX rows) at a time, shown with the answer */
-  steps?: { caption: string; lines: string[] }[];
+  /** the model answer's working, already typeset as HTML, drawn under the short answer on the answers page */
+  working?: string;
 }
 /** the paper and the answers page of a set of skill questions */
 function skillParts(title: string, subtitle: string | undefined, questions: SkillPrintQuestion[], layout: SkillLayout = { perPage: false, space: "auto" }): { paper: string; answers: string } {
   const area = (q: SkillPrintQuestion): string => {
     if (layout.space === "none") return "";
     const size = layout.space === "s" || layout.space === "m" || layout.space === "l" ? layout.space : q.space ?? "m";
-    return `<div class="box ${size}${layout.space === "lines" ? " lines" : layout.space === "grid" ? " grid" : ""}"></div>`;
+    return `<div class="box ${size}${layout.space === "lines" ? " lines" : layout.space === "grid" ? " grid" : layout.space === "dots" ? " dots" : ""}"></div>`;
   };
   const count = `${questions.length} question${questions.length === 1 ? "" : "s"}`;
   return {
     paper: `<div class="paper">
     ${frameHeader(title, subtitle)}
     <div class="meta">${count}</div>
-    ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}${q.figure ? `<div class="fig small" style="margin-top:3mm">${q.figure}</div>` : ""}</div>${area(q)}</section>`).join("\n")}
+    ${questions.map((q, i) => `<section class="skillq${layout.perPage ? " single" : ""}"><div class="n">${i + 1}.</div><div class="intro" style="margin:0">${mathHtml(q.prompt)}</div>${q.figure ? `<div class="skillfig">${q.figure}</div>` : ""}${area(q)}</section>`).join("\n")}
   </div>`,
     answers: `<div class="markscheme">
     ${frameHeader(title, subtitle, { tag: "answers", who: false })}
     <div class="meta">${count}</div>
-    <div class="answers">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}${q.steps ? `<div class="worked">${q.steps.map((st) => `<div class="cap">${esc(st.caption)}</div>${st.lines.map((l) => (l.startsWith("#") ? `<div class="lab">${esc(l.slice(1))}</div>` : `<div class="ln">${texHtml(l.replace(/^=\s*/, "= "))}</div>`)).join("")}`).join("")}</div>` : ""}</div></div>`).join("\n")}</div>
+    <div class="answers${questions.some((q) => q.working) ? " wide" : ""}">${questions.map((q, i) => `<div class="a"><b>${i + 1}.</b><div>${mathHtml(q.answer)}${q.working ? `<div class="working">${q.working}</div>` : ""}</div></div>`).join("\n")}</div>
   </div>`,
   };
 }

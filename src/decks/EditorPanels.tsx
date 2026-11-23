@@ -133,6 +133,16 @@ export function NumberGridProps({ el, set }: { el: ElOf<"numberGrid">; set: (p: 
   );
 }
 
+/** "10, 15" to [10, 15]: whole numbers at least `min`, an empty box giving no list (the field is cleared, not left as []). */
+const parseNumbers = (t: string, min: number): number[] | undefined => {
+  const xs = t.split(/[^0-9]+/).filter(Boolean).map(Number).filter((n) => Number.isInteger(n) && n >= min).slice(0, 8);
+  return xs.length ? xs : undefined;
+};
+/** A comma-separated list of numbers, typed freely and applied when the box is left. */
+function NumbersField({ value, min, onCommit, placeholder, label }: { value?: number[]; min: number; onCommit: (v: number[] | undefined) => void; placeholder: string; label: string }) {
+  const [t, setT] = useState((value ?? []).join(", "));
+  return <input className={input} value={t} onChange={(e) => setT(e.target.value)} onBlur={() => { const v = parseNumbers(t, min); setT((v ?? []).join(", ")); onCommit(v); }} placeholder={placeholder} aria-label={label} />;
+}
 const VENN_REGIONS: [VennRegion | "", string][] = [["", "Scattered outside"], ["left", "Left only"], ["middle", "Middle"], ["right", "Right only"]];
 
 /** The Venn diagram: its labels, the cards (text, tile or not, where each sits), one card per click, the answer lines, and a quick way to
@@ -157,6 +167,10 @@ export function VennProps({ el, set }: { el: ElOf<"venn">; set: (p: Partial<ElOf
         <input className={input} value={el.left} onChange={(e) => set({ left: e.target.value })} aria-label="Left circle label" />
         <input className={input} value={el.right} onChange={(e) => set({ right: e.target.value })} aria-label="Right circle label" />
       </div>
+      <Label>Build mode: numbers listed on the left (as prime tiles)</Label>
+      <NumbersField value={el.listing} min={2} onCommit={(v) => set({ listing: v })} placeholder="e.g. 10, 15 (empty: no list)" label="Numbers listed as prime tiles" />
+      <Label>Build mode: prime tile buttons along the bottom</Label>
+      <NumbersField value={el.palette} min={2} onCommit={(v) => set({ palette: v })} placeholder="e.g. 2, 3, 5, 7, 11 (empty: no buttons)" label="Prime tile buttons" />
       <Label>Cards</Label>
       <div className="flex flex-col gap-1">
         {el.cards.map((c, i) => (

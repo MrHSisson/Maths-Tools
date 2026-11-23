@@ -1,16 +1,16 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { DecisionProblem, LpRow, SolveStep } from "./types";
+import WorkingPage, { Newest } from "./WorkingPage";
 
 // The picture of a "Write a constraint" question is the page a student would WRITE: the variables, then the translation of the words, the tidying one line
-// at a time, the check and the constraint in a box, the newest rows in blue. The step beside it says why each row is there. The page never scrolls: it is
-// scaled to fit its panel. Rows are KaTeX rendered to a string with inline styles, so the layout holds on every screen.
+// at a time, the check and the constraint in a box, the newest rows in blue. The step beside it says why each row is there. On screen it is an open page that
+// grows downward (WorkingPage). Rows are KaTeX rendered to a string with inline styles, so the layout holds on every screen.
 
 const INK = "#0f172a";
 const NEW = "#1d4ed8";
 const GIVEN = "#475569";
-const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 function Tex({ t }: { t: string }) {
   let html: string;
@@ -35,44 +35,48 @@ function Row({ r, fresh, big }: { r: LpRow; fresh: boolean; big: boolean }) {
 
 export default function LpCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
   const d = p.lp;
-  const box = useRef<HTMLDivElement>(null);
-  const inner = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   const v = step?.lpView;
   const prob = d?.info.kind === "problem" ? d.info : undefined;
   // a problem does not name its variables before the answer: the question shows only its table (when the data is shown as one)
   const rows: LpRow[] = v ? v.rows : d && !prob ? [{ k: "head", t: "Variables" }, ...d.vars.map((x): LpRow => ({ k: "words", t: `$${x.sym}$ is the number of ${x.noun}` }))] : [];
   const fresh = v?.fresh ?? 0;
-  useIso(() => {
-    const b = box.current, i = inner.current;
-    if (!b || !i || typeof ResizeObserver === "undefined") return;
-    const fit = () => {
-      const w = i.offsetWidth, h = i.offsetHeight;
-      if (w > 0 && h > 0) setScale(Math.max(0.3, Math.min(1, (b.clientWidth - 20) / w, b.clientHeight / h)));
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(b);
-    return () => ro.disconnect();
-  }, [rows]);
   if (!d) return null;
+  // the rows accumulate from step to step: the page is all of them, the rows the newest step added in blue
+  const old = v ? rows.slice(0, rows.length - fresh) : rows;
+  const added = v ? rows.slice(rows.length - fresh) : [];
+  const line = (r: LpRow, i: number, isNew: boolean) => <Row key={i} r={r} fresh={isNew} big={r.k === "tex"} />;
+  const col: CSSProperties = { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.5em" };
   return (
-    <div style={{ position: "absolute", inset: 0, background: "#fff", overflow: "hidden", containerType: "size" } as CSSProperties}>
-      <div style={{ position: "absolute", top: 12, left: 60, right: 12, ...label }}>Your working</div>
-      <div ref={box} style={{ position: "absolute", top: 40, left: 14, right: 10, bottom: 8, overflow: "hidden", borderLeft: "2px solid #fecaca", paddingLeft: 14 }}>
-        <div ref={inner} style={{ display: "inline-block", width: "max-content", maxWidth: "46em", transformOrigin: "top left", transform: `scale(${scale})`, fontSize: "clamp(13px, 4.4cqh, 30px)", color: v ? INK : GIVEN }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.5em" }}>
-            {rows.map((r, i) => <Row key={i} r={r} fresh={!!v && i >= rows.length - fresh} big={r.k === "tex"} />)}
-          </div>
-          {!v && prob?.showTable && prob.table && (
-            <table style={{ borderCollapse: "collapse", fontSize: "0.8em", marginBottom: 8 }}>
-              <thead><tr>{prob.table.head.map((h, i) => <th key={i} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", background: "#f1f5f9", fontWeight: 600, textAlign: i === 0 ? "left" : "center" }}>{h}</th>)}</tr></thead>
-              <tbody>{prob.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", textAlign: j === 0 ? "left" : "center", fontWeight: j === 0 || i === prob.table!.rows.length - 1 ? 600 : 400 }}>{c}</td>)}</tr>)}</tbody>
-            </table>
-          )}
-          {!v && <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: 14, fontWeight: 500, paddingTop: 10 }}>Your working builds up here, one line at a time.</div>}
-        </div>
+    <WorkingPage watch={`${p.prompt}|${rows.length}`} hint={!v ? "Your working builds up here, one line at a time." : undefined}>
+      <div style={{ ...col, color: v ? INK : GIVEN }}>
+        {old.map((r, i) => line(r, i, false))}
+        {added.length > 0 && <Newest><div style={col}>{added.map((r, i) => line(r, old.length + i, true))}</div></Newest>}
       </div>
+      {!v && prob?.showTable && prob.table && (
+        <table style={{ borderCollapse: "collapse", fontSize: "0.8em", alignSelf: "center" }}>
+          <thead><tr>{prob.table.head.map((h, i) => <th key={i} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", background: "#f1f5f9", fontWeight: 600, textAlign: i === 0 ? "left" : "center" }}>{h}</th>)}</tr></thead>
+          <tbody>{prob.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", textAlign: j === 0 ? "left" : "center", fontWeight: j === 0 || i === prob.table!.rows.length - 1 ? 600 : 400 }}>{c}</td>)}</tr>)}</tbody>
+        </table>
+      )}
+    </WorkingPage>
+  );
+}
+
+/** what a question shows before any working, for the question stage: the variables, or the table of data, as flowing content */
+export function LpStageFigure({ p }: { p: DecisionProblem }) {
+  const d = p.lp;
+  const prob = d?.info.kind === "problem" ? d.info : undefined;
+  if (!d) return null;
+  const rows: LpRow[] = !prob ? [{ k: "head", t: "Variables" }, ...d.vars.map((x): LpRow => ({ k: "words", t: `$${x.sym}$ is the number of ${x.noun}` }))] : [];
+  return (
+    <div style={{ fontSize: 20, color: INK, display: "flex", flexDirection: "column", gap: "0.6em", alignItems: "flex-start" }}>
+      {rows.map((r, i) => <Row key={i} r={r} fresh={false} big={false} />)}
+      {prob?.showTable && prob.table && (
+        <table style={{ borderCollapse: "collapse", fontSize: "0.85em", alignSelf: "center" }}>
+          <thead><tr>{prob.table.head.map((h, i) => <th key={i} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", background: "#f1f5f9", fontWeight: 600, textAlign: i === 0 ? "left" : "center" }}>{h}</th>)}</tr></thead>
+          <tbody>{prob.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ border: "1px solid #cbd5e1", padding: "0.25em 0.6em", textAlign: j === 0 ? "left" : "center", fontWeight: j === 0 || i === prob.table!.rows.length - 1 ? 600 : 400 }}>{c}</td>)}</tr>)}</tbody>
+        </table>
+      )}
     </div>
   );
 }

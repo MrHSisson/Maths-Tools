@@ -1,0 +1,305 @@
+{
+ "id": "arcsin-graph",
+ "title": "Inverse of sin x: the graph of arcsin x",
+ "summary": "Why sin x is restricted to −π/2 ≤ x ≤ π/2, then an animation: reflect the graph in y = x and separate it into y = arcsin x.",
+ "slides": [
+  {
+   "id": "as-title",
+   "family": "structure",
+   "title": "Inverse of sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 290,
+     "w": 1400,
+     "h": 170,
+     "text": "Inverse of sin x",
+     "size": 120,
+     "colour": "#0f172a",
+     "bold": true,
+     "align": "center",
+     "middle": true,
+     "id": "as-title-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 480,
+     "w": 1400,
+     "h": 90,
+     "text": "Where the graph of arcsin x comes from",
+     "size": 56,
+     "colour": "#64748b",
+     "align": "center",
+     "id": "as-title-2"
+    }
+   ],
+   "built": "1oh3bxh"
+  },
+  {
+   "id": "as-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "as-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Sketch y = arcsin x by reflecting the restricted graph of y = sin x in the line y = x.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  Say why sin x must be restricted before it has an inverse\n•  Give the restricted domain and the range of y = sin x\n•  State the domain and range of y = arcsin x",
+     "size": 44,
+     "colour": "#334155",
+     "id": "as-objective-3"
+    }
+   ],
+   "built": "8r85dp"
+  },
+  {
+   "id": "as-discuss",
+   "family": "discussion",
+   "title": "Discuss",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 660,
+     "h": 50,
+     "text": "DISCUSS",
+     "size": 30,
+     "colour": "#be185d",
+     "bold": true,
+     "id": "as-discuss-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 660,
+     "h": 300,
+     "text": "$\\sin \\frac{\\pi}{6} = 0.5$ and $\\sin \\frac{5\\pi}{6} = 0.5$. If $\\arcsin 0.5$ gave both angles, what would be wrong with it?",
+     "size": 48,
+     "colour": "#0f172a",
+     "id": "as-discuss-2"
+    },
+    {
+     "kind": "line",
+     "x": 800,
+     "y": 100,
+     "w": 0,
+     "h": 720,
+     "colour": "#e2e8f0",
+     "width": 4,
+     "id": "as-discuss-3"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 520,
+     "w": 660,
+     "h": 50,
+     "text": "KEY POINT",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 1,
+     "id": "as-discuss-4"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 580,
+     "w": 660,
+     "h": 260,
+     "text": "A function gives exactly one output for each input. So we keep just one section of the sine graph that does not repeat any output.",
+     "size": 44,
+     "colour": "#0f172a",
+     "bold": true,
+     "step": 1,
+     "id": "as-discuss-5"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 100,
+     "w": 640,
+     "h": 50,
+     "text": "QUESTION",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 2,
+     "id": "as-discuss-6"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 170,
+     "w": 640,
+     "h": 260,
+     "text": "Which section of $y = \\sin x$ do we keep?",
+     "size": 52,
+     "colour": "#0f172a",
+     "step": 2,
+     "id": "as-discuss-7"
+    },
+    {
+     "kind": "text",
+     "x": 860,
+     "y": 520,
+     "w": 640,
+     "h": 50,
+     "text": "ANSWER",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "step": 3,
+     "id": "as-discuss-8"
+    },
+    {
+     "kind": "maths",
+     "x": 860,
+     "y": 580,
+     "w": 640,
+     "h": 200,
+     "latex": "-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}",
+     "size": 96,
+     "colour": "#1e3a8a",
+     "align": "left",
+     "step": 3,
+     "id": "as-discuss-9"
+    }
+   ],
+   "built": "19hkes0"
+  },
+  {
+   "id": "as-animation",
+   "family": "teach",
+   "title": "Inverse of sin x",
+   "els": [
+    {
+     "kind": "text",
+     "x": 70,
+     "y": 36,
+     "w": 1460,
+     "h": 100,
+     "text": "Inverse of sin x",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-animation-1"
+    },
+    {
+     "kind": "inverseTrig",
+     "fn": "sin",
+     "x": 70,
+     "y": 150,
+     "w": 1460,
+     "h": 720,
+     "id": "as-animation-2"
+    }
+   ],
+   "built": "58s9k2"
+  },
+  {
+   "id": "as-facts",
+   "family": "teach",
+   "title": "Domain and range swap",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 80,
+     "w": 1400,
+     "h": 110,
+     "text": "Domain and range swap",
+     "size": 64,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-facts-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\sin x$ (restricted)\n\nDomain: $-\\frac{\\pi}{2} \\le x \\le \\frac{\\pi}{2}$\n\nRange: $-1 \\le y \\le 1$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-facts-2"
+    },
+    {
+     "kind": "text",
+     "x": 830,
+     "y": 230,
+     "w": 670,
+     "h": 590,
+     "text": "$y = \\arcsin x$\n\nDomain: $-1 \\le x \\le 1$\n\nRange: $-\\frac{\\pi}{2} \\le y \\le \\frac{\\pi}{2}$",
+     "size": 44,
+     "colour": "#0f172a",
+     "id": "as-facts-3"
+    }
+   ],
+   "built": "16fn2d9"
+  },
+  {
+   "id": "as-summary",
+   "family": "structure",
+   "title": "Summary",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 110,
+     "text": "Summary",
+     "size": 72,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "as-summary-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 260,
+     "w": 1400,
+     "h": 560,
+     "text": "•  sin x repeats its outputs, so it is restricted to −π/2 ≤ x ≤ π/2 first.\n•  Reflecting in y = x swaps the x and y values of every point.\n•  The reflection is y = arcsin x: its domain is the range of sin x, and its range is the restricted domain.",
+     "size": 50,
+     "colour": "#0f172a",
+     "id": "as-summary-2"
+    }
+   ],
+   "built": "p5mt6p"
+  }
+ ],
+ "questionVersion": 2
+}

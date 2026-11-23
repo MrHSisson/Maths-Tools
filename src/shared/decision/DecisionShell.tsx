@@ -1,9 +1,10 @@
 import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
+import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, PictureInPicture2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
+import QuestionText from "./QuestionText";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -408,11 +409,21 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const skillProblems = problems.filter((pr) => !pr.exam);
     // skill questions: numbered, each with a blank working box (more room for a longer kind), then a page of answers
     const roomFor = (k: string | undefined): "s" | "m" | "l" => (k === "powers" ? "l" : k && k.startsWith("cons") ? "m" : "s");
-    // a mechanics question prints with its picture under it and its worked answer on the answers page
-    const { renderToStaticMarkup } = await import("react-dom/server");
-    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: false, space: "auto" as const }, questions: skillProblems.map((pr) => ({ prompt: pr.prompt, answer: pr.answer?.text ?? "", space: pr.mech ? ("m" as const) : roomFor(pr.dim?.kind), ...(pr.mech ? { figure: pr.mech.display === "hidden" || !renderCanvas ? undefined : renderToStaticMarkup(<>{renderCanvas(pr, { caption: "", edgeStates: {}, mechView: { stage: "answer", shown: 99, lines: [], fresh: 0 } })}</>), steps: pr.mech.steps } : {}) })) } : null;
+    const sp = config.skillPrint;
+    const html = async (node: React.ReactNode): Promise<string | undefined> => {
+      if (node == null) return undefined;
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      return renderToStaticMarkup(<>{node}</>);
+    };
+    const skillQuestions = await Promise.all(skillProblems.map(async (pr) => ({
+      prompt: pr.prompt, answer: pr.answer?.text ?? "", space: sp ? ("l" as const) : roomFor(pr.dim?.kind),
+      figure: sp?.figure ? await html(sp.figure(pr)) : undefined,
+      working: sp?.working ? await html(sp.working(pr, solve ? solve(pr) : [])) : undefined,
+    })));
+    const skill = skillProblems.length ? { title: config.pageTitle, subtitle, layout: { perPage: !!sp?.perPage, space: sp?.dots ? ("dots" as const) : ("auto" as const) }, questions: skillQuestions } : null;
     let inputs: Parameters<typeof printSheets>[0] = [];
     if (examProblems.length) {
+      const { renderToStaticMarkup } = await import("react-dom/server");
       inputs = examProblems.map((pr) => {
         // a written-working picture (Dimensional Analysis) is drawn to fit a screen panel: on paper the student writes their own, so nothing is drawn
         const draw = (view?: unknown) => pr.dim ? "" : renderToStaticMarkup(<>{renderCanvas ? renderCanvas(pr, view ? { caption: "", edgeStates: {}, flowView: view as SolveStep["flowView"] } : undefined) : null}</>);
@@ -617,22 +628,32 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
   const [qOpen, setQOpen] = useState(false);
   useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
+  // question stage (a trial: opt in with config.questionStage; laptop only): before the steps start the question is shown large and centred over the tool, then shrinks away
+  // toward the question card at the top right as the first step begins. It stays mounted and is only hidden, so the shrink is a transition.
+  const stageOn = !!config.questionStage && !narrow && !problem.exam;
+  // it is never open on arrival: the enlarge button on the question card opens it (in the page and in fullscreen), and a step, a new question or its own button closes it
+  const [stageOpen, setStageOpen] = useState(false);
+  useEffect(() => { setStageOpen(false); }, [stepIdx, problem]);
   const questionBlock = (big: boolean) => {
-    const folded = !atQuestion && !qOpen;
+    const folded = !atQuestion && (stageOn || !qOpen);
     return (
-      <div className={`rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+      <div className={`relative rounded-xl ${folded ? "px-4 py-2" : big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-4 py-2.5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+        {stageOn && (
+          <button type="button" onClick={() => setStageOpen(true)} aria-label="Show the question large" title="Show the question large"
+            className={`absolute right-3 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/5 hover:bg-black/10`}><PictureInPicture2 size={16} color="#6b7280" /></button>
+        )}
         {atQuestion ? (
           <>
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-            <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
+            <div className={`text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5 ${stageOn ? "pr-9" : ""}`}>{config.instruction ?? "Question"}</div>
+            <div className={`${stageOn ? "pr-9 " : ""}${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-base"} font-semibold text-gray-900 leading-snug`}><InlineMath text={problem.prompt} /></div>
           </>
         ) : (
-          <button type="button" onClick={() => setQOpen(!qOpen)} title={qOpen ? "Fold the question" : "Show the whole question"} className="w-full text-left flex items-start gap-2">
+          <button type="button" onClick={() => (stageOn ? setStageOpen(true) : setQOpen(!qOpen))} title={stageOn ? "Show the question large" : qOpen ? "Fold the question" : "Show the whole question"} className={`w-full text-left flex items-start gap-2 ${stageOn ? "pr-9" : ""}`}>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{config.instruction ?? "Question"}</div>
-              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
+              <div className={`${big ? (short ? "text-lg" : "text-xl") : "text-base"} font-semibold text-gray-900 leading-snug ${qOpen && !stageOn ? "" : "truncate"}`}><InlineMath text={problem.prompt} /></div>
             </div>
-            <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />
+            {!stageOn && <ChevronDown size={18} className="mt-1 flex-shrink-0 text-slate-400" style={{ transition: "transform 0.2s", transform: qOpen ? "rotate(180deg)" : "rotate(0)" }} />}
           </button>
         )}
       </div>
@@ -646,7 +667,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
         aria-label="Fullscreen"
-        className="absolute top-3 left-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10"
+        className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -827,6 +848,31 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
+  // the question stage (a trial, see config.questionStage): laid over the working in the page and in fullscreen
+  const stageEl = stageOn ? (
+        <div data-question-stage="" aria-hidden={!stageOpen} className="absolute inset-0 z-20 flex items-start justify-center px-4 pt-4 pb-4 bg-slate-50"
+          style={{ transformOrigin: "88% 6%", ...(stageOpen
+            ? { opacity: 1, transform: "none", visibility: "visible", transition: "opacity .35s ease, transform .35s ease" }
+            : { opacity: 0, transform: "scale(0.25)", visibility: "hidden", pointerEvents: "none", transition: "opacity .4s ease, transform .4s ease, visibility 0s linear .4s" }) }}>
+          <div className="w-full max-w-4xl max-h-full overflow-auto rounded-2xl border border-slate-300 shadow-lift bg-white p-6 xl:p-8 flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{config.instruction ?? "Question"}</div>
+              {atQuestion ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setStageOpen(false)} tabIndex={stageOpen ? 0 : -1} className={`${BTN} bg-white text-slate-700 border border-slate-300 hover:bg-slate-50`}><Minimize2 size={18} /> Close</button>
+              <button onClick={() => jump(0)} tabIndex={stageOpen ? 0 : -1} className={BTN_PRIMARY}><Eye size={18} /> Show working</button>
+            </div>
+          ) : (
+            <button onClick={() => setStageOpen(false)} tabIndex={stageOpen ? 0 : -1} className={BTN_PRIMARY}><Minimize2 size={18} /> Back to the working</button>
+          )}
+            </div>
+            <QuestionText prompt={problem.prompt} size={problem.prompt.length > 260 ? "text-lg xl:text-xl" : problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} />
+            {config.questionStage?.hasFigure?.(problem) && (config.questionStage.figure
+          ? <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-4">{config.questionStage.figure(problem)}</div>
+          : <div className="relative shrink-0 rounded-xl border border-slate-200 overflow-hidden" style={{ height: "min(34vh, 320px)", minHeight: "13rem" }}>{shown(undefined)}</div>)}
+          </div>
+        </div>
+  ) : null;
   const body = problem.exam ? <ExamView key={problem.exam.id} problem={problem} shown={shown} onPractise={practiseThis} footer={footer} narrow={isPhone} tablet={isTablet} /> : example;
 
   if (failed)
@@ -848,12 +894,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         {levelInfoDialog}{printOpen && <PrintTemplates onClose={() => setPrintOpen(false)} />}{basket.ui}
         {/* the same level, options and New Question controls as the page, so a class never has to leave fullscreen to change question */}
         <div className="flex-shrink-0 px-4 pt-3 pb-2">{controlRow}</div>
-        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 min-h-0 overflow-auto md:overflow-hidden px-4 pb-4 pt-0 flex flex-col md:flex-row gap-4">
+          {stageEl}
           <div className="flex flex-col gap-2 min-w-0 md:flex-[5] min-h-[60vh] md:min-h-0">
             <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
               {/* in the same corner as the page's Fullscreen button, which this one replaces */}
-              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className="absolute top-3 left-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10">
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
                 <Minimize2 size={18} color="#6b7280" />
               </button>
               {!config.noSandbox && (
@@ -1120,7 +1167,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           <div className="flex flex-col gap-4">
             {topicChooser}
             {controlBar}
-            <div className={`${CARD} overflow-clip`}>{body}</div>
+            <div className={`${CARD} overflow-clip relative`} style={stageOn && stageOpen ? { minHeight: "min(36rem, calc(100dvh - 8rem))" } : undefined}>
+              {body}
+              {stageEl}
+            </div>
           </div>
         </div>
       </div>

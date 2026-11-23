@@ -2,6 +2,7 @@ import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type Gener
 import type { ShellOption } from "../../shared/decision/types";
 import { MechCanvas, type MechProblemData, type DiagramDisplay } from "../../shared/mechanics";
 import { MC_NOTICE } from "./mcNotice";
+import { MC_PRINT } from "./mcPrint";
 import { generateFd } from "./workDone/fd";
 import { generateGrav } from "./workDone/grav";
 import { generateAngle } from "./workDone/angle";
@@ -143,6 +144,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        skillPrint: MC_PRINT,
         devNotice: MC_NOTICE,
         noSandbox: true,
         levelLabels: {
