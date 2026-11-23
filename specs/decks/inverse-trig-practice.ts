@@ -19,6 +19,7 @@ const exactSheet = checked([
   ["\\arccos\\frac{1}{2}", acos(1 / 2), "\\frac{\\pi}{3}", PI / 3],
   ["\\arctan\\frac{1}{\\sqrt{3}}", atan(1 / sqrt(3)), "\\frac{\\pi}{6}", PI / 6],
   ["\\arcsin\\frac{\\sqrt{2}}{2}", asin(sqrt(2) / 2), "\\frac{\\pi}{4}", PI / 4],
+  ["\\arccos 0", acos(0), "\\frac{\\pi}{2}", PI / 2],
   ["\\arcsin\\left(-\\frac{\\sqrt{3}}{2}\\right)", asin(-sqrt(3) / 2), "-\\frac{\\pi}{3}", -PI / 3],
   ["\\arctan(-1)", atan(-1), "-\\frac{\\pi}{4}", -PI / 4],
   ["\\arccos\\left(-\\frac{\\sqrt{3}}{2}\\right)", acos(-sqrt(3) / 2), "\\frac{5\\pi}{6}", 5 * PI / 6],
@@ -28,7 +29,6 @@ const undoSheet = checked([
   ["\\arcsin\\left(\\sin\\left(-\\frac{\\pi}{6}\\right)\\right)", asin(sin(-PI / 6)), "-\\frac{\\pi}{6}", -PI / 6],
   ["\\arccos\\left(\\cos\\frac{\\pi}{4}\\right)", acos(cos(PI / 4)), "\\frac{\\pi}{4}", PI / 4],
   ["\\arctan\\left(\\tan\\left(-\\frac{\\pi}{3}\\right)\\right)", atan(tan(-PI / 3)), "-\\frac{\\pi}{3}", -PI / 3],
-  ["\\arcsin\\left(\\sin\\frac{3\\pi}{4}\\right)", asin(sin(3 * PI / 4)), "\\frac{\\pi}{4}", PI / 4],
   ["\\arccos\\left(\\cos\\frac{4\\pi}{3}\\right)", acos(cos(4 * PI / 3)), "\\frac{2\\pi}{3}", 2 * PI / 3],
   ["\\arctan\\left(\\tan\\frac{3\\pi}{4}\\right)", atan(tan(3 * PI / 4)), "-\\frac{\\pi}{4}", -PI / 4],
   ["\\arcsin\\left(\\sin\\frac{5\\pi}{4}\\right)", asin(sin(5 * PI / 4)), "-\\frac{\\pi}{4}", -PI / 4],
@@ -36,7 +36,6 @@ const undoSheet = checked([
 const solveSheet = checked([
   ["\\arcsin x = \\frac{\\pi}{6}", sin(PI / 6), "\\frac{1}{2}", 1 / 2],
   ["\\arccos x = \\frac{\\pi}{4}", cos(PI / 4), "\\frac{\\sqrt{2}}{2}", sqrt(2) / 2],
-  ["\\arctan x = \\frac{\\pi}{4}", tan(PI / 4), "1", 1],
   ["\\arcsin 3x = \\frac{\\pi}{2}", sin(PI / 2) / 3, "\\frac{1}{3}", 1 / 3],
   ["\\arccos(x + 1) = \\frac{2\\pi}{3}", cos(2 * PI / 3) - 1, "-\\frac{3}{2}", -3 / 2],
   ["\\arctan(2x + 1) = -\\frac{\\pi}{3}", (tan(-PI / 3) - 1) / 2, "\\frac{-1 - \\sqrt{3}}{2}", (-1 - sqrt(3)) / 2],
@@ -94,7 +93,7 @@ const sheet = {
   blocks: [
     { instruction: "Without using a calculator, find the exact value in radians.", cols: 4, parts: exactSheet.map((r) => r[0]), answers: exactSheet.map((r) => r[2]) },
     { instruction: "Without using a calculator, find the exact value.", cols: 3, parts: undoSheet.map((r) => r[0]), answers: undoSheet.map((r) => r[2]) },
-    { instruction: "Without using a calculator, solve each equation. If there is no solution, say so.", cols: 3,
+    { instruction: "Without using a calculator, solve each equation. If there is no solution, say so.", cols: 2,
       parts: [...solveSheet.map((r) => r[0]), "\\arcsin x = \\frac{2\\pi}{3}"], answers: [...solveSheet.map((r) => r[2]), "\\text{no solution}"] },
   ],
 };
