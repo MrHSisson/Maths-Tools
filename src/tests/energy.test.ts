@@ -173,6 +173,6 @@ describe("Energy: energy bars as the working picture", () => {
   it("without the option the diagram is untouched, and a question with no picture stays without one", () => {
     const m = draw("conserve", 1);
     expect(m.scene!.elements.some((e) => e.type === "bars")).toBe(false);
-    expect(draw("conserve", 1, { picture: "bars", diagram: "hidden" }).display).toBe("hidden");
+    expect(draw("kepe", 1, { picture: "bars", keEnergy: "ke" }).display).toBe("hidden");
   });
 });

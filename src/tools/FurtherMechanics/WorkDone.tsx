@@ -34,7 +34,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "fd";
   const o = ctx?.options ?? {};
   const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display = opt(o, "diagram", "blurred") as DiagramDisplay;
+  const display: DiagramDisplay = "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
@@ -55,11 +55,6 @@ const OPTIONS: ShellOption[] = [
   {
     key: "course", label: "Course", info: "AS teaches work done by a force along the line of motion, and no resolving. A2 adds a force at an angle (F d cos θ) and work on a slope.",
     defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes cos θ and slopes" }, { value: "AS", label: "AS" }],
-  },
-  {
-    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, gives it (and the information taken from the question) blurred until you choose Reveal Full or Build Diagram, so students draw it themselves first, or has none.",
-    displayOnly: true, tab: "display", defaultFor: () => "blurred",
-    choices: [{ value: "blurred", label: "Blurred until revealed" }, { value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a crate, a car, a climber) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
