@@ -1,6 +1,6 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MechCanvas, MECH_STAGE, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { MC_NOTICE } from "./mcNotice";
 import { MC_PRINT } from "./mcPrint";
 import { generateKepe } from "./energy/kepe";
@@ -31,7 +31,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "kepe";
   const o = ctx?.options ?? {};
   const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display = opt(o, "diagram", "given") as DiagramDisplay;
+  const display = opt(o, "diagram", "blurred") as DiagramDisplay;
   const context = opt(o, "context", level === 1 ? "particle" : "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
@@ -53,9 +53,9 @@ const OPTIONS: ShellOption[] = [
     defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes vectors and angled slopes" }, { value: "AS", label: "AS" }],
   },
   {
-    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, gives it blurred until you press Reveal diagram (so students draw it themselves first), or has none.",
-    displayOnly: true, tab: "display", defaultFor: () => "given",
-    choices: [{ value: "given", label: "With the question" }, { value: "blurred", label: "Blurred until revealed" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
+    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, gives it (and the information taken from the question) blurred until you choose Reveal Full or Build Diagram, so students draw it themselves first, or has none.",
+    displayOnly: true, tab: "display", defaultFor: () => "blurred",
+    choices: [{ value: "blurred", label: "Blurred until revealed" }, { value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
   {
     key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["workenergy", "conserve"],
@@ -137,6 +137,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: MECH_STAGE,
         skillPrint: MC_PRINT,
         devNotice: MC_NOTICE,
         noSandbox: true,

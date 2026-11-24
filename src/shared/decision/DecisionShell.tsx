@@ -628,9 +628,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
   const [qOpen, setQOpen] = useState(false);
   useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
-  // question stage (a trial: opt in with config.questionStage; laptop only): before the steps start the question is shown large and centred over the tool, then shrinks away
+  // question stage (every Decision tool; laptop and tablet landscape only; `config.questionStage` adds a figure): before the steps start the question is shown large and centred over the tool, then shrinks away
   // toward the question card at the top right as the first step begins. It stays mounted and is only hidden, so the shrink is a transition.
-  const stageOn = !!config.questionStage && !narrow && !problem.exam;
+  const questionStage = config.questionStage ?? {};   // every Decision tool has the enlarge button; a tool's own `questionStage` only adds its figure
+  const stageOn = !narrow && !problem.exam;
   // it is never open on arrival: the enlarge button on the question card opens it (in the page and in fullscreen), and a step, a new question or its own button closes it
   const [stageOpen, setStageOpen] = useState(false);
   useEffect(() => { setStageOpen(false); }, [stepIdx, problem]);
@@ -667,7 +668,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
         aria-label="Fullscreen"
-        className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
+        className={`absolute top-3 right-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -848,7 +849,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  // the question stage (a trial, see config.questionStage): laid over the working in the page and in fullscreen
+  // the question stage (see config.questionStage): laid over the working in the page and in fullscreen
   const stageEl = stageOn ? (
         <div data-question-stage="" aria-hidden={!stageOpen} className="absolute inset-0 z-20 flex items-start justify-center px-4 pt-4 pb-4 bg-slate-50"
           style={{ transformOrigin: "88% 6%", ...(stageOpen
@@ -867,8 +868,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           )}
             </div>
             <QuestionText prompt={problem.prompt} size={problem.prompt.length > 260 ? "text-lg xl:text-xl" : problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} />
-            {config.questionStage?.hasFigure?.(problem) && (config.questionStage.figure
-          ? <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-4">{config.questionStage.figure(problem)}</div>
+            {questionStage.hasFigure?.(problem) && (questionStage.figure
+          ? <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-4">{questionStage.figure(problem)}</div>
           : <div className="relative shrink-0 rounded-xl border border-slate-200 overflow-hidden" style={{ height: "min(34vh, 320px)", minHeight: "13rem" }}>{shown(undefined)}</div>)}
           </div>
         </div>
@@ -900,7 +901,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
               {/* in the same corner as the page's Fullscreen button, which this one replaces */}
-              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 right-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
                 <Minimize2 size={18} color="#6b7280" />
               </button>
               {!config.noSandbox && (
