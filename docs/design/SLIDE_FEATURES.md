@@ -20,6 +20,7 @@ The menu a lesson plan is built from. The visual version is the Slide library (`
 | Rectilinear shape question | Choose fixed dimensions for an L, T, staircase (steps can differ in size), cross or capital I shape, split-and-add or remove cut-outs; the diagram and working stay together. |
 | Live generator | The tool's generator on screen (labelled General practice): New question, answer, working step by step. The Rounding tool works here too (nearest, decimal places, significant figures) |
 | Worksheet | A worksheet to print (A5, with an answer sheet in the same boxes) and hand out; the slide shows its answers on a click. Up to three pinned per lesson, printed from File → Worksheets; authored rectilinear sheets add diagrams, fading scaffolds and working space on A4. |
+| Picture worksheet | A printed sheet of up to eight authored picture questions (four to an A4 page, ruled working space, a worked answer copy), for shapes the rectilinear question cannot draw; the slide shows the pictures and the answers on a click. Pictures are fixed images. |
 | Book activity | A numbered set of generated questions to copy into books, answers on demand |
 | Quickfire block · Retrieval starter · Exit ticket | Several short questions at once, answers on demand |
 | Depth card | A diagnostic question with the Depth characters (full slide) |

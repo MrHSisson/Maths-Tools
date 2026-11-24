@@ -1,6 +1,6 @@
 # Composite shapes (area) — authored lesson plan
 
-**Status:** implemented (build script `composite-shapes.build.ts`; pictures `composite-shapes-art.ts`). Option A (authored pictures) chosen by Harry.
+**Status:** implemented (revised 2026-11-24, see Revision 2) (build script `composite-shapes.build.ts`; pictures `composite-shapes-art.ts`). Option A (authored pictures) chosen by Harry.
 **Audience:** Year 7, at the end of the area topic: secure on the area of a rectangle, a triangle and a parallelogram.
 **Lesson:** about 60 minutes, stand-alone, fully authored (no generator, no new tool).
 **Reference sheet:** Harry's Questions 3 to 5 (house shapes, shaded areas, trapezium-type shapes).
@@ -70,3 +70,10 @@ No tool in the repo draws a shape that mixes triangles, parallelograms and trape
 
 - No generator, no new tool, no Depth bank (unless asked).
 - No printed worksheet pinned to the lesson (the book-work slide serves); easy to add after.
+
+## Revision 2 (Harry's feedback, 2026-11-24): fit one lesson, an authored worksheet, at most one decimal
+
+- **Trimmed to 21 slides** (about 60 minutes). Whiteboard questions: A1 to A4 and C1 (add), B1 and B2 (subtract), D1 and D2 (trapezium stretch), three models (add, subtract, trapezium). The notch, the triangle with a rectangular hole, decimal trapezia, the parallelogram models and the dividers were dropped: the plan does not have to reproduce the whole reference sheet.
+- **Authored worksheet of eight** (a pinned picture sheet, printed four to an A4 page with a worked answer copy; new code `src/decks/pictureSheet.ts`): 1 house (63), 2 rectangle and triangle beside (87), 3 house with the total height given (70), 4 triangular hole (108), 5 square hole, 9.5 wide (124), 6 parallelogram with a hole (64), 7 trapezium (45), 8 trapezium on a rectangle (50). Support fades: the split is drawn for 1 and 2, then independent. Fresh numbers; the book-work page of six was removed.
+- **Decimal rule:** one decimal place at most, and two decimals are never multiplied. The build script checks it for every question: at most one decimal length in a picture, and every piece's area to one decimal place at most (B1 has 7.5; the worksheet has 9.5).
+- Timing guide: recall, objective, vocabulary and the opening discussion 10 min; adding 17 min (model, four questions, the trap slide); subtracting 8; trapezia 8; worksheet 12; exit and summary 5.
