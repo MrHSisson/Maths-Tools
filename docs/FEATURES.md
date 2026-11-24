@@ -31,6 +31,10 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 Deck grids and book activities reveal an individual answer with a 500 ms hold within 8 px.
 
+### Decks by class (finding a deck by who it is for)
+
+**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** the Decks page has **By topic** (the strands and topics) and **By class**. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks open underneath, most recently made first; each shows its title, a line about it, how many slides and when it was made. Only that class's list is fetched, and it carries no slide pictures, so it opens quickly. A deck can be used with more than one class. With Developing tools on, a class has **Add a deck…** and a cross on each deck to take it out; anyone else sees the published decks only.
+
 ### Deck strands and topics (filing the Decks page)
 
 **For:** keeping the Decks page in the order and under the headings you want, instead of five fixed names. **How it works:** decks are filed under a strand (Number ... Probability & Statistics, A-Level with Maths and Further Maths inside it, Starters; you can change all of these) and, if you want, a topic inside it (Factors & multiples inside Number). You make, rename, reorder, move and delete them yourself with **Manage categories** on the Decks page (it appears once Developing tools is on), and file a deck by **dragging its card onto a heading**. On a touch screen, where dragging does not work, open the card's (i) and use **Filed under**; the same menu is in the deck editor's About the deck. A deck sits in one place; empty headings show only to you (with a hint) and anyone else sees just the strands and topics that have published decks, in your order. Each deck can also carry a **lesson pitch** (Upper, Middle or Lower band), set in the editor's About the deck and shown only in the card's (i). Decks not filed appear under **Not filed** (**Other decks** to everyone else).

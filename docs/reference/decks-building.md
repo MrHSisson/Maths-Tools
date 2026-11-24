@@ -30,6 +30,14 @@ Fixed questions that carry a tool's own working: `Q.ratioSimplify(id, level, par
 - **Lesson pitch:** `DeckDef.pitch` (`upper`, `middle` or `lower`; labels in `PITCH_LABEL`) is set in the editor's About the deck, kept in the published listing (`published_decks.pitch`) and shown only in the card's (i), never on the card or in the player. <!-- ref -->
 - **Tests:** `deckCategories.test.ts` (seeding, the upgrade of an earlier seed, every change, the public and admin reads, the key), `deckCategoryTree.test.ts` (where a deck shows, the order, empty headings).
 
+### Decks by class (`api/_classes.ts`, `src/decks/classes.ts`, `components/ClassView.tsx`)
+
+- **A second way to find a deck** (decided with Harry, 2026-11-24): the Decks page has **By topic** (the strands and topics above) and **By class**, remembered on the device (`mt-decks-view`). By class shows a heading per year (Year 7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM; Years 8, 10 and 11 have none yet) and a count of decks on each. Clicking a class opens its decks under the year, **most recently made first** (`?class=<id>` in the address keeps the choice).
+- **Light by design.** A class's decks are read one class at a time, only when it is clicked, as a plain list (title, summary, slides, when made): no first slide, no deck body. The deck cards of By topic still use the full index. The class list is fixed in `api/_classes.ts` (`CLASS_GROUPS`) for now.
+- **A deck can be in several classes** (sets in one year often share a lesson). Stored in `maths.deck_classes (deck_id, class_id)`, apart from the decks, so choosing a class makes no deck version and cannot clash with an edit. Signed in, a class has **Add a deck…** (a titles-only picker) and a remove cross on each row; signed out it lists published decks only. A deleted deck leaves its classes.
+- **"Made" is `maths.decks.created_at`**, set when a deck is first saved; decks that existed before it was added got their earliest saved version's time (an approximation). Editing a deck does not change it. The public list uses the deck's made time where the working copy exists, else its published time.
+- **API:** `GET ?classes` (public counts), `?classes=all` (admin: counts, each deck's classes, every deck's id and title), `?class=<id>` (public, published only) and `?class=<id>&all=1` (admin); `POST {classes: {deckId, classIds}}` replaces a deck's classes. Tests: `deckClasses.test.ts`.
+
 ### Looking at a deck, shared pieces and the build rules (`pieces.ts`, `deckRules.ts`, `deckReview.mjs`)
 
 - **The look card:** `npm run deck -- looks <script>` builds a script to a temp file (the repo is untouched; `build <script> --out <file>` does the same) and writes contact sheets of one slide of each kind in every state: each question of a question set, the working open, a book-work grid with its answers shown. Harry approves these before the rest is built.
