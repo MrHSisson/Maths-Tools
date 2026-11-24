@@ -1221,6 +1221,7 @@
    "tests": true,
    "about": true,
    "decks": [
+    "composite-shapes",
     "year7-rectilinear-area"
    ],
    "skillLinks": false,

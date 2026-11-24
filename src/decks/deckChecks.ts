@@ -2,6 +2,7 @@ import { classifyQuestion, isCuratedQuestion } from "../../api/_questions";
 import { rectilinearQuestion } from "./rectilinear";
 import { textbookProblems } from "./textbookSheet";
 import { vennSheetProblems } from "./vennSheet";
+import { pictureSheetProblems } from "./pictureSheet";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
 // sets are long enough, Depth cards ask something new, generators exist and run at their level, and text fits its box.
 // Pure functions over a deck; used by the CLI (`npm run deck -- check <id>`) and by the tests. House rules: docs/design/LESSON_STYLE.md.
@@ -160,6 +161,10 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       }
       if (el.kind === "worksheet" && el.vennSheet) {
         for (const p of vennSheetProblems(el.vennSheet)) problems.push(`${where}: ${p}`);
+        continue;
+      }
+      if (el.kind === "worksheet" && el.pictureSheet) {
+        for (const p of pictureSheetProblems(el.pictureSheet)) problems.push(`${where}: ${p}`);
         continue;
       }
       if (el.kind === "worksheet" && el.authored) {

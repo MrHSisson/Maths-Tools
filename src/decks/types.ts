@@ -7,6 +7,7 @@ import type { TreeNode, TreeReveal } from "../shared/factorTree";
 import type { AnyQuestion } from "../shared";
 import type { TextbookSheet } from "./textbookSheet";
 import type { VennSheet } from "./vennSheet";
+import type { PictureSheet } from "./pictureSheet";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decks — a combined, directed lesson, and a small slide editor built around it.
@@ -138,6 +139,8 @@ export type DeckElement = Box & (
       textbook?: TextbookSheet;
       /** A hand-written sheet of printed Venn diagrams (three to an A4 page, at most nine): each Venn is just two numbers, so its tiles are always right. Shown on the slide and printed as written. Never regenerated. */
       vennSheet?: VennSheet;
+      /** A hand-written sheet of authored picture questions (four to an A4 page, at most eight), kept as images: shown on the slide and printed with a worked answer copy. Never regenerated. */
+      pictureSheet?: PictureSheet;
       /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
       view?: "key" }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */

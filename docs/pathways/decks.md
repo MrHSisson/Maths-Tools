@@ -1,11 +1,12 @@
 # Decks
 - **Status:** building
-- **Updated:** 2026-11-15
+- **Updated:** 2026-11-24
 
 ## Intention
 Whole lessons on their own page (`/decks/<id>`, also reached from a tool's burger menu): a stripped-down PowerPoint built around the site's own pieces (boards, practice questions, question grids, Depth cards, live generators). Harry refines the decks Claude builds, adds slides to them and builds his own. This pathway also absorbs the old **Slides** question (which of four slide surfaces survive) and **Lessons and Teach decks**: the plan is to fold the Teach tab and lesson decks into decks, then retire them.
 
 ## Progress
+- Composite shapes (2026-11-24): Year 7 end-of-topic lesson, 20 slides, fully authored (eight whiteboard questions and three models, an eight-question picture worksheet, exit ticket; trapezia worked with the formula, houses give the total height). Pictures are authored SVG images, no site code; plan in `specs/decks/composite-shapes.md`.
 - Sharing in a ratio (2026-11-15, rebuilt after Harry's first look): 30-slide recap lesson for the middle band, built round the mistakes. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions, the tool's live generator at Level 2, then an independent set (a 3 × 3 board grid, then printed sheets of nine, nine and fifteen in the cells layout). All 62 questions authored in difficulty ladders (a : b from the start, no hints) and recomputed by test. Ratio Sharing gained three-part ratios, unsimplified ratios, quantity contexts, a check step and its first Depth bank (15 items). The bar-model slide piece now stages values and shares as separate clicks and a row's total can be `given`; generator slides always centre their question. A working copy in the shared deck store, not published. Plan: `specs/decks/ratio-sharing.md`.
 - Lesson pitch (2026-11-14): a deck can be labelled Upper, Middle or Lower band (editor's About the deck); shown only in the card's (i); kept in the published listing.
 - Deck strands and topics Harry controls (2026-11-14): replaces the five fixed strands. A two-level tree (strand, then topic) and the filing of each deck live in their own tables (so filing never touches a deck); Manage categories on the Decks page, drag a card onto a heading (or Filed under in its (i) for touch), the same menu in the editor's About the deck, the dashboard filtered by it; the public sees only strands and topics with published decks. Seeded as five maths strands, A-Level (Maths, Further Maths) and Starters. `deck categories` / `deck file` for Claude. Before this the page showed Number as the only strand with decks and put the rest under Other decks.

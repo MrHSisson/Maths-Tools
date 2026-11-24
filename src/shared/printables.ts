@@ -286,3 +286,36 @@ export function vennWorksheet(cells: VennCell[], title: string, note: string | u
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
 }
+
+/** One question on a printed picture sheet: the picture as given, the picture with its working drawn in, the worked lines and the answer. */
+interface PictureCell { src: string; answerSrc: string; working: string[]; answer: string }
+
+/**
+ * Printed pages of picture questions (the Composite shapes worksheet): four to an A4 page in a 2 x 2 grid, made to be shrunk to A5 like the
+ * shape sheets. Each cell is the number, a large picture, ruled working space and an "Area = ___" line. The answer pages draw the working
+ * into the picture and write the worked lines and the answer in the same places.
+ */
+export function pictureWorksheet(cells: PictureCell[], title: string, note: string | undefined, mode: "questions" | "answers" | "both"): string {
+  const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  const PER = 4;
+  const pages = (answers: boolean) => Array.from({ length: Math.ceil(cells.length / PER) }, (_, page) => {
+    const body = cells.slice(page * PER, (page + 1) * PER).map((c, i) => `<article${answers ? ' class="key"' : ""}><b class="n">${page * PER + i + 1}</b><div class="pic"><img alt="" src="${esc(answers ? c.answerSrc : c.src)}"></div><div class="work">${answers
+      ? c.working.map(t => `<p>${esc(t)}</p>`).join("") + `<p class="final">${esc(c.answer)}</p>`
+      : '<div class="space"><span>Working</span></div><p class="final">Area = <i class="blank long"></i> cm&sup2;</p>'}</div></article>`).join("");
+    return `<section class="page"><header><h1>${esc(title)}${answers ? " \u2014 worked answers" : ""}</h1>${answers ? "" : '<span class="name">Name <i></i></span>'}</header>${!answers && note ? `<p class="lead">${esc(note)}</p>` : ""}<div class="grid2">${body}</div></section>`;
+  }).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+  *{box-sizing:border-box} @page{size:A4 portrait;margin:0} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a}
+  .page{width:210mm;height:297mm;padding:11mm 13mm 9mm;break-after:page;display:flex;flex-direction:column;overflow:hidden} .page:last-child{break-after:auto}
+  header{display:flex;justify-content:space-between;align-items:baseline;height:9mm} h1{font-size:16pt;margin:0;font-weight:700;white-space:nowrap} .name{font-size:12.5pt;display:flex;align-items:baseline;gap:2mm} .name i{display:inline-block;width:40mm;border-bottom:.4mm solid #0f172a}
+  .lead{margin:1.5mm 0 0;font-size:12.5pt;color:#334155}
+  .grid2{flex:1;min-height:0;display:grid;gap:3.5mm;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;margin-top:3mm}
+  article{position:relative;display:flex;flex-direction:column;border:.35mm solid #94a3b8;border-radius:2.5mm;min-width:0;min-height:0;overflow:hidden;break-inside:avoid}
+  .n{position:absolute;left:2.5mm;top:2mm;font-size:17pt;color:#1e3a8a;z-index:1} .pic{flex:0 0 66mm;min-height:0;padding:1.5mm 2mm} .pic img{width:100%;height:100%;object-fit:contain;display:block}
+  .work{flex:1;min-height:0;padding:0 4mm 3mm;display:flex;flex-direction:column} .work p{margin:0 0 1.6mm;font-size:11.5pt;line-height:1.3}
+  .space{flex:1;min-height:10mm;margin-bottom:2mm;border-radius:1.5mm;background:repeating-linear-gradient(transparent 0 7.4mm,#cbd5e1 7.4mm 7.8mm)} .space span{font-size:10.5pt;color:#94a3b8}
+  .final{margin-top:auto!important;font-weight:700;font-size:13.5pt!important;display:flex;align-items:flex-end;gap:1.5mm;white-space:nowrap} .blank{display:inline-block;height:5mm;border-bottom:.35mm solid #0f172a} .blank.long{flex:1;min-width:20mm}
+  .key .final{color:#166534}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>${mode !== "answers" ? pages(false) : ""}${mode !== "questions" ? pages(true) : ""}</body></html>`;
+}

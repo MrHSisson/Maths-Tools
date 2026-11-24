@@ -167,7 +167,7 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
 /** A working that ends with an "Answer:" step saying exactly what the answer box says would print it twice (the tool pages hide that step for the same reason):
  *  drop the step and keep its picture, if it has one, for when the answer is shown. */
 const tidy = (x: string) => x.replace(/\s+/g, "");
-export function withoutRepeatedAnswer(q: Shown): Shown {
+function withoutRepeatedAnswer(q: Shown): Shown {
   const last = q.working[q.working.length - 1];
   if (q.working.length < 2 || !last || !/^answer\b/i.test(last.label) || tidy(last.latex) !== tidy(q.answer)) return q;
   return { ...q, working: q.working.slice(0, -1), answerPicture: last.extra };
@@ -465,6 +465,36 @@ function VennSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
   );
 }
 
+/** A picture sheet on the slide: the authored pictures in a grid (four across), numbered; `a` (or the button) swaps in the pictures with their pieces drawn
+ *  and shows each answer in the same place, so showing them never moves anything. */
+function PictureSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const sheet = el.pictureSheet!;
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const answers = shown || forced, cols = Math.min(4, sheet.items.length), rows = Math.ceil(sheet.items.length / cols);
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`, gap: 12 }}>
+        {sheet.items.map((it, i) => (
+          <div key={i} style={{ minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+            <span style={{ position: "absolute", left: 4, top: 0, fontSize: 30, fontWeight: 700, color: "#1e3a8a" }}>{i + 1}</span>
+            <img src={answers ? it.answerSrc ?? it.src : it.src} alt="" draggable={false} style={{ flex: 1, minHeight: 0, width: "100%", objectFit: "contain" }} />
+            <div style={{ fontSize: 30, fontWeight: 700, color: "#166534", minHeight: 40, lineHeight: "40px" }}>{answers ? it.answer : ""}</div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26, marginTop: 8 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 /** The answer key of a worksheet that is pinned to the lesson: the cue to hand the sheet out, with the answers hidden until asked (`a`). */
 /** A textbook-style sheet: each question's instruction, then its parts (a), (b), (c) ... in columns. `a` (or the button) shows the answers in the
  *  same places, so showing them never changes the layout. Sized to fill the slide. */
@@ -749,7 +779,7 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.pictureSheet ? <PictureSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
     default: return <NewerCodePlaceholder />;      // an element kind a newer version of the site adds
   }
 }
