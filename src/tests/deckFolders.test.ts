@@ -136,4 +136,101 @@ describe("deck folders", () => {
     await post({ remove: "gone" });
     expect((await tree()).byDeck).toEqual({});
   });
+
+  describe("changing folders", () => {
+    const op = async (o: Record<string, unknown>) => { const r = await post({ folderOp: o }); return { status: r.status, body: await r.json() as Tree & { error?: string } }; };
+    const kidsOf = (t: Tree, parent: string | null) => t.folders.filter((f) => f.parent === parent).sort((a, b) => a.position - b.position).map((f) => f.name);
+
+    it("adds a folder inside a folder, at the end, and refuses a clashing or bad name", async () => {
+      const t = await tree();
+      const y9 = fid(t, "Year 9");
+      const r = await op({ op: "add", tree: "class", name: "  Autumn   term ", parent: fid(t, "9M6") });
+      expect(r.status).toBe(200);
+      expect(kidsOf(r.body, fid(t, "9M6"))).toEqual(["Autumn term"]);
+      expect((await op({ op: "add", tree: "class", name: "autumn TERM", parent: fid(t, "9M6") })).status).toBe(409);
+      expect((await op({ op: "add", tree: "class", name: "   ", parent: y9 })).status).toBe(400);
+      expect((await op({ op: "add", tree: "class", name: "x".repeat(61), parent: y9 })).status).toBe(400);
+      expect((await op({ op: "add", tree: "class", name: "Top" })).status).toBe(200);
+      expect(kidsOf((await tree()), null).slice(-1)).toEqual(["Top"]);
+      expect((await op({ op: "add", tree: "class", name: "Lost", parent: "nope" })).status).toBe(404);
+    });
+
+    it("stops folders going deeper than the cap", async () => {
+      let t = await tree();
+      let parent: string | null = null;
+      for (let i = 0; i < MAX_DEPTH; i++) { const r = await op({ op: "add", tree: "class", name: `L${i}`, parent }); expect(r.status).toBe(200); t = r.body; parent = t.folders.find((f) => f.name === `L${i}`)!.id; }
+      const r = await op({ op: "add", tree: "class", name: "Too deep", parent });
+      expect(r.status).toBe(400);
+      expect(r.body.error).toMatch(/deep/);
+    });
+
+    it("renames a folder, keeping names unique among its siblings", async () => {
+      const t = await tree();
+      expect((await op({ op: "rename", id: fid(t, "9M3"), name: "9M3 (new)" })).status).toBe(200);
+      expect((await op({ op: "rename", id: fid(t, "9M3"), name: "9m6" })).status).toBe(409);
+      expect((await op({ op: "rename", id: "missing", name: "x" })).status).toBe(404);
+    });
+
+    it("moves a folder, but never inside itself or too deep, or into another kind of tree", async () => {
+      const t = await tree();
+      const [y7, y9, c96] = [fid(t, "Year 7"), fid(t, "Year 9"), fid(t, "9M6")];
+      const moved = await op({ op: "move", id: c96, parent: y7 });
+      expect(moved.status).toBe(200);
+      expect(kidsOf(moved.body, y7)).toEqual(["7M1", "9M6"]);
+      expect(kidsOf(moved.body, y9)).toEqual(["9M3", "9M2"]);
+      expect((await op({ op: "move", id: y9, parent: fid(t, "9M3") })).status).toBe(400);         // inside its own subfolder
+      expect((await op({ op: "move", id: y9, parent: y9 })).status).toBe(400);                      // inside itself
+      expect((await op({ op: "move", id: c96, parent: null })).status).toBe(200);                   // to the top level
+      await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) VALUES ('t-num','topic','Number',NULL,0)`);
+      expect((await op({ op: "move", id: c96, parent: "t-num" })).status).toBe(400);               // another tree
+      // a folder with a deep subtree cannot be moved so that it would pass the cap
+      let p: string = y9;
+      for (let i = 0; i < MAX_DEPTH - 2; i++) { const r = await op({ op: "add", tree: "class", name: `D${i}`, parent: p }); p = r.body.folders.find((f) => f.name === `D${i}`)!.id; }
+      expect((await op({ op: "move", id: y9, parent: fid(await tree(), "7M1") })).status).toBe(400);
+    });
+
+    it("reorders among siblings, and the ends stay put", async () => {
+      const t = await tree();
+      const up = await op({ op: "reorder", id: fid(t, "9M2"), direction: "up" });
+      expect(kidsOf(up.body, fid(t, "Year 9"))).toEqual(["9M6", "9M2", "9M3"]);
+      const first = await op({ op: "reorder", id: fid(t, "9M6"), direction: "up" });
+      expect(kidsOf(first.body, fid(t, "Year 9"))).toEqual(["9M6", "9M2", "9M3"]);
+    });
+
+    it("deleting a folder moves its decks up to its parent and its subfolders up one level, and touches no deck", async () => {
+      await post({ deck: deck("x", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("y", "2026-11-02T10:00:00.000Z") });
+      const t = await tree();
+      const [y9, c96] = [fid(t, "Year 9"), fid(t, "9M6")];
+      const sub = (await op({ op: "add", tree: "class", name: "Autumn", parent: c96 })).body.folders.find((f) => f.name === "Autumn")!.id;
+      await file("x", [c96]); await file("y", [sub]);
+      const r = await op({ op: "delete", id: c96 });
+      expect(r.status).toBe(200);
+      expect(r.body.folders.some((f) => f.id === c96)).toBe(false);
+      expect(kidsOf(r.body, y9)).toEqual(["9M3", "9M2", "Autumn"]);                                 // the subfolder moved up into Year 9
+      expect(r.body.byDeck.x).toEqual([y9]);                                                         // its decks went up to the parent
+      expect(r.body.byDeck.y).toEqual([sub]);
+      expect((await get("?id=x")).status).toBe(200);                                                 // the deck itself is untouched
+    });
+
+    it("deleting a top-level folder leaves its decks in no folder, and a moved-up subfolder with a clashing name is renamed", async () => {
+      await post({ deck: deck("x", "2026-11-01T10:00:00.000Z") });
+      const t = await tree();
+      const c96 = fid(t, "9M6");
+      await op({ op: "add", tree: "class", name: "9M3", parent: c96 });                              // same name as a sibling of 9M6
+      await file("x", [fid(t, "A-Level")]);
+      const r = await op({ op: "delete", id: c96 });
+      expect(kidsOf(r.body, fid(t, "Year 9"))).toEqual(["9M3", "9M2", "9M3 (from 9M6)"]);
+      const gone = await op({ op: "delete", id: fid(t, "A-Level") });
+      expect(gone.body.byDeck).toEqual({});
+      expect(kidsOf(gone.body, null)).toContain("12FM");                                             // its classes became top-level folders
+    });
+
+    it("folder changes need the admin key and a well-formed request", async () => {
+      const t = await tree();
+      expect((await post({ folderOp: { op: "delete", id: fid(t, "9M6") } }, null)).status).toBe(401);
+      expect((await op({ op: "explode", id: "x" })).status).toBe(400);
+      expect((await op({ op: "add", tree: "nope", name: "x" })).status).toBe(400);
+    });
+  });
 });

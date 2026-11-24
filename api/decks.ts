@@ -14,6 +14,7 @@
 // GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, and every deck's id and title (admin)
 // GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin)
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
+// POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
 // Everything except the published and categories GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // Storage is Neon Postgres (api/_db.ts, api/_deckStore.ts), schema `maths`. A save reads the deck with its version, merges, and writes only if the
@@ -22,7 +23,7 @@ import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
 import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, newestSnapshotAt, putPublished, readDeck, removeDeck, removePublished, writeDeck } from "./_deckStore.js";
 import { applyOp, listCategories, parseOp, unfileDeck } from "./_categories.js";
-import { decksInFolder, listTree, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
+import { applyFolderOp, decksInFolder, listTree, parseFolderOp, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
 import { MAX_SNAPSHOTS, checkDeck, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
@@ -146,6 +147,12 @@ export async function POST(req: Request) {
     const op = parseOp(body.categories);
     if (!op) return json({ error: "Not a category change" }, 400);
     const result = await applyOp(db, op);
+    return result.ok ? json(result.data) : json({ error: result.error }, result.status);
+  }
+  if ("folderOp" in body) {
+    const op = parseFolderOp(body.folderOp);
+    if (!op) return json({ error: "Not a folder change" }, 400);
+    const result = await applyFolderOp(db, op);
     return result.ok ? json(result.data) : json({ error: result.error }, result.status);
   }
   if ("folders" in body) {

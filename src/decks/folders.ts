@@ -1,10 +1,10 @@
 // The folder view's data: a tree's folders (any depth) read once, and one folder's decks (with their first slides, for the cards) read when it is opened.
 // It is for signed-in use, so every read and change sends the admin key.
 import { useCallback, useEffect, useState } from "react";
-import type { Folder, FolderDeck, Tree } from "../../api/_folders";
+import type { Folder, FolderDeck, FolderOp, Tree } from "../../api/_folders";
 import { DEV_PASSWORD } from "../devAccess";
 
-export type { Folder, FolderDeck, Tree };
+export type { Folder, FolderDeck, FolderOp, Tree };
 interface TreeData { folders: Folder[]; /** Decks held directly in each folder. */ counts: Record<string, number>; /** deck id → the folders it is in. */ byDeck: Record<string, string[]>; /** Every deck's id and title, for the Add a deck picker. */ decks: { id: string; title: string }[] }
 const URL_ = "/api/decks";
 /** True when the response came from the decks service (a dev server answers every path with the app's own page). */
@@ -23,6 +23,16 @@ const fetchFolderDecks = async (folderId: string) => (await read<{ decks: Folder
 export async function setDeckFolders(deckId: string, tree: Tree, folderIds: string[]): Promise<string | null> {
   try {
     const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" }, body: JSON.stringify({ folders: { deckId, tree, folderIds }, by: "Harry" }) });
+    if (!fromService(res)) return "the sharing service isn't available here";
+    if (!res.ok) return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "that did not work";
+    return null;
+  } catch { return "no connection"; }
+}
+
+/** Makes one change to the folders (add, rename, move, reorder, delete). Resolves to null when it worked, else the reason in words. */
+export async function sendFolderOp(op: FolderOp): Promise<string | null> {
+  try {
+    const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" }, body: JSON.stringify({ folderOp: op, by: "Harry" }) });
     if (!fromService(res)) return "the sharing service isn't available here";
     if (!res.ok) return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "that did not work";
     return null;

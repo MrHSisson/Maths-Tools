@@ -31,9 +31,9 @@ Every feature a tool can have, and what it is for. To see which tools have each 
 
 Deck grids and book activities reveal an individual answer with a 500 ms hold within 8 px.
 
-### Decks by class (finding a deck by who it is for)
+### Decks by class (finding a deck like files in folders)
 
-**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks appear as the usual preview cards, most recently made first from the left. Only that class's decks are loaded, when you click it. A deck can be in more than one class (it is not copied). **Add a deck…** puts a deck in the class, and the cross on a card takes it out (neither is offered on a phone). The years and classes are folders, and folders inside folders are coming next.
+**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class works like a file explorer: a trail across the top (Classes › Year 9 › 9M6), the folders inside the one you are in as tiles, and its decks below as the usual preview cards, most recently made first from the left. The years and classes are folders to start with (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), and you can make folders inside folders, rename them, move them, put them in the order you want and delete them (deleting a folder never deletes a deck: its decks and folders move up a level). **Drag** a deck card or a folder onto a folder tile or a breadcrumb to move it; **Add a deck…** puts a deck in a folder as well, so one deck can live in several folders (it is not copied); the cross on a card takes it out of that folder. On a touch screen use the **Move into…** menu. Only the folder you open loads its decks. A phone browses but does not edit.
 
 ### Deck strands and topics (filing the Decks page)
 
