@@ -158,7 +158,7 @@ export const visibleAt = (e: Base, step?: number): boolean => step == null || e.
 
 /** Does the question show its diagram straight away (`given`), draw it up from nothing as the working goes on (`build`), never have one (`hidden`), or give it
  *  blurred until the student presses Reveal (`blurred`: it is `given` once revealed, so students can draw it themselves first)? */
-export type DiagramDisplay = "given" | "build" | "hidden" | "blurred";
+export type DiagramDisplay = "given" | "build" | "hidden" | "blurred" | "full";
 /** Where the picture is being shown: with the question, at a working step (`shown` = how many steps are showing), or at the end with the answer. */
 export type DiagramView = { stage: "question" } | { stage: "working"; shown: number } | { stage: "answer" };
 
@@ -166,6 +166,7 @@ export type DiagramView = { stage: "question" } | { stage: "working"; shown: num
  *  rule lives, so every tool shows its diagram the same way. */
 export function displayStep(display: DiagramDisplay, view: DiagramView): number | null | undefined {
   if (display === "hidden") return null;
+  if (display === "full") return undefined;   // the whole picture from the start
   switch (view.stage) {
     case "answer": return undefined;
     case "question": return display === "given" || display === "blurred" ? 0 : null;

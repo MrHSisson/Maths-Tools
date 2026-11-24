@@ -18,12 +18,11 @@ import { generateMotion } from "./power/motion";
 // The maths is in the builders in ./power/ (question, picture, working and answer from one set of inputs); the shared pieces are in shared/mechanics.
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-const A2 = { key: "course", values: ["A2"] };
 
 const SUB_TOOLS = [
   { key: "avgpower", label: "Average Power", levels: 3, blurb: "Power = work done ÷ time" },
   { key: "forcespeed", label: "Force and Speed", levels: 3, blurb: "Power = driving force × speed" },
-  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope", when: [A2] },
+  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope" },
   { key: "motion", label: "Power from Motion Data", levels: 2, blurb: "Power from s(t) or a speed-time graph" },
 ];
 
@@ -32,8 +31,8 @@ const opt = (o: Record<string, string>, key: string, fallback: string): string =
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "avgpower";
   const o = ctx?.options ?? {};
-  const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display: DiagramDisplay = "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
+  const course: "AS" | "A2" = "A2";   // every question can use A2 content; the options that bring it say "(A2)"
+  const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
@@ -51,8 +50,8 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to power on level ground. A2 adds Power on a Slope, where the weight has to be resolved along the road.",
-    defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes slopes" }, { value: "AS", label: "AS" }],
+    key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
+    displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {

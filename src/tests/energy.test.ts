@@ -103,12 +103,6 @@ describe("Energy: strings, pictures, course and worksheet", () => {
       }
     }
   });
-  it("nothing A2-only at AS", () => {
-    for (const sub of ["kepe", "workenergy", "conserve"]) for (const level of [1, 2, 3]) for (let k = 0; k < 40; k++) {
-      const m = __seed.generate(level, { subTool: sub, options: { ...profileOptions(groups, { course: "AS" }, undefined, level, sub), course: "AS", keVelocity: "vector", cvAsk: "speed,stop", cvSetting: "slope" } }).mech!;
-      expect(m.a2, `${sub} L${level}`).toBe(false);
-    }
-  });
   it("a worksheet of 30 has different questions at default options at every level", () => {
     for (const sub of ["kepe", "workenergy", "conserve"]) for (const level of [1, 2, 3]) {
       const seen = new Set<string>();
@@ -143,13 +137,12 @@ describe("Energy: a rough slope (A2) and a load raised over a pulley", () => {
     const s = 36 / (2 * 9.8 * (sin(30) + 0.2 * cos(30)));
     expect(sig(s, 3)).toBe(2.73);
   });
-  it("every KaTeX line renders, every scene validates, and a rough slope is not offered at AS", () => {
+  it("every KaTeX line renders and every scene validates", () => {
     for (const setting of ["rough", "pulley"]) for (const display of ["given", "build", "hidden"]) for (const m of many("workenergy", 3, 25, { weSetting: setting, weAsk: "speed,distance,force,mu", diagram: display })) {
       for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), r).not.toThrow();
       for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
       if (m.scene) expect(validateScene(m.scene)).toEqual([]);
     }
-    for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "workenergy", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "workenergy"), course: "AS", weSetting: "rough", weAsk: "speed,mu" } }).mech!.a2).toBe(false);
   });
 });
 

@@ -9,5 +9,8 @@ Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/to
 
 - **Question kinds are tick-any, not either/or.** In Work Done, Power and Energy the options that choose a kind of question are now multi (tick several to mix, tick one to restrict): Force Acts (with / against the motion, both by default), By or Against gravity (both by default), Setting (Work Done, work-energy and conservation), Context, Motion, Vehicle, Resistance, Angle Given As, Data, Forces, Parts Shown, Velocity As. Each keeps its old default except the two direction options. The shell's `when` rule now reads a multi option's ticks, so "Working Shown" still appears only when a slope can be drawn. Course, g, units and answer format stay single.
 
+- **No AS / A2 selector in Work Done, Power, Energy or Elastic.** Every question can use A2 content, and the choices that bring it say "(A2)" (the Force at an Angle and Power on a Slope tabs, a slope setting, vectors, a rough table…). The generators still take a course internally.
+- **Full Diagram switch** in the Question Options (off by default): on, the whole diagram shows from the start with no blur (`DiagramDisplay` `"full"`); it is also what the enlarged question shows.
+
 Agent: Claude Code
 Notes: Build Log block to be added by the next planner update (planner not updated this session).

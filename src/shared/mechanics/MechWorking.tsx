@@ -69,8 +69,8 @@ export default function MechCanvas({ data, view }: { data: MechProblemData; view
   );
 }
 
-/** The question stage's picture (the enlarged question) for a Further Mechanics tool: the diagram when the question gives it, never a blurred or built one. */
+/** The question stage's picture (the enlarged question) for a Further Mechanics tool: the diagram when it is shown in full (the Full Diagram switch), never a blurred or built one. */
 export const MECH_STAGE = {
-  hasFigure: (p: { mech?: MechProblemData }): boolean => p.mech?.display === "given" && !!p.mech.scene,
-  figure: (p: { mech?: MechProblemData }): ReactElement | null => (p.mech?.scene ? <div style={{ maxWidth: 560, margin: "0 auto" }}><MechDiagram scene={p.mech.scene} step={0} size="board" /></div> : null),
+  hasFigure: (p: { mech?: MechProblemData }): boolean => p.mech?.display === "full" && !!p.mech.scene,
+  figure: (p: { mech?: MechProblemData }): ReactElement | null => (p.mech?.scene ? <div style={{ maxWidth: 560, margin: "0 auto" }}><MechDiagram scene={p.mech.scene} size="board" /></div> : null),
 };

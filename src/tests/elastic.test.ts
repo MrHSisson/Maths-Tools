@@ -110,12 +110,6 @@ describe("Elastic: strings, pictures, course and worksheet", () => {
       }
     }
   });
-  it("nothing A2-only at AS (the rough table is not offered)", () => {
-    for (const sub of ["hooke", "epe", "elastic"]) for (const level of sub === "epe" ? [1, 2] : [1, 2, 3]) for (let k = 0; k < 40; k++) {
-      const m = __seed.generate(level, { subTool: sub, options: { ...profileOptions(groups, { course: "AS" }, undefined, level, sub), course: "AS", elSetting: "horizontal,vertical,rough", elAsk: "speedNat,stop,maxext" } }).mech!;
-      expect(m.a2, `${sub} L${level}`).toBe(false);
-    }
-  });
   it("a worksheet of 30 has different questions at default options at every level", () => {
     for (const sub of ["hooke", "epe", "elastic"]) for (const level of sub === "epe" ? [1, 2] : [1, 2, 3]) {
       const seen = new Set<string>();
@@ -161,14 +155,10 @@ describe("Elastic: a slope, two fixed points and Show That (A2)", () => {
       expect(rel(TA * Math.sqrt(1 - cosA * cosA) + TB * Math.sqrt(1 - cosB * cosB), m.extra![0].value * i.g)).toBeLessThan(0.0101);
     }
   });
-  it("Show That gives the answer in the question, and an A2 setting is not offered at AS", () => {
+  it("Show That gives the answer in the question", () => {
     for (const m of many("elastic", 2, 60, { elSetting: "vertical", elAsk: "maxext,rest,maxspeed", elShow: "on" })) {
       expect(m.prompt).toContain("Show that");
       expect(m.prompt).toContain(sfText(m.answer.value, 3));
-    }
-    for (const sub of ["hooke", "elastic"]) for (let k = 0; k < 40; k++) {
-      const m = __seed.generate(3, { subTool: sub, options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, sub), course: "AS", hkSetting: "points,two", elSetting: "slope,rough" } }).mech!;
-      expect(m.a2, sub).toBe(false);
     }
   });
 });

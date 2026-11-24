@@ -28,8 +28,8 @@ const opt = (o: Record<string, string>, key: string, fallback: string): string =
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "hooke";
   const o = ctx?.options ?? {};
-  const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display: DiagramDisplay = "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
+  const course: "AS" | "A2" = "A2";   // every question can use A2 content; the options that bring it say "(A2)"
+  const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
   const kind = opt(o, "kind", "string,spring");
@@ -47,8 +47,8 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to smooth surfaces, vertical motion and strings along a line. A2 adds a rough table, a smooth slope, and two strings fixed at two points, which need friction or resolving.",
-    defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes friction" }, { value: "AS", label: "AS" }],
+    key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
+    displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
     key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["elastic"],

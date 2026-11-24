@@ -17,7 +17,6 @@ import { generateConserve } from "./energy/conserve";
 // The maths is in shared/mechanics/core.ts, the builders (question, picture, working and answer from one set of inputs) in ./energy/.
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-const A2 = { key: "course", values: ["A2"] };
 
 const SUB_TOOLS = [
   { key: "kepe", label: "Kinetic and Potential Energy", levels: 3, blurb: "KE = ½mv² and GPE = mgh" },
@@ -30,8 +29,8 @@ const opt = (o: Record<string, string>, key: string, fallback: string): string =
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "kepe";
   const o = ctx?.options ?? {};
-  const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display: DiagramDisplay = "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
+  const course: "AS" | "A2" = "A2";   // every question can use A2 content; the options that bring it say "(A2)"
+  const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
@@ -49,8 +48,8 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to energy with no resolving: slopes are given by their length and drop. A2 adds velocity vectors, and slopes given by their angle.",
-    defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes vectors and angled slopes" }, { value: "AS", label: "AS" }],
+    key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
+    displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
     key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["workenergy", "conserve"],
@@ -67,9 +66,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "energy", label: "The energy" }, { value: "mass", forLevels: [2, 3], label: "The mass" }, { value: "speed", forLevels: [2, 3], label: "The speed" }, { value: "height", forLevels: [2, 3], label: "The height" }, { value: "change", forLevels: [3], label: "A gain or loss" }],
   },
   {
-    key: "keVelocity", label: "Velocity As", info: "For a change in kinetic energy: the speeds are given, or the velocities as vectors in i and j (A2).", forSubTools: ["kepe"], forLevels: [3], when: A2,
+    key: "keVelocity", label: "Velocity As", info: "For a change in kinetic energy: the speeds are given, or the velocities as vectors in i and j (A2).", forSubTools: ["kepe"], forLevels: [3],
     multi: true,
-    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector", sub: "i and j" }],
+    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector (A2)", sub: "i and j" }],
   },
   {
     key: "weSetting", label: "Setting", info: "Level ground, along a slope given by its length and how far it rises or falls, a load raised by a rope over a pulley, or (A2) a rough slope given by its angle, where friction is μ times the normal reaction.", forSubTools: ["workenergy"],
