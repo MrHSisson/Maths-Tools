@@ -8,7 +8,7 @@
 //  - along a dashed line (a height): no arrow, a label beside the line;
 //  - along a hole's edge, or a sloping edge: a label only, beside the edge (parallel to a sloping edge).
 export type P = [number, number];
-export interface Dim { a: P; b: P; label: string; side: P; /** kept for older calls; the gap is fixed */ off?: number }
+export interface Dim { a: P; b: P; label: string; side: P; /** kept for older calls; the gap is fixed */ off?: number; /** a dashed height: how far up from the base its label sits (0.4 by default) */ at?: number }
 export interface Piece { pts: P[]; fill: string; name?: string; sign?: 1 | -1; /** shift the letter (cm) so it clears a length */ dx?: number; dy?: number }
 export interface Art {
   outline: P[];                 // the outer boundary
@@ -72,7 +72,7 @@ export function drawArt(art: Art, w = 880, h = 700, pad = 120): string {
     const ax = X(d.a), ay = Y(d.a), bx = X(d.b), by = Y(d.b), mx = (ax + bx) / 2, my = (ay + by) / 2;
     const axisAligned = Math.abs(ax - bx) < 0.5 || Math.abs(ay - by) < 0.5, vertical = Math.abs(ax - bx) < 0.5;
     if (onDash) {            // a height: the label beside its dashed line
-      if (vertical) out.push(halo(mx + (sx >= 0 ? 12 : -12), ay + 0.4 * (by - ay), d.label, { anchor: sx >= 0 ? "start" : "end" }));   // 40% up from the base, where a pointed shape is widest
+      if (vertical) out.push(halo(mx + (sx >= 0 ? 12 : -12), ay + (d.at ?? 0.4) * (by - ay), d.label, { anchor: sx >= 0 ? "start" : "end" }));   // 40% up from the base, where a pointed shape is widest
       else out.push(halo(mx, my + (sy >= 0 ? 22 : -22), d.label));
       continue;
     }
@@ -84,7 +84,7 @@ export function drawArt(art: Art, w = 880, h = 700, pad = 120): string {
       else if (vertical) out.push(halo(mx + (sx >= 0 ? 14 : -14), my, d.label, { anchor: sx >= 0 ? "start" : "end" }));
       else {                // level hole edge: the label on the outside, unless that runs into the outline, then just inside
         const outsideY = my + (sy >= 0 ? 24 : -24), floor = Y([0, y0]), roof = Y([0, y1]);
-        out.push(halo(mx, outsideY > floor - 22 || outsideY < roof + 22 ? my - (sy >= 0 ? 24 : -24) : outsideY, d.label));
+        out.push(halo(mx, outsideY > floor - 16 || outsideY < roof + 16 ? my - (sy >= 0 ? 24 : -24) : outsideY, d.label));
       }
       continue;
     }

@@ -97,3 +97,7 @@ A bowtie (a box with an identical triangle on each side) replaces two of the hou
 - **B2 is a triangle inside a triangle** (whole triangle base 20, height 12: 120; hole base 8, height 5: 20; shaded 100), replacing the square hole in a rectangle. The square-hole shape stays in worksheet question 5.
 - **C1 (rectangle and parallelogram) gives the whole shape's height and the rectangle's**, not the parallelogram's own height: the first line of working is 7 − 3 = 4.
 - **Why the worksheet looked like rectilinear shapes:** the live site runs `main`, which does not have the picture-sheet code, so it drew the worksheet element as an ordinary generated worksheet using the Perimeter & Area rectilinear generator. It shows the eight composite pictures correctly once the picture-sheet code is merged.
+
+## Revision 7 (Harry's feedback, 2026-11-24): worksheet questions 3, 5 and 6
+
+Questions 1, 2, 4, 7 and 8 stay. Question 3 (the bowtie) is taller: rectangle 9 by 6, triangles 4 wide, total width 17: 78. Question 5 is a parallelogram with a triangle on top (base 12, height 5, total height 9, so the triangle's height is 4: 60 + 24 = 84). Question 6 is a right-angled triangle (20 by 12) with a parallelogram cut out (base 8, height 3: 120 − 24 = 96). Worksheet answers: 63, 87, 78, 104, 84, 96, 54, 50. No worksheet question has a decimal now.

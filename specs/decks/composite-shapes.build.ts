@@ -117,6 +117,29 @@ function triInTri(id: string, set: string, b: number, h: number, hb: number, hh:
     [], [[[0, 0], [1, 0], [0, 1]], [[hx, hy], [hx + 1, hy], [hx, hy + 1]]],
     [`Whole triangle: $\\tfrac12 \\times ${b} \\times ${h} = ${area(oa)}$ cm²`, `Hole: $\\tfrac12 \\times ${hb} \\times ${hh} = ${area(ha)}$ cm²`, `Shaded: $${area(oa)} - ${area(ha)} = ${area(oa - ha)}$ cm²`], oa - ha, brief);
 }
+/** A parallelogram (base `base`, slanting by `off`, perpendicular height `ph`) with a triangle on its top edge. The picture gives the parallelogram's height
+ *  and the total height; the triangle's height is found by subtraction. */
+function paraAndTriangle(id: string, set: string, base: number, off: number, ph: number, total: number, brief: string): Q {
+  const ah = total - ph, apex: P = [off + base / 2, total];
+  const para: P[] = [[0, 0], [base, 0], [base + off, ph], [off, ph]];
+  const given: Art = { outline: [[0, 0], [base, 0], [base + off, ph], apex, [off, ph]],
+    dims: [{ a: [0, 0], b: [base, 0], label: `${base} cm`, side: B }, { a: [off, 0], b: [off, ph], label: `${ph} cm`, side: R }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }],
+    dashed: [[[off, 0], [off, ph]], [[off + base / 2, total], [0, total]]], right: [[[off, 0], [off + 1, 0], [off, 1]]] };
+  const pa = base * ph, ta = (base * ah) / 2;
+  return { id, set, prompt: "Work out the area of this shape.", given, brief, answer: pa + ta,
+    worked: { dashed: [[[off, ph], [base + off, ph]], [[off + base / 2, ph], apex]], dims: [{ a: [off + base / 2, ph], b: apex, label: `${ah} cm`, side: R }] },
+    steps: [`Triangle height: $${total} - ${ph} = ${ah}$ cm`, `A: parallelogram  $${base} \\times ${ph} = ${pa}$ cm²`, `B: triangle  $\\tfrac12 \\times ${base} \\times ${ah} = ${area(ta)}$ cm²`, `Total: $${pa} + ${area(ta)} = ${area(pa + ta)}$ cm²`],
+    pieces: [{ pts: para, fill: COL.para, name: "A" }, { pts: [[off, ph], [base + off, ph], apex], fill: COL.tri, name: "B" }] };
+}
+/** A right-angled triangle (base `b`, height `h`) with a parallelogram cut out (base `pb`, perpendicular height `ph`, slanting by `po`); its lower left corner is at (`px`, `py`). */
+function triParaHole(id: string, set: string, b: number, h: number, pb: number, ph: number, po: number, px: number, py: number, brief: string): Q {
+  const outline: P[] = [[0, 0], [b, 0], [0, h]], hole: P[] = [[px, py], [px + pb, py], [px + po + pb, py + ph], [px + po, py + ph]];
+  const oa = (b * h) / 2, ha = pb * ph;
+  return shaded(id, set, outline, hole,
+    [{ a: [0, 0], b: [b, 0], label: `${b} cm`, side: B }, { a: [0, 0], b: [0, h], label: `${h} cm`, side: L }, { a: [px, py], b: [px + pb, py], label: `${pb} cm`, side: B }, { a: [px + po, py], b: [px + po, py + ph], label: `${ph} cm`, side: R, at: 0.5 }],
+    [[[px + po, py], [px + po, py + ph]]], [[[0, 0], [1, 0], [0, 1]], [[px + po, py], [px + po + 1, py], [px + po, py + 1]]],
+    [`Whole triangle: $\\tfrac12 \\times ${b} \\times ${h} = ${area(oa)}$ cm²`, `Hole: $${pb} \\times ${ph} = ${area(ha)}$ cm²`, `Shaded: $${area(oa)} - ${area(ha)} = ${area(oa - ha)}$ cm²`], oa - ha, brief);
+}
 /** A rectangle w × h with a square hole of side `s`. */
 function squareHole(id: string, set: string, w: number, h: number, s: number, brief: string): Q {
   const x0 = (w - s) / 2, y0 = (h - s) / 2, ra = w * h;
@@ -204,14 +227,14 @@ const D2 = trapAndTriangle("d2", "Set D", 14, 8, 5, 9, "A trapezium with a trian
 const W: { q: Q; split: boolean }[] = [
   { q: house("w1", "Sheet", 9, 5, 4), split: true },
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
-  { q: bowtie("w3", "Sheet", 10, 4, 5), split: false },
+  { q: bowtie("w3", "Sheet", 9, 6, 4), split: false },
   { q: triHole("w4", "Sheet", 15, 8, 8, 4, ""), split: false },
-  { q: squareHole("w5", "Sheet", 14, 9.5, 3, ""), split: false },
-  { q: parallelogram("w6", "Sheet", 14, 0, 6, 3, { hole: [6, 1, 5, 4], brief: "" }), split: false },
+  { q: paraAndTriangle("w5", "Sheet", 12, 3, 5, 9, ""), split: false },
+  { q: triParaHole("w6", "Sheet", 20, 12, 8, 3, 1, 1, 2.5, ""), split: false },
   { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
   { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 60, 104, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 78, 104, 84, 96, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
@@ -219,7 +242,7 @@ const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
 });
 const worksheetSlide = (): Slide => {
   const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself. In question 3 the two triangles are the same.", items: sheetItems }, "perimeter-and-area");
-  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 to 6 are shaded, 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
+  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 is a triangular hole in a rectangle, 5 a parallelogram with a triangle on top, 6 a parallelogram cut out of a triangle, 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
 };
 
 // ---------- the exit ticket ----------
