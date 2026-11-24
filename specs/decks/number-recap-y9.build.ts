@@ -211,11 +211,11 @@ export default () => ({
   slides: [
     S.title(`${P}-title`, "Number Recap", "Whiteboards up"),
     S.summary(`${P}-how`, "How this works", ["Question 1: on your own, no help. Hold it up.", "We sort out any mistakes together.", "Questions 2 and 3: have another go."]),
-    cDecimals, cScale, cMultiply, cClosest,
+    cDecimals, cScale, cMultiply,
+    bOrder, bandA,
     eEstimate, eBestBuy,
     dPrimes, dHcf,
-    bOrder,
-    bandA,
+    cClosest,
     tally,
   ] as Slide[],
 });

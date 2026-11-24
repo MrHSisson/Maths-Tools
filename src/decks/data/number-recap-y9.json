@@ -1,1054 +1,1049 @@
 {
  "id": "number-recap-y9",
  "title": "Number Recap (Y9 Foundation)",
- "strand": "Number",
- "questionVersion": 2,
- "summary": "A whiteboard recap before the Year 9 Number 1 assessment, in order of the marks each block carries: decimals, scaling and multiplying; estimating and money; prime factors and HCF; order of operations; negatives and squares. Question 1 of each block is cold and gives the tally for the next lesson's starter.",
  "slides": [
   {
    "id": "nr-title",
-   "family": "structure",
-   "title": "Number Recap",
    "els": [
     {
-     "kind": "text",
+     "h": 170,
+     "w": 1400,
      "x": 100,
      "y": 290,
-     "w": 1400,
-     "h": 170,
-     "text": "Number Recap",
-     "size": 120,
-     "colour": "#0f172a",
+     "id": "nr-title-1",
      "bold": true,
+     "kind": "text",
+     "size": 120,
+     "text": "Number Recap",
      "align": "center",
-     "middle": true,
-     "id": "nr-title-1"
+     "colour": "#0f172a",
+     "middle": true
     },
     {
-     "kind": "text",
+     "h": 90,
+     "w": 1400,
      "x": 100,
      "y": 480,
-     "w": 1400,
-     "h": 90,
-     "text": "Whiteboards up",
+     "id": "nr-title-2",
+     "kind": "text",
      "size": 56,
-     "colour": "#64748b",
+     "text": "Whiteboards up",
      "align": "center",
-     "id": "nr-title-2"
+     "colour": "#64748b"
     }
    ],
-   "built": "17vfdra"
+   "built": "17vfdra",
+   "title": "Number Recap",
+   "family": "structure"
   },
   {
    "id": "nr-how",
-   "family": "structure",
-   "title": "How this works",
    "els": [
     {
-     "kind": "text",
+     "h": 110,
+     "w": 1400,
      "x": 100,
      "y": 100,
-     "w": 1400,
-     "h": 110,
-     "text": "How this works",
-     "size": 72,
-     "colour": "#0f172a",
+     "id": "nr-how-1",
      "bold": true,
-     "id": "nr-how-1"
+     "kind": "text",
+     "size": 72,
+     "text": "How this works",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 560,
+     "w": 1400,
      "x": 100,
      "y": 260,
-     "w": 1400,
-     "h": 560,
-     "text": "•  Question 1: on your own, no help. Hold it up.\n•  We sort out any mistakes together.\n•  Questions 2 and 3: have another go.",
+     "id": "nr-how-2",
+     "kind": "text",
      "size": 50,
-     "colour": "#0f172a",
-     "id": "nr-how-2"
+     "text": "•  Question 1: on your own, no help. Hold it up.\n•  We sort out any mistakes together.\n•  Questions 2 and 3: have another go.",
+     "colour": "#0f172a"
     }
    ],
-   "built": "ueirej"
+   "built": "ueirej",
+   "title": "How this works",
+   "family": "structure"
   },
   {
    "id": "nr-c-decimals",
-   "family": "teach",
-   "title": "Decimals: add and subtract",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-c-decimals-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-dec-1",
-       "title": "Work out $6.84 + 3.57$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $6.84 + 3.57$."
-       ],
+       "title": "Work out $6.84 + 3.57$",
        "answer": [
         "$10.41$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $6.84 + 3.57$."
+       ],
+       "rationale": "Line up the decimal points, then add column by column.",
        "explanation": [
         "Line up the decimal points: $6.84$ above $3.57$.",
         "Add from the right, carrying when a column reaches $10$.",
         "$6.84 + 3.57 = 10.41$"
        ],
-       "rationale": "Line up the decimal points, then add column by column.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-dec-2",
-       "title": "Work out $8.2 - 3.45$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $8.2 - 3.45$."
-       ],
+       "title": "Work out $8.2 - 3.45$",
        "answer": [
         "$4.75$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $8.2 - 3.45$."
+       ],
+       "rationale": "Placeholder zero, line up the points, subtract.",
        "explanation": [
         "Fill the gap with a zero so both have the same number of decimal places: $8.20 - 3.45$.",
         "Line up the decimal points and subtract: $8.20 - 3.45 = 4.75$"
        ],
-       "rationale": "Placeholder zero, line up the points, subtract.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-dec-3",
-       "title": "Find the difference between $9.06$ and $4.8$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Find the difference between $9.06$ and $4.8$."
-       ],
+       "title": "Find the difference between $9.06$ and $4.8$",
        "answer": [
         "$4.26$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Find the difference between $9.06$ and $4.8$."
+       ],
+       "rationale": "Placeholder zero, line up the points, subtract.",
        "explanation": [
         "Fill the gap with a zero so both have the same number of decimal places: $9.06 - 4.80$.",
         "Line up the decimal points and subtract: $9.06 - 4.80 = 4.26$"
        ],
-       "rationale": "Placeholder zero, line up the points, subtract.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-c-decimals-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold: tally the boards. Lining up the points and the placeholder zero (8.2 as 8.20) are the usual slips. The third question is a spare.",
-   "built": "2d74uv"
+   "built": "2d74uv",
+   "title": "Decimals: add and subtract",
+   "family": "teach"
   },
   {
    "id": "nr-c-scale",
-   "family": "teach",
-   "title": "Multiply and divide by 10, 100, 1000",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-c-scale-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-sc-1",
-       "title": "Work out $4.05 \\times 100$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $4.05 \\times 100$."
-       ],
+       "title": "Work out $4.05 \\times 100$",
        "answer": [
         "$405$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $4.05 \\times 100$."
+       ],
+       "rationale": "The digits move; the decimal point does not.",
        "explanation": [
         "Multiplying by $100$ moves every digit 2 places to the left.",
         "$4.05 \\times 100 = 405$"
        ],
-       "rationale": "The digits move; the decimal point does not.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-sc-2",
-       "title": "Work out $7.3 \\div 1,000$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $7.3 \\div 1,000$."
-       ],
+       "title": "Work out $7.3 \\div 1,000$",
        "answer": [
         "$0.0073$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $7.3 \\div 1,000$."
+       ],
+       "rationale": "The digits move; the decimal point does not.",
        "explanation": [
         "Dividing by $1,000$ moves every digit 3 places to the right.",
         "$7.3 \\div 1,000 = 0.0073$"
        ],
-       "rationale": "The digits move; the decimal point does not.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-sc-3",
-       "title": "Work out $0.63 \\times 1,000$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $0.63 \\times 1,000$."
-       ],
+       "title": "Work out $0.63 \\times 1,000$",
        "answer": [
         "$630$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $0.63 \\times 1,000$."
+       ],
+       "rationale": "The digits move; the decimal point does not.",
        "explanation": [
         "Multiplying by $1,000$ moves every digit 3 places to the left.",
         "$0.63 \\times 1,000 = 630$"
        ],
-       "rationale": "The digits move; the decimal point does not.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-c-scale-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold. Say 'the digits move' not 'the point moves'. The third question is a spare.",
-   "built": "j5ix0o"
+   "built": "j5ix0o",
+   "title": "Multiply and divide by 10, 100, 1000",
+   "family": "teach"
   },
   {
    "id": "nr-c-multiply",
-   "family": "teach",
-   "title": "Multiplying two 2-digit numbers",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-c-multiply-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-mul-1",
-       "title": "Work out $67 \\times 43$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $67 \\times 43$."
-       ],
+       "title": "Work out $67 \\times 43$",
        "answer": [
         "$2881$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $67 \\times 43$."
+       ],
+       "rationale": "Grid or partition: four small products, then add.",
        "explanation": [
         "Split both numbers: $67 = 60 + 7$ and $43 = 40 + 3$.",
         "$60 \\times 40 = 2400$, $\\;60 \\times 3 = 180$, $\\;7 \\times 40 = 280$, $\\;7 \\times 3 = 21$",
         "Add the four parts: $2400 + 180 + 280 + 21 = 2881$"
        ],
-       "rationale": "Grid or partition: four small products, then add.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-mul-2",
-       "title": "Work out $54 \\times 28$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $54 \\times 28$."
-       ],
+       "title": "Work out $54 \\times 28$",
        "answer": [
         "$1512$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $54 \\times 28$."
+       ],
+       "rationale": "Grid or partition: four small products, then add.",
        "explanation": [
         "Split both numbers: $54 = 50 + 4$ and $28 = 20 + 8$.",
         "$50 \\times 20 = 1000$, $\\;50 \\times 8 = 400$, $\\;4 \\times 20 = 80$, $\\;4 \\times 8 = 32$",
         "Add the four parts: $1000 + 400 + 80 + 32 = 1512$"
        ],
-       "rationale": "Grid or partition: four small products, then add.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-mul-3",
-       "title": "Work out $83 \\times 36$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $83 \\times 36$."
-       ],
+       "title": "Work out $83 \\times 36$",
        "answer": [
         "$2988$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $83 \\times 36$."
+       ],
+       "rationale": "Grid or partition: four small products, then add.",
        "explanation": [
         "Split both numbers: $83 = 80 + 3$ and $36 = 30 + 6$.",
         "$80 \\times 30 = 2400$, $\\;80 \\times 6 = 480$, $\\;3 \\times 30 = 90$, $\\;3 \\times 6 = 18$",
         "Add the four parts: $2400 + 480 + 90 + 18 = 2988$"
        ],
-       "rationale": "Grid or partition: four small products, then add.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-c-multiply-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold. Students show the grid or the four products on the board, not just the answer (3 marks on the test). The third question is a spare.",
-   "built": "3kno0o"
+   "built": "3kno0o",
+   "title": "Multiplying two 2-digit numbers",
+   "family": "teach"
   },
   {
-   "id": "nr-c-closest",
-   "family": "teach",
-   "title": "Which is closest to a fraction?",
+   "id": "nr-b-order",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-b-order-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
-       "id": "nr-cl-1",
-       "title": "Which is closest to $\\dfrac{1}{4}$?",
+       "id": "nr-bod-1",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Which is closest to $\\dfrac{1}{4}$?",
-        "$0.22 \\qquad \\dfrac{3}{10} \\qquad 0.27 \\qquad \\dfrac{6}{25}$"
-       ],
+       "title": "Work out $2 + 3 \\times 4 - 1$",
        "answer": [
-        "$\\dfrac{6}{25}$"
+        "$13$"
        ],
-       "explanation": [
-        "Write everything as a decimal: $\\dfrac{1}{4} = 0.25$, $\\dfrac{3}{10} = 0.3$, $\\dfrac{6}{25} = 0.24$.",
-        "Find how far each is from $0.25$: $0.03, \\; 0.05, \\; 0.02, \\; 0.01$",
-        "The smallest gap is $0.01$, so $\\dfrac{6}{25}$ is closest."
-       ],
-       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Work out $2 + 3 \\times 4 - 1$."
+       ],
+       "rationale": "Multiplication before addition and subtraction.",
+       "explanation": [
+        "Multiply first: $3 \\times 4 = 12$.",
+        "$2 + 12 - 1$",
+        "Add and subtract from left to right: $13$"
+       ],
+       "expectedErrors": []
       },
       {
-       "version": 2,
-       "id": "nr-cl-2",
-       "title": "Which is closest to $\\dfrac{1}{5}$?",
+       "id": "nr-bod-2",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Which is closest to $\\dfrac{1}{5}$?",
-        "$0.18 \\qquad \\dfrac{3}{20} \\qquad 0.23 \\qquad \\dfrac{4}{25}$"
-       ],
+       "title": "Add one pair of brackets so that",
        "answer": [
-        "$0.18$"
+        "$(2 + 3) \\times 4 - 1 = 19$"
        ],
-       "explanation": [
-        "Write everything as a decimal: $\\dfrac{1}{5} = 0.2$, $\\dfrac{3}{20} = 0.15$, $\\dfrac{4}{25} = 0.16$.",
-        "Find how far each is from $0.2$: $0.02, \\; 0.05, \\; 0.03, \\; 0.04$",
-        "The smallest gap is $0.02$, so $0.18$ is closest."
-       ],
-       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Add one pair of brackets so that",
+        "$2 + 3 \\times 4 - 1 = 19$"
+       ],
+       "rationale": "Brackets change the order; try the placements and check.",
+       "explanation": [
+        "Try bracketing $2 + 3$: $(2 + 3) \\times 4 - 1$.",
+        "Bracket first: $5 \\times 4 - 1$.",
+        "Multiply, then subtract: $20 - 1 = 19$"
+       ],
+       "expectedErrors": []
       },
       {
-       "version": 2,
-       "id": "nr-cl-3",
-       "title": "Which is closest to $\\dfrac{3}{4}$?",
+       "id": "nr-bod-3",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Which is closest to $\\dfrac{3}{4}$?",
-        "$0.72 \\qquad \\dfrac{4}{5} \\qquad 0.78 \\qquad \\dfrac{37}{50}$"
-       ],
+       "title": "Dev works out $6 \\times (10 - 4)$",
        "answer": [
-        "$\\dfrac{37}{50}$"
+        "He multiplied by $10$ and ignored the bracket: it is $36$"
        ],
-       "explanation": [
-        "Write everything as a decimal: $\\dfrac{3}{4} = 0.75$, $\\dfrac{4}{5} = 0.8$, $\\dfrac{37}{50} = 0.74$.",
-        "Find how far each is from $0.75$: $0.03, \\; 0.05, \\; 0.03, \\; 0.01$",
-        "The smallest gap is $0.01$, so $\\dfrac{37}{50}$ is closest."
-       ],
-       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Dev works out $6 \\times (10 - 4)$.",
+        "His working: $6 \\times (10 - 4) = 60 - 4 = 56$",
+        "What mistake has he made?"
+       ],
+       "rationale": "Brackets come first, even when the multiplication is written before them.",
+       "explanation": [
+        "He did $6 \\times 10$ first, but the bracket must be worked out first.",
+        "Bracket first: $10 - 4 = 6$.",
+        "Then $6 \\times 6 = 36$."
+       ],
+       "expectedErrors": []
       }
      ],
-     "id": "nr-c-closest-1",
      "visualiser": false
     }
    ],
-   "brief": "Question 1 is cold. The point is the distance from the target, not which is biggest. The third question is a spare.",
-   "built": "wgwrvu"
+   "brief": "Question 1 is cold. Question 3 is the error-spot; the sentence 'he did ... but should have done ...' is the answer. The third question is a spare.",
+   "built": "1vumadv",
+   "title": "Order of operations",
+   "family": "teach"
   },
   {
-   "id": "nr-e-estimate",
-   "family": "teach",
-   "title": "Estimating a calculation",
+   "id": "nr-a-negatives",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-a-negatives-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
+       "id": "nr-neg-1",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Write in order, smallest first:",
+       "answer": [
+        "$-15, \\; -9, \\; -2, \\; 0, \\; 4$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
        "version": 2,
+       "followUp": "",
+       "question": [
+        "Write in order, smallest first:",
+        "$-9, \\quad 4, \\quad -2, \\quad -15, \\quad 0$"
+       ],
+       "rationale": "Order on a number line, negatives first.",
+       "explanation": [
+        "The negatives are smallest, and the bigger the number after the minus sign, the smaller the number: $-15 < -9 < -2$.",
+        "Then $0$, then $4$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-neg-2",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Work out $(-6)^2$",
+       "answer": [
+        "$(-6)^2 = 36$ and $-6^2 = -36$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $(-6)^2$.",
+        "Then work out $-6^2$."
+       ],
+       "rationale": "The brackets decide what is squared.",
+       "explanation": [
+        "$(-6)^2 = -6 \\times -6 = 36$, since a negative times a negative is positive.",
+        "$-6^2$: square the $6$ first, then make it negative: $-(6 \\times 6) = -36$."
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-neg-3",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Zoe says $(-5)^2 = -25$",
+       "answer": [
+        "She squared only the $5$ and kept the minus: $(-5)^2 = 25$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Zoe says $(-5)^2 = -25$.",
+        "What mistake has she made?"
+       ],
+       "rationale": "Squaring a negative gives a positive.",
+       "explanation": [
+        "She worked out $5 \\times 5 = 25$ and put the minus back on.",
+        "$(-5)^2$ means $-5 \\times -5$, and a negative times a negative is positive: $25$."
+       ],
+       "expectedErrors": []
+      }
+     ],
+     "visualiser": false
+    }
+   ],
+   "brief": "Question 1 is cold. Squaring a negative is the idea to leave them with (the test asks whether a squared negative can be negative). The third question is a spare.",
+   "built": "1eh7aqr",
+   "title": "Negatives and squares",
+   "family": "teach"
+  },
+  {
+   "id": "nr-e-estimate",
+   "els": [
+    {
+     "h": 852,
+     "w": 1504,
+     "x": 48,
+     "y": 24,
+     "id": "nr-e-estimate-1",
+     "kind": "questions",
+     "size": 56,
+     "items": [
+      {
        "id": "nr-est-1",
-       "title": "Estimate: $\\dfrac{28.7 \\times 9.8}{0.52}$",
        "tool": "estimation",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $\\dfrac{28.7 \\times 9.8}{0.52}$"
-       ],
+       "title": "Estimate: $\\dfrac{28.7 \\times 9.8}{0.52}$",
        "answer": [
         "$\\approx 600$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Estimate: $\\dfrac{28.7 \\times 9.8}{0.52}$"
+       ],
+       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
        "explanation": [
         "Original: $\\dfrac{(28.7 \\times 9.8)}{0.52}$",
         "Round to 1 s.f.: $28.7 \\to 30, \\;9.8 \\to 10, \\;0.52 \\to 0.5$",
         "Numerator: $(30 \\times 10) = 300$",
         "Calculate: $300 \\div 0.5 = 600$"
        ],
-       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-est-2",
-       "title": "Estimate: $\\dfrac{6.1 \\times 19.7}{0.39}$",
        "tool": "estimation",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $\\dfrac{6.1 \\times 19.7}{0.39}$"
-       ],
+       "title": "Estimate: $\\dfrac{6.1 \\times 19.7}{0.39}$",
        "answer": [
         "$\\approx 300$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Estimate: $\\dfrac{6.1 \\times 19.7}{0.39}$"
+       ],
+       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
        "explanation": [
         "Original: $\\dfrac{(6.1 \\times 19.7)}{0.39}$",
         "Round to 1 s.f.: $6.1 \\to 6, \\;19.7 \\to 20, \\;0.39 \\to 0.4$",
         "Numerator: $(6 \\times 20) = 120$",
         "Calculate: $120 \\div 0.4 = 300$"
        ],
-       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-est-3",
-       "title": "Estimate: $\\dfrac{82 \\times 4.9}{0.21}$",
        "tool": "estimation",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Estimate: $\\dfrac{82 \\times 4.9}{0.21}$"
-       ],
+       "title": "Estimate: $\\dfrac{82 \\times 4.9}{0.21}$",
        "answer": [
         "$\\approx 2{,}000$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Estimate: $\\dfrac{82 \\times 4.9}{0.21}$"
+       ],
+       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
        "explanation": [
         "Original: $\\dfrac{(82 \\times 4.9)}{0.21}$",
         "Round to 1 s.f.: $82 \\to 80, \\;4.9 \\to 5, \\;0.21 \\to 0.2$",
         "Numerator: $(80 \\times 5) = 400$",
         "Calculate: $400 \\div 0.2 = 2{,}000$"
        ],
-       "rationale": "Round every number to 1 significant figure, work out the top, then divide.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-e-estimate-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold. Round each number to 1 s.f. first. Dividing by 0.5 is the sticking point: say 'divide by a half is the same as double'. The third question is a spare.",
-   "built": "j6z8kh"
+   "built": "j6z8kh",
+   "title": "Estimating a calculation",
+   "family": "teach"
   },
   {
    "id": "nr-e-bestbuy",
-   "family": "teach",
-   "title": "Money: which is the best buy?",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-e-bestbuy-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-buy-1",
-       "title": "Plan X: £5 a month plus 4p for each text. Plan Y: 6p for each text. Sam sends 150 texts. Which plan is cheaper?",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Plan X: £5 a month plus 4p for each text. Plan Y: 6p for each text. Sam sends 150 texts. Which plan is cheaper?"
-       ],
+       "title": "Plan X: £5 a month plus 4p for each text. Plan Y: 6p for each text. Sam sends 150 texts. Which plan is cheaper?",
        "answer": [
         "Plan Y (£9 against £11)"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Plan X: £5 a month plus 4p for each text. Plan Y: 6p for each text. Sam sends 150 texts. Which plan is cheaper?"
+       ],
+       "rationale": "Cost each plan for the same number of texts in the same unit, then compare.",
        "explanation": [
         "Plan X: 150 × 4p = 600p = £6, then £6 + £5 = £11.",
         "Plan Y: 150 × 6p = 900p = £9.",
         "£9 is less than £11, so Plan Y is cheaper."
        ],
-       "rationale": "Cost each plan for the same number of texts in the same unit, then compare.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-buy-2",
-       "title": "A phone plan charges 4p a minute for the first 20 minutes and 6p a minute after that. How much is a 50-minute call?",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "A phone plan charges 4p a minute for the first 20 minutes and 6p a minute after that. How much is a 50-minute call?"
-       ],
+       "title": "A phone plan charges 4p a minute for the first 20 minutes and 6p a minute after that. How much is a 50-minute call?",
        "answer": [
         "£2.60"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "A phone plan charges 4p a minute for the first 20 minutes and 6p a minute after that. How much is a 50-minute call?"
+       ],
+       "rationale": "A tiered price: cost each band separately, then add.",
        "explanation": [
         "First 20 minutes: 20 × 4p = 80p.",
         "The other 30 minutes: 30 × 6p = 180p.",
         "Total: 80p + 180p = 260p = £2.60."
        ],
-       "rationale": "A tiered price: cost each band separately, then add.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-buy-3",
-       "title": "Taxi A charges £3 plus 80p a mile. Taxi B charges £1.50 a mile. Which is cheaper for 5 miles, and by how much?",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Taxi A charges £3 plus 80p a mile. Taxi B charges £1.50 a mile. Which is cheaper for 5 miles, and by how much?"
-       ],
+       "title": "Taxi A charges £3 plus 80p a mile. Taxi B charges £1.50 a mile. Which is cheaper for 5 miles, and by how much?",
        "answer": [
         "Taxi A, by £0.50 (£7 against £7.50)"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Taxi A charges £3 plus 80p a mile. Taxi B charges £1.50 a mile. Which is cheaper for 5 miles, and by how much?"
+       ],
+       "rationale": "Same method with mixed pounds and pence: change everything to pence first, or everything to pounds.",
        "explanation": [
         "Taxi A: 5 × 80p = 400p = £4, then £4 + £3 = £7.",
         "Taxi B: 5 × £1.50 = £7.50.",
         "£7 is less than £7.50, so Taxi A is cheaper by £0.50."
        ],
-       "rationale": "Same method with mixed pounds and pence: change everything to pence first, or everything to pounds.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-e-bestbuy-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold. Cost every option in the same unit, then compare in a sentence (the last mark on the test). The third question is a spare.",
-   "built": "16kihaz"
+   "built": "16kihaz",
+   "title": "Money: which is the best buy?",
+   "family": "teach"
   },
   {
    "id": "nr-d-primes",
-   "family": "teach",
-   "title": "Prime factors",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-d-primes-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-pf-1",
-       "title": "Write $90$ as a product of its prime factors",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write $90$ as a product of its prime factors."
-       ],
+       "title": "Write $90$ as a product of its prime factors",
        "answer": [
         "$90 = 2 \\times 3^{2} \\times 5$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Write $90$ as a product of its prime factors."
+       ],
+       "rationale": "A factor tree, circle the primes, then write the product in order.",
        "explanation": [
         "Split into a pair of factors: $90 = 9 \\times 10$.",
         "Keep splitting until every branch ends in a prime: $9 = 3 \\times 3$, $\\;10 = 2 \\times 5$.",
         "Write the primes in order: $90 = 2 \\times 3 \\times 3 \\times 5$",
         "In index form: $90 = 2 \\times 3^{2} \\times 5$"
        ],
-       "rationale": "A factor tree, circle the primes, then write the product in order.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-pf-2",
-       "title": "Write $140$ as a product of its prime factors",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write $140$ as a product of its prime factors."
-       ],
+       "title": "Write $140$ as a product of its prime factors",
        "answer": [
         "$140 = 2^{2} \\times 5 \\times 7$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Write $140$ as a product of its prime factors."
+       ],
+       "rationale": "A factor tree, circle the primes, then write the product in order.",
        "explanation": [
         "Split into a pair of factors: $140 = 14 \\times 10$.",
         "Keep splitting until every branch ends in a prime: $14 = 2 \\times 7$, $\\;10 = 2 \\times 5$.",
         "Write the primes in order: $140 = 2 \\times 2 \\times 5 \\times 7$",
         "In index form: $140 = 2^{2} \\times 5 \\times 7$"
        ],
-       "rationale": "A factor tree, circle the primes, then write the product in order.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-pf-3",
-       "title": "Write $252$ as a product of its prime factors",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write $252$ as a product of its prime factors."
-       ],
+       "title": "Write $252$ as a product of its prime factors",
        "answer": [
         "$252 = 2^{2} \\times 3^{2} \\times 7$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Write $252$ as a product of its prime factors."
+       ],
+       "rationale": "A factor tree, circle the primes, then write the product in order.",
        "explanation": [
         "Split into a pair of factors: $252 = 4 \\times 63$.",
         "Keep splitting until every branch ends in a prime: $4 = 2 \\times 2$, $\\;63 = 3 \\times 3 \\times 7$.",
         "Write the primes in order: $252 = 2 \\times 2 \\times 3 \\times 3 \\times 7$",
         "In index form: $252 = 2^{2} \\times 3^{2} \\times 7$"
        ],
-       "rationale": "A factor tree, circle the primes, then write the product in order.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-d-primes-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold. Students draw the tree on their boards. The third question is a spare.",
-   "built": "z0hxfz"
+   "built": "z0hxfz",
+   "title": "Prime factors",
+   "family": "teach"
   },
   {
    "id": "nr-d-hcf",
-   "family": "teach",
-   "title": "HCF from prime factors",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-d-hcf-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
        "id": "nr-hcf-1",
-       "title": "$126 = 2 \\times 3^{2} \\times 7$ and $84 = 2^{2} \\times 3 \\times 7$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$126 = 2 \\times 3^{2} \\times 7$ and $84 = 2^{2} \\times 3 \\times 7$",
+       "answer": [
+        "$42$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$126 = 2 \\times 3^{2} \\times 7$ and $84 = 2^{2} \\times 3 \\times 7$.",
         "Find the HCF of $126$ and $84$."
        ],
-       "answer": [
-        "$42$"
-       ],
+       "rationale": "Both numbers' primes are shown: take every prime they share, at the lower power, and multiply.",
        "explanation": [
         "Circle the primes that are in both: $2, 3, 7$.",
         "Multiply them: $2 \\times 3 \\times 7 = 42$",
         "The HCF of $126$ and $84$ is $42$."
        ],
-       "rationale": "Both numbers' primes are shown: take every prime they share, at the lower power, and multiply.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-hcf-2",
-       "title": "$150 = 2 \\times 3 \\times 5^{2}$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
+       "title": "$150 = 2 \\times 3 \\times 5^{2}$",
+       "answer": [
+        "$210 = 2 \\times 3 \\times 5 \\times 7$ and HCF $= 30$"
+       ],
        "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
        "question": [
         "$150 = 2 \\times 3 \\times 5^{2}$.",
         "Write $210$ as a product of primes, then find the HCF of $150$ and $210$."
        ],
-       "answer": [
-        "$210 = 2 \\times 3 \\times 5 \\times 7$ and HCF $= 30$"
-       ],
+       "rationale": "As the test asks: write one number in primes yourself, use the other as given, then take the shared primes.",
        "explanation": [
         "$210 = 2 \\times 3 \\times 5 \\times 7 = 2 \\times 3 \\times 5 \\times 7$",
         "The primes in both: $2, 3, 5$.",
         "$2 \\times 3 \\times 5 = 30$, so the HCF of $150$ and $210$ is $30$."
        ],
-       "rationale": "As the test asks: write one number in primes yourself, use the other as given, then take the shared primes.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       },
       {
-       "version": 2,
        "id": "nr-hcf-3",
-       "title": "Find the HCF of $132$ and $198$",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Find the HCF of $132$ and $198$."
-       ],
+       "title": "Find the HCF of $132$ and $198$",
        "answer": [
         "$66$"
        ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Find the HCF of $132$ and $198$."
+       ],
+       "rationale": "Prime factors of both, then the shared primes.",
        "explanation": [
         "$132 = 2^{2} \\times 3 \\times 11$ and $198 = 2 \\times 3^{2} \\times 11$",
         "The primes in both: $2, 3, 11$.",
         "$2 \\times 3 \\times 11 = 66$, so the HCF is $66$."
        ],
-       "rationale": "Prime factors of both, then the shared primes.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
+       "expectedErrors": []
       }
      ],
-     "id": "nr-d-hcf-1",
      "visualiser": false
     }
    ],
    "brief": "Question 1 is cold: both prime forms are given. Question 2 has one given, as on the test. The third question is a spare.",
-   "built": "mxf9ml"
+   "built": "mxf9ml",
+   "title": "HCF from prime factors",
+   "family": "teach"
   },
   {
-   "id": "nr-b-order",
-   "family": "teach",
-   "title": "Order of operations",
+   "id": "nr-c-closest",
    "els": [
     {
-     "kind": "questions",
+     "h": 852,
+     "w": 1504,
      "x": 48,
      "y": 24,
-     "w": 1504,
-     "h": 852,
+     "id": "nr-c-closest-1",
+     "kind": "questions",
      "size": 56,
      "items": [
       {
-       "version": 2,
-       "id": "nr-bod-1",
-       "title": "Work out $2 + 3 \\times 4 - 1$",
+       "id": "nr-cl-1",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $2 + 3 \\times 4 - 1$."
-       ],
+       "title": "Which is closest to $\\dfrac{1}{4}$?",
        "answer": [
-        "$13$"
+        "$\\dfrac{6}{25}$"
        ],
-       "explanation": [
-        "Multiply first: $3 \\times 4 = 12$.",
-        "$2 + 12 - 1$",
-        "Add and subtract from left to right: $13$"
-       ],
-       "rationale": "Multiplication before addition and subtraction.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Which is closest to $\\dfrac{1}{4}$?",
+        "$0.22 \\qquad \\dfrac{3}{10} \\qquad 0.27 \\qquad \\dfrac{6}{25}$"
+       ],
+       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
+       "explanation": [
+        "Write everything as a decimal: $\\dfrac{1}{4} = 0.25$, $\\dfrac{3}{10} = 0.3$, $\\dfrac{6}{25} = 0.24$.",
+        "Find how far each is from $0.25$: $0.03, \\; 0.05, \\; 0.02, \\; 0.01$",
+        "The smallest gap is $0.01$, so $\\dfrac{6}{25}$ is closest."
+       ],
+       "expectedErrors": []
       },
       {
-       "version": 2,
-       "id": "nr-bod-2",
-       "title": "Add one pair of brackets so that",
+       "id": "nr-cl-2",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Add one pair of brackets so that",
-        "$2 + 3 \\times 4 - 1 = 19$"
-       ],
+       "title": "Which is closest to $\\dfrac{1}{5}$?",
        "answer": [
-        "$(2 + 3) \\times 4 - 1 = 19$"
+        "$0.18$"
        ],
-       "explanation": [
-        "Try bracketing $2 + 3$: $(2 + 3) \\times 4 - 1$.",
-        "Bracket first: $5 \\times 4 - 1$.",
-        "Multiply, then subtract: $20 - 1 = 19$"
-       ],
-       "rationale": "Brackets change the order; try the placements and check.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Which is closest to $\\dfrac{1}{5}$?",
+        "$0.18 \\qquad \\dfrac{3}{20} \\qquad 0.23 \\qquad \\dfrac{4}{25}$"
+       ],
+       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
+       "explanation": [
+        "Write everything as a decimal: $\\dfrac{1}{5} = 0.2$, $\\dfrac{3}{20} = 0.15$, $\\dfrac{4}{25} = 0.16$.",
+        "Find how far each is from $0.2$: $0.02, \\; 0.05, \\; 0.03, \\; 0.04$",
+        "The smallest gap is $0.02$, so $0.18$ is closest."
+       ],
+       "expectedErrors": []
       },
       {
-       "version": 2,
-       "id": "nr-bod-3",
-       "title": "Dev works out $6 \\times (10 - 4)$",
+       "id": "nr-cl-3",
        "tool": "number-recap-y9",
        "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Dev works out $6 \\times (10 - 4)$.",
-        "His working: $6 \\times (10 - 4) = 60 - 4 = 56$",
-        "What mistake has he made?"
-       ],
+       "title": "Which is closest to $\\dfrac{3}{4}$?",
        "answer": [
-        "He multiplied by $10$ and ignored the bracket: it is $36$"
+        "$\\dfrac{37}{50}$"
        ],
-       "explanation": [
-        "He did $6 \\times 10$ first, but the bracket must be worked out first.",
-        "Bracket first: $10 - 4 = 6$.",
-        "Then $6 \\times 6 = 36$."
-       ],
-       "rationale": "Brackets come first, even when the multiplication is written before them.",
-       "expectedErrors": [],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
        "followUp": "",
-       "status": "ready"
+       "question": [
+        "Which is closest to $\\dfrac{3}{4}$?",
+        "$0.72 \\qquad \\dfrac{4}{5} \\qquad 0.78 \\qquad \\dfrac{37}{50}$"
+       ],
+       "rationale": "Convert to decimals, then compare the distance from the target. The biggest or smallest is not the answer.",
+       "explanation": [
+        "Write everything as a decimal: $\\dfrac{3}{4} = 0.75$, $\\dfrac{4}{5} = 0.8$, $\\dfrac{37}{50} = 0.74$.",
+        "Find how far each is from $0.75$: $0.03, \\; 0.05, \\; 0.03, \\; 0.01$",
+        "The smallest gap is $0.01$, so $\\dfrac{37}{50}$ is closest."
+       ],
+       "expectedErrors": []
       }
      ],
-     "id": "nr-b-order-1",
      "visualiser": false
     }
    ],
-   "brief": "Question 1 is cold. Question 3 is the error-spot; the sentence 'he did ... but should have done ...' is the answer. The third question is a spare.",
-   "built": "1vumadv"
-  },
-  {
-   "id": "nr-a-negatives",
-   "family": "teach",
-   "title": "Negatives and squares",
-   "els": [
-    {
-     "kind": "questions",
-     "x": 48,
-     "y": 24,
-     "w": 1504,
-     "h": 852,
-     "size": 56,
-     "items": [
-      {
-       "version": 2,
-       "id": "nr-neg-1",
-       "title": "Write in order, smallest first:",
-       "tool": "number-recap-y9",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Write in order, smallest first:",
-        "$-9, \\quad 4, \\quad -2, \\quad -15, \\quad 0$"
-       ],
-       "answer": [
-        "$-15, \\; -9, \\; -2, \\; 0, \\; 4$"
-       ],
-       "explanation": [
-        "The negatives are smallest, and the bigger the number after the minus sign, the smaller the number: $-15 < -9 < -2$.",
-        "Then $0$, then $4$."
-       ],
-       "rationale": "Order on a number line, negatives first.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "nr-neg-2",
-       "title": "Work out $(-6)^2$",
-       "tool": "number-recap-y9",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Work out $(-6)^2$.",
-        "Then work out $-6^2$."
-       ],
-       "answer": [
-        "$(-6)^2 = 36$ and $-6^2 = -36$"
-       ],
-       "explanation": [
-        "$(-6)^2 = -6 \\times -6 = 36$, since a negative times a negative is positive.",
-        "$-6^2$: square the $6$ first, then make it negative: $-(6 \\times 6) = -36$."
-       ],
-       "rationale": "The brackets decide what is squared.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      },
-      {
-       "version": 2,
-       "id": "nr-neg-3",
-       "title": "Zoe says $(-5)^2 = -25$",
-       "tool": "number-recap-y9",
-       "level": "level1",
-       "purpose": "practice",
-       "format": "open",
-       "question": [
-        "Zoe says $(-5)^2 = -25$.",
-        "What mistake has she made?"
-       ],
-       "answer": [
-        "She squared only the $5$ and kept the minus: $(-5)^2 = 25$"
-       ],
-       "explanation": [
-        "She worked out $5 \\times 5 = 25$ and put the minus back on.",
-        "$(-5)^2$ means $-5 \\times -5$, and a negative times a negative is positive: $25$."
-       ],
-       "rationale": "Squaring a negative gives a positive.",
-       "expectedErrors": [],
-       "followUp": "",
-       "status": "ready"
-      }
-     ],
-     "id": "nr-a-negatives-1",
-     "visualiser": false
-    }
-   ],
-   "brief": "Question 1 is cold. Squaring a negative is the idea to leave them with (the test asks whether a squared negative can be negative). The third question is a spare.",
-   "built": "1eh7aqr"
+   "brief": "Question 1 is cold. The point is the distance from the target, not which is biggest. The third question is a spare.",
+   "built": "wgwrvu",
+   "title": "Which is closest to a fraction?",
+   "family": "teach"
   },
   {
    "id": "nr-tally",
-   "family": "teach",
-   "title": "Friday's list",
    "els": [
     {
-     "kind": "text",
+     "h": 100,
+     "w": 1400,
      "x": 100,
      "y": 60,
-     "w": 1400,
-     "h": 100,
-     "text": "Friday's list",
-     "size": 64,
-     "colour": "#0f172a",
+     "id": "nr-tally-1",
      "bold": true,
-     "id": "nr-tally-1"
+     "kind": "text",
+     "size": 64,
+     "text": "Friday's list",
+     "colour": "#0f172a"
     },
     {
-     "kind": "text",
+     "h": 60,
+     "w": 1400,
      "x": 100,
      "y": 165,
-     "w": 1400,
-     "h": 60,
-     "text": "Which blocks had fewer than 6 in 10 right on question 1?",
+     "id": "nr-tally-2",
+     "kind": "text",
      "size": 40,
-     "colour": "#64748b",
-     "id": "nr-tally-2"
+     "text": "Which blocks had fewer than 6 in 10 right on question 1?",
+     "colour": "#64748b"
     },
     {
-     "kind": "board",
+     "h": 600,
+     "w": 1400,
      "x": 100,
      "y": 250,
-     "w": 1400,
-     "h": 600,
+     "id": "nr-tally-3",
+     "fill": "structure",
      "grid": {
       "head": [
        "Block",
        "Right on Q1"
       ],
-      "given": 1,
       "rows": [
        [
         "Decimals and scaling",
@@ -1070,14 +1065,19 @@
         "Negatives and squares",
         ""
        ]
-      ]
+      ],
+      "given": 1
      },
-     "fill": "structure",
-     "size": 46,
-     "id": "nr-tally-3"
+     "kind": "board",
+     "size": 46
     }
    ],
-   "built": "10ky3qs"
+   "built": "10ky3qs",
+   "title": "Friday's list",
+   "family": "teach"
   }
- ]
+ ],
+ "strand": "Number",
+ "summary": "A whiteboard recap before the Year 9 Number 1 assessment, in order of the marks each block carries: decimals, scaling and multiplying; estimating and money; prime factors and HCF; order of operations; negatives and squares. Question 1 of each block is cold and gives the tally for the next lesson's starter.",
+ "questionVersion": 2
 }
