@@ -21,10 +21,11 @@ export default function DecksTab() {
   const unlocked = useDevMode();
   const phone = usePhoneDevice();
   const [view, setView] = useView();
+  if (!unlocked) return <PublishedList />;                        // classes are for signed-in use: signed out there is only the published list
   return (
     <>
       <ViewSwitch view={view} onChange={setView} />
-      {view === 'class' ? <ClassView admin={unlocked} canEdit={!phone} /> : unlocked ? <EditableList viewOnly={phone} /> : <PublishedList />}
+      {view === 'class' ? <ClassView canEdit={!phone} /> : <EditableList viewOnly={phone} />}
     </>
   );
 }

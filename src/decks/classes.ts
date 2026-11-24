@@ -1,5 +1,5 @@
-// The class view's data: a class's decks (light, no preview) read one class at a time, and the admin's choice of classes for a deck.
-// Public reads show published decks only; the admin reads (and every change) send the admin key. Nothing here loads a deck or its first slide.
+// The class view's data: a class's decks (with their first slides, for the cards) read one class at a time, when it is clicked, and the choice of
+// classes for a deck. The class view is for signed-in use, so every read and change sends the admin key.
 import { useCallback, useEffect, useState } from "react";
 import type { ClassDeck } from "../../api/_classes";
 import { DEV_PASSWORD } from "../devAccess";
@@ -8,19 +8,18 @@ export type { ClassDeck };
 const URL_ = "/api/decks";
 /** True when the response came from the decks service (a dev server answers every path with the app's own page). */
 const fromService = (res: Response) => (res.headers.get("content-type") ?? "").includes("json");
-const admin = { headers: { "x-admin-key": DEV_PASSWORD } };
 
-async function read<T>(query: string, isAdmin: boolean): Promise<T | null> {
+async function read<T>(query: string): Promise<T | null> {
   try {
-    const res = await fetch(`${URL_}?${query}`, isAdmin ? admin : undefined);
+    const res = await fetch(`${URL_}?${query}`, { headers: { "x-admin-key": DEV_PASSWORD } });
     return res.ok && fromService(res) ? ((await res.json()) as T) : null;
   } catch { return null; }
 }
 
-/** How many published decks each class has (public), or every deck's count (admin). null when the service is not reachable. */
-const fetchClassCounts = (isAdmin: boolean) => read<{ counts: Record<string, number>; byDeck?: Record<string, string[]>; decks?: { id: string; title: string }[] }>(isAdmin ? "classes=all" : "classes", isAdmin);
-/** One class's decks, most recently made first. null when the service is not reachable. */
-const fetchClassDecks = async (classId: string, isAdmin: boolean) => (await read<{ decks: ClassDeck[] }>(`class=${encodeURIComponent(classId)}${isAdmin ? "&all=1" : ""}`, isAdmin))?.decks ?? null;
+/** How many decks each class has, which classes each deck is in, and every deck's title for the picker. null when the service is not reachable. */
+const fetchClassCounts = () => read<{ counts: Record<string, number>; byDeck: Record<string, string[]>; decks: { id: string; title: string }[] }>("classes=all");
+/** One class's decks, most recently made first, each with its first slide. null when the service is not reachable. */
+const fetchClassDecks = async (classId: string) => (await read<{ decks: ClassDeck[] }>(`class=${encodeURIComponent(classId)}`))?.decks ?? null;
 
 /** Sets the classes a deck is used with. Resolves to null when it worked, else the reason in words. */
 export async function setDeckClasses(deckId: string, classIds: string[]): Promise<string | null> {
@@ -33,27 +32,27 @@ export async function setDeckClasses(deckId: string, classIds: string[]): Promis
 }
 
 /** One class's decks for a page: undefined while loading, null when unavailable. `reload` asks again (after a change). */
-export function useClassDecks(classId: string | null, isAdmin: boolean, reload: number): ClassDeck[] | null | undefined {
+export function useClassDecks(classId: string | null, reload: number): ClassDeck[] | null | undefined {
   const [state, setState] = useState<{ key: string; decks: ClassDeck[] | null } | undefined>(undefined);
-  const key = classId ? `${classId}|${isAdmin}|${reload}` : "";
+  const key = classId ? `${classId}|${reload}` : "";
   useEffect(() => {
     if (!classId) return;
     let on = true;
-    void fetchClassDecks(classId, isAdmin).then((decks) => { if (on) setState({ key, decks }); });
+    void fetchClassDecks(classId).then((decks) => { if (on) setState({ key, decks }); });
     return () => { on = false; };
-  }, [classId, isAdmin, key]);
+  }, [classId, key]);
   return !classId ? undefined : state?.key === key ? state.decks : undefined;
 }
 
-/** The counts (and, for the admin, each deck's classes and the picker's titles): undefined while loading, null when unavailable. */
-export function useClassCounts(isAdmin: boolean, reload: number) {
+/** The counts, each deck's classes and the picker's titles: undefined while loading, null when unavailable. */
+export function useClassCounts(reload: number) {
   const [state, setState] = useState<{ key: string; data: Awaited<ReturnType<typeof fetchClassCounts>> } | undefined>(undefined);
-  const key = `${isAdmin}|${reload}`;
+  const key = `${reload}`;
   useEffect(() => {
     let on = true;
-    void fetchClassCounts(isAdmin).then((data) => { if (on) setState({ key, data }); });
+    void fetchClassCounts().then((data) => { if (on) setState({ key, data }); });
     return () => { on = false; };
-  }, [isAdmin, key]);
+  }, [key]);
   return state?.key === key ? state.data : undefined;
 }
 

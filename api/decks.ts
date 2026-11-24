@@ -11,10 +11,8 @@
 // GET  /api/decks?categories              → { categories, filing }: the two-level category tree and which published deck is filed where (anyone may read; cached a minute)
 // GET  /api/decks?categories=all          → the same with every deck's filing (admin)
 // POST /api/decks {categories: <op>}      → change the tree or the filing: add / rename / move / setParent / delete a category, or file a deck (api/_categories.ts); answers with the whole tree and filing
-// GET  /api/decks?classes                 → { counts }: how many published decks each class has (anyone may read; cached a minute)
 // GET  /api/decks?classes=all             → { counts, byDeck, decks }: every deck's classes, and every deck's id and title for the picker (admin)
-// GET  /api/decks?class=<id>              → { decks }: the published decks used with one class, most recently made first, light (no preview; anyone may read; cached a minute)
-// GET  /api/decks?class=<id>&all=1        → the same with every deck, published or not (admin)
+// GET  /api/decks?class=<id>              → { decks }: the decks used with one class, most recently made first, each with its first slide for the card (admin)
 // POST /api/decks {classes: {deckId, classIds}} → set the classes a deck is used with (api/_classes.ts)
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
 // Everything except the published and categories GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
@@ -65,18 +63,13 @@ export async function GET(req: Request) {
     return value ? json(value, 200, PUBLIC_CACHE) : json({ error: "Not published" }, 404);
   }
   const cls = params.get("class"), clsAll = params.get("classes");
-  if (cls !== null && params.get("all") === null) {       // the public class read: published decks only, no previews
-    if (!validClass(cls)) return json({ error: "Bad class" }, 400);
-    const db = getDb(); await ensureSchema(db); return json({ decks: await decksInClass(db, cls, true) }, 200, PUBLIC_CACHE);
-  }
-  if (clsAll === "") { const db = getDb(); await ensureSchema(db); return json({ counts: (await classSummary(db, true)).counts }, 200, PUBLIC_CACHE); }
   const cats = params.get("categories");
   if (cats === "") { const db = getDb(); await ensureSchema(db); return json(await listCategories(db, { publishedOnly: true }), 200, PUBLIC_CACHE); }   // the public read: published decks only
   const denied = authorised(req);
   if (denied) return denied;
   const db = getDb(); await ensureSchema(db);
   if (cats === "all") return json(await listCategories(db));
-  if (cls !== null) { if (!validClass(cls)) return json({ error: "Bad class" }, 400); return json({ decks: await decksInClass(db, cls, false) }); }
+  if (cls !== null) { if (!validClass(cls)) return json({ error: "Bad class" }, 400); return json({ decks: await decksInClass(db, cls, false) }); }       // the class view is for signed-in use only
   if (clsAll === "all") return json({ ...(await classSummary(db, false)), decks: await deckTitles(db) });
   const hist = params.get("history");
   if (hist !== null) {
