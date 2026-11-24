@@ -86,3 +86,37 @@ export function flatten(folders: Folder[]): { folder: Folder; depth: number }[] 
   walk(null, 0);
   return out;
 }
+
+// ── Sorting, search and the choices remembered on this device ──
+
+export type SortBy = "made" | "edited" | "name";
+export const SORTS: readonly SortBy[] = ["made", "edited", "name"];
+export const SORT_LABEL: Record<SortBy, string> = { made: "Most recently made", edited: "Last edited", name: "Name (A to Z)" };
+
+/** The decks in the order asked for: newest made or newest edited first, or by name (numbers in names count as numbers, so "Unit 2" comes before "Unit 10"). */
+export function sortDecks(decks: FolderDeck[], by: SortBy): FolderDeck[] {
+  const stable = (a: FolderDeck, b: FolderDeck) => (a.id < b.id ? -1 : 1);
+  if (by === "name") return [...decks].sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true, sensitivity: "base" }) || stable(a, b));
+  const when = (d: FolderDeck) => (by === "made" ? d.madeAt : d.updatedAt);
+  return [...decks].sort((a, b) => when(b).localeCompare(when(a)) || stable(a, b));
+}
+
+/** A choice kept on this device (a sort order, grid or list). Anything else stored there is ignored. */
+export function usePref<T extends string>(key: string, allowed: readonly T[], fallback: T): [T, (v: T) => void] {
+  const [value, set] = useState<T>(() => { try { const v = localStorage.getItem(key); return allowed.includes(v as T) ? (v as T) : fallback; } catch { return fallback; } });
+  return [value, (v) => { set(v); try { localStorage.setItem(key, v); } catch { /* the choice just is not remembered */ } }];
+}
+
+const SEARCH_WAIT_MS = 300;
+/** Decks matching the text, from every folder, read a moment after typing stops: undefined while waiting (or when there is no text), null when the service is not reachable. */
+export function useSearch(text: string, pub: boolean): FolderDeck[] | null | undefined {
+  const [state, setState] = useState<{ key: string; decks: FolderDeck[] | null } | undefined>(undefined);
+  const key = `${text}|${pub}`;
+  useEffect(() => {
+    if (!text) return;
+    let on = true;
+    const timer = window.setTimeout(() => { void read<{ decks: FolderDeck[] }>(`search=${encodeURIComponent(text)}`, pub).then((r) => { if (on) setState({ key, decks: r?.decks ?? null }); }); }, SEARCH_WAIT_MS);
+    return () => { on = false; window.clearTimeout(timer); };
+  }, [text, pub, key]);
+  return text && state?.key === key ? state.decks : undefined;
+}

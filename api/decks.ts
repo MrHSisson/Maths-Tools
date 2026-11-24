@@ -11,6 +11,7 @@
 // GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, unfiled, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, how many are in none, and every deck's id and title (admin)
 // GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin). `folder=unfiled&of=<tree>` is the decks in no folder of that tree
 // GET  /api/decks?folders=topic&public=1  → the same for everyone: published decks only, only the folders that lead to one, no titles list (cached a minute). `?folder=<id>&public=1` likewise. The class tree is signed-in only
+// GET  /api/decks?search=<text>           → { decks }: decks whose title or summary contains the text, across every folder, most recently made first, up to 60, each with its first slide (admin; with &public=1 anyone, published decks only)
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
@@ -20,7 +21,7 @@
 import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
 import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, newestSnapshotAt, putPublished, readDeck, removeDeck, removePublished, writeDeck } from "./_deckStore.js";
-import { applyFolderOp, decksInFolder, fileNewDeckByStrand, listTree, parseFolderOp, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
+import { applyFolderOp, decksInFolder, fileNewDeckByStrand, listTree, parseFolderOp, searchDecks, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
 import { MAX_SNAPSHOTS, checkDeck, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
@@ -60,7 +61,10 @@ export async function GET(req: Request) {
     const value = await getPublished(db, published);
     return value ? json(value, 200, PUBLIC_CACHE) : json({ error: "Not published" }, 404);
   }
-  const folder = params.get("folder"), tree = params.get("folders");
+  const folder = params.get("folder"), tree = params.get("folders"), search = params.get("search");
+  const searchText = search === null ? null : search.replace(/\s+/g, " ").trim();
+  if (search !== null && (!searchText || searchText.length > 80)) return json({ error: "Search for 1 to 80 characters" }, 400);
+  if (searchText !== null && params.get("public") !== null) { const db = getDb(); await ensureSchema(db); return json({ decks: await searchDecks(db, searchText, { publicOnly: true }) }, 200, PUBLIC_CACHE); }
   if (params.get("public") !== null && (folder !== null || tree !== null)) {       // the read anyone may make: published decks in the topic tree
     const db = getDb(); await ensureSchema(db);
     if (tree !== null) return tree === "topic" ? json(await listTree(db, "topic", { publicOnly: true }), 200, PUBLIC_CACHE) : json({ error: "Not available" }, 404);
@@ -71,6 +75,7 @@ export async function GET(req: Request) {
   const denied = authorised(req);
   if (denied) return denied;
   const db = getDb(); await ensureSchema(db);
+  if (searchText !== null) return json({ decks: await searchDecks(db, searchText) });
   if (folder !== null) {                              // the folder view is for signed-in use only
     if (!validFolderId(folder)) return json({ error: "Bad folder" }, 400);
     const of = params.get("of");

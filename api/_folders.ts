@@ -9,7 +9,7 @@ export const TREES: Tree[] = ["class", "topic"];
 export const validTree = (v: unknown): v is Tree => typeof v === "string" && (TREES as string[]).includes(v);
 export interface Folder { id: string; tree: Tree; name: string; /** null for a top-level folder; another folder's id otherwise. */ parent: string | null; position: number }
 /** A deck as a folder lists it: its summary and its first slide for the card, with when it was made. Only the opened folder's decks are read. */
-export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; published: boolean; preview?: unknown }
+export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; /** When it was last saved (for the public read, when it was last published). */ updatedAt: string; published: boolean; preview?: unknown }
 type Row = Record<string, unknown>;
 
 export const MAX_NAME = 60;
@@ -146,13 +146,29 @@ export async function decksInFolder(db: Db, folderId: string, o: { publicOnly?: 
     cond = (id) => `EXISTS (SELECT 1 FROM maths.deck_folder_items i WHERE i.deck_id = ${id} AND i.folder_id = $1)`;
   }
   const rows = o.publicOnly
-    ? await db.query<Row>(`SELECT p.id, p.title, p.summary, p.slides, p.preview, COALESCE(d.created_at, p.published_at) AS made
-        FROM maths.published_decks p LEFT JOIN maths.decks d ON d.id = p.id WHERE ${cond("p.id")} ORDER BY made DESC, p.id`, [param])
-    : await db.query<Row>(`SELECT d.id, d.title, d.summary, d.slides,
-        CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END AS preview,
-        COALESCE(d.created_at, d.updated_at) AS made, (p.id IS NOT NULL) AS published
-        FROM maths.decks d LEFT JOIN maths.published_decks p ON p.id = d.id WHERE ${cond("d.id")} ORDER BY made DESC, d.id`, [param]);
-  return rows.map((r) => ({ id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, published: o.publicOnly ? true : r.published === true, ...(r.preview ? { preview: r.preview } : {}) }));
+    ? await db.query<Row>(`SELECT ${PUBLIC_COLUMNS} FROM maths.published_decks p LEFT JOIN maths.decks d ON d.id = p.id WHERE ${cond("p.id")} ORDER BY made DESC, p.id`, [param])
+    : await db.query<Row>(`SELECT ${ADMIN_COLUMNS} FROM maths.decks d LEFT JOIN maths.published_decks p ON p.id = d.id WHERE ${cond("d.id")} ORDER BY made DESC, d.id`, [param]);
+  return rows.map((r) => toDeck(r, !!o.publicOnly));
+}
+
+// What a deck card needs, read the same way wherever decks are listed. The admin read uses the working copy; the public read the published copy.
+const ADMIN_COLUMNS = `d.id, d.title, d.summary, d.slides,
+  CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END AS preview,
+  COALESCE(d.created_at, d.updated_at) AS made, d.updated_at AS edited, (p.id IS NOT NULL) AS published`;
+const PUBLIC_COLUMNS = `p.id, p.title, p.summary, p.slides, p.preview, COALESCE(d.created_at, p.published_at) AS made, p.published_at AS edited`;
+const toDeck = (r: Row, publicOnly: boolean): FolderDeck => ({
+  id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, updatedAt: r.edited as string,
+  published: publicOnly ? true : r.published === true, ...(r.preview ? { preview: r.preview } : {}),
+});
+
+export const MAX_SEARCH_RESULTS = 60;
+/** Decks whose title or summary contains the text (any case), most recently made first, across every folder (and the decks in none). `publicOnly` searches only published decks. */
+export async function searchDecks(db: Db, text: string, o: { publicOnly?: boolean } = {}): Promise<FolderDeck[]> {
+  const like = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = o.publicOnly
+    ? await db.query<Row>(`SELECT ${PUBLIC_COLUMNS} FROM maths.published_decks p LEFT JOIN maths.decks d ON d.id = p.id WHERE p.title ILIKE $1 ESCAPE '\\' OR p.summary ILIKE $1 ESCAPE '\\' ORDER BY made DESC, p.id LIMIT ${MAX_SEARCH_RESULTS}`, [like])
+    : await db.query<Row>(`SELECT ${ADMIN_COLUMNS} FROM maths.decks d LEFT JOIN maths.published_decks p ON p.id = d.id WHERE d.title ILIKE $1 ESCAPE '\\' OR d.summary ILIKE $1 ESCAPE '\\' ORDER BY made DESC, d.id LIMIT ${MAX_SEARCH_RESULTS}`, [like]);
+  return rows.map((r) => toDeck(r, !!o.publicOnly));
 }
 
 /** Replaces the folders a deck is in within one tree (its place in the other tree is left alone). Folders that are not in that tree are ignored. Returns the folders now set. */

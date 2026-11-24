@@ -333,4 +333,63 @@ describe("deck folders", () => {
       expect((await get("?folders=topic", null)).status).toBe(401);
     });
   });
+
+  describe("search and sorting", () => {
+    const named = (id: string, title: string, summary: string, updatedAt: string) => ({ ...deck(id, updatedAt), title, summary });
+    const search = async (q: string, key: string | null = "k", pub = false) => (await get(`?search=${encodeURIComponent(q)}${pub ? "&public=1" : ""}`, key));
+    const ids = async (q: string, pub = false) => ((await (await search(q, pub ? null : "k", pub)).json()) as { decks: FolderDeck[] }).decks.map((d) => d.id);
+
+    it("finds decks by a word in the title or summary, any case, across every folder and the decks in none, newest made first", async () => {
+      await post({ deck: named("a", "Factors and HCF", "Common factors", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("b", "Ratio sharing", "Share in a ratio, with factors", "2026-11-05T10:00:00.000Z") });
+      await post({ deck: named("c", "Estimation", "Round first", "2026-11-09T10:00:00.000Z") });
+      const t = await tree("topic");
+      await file("a", [fid(t, "Number")], "topic");                               // a is in a folder, b is in none
+      expect(await ids("FACTORS")).toEqual(["b", "a"]);
+      expect(await ids("round")).toEqual(["c"]);
+      expect(await ids("nothing like this")).toEqual([]);
+    });
+
+    it("treats % and _ and \\ as ordinary characters, not wildcards", async () => {
+      await post({ deck: named("p", "100% sure", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("q", "Plain", "", "2026-11-02T10:00:00.000Z") });
+      await post({ deck: named("r", "a_b", "", "2026-11-03T10:00:00.000Z") });
+      expect(await ids("%")).toEqual(["p"]);
+      expect(await ids("_")).toEqual(["r"]);
+      expect(await ids("\\")).toEqual([]);
+    });
+
+    it("gives each result its first slide and when it was last saved, for the cards and for sorting", async () => {
+      await post({ deck: named("a", "Alpha", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("a", "Alpha", "", "2026-11-20T10:00:00.000Z") });     // edited later
+      const [d] = ((await (await search("alpha")).json()) as { decks: FolderDeck[] }).decks as (FolderDeck & { updatedAt: string })[];
+      expect(d.preview?.id).toBe("a");
+      expect(d.madeAt).toBe("2026-11-01T10:00:00.000Z");
+      expect(d.updatedAt).toBe("2026-11-20T10:00:00.000Z");
+      const f = fid(await tree(), "7M1");
+      await file("a", [f]);
+      expect(((await inFolder(f)).decks[0] as FolderDeck & { updatedAt: string }).updatedAt).toBe("2026-11-20T10:00:00.000Z");
+    });
+
+    it("is capped at 60 results", async () => {
+      for (let i = 0; i < 65; i++) await post({ deck: named(`d${i}`, `Common title ${i}`, "", `2026-11-01T10:00:${String(i % 60).padStart(2, "0")}.000Z`) });
+      expect((await ids("common")).length).toBe(60);
+    });
+
+    it("the public search sees only published decks, from their published copies, and nothing else", async () => {
+      await post({ deck: named("live", "Public lesson", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("draft", "Public draft", "", "2026-11-02T10:00:00.000Z") });
+      await post({ publish: named("live", "Public lesson", "", "2026-11-01T10:00:00.000Z") });
+      expect(await ids("public", true)).toEqual(["live"]);
+      expect(await ids("public")).toEqual(["draft", "live"]);
+      const [d] = ((await (await search("lesson", null, true)).json()) as { decks: FolderDeck[] }).decks;
+      expect(d.published).toBe(true);
+    });
+
+    it("needs a search of 1 to 80 characters, and the signed-in search needs the key", async () => {
+      expect((await search("   ")).status).toBe(400);
+      expect((await search("x".repeat(81))).status).toBe(400);
+      expect((await search("lesson", null)).status).toBe(401);
+    });
+  });
 });

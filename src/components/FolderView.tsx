@@ -1,7 +1,7 @@
 import { useState, type DragEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Folder as FolderIcon, FolderPlus, Pencil, Trash2, X } from 'lucide-react';
-import { UNFILED, pathTo, sendFolderOp, setDeckFolders, useFolderDecks, useReload, useTree, type Folder, type FolderOp, type Tree } from '../decks/folders';
+import { ChevronLeft, ChevronRight, Folder as FolderIcon, FolderPlus, LayoutGrid, List, Pencil, Search, Trash2, X } from 'lucide-react';
+import { SORTS, SORT_LABEL, UNFILED, pathTo, sendFolderOp, setDeckFolders, sortDecks, usePref, useFolderDecks, useReload, useSearch, useTree, type Folder, type FolderDeck, type FolderOp, type SortBy, type Tree } from '../decks/folders';
 import type { Slide } from '../decks/types';
 import { DeckCard, type GalleryDeck } from './DeckGallery';
 
@@ -10,8 +10,11 @@ const ROOT_NAME: Record<Tree, string> = { class: 'Classes', topic: 'Topics' };
 type Drag = { kind: 'deck' | 'folder'; id: string } | null;
 const iconBtn = 'grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30';
 
-/** Decks as a file explorer: a breadcrumb trail, the opened folder's subfolders as tiles, and its decks as the usual preview cards, most recently made first from
- *  the left. Folders go inside folders, and decks in no folder are under **Not filed**. Only the opened folder's decks (and their first slides) are read. With
+const LAYOUTS = ['grid', 'list'] as const;
+type Layout = (typeof LAYOUTS)[number];
+
+/** Decks as a file explorer: a breadcrumb trail, the opened folder's subfolders as tiles, and its decks as the usual preview cards (or as a list), most recently made
+ *  first from the left unless another order is chosen. A search box looks through every folder. Folders go inside folders, and decks in no folder are under **Not filed**. Only the opened folder's decks (and their first slides) are read. With
  *  `canEdit` (signed in, not on a phone, which only previews) folders can be made, renamed, moved, reordered and deleted, and a card or a folder can be dragged onto
  *  a folder or a breadcrumb. `publicMode` is what anyone sees: the topic tree's published decks only, read-only. */
 export default function FolderView({ tree, canEdit: editable, publicMode = false }: { tree: Tree; canEdit: boolean; publicMode?: boolean }) {
@@ -29,6 +32,11 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
   const realHere = here && here !== UNFILED ? here : null;
   const go = (id: string | null) => setParams((p) => { const n = new URLSearchParams(p); if (id) n.set('folder', id); else n.delete('folder'); return n; }, { replace: true });
   const decks = useFolderDecks(here, tree, reload, publicMode);
+  const [query, setQuery] = useState('');
+  const q = query.replace(/\s+/g, ' ').trim().slice(0, 80);
+  const [sort, setSort] = usePref<SortBy>('mt-decks-sort', SORTS, 'made');
+  const [layout, setLayout] = usePref<Layout>('mt-decks-layout', LAYOUTS, 'grid');
+  const results = useSearch(q, publicMode);
   if (data === null) return <p className="mt-8 text-slate-500">Folders come from the website, so they can't be shown here.</p>;
   if (data === undefined) return <p className="mt-8 text-slate-500" role="status">Loading…</p>;
 
@@ -59,22 +67,74 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
   const lit = (id: string | null) => (over === (id ?? '__root') && drag ? 'bg-blue-50 ring-2 ring-blue-400' : '');
 
   const subtreeDecks = (id: string) => new Set(Object.entries(data.byDeck).filter(([, fs]) => fs.some((f) => inSubtree(f, id))).map(([d]) => d)).size;
-  const cards: GalleryDeck[] = (decks ?? []).map((d) => ({
-    id: d.id, title: d.title, summary: d.summary, slides: d.slides, preview: d.preview as Slide | undefined,
-    badge: d.published ? undefined : 'Not published', notes: [`made ${dateOf(d.madeAt)}`, d.published ? 'published' : 'not published'],
-    action: canEdit && here ? (
+  /** Where a deck is in this tree, for a search result ("A-Level › Further Maths", "+1 more" when it is in several, or "Not filed"). */
+  const pathText = (deckId: string) => {
+    const ids = data.byDeck[deckId] ?? [];
+    const first = ids.length ? byId.get(ids[0]) : undefined;
+    return first ? `${label(first)}${ids.length > 1 ? ` +${ids.length - 1} more` : ''}` : 'Not filed';
+  };
+  /** A deck as a card or row. In a folder it can be taken out of that folder; in search results it only has Edit. */
+  const toCard = (d: FolderDeck, inFolder: boolean): GalleryDeck => ({
+    id: d.id, title: d.title, summary: d.summary, slides: d.slides, preview: d.preview as Slide | undefined, ...(inFolder ? {} : { sub: pathText(d.id) }),
+    badge: d.published ? undefined : 'Not published', notes: [`made ${dateOf(d.madeAt)}`, `edited ${dateOf(d.updatedAt)}`, d.published ? 'published' : 'not published'],
+    action: canEdit ? (
       <>
         <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className={iconBtn}><Pencil size={16} /></Link>
-        {realHere && <button onClick={() => void unfileDeck(d.id)} aria-label={`Take ${d.title} out of ${byId.get(realHere)?.name}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={16} /></button>}
+        {inFolder && realHere && <button onClick={() => void unfileDeck(d.id)} aria-label={`Take ${d.title} out of ${byId.get(realHere)?.name}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={16} /></button>}
       </>
     ) : undefined,
-  }));
+  });
+  const cards = sortDecks(decks ?? [], sort).map((d) => toCard(d, true));
+  const shown = (list: GalleryDeck[], where?: string) => layout === 'list'
+    ? <ul className="divide-y divide-slate-200 rounded-2xl border border-slate-300 bg-white shadow-card">{list.map((d) => <DeckRow key={d.id} d={d} admin={canEdit} onDragStart={(id) => setDrag({ kind: 'deck', id })} onDragEnd={() => { setDrag(null); setOver(null); }} />)}</ul>
+    : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{list.map((d) => <DeckCard key={d.id} d={d} admin={canEdit} where={where} onDragStart={(id) => setDrag({ kind: 'deck', id })} onDragEnd={() => { setDrag(null); setOver(null); }} />)}</div>;
+  const folderMatches = q ? folders.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())).slice(0, 12) : [];
   const hereIds = new Set((decks ?? []).map((d) => d.id));
   const addable = data.decks.filter((d) => !hereIds.has(d.id));
 
+  const controls = (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="flex min-w-[12rem] flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 sm:max-w-md">
+        <Search size={16} className="shrink-0 text-slate-400" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setQuery(''); }} maxLength={80} placeholder="Search every deck" aria-label="Search decks" className="w-full bg-transparent text-sm outline-none" />
+        {query && <button onClick={() => setQuery('')} aria-label="Clear the search" className="text-slate-400 hover:text-slate-700"><X size={14} /></button>}
+      </label>
+      <select value={sort} onChange={(e) => setSort(e.target.value as SortBy)} aria-label="Sort decks" className="rounded-xl border border-slate-300 bg-white px-2 py-2 text-sm text-slate-700">
+        {SORTS.map((o) => <option key={o} value={o}>{SORT_LABEL[o]}</option>)}
+      </select>
+      <div role="group" aria-label="Show decks as" className="flex overflow-hidden rounded-xl border border-slate-300 bg-white">
+        {LAYOUTS.map((l) => (
+          <button key={l} onClick={() => setLayout(l)} aria-pressed={layout === l} aria-label={l === 'grid' ? 'Show as pictures' : 'Show as a list'} title={l === 'grid' ? 'Pictures' : 'List'}
+            className={`grid h-9 w-10 place-items-center ${layout === l ? 'bg-blue-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{l === 'grid' ? <LayoutGrid size={16} /> : <List size={16} />}</button>
+        ))}
+      </div>
+    </div>
+  );
+  if (q) {
+    return (
+      <div className="mt-6">
+        {controls}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <h4 className="text-lg font-semibold text-slate-900">Results for “{q}”</h4>
+          <button onClick={() => setQuery('')} className="text-sm font-semibold text-blue-900 hover:underline">Back to the folders</button>
+        </div>
+        {folderMatches.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2" aria-label="Matching folders">
+            {folderMatches.map((f) => <button key={f.id} onClick={() => { setQuery(''); go(f.id); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-card hover:bg-slate-50"><FolderIcon size={15} className="text-blue-900" />{label(f)}</button>)}
+          </div>
+        )}
+        {results === undefined && <p className="mt-4 text-slate-500" role="status">Searching…</p>}
+        {results === null && <p className="mt-4 text-slate-500">Search comes from the website, so it can't be used here.</p>}
+        {results && results.length === 0 && folderMatches.length === 0 && <p className="mt-4 text-slate-500">No decks match.</p>}
+        {results && results.length > 0 && <div className="mt-4">{shown(sortDecks(results, sort).map((d) => toCard(d, false)))}</div>}
+      </div>
+    );
+  }
+
   return (
     <div className="mt-6">
-      <nav aria-label="Folder path" className="flex flex-wrap items-center gap-1 text-sm">
+      {controls}
+      <nav aria-label="Folder path" className="mt-4 flex flex-wrap items-center gap-1 text-sm">
         <Crumb onClick={() => go(null)} current={!here} extra={{ ...target(null), className: lit(null) }}>{ROOT_NAME[tree]}</Crumb>
         {crumbs.map((c, i) => (
           <span key={c.id} className="flex items-center gap-1"><ChevronRight size={14} className="text-slate-400" />
@@ -127,13 +187,26 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
       {here && decks === null && <p className="mt-5 text-slate-500">This folder's decks can't be listed here.</p>}
       {here && cards.length > 0 && (
         <>
-          <h4 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">Decks <span className="font-normal normal-case text-slate-400">most recently made first</span></h4>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {cards.map((d) => <DeckCard key={d.id} d={d} admin={canEdit} where={here === UNFILED ? 'Not filed' : byId.get(here)?.name} onDragStart={(id) => setDrag({ kind: 'deck', id })} onDragEnd={() => { setDrag(null); setOver(null); }} />)}
-          </div>
+          <h4 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">Decks <span className="font-normal normal-case text-slate-400">{SORT_LABEL[sort].toLowerCase()}{sort === 'name' ? '' : ' first'}</span></h4>
+          {shown(cards, here === UNFILED ? 'Not filed' : byId.get(here)?.name)}
         </>
       )}
     </div>
+  );
+}
+
+/** A deck as one row of a list: its title, a line about it, where it is or when it was made, and the same Edit and take-out buttons as the card. */
+function DeckRow({ d, admin, onDragStart, onDragEnd }: { d: GalleryDeck; admin: boolean; onDragStart: (id: string) => void; onDragEnd: () => void }) {
+  return (
+    <li draggable={admin} data-deck={d.id} onDragStart={admin ? (e) => { e.dataTransfer.setData('text/plain', d.id); e.dataTransfer.effectAllowed = 'move'; onDragStart(d.id); } : undefined} onDragEnd={admin ? onDragEnd : undefined}
+      className={`flex items-center gap-3 px-4 py-3 ${admin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+      <Link to={`/decks/${d.id}`} draggable={false} aria-label={`Play ${d.title}`} className="min-w-0 flex-1 rounded-lg hover:bg-slate-50">
+        <div className="flex flex-wrap items-center gap-2"><span className="font-semibold leading-tight text-slate-900">{d.title}</span>{d.badge && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{d.badge}</span>}</div>
+        {d.summary && <div className="mt-0.5 line-clamp-1 text-sm text-slate-500">{d.summary}</div>}
+        <div className="mt-0.5 truncate text-xs text-slate-400">{[d.sub, `${d.slides} slides`, ...d.notes.slice(0, 2)].filter(Boolean).join(' · ')}</div>
+      </Link>
+      {d.action}
+    </li>
   );
 }
 

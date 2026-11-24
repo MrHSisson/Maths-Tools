@@ -9,6 +9,8 @@ import { CANVAS_W, PITCH_LABEL, type Pitch, type Slide } from '../decks/types';
 
 export interface GalleryDeck {
   id: string; title: string; summary: string; pitch?: Pitch; slides: number; preview?: Slide;
+  /** A small grey line under the title, such as the folder a search result is in. */
+  sub?: string;
   /** A small tag beside the title, such as "Not published". */
   badge?: string;
   /** Lines for the (i): "Published 3 Nov 2026", "Your deck" … */
@@ -52,7 +54,10 @@ export function DeckCard({ d, admin, where, onDragStart, onDragEnd }: {
         {d.badge && <span className="pointer-events-none absolute left-2 top-3 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-slate-500 shadow-sm">{d.badge}</span>}
       </div>
       <div className="mt-2 flex min-h-12 items-center gap-1">
-        <div className="min-w-0 flex-1 font-semibold leading-tight text-slate-900" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{d.title}</div>
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold leading-tight text-slate-900" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{d.title}</div>
+          {d.sub && <div className="mt-0.5 truncate text-xs text-slate-500" title={d.sub}>{d.sub}</div>}
+        </div>
         {d.action}
         <button onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`About ${d.title}`} title="About this deck"
           className={`-mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors ${open ? 'text-blue-900' : 'text-slate-400 hover:text-slate-700'}`}><Info size={18} /></button>
