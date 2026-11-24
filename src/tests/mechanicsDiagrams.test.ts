@@ -395,6 +395,9 @@ describe("mechanics diagrams: every template", () => {
     expect(displayStep(hidden, { stage: "question" })).toBeNull();
     expect(displayStep(hidden, { stage: "working", shown: 4 })).toBeNull();
     expect(displayStep(hidden, { stage: "answer" })).toBeNull();
+    expect(displayStep("blurred", { stage: "question" })).toBe(0);
+    expect(displayStep("blurred", { stage: "working", shown: 2 })).toBe(2);
+    expect(displayStep("blurred", { stage: "answer" })).toBeUndefined();
     const scene = buildHorizontal({ forces: [{ kind: "driving", label: { text: "F" } }] });
     const html = (display: Display, view: Parameters<typeof displayStep>[1]) => renderToStaticMarkup(createElement(MechPicture, { scene, display, view }));
     expect(html("hidden", { stage: "answer" })).toBe("");

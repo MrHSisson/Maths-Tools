@@ -57,9 +57,9 @@ const OPTIONS: ShellOption[] = [
     defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes cos θ and slopes" }, { value: "AS", label: "AS" }],
   },
   {
-    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, or has none.",
+    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, gives it blurred until you press Reveal diagram (so students draw it themselves first), or has none.",
     displayOnly: true, tab: "display", defaultFor: () => "given",
-    choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
+    choices: [{ value: "given", label: "With the question" }, { value: "blurred", label: "Blurred until revealed" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a crate, a car, a climber) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {

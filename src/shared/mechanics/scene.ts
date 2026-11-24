@@ -156,8 +156,9 @@ export const visibleAt = (e: Base, step?: number): boolean => step == null || e.
 
 // ── adding a picture by parts, and when it shows ─────────────────────────────────────────────────────────────────────
 
-/** Does the question show its diagram straight away (`given`), draw it up from nothing as the working goes on (`build`), or never have one (`hidden`)? */
-export type DiagramDisplay = "given" | "build" | "hidden";
+/** Does the question show its diagram straight away (`given`), draw it up from nothing as the working goes on (`build`), never have one (`hidden`), or give it
+ *  blurred until the student presses Reveal (`blurred`: it is `given` once revealed, so students can draw it themselves first)? */
+export type DiagramDisplay = "given" | "build" | "hidden" | "blurred";
 /** Where the picture is being shown: with the question, at a working step (`shown` = how many steps are showing), or at the end with the answer. */
 export type DiagramView = { stage: "question" } | { stage: "working"; shown: number } | { stage: "answer" };
 
@@ -167,8 +168,8 @@ export function displayStep(display: DiagramDisplay, view: DiagramView): number 
   if (display === "hidden") return null;
   switch (view.stage) {
     case "answer": return undefined;
-    case "question": return display === "given" ? 0 : null;
-    case "working": return display === "given" ? view.shown : view.shown <= 0 ? null : view.shown;
+    case "question": return display === "given" || display === "blurred" ? 0 : null;
+    case "working": return display === "given" || display === "blurred" ? view.shown : view.shown <= 0 ? null : view.shown;
   }
 }
 
