@@ -62,11 +62,17 @@ const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number]
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
 /** Does this tab / option's `when` hold for these option values? */
 const whenOk = (w: { key: string; values: string[] } | { key: string; values: string[] }[] | undefined, opts: Record<string, string>): boolean =>
-  !w || (Array.isArray(w) ? w : [w]).every((c) => c.values.includes(opts[c.key]));
+  !w || (Array.isArray(w) ? w : [w]).every((c) => (opts[c.key] ?? "").split(",").some((x) => c.values.includes(x)));
+/** The option values with every multi option that is still following its default replaced by the ticks it shows, so a `when` can read it (a multi option matches when ANY tick is listed). */
+const withTicks = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number, sub: string): Record<string, string> => {
+  const out = { ...opts };
+  for (const o of config.options ?? []) if (o.multi && !out[o.key]) out[o.key] = ticksOf(o, "", level, sub).join(",");
+  return out;
+};
 /** An option that is no longer on offer (its `when` fails) goes back to its default, so a hidden choice can never keep the page on a tab that is not there. */
 const settle = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number): Record<string, string> => {
   const out = { ...opts };
-  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
+  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, withTicks(config, out, level, ""))) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
   return out;
 };
 /** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
@@ -110,7 +116,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     setLevel(lv); setSubTool(sub); setOptions(opts); newQuestion(lv, sub, opts);
   };
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, opts) && levelOption(o, lv).choices.length > 0;
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, withTicks(config, opts, lv, sub)) && levelOption(o, lv).choices.length > 0;
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
     options: resolvedOptions(config.options ?? [], opts, lv, sub),
@@ -209,7 +215,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
     setLevel(lv); setOptions(opts); setSubTool(t.subTool); newQuestion(lv, t.subTool, opts);
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, withTicks(config, options, level, subTool)));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
   const chooseTop = (key: string, value: string) => {
@@ -385,7 +391,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         const n = t.levels ?? config.levels ?? 1;
         return {
           key: t.key, name: t.label, purpose: t.blurb ?? "", levels: n > 1 ? labelsFor(t.key).slice(0, n) : [],
-          options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, options))
+          options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, withTicks(config, options, level, t.key)))
             .map((o) => { const list = o.choices.map((c) => (c.sub ? `${c.label} ${c.sub}` : c.label)).join(" · "); return { label: o.label, detail: o.info ?? `${list}.`, ...(o.info ? { choices: list } : {}) }; }),
         };
       }),

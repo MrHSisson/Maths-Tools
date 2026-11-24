@@ -1,6 +1,6 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import { MechCanvas, MECH_STAGE, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MechCanvas, MECH_STAGE, pickOne, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { MC_NOTICE } from "./mcNotice";
 import { MC_PRINT } from "./mcPrint";
 import { generateAvgPower } from "./power/avgpower";
@@ -34,13 +34,13 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
   const display = opt(o, "diagram", "blurred") as DiagramDisplay;
-  const context = opt(o, "context", level === 1 ? "particle" : "story");
+  const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
   let m: MechProblemData;
-  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: opt(o, "fsMotion", "constant"), resist: opt(o, "fsResist", "const"), vehicle: opt(o, "fsVehicle", "single"), units, context, display, course });
-  else if (sub === "powerslope") m = generatePowerSlope(level, { ask: opt(o, "psAsk", "speed"), dir: opt(o, "psDir", "up"), resist: opt(o, "psResist", "const"), angleAs: opt(o, "psAngle", "deg"), units, context, g, display, course });
-  else if (sub === "motion") m = generateMotion(level, { data: opt(o, "mtData", level === 1 ? "function" : "graph"), phase: opt(o, "mtPhase", "accel,const,decel"), resist: opt(o, "mtResist", "none,const"), context, display, course });
+  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: pickOne(opt(o, "fsMotion", "constant"), "constant"), resist: pickOne(opt(o, "fsResist", "const"), "const"), vehicle: pickOne(opt(o, "fsVehicle", "single"), "single"), units, context, display, course });
+  else if (sub === "powerslope") m = generatePowerSlope(level, { ask: opt(o, "psAsk", "speed"), dir: opt(o, "psDir", "up"), resist: pickOne(opt(o, "psResist", "const"), "const"), angleAs: pickOne(opt(o, "psAngle", "deg"), "deg"), units, context, g, display, course });
+  else if (sub === "motion") m = generateMotion(level, { data: pickOne(opt(o, "mtData", level === 1 ? "function" : "graph"), "graph"), phase: opt(o, "mtPhase", "accel,const,decel"), resist: opt(o, "mtResist", "none,const"), context, display, course });
   else m = generateAvgPower(level, { doing: opt(o, "apDoing", "lift"), ask: opt(o, "apAsk", "power"), units, format: opt(o, "format", level === 1 ? "w" : "kw"), context, g, display, course });
   return mechProblem(m, `power-${sub}`);
 }
@@ -59,7 +59,7 @@ const OPTIONS: ShellOption[] = [
     displayOnly: true, tab: "display", defaultFor: () => "blurred",
     choices: [{ value: "blurred", label: "Blurred until revealed" }, { value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
   },
-  { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
+  { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "apDoing", label: "Doing the Work", info: "What supplies or removes the energy: a lift raising a load, brakes stopping a vehicle, a pump moving water, or an engine speeding a vehicle up.", forSubTools: ["avgpower"], multi: true,
     defaultFor: lv({ 1: "lift", 2: "lift,brake", 3: "pump,accel" }),
@@ -77,14 +77,17 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "fsMotion", label: "Motion", info: "Whether the vehicle is at constant speed (the resultant force is zero) or accelerating at the instant. It applies to a constant resistance; the acceleration question is always accelerating.", forSubTools: ["forcespeed"],
+    multi: true,
     defaultFor: lv({ 1: "constant", 2: "accel", 3: "accel" }), choices: [{ value: "constant", label: "Constant speed" }, { value: "accel", label: "Accelerating" }],
   },
   {
     key: "fsVehicle", label: "Vehicle", info: "A single vehicle, or a train of an engine and coaches: the acceleration of the whole train, then the tension in the coupling to the coaches.", forSubTools: ["forcespeed"], forLevels: [3],
+    multi: true,
     defaultFor: () => "single", choices: [{ value: "single", label: "A single vehicle" }, { value: "train", label: "Engine and coaches" }],
   },
   {
     key: "fsResist", label: "Resistance", info: "A constant resistance, or one proportional to the speed (kv) or to its square (kv²), which makes the maximum power depend on the maximum speed.", forSubTools: ["forcespeed"], forLevels: [3],
+    multi: true,
     defaultFor: lv({ 1: "const", 2: "const", 3: "speed" }), choices: [{ value: "const", label: "Constant" }, { value: "speed", label: "Proportional to speed" }, { value: "speed2", label: "Proportional to speed squared" }],
   },
   {
@@ -98,14 +101,17 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "psResist", label: "Resistance", info: "A constant resistance, or one proportional to the speed, which makes the steady speed the root of a quadratic.", forSubTools: ["powerslope"], forLevels: [3],
+    multi: true,
     defaultFor: lv({ 1: "const", 2: "const", 3: "const" }), choices: [{ value: "const", label: "Constant" }, { value: "kv", label: "Proportional to speed" }],
   },
   {
     key: "psAngle", label: "Angle Given As", info: "The slope as an angle in degrees, or by its sine (for example sin α = 1/20), which needs no calculator. The angle question always gives degrees.", forSubTools: ["powerslope"],
+    multi: true,
     defaultFor: () => "deg", choices: [{ value: "deg", label: "Degrees" }, { value: "sine", label: "Sine", sub: "sin α = 1/n" }],
   },
   {
     key: "mtData", label: "Data", info: "A displacement function s(t) to differentiate, or a speed-time graph of a vehicle to read.", forSubTools: ["motion"],
+    multi: true,
     defaultFor: lv({ 1: "function", 2: "graph" }), choices: [{ value: "function", label: "A function s(t)" }, { value: "graph", label: "A speed-time graph" }],
   },
   {
