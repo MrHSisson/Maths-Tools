@@ -47,7 +47,7 @@
 | D3 | Trapezium, parallel sides 6.4 and 9, height 5 | decimal | 38.5 cm² | not halving | 77 |
 | D4 | Rectangle 6 × 5 with a trapezium below (top 6, bottom 14, height 9) | trapezium inside a composite | 120 cm² | not halving | 210 |
 
-All 17 recomputed by a second route (and again inside the build script, from each picture's own pieces) (the wrong-method column was produced by running the wrong method; none equals the right answer). Book work (a to f: 63, 114, 99, 111, 60, 80) and the exit ticket (77 and 132) use fresh numbers; nothing above is reused.
+All 17 recomputed by a second route (and again inside the build script, from each picture's own pieces) (the wrong-method column was produced by running the wrong method; none equals the right answer). Book work (a to f: 63, 114, 99, 111, 60, 80) and the exit ticket (77 and 133) use fresh numbers; nothing above is reused.
 
 ## The traps (shared vocabulary)
 
@@ -74,7 +74,7 @@ No tool in the repo draws a shape that mixes triangles, parallelograms and trape
 ## Revision 2 (Harry's feedback, 2026-11-24): fit one lesson, an authored worksheet, at most one decimal
 
 - **Trimmed to 21 slides** (about 60 minutes). Whiteboard questions: A1 to A4 and C1 (add), B1 and B2 (subtract), D1 and D2 (trapezium stretch), three models (add, subtract, trapezium). The notch, the triangle with a rectangular hole, decimal trapezia, the parallelogram models and the dividers were dropped: the plan does not have to reproduce the whole reference sheet.
-- **Authored worksheet of eight** (a pinned picture sheet, printed four to an A4 page with a worked answer copy; new code `src/decks/pictureSheet.ts`): 1 house (63), 2 rectangle and triangle beside (87), 3 house with the total height given (70), 4 triangular hole (108), 5 square hole, 9.5 wide (124), 6 parallelogram with a hole (64), 7 trapezium (45), 8 trapezium on a rectangle (50). Support fades: the split is drawn for 1 and 2, then independent. Fresh numbers; the book-work page of six was removed.
+- **Authored worksheet of eight** (a pinned picture sheet, printed four to an A4 page with a worked answer copy; new code `src/decks/pictureSheet.ts`): 1 house (63), 2 rectangle and triangle beside (87), 3 house with the total height given (70), 4 triangular hole (104), 5 square hole, 9.5 wide (124), 6 parallelogram with a hole (64), 7 trapezium (45), 8 trapezium on a rectangle (50). Support fades: the split is drawn for 1 and 2, then independent. Fresh numbers; the book-work page of six was removed.
 - **Decimal rule:** one decimal place at most, and two decimals are never multiplied. The build script checks it for every question: at most one decimal length in a picture, and every piece's area to one decimal place at most (B1 has 7.5; the worksheet has 9.5).
 - Timing guide: recall, objective, vocabulary and the opening discussion 10 min; adding 17 min (model, four questions, the trap slide); subtracting 8; trapezia 8; worksheet 12; exit and summary 5.
 
@@ -82,4 +82,8 @@ No tool in the repo draws a shape that mixes triangles, parallelograms and trape
 
 - **Houses and shapes with a triangle beside them give the wall height (or the rectangle's width) and the total, not the triangle's height.** The triangle's height is the first line of the working (a subtraction). This applies to every house, to the "triangle beside" shape and to the trapezium-plus-triangle and rectangle-plus-trapezium shapes. The separate "total height given" house (old A4) was dropped, because every house now has that step.
 - **Trapezia use the formula, not a split.** Pupils already know the area of a trapezium, so a trapezium is a piece of a composite shape worked with the formula: M4 rectangle (10 by 3) with a trapezium on top (6 and 10, total height 7): 62; D1 trapezium (12 and 8, height 5) with a 3 by 2 hole: 44; D2 trapezium (14 and 8, height 5) with a triangle on top (total height 9): 71. Worksheet 7 is now a trapezium with a triangle on top (12 and 6, height 5, total 8): 54; worksheet 8 is a rectangle with a trapezium on top (50). The recall grid now asks a trapezium (6 and 10, height 4: 32).
-- Worksheet answers: 63, 87, 70, 108, 124, 64, 54, 50. All lengths are whole numbers except 7.5 (B1) and 9.5 (worksheet 5).
+- Worksheet answers: 63, 87, 70, 104, 124, 64, 54, 50. All lengths are whole numbers except 7.5 (B1) and 9.5 (worksheet 5).
+
+## Revision 4 (Harry's feedback, 2026-11-24): the diagrams, arrows and labels
+
+The pictures were redrawn in the site's own rectilinear style (`specs/decks/composite-shapes-art.ts`): indigo outline; lengths and arrows in one dark blue; an arrow runs parallel to its own edge at a fixed gap, with the label in a break in the arrow (rotated on an upright edge, a short arrow keeps its label just outside); a thin dashed lead line where a length reaches past the shape (a total height or width); a dashed height has no arrow, only a plain label beside it, at 40% of the way up from the base; a sloping edge has its label along it; a hole's edge has a label beside it, inside the hole when the outside would run into the outline; right-angle marks; lettered pieces with a white halo so they read over the colours. Text keeps one size at every scale. Three holes were widened so the height label fits: M2 (base 6, height 3: 45), worksheet 4 (base 8, height 4: 104) and the exit ticket (base 8, height 5: 133).

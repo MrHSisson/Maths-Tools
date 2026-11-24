@@ -88,7 +88,7 @@ function shaded(id: string, set: string, outline: P[], hole: P[], dims: Art["dim
 }
 /** A rectangle w × h with a triangular hole (base `tb` along the bottom, height `th`), the hole placed inside. */
 function triHole(id: string, set: string, w: number, h: number, tb: number, th: number, brief: string): Q {
-  const x0 = (w - tb) / 2, y0 = Math.min(1.5, (h - th) / 2), hole: P[] = [[x0, y0], [x0 + tb, y0], [w / 2, y0 + th]];
+  const x0 = (w - tb) / 2, y0 = (h - th) / 2, hole: P[] = [[x0, y0], [x0 + tb, y0], [w / 2, y0 + th]];
   const ra = w * h, ta = (tb * th) / 2;
   return shaded(id, set, rect(0, 0, w, h), hole,
     [{ a: [0, h], b: [w, h], label: `${w} cm`, side: U }, { a: [w, 0], b: [w, h], label: `${h} cm`, side: R }, { a: [x0, y0], b: [x0 + tb, y0], label: `${tb} cm`, side: B, off: 30 }, { a: [w / 2, y0], b: [w / 2, y0 + th], label: `${th} cm`, side: R, off: 24 }],
@@ -157,7 +157,7 @@ function trapAndTriangle(id: string, set: string, bottom: number, top: number, t
     dashed: [[[o, 0], [o, th]], [[mid, total], [0, total]]], right: [[[o, 0], [o + 1, 0], [o, 1]]] };
   return { id, set, prompt: "Work out the area of this shape.", given, worked: { dashed: [[[o, th], [o + top, th]], [[mid, th], [mid, total]]], dims: [{ a: [mid, th], b: [mid, total], label: `${ah} cm`, side: R, off: 22 }] }, brief, answer: ta + tri,
     steps: [`Triangle height: $${total} - ${th} = ${ah}$ cm`, `A: trapezium  $\\tfrac12 \\times (${bottom} + ${top}) \\times ${th} = ${area(ta)}$ cm²`, `B: triangle  $\\tfrac12 \\times ${top} \\times ${ah} = ${area(tri)}$ cm²`, `Total: $${area(ta)} + ${area(tri)} = ${area(ta + tri)}$ cm²`],
-    pieces: [{ pts: trapPts(bottom, top, 0, th), fill: COL.trap, name: "A" }, { pts: [[o, th], [o + top, th], [mid, total]], fill: COL.tri, name: "B", dx: -1.6 }] };
+    pieces: [{ pts: trapPts(bottom, top, 0, th), fill: COL.trap, name: "A" }, { pts: [[o, th], [o + top, th], [mid, total]], fill: COL.tri, name: "B", dx: -1.1 }] };
 }
 
 // ---------- the lesson (about 60 minutes) ----------
@@ -167,7 +167,7 @@ const A1 = house("a1", "Set A", 6, 4, 3, { brief: "Rectangle and triangle. The w
 const A2 = house("a2", "Set A", 12, 7, 8, { slant: "10 cm", brief: "A sloping side is marked as a distractor. The height is the dashed line at right angles to the base." });
 const A3 = beside("a3", "Set A", 8, 5, 3, "The triangle sits beside the rectangle, not on top: its base is the side of the rectangle, and its height is found from the widths (11 − 8).");
 const C1 = parallelogram("c1", "Set A", 9, 3, 4, 3, { slant: "5 cm", brief: "A parallelogram on a rectangle. The sloping side (5) is marked: catches using it as the height." });
-const M2 = triHole("m2", "Model", 9, 6, 4, 3, "Models whole minus cut-out for a shaded shape: the hole is a triangle.");
+const M2 = triHole("m2", "Model", 9, 6, 6, 3, "Models whole minus cut-out for a shaded shape: the hole is a triangle.");
 const B1 = triHole("b1", "Set B", 13, 7.5, 9, 5, "First subtract: a triangular hole in a rectangle, with one decimal length. Catches adding the two areas.");
 const B2 = squareHole("b2", "Set B", 20, 12, 5, "The simplest subtraction: a square hole, no triangle.");
 const M4 = rectAndTrapezium("m4", "Model", 10, 3, 6, 7, "Models a trapezium as a piece of a composite shape: find its height from the total, then use the trapezium formula (no splitting) and add the rectangle.");
@@ -179,17 +179,17 @@ const W: { q: Q; split: boolean }[] = [
   { q: house("w1", "Sheet", 9, 5, 4), split: true },
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
   { q: house("w3", "Sheet", 10, 5, 4), split: false },
-  { q: triHole("w4", "Sheet", 15, 8, 6, 4, ""), split: false },
+  { q: triHole("w4", "Sheet", 15, 8, 8, 4, ""), split: false },
   { q: squareHole("w5", "Sheet", 14, 9.5, 3, ""), split: false },
-  { q: parallelogram("w6", "Sheet", 14, 0, 6, 3, { hole: [5, 1, 5, 4], brief: "" }), split: false },
+  { q: parallelogram("w6", "Sheet", 14, 0, 6, 3, { hole: [6, 1, 5, 4], brief: "" }), split: false },
   { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
   { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 70, 108, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 70, 104, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
-  return { src: toSrc(drawArt(asked, 760, 560, 100)), answerSrc: toSrc(drawArt(splitArt(q), 760, 560, 100)), working: q.steps.map(plain), answer: `Area = ${area(q.answer)} cm²` };
+  return { src: toSrc(drawArt(asked, 560, 420, 72)), answerSrc: toSrc(drawArt(splitArt(q), 560, 420, 72)), working: q.steps.map(plain), answer: `Area = ${area(q.answer)} cm²` };
 });
 const worksheetSlide = (): Slide => {
   const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself.", items: sheetItems }, "perimeter-and-area");
@@ -198,15 +198,15 @@ const worksheetSlide = (): Slide => {
 
 // ---------- the exit ticket ----------
 const E1 = house("e1", "Exit", 11, 4, 6);
-const E2 = triHole("e2", "Exit", 17, 9, 6, 7, "");
-must(E1.answer === 77 && E2.answer === 132, "the exit ticket answers are 77 and 132");
+const E2 = triHole("e2", "Exit", 17, 9, 8, 5, "");
+must(E1.answer === 77 && E2.answer === 133, "the exit ticket answers are 77 and 133");
 check(E1); check(E2);
 const exitSlide = (): Slide => makeSlide("cs-exit", "retrieval", "Exit ticket", [
   ...titleEls("Exit ticket", "Find each area. Then write how you chose between adding and subtracting."),
   { kind: "image", x: 40, y: 240, w: 760, h: 560, src: toSrc(drawArt(E1.given, 760, 560, 110)) },
   { kind: "image", x: 800, y: 240, w: 760, h: 560, src: toSrc(drawArt(E2.given, 760, 560, 110)) },
   textEl(40, 810, 760, 70, "$\\tfrac12 \\times 11 \\times 6 = 33$, so $44 + 33 = 77$ cm²", 36, { align: "center", bold: true, colour: LOOK.green, step: 1 }),
-  textEl(800, 810, 760, 70, "$153 - 21 = 132$ cm²  (subtract the hole)", 36, { align: "center", bold: true, colour: LOOK.green, step: 1 }),
+  textEl(800, 810, 760, 70, "$153 - 20 = 133$ cm²  (subtract the hole)", 36, { align: "center", bold: true, colour: LOOK.green, step: 1 }),
 ] as never, "Two shapes: one add, one subtract. The written part checks they can say why.");
 
 // ---------- the discussion slides ----------
@@ -218,7 +218,7 @@ const discussSplit = (): Slide => makeSlide("cs-discuss-split", "discussion", "D
   { kind: "image", x: 800, y: 110, w: 740, h: 700, src: toSrc(drawArt(houseBare(), 740, 700, 110)) },
   { kind: "image", x: 800, y: 110, w: 740, h: 700, src: toSrc(drawArt({ ...houseBare(), pieces: [{ pts: rect(0, 0, 6, 4), fill: COL.rect, name: "A" }, { pts: [[0, 4], [6, 4], [3, 7]], fill: COL.tri, name: "B" }], dashed: [[[0, 4], [6, 4]]] }, 740, 700, 110)), step: 1 },
 ] as never, "Opens the lesson: the class finds that a rectangle and a triangle make the house.");
-const trapPicture: Art = { outline: [[0, 0], [10, 0], [5, 12]], dims: [{ a: [0, 0], b: [10, 0], label: "10 cm", side: B }, { a: [10, 0], b: [5, 12], label: "13 cm", side: [0.9, 0.4], off: 40 }, { a: [5, 0], b: [5, 12], label: "12 cm", side: L, off: 36 }], dashed: [[[5, 0], [5, 12]]], right: [[[5, 0], [0, 0], [5, 12]]] };
+const trapPicture: Art = { outline: [[0, 0], [10, 0], [5, 12]], dims: [{ a: [0, 0], b: [10, 0], label: "10 cm", side: B }, { a: [10, 0], b: [5, 12], label: "13 cm", side: [0.9, 0.4], off: 40 }, { a: [5, 0], b: [5, 12], label: "12 cm", side: R, off: 36 }], dashed: [[[5, 0], [5, 12]]], right: [[[5, 0], [0, 0], [5, 12]]] };
 const discussTrap = (): Slide => makeSlide("cs-discuss-trap", "discussion", "Discuss", [
   textEl(100, 60, 700, 50, "FIND THE MISTAKE", 30, { bold: true, colour: "#be185d" }),
   textEl(100, 130, 700, 330, "Sam says the area is $\\tfrac12 \\times 10 \\times 13 = 65$ cm². What went wrong?", 48),
