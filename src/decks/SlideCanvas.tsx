@@ -167,7 +167,7 @@ export const fromGenerated = (q: AnyQuestion, source = "Generated"): Shown => ({
 /** A working that ends with an "Answer:" step saying exactly what the answer box says would print it twice (the tool pages hide that step for the same reason):
  *  drop the step and keep its picture, if it has one, for when the answer is shown. */
 const tidy = (x: string) => x.replace(/\s+/g, "");
-export function withoutRepeatedAnswer(q: Shown): Shown {
+function withoutRepeatedAnswer(q: Shown): Shown {
   const last = q.working[q.working.length - 1];
   if (q.working.length < 2 || !last || !/^answer\b/i.test(last.label) || tidy(last.latex) !== tidy(q.answer)) return q;
   return { ...q, working: q.working.slice(0, -1), answerPicture: last.extra };
