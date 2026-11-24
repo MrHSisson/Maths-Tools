@@ -7,7 +7,7 @@ import { usePublishedIndex } from '../decks/published';
 import { deckSummaries, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from '../decks/store';
 import { titleSlide } from '../decks/layouts';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
-import ClassView from './ClassView';
+import FolderView from './FolderView';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 /** How long the signed-in list waits for the shared copies, so a deck's older title or preview is not shown and then swapped. */
@@ -25,7 +25,7 @@ export default function DecksTab() {
   return (
     <>
       <ViewSwitch view={view} onChange={setView} />
-      {view === 'class' ? <ClassView canEdit={!phone} /> : <EditableList viewOnly={phone} />}
+      {view === 'class' ? <FolderView tree="class" canEdit={!phone} /> : <EditableList viewOnly={phone} />}
     </>
   );
 }

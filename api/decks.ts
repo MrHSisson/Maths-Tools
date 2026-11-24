@@ -11,9 +11,9 @@
 // GET  /api/decks?categories              → { categories, filing }: the two-level category tree and which published deck is filed where (anyone may read; cached a minute)
 // GET  /api/decks?categories=all          → the same with every deck's filing (admin)
 // POST /api/decks {categories: <op>}      → change the tree or the filing: add / rename / move / setParent / delete a category, or file a deck (api/_categories.ts); answers with the whole tree and filing
-// GET  /api/decks?classes=all             → { counts, byDeck, decks }: every deck's classes, and every deck's id and title for the picker (admin)
-// GET  /api/decks?class=<id>              → { decks }: the decks used with one class, most recently made first, each with its first slide for the card (admin)
-// POST /api/decks {classes: {deckId, classIds}} → set the classes a deck is used with (api/_classes.ts)
+// GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, and every deck's id and title (admin)
+// GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin)
+// POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
 // Everything except the published and categories GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // Storage is Neon Postgres (api/_db.ts, api/_deckStore.ts), schema `maths`. A save reads the deck with its version, merges, and writes only if the
@@ -22,7 +22,7 @@ import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
 import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, newestSnapshotAt, putPublished, readDeck, removeDeck, removePublished, writeDeck } from "./_deckStore.js";
 import { applyOp, listCategories, parseOp, unfileDeck } from "./_categories.js";
-import { classSummary, deckTitles, decksInClass, setDeckClasses, unclassDeck, validClass } from "./_classes.js";
+import { decksInFolder, listTree, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
 import { MAX_SNAPSHOTS, checkDeck, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
@@ -62,15 +62,19 @@ export async function GET(req: Request) {
     const value = await getPublished(db, published);
     return value ? json(value, 200, PUBLIC_CACHE) : json({ error: "Not published" }, 404);
   }
-  const cls = params.get("class"), clsAll = params.get("classes");
+  const folder = params.get("folder"), tree = params.get("folders");
   const cats = params.get("categories");
   if (cats === "") { const db = getDb(); await ensureSchema(db); return json(await listCategories(db, { publishedOnly: true }), 200, PUBLIC_CACHE); }   // the public read: published decks only
   const denied = authorised(req);
   if (denied) return denied;
   const db = getDb(); await ensureSchema(db);
   if (cats === "all") return json(await listCategories(db));
-  if (cls !== null) { if (!validClass(cls)) return json({ error: "Bad class" }, 400); return json({ decks: await decksInClass(db, cls, false) }); }       // the class view is for signed-in use only
-  if (clsAll === "all") return json({ ...(await classSummary(db, false)), decks: await deckTitles(db) });
+  if (folder !== null) {                              // the folder view is for signed-in use only
+    if (!validFolderId(folder)) return json({ error: "Bad folder" }, 400);
+    const decks = await decksInFolder(db, folder);
+    return decks ? json({ decks }) : json({ error: "No such folder" }, 404);
+  }
+  if (tree !== null) return validTree(tree) ? json(await listTree(db, tree)) : json({ error: "Bad tree" }, 400);
   const hist = params.get("history");
   if (hist !== null) {
     if (!validId(hist)) return json({ error: "Bad id" }, 400);
@@ -144,17 +148,17 @@ export async function POST(req: Request) {
     const result = await applyOp(db, op);
     return result.ok ? json(result.data) : json({ error: result.error }, result.status);
   }
-  if ("classes" in body) {
-    const c = body.classes as { deckId?: unknown; classIds?: unknown } | null;
-    if (!c || !validId(c.deckId) || !Array.isArray(c.classIds) || !c.classIds.every(validClass)) return json({ error: "Not a class change" }, 400);
-    const classIds = await setDeckClasses(db, c.deckId, c.classIds as string[]);
-    return json({ deckId: c.deckId, classIds });
+  if ("folders" in body) {
+    const c = body.folders as { deckId?: unknown; tree?: unknown; folderIds?: unknown } | null;
+    if (!c || !validId(c.deckId) || !validTree(c.tree) || !Array.isArray(c.folderIds) || !c.folderIds.every(validFolderId)) return json({ error: "Not a folder change" }, 400);
+    const folderIds = await setDeckFolders(db, c.deckId, c.tree, c.folderIds as string[]);
+    return json({ deckId: c.deckId, tree: c.tree, folderIds });
   }
   if ("remove" in body) {
     if (!validId(body.remove)) return json({ error: "Bad id" }, 400);
     await removeDeck(db, body.remove);
     await unfileDeck(db, body.remove);
-    await unclassDeck(db, body.remove);
+    await unfolderDeck(db, body.remove);
     return json({ removed: true });
   }
   return json({ error: "Nothing to do" }, 400);

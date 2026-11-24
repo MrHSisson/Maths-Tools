@@ -333,7 +333,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks appear as the usual preview cards, most recently made first from the left. Only that class's decks are loaded, when you click it. A deck can be used with more than one class. **Add a deck…** puts a deck in the class, and the cross on a card takes it out (neither is offered on a phone)."
+     "s": "**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks appear as the usual preview cards, most recently made first from the left. Only that class's decks are loaded, when you click it. A deck can be in more than one class (it is not copied). **Add a deck…** puts a deck in the class, and the cross on a card takes it out (neither is offered on a phone). The years and classes are folders, and folders inside folders are coming next."
     }
    ]
   },
@@ -1314,6 +1314,64 @@
       {
        "t": "p",
        "s": "`docs/architecture/DECISION_SHELL_PLAN.md`, `specs/flow-parts-library.md`, `specs/flow-exam-questions.md`, `specs/cpa-exam-questions.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "deck-folders",
+   "title": "Deck folders",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-11-24",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Decks in a file-explorer structure: folders inside folders, to a sensible depth, for the Decks page's two views (By class and By topic), instead of a fixed two-level strand list and a fixed class list. A deck can sit in several folders (like a shortcut; the deck is never copied). One folder engine and one explorer screen serve both views. Decks themselves are never touched by filing, so Harry's decks, their links and their published copies are not disrupted. Decided with Harry, 2026-11-24."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-24, **step 1 done (on the branch, not merged):** the folder engine (`api/_folders.ts`, tables `maths.deck_folders` and `maths.deck_folder_items`, a `class` and a `topic` tree) and By class running on it, drawn from the folders (`src/components/FolderView.tsx`, `src/decks/folders.ts`). The class tree is seeded once with Harry's years and classes. The screen is unchanged for Harry: a heading per year, the classes as buttons, a folder's deck cards (with previews) most recently made first, loaded only when the folder is opened. Signed in only; By class is the default view. A deck's made date is new (`maths.decks.created_at`). There were no class assignments to migrate: the earlier class tables were never deployed."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "**Step 2, the explorer screen:** breadcrumbs, folder tiles beside deck cards, new folder, rename, move, delete, drag a card onto a folder or breadcrumb. Rules to settle with Harry: deleting a folder moves its decks to the parent (and asks first if it has subfolders); depth capped at `MAX_DEPTH` (6); a folder cannot move inside itself; phone previews only.",
+        "**Step 3, By topic on the same engine:** copy the strands, topics and `deck_filing` into the `topic` tree (a migration; the old tables stay until the new view has been used), swap the By topic view, then retire `api/_categories.ts` and the Manage categories controls.",
+        "**Step 4, sort, list view and search:** sort by made, last edited or name; a list/grid toggle; one search across every folder."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "`docs/reference/decks-building.md` (\"Decks in folders\")",
+        "`docs/FEATURES.md` (\"Decks by class\")"
+       ]
       }
      ]
     }
