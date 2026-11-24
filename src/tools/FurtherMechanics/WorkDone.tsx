@@ -19,10 +19,12 @@ import { generateVariable } from "./workDone/variable";
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 
+const A2_OFF = { key: "a2", values: ["off"] };
+
 const SUB_TOOLS = [
   { key: "fd", label: "Force and Distance", levels: 3, blurb: "Work done = force × distance" },
   { key: "grav", label: "Work and Gravity", levels: 3, blurb: "Work done by or against gravity, mgh" },
-  { key: "angle", label: "Force at an Angle (A2)", levels: 3, blurb: "Work done = F d cos θ" },
+  { key: "angle", label: "Force at an Angle (A2)", levels: 3, blurb: "Work done = F d cos θ", disabledWhen: A2_OFF },
   { key: "several", label: "Several Forces", levels: 3, blurb: "Totals over forces, stages and heights" },
   { key: "variable", label: "Variable Force", levels: 3, blurb: "Work done as an integral" },
 ];
@@ -32,7 +34,7 @@ const opt = (o: Record<string, string>, key: string, fallback: string): string =
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "fd";
   const o = ctx?.options ?? {};
-  const course: "AS" | "A2" = "A2";   // every question can use A2 content; the options that bring it say "(A2)"
+  const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
   const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
@@ -55,6 +57,10 @@ const OPTIONS: ShellOption[] = [
     key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
     displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
+  {
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up. Left out, they are not drawn: their choices and tabs stay on show but greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "off", label: "Left out" }],
+  },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a crate, a car, a climber) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "fdAsk", label: "Ask for", info: "What to find: the work done, or the force or the distance from the work done.", forSubTools: ["fd"], multi: true,
@@ -74,7 +80,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "gravSetting", label: "Setting", info: "Lifting or falling straight up and down, or moving along a slope (A2, where the height gained is d sin α).", forSubTools: ["grav"],
     multi: true,
-    defaultFor: () => "vertical", choices: [{ value: "vertical", label: "Vertical" }, { value: "slope", label: "Along a slope (A2)" }],
+    defaultFor: () => "vertical", choices: [{ value: "vertical", label: "Vertical" }, { value: "slope", label: "Along a slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "gravBy", label: "By or Against", info: "Work done against gravity (lifting, climbing) or by gravity (falling, sliding down).", forSubTools: ["grav"],
@@ -93,7 +99,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "sevSituation", label: "Situation", info: "Two forces over one distance; a journey with a height change; the two-step question that finds a distance first; a journey in two stages; or (A2) a road given by its angle, where gravity needs the height gained.", forSubTools: ["several"], multi: true,
     defaultFor: lv({ 1: "two", 2: "journey", 3: "twostep,stages" }),
-    choices: [{ value: "two", label: "Two forces" }, { value: "journey", label: "A journey with a height change" }, { value: "twostep", forLevels: [3], label: "Find a distance first" }, { value: "stages", forLevels: [3], label: "Two stages" }, { value: "slope", forLevels: [3], label: "Up a slope by its angle (A2)" }],
+    choices: [{ value: "two", label: "Two forces" }, { value: "journey", label: "A journey with a height change" }, { value: "twostep", forLevels: [3], label: "Find a distance first" }, { value: "stages", forLevels: [3], label: "Two stages" }, { value: "slope", forLevels: [3], label: "Up a slope by its angle (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "varForms", label: "Force Forms", info: "The kind of force to integrate: a polynomial, kx to a power, a square root, a trigonometric force or a reciprocal.", forSubTools: ["variable"], forLevels: [1, 2], multi: true,

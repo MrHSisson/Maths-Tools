@@ -253,6 +253,8 @@ export interface ShellSubTool {
   key: string;
   label: string;
   when?: ShellWhen | ShellWhen[]; // an array: every condition must hold
+  /** the tab stays on show but greyed and unpickable while another option has one of these values (A2 questions left out). Unlike `when`, nothing is hidden. */
+  disabledWhen?: ShellWhen | ShellWhen[];
   /** one line under the label on the topic chooser's tile */
   blurb?: string;
   /** how many levels this tab has (default: the tool's `levels`); one level hides the level picker on this tab */
@@ -275,9 +277,11 @@ export interface ShellOption {
   /** What this option is for, in a plain sentence: shown in "About this tool" (required for every option; a test checks). */
   info?: string;
   /** `sub`: a small descriptive line under the label; `forLevels`: legal levels for this choice (default all). */
-  choices: Array<{ value: string; label: string; sub?: string; forLevels?: number[] }>;
+  choices: Array<{ value: string; label: string; sub?: string; forLevels?: number[]; /** greyed and never drawn from while another option has one of these values (see `ShellSubTool.disabledWhen`) */ disabledWhen?: ShellWhen | ShellWhen[] }>;
   /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
   top?: boolean;
+  /** Kept when the teacher changes sub-tool or level (as the `top` options are) but drawn in the Question Options popover: a setting about the whole tool, such as leaving out A2 questions. */
+  shared?: boolean;
   /** only show this option while another option has one of these values (an array: every condition must hold) */
   when?: ShellWhen | ShellWhen[];
   /** only show this option on these sub-tool tabs (default: all) */

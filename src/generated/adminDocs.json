@@ -4247,10 +4247,6 @@
   "elastic-strings": {
    "changes": [
     {
-     "date": "2026-11-24",
-     "title": "Further Mechanics: blurred diagram with a Reveal button"
-    },
-    {
      "date": "2026-11-22",
      "title": "Further Mechanics: energy bars and the remaining gaps"
     },

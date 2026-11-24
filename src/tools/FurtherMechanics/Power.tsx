@@ -19,10 +19,12 @@ import { generateMotion } from "./power/motion";
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 
+const A2_OFF = { key: "a2", values: ["off"] };
+
 const SUB_TOOLS = [
   { key: "avgpower", label: "Average Power", levels: 3, blurb: "Power = work done ÷ time" },
   { key: "forcespeed", label: "Force and Speed", levels: 3, blurb: "Power = driving force × speed" },
-  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope" },
+  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope", disabledWhen: A2_OFF },
   { key: "motion", label: "Power from Motion Data", levels: 2, blurb: "Power from s(t) or a speed-time graph" },
 ];
 
@@ -31,7 +33,7 @@ const opt = (o: Record<string, string>, key: string, fallback: string): string =
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "avgpower";
   const o = ctx?.options ?? {};
-  const course: "AS" | "A2" = "A2";   // every question can use A2 content; the options that bring it say "(A2)"
+  const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
   const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
@@ -53,6 +55,10 @@ const OPTIONS: ShellOption[] = [
     key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
     displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
+  {
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up. Left out, they are not drawn: their choices and tabs stay on show but greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "off", label: "Left out" }],
+  },
   { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "apDoing", label: "Doing the Work", info: "What supplies or removes the energy: a lift raising a load, brakes stopping a vehicle, a pump moving water, or an engine speeding a vehicle up.", forSubTools: ["avgpower"], multi: true,
@@ -67,7 +73,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "fsAsk", label: "Ask for", info: "What to find: the power, the driving force, the speed, the resistance or the acceleration; the power needed for a higher speed; and with a resistance that depends on speed, k, the maximum speed or the maximum power; and (A2) the work done by a force and the power from a vector force and displacement.", forSubTools: ["forcespeed"], multi: true,
     defaultFor: lv({ 1: "power,force,speed,resist", 2: "acc,resist,speed,newpower", 3: "k,maxpower,acc,maxspeed" }),
-    choices: [{ value: "power", label: "The power" }, { value: "force", label: "The driving force" }, { value: "speed", label: "The speed" }, { value: "resist", label: "The resistance" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed" }, { value: "k", forLevels: [3], label: "The constant k" }, { value: "maxspeed", forLevels: [3], label: "The maximum speed" }, { value: "maxpower", forLevels: [3], label: "The maximum power" }, { value: "vector", forLevels: [3], label: "Work and power from vectors (A2)" }],
+    choices: [{ value: "power", label: "The power" }, { value: "force", label: "The driving force" }, { value: "speed", label: "The speed" }, { value: "resist", label: "The resistance" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed" }, { value: "k", forLevels: [3], label: "The constant k" }, { value: "maxspeed", forLevels: [3], label: "The maximum speed" }, { value: "maxpower", forLevels: [3], label: "The maximum power" }, { value: "vector", forLevels: [3], label: "Work and power from vectors (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "fsMotion", label: "Motion", info: "Whether the vehicle is at constant speed (the resultant force is zero) or accelerating at the instant. It applies to a constant resistance; the acceleration question is always accelerating.", forSubTools: ["forcespeed"],

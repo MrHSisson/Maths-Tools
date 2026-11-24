@@ -1,7 +1,7 @@
-import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
+import { holds, levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, PictureInPicture2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
-import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
+import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, ShellWhen, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
 import QuestionText from "./QuestionText";
@@ -115,6 +115,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const opts = optionsFor(sub, lv);
     setLevel(lv); setSubTool(sub); setOptions(opts); newQuestion(lv, sub, opts);
   };
+  // a tab that is switched off (A2 questions left out) stays on show, greyed
+  const tabOff = (t: { disabledWhen?: ShellWhen | ShellWhen[] }, opts: Record<string, string>, lv: number, sub: string) => !!t.disabledWhen && holds(t.disabledWhen, withTicks(config, opts, lv, sub));
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
   const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, withTicks(config, opts, lv, sub)) && levelOption(o, lv).choices.length > 0;
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
@@ -269,6 +271,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // changes how the same problem is shown: then it is redrawn at once from its saved seed.
   const changeOption = (o: { key: string; displayOnly?: boolean }, v: string) => {
     const opts = { ...options, [o.key]: v };
+    // an option can switch the current tab off: move to the first tab still on
+    const here = tabs.find((t) => t.key === subTool);
+    if (here && tabOff(here, opts, level, subTool)) {
+      const next = tabs.find((t) => !tabOff(t, opts, level, t.key));
+      if (next) {
+        const lv = Math.min(level, next.levels ?? config.levels ?? 1);
+        const scoped = optionsFor(next.key, lv, opts);
+        setLevel(lv); setOptions(scoped); setSubTool(next.key); newQuestion(lv, next.key, scoped);
+        return;
+      }
+    }
     setOptions(opts);
     if (!o.displayOnly) return;
     try {
@@ -943,7 +956,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   if (narrow) {
     const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
       ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
-      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
+      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.filter((t) => !tabOff(t, options, level, t.key)).map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
     ];
     if (!started && launchSteps.length && !chooser) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
@@ -1093,8 +1106,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       {tabs.map((t) => (
                         <button
                           key={t.key}
+                          disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Switch A2 questions on to use this" : undefined}
                           onClick={() => { chooseSubTool(t.key); setDrawer(false); }}
-                          className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
+                          className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
                           {t.label}
                         </button>
@@ -1159,11 +1173,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 {tabs.map((t) => (
                   <button
                     key={t.key}
+                    disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Switch A2 questions on to use this" : undefined}
                     onClick={() => {
                       setSubTool(t.key);
                       newQuestion(level, t.key, options);
                     }}
-                    className={tabBtn(subTool === t.key)}
+                    className={`${tabBtn(subTool === t.key)} disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {t.label}
                   </button>
@@ -1211,16 +1226,18 @@ function DecisionOptionGroups({ groups, options, level, sub, onChange, sheet = f
     <QOTabs tabs={tabs} active={active} onPick={setPicked} />
     {shown.map(o => <div key={o.key} className={sheet ? "bg-white rounded-2xl border border-slate-300 p-4" : ""}>
       <OptionHeading o={o} sheet={sheet} />
-      <OptionControl o={o} value={options[o.key]} level={level} sub={sub} onChange={v => onChange(o, v)} />
+      <OptionControl o={o} value={options[o.key]} all={options} level={level} sub={sub} onChange={v => onChange(o, v)} />
     </div>)}
   </div>;
 }
 
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
-function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
+function OptionControl({ o, value, all, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; all: Record<string, string>; onChange: (v: string) => void; level: number; sub: string }) {
   // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
-  const on = o.multi ? ticksOf(o, value, level, sub) : [optionValue(o, value, level, sub)];
+  const off = (c: { disabledWhen?: ShellWhen | ShellWhen[] }) => !!c.disabledWhen && holds(c.disabledWhen, all);
+  const liveOnly = (xs: string[]) => { const kept = xs.filter((x) => !off(o.choices.find((c) => c.value === x) ?? {})); return kept.length ? kept : xs; };
+  const on = o.multi ? liveOnly(ticksOf(o, value, level, sub)) : [optionValue(o, value, level, sub)];
   const auto = o.multi ? ticksOf(o, "", level, sub) : [];
   const press = (v: string) => {
     if (!o.multi) { onChange(v); return; }
@@ -1229,7 +1246,7 @@ function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<Deci
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
-  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) }))} onPress={press} />;
+  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) && !off(c), disabled: off(c), title: off(c) ? "Switch A2 questions on to use this" : undefined }))} onPress={press} />;
 }
 
 const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {
