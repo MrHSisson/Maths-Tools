@@ -1,21 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Info, Plus, Settings2, Trash2 } from 'lucide-react';
-import type { CategoryOp } from '../../api/_categories';
-import { useCategories } from '../decks/categories';
-import { layoutDecks, pathOf, type Category } from '../decks/categoryTree';
+import { Info } from 'lucide-react';
 import { SlideCanvas } from '../decks/SlideCanvas';
 import { CANVAS_W, PITCH_LABEL, type Pitch, type Slide } from '../decks/types';
 
 
-// The one way decks are laid out: a card per deck (its first slide, its title and an (i) for the details), grouped under a heading per
-// category. The categories are Harry's to control (a strand, with topics inside it; src/decks/categoryTree.ts), and with Developing tools on he files a
-// deck by dragging its card onto a heading. The Decks page and the deck
-// editor's list both draw this, so the two always mirror each other: the page shows the published decks (and, with Developing tools on, the rest),
-// the editor shows every deck.
+// The deck card: a deck's first slide, its title and an (i) for the details. The Decks page (components/FolderView.tsx) lays them out in folders.
 
 export interface GalleryDeck {
-  id: string; title: string; summary: string; strand?: string; pitch?: Pitch; slides: number; preview?: Slide;
+  id: string; title: string; summary: string; pitch?: Pitch; slides: number; preview?: Slide;
   /** A small tag beside the title, such as "Not published". */
   badge?: string;
   /** Lines for the (i): "Published 3 Nov 2026", "Your deck" … */
@@ -69,134 +62,6 @@ export function DeckCard({ d, admin, where, onDragStart, onDragEnd }: {
           {d.summary && <div className="text-sm text-slate-500">{d.summary}</div>}
           <div className="mt-1 text-xs text-slate-400">{[where, d.pitch && `Pitched at the ${PITCH_LABEL[d.pitch].toLowerCase()}`, `${d.slides} slides`, ...d.notes].filter(Boolean).join(' · ')}</div>
         </div>
-      )}
-    </div>
-  );
-}
-
-/** A place a deck can be dropped (a strand, a topic, Not filed). While a deck is being dragged it shows where it will land; the innermost zone wins. */
-function DropZone({ on, dragging, onDrop, className = '', children }: { on: boolean; dragging: boolean; onDrop: () => void; className?: string; children: ReactNode }) {
-  const [over, setOver] = useState(0);        // entering a child fires leave then enter, so count them
-  const live = on && dragging;
-  return (
-    <div className={`${className} rounded-2xl transition-colors ${live ? (over > 0 ? 'bg-blue-50 ring-2 ring-blue-400' : 'ring-1 ring-slate-200') : ''}`}
-      onDragEnter={live ? (e) => { e.stopPropagation(); setOver((n) => n + 1); } : undefined}
-      onDragLeave={live ? (e) => { e.stopPropagation(); setOver((n) => Math.max(0, n - 1)); } : undefined}
-      onDragOver={live ? (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; } : undefined}
-      onDrop={live ? (e) => { e.preventDefault(); e.stopPropagation(); setOver(0); onDrop(); } : undefined}>
-      {children}
-    </div>
-  );
-}
-
-const small = 'grid h-7 w-7 place-items-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40';
-
-/** A heading. In manage mode it also renames (click the name), reorders, moves, adds a topic and deletes. */
-function Heading({ category, level, manage, strands, hasTopics, onOp }: {
-  category: Category; level: 1 | 2; manage: boolean; strands: Category[]; hasTopics: boolean; onOp: (op: CategoryOp) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const commit = (value: string) => { setEditing(false); if (value.trim() && value.trim() !== category.name) onOp({ op: 'rename', id: category.id, name: value }); };
-  const title = level === 1 ? 'text-sm font-semibold uppercase tracking-wide text-slate-500' : 'text-sm font-semibold text-slate-600';
-  const others = strands.filter((x) => x.id !== category.id && x.id !== category.parent);
-  return (
-    <div className="mb-3">
-      <div className="flex flex-wrap items-center gap-1.5">
-        {manage && editing
-          ? <input autoFocus defaultValue={category.name} maxLength={60} aria-label="Category name" onBlur={(e) => commit(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); if (e.key === 'Escape') setEditing(false); }}
-              className="rounded-lg border border-blue-400 bg-white px-2 py-1 text-sm font-semibold text-slate-800 outline-none" />
-          : manage
-            ? <button onClick={() => setEditing(true)} title="Rename" className={`${title} rounded-md px-1 hover:bg-slate-100`}>{category.name}</button>
-            : <h3 className={title}>{category.name}</h3>}
-        {manage && (
-          <>
-            <button className={small} onClick={() => onOp({ op: 'move', id: category.id, direction: 'up' })} aria-label={`Move ${category.name} up`} title="Move up"><ChevronUp size={14} /></button>
-            <button className={small} onClick={() => onOp({ op: 'move', id: category.id, direction: 'down' })} aria-label={`Move ${category.name} down`} title="Move down"><ChevronDown size={14} /></button>
-            {level === 1 && <button className={small} onClick={() => setAdding((a) => !a)} aria-label={`Add a topic to ${category.name}`} title="Add a topic inside"><Plus size={14} /></button>}
-            {(level === 2 || !hasTopics) && (level === 2 || others.length > 0) && (
-              <select value="" aria-label={`Move ${category.name}`} title={level === 2 ? 'Move to another strand' : 'Make this a topic of another strand'}
-                onChange={(e) => { const v = e.target.value; if (v) onOp({ op: 'setParent', id: category.id, parent: v === '__top' ? null : v }); }}
-                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-600">
-                <option value="">{level === 2 ? 'Move to…' : 'Make a topic of…'}</option>
-                {level === 2 && <option value="__top">Top level (a strand)</option>}
-                {others.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-              </select>
-            )}
-            <button className={`${small} hover:border-red-300 hover:text-red-600`} aria-label={`Delete ${category.name}`} title="Delete"
-              onClick={() => { if (window.confirm(`Delete "${category.name}"${hasTopics ? ' and its topics' : ''}? Decks filed in it become not filed.`)) onOp({ op: 'delete', id: category.id }); }}><Trash2 size={14} /></button>
-          </>
-        )}
-      </div>
-      {manage && adding && (
-        <form className="mt-2 flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); const v = (new FormData(e.currentTarget).get('topic') as string) ?? ''; if (v.trim()) { onOp({ op: 'add', name: v, parent: category.id }); setAdding(false); } }}>
-          <input name="topic" autoFocus maxLength={60} placeholder={`A topic inside ${category.name}`} aria-label="New topic name" className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm" />
-          <button className="rounded-lg bg-blue-900 px-2.5 py-1 text-sm font-semibold text-white">Add</button>
-        </form>
-      )}
-    </div>
-  );
-}
-
-/** The decks under the categories Harry set (a heading per strand, topics inside it), then those not filed. With `admin` he can also manage the categories and file decks. */
-export function DeckSections({ decks, admin = false }: { decks: GalleryDeck[]; admin?: boolean }) {
-  const { data, act } = useCategories(admin);
-  const [manage, setManage] = useState(false);
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  if (data === undefined) return <p className="text-slate-500">Loading…</p>;
-  const canEdit = admin && data !== null;                      // without the sharing service nothing can be filed
-  const layout = layoutDecks(decks, data, { showEmpty: admin });
-  const strands = (data ?? { categories: [] }).categories.filter((c) => c.parent === null);
-  const byId = new Map(decks.map((d) => [d.id, d]));
-  const run = async (op: CategoryOp) => setError(await act(op));
-  const file = (deckId: string, categoryId: string | null) => { setDragging(null); void run({ op: 'file', deckId, categoryId }); };
-  const cards = (ids: string[], filedIn: string | null) => ids.map((id) => {
-    const d = byId.get(id);
-    return d ? <DeckCard key={id} d={d} admin={canEdit} where={pathOf(filedIn, data)} onDragStart={setDragging} onDragEnd={() => setDragging(null)} /> : null;
-  });
-  const row = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4';
-  const drop = (target: string | null) => () => { if (dragging) file(dragging, target); };
-
-  return (
-    <div className="space-y-8">
-      {admin && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          {canEdit && <button onClick={() => setManage((m) => !m)} aria-pressed={manage} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-semibold shadow-card ${manage ? 'border-blue-400 bg-blue-50 text-blue-900' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}><Settings2 size={14} />Manage categories</button>}
-          <span className="text-slate-500">{!canEdit ? "Categories can't be changed here: the sharing service isn't available." : manage ? 'Click a name to rename it. Arrows reorder; + adds a topic.' : 'Drag a deck onto a heading to file it.'}</span>
-          {manage && (
-            <form className="ml-auto flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); if (name.trim()) { void run({ op: 'add', name }); setName(''); } }}>
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="New strand" aria-label="New strand name" className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm" />
-              <button className="rounded-lg bg-blue-900 px-2.5 py-1 text-sm font-semibold text-white">Add strand</button>
-            </form>
-          )}
-          {error && <span className="basis-full text-red-600" role="alert">{error}</span>}
-        </div>
-      )}
-      {layout.sections.map((s) => {
-        const direct = cards(s.decks, s.category.id);
-        const empty = s.decks.length === 0 && s.topics.every((t) => t.decks.length === 0);
-        return (
-          <DropZone key={s.category.id} on={canEdit} dragging={!!dragging} onDrop={drop(s.category.id)} className="-m-1 p-1">
-            <Heading category={s.category} level={1} manage={manage && canEdit} strands={strands} hasTopics={s.topics.length > 0} onOp={(op) => void run(op)} />
-            {direct.length > 0 && <div className={row}>{direct}</div>}
-            {empty && admin && <p className="text-sm text-slate-400">Nothing here yet{canEdit ? ': drag a deck onto this heading.' : '.'}</p>}
-            {s.topics.map((t) => (
-              <DropZone key={t.category.id} on={canEdit} dragging={!!dragging} onDrop={drop(t.category.id)} className={`${direct.length > 0 ? 'mt-5' : 'mt-1'} p-1`}>
-                <Heading category={t.category} level={2} manage={manage && canEdit} strands={strands} hasTopics={false} onOp={(op) => void run(op)} />
-                {t.decks.length > 0 ? <div className={row}>{cards(t.decks, t.category.id)}</div> : admin && <p className="text-sm text-slate-400">Nothing here yet.</p>}
-              </DropZone>
-            ))}
-          </DropZone>
-        );
-      })}
-      {(layout.unfiled.length > 0 || (canEdit && dragging)) && (
-        <DropZone on={canEdit} dragging={!!dragging} onDrop={drop(null)} className="-m-1 p-1">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{admin ? 'Not filed' : 'Other decks'}{admin && dragging ? ' (drop here to unfile)' : ''}</h3>
-          <div className={row}>{cards(layout.unfiled, null)}</div>
-        </DropZone>
       )}
     </div>
   );

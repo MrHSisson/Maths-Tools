@@ -8,22 +8,19 @@
 // GET  /api/decks?history=<id>&key=<key>  → one snapshot (a deck), to restore from; the client restores it as an ordinary save
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next; cached for a minute)
 // GET  /api/decks?published=<id>          → one published deck, a frozen copy
-// GET  /api/decks?categories              → { categories, filing }: the two-level category tree and which published deck is filed where (anyone may read; cached a minute)
-// GET  /api/decks?categories=all          → the same with every deck's filing (admin)
-// POST /api/decks {categories: <op>}      → change the tree or the filing: add / rename / move / setParent / delete a category, or file a deck (api/_categories.ts); answers with the whole tree and filing
-// GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, and every deck's id and title (admin)
-// GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin)
+// GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, unfiled, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, how many are in none, and every deck's id and title (admin)
+// GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin). `folder=unfiled&of=<tree>` is the decks in no folder of that tree
+// GET  /api/decks?folders=topic&public=1  → the same for everyone: published decks only, only the folders that lead to one, no titles list (cached a minute). `?folder=<id>&public=1` likewise. The class tree is signed-in only
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
-// Everything except the published and categories GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
+// Everything except the published and public folder GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
 // Storage is Neon Postgres (api/_db.ts, api/_deckStore.ts), schema `maths`. A save reads the deck with its version, merges, and writes only if the
 // version has not moved (retried if another save got in first), so two devices never overwrite each other.
 import { getDb, ensureSchema } from "./_db.js";
 import { mergeDecks } from "./_deckMerge.js";
 import { addSnapshot, getDeck, getPublished, getSnapshot, listHistory, listIndex, listPublished, newestSnapshotAt, putPublished, readDeck, removeDeck, removePublished, writeDeck } from "./_deckStore.js";
-import { applyOp, listCategories, parseOp, unfileDeck } from "./_categories.js";
-import { applyFolderOp, decksInFolder, listTree, parseFolderOp, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
+import { applyFolderOp, decksInFolder, fileNewDeckByStrand, listTree, parseFolderOp, setDeckFolders, unfolderDeck, validFolderId, validTree } from "./_folders.js";
 import { MAX_SNAPSHOTS, checkDeck, publishedBody, shouldSnapshot, snapshotKey, validId, validSnapshotKey, type HistoryEntry } from "./_decks.js";
 
 const isDeckLike = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && Array.isArray((v as { slides?: unknown }).slides);
@@ -64,15 +61,20 @@ export async function GET(req: Request) {
     return value ? json(value, 200, PUBLIC_CACHE) : json({ error: "Not published" }, 404);
   }
   const folder = params.get("folder"), tree = params.get("folders");
-  const cats = params.get("categories");
-  if (cats === "") { const db = getDb(); await ensureSchema(db); return json(await listCategories(db, { publishedOnly: true }), 200, PUBLIC_CACHE); }   // the public read: published decks only
+  if (params.get("public") !== null && (folder !== null || tree !== null)) {       // the read anyone may make: published decks in the topic tree
+    const db = getDb(); await ensureSchema(db);
+    if (tree !== null) return tree === "topic" ? json(await listTree(db, "topic", { publicOnly: true }), 200, PUBLIC_CACHE) : json({ error: "Not available" }, 404);
+    if (!validFolderId(folder)) return json({ error: "Bad folder" }, 400);
+    const decks = await decksInFolder(db, folder as string, { publicOnly: true, of: "topic" });
+    return decks ? json({ decks }, 200, PUBLIC_CACHE) : json({ error: "No such folder" }, 404);
+  }
   const denied = authorised(req);
   if (denied) return denied;
   const db = getDb(); await ensureSchema(db);
-  if (cats === "all") return json(await listCategories(db));
   if (folder !== null) {                              // the folder view is for signed-in use only
     if (!validFolderId(folder)) return json({ error: "Bad folder" }, 400);
-    const decks = await decksInFolder(db, folder);
+    const of = params.get("of");
+    const decks = await decksInFolder(db, folder, { of: validTree(of) ? of : undefined });
     return decks ? json({ decks }) : json({ error: "No such folder" }, 404);
   }
   if (tree !== null) return validTree(tree) ? json(await listTree(db, tree)) : json({ error: "Bad tree" }, 400);
@@ -126,6 +128,7 @@ export async function POST(req: Request) {
       else await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
     }
     if (!saved) return json({ error: "Could not save — please try again" }, 409);
+    if (previous === null) { try { await fileNewDeckByStrand(db, id, saved.deck.strand); } catch { /* the save has happened; filing can be done by hand */ } }
     await snapshotBefore(db, id, previous, saved.deck, now);
     const entry = { title: saved.summary.title.slice(0, 200), summary: saved.summary.summary.slice(0, 500), slides: saved.summary.slides.length, updatedAt: saved.summary.updatedAt ?? now, updatedBy: by };
     const unchecked = (() => { const c = checkDeck(saved.deck); return "unchecked" in c ? c.unchecked : []; })();
@@ -143,12 +146,6 @@ export async function POST(req: Request) {
     await removePublished(db, body.unpublish);
     return json({ unpublished: true });
   }
-  if ("categories" in body) {
-    const op = parseOp(body.categories);
-    if (!op) return json({ error: "Not a category change" }, 400);
-    const result = await applyOp(db, op);
-    return result.ok ? json(result.data) : json({ error: result.error }, result.status);
-  }
   if ("folderOp" in body) {
     const op = parseFolderOp(body.folderOp);
     if (!op) return json({ error: "Not a folder change" }, 400);
@@ -164,7 +161,6 @@ export async function POST(req: Request) {
   if ("remove" in body) {
     if (!validId(body.remove)) return json({ error: "Bad id" }, 400);
     await removeDeck(db, body.remove);
-    await unfileDeck(db, body.remove);
     await unfolderDeck(db, body.remove);
     return json({ removed: true });
   }

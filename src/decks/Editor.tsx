@@ -953,11 +953,11 @@ function EditorInner({ start, startIndex, onPresent }: { start: DeckDef; startIn
           onChange={(e) => setSlide((sl) => (sl.timer ? { ...sl, timer: { minutes: sl.timer.minutes, ...(e.target.checked ? {} : { auto: false }) } } : sl))} />Starts with the slide</label>}
       </RibbonGroup>
       <RibbonGroup label="Deck">
-        <Menu wide label="About the deck" title="Where the deck is filed, and what it covers" button={<><Layers size={16} />About the deck</>}>
+        <Menu wide label="About the deck" title="Which folders the deck is in, and what it covers" button={<><Layers size={16} />About the deck</>}>
           {() => (
             <div className="space-y-2 p-2 text-sm">
-              <div className="text-xs font-semibold text-slate-500">Filed under (where it appears on the Decks page; manage the categories there)</div>
-              <FileUnder deckId={deck.id} strand={deck.strand} />
+              <div className="text-xs font-semibold text-slate-500">Filed under (where it appears on the Decks page; make and move folders there)</div>
+              <FileUnder deckId={deck.id} />
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">Lesson pitch (shown only in the deck's (i))
                 <select value={deck.pitch ?? ""} onChange={(e) => apply((d) => ({ ...d, pitch: (e.target.value || undefined) as Pitch | undefined }))} aria-label="Lesson pitch"
                   className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-normal text-slate-800">
