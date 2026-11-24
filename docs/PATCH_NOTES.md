@@ -69,6 +69,23 @@ Branch `claude/confident-rubin-7kdxat`. Area: `api/_folders.ts`, `api/_db.ts`, `
 Agent: Claude Code
 Notes: Build Log block not written (the planner was not used this session).
 
+## 2026-11-24 — Composite shapes: a Year 7 authored lesson deck
+
+Branch `claude/clever-pascal-4ckijk`. Area: `specs/decks/composite-shapes*.ts`, `src/decks/data/composite-shapes.json`.
+
+A new authored lesson deck, 20 slides, no generator, trimmed to fit one lesson after Harry's first look. Recall grid, vocabulary, a "how would you split it?" discussion, then four sections each opened by a modelled example: adding (rectangle + triangle, with missing lengths), subtracting a cut-out (shaded shapes), parallelograms, and trapezia as the stretch (a rectangle and triangles, then the formula agrees). A "find the mistake" slide names the sloping-side trap once. It finishes with an eight-question authored worksheet, an exit ticket and a summary. Nine whiteboard questions on the ladder agreed with Harry (`specs/decks/composite-shapes.md`, Revision 2); every answer is recomputed inside the build script from the picture's own pieces, so a picture and its answer cannot disagree.
+New: a **picture sheet** worksheet (`src/decks/pictureSheet.ts`, `pictureWorksheet` in `printables.ts`, `S.pictureSheet`): authored picture questions printed four to an A4 page (at most eight) with ruled working space and a matching worked answer copy; the slide shows them with answers on a click. Rule from Harry: at most one decimal in any calculation, never two decimals multiplied; the build script checks every question for it.
+Feedback applied: houses (and any shape with a triangle beside or on top) give the wall height and the total, not the triangle's height, so the first working line is a subtraction; trapezia are worked with the formula as a piece of a composite shape (rectangle with a trapezium, trapezium with a hole, trapezium with a triangle), never split, because pupils already know the trapezium formula.
+Diagrams redrawn after feedback in the site's own rectilinear style: arrows run parallel to their edge with the label in a break (rotated on an upright edge), dashed lead lines for totals, plain labels beside dashed heights, labels along sloping edges, right-angle marks, lettered pieces.
+Fewer houses: a bowtie (a box with an identical triangle on each side) replaces two of them (the sloping-side question and worksheet 3).
+B2 is now a right-angled triangle with a right-angled triangular hole (100); the rectangle-and-parallelogram question gives the whole shape's height and the rectangle's, so the parallelogram's height is found by subtraction.
+Worksheet revised: question 3 (the bowtie) is taller, question 5 is a parallelogram with a triangle on top, question 6 is a triangle with a parallelogram cut out (question 4 a parallelogram with a triangle on top, 5 a square cut out of a larger parallelogram with one edge labelled and all four marked equal, 6 a triangle frame; answers 63, 87, 78, 84, 64, 81, 54, 50).
+Pictures: no existing tool draws triangles, parallelograms and trapezia in one outline, so each shape is an authored SVG saved in the deck as an image (`specs/decks/composite-shapes-art.ts`); a click shows it split into lettered pieces and the working appears a line a click. No new site code, so the deck can be pushed straight away. Lengths are therefore fixed (not editable in the slide editor). A shape-spec picture in the editor (like Rectilinear Shapes) is the alternative if lengths ever need to be editable or printable.
+Checks: deck content and layout checks pass on all 20 slides; the printed sheet is 2 question pages and 2 answer pages; new `pictureSheet.test.ts`; type check and lint clean.
+Not done: no Depth bank. The new element is code, so merge it before relying on the deck on the live site (until then the sheet shows "needs a newer version of the site").
+Agent: Claude Code
+Notes: Build Log block to be added by the next planner update (planner not updated this session).
+
 ## 2026-11-23 — One inverse trig deck, with practice and a live solving-trig flow
 
 Branch `ccr-038baa8d-pooiut`. Area: `specs/decks/inverse-trig-*.ts`, `src/decks/{SlideCanvas,WorkedPicture}.tsx`, `src/decks/data/inverse-trig-graphs.json`.
