@@ -123,8 +123,8 @@ function paraAndTriangle(id: string, set: string, base: number, off: number, ph:
   const ah = total - ph, apex: P = [off + base / 2, total];
   const para: P[] = [[0, 0], [base, 0], [base + off, ph], [off, ph]];
   const given: Art = { outline: [[0, 0], [base, 0], [base + off, ph], apex, [off, ph]],
-    dims: [{ a: [0, 0], b: [base, 0], label: `${base} cm`, side: B }, { a: [off, 0], b: [off, ph], label: `${ph} cm`, side: R }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }],
-    dashed: [[[off, 0], [off, ph]], [[off + base / 2, total], [0, total]]], right: [[[off, 0], [off + 1, 0], [off, 1]]] };
+    dims: [{ a: [0, 0], b: [base, 0], label: `${base} cm`, side: B }, { a: [base + off, 0], b: [base + off, ph], label: `${ph} cm`, side: R }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }],
+    dashed: [[[base, 0], [base + off, 0]], [[base + off, 0], [base + off, ph]], [[off + base / 2, total], [0, total]]], right: [[[base + off, 0], [base + off - 1, 0], [base + off, 1]]] };
   const pa = base * ph, ta = (base * ah) / 2;
   return { id, set, prompt: "Work out the area of this shape.", given, brief, answer: pa + ta,
     worked: { dashed: [[[off, ph], [base + off, ph]], [[off + base / 2, ph], apex]], dims: [{ a: [off + base / 2, ph], b: apex, label: `${ah} cm`, side: R }] },
@@ -157,10 +157,10 @@ function parallelogram(id: string, set: string, base: number, rectH: number, ph:
   if (lower) dims.push({ a: [base, 0], b: [base, rectH], label: `${rectH} cm`, side: R });
   const heightDim = { a: [off, hy] as P, b: [off, hy + ph] as P, label: `${ph} cm`, side: R, off: 24 };
   if (lower) dims.push({ a: [0, 0], b: [0, hy + ph], label: `${hy + ph} cm`, side: L });   // the whole shape's height; the parallelogram's own height is found
-  else dims.push(heightDim);
+  else dims.push({ a: [base + off, 0], b: [base + off, ph], label: `${ph} cm`, side: R });   // outside: dropped from the top right corner onto the extended base
   if (o.slant) dims.push({ a: [base, hy], b: [base + off, hy + ph], label: o.slant, side: [0.8, -0.6], off: 28 });
-  const given: Art = { outline, dims, dashed: lower ? [[[off, hy + ph], [0, hy + ph]]] : [[[off, hy], [off, hy + ph]]],
-    right: lower ? [[[0, 0], [base, 0], [0, rectH]], [[base, 0], [0, 0], [base, rectH]]] : [[[off, hy], [off + 1, hy], [off, hy + 1]]] };
+  const given: Art = { outline, dims, dashed: lower ? [[[off, hy + ph], [0, hy + ph]]] : [[[base, 0], [base + off, 0]], [[base + off, 0], [base + off, ph]]],
+    right: lower ? [[[0, 0], [base, 0], [0, rectH]], [[base, 0], [0, 0], [base, rectH]]] : [[[base + off, 0], [base + off - 1, 0], [base + off, 1]]] };
   if (o.hole) {
     const [x0, y0, hw, hh] = o.hole, hole = rect(x0, y0, x0 + hw, y0 + hh), pa = base * ph;
     given.hole = hole; given.base = COL.shade;

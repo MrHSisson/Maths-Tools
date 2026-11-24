@@ -38,8 +38,14 @@ const edgeOf = (a: P, b: P, poly: P[]) => poly.some((q, i) => { const r = poly[(
 export function drawArt(art: Art, w = 880, h = 700, pad = 120): string {
   const all = [...art.outline, ...(art.hole ?? [])];
   const xs = all.map((p) => p[0]), ys = all.map((p) => p[1]);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const s = Math.min((w - 2 * pad) / (x1 - x0 || 1), (h - 2 * pad) / (y1 - y0 || 1));
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  let x1 = Math.max(...xs);
+  const fit = () => Math.min((w - 2 * pad) / (x1 - x0 || 1), (h - 2 * pad) / (y1 - y0 || 1));
+  let s = fit();
+  for (const d of art.dims) {   // a height label to the right of a dashed vertical that sits outside the shape needs room beyond it
+    const dashedHeight = (art.dashed ?? []).some(([p, q]) => sameSeg(d.a, d.b, p, q));
+    if (dashedHeight && Math.abs(d.a[0] - d.b[0]) < 1e-9 && d.side[0] > 0) { x1 = Math.max(x1, d.a[0] + (d.label.length * FS * 0.56 + 36) / s); s = fit(); }
+  }
   const ox = (w - (x1 - x0) * s) / 2 - x0 * s, oy = (h + (y1 - y0) * s) / 2 + y0 * s;
   const X = (p: P) => +(ox + p[0] * s).toFixed(1), Y = (p: P) => +(oy - p[1] * s).toFixed(1);
   const poly = (pts: P[], fill: string, stroke = "none", sw = 0) => `<polygon points="${pts.map((p) => `${X(p)},${Y(p)}`).join(" ")}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
