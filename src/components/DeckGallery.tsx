@@ -41,7 +41,7 @@ function FitPreview({ slide }: { slide: Slide }) {
 }
 
 /** The cards fill a grid (one to a row on a phone, two on a tablet, four on a laptop), so every card in a row is the same width and the gaps stay even. */
-function DeckCard({ d, admin, where, onDragStart, onDragEnd }: {
+export function DeckCard({ d, admin, where, onDragStart, onDragEnd }: {
   d: GalleryDeck; admin?: boolean; where?: string; onDragStart?: (id: string) => void; onDragEnd?: () => void;
 }) {
   const [open, setOpen] = useState(false);
