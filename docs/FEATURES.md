@@ -33,7 +33,7 @@ Deck grids and book activities reveal an individual answer with a 500 ms hold wi
 
 ### Decks by class (finding a deck by who it is for)
 
-**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page has **By topic** (the strands and topics) and **By class**; signed out there is only the published list. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks appear as the usual preview cards, most recently made first from the left. Only that class's decks are loaded, when you click it. A deck can be used with more than one class. **Add a deck…** puts a deck in the class, and the cross on a card takes it out (neither is offered on a phone).
+**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class lists a heading per year (7, 8, 9, 10, 11, A-Level) with its classes as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), each with how many decks it has. Click a class and its decks appear as the usual preview cards, most recently made first from the left. Only that class's decks are loaded, when you click it. A deck can be used with more than one class. **Add a deck…** puts a deck in the class, and the cross on a card takes it out (neither is offered on a phone).
 
 ### Deck strands and topics (filing the Decks page)
 

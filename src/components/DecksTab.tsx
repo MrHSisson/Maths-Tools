@@ -32,9 +32,9 @@ export default function DecksTab() {
 
 type View = 'topic' | 'class';
 const VIEW_KEY = 'mt-decks-view';
-/** Which way the Decks page is organised, remembered on this device. */
+/** Which way the Decks page is organised (By class unless By topic was chosen), remembered on this device. */
 function useView(): [View, (v: View) => void] {
-  const [view, set] = useState<View>(() => { try { return localStorage.getItem(VIEW_KEY) === 'class' ? 'class' : 'topic'; } catch { return 'topic'; } });
+  const [view, set] = useState<View>(() => { try { return localStorage.getItem(VIEW_KEY) === 'topic' ? 'topic' : 'class'; } catch { return 'class'; } });
   return [view, (v) => { set(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* the choice just is not remembered */ } }];
 }
 /** By topic (the strands and topics) or By class (a year, then its classes). */
