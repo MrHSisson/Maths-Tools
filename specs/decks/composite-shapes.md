@@ -1,7 +1,7 @@
 # Composite shapes (area) — authored lesson plan
 
-**Status:** draft, for Harry's review (nothing built yet)
-**Audience:** Year 8, secure on the area of a rectangle, a triangle and a parallelogram.
+**Status:** implemented (build script `composite-shapes.build.ts`; pictures `composite-shapes-art.ts`). Option A (authored pictures) chosen by Harry.
+**Audience:** Year 7, at the end of the area topic: secure on the area of a rectangle, a triangle and a parallelogram.
 **Lesson:** about 60 minutes, stand-alone, fully authored (no generator, no new tool).
 **Reference sheet:** Harry's Questions 3 to 5 (house shapes, shaded areas, trapezium-type shapes).
 **Modelled on:** `year7-rectilinear-area` (split, find, add; then the cut-out alternative). Same house look (`docs/design/LESSON_STYLE.md`).
@@ -32,14 +32,14 @@
 | A1 | Rectangle 6 × 4 with triangle on top, base 6, height 3 | all lengths given, standard house | 33 cm² | forgetting the ½ | 42 |
 | A2 | Rectangle 10 × 6 with triangle, base 10, height 4 | same, bigger | 80 cm² | forgetting the ½ | 100 |
 | A3 | Rectangle 8 × 5 with triangle on the right, base 5, height 3 | rotated: triangle beside, not on top | 47.5 cm² | ½ again, with a decimal result | 55 |
-| A4 | Rectangle 12 × 7 with triangle, base 12, height 4; sloping sides 6.5 marked | extra length is a distractor | 108 cm² | slant side used as the height | 123 |
+| A4 | Rectangle 12 × 7 with triangle, base 12, height 8; sloping sides 10 marked | extra length is a distractor (sloping sides drawn true: 6, 8, 10) | 132 cm² | slant side used as the height | 144 |
 | A5 | Width 7, total height 8, apex 3 above the rectangle | missing length: 8 − 3 = 5 first | 45.5 cm² | total height used as the rectangle's | 66.5 |
 | A6 | Base 10, left side 8, right side 12 (right-angled trapezium) | missing length: 12 − 8 = 4 first | 100 cm² | 12 used as the rectangle's height | 140 |
 | B1 | Rectangle 13 × 7.5, triangle hole base 9, height 5 (shaded) | first subtract | 75 cm² | adding instead | 120 |
 | B2 | Rectangle 20 × 12, square hole 5 × 5 | easy subtract, no triangle | 215 cm² | adding instead | 265 |
 | B3 | Rectangle 18 × 10 with a triangular notch, base 8, height 6 | notch from an edge | 156 cm² | notch treated as a rectangle | 132 |
 | B4 | Triangle base 14.4, height 12, rectangular hole 3 × 3.5 | decimals; hole inside a triangle | 75.9 cm² | adding instead | 96.9 |
-| C1 | Parallelogram base 9, height 4, joined to rectangle 5 × 4 | parallelogram + rectangle | 56 cm² | slant (5) used as the height | 65 |
+| C1 | Parallelogram base 9, height 4 (slant 5) on a rectangle 9 × 3 | parallelogram + rectangle | 63 cm² | slant (5) used as the height | 72 |
 | C2 | Parallelogram base 12, height 7, rectangular hole 4 × 3 | parallelogram minus a hole | 72 cm² | adding instead | 96 |
 | C3 | Parallelogram base 10, height 6, triangle on top, base 10, height 4 | two different formulas | 80 cm² | forgetting the ½ | 100 |
 | D1 | Trapezium, parallel sides 5 and 11, height 4, split rectangle + triangle | trapezium as a composite | 32 cm² | adding parallel sides, not halving | 64 |
@@ -47,7 +47,7 @@
 | D3 | Trapezium, parallel sides 6.4 and 9, height 5 | decimal | 38.5 cm² | not halving | 77 |
 | D4 | Rectangle 6 × 5 with a trapezium below (top 6, bottom 14, height 9) | trapezium inside a composite | 120 cm² | not halving | 210 |
 
-All 17 recomputed by a second route (the wrong-method column was produced by running the wrong method; none equals the right answer). Book work (slide 13) and the exit ticket (slide 14) are written after this plan is agreed, using fresh numbers (nothing above is reused).
+All 17 recomputed by a second route (and again inside the build script, from each picture's own pieces) (the wrong-method column was produced by running the wrong method; none equals the right answer). Book work (a to f: 63, 114, 99, 111, 60, 80) and the exit ticket (77 and 132) use fresh numbers; nothing above is reused.
 
 ## The traps (shared vocabulary)
 
@@ -57,7 +57,7 @@ All 17 recomputed by a second route (the wrong-method column was produced by run
 4. Using the total height for the rectangle (missing-length step skipped).
 5. Trapezium: not halving the sum of the parallel sides.
 
-## Pictures
+## Pictures (decided: option A)
 
 No tool in the repo draws a shape that mixes triangles, parallelograms and trapezia: the Rectilinear Shapes picture only does right-angled outlines. Two ways to get the pictures:
 
