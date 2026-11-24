@@ -228,13 +228,13 @@ const W: { q: Q; split: boolean }[] = [
   { q: house("w1", "Sheet", 9, 5, 4), split: true },
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
   { q: bowtie("w3", "Sheet", 9, 6, 4), split: false },
-  { q: paraAndTriangle("w5", "Sheet", 12, 3, 5, 9, ""), split: false },
-  { q: triHole("w4", "Sheet", 15, 8, 8, 4, ""), split: false },
-  { q: triParaHole("w6", "Sheet", 20, 12, 8, 3, 1, 1, 2.5, ""), split: false },
+  { q: paraAndTriangle("w4", "Sheet", 12, 3, 5, 9, ""), split: false },
+  { q: parallelogram("w5", "Sheet", 12, 0, 6, 3, { hole: [6, 2, 4, 3], brief: "" }), split: false },
+  { q: triInTri("w6", "Sheet", 16, 12, 6, 5, 2, 2.5, ""), split: false },
   { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
   { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 78, 84, 104, 96, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 78, 84, 60, 81, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
@@ -242,7 +242,7 @@ const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
 });
 const worksheetSlide = (): Slide => {
   const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself. In question 3 the two triangles are the same.", items: sheetItems }, "perimeter-and-area");
-  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 is a parallelogram with a triangle on top, 5 a triangular hole in a rectangle, 6 a parallelogram cut out of a triangle, 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
+  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 is a parallelogram with a triangle on top, 5 a rectangle cut out of a parallelogram, 6 a triangle frame (a triangle cut out of a triangle), 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
 };
 
 // ---------- the exit ticket ----------

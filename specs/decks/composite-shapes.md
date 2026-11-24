@@ -100,8 +100,12 @@ A bowtie (a box with an identical triangle on each side) replaces two of the hou
 
 ## Revision 7 (Harry's feedback, 2026-11-24): worksheet questions 3, 5 and 6
 
-Questions 1, 2, 4, 7 and 8 stay. Question 3 (the bowtie) is taller: rectangle 9 by 6, triangles 4 wide, total width 17: 78. Question 5 is a parallelogram with a triangle on top (base 12, height 5, total height 9, so the triangle's height is 4: 60 + 24 = 84). Question 6 is a right-angled triangle (20 by 12) with a parallelogram cut out (base 8, height 3: 120 − 24 = 96). Worksheet answers: 63, 87, 78, 84, 104, 96, 54, 50. No worksheet question has a decimal now.
+Questions 1, 2, 4, 7 and 8 stay. Question 3 (the bowtie) is taller: rectangle 9 by 6, triangles 4 wide, total width 17: 78. Question 5 is a parallelogram with a triangle on top (base 12, height 5, total height 9, so the triangle's height is 4: 60 + 24 = 84). Question 6 is a right-angled triangle (20 by 12) with a parallelogram cut out (base 8, height 3: 120 − 24 = 96). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50. No worksheet question has a decimal now.
 
 ## Revision 8 (Harry's feedback, 2026-11-24)
 
-Worksheet questions 4 and 5 swap places: question 4 is the parallelogram with a triangle on top (84) and question 5 is the rectangle with a triangular hole (104). Worksheet answers: 63, 87, 78, 84, 104, 96, 54, 50.
+Worksheet questions 4 and 5 swap places: question 4 is the parallelogram with a triangle on top (84) and question 5 is the rectangle with a triangular hole (104). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50.
+
+## Revision 9 (Harry's feedback, 2026-11-24)
+
+Worksheet question 5 is a rectangle cut out of a parallelogram (base 12, height 6, hole 4 by 3: 72 − 12 = 60). Question 6 is a triangle frame, a right-angled triangle (16 by 12) with a right-angled triangle cut out (base 6, height 5: 96 − 15 = 81). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50. The rectangle with a triangular hole stays in the lesson (B1) but no longer appears on the worksheet.
