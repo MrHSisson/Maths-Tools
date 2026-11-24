@@ -53,33 +53,33 @@ function questionSlide(q: Q): Slide {
 
 // ---------- shapes ----------
 const apexH = (w: number, h: number, ah: number): Art["outline"] => [[0, 0], [w, 0], [w, h], [w / 2, h + ah], [0, h]];
-/** A house: rectangle w × h with a triangle on top whose apex is `ah` above it. `total` gives the whole height instead of the rectangle's. */
-function house(id: string, set: string, w: number, h: number, ah: number, o: { slant?: string; total?: number; brief?: string } = {}): Q {
-  const rectArea = w * h, tri = (w * ah) / 2;
-  const total = o.total !== undefined;
-  const dims: Art["dims"] = [{ a: [0, 0], b: [w, 0], label: `${w} cm`, side: B }];
-  if (total) dims.push({ a: [w, 0], b: [w, h + ah], label: `${o.total} cm`, side: R, off: 70 }); else dims.push({ a: [w, 0], b: [w, h], label: `${h} cm`, side: R });
-  dims.push({ a: [w / 2, h], b: [w / 2, h + ah], label: `${ah} cm`, side: R, off: 22 });
-  if (o.slant) dims.push({ a: [0, h], b: [w / 2, h + ah], label: o.slant, side: [-0.7, 0.7], off: 30 });
-  const given: Art = { outline: apexH(w, h, ah), dims, dashed: [[[w / 2, h], [w / 2, h + ah]], ...(total ? [[[w / 2, h + ah], [w, h + ah]] as [P, P]] : [])], right: [[[0, 0], [w, 0], [0, h]], [[w, 0], [0, 0], [w, h]], [[w / 2, h], [0, h], [w / 2, h + ah]]] };
-  const worked: Partial<Art> = { dashed: [[[0, h], [w, h]]], dims: total ? [{ a: [0, 0], b: [0, h], label: `${h} cm`, side: L, off: 38 }] : [] };
+/** A house: a rectangle (wall height `h`) with a triangle on top. The picture gives the wall height and the total height; the triangle's height
+ *  (`ah`, the difference) is found in the working. */
+function house(id: string, set: string, w: number, h: number, ah: number, o: { slant?: string; brief?: string } = {}): Q {
+  const rectArea = w * h, tri = (w * ah) / 2, total = h + ah;
+  const dims: Art["dims"] = [{ a: [0, 0], b: [w, 0], label: `${w} cm`, side: B }, { a: [w, 0], b: [w, h], label: `${h} cm`, side: R }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }];
+  if (o.slant) dims.push({ a: [w, h], b: [w / 2, total], label: o.slant, side: [0.7, 0.7], off: 30 });
+  const given: Art = { outline: apexH(w, h, ah), dims, dashed: [[[w / 2, total], [0, total]]], right: [[[0, 0], [w, 0], [0, h]], [[w, 0], [0, 0], [w, h]]] };
+  const worked: Partial<Art> = { dashed: [[[0, h], [w, h]], [[w / 2, h], [w / 2, total]]], dims: [{ a: [w / 2, h], b: [w / 2, total], label: `${ah} cm`, side: R, off: 22 }] };
   const steps = [
-    ...(total ? [`Rectangle height: $${o.total} - ${ah} = ${h}$ cm`] : []),
+    `Triangle height: $${total} - ${h} = ${ah}$ cm`,
     `A: rectangle  $${w} \\times ${h} = ${area(rectArea)}$ cm²`,
     `B: triangle  $\\tfrac12 \\times ${w} \\times ${ah} = ${area(tri)}$ cm²`,
     `Total: $${area(rectArea)} + ${area(tri)} = ${area(rectArea + tri)}$ cm²`,
   ];
   return { id, set, prompt: "Work out the area of this shape.", given, worked, steps, answer: rectArea + tri, brief: o.brief,
-    pieces: [{ pts: rect(0, 0, w, h), fill: COL.rect, name: "A" }, { pts: [[0, h], [w, h], [w / 2, h + ah]], fill: COL.tri, name: "B", dx: -w * 0.22 }] };
+    pieces: [{ pts: rect(0, 0, w, h), fill: COL.rect, name: "A" }, { pts: [[0, h], [w, h], [w / 2, total]], fill: COL.tri, name: "B", dx: -w * 0.22 }] };
 }
-/** A rectangle w × h with a triangle beside it on the right: the triangle's base is the rectangle's side (h), its height `th`. */
+/** A rectangle (width `w`, height `h`) with a triangle beside it on the right. The picture gives the rectangle's width and the total width; the
+ *  triangle's height (`th`, the difference) is found in the working. Its base is the rectangle's side (h). */
 function beside(id: string, set: string, w: number, h: number, th: number, brief: string): Q {
-  const given: Art = { outline: [[0, 0], [w, 0], [w + th, h / 2], [w, h], [0, h]], dims: [{ a: [0, 0], b: [w, 0], label: `${w} cm`, side: B }, { a: [0, 0], b: [0, h], label: `${h} cm`, side: L }, { a: [w, h / 2], b: [w + th, h / 2], label: `${th} cm`, side: U, off: 26 }],
-    dashed: [[[w, h / 2], [w + th, h / 2]]], right: [[[0, 0], [w, 0], [0, h]], [[0, h], [0, 0], [w, h]], [[w, h / 2], [w, h], [w + th, h / 2]]] };
+  const total = w + th;
+  const given: Art = { outline: [[0, 0], [w, 0], [total, h / 2], [w, h], [0, h]], dims: [{ a: [0, 0], b: [total, 0], label: `${total} cm`, side: B }, { a: [0, h], b: [w, h], label: `${w} cm`, side: U }, { a: [0, 0], b: [0, h], label: `${h} cm`, side: L }],
+    dashed: [[[total, h / 2], [total, 0]]], right: [[[0, 0], [w, 0], [0, h]], [[0, h], [0, 0], [w, h]]] };
   const ra = w * h, ta = (h * th) / 2;
-  return { id, set, prompt: "Work out the area of this shape.", given, worked: { dashed: [[[w, 0], [w, h]]] }, brief, answer: ra + ta,
-    steps: [`A: rectangle  $${w} \\times ${h} = ${ra}$ cm²`, `B: triangle  base $${h}$, height $${th}$:  $\\tfrac12 \\times ${h} \\times ${th} = ${area(ta)}$ cm²`, `Total: $${ra} + ${area(ta)} = ${area(ra + ta)}$ cm²`],
-    pieces: [{ pts: rect(0, 0, w, h), fill: COL.rect, name: "A" }, { pts: [[w, 0], [w + th, h / 2], [w, h]], fill: COL.tri, name: "B", dy: -0.9 }] };
+  return { id, set, prompt: "Work out the area of this shape.", given, worked: { dashed: [[[w, 0], [w, h]], [[w, h / 2], [total, h / 2]]], dims: [{ a: [w, h / 2], b: [total, h / 2], label: `${th} cm`, side: U, off: 26 }] }, brief, answer: ra + ta,
+    steps: [`Triangle height: $${total} - ${w} = ${th}$ cm`, `A: rectangle  $${w} \\times ${h} = ${ra}$ cm²`, `B: triangle  base $${h}$, height $${th}$:  $\\tfrac12 \\times ${h} \\times ${th} = ${area(ta)}$ cm²`, `Total: $${ra} + ${area(ta)} = ${area(ra + ta)}$ cm²`],
+    pieces: [{ pts: rect(0, 0, w, h), fill: COL.rect, name: "A" }, { pts: [[w, 0], [total, h / 2], [w, h]], fill: COL.tri, name: "B", dx: -0.25, dy: -1.4 }] };
 }
 /** A shaded outline with a cut-out; the working subtracts. */
 function shaded(id: string, set: string, outline: P[], hole: P[], dims: Art["dims"], dashed: [P, P][], right: [P, P, P][], steps: string[], answer: number, brief: string, prompt = "Work out the shaded area."): Q {
@@ -126,66 +126,66 @@ function parallelogram(id: string, set: string, base: number, rectH: number, ph:
     steps: [`A: rectangle  $${base} \\times ${rectH} = ${base * rectH}$ cm²`, `B: parallelogram  $${base} \\times ${ph} = ${base * ph}$ cm²`, `Total: $${base * rectH} + ${base * ph} = ${total}$ cm²`],
     pieces: [{ pts: rect(0, 0, base, rectH), fill: COL.rect, name: "A" }, { pts: para, fill: COL.para, name: "B", dx: 1.5 }] };
 }
-/** A trapezium (`bottom` and `top` parallel, height `h`): one right-angled side, or symmetrical. Worked as a rectangle and one or two triangles; the formula must agree. */
-function trapezium(id: string, set: string, bottom: number, top: number, h: number, iso: boolean, brief: string): Q {
-  const d = bottom - top, sp = iso ? d / 2 : d;
-  const tl: P = iso ? [sp, h] : [0, h], tr: P = [tl[0] + top, h];
-  const dims: Art["dims"] = [{ a: [0, 0], b: [bottom, 0], label: `${bottom} cm`, side: B }, { a: tl, b: tr, label: `${top} cm`, side: U }];
-  const dashed: [P, P][] = [], right: [P, P, P][] = [];
-  if (iso) { dims.push({ a: [sp, 0], b: [sp, h], label: `${h} cm`, side: R, off: 22 }); dashed.push([[sp, 0], [sp, h]]); right.push([[sp, 0], [0, 0], [sp, h]]); }
-  else { dims.push({ a: [0, 0], b: [0, h], label: `${h} cm`, side: L }); right.push([[0, 0], [bottom, 0], [0, h]], [[0, h], [0, 0], tr]); }
-  const ra = top * h, ta = (sp * h) / 2;
-  let pieces: Piece[], steps: string[], answer: number;
-  if (iso) {
-    pieces = [{ pts: rect(sp, 0, sp + top, h), fill: COL.rect, name: "A" }, { pts: [[0, 0], [sp, 0], [sp, h]], fill: COL.tri, name: "B", dx: -0.4 }, { pts: [[sp + top, 0], [bottom, 0], [sp + top, h]], fill: COL.tri, name: "C", dx: 0.4 }];
-    steps = [`A: rectangle  $${top} \\times ${h} = ${ra}$ cm²`, `B and C: two triangles, base $${sp}$, height $${h}$:  $2 \\times \\tfrac12 \\times ${sp} \\times ${h} = ${area(2 * ta)}$ cm²`, `Total: $${ra} + ${area(2 * ta)} = ${area(ra + 2 * ta)}$ cm²`];
-    answer = ra + 2 * ta;
-  } else {
-    pieces = [{ pts: rect(0, 0, top, h), fill: COL.rect, name: "A" }, { pts: [[top, 0], [bottom, 0], [top, h]], fill: COL.tri, name: "B" }];
-    steps = [`Triangle base: $${bottom} - ${top} = ${area(sp)}$ cm`, `A: rectangle  $${top} \\times ${h} = ${ra}$ cm²`, `B: triangle  $\\tfrac12 \\times ${area(sp)} \\times ${h} = ${area(ta)}$ cm²`, `Total: $${ra} + ${area(ta)} = ${area(ra + ta)}$ cm²`];
-    answer = ra + ta;
-  }
-  must(Math.abs(((top + bottom) * h) / 2 - answer) < 1e-9, `${id}: the formula and the split disagree`);
-  return { id, set, prompt: "Work out the area of this trapezium.", given: { outline: [[0, 0], [bottom, 0], tr, tl], dims, dashed, right }, worked: { dashed: iso ? [[[sp + top, 0], [sp + top, h]]] : [[[top, 0], [top, h]]] }, steps, answer, brief, pieces };
+// Trapezia are never split: pupils already have the formula, so a trapezium here is a piece that gets ½ × (a + b) × h. Every one is symmetrical
+// (bottom edge longer than the top edge, the slanted sides equal), drawn with its perpendicular height.
+const trapArea = (bottom: number, top: number, h: number) => ((bottom + top) * h) / 2;
+const trapPts = (bottom: number, top: number, y0: number, h: number): P[] => { const o = (bottom - top) / 2; return [[0, y0], [bottom, y0], [o + top, y0 + h], [o, y0 + h]]; };
+
+/** A rectangle (width `w`, height `rh`) with a symmetrical trapezium on top (bottom edge `w`, top edge `top`). The picture gives the rectangle's
+ *  height and the total height; the trapezium's height is found by subtraction. */
+function rectAndTrapezium(id: string, set: string, w: number, rh: number, top: number, total: number, brief: string): Q {
+  const th = total - rh, o = (w - top) / 2, ta = trapArea(w, top, th), ra = w * rh;
+  const given: Art = { outline: [[0, 0], [w, 0], [w, rh], [o + top, total], [o, total], [0, rh]], dims: [{ a: [0, 0], b: [w, 0], label: `${w} cm`, side: B }, { a: [w, 0], b: [w, rh], label: `${rh} cm`, side: R }, { a: [o, total], b: [o + top, total], label: `${top} cm`, side: U }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }],
+    dashed: [[[o, total], [0, total]]], right: [[[0, 0], [w, 0], [0, rh]], [[w, 0], [0, 0], [w, rh]]] };
+  return { id, set, prompt: "Work out the area of this shape.", given, worked: { dashed: [[[0, rh], [w, rh]], [[o, rh], [o, total]]], dims: [{ a: [o, rh], b: [o, total], label: `${th} cm`, side: R, off: 24 }] }, brief, answer: ra + ta,
+    steps: [`Trapezium height: $${total} - ${rh} = ${th}$ cm`, `A: rectangle  $${w} \\times ${rh} = ${ra}$ cm²`, `B: trapezium  $\\tfrac12 \\times (${w} + ${top}) \\times ${th} = ${area(ta)}$ cm²`, `Total: $${ra} + ${area(ta)} = ${area(ra + ta)}$ cm²`],
+    pieces: [{ pts: rect(0, 0, w, rh), fill: COL.rect, name: "A" }, { pts: trapPts(w, top, rh, th), fill: COL.trap, name: "B", dx: 1.2 }] };
 }
-/** A rectangle w × rh with a symmetrical trapezium on top (bottom edge w, top edge `top`, height `th`). */
-function rectAndTrapezium(id: string, set: string, w: number, rh: number, top: number, th: number, brief: string): Q {
-  const o = (w - top) / 2, ap: P[] = [[o, rh + th], [o + top, rh + th]];
-  const given: Art = { outline: [[0, 0], [w, 0], [w, rh], ap[1], ap[0], [0, rh]], dims: [{ a: [0, 0], b: [w, 0], label: `${w} cm`, side: B }, { a: [w, 0], b: [w, rh], label: `${rh} cm`, side: R }, { a: ap[0], b: ap[1], label: `${top} cm`, side: U }, { a: [o, rh], b: ap[0], label: `${th} cm`, side: R, off: 24 }],
-    dashed: [[[o, rh], ap[0]]], right: [[[0, 0], [w, 0], [0, rh]], [[w, 0], [0, 0], [w, rh]], [[o, rh], [o + 1, rh], [o, rh + 1]]] };
-  const ra = w * rh, ta = ((w + top) * th) / 2;
-  return { id, set, prompt: "Work out the area of this shape.", given, worked: {}, brief, answer: ra + ta,
-    steps: [`A: rectangle  $${w} \\times ${rh} = ${ra}$ cm²`, `B: trapezium  $\\tfrac12 \\times (${w} + ${top}) \\times ${th} = ${ta}$ cm²`, `Total: $${ra} + ${ta} = ${ra + ta}$ cm²`],
-    pieces: [{ pts: rect(0, 0, w, rh), fill: COL.rect, name: "A" }, { pts: [[0, rh], [w, rh], ap[1], ap[0]], fill: COL.trap, name: "B", dx: 1.2 }] };
+/** A symmetrical trapezium (`bottom`, `top`, height `h`) with a rectangular hole: whole minus hole, the whole worked with the formula. */
+function trapHole(id: string, set: string, bottom: number, top: number, h: number, hole: [number, number], brief: string): Q {
+  const o = (bottom - top) / 2, [hw, hh] = hole, x0 = (bottom - hw) / 2, y0 = 1.5, ta = trapArea(bottom, top, h);
+  const holePts = rect(x0, y0, x0 + hw, y0 + hh);
+  return shaded(id, set, trapPts(bottom, top, 0, h), holePts,
+    [{ a: [0, 0], b: [bottom, 0], label: `${bottom} cm`, side: B }, { a: [o, h], b: [o + top, h], label: `${top} cm`, side: U }, { a: [o, 0], b: [o, h], label: `${h} cm`, side: R, off: 24 }, { a: [x0, y0], b: [x0 + hw, y0], label: `${hw} cm`, side: B, off: 30 }, { a: [x0 + hw, y0], b: [x0 + hw, y0 + hh], label: `${hh} cm`, side: R, off: 24 }],
+    [[[o, 0], [o, h]]], [[[o, 0], [o + 1, 0], [o, 1]]],
+    [`Trapezium: $\\tfrac12 \\times (${bottom} + ${top}) \\times ${h} = ${area(ta)}$ cm²`, `Hole: $${hw} \\times ${hh} = ${hw * hh}$ cm²`, `Shaded: $${area(ta)} - ${hw * hh} = ${area(ta - hw * hh)}$ cm²`], ta - hw * hh, brief);
+}
+/** A symmetrical trapezium with a triangle on its top edge. The picture gives the trapezium's height and the total height; the triangle's height is found by subtraction. */
+function trapAndTriangle(id: string, set: string, bottom: number, top: number, th: number, total: number, brief: string): Q {
+  const o = (bottom - top) / 2, ah = total - th, ta = trapArea(bottom, top, th), tri = (top * ah) / 2, mid = bottom / 2;
+  const given: Art = { outline: [[0, 0], [bottom, 0], [o + top, th], [mid, total], [o, th]], dims: [{ a: [0, 0], b: [bottom, 0], label: `${bottom} cm`, side: B }, { a: [o, th], b: [o + top, th], label: `${top} cm`, side: [0, -1], off: 26 }, { a: [o, 0], b: [o, th], label: `${th} cm`, side: R, off: 24 }, { a: [0, 0], b: [0, total], label: `${total} cm`, side: L }],
+    dashed: [[[o, 0], [o, th]], [[mid, total], [0, total]]], right: [[[o, 0], [o + 1, 0], [o, 1]]] };
+  return { id, set, prompt: "Work out the area of this shape.", given, worked: { dashed: [[[o, th], [o + top, th]], [[mid, th], [mid, total]]], dims: [{ a: [mid, th], b: [mid, total], label: `${ah} cm`, side: R, off: 22 }] }, brief, answer: ta + tri,
+    steps: [`Triangle height: $${total} - ${th} = ${ah}$ cm`, `A: trapezium  $\\tfrac12 \\times (${bottom} + ${top}) \\times ${th} = ${area(ta)}$ cm²`, `B: triangle  $\\tfrac12 \\times ${top} \\times ${ah} = ${area(tri)}$ cm²`, `Total: $${area(ta)} + ${area(tri)} = ${area(ta + tri)}$ cm²`],
+    pieces: [{ pts: trapPts(bottom, top, 0, th), fill: COL.trap, name: "A" }, { pts: [[o, th], [o + top, th], [mid, total]], fill: COL.tri, name: "B", dx: -1.6 }] };
 }
 
 // ---------- the lesson (about 60 minutes) ----------
-// Add: model + four. Trap. Subtract: model + two. Stretch: model + two. Worksheet (8). Exit.
-const M1 = house("m1", "Model", 8, 3, 3, { brief: "Models splitting a house shape into a rectangle and a triangle, finding each area and adding." });
-const A1 = house("a1", "Set A", 6, 4, 3, { brief: "Rectangle and triangle, every length given. Catches forgetting the half for a triangle." });
+// Add: model + three (house, sloping side, beside) + a parallelogram. Trap. Subtract: model + two. Stretch: model + two. Worksheet (8). Exit.
+const M1 = house("m1", "Model", 8, 3, 3, { brief: "Models splitting a house shape: find the triangle's height from the wall and total heights, then each area, then add." });
+const A1 = house("a1", "Set A", 6, 4, 3, { brief: "Rectangle and triangle. The wall and total heights are given, so the triangle's height is found first (7 − 4). Catches forgetting the half." });
 const A2 = house("a2", "Set A", 12, 7, 8, { slant: "10 cm", brief: "A sloping side is marked as a distractor. The height is the dashed line at right angles to the base." });
-const A3 = beside("a3", "Set A", 8, 5, 3, "The triangle sits beside the rectangle, not on top: its base is the side of the rectangle.");
-const A4 = house("a4", "Set A", 7, 5, 3, { total: 8, brief: "The total height is given, so the rectangle's height must be found first (8 − 3)." });
+const A3 = beside("a3", "Set A", 8, 5, 3, "The triangle sits beside the rectangle, not on top: its base is the side of the rectangle, and its height is found from the widths (11 − 8).");
 const C1 = parallelogram("c1", "Set A", 9, 3, 4, 3, { slant: "5 cm", brief: "A parallelogram on a rectangle. The sloping side (5) is marked: catches using it as the height." });
 const M2 = triHole("m2", "Model", 9, 6, 4, 3, "Models whole minus cut-out for a shaded shape: the hole is a triangle.");
 const B1 = triHole("b1", "Set B", 13, 7.5, 9, 5, "First subtract: a triangular hole in a rectangle, with one decimal length. Catches adding the two areas.");
 const B2 = squareHole("b2", "Set B", 20, 12, 5, "The simplest subtraction: a square hole, no triangle.");
-const M4 = trapezium("m4", "Model", 9, 5, 4, false, "Models a trapezium as a rectangle and a triangle; the formula comes after, as a shortcut for the same thing.");
-const D1 = trapezium("d1", "Set D", 11, 5, 4, false, "A trapezium with one right-angled side, split into a rectangle and a triangle. Catches adding the parallel sides without halving.");
-const D2 = trapezium("d2", "Set D", 14, 8, 5, true, "A symmetrical trapezium: a rectangle and two triangles. Links the split to the formula.");
+const M4 = rectAndTrapezium("m4", "Model", 10, 3, 6, 7, "Models a trapezium as a piece of a composite shape: find its height from the total, then use the trapezium formula (no splitting) and add the rectangle.");
+const D1 = trapHole("d1", "Set D", 12, 8, 5, [3, 2], "A trapezium with a rectangular hole: the formula for the whole, then subtract. Catches not halving the sum of the parallel sides.");
+const D2 = trapAndTriangle("d2", "Set D", 14, 8, 5, 9, "A trapezium with a triangle on top: two formulas in one shape, and the triangle's height found from the total (9 \u2212 5).");
 
 // ---------- the worksheet: eight questions, fading support (split shown, then independent), one decimal at most ----------
 const W: { q: Q; split: boolean }[] = [
   { q: house("w1", "Sheet", 9, 5, 4), split: true },
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
-  { q: house("w3", "Sheet", 10, 5, 4, { total: 9 }), split: false },
+  { q: house("w3", "Sheet", 10, 5, 4), split: false },
   { q: triHole("w4", "Sheet", 15, 8, 6, 4, ""), split: false },
   { q: squareHole("w5", "Sheet", 14, 9.5, 3, ""), split: false },
   { q: parallelogram("w6", "Sheet", 14, 0, 6, 3, { hole: [5, 1, 5, 4], brief: "" }), split: false },
-  { q: trapezium("w7", "Sheet", 12, 6, 5, false, ""), split: false },
-  { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 3, ""), split: false },
+  { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
+  { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 70, 108, 124, 64, 45, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 70, 108, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
@@ -193,7 +193,7 @@ const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
 });
 const worksheetSlide = (): Slide => {
   const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself.", items: sheetItems }, "perimeter-and-area");
-  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; 3 needs a missing length, 4 to 6 are shaded, 7 is a trapezium, 8 a trapezium on a rectangle. Answers appear on a click." };
+  return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 to 6 are shaded, 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
 };
 
 // ---------- the exit ticket ----------
@@ -232,7 +232,7 @@ const startItems = [
   Q.open("cs-s1", "perimeter-and-area", "level1", "A rectangle is $9$ cm by $4$ cm. What is its area?", "$36$ cm²"),
   Q.open("cs-s2", "perimeter-and-area", "level1", "A triangle has base $10$ cm and perpendicular height $6$ cm. What is its area?", "$30$ cm²"),
   Q.open("cs-s3", "perimeter-and-area", "level1", "A parallelogram has base $7$ cm, height $5$ cm and sloping side $6$ cm. What is its area?", "$35$ cm²"),
-  Q.open("cs-s4", "perimeter-and-area", "level1", "A triangle has base $8$ cm, height $7$ cm and sloping side $9$ cm. What is its area?", "$28$ cm²"),
+  Q.open("cs-s4", "perimeter-and-area", "level1", "A trapezium has parallel sides $6$ cm and $10$ cm, and height $4$ cm. What is its area?", "$32$ cm²"),
 ];
 
 export default (): Omit<DeckDef, "toolPath"> => ({
@@ -248,7 +248,7 @@ export default (): Omit<DeckDef, "toolPath"> => ({
       { term: "Trapezium", meaning: "A quadrilateral with one pair of parallel sides." },
     ]),
     discussSplit(),
-    questionSlide(M1), questionSlide(A1), questionSlide(A2), discussTrap(), questionSlide(A3), questionSlide(A4), questionSlide(C1),
+    questionSlide(M1), questionSlide(A1), questionSlide(A2), discussTrap(), questionSlide(A3), questionSlide(C1),
     questionSlide(M2), questionSlide(B1), questionSlide(B2),
     questionSlide(M4), questionSlide(D1), questionSlide(D2),
     worksheetSlide(),
