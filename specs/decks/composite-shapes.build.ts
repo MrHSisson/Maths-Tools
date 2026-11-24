@@ -107,6 +107,16 @@ function triHole(id: string, set: string, w: number, h: number, tb: number, th: 
     [[[w / 2, y0], [w / 2, y0 + th]]], [[[0, 0], [w, 0], [0, h]]],
     [`Rectangle: $${w} \\times ${h} = ${area(ra)}$ cm²`, `Hole: $\\tfrac12 \\times ${tb} \\times ${th} = ${area(ta)}$ cm²`, `Shaded: $${area(ra)} - ${area(ta)} = ${area(ra - ta)}$ cm²`], ra - ta, brief);
 }
+/** A right-angled triangle (base `b`, height `h`) with a right-angled triangular hole (base `hb`, height `hh`) whose right angle sits at (`hx`, `hy`).
+ *  Both heights are upright edges, so each is labelled on its own edge and no dashed height is needed. */
+function triInTri(id: string, set: string, b: number, h: number, hb: number, hh: number, hx: number, hy: number, brief: string): Q {
+  const outline: P[] = [[0, 0], [b, 0], [0, h]], hole: P[] = [[hx, hy], [hx + hb, hy], [hx, hy + hh]];
+  const oa = (b * h) / 2, ha = (hb * hh) / 2;
+  return shaded(id, set, outline, hole,
+    [{ a: [0, 0], b: [b, 0], label: `${b} cm`, side: B }, { a: [0, 0], b: [0, h], label: `${h} cm`, side: L }, { a: [hx, hy], b: [hx + hb, hy], label: `${hb} cm`, side: B }, { a: [hx, hy], b: [hx, hy + hh], label: `${hh} cm`, side: R }],
+    [], [[[0, 0], [1, 0], [0, 1]], [[hx, hy], [hx + 1, hy], [hx, hy + 1]]],
+    [`Whole triangle: $\\tfrac12 \\times ${b} \\times ${h} = ${area(oa)}$ cm²`, `Hole: $\\tfrac12 \\times ${hb} \\times ${hh} = ${area(ha)}$ cm²`, `Shaded: $${area(oa)} - ${area(ha)} = ${area(oa - ha)}$ cm²`], oa - ha, brief);
+}
 /** A rectangle w × h with a square hole of side `s`. */
 function squareHole(id: string, set: string, w: number, h: number, s: number, brief: string): Q {
   const x0 = (w - s) / 2, y0 = (h - s) / 2, ra = w * h;
@@ -122,9 +132,12 @@ function parallelogram(id: string, set: string, base: number, rectH: number, ph:
   const outline: P[] = lower ? [[0, 0], [base, 0], [base, rectH], [base + off, rectH + ph], [off, rectH + ph], [0, rectH]] : [[0, 0], [base, 0], [base + off, ph], [off, ph]];
   const dims: Art["dims"] = [{ a: [0, 0], b: [base, 0], label: `${base} cm`, side: B }];
   if (lower) dims.push({ a: [base, 0], b: [base, rectH], label: `${rectH} cm`, side: R });
-  dims.push({ a: [off, hy], b: [off, hy + ph], label: `${ph} cm`, side: R, off: 24 });
+  const heightDim = { a: [off, hy] as P, b: [off, hy + ph] as P, label: `${ph} cm`, side: R, off: 24 };
+  if (lower) dims.push({ a: [0, 0], b: [0, hy + ph], label: `${hy + ph} cm`, side: L });   // the whole shape's height; the parallelogram's own height is found
+  else dims.push(heightDim);
   if (o.slant) dims.push({ a: [base, hy], b: [base + off, hy + ph], label: o.slant, side: [0.8, -0.6], off: 28 });
-  const given: Art = { outline, dims, dashed: [[[off, hy], [off, hy + ph]]], right: [[[off, hy], [off + 1, hy], [off, hy + 1]]] };
+  const given: Art = { outline, dims, dashed: lower ? [[[off, hy + ph], [0, hy + ph]]] : [[[off, hy], [off, hy + ph]]],
+    right: lower ? [[[0, 0], [base, 0], [0, rectH]], [[base, 0], [0, 0], [base, rectH]]] : [[[off, hy], [off + 1, hy], [off, hy + 1]]] };
   if (o.hole) {
     const [x0, y0, hw, hh] = o.hole, hole = rect(x0, y0, x0 + hw, y0 + hh), pa = base * ph;
     given.hole = hole; given.base = COL.shade;
@@ -134,8 +147,9 @@ function parallelogram(id: string, set: string, base: number, rectH: number, ph:
       pieces: [{ pts: para, fill: COL.shade }, { pts: hole, fill: COL.hole, sign: -1 }] };
   }
   const total = base * rectH + base * ph;
-  return { id, set, prompt: "Work out the area of this shape.", given, worked: {}, brief: o.brief, answer: total,
-    steps: [`A: rectangle  $${base} \\times ${rectH} = ${base * rectH}$ cm²`, `B: parallelogram  $${base} \\times ${ph} = ${base * ph}$ cm²`, `Total: $${base * rectH} + ${base * ph} = ${total}$ cm²`],
+  return { id, set, prompt: "Work out the area of this shape.", given, brief: o.brief, answer: total,
+    worked: { dashed: [[[off, hy], [off, hy + ph]], [[0, hy], [base, hy]]], dims: [heightDim], right: [[[0, 0], [base, 0], [0, rectH]], [[base, 0], [0, 0], [base, rectH]], [[off, hy], [off + 1, hy], [off, hy + 1]]] },
+    steps: [`Parallelogram height: $${hy + ph} - ${hy} = ${ph}$ cm`, `A: rectangle  $${base} \\times ${rectH} = ${base * rectH}$ cm²`, `B: parallelogram  $${base} \\times ${ph} = ${base * ph}$ cm²`, `Total: $${base * rectH} + ${base * ph} = ${total}$ cm²`],
     pieces: [{ pts: rect(0, 0, base, rectH), fill: COL.rect, name: "A" }, { pts: para, fill: COL.para, name: "B", dx: 1.5 }] };
 }
 // Trapezia are never split: pupils already have the formula, so a trapezium here is a piece that gets ½ × (a + b) × h. Every one is symmetrical
@@ -181,7 +195,7 @@ const A3 = beside("a3", "Set A", 8, 5, 3, "The triangle sits beside the rectangl
 const C1 = parallelogram("c1", "Set A", 9, 3, 4, 3, { slant: "5 cm", brief: "A parallelogram on a rectangle. The sloping side (5) is marked: catches using it as the height." });
 const M2 = triHole("m2", "Model", 9, 6, 6, 3, "Models whole minus cut-out for a shaded shape: the hole is a triangle.");
 const B1 = triHole("b1", "Set B", 13, 7.5, 9, 5, "First subtract: a triangular hole in a rectangle, with one decimal length. Catches adding the two areas.");
-const B2 = squareHole("b2", "Set B", 20, 12, 5, "The simplest subtraction: a square hole, no triangle.");
+const B2 = triInTri("b2", "Set B", 20, 12, 8, 5, 3, 2.5, "A triangle inside a triangle: both areas use the triangle formula, then subtract. Catches adding, and halving only one of them.");
 const M4 = rectAndTrapezium("m4", "Model", 10, 3, 6, 7, "Models a trapezium as a piece of a composite shape: find its height from the total, then use the trapezium formula (no splitting) and add the rectangle.");
 const D1 = trapHole("d1", "Set D", 12, 8, 5, [3, 2], "A trapezium with a rectangular hole: the formula for the whole, then subtract. Catches not halving the sum of the parallel sides.");
 const D2 = trapAndTriangle("d2", "Set D", 14, 8, 5, 9, "A trapezium with a triangle on top: two formulas in one shape, and the triangle's height found from the total (9 \u2212 5).");

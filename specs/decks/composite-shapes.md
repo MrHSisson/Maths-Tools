@@ -91,3 +91,9 @@ The pictures were redrawn in the site's own rectilinear style (`specs/decks/comp
 ## Revision 5 (Harry's feedback, 2026-11-24): fewer houses
 
 A bowtie (a box with an identical triangle on each side) replaces two of the houses: A2 (width 7, height 6, triangles 4 wide, total width 15, sloping side 5 marked as the distractor: 66) and worksheet 3 (width 10, height 4, triangles 5 wide, total 20: 60). The picture gives the rectangle's width and the total width, so the first line of working is (total - width) / 2. Houses remain in the model, A1, worksheet 1 and the exit ticket. Worksheet answers: 63, 87, 60, 104, 124, 64, 54, 50.
+
+## Revision 6 (Harry's feedback, 2026-11-24)
+
+- **B2 is a triangle inside a triangle** (whole triangle base 20, height 12: 120; hole base 8, height 5: 20; shaded 100), replacing the square hole in a rectangle. The square-hole shape stays in worksheet question 5.
+- **C1 (rectangle and parallelogram) gives the whole shape's height and the rectangle's**, not the parallelogram's own height: the first line of working is 7 − 3 = 4.
+- **Why the worksheet looked like rectilinear shapes:** the live site runs `main`, which does not have the picture-sheet code, so it drew the worksheet element as an ordinary generated worksheet using the Perimeter & Area rectilinear generator. It shows the eight composite pictures correctly once the picture-sheet code is merged.
