@@ -164,7 +164,9 @@ function parallelogram(id: string, set: string, base: number, rectH: number, ph:
   if (o.hole) {
     const [x0, y0, hw, hh] = o.hole, hole = rect(x0, y0, x0 + hw, y0 + hh), pa = base * ph;
     given.hole = hole; given.base = COL.shade;
-    dims.push({ a: [x0, y0], b: [x0 + hw, y0], label: `${hw} cm`, side: B, off: 30 }, { a: [x0 + hw, y0], b: [x0 + hw, y0 + hh], label: `${hh} cm`, side: R, off: 24 });
+    dims.push({ a: [x0, y0], b: [x0 + hw, y0], label: `${hw} cm`, side: B, off: 30 });
+    if (hw === hh) given.ticks = [[[x0, y0], [x0 + hw, y0]], [[x0 + hw, y0], [x0 + hw, y0 + hh]], [[x0 + hw, y0 + hh], [x0, y0 + hh]], [[x0, y0 + hh], [x0, y0]]];   // a square: one edge labelled, all four marked equal
+    else dims.push({ a: [x0 + hw, y0], b: [x0 + hw, y0 + hh], label: `${hh} cm`, side: R, off: 24 });
     return { id, set, prompt: "Work out the shaded area.", given, worked: { holeFill: COL.hole }, brief: o.brief, answer: pa - hw * hh,
       steps: [`Parallelogram: $${base} \\times ${ph} = ${pa}$ cm²`, `Hole: $${hw} \\times ${hh} = ${hw * hh}$ cm²`, `Shaded: $${pa} - ${hw * hh} = ${pa - hw * hh}$ cm²`],
       pieces: [{ pts: para, fill: COL.shade }, { pts: hole, fill: COL.hole, sign: -1 }] };
@@ -229,19 +231,19 @@ const W: { q: Q; split: boolean }[] = [
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
   { q: bowtie("w3", "Sheet", 9, 6, 4), split: false },
   { q: paraAndTriangle("w4", "Sheet", 12, 3, 5, 9, ""), split: false },
-  { q: parallelogram("w5", "Sheet", 12, 0, 6, 3, { hole: [6, 2, 4, 3], brief: "" }), split: false },
+  { q: parallelogram("w5", "Sheet", 10, 0, 8, 2, { hole: [4, 2, 4, 4], brief: "" }), split: false },
   { q: triInTri("w6", "Sheet", 16, 12, 6, 5, 2, 2.5, ""), split: false },
   { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
   { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 78, 84, 60, 81, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 78, 84, 64, 81, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
   return { src: toSrc(drawArt(asked, 560, 420, 72)), answerSrc: toSrc(drawArt(splitArt(q), 560, 420, 72)), working: q.steps.map(plain), answer: `Area = ${area(q.answer)} cm²` };
 });
 const worksheetSlide = (): Slide => {
-  const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself. In question 3 the two triangles are the same.", items: sheetItems }, "perimeter-and-area");
+  const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself. In question 3 the two triangles are the same. In question 5 the cut-out is a square.", items: sheetItems }, "perimeter-and-area");
   return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 is a parallelogram with a triangle on top, 5 a rectangle cut out of a parallelogram, 6 a triangle frame (a triangle cut out of a triangle), 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
 };
 

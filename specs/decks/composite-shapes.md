@@ -100,16 +100,20 @@ A bowtie (a box with an identical triangle on each side) replaces two of the hou
 
 ## Revision 7 (Harry's feedback, 2026-11-24): worksheet questions 3, 5 and 6
 
-Questions 1, 2, 4, 7 and 8 stay. Question 3 (the bowtie) is taller: rectangle 9 by 6, triangles 4 wide, total width 17: 78. Question 5 is a parallelogram with a triangle on top (base 12, height 5, total height 9, so the triangle's height is 4: 60 + 24 = 84). Question 6 is a right-angled triangle (20 by 12) with a parallelogram cut out (base 8, height 3: 120 − 24 = 96). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50. No worksheet question has a decimal now.
+Questions 1, 2, 4, 7 and 8 stay. Question 3 (the bowtie) is taller: rectangle 9 by 6, triangles 4 wide, total width 17: 78. Question 5 is a parallelogram with a triangle on top (base 12, height 5, total height 9, so the triangle's height is 4: 60 + 24 = 84). Question 6 is a right-angled triangle (20 by 12) with a parallelogram cut out (base 8, height 3: 120 − 24 = 96). Worksheet answers: 63, 87, 78, 84, 64, 81, 54, 50. No worksheet question has a decimal now.
 
 ## Revision 8 (Harry's feedback, 2026-11-24)
 
-Worksheet questions 4 and 5 swap places: question 4 is the parallelogram with a triangle on top (84) and question 5 is the rectangle with a triangular hole (104). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50.
+Worksheet questions 4 and 5 swap places: question 4 is the parallelogram with a triangle on top (84) and question 5 is the rectangle with a triangular hole (104). Worksheet answers: 63, 87, 78, 84, 64, 81, 54, 50.
 
 ## Revision 9 (Harry's feedback, 2026-11-24)
 
-Worksheet question 5 is a rectangle cut out of a parallelogram (base 12, height 6, hole 4 by 3: 72 − 12 = 60). Question 6 is a triangle frame, a right-angled triangle (16 by 12) with a right-angled triangle cut out (base 6, height 5: 96 − 15 = 81). Worksheet answers: 63, 87, 78, 84, 60, 81, 54, 50. The rectangle with a triangular hole stays in the lesson (B1) but no longer appears on the worksheet.
+Worksheet question 5 is a rectangle cut out of a parallelogram (base 12, height 6, hole 4 by 3: 72 − 12 = 60). Question 6 is a triangle frame, a right-angled triangle (16 by 12) with a right-angled triangle cut out (base 6, height 5: 96 − 15 = 81). Worksheet answers: 63, 87, 78, 84, 64, 81, 54, 50. The rectangle with a triangular hole stays in the lesson (B1) but no longer appears on the worksheet.
 
 ## Revision 10 (Harry's feedback, 2026-11-24)
 
 On worksheet questions 4 and 5 the parallelogram's perpendicular height is drawn outside the shape: a dashed line dropped from the top right corner onto the extended base, with a right-angle mark at its foot and the label beside it. (C1 in the lesson still draws its height inside once it is found.)
+
+## Revision 11 (Harry's feedback, 2026-11-24)
+
+Worksheet question 5: a larger parallelogram (base 10, height 8, slant 2) with a square cut out (side 4). One edge of the square is labelled and all four are marked with a dash to show they are equal (`ticks` in `composite-shapes-art.ts`). Area 80 − 16 = 64. Worksheet answers: 63, 87, 78, 84, 64, 81, 54, 50.

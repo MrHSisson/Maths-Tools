@@ -19,6 +19,7 @@ export interface Art {
   dims: Dim[];
   dashed?: [P, P][];
   right?: [P, P, P][];          // right-angle marks: the corner is the first point
+  ticks?: [P, P][];             // edges marked equal: one short dash across the middle of each
   texts?: { at: P; text: string; colour?: string; size?: number }[];
 }
 
@@ -116,6 +117,10 @@ export function drawArt(art: Art, w = 880, h = 700, pad = 120): string {
       out.push(`<line x1="${pa[0]}" y1="${pa[1]}" x2="${pb[0]}" y2="${pb[1]}" stroke="${DIM}" stroke-width="2.5"/>`, arrowHead(pa[0], pa[1], -ux, -uy), arrowHead(pb[0], pb[1], ux, uy));
       out.push(halo(label[0] + nx * 30, label[1] + ny * 22, d.label, { rotate: vertical ? -90 : 0 }));
     }
+  }
+  for (const [p, q] of art.ticks ?? []) {
+    const mx = (X(p) + X(q)) / 2, my = (Y(p) + Y(q)) / 2, dx = X(q) - X(p), dy = Y(q) - Y(p), l = Math.hypot(dx, dy) || 1, nx = (-dy / l) * 9, ny = (dx / l) * 9;
+    out.push(`<line x1="${(mx - nx).toFixed(1)}" y1="${(my - ny).toFixed(1)}" x2="${(mx + nx).toFixed(1)}" y2="${(my + ny).toFixed(1)}" stroke="${INK}" stroke-width="3.5"/>`);
   }
   for (const t of art.texts ?? []) out.push(halo(X(t.at), Y(t.at), t.text, { size: t.size, fill: t.colour }));
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${out.join("")}</svg>`;
