@@ -81,6 +81,18 @@ function beside(id: string, set: string, w: number, h: number, th: number, brief
     steps: [`Triangle height: $${total} - ${w} = ${th}$ cm`, `A: rectangle  $${w} \\times ${h} = ${ra}$ cm²`, `B: triangle  base $${h}$, height $${th}$:  $\\tfrac12 \\times ${h} \\times ${th} = ${area(ta)}$ cm²`, `Total: $${ra} + ${area(ta)} = ${area(ra + ta)}$ cm²`],
     pieces: [{ pts: rect(0, 0, w, h), fill: COL.rect, name: "A" }, { pts: [[w, 0], [total, h / 2], [w, h]], fill: COL.tri, name: "B", dx: -0.25, dy: -1.4 }] };
 }
+/** A bowtie: a rectangle (width `w`, height `h`) with an identical triangle on each side (base `h`, height `th`). The picture gives the rectangle's
+ *  width and the total width; each triangle's height (the difference, halved) is found in the working. The two split lines are drawn. */
+function bowtie(id: string, set: string, w: number, h: number, th: number, o: { slant?: string; brief?: string } = {}): Q {
+  const total = w + 2 * th, ra = w * h, ta = (h * th) / 2;
+  const dims: Art["dims"] = [{ a: [0, 0], b: [total, 0], label: `${total} cm`, side: B }, { a: [th, h], b: [th + w, h], label: `${w} cm`, side: U }, { a: [th, 0], b: [th, h], label: `${h} cm`, side: R }];
+  if (o.slant) dims.push({ a: [0, h / 2], b: [th, h], label: o.slant, side: [-0.7, 0.7] });
+  const given: Art = { outline: [[th, 0], [th + w, 0], [total, h / 2], [th + w, h], [th, h], [0, h / 2]], dims,
+    dashed: [[[th, 0], [th, h]], [[th + w, 0], [th + w, h]], [[0, h / 2], [0, 0]], [[total, h / 2], [total, 0]]], right: [[[th, 0], [th + 1, 0], [th, 1]], [[th + w, 0], [th + w - 1, 0], [th + w, 1]]] };
+  return { id, set, prompt: "Work out the area of this shape. The two triangles are the same.", given, worked: { dashed: [[[0, h / 2], [th, h / 2]]], dims: [{ a: [0, h / 2], b: [th, h / 2], label: `${th} cm`, side: U }] }, brief: o.brief, answer: ra + 2 * ta,
+    steps: [`Triangle height: $(${total} - ${w}) \\div 2 = ${th}$ cm`, `A: rectangle  $${w} \\times ${h} = ${ra}$ cm²`, `B and C: two triangles  $2 \\times \\tfrac12 \\times ${h} \\times ${th} = ${area(2 * ta)}$ cm²`, `Total: $${ra} + ${area(2 * ta)} = ${area(ra + 2 * ta)}$ cm²`],
+    pieces: [{ pts: rect(th, 0, th + w, h), fill: COL.rect, name: "A" }, { pts: [[0, h / 2], [th, 0], [th, h]], fill: COL.tri, name: "B", dx: 0.5, dy: -1.3 }, { pts: [[th + w, 0], [total, h / 2], [th + w, h]], fill: COL.tri, name: "C", dx: -0.5, dy: -1.3 }] };
+}
 /** A shaded outline with a cut-out; the working subtracts. */
 function shaded(id: string, set: string, outline: P[], hole: P[], dims: Art["dims"], dashed: [P, P][], right: [P, P, P][], steps: string[], answer: number, brief: string, prompt = "Work out the shaded area."): Q {
   const given: Art = { outline, hole, base: COL.shade, dims, dashed, right };
@@ -161,10 +173,10 @@ function trapAndTriangle(id: string, set: string, bottom: number, top: number, t
 }
 
 // ---------- the lesson (about 60 minutes) ----------
-// Add: model + three (house, sloping side, beside) + a parallelogram. Trap. Subtract: model + two. Stretch: model + two. Worksheet (8). Exit.
+// Add: model + three (house, bowtie with a sloping side, beside) + a parallelogram. Trap. Subtract: model + two. Stretch: model + two. Worksheet (8). Exit.
 const M1 = house("m1", "Model", 8, 3, 3, { brief: "Models splitting a house shape: find the triangle's height from the wall and total heights, then each area, then add." });
 const A1 = house("a1", "Set A", 6, 4, 3, { brief: "Rectangle and triangle. The wall and total heights are given, so the triangle's height is found first (7 − 4). Catches forgetting the half." });
-const A2 = house("a2", "Set A", 12, 7, 8, { slant: "10 cm", brief: "A sloping side is marked as a distractor. The height is the dashed line at right angles to the base." });
+const A2 = bowtie("a2", "Set A", 7, 6, 4, { slant: "5 cm", brief: "A box with an identical triangle on each side. The sloping side (5) is marked as a distractor: the height is the width each triangle sticks out." });
 const A3 = beside("a3", "Set A", 8, 5, 3, "The triangle sits beside the rectangle, not on top: its base is the side of the rectangle, and its height is found from the widths (11 − 8).");
 const C1 = parallelogram("c1", "Set A", 9, 3, 4, 3, { slant: "5 cm", brief: "A parallelogram on a rectangle. The sloping side (5) is marked: catches using it as the height." });
 const M2 = triHole("m2", "Model", 9, 6, 6, 3, "Models whole minus cut-out for a shaded shape: the hole is a triangle.");
@@ -178,21 +190,21 @@ const D2 = trapAndTriangle("d2", "Set D", 14, 8, 5, 9, "A trapezium with a trian
 const W: { q: Q; split: boolean }[] = [
   { q: house("w1", "Sheet", 9, 5, 4), split: true },
   { q: beside("w2", "Sheet", 12, 6, 5, ""), split: true },
-  { q: house("w3", "Sheet", 10, 5, 4), split: false },
+  { q: bowtie("w3", "Sheet", 10, 4, 5), split: false },
   { q: triHole("w4", "Sheet", 15, 8, 8, 4, ""), split: false },
   { q: squareHole("w5", "Sheet", 14, 9.5, 3, ""), split: false },
   { q: parallelogram("w6", "Sheet", 14, 0, 6, 3, { hole: [6, 1, 5, 4], brief: "" }), split: false },
   { q: trapAndTriangle("w7", "Sheet", 12, 6, 5, 8, ""), split: false },
   { q: rectAndTrapezium("w8", "Sheet", 8, 4, 4, 7, ""), split: false },
 ];
-must(W.map((w) => w.q.answer).join() === [63, 87, 70, 104, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
+must(W.map((w) => w.q.answer).join() === [63, 87, 60, 104, 124, 64, 54, 50].join(), `the worksheet answers are ${W.map((w) => w.q.answer).join()}`);
 const sheetItems: PictureSheetItem[] = W.map(({ q, split }) => {
   check(q);
   const asked: Art = split ? { ...q.given, dashed: [...(q.given.dashed ?? []), ...(q.worked.dashed ?? [])] } : q.given;
   return { src: toSrc(drawArt(asked, 560, 420, 72)), answerSrc: toSrc(drawArt(splitArt(q), 560, 420, 72)), working: q.steps.map(plain), answer: `Area = ${area(q.answer)} cm²` };
 });
 const worksheetSlide = (): Slide => {
-  const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself.", items: sheetItems }, "perimeter-and-area");
+  const s = S.pictureSheet("cs-worksheet", { title: "Composite shapes", note: "Work out the area of each shape. Questions 1 and 2 show the split; after that, split the shape yourself. In question 3 the two triangles are the same.", items: sheetItems }, "perimeter-and-area");
   return { ...s, brief: "Eight authored questions, printed four to an A4 page with a worked answer copy. Support fades: the split is drawn for 1 and 2, then it is independent; every house or side-triangle gives the total and the part, so the triangle's height is found by subtraction; 4 to 6 are shaded, 7 is a trapezium with a triangle on top, 8 a trapezium on a rectangle (the trapezium formula is used, never a split). Answers appear on a click." };
 };
 
