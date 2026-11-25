@@ -25,7 +25,7 @@ A **printable** is an A4 sheet with no generated questions, for the class to fil
 
 ## DecisionShell (`src/shared/decision/`) — network-native tools, quick reference
 
-**A slow generator:** a Decision tool whose `generate` can take a second or more sets `config.slowGenerate: true` (Critical Path does). A new question then shows a small "Making a new question…" pill at the top of the page: the shell paints it for one frame, then generates, and the pill is only CSS transform and opacity so it keeps turning while the page is busy; it fades in after 0.2 s, so a question that comes at once shows nothing. The first question of a visit is made before the page draws, so it has no spinner.
+**A slow generator:** a Decision tool whose `generate` can take a second or more sets `config.slowGenerate: true` (Critical Path does). A new question then shows a small "Making a new question…" pill at the top of the page: the shell paints it for one frame, then generates, and the pill is only CSS transform and opacity so it keeps turning while the page is busy; it fades in after 0.2 s, so a question that comes at once shows nothing, and it keeps turning when the device asks for reduced motion (it is the only sign the page is working). The first question of a visit is made before the page draws, so it has no spinner.
 
 Full plan: `docs/architecture/DECISION_SHELL_PLAN.md`. Shell-level options a Decision tool can use (all opt-in):
 
