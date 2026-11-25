@@ -326,6 +326,8 @@ export interface DecisionShellProps {
   renderSolution?: (problem: DecisionProblem, steps: SolveStep[]) => ReactNode;
   config: {
     pageTitle: string;
+    /** the generator can take a second or more: the shell shows "Making a new question…" with a spinner while it works (a new question only; the first one is made before the page draws) */
+    slowGenerate?: boolean;
     /** One or two plain sentences: what the whole tool is for. The opening of "About this tool". */
     purpose?: string;
     instruction?: string;

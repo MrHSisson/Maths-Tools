@@ -25,6 +25,8 @@ A **printable** is an A4 sheet with no generated questions, for the class to fil
 
 ## DecisionShell (`src/shared/decision/`) — network-native tools, quick reference
 
+**A slow generator:** a Decision tool whose `generate` can take a second or more sets `config.slowGenerate: true` (Critical Path does). A new question then shows a small "Making a new question…" pill at the top of the page: the shell paints it for one frame, then generates, and the pill is only CSS transform and opacity so it keeps turning while the page is busy; it fades in after 0.2 s, so a question that comes at once shows nothing. The first question of a visit is made before the page draws, so it has no spinner.
+
 Full plan: `docs/architecture/DECISION_SHELL_PLAN.md`. Shell-level options a Decision tool can use (all opt-in):
 
 - **`config.chooser: ShellChooser`** — one collapsible topic chooser at the top (desktop; phones keep the click-through start screens) instead of the big tabs and tab row: `filters` (the `top` option keys shown as segmented filters inside it), `groups` (titled lists of sub-tool keys) and optional `art(key)` mini pictures. `ShellSubTool.blurb` is the tile's one-liner; `ShellSubTool.when` / `ShellOption.when` accept an array (every condition must hold) so a course or practice switch can hide tabs and options. Picking a tile leaves the chooser open. Reference: `src/tools/Decision/NetworkFlows.tsx` (art: `FlowTileArt.tsx`). <!-- ref -->
