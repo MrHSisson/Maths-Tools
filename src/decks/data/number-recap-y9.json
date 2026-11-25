@@ -37,6 +37,191 @@
    "family": "structure"
   },
   {
+   "id": "nr-starter",
+   "els": [
+    {
+     "h": 100,
+     "w": 1400,
+     "x": 100,
+     "y": 60,
+     "id": "nr-starter-1",
+     "bold": true,
+     "kind": "text",
+     "size": 64,
+     "text": "Starter",
+     "colour": "#0f172a"
+    },
+    {
+     "h": 50,
+     "w": 1400,
+     "x": 100,
+     "y": 160,
+     "id": "nr-starter-2",
+     "kind": "text",
+     "size": 34,
+     "text": "Whiteboards: answer all six on your own.",
+     "colour": "#64748b"
+    },
+    {
+     "h": 620,
+     "w": 1400,
+     "x": 100,
+     "y": 230,
+     "id": "nr-starter-3",
+     "bank": [],
+     "cols": 3,
+     "kind": "grid",
+     "items": [
+      {
+       "id": "nr-st-1",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Work out $4.75 + 3.68$",
+       "answer": [
+        "$8.43$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $4.75 + 3.68$."
+       ],
+       "rationale": "Adding decimals.",
+       "explanation": [
+        "Line up the decimal points, then add column by column.",
+        "$4.75 + 3.68 = 8.43$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-st-2",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Work out $52.9 \\div 10$",
+       "answer": [
+        "$5.29$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $52.9 \\div 10$."
+       ],
+       "rationale": "Dividing by a power of ten.",
+       "explanation": [
+        "Dividing by $10$ moves every digit 1 place to the right.",
+        "$52.9 \\div 10 = 5.29$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-st-3",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Estimate $39 \\times 21$",
+       "answer": [
+        "$\\approx 800$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Estimate $39 \\times 21$."
+       ],
+       "rationale": "Estimating.",
+       "explanation": [
+        "Round each number to 1 significant figure: $39 \\to 40$ and $21 \\to 20$.",
+        "$40 \\times 20 = 800$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-st-4",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Write $60$ as a product of its prime factors",
+       "answer": [
+        "$2^2 \\times 3 \\times 5$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Write $60$ as a product of its prime factors."
+       ],
+       "rationale": "Prime factors.",
+       "explanation": [
+        "Split into a pair of factors: $60 = 6 \\times 10$.",
+        "$6 = 2 \\times 3$ and $10 = 2 \\times 5$, so $60 = 2 \\times 2 \\times 3 \\times 5$.",
+        "In index form: $60 = 2^2 \\times 3 \\times 5$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-st-5",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Work out $20 - 3 \\times 4$",
+       "answer": [
+        "$8$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $20 - 3 \\times 4$."
+       ],
+       "rationale": "Order of operations (the wrong answer is 68).",
+       "explanation": [
+        "Multiply first: $3 \\times 4 = 12$.",
+        "$20 - 12 = 8$"
+       ],
+       "expectedErrors": []
+      },
+      {
+       "id": "nr-st-6",
+       "tool": "number-recap-y9",
+       "level": "level1",
+       "title": "Work out $(-4)^2$",
+       "answer": [
+        "$16$"
+       ],
+       "format": "open",
+       "status": "ready",
+       "purpose": "practice",
+       "version": 2,
+       "followUp": "",
+       "question": [
+        "Work out $(-4)^2$."
+       ],
+       "rationale": "Squaring a negative.",
+       "explanation": [
+        "$(-4)^2 = -4 \\times -4$.",
+        "A negative times a negative is positive, so $(-4)^2 = 16$."
+       ],
+       "expectedErrors": []
+      }
+     ]
+    }
+   ],
+   "built": "1f9guc0",
+   "timer": {
+    "minutes": 5
+   },
+   "title": "Starter",
+   "family": "retrieval"
+  },
+  {
    "id": "nr-how",
    "els": [
     {

@@ -196,6 +196,20 @@ const bandA = S.whiteboard(`${P}-a-negatives`, "Negatives and squares", [
   open("neg-3", ["Zoe says $(-5)^2 = -25$.", "What mistake has she made?"], "She squared only the $5$ and kept the minus: $(-5)^2 = 25$", ["She worked out $5 \\times 5 = 25$ and put the minus back on.", "$(-5)^2$ means $-5 \\times -5$, and a negative times a negative is positive: $25$."], "Squaring a negative gives a positive."),
 ], "Question 1 is cold. Squaring a negative is the idea to leave them with (the test asks whether a squared negative can be negative). The third question is a spare.");
 
+// ---------- the starter: six quick questions, one for each kind of thing the lesson covers (to be done before anything is taught) ----------
+must(r(4.75 + 3.68) === 8.43 && r(52.9 / 10) === 5.29 && (40 * 20) === 800 && 2 * 2 * 3 * 5 === 60 && 20 - 3 * 4 === 8 && (-4) ** 2 === 16, "starter answers");
+must(Number((39).toPrecision(1)) === 40 && Number((21).toPrecision(1)) === 20, "starter estimate rounds to 40 and 20");
+must(20 - 3 * 4 !== (20 - 3) * 4, "the starter BIDMAS question has a tempting wrong answer (68)");
+const starter = S.quick(`${P}-starter`, "Starter", [
+  open("st-1", ["Work out $4.75 + 3.68$."], "$8.43$", ["Line up the decimal points, then add column by column.", "$4.75 + 3.68 = 8.43$"], "Adding decimals."),
+  open("st-2", ["Work out $52.9 \\div 10$."], "$5.29$", ["Dividing by $10$ moves every digit 1 place to the right.", "$52.9 \\div 10 = 5.29$"], "Dividing by a power of ten."),
+  open("st-3", ["Estimate $39 \\times 21$."], "$\\approx 800$", ["Round each number to 1 significant figure: $39 \\to 40$ and $21 \\to 20$.", "$40 \\times 20 = 800$"], "Estimating."),
+  open("st-4", ["Write $60$ as a product of its prime factors."], "$2^2 \\times 3 \\times 5$", ["Split into a pair of factors: $60 = 6 \\times 10$.", "$6 = 2 \\times 3$ and $10 = 2 \\times 5$, so $60 = 2 \\times 2 \\times 3 \\times 5$.", "In index form: $60 = 2^2 \\times 3 \\times 5$"], "Prime factors."),
+  open("st-5", ["Work out $20 - 3 \\times 4$."], "$8$", ["Multiply first: $3 \\times 4 = 12$.", "$20 - 12 = 8$"], "Order of operations (the wrong answer is 68)."),
+  open("st-6", ["Work out $(-4)^2$."], "$16$", ["$(-4)^2 = -4 \\times -4$.", "A negative times a negative is positive, so $(-4)^2 = 16$."], "Squaring a negative."),
+], 3, "Whiteboards: answer all six on your own.");
+starter.timer = { minutes: 5 };
+
 // ---------- the Friday list ----------
 const tally = S.board(`${P}-tally`, "Friday's list", "Which blocks had fewer than 6 in 10 right on question 1?", {
   head: ["Block", "Right on Q1"], given: 1,
@@ -210,6 +224,7 @@ export default () => ({
   summary: "A whiteboard recap before the Year 9 Number 1 assessment, in order of the marks each block carries: decimals, scaling and multiplying; estimating and money; prime factors and HCF; order of operations; negatives and squares. Question 1 of each block is cold and gives the tally for the next lesson's starter.",
   slides: [
     S.title(`${P}-title`, "Number Recap", "Whiteboards up"),
+    starter,
     S.summary(`${P}-how`, "How this works", ["Question 1: on your own, no help. Hold it up.", "We sort out any mistakes together.", "Questions 2 and 3: have another go."]),
     cDecimals, cScale, cMultiply,
     bOrder, bandA,
