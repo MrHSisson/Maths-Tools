@@ -7447,71 +7447,344 @@
    "built": "uy6ao9"
   },
   {
-   "id": "sf-sheet-parts",
+   "id": "sf-book-parts",
    "family": "retrieval",
-   "title": "Standard Form: Numbers in parts",
+   "title": "Numbers in parts book work",
    "els": [
     {
-     "id": "sf-sheet-parts-1",
-     "kind": "worksheet",
-     "x": 40,
-     "y": 30,
-     "w": 1520,
-     "h": 840,
-     "tool": "standard-form",
-     "preset": {
-      "sub": "converting",
-      "level": "level1"
-     },
-     "count": 12,
+     "kind": "text",
+     "x": 60,
+     "y": 46,
+     "w": 1480,
+     "h": 64,
+     "text": "Copy into your book. Write each in standard form.",
+     "size": 38,
+     "colour": "#64748b",
+     "id": "sf-book-parts-1"
+    },
+    {
+     "kind": "grid",
+     "x": 60,
+     "y": 124,
+     "w": 1480,
+     "h": 748,
+     "bank": [],
+     "items": [
+      {
+       "version": 2,
+       "id": "sf-sb1",
+       "title": "12 x 10^4 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$12 \\times 10^{4}$"
+       ],
+       "answer": [
+        "$1.2 \\times 10^{5}$"
+       ],
+       "explanation": [
+        "$12 = 1.2 \\times 10$",
+        "$12 \\times 10^{4} = 1.2 \\times 10 \\times 10^{4}$",
+        "$= 1.2 \\times 10^{5}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb2",
+       "title": "35 x 10^6 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$35 \\times 10^{6}$"
+       ],
+       "answer": [
+        "$3.5 \\times 10^{7}$"
+       ],
+       "explanation": [
+        "$35 = 3.5 \\times 10$",
+        "$35 \\times 10^{6} = 3.5 \\times 10 \\times 10^{6}$",
+        "$= 3.5 \\times 10^{7}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb3",
+       "title": "68 x 10^3 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$68 \\times 10^{3}$"
+       ],
+       "answer": [
+        "$6.8 \\times 10^{4}$"
+       ],
+       "explanation": [
+        "$68 = 6.8 \\times 10$",
+        "$68 \\times 10^{3} = 6.8 \\times 10 \\times 10^{3}$",
+        "$= 6.8 \\times 10^{4}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb4",
+       "title": "450 x 10^5 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$450 \\times 10^{5}$"
+       ],
+       "answer": [
+        "$4.5 \\times 10^{7}$"
+       ],
+       "explanation": [
+        "$450 = 45 \\times 10$",
+        "$450 \\times 10^{5} = 45 \\times 10 \\times 10^{5}$",
+        "$= 45 \\times 10^{6}$",
+        "$45 = 4.5 \\times 10$",
+        "$45 \\times 10^{6} = 4.5 \\times 10 \\times 10^{6}$",
+        "$= 4.5 \\times 10^{7}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb5",
+       "title": "820 x 10^2 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$820 \\times 10^{2}$"
+       ],
+       "answer": [
+        "$8.2 \\times 10^{4}$"
+       ],
+       "explanation": [
+        "$820 = 82 \\times 10$",
+        "$820 \\times 10^{2} = 82 \\times 10 \\times 10^{2}$",
+        "$= 82 \\times 10^{3}$",
+        "$82 = 8.2 \\times 10$",
+        "$82 \\times 10^{3} = 8.2 \\times 10 \\times 10^{3}$",
+        "$= 8.2 \\times 10^{4}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb6",
+       "title": "2300 x 10^3 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$2300 \\times 10^{3}$"
+       ],
+       "answer": [
+        "$2.3 \\times 10^{6}$"
+       ],
+       "explanation": [
+        "$2300 = 230 \\times 10$",
+        "$2300 \\times 10^{3} = 230 \\times 10 \\times 10^{3}$",
+        "$= 230 \\times 10^{4}$",
+        "$230 = 23 \\times 10$",
+        "$230 \\times 10^{4} = 23 \\times 10 \\times 10^{4}$",
+        "$= 23 \\times 10^{5}$",
+        "$23 = 2.3 \\times 10$",
+        "$23 \\times 10^{5} = 2.3 \\times 10 \\times 10^{5}$",
+        "$= 2.3 \\times 10^{6}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb7",
+       "title": "56 x 10^-5 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$56 \\times 10^{-5}$"
+       ],
+       "answer": [
+        "$5.6 \\times 10^{-4}$"
+       ],
+       "explanation": [
+        "$56 = 5.6 \\times 10$",
+        "$56 \\times 10^{-5} = 5.6 \\times 10 \\times 10^{-5}$",
+        "$= 5.6 \\times 10^{-4}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb8",
+       "title": "210 x 10^-3 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$210 \\times 10^{-3}$"
+       ],
+       "answer": [
+        "$2.1 \\times 10^{-1}$"
+       ],
+       "explanation": [
+        "$210 = 21 \\times 10$",
+        "$210 \\times 10^{-3} = 21 \\times 10 \\times 10^{-3}$",
+        "$= 21 \\times 10^{-2}$",
+        "$21 = 2.1 \\times 10$",
+        "$21 \\times 10^{-2} = 2.1 \\times 10 \\times 10^{-2}$",
+        "$= 2.1 \\times 10^{-1}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb9",
+       "title": "380 x 10^-7 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$380 \\times 10^{-7}$"
+       ],
+       "answer": [
+        "$3.8 \\times 10^{-5}$"
+       ],
+       "explanation": [
+        "$380 = 38 \\times 10$",
+        "$380 \\times 10^{-7} = 38 \\times 10 \\times 10^{-7}$",
+        "$= 38 \\times 10^{-6}$",
+        "$38 = 3.8 \\times 10$",
+        "$38 \\times 10^{-6} = 3.8 \\times 10 \\times 10^{-6}$",
+        "$= 3.8 \\times 10^{-5}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb10",
+       "title": "0.3 x 10^8 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$0.3 \\times 10^{8}$"
+       ],
+       "answer": [
+        "$3 \\times 10^{7}$"
+       ],
+       "explanation": [
+        "$0.3 = 3 \\times 10^{-1}$",
+        "$0.3 \\times 10^{8} = 3 \\times 10^{-1} \\times 10^{8}$",
+        "$= 3 \\times 10^{7}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb11",
+       "title": "0.52 x 10^-3 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$0.52 \\times 10^{-3}$"
+       ],
+       "answer": [
+        "$5.2 \\times 10^{-4}$"
+       ],
+       "explanation": [
+        "$0.52 = 5.2 \\times 10^{-1}$",
+        "$0.52 \\times 10^{-3} = 5.2 \\times 10^{-1} \\times 10^{-3}$",
+        "$= 5.2 \\times 10^{-4}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      },
+      {
+       "version": 2,
+       "id": "sf-sb12",
+       "title": "0.095 x 10^6 in standard form",
+       "tool": "standard-form",
+       "level": "level1",
+       "purpose": "practice",
+       "format": "open",
+       "question": [
+        "$0.095 \\times 10^{6}$"
+       ],
+       "answer": [
+        "$9.5 \\times 10^{4}$"
+       ],
+       "explanation": [
+        "$0.095 = 9.5 \\times 10^{-2}$",
+        "$0.095 \\times 10^{6} = 9.5 \\times 10^{-2} \\times 10^{6}$",
+        "$= 9.5 \\times 10^{4}$"
+       ],
+       "rationale": "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens.",
+       "expectedErrors": [],
+       "followUp": "",
+       "status": "ready"
+      }
+     ],
      "cols": 3,
-     "pin": {
-      "title": "Standard Form: Numbers in parts",
-      "paper": "A4",
-      "layout": "grid",
-      "borders": false
-     },
-     "textbook": {
-      "title": "Standard Form: Numbers in parts",
-      "note": "Write your answers in your book. Show your working.",
-      "cols": 3,
-      "blocks": [
-       {
-        "instruction": "Write each of the following in standard form.",
-        "parts": [
-         "12 \\times 10^{4}",
-         "35 \\times 10^{6}",
-         "68 \\times 10^{3}",
-         "450 \\times 10^{5}",
-         "820 \\times 10^{2}",
-         "2300 \\times 10^{3}",
-         "56 \\times 10^{-5}",
-         "210 \\times 10^{-3}",
-         "380 \\times 10^{-7}",
-         "0.3 \\times 10^{8}",
-         "0.52 \\times 10^{-3}",
-         "0.095 \\times 10^{6}"
-        ],
-        "answers": [
-         "1.2 \\times 10^{5}",
-         "3.5 \\times 10^{7}",
-         "6.8 \\times 10^{4}",
-         "4.5 \\times 10^{7}",
-         "8.2 \\times 10^{4}",
-         "2.3 \\times 10^{6}",
-         "5.6 \\times 10^{-4}",
-         "2.1 \\times 10^{-1}",
-         "3.8 \\times 10^{-5}",
-         "3 \\times 10^{7}",
-         "5.2 \\times 10^{-4}",
-         "9.5 \\times 10^{4}"
-        ]
-       }
-      ]
-     }
+     "id": "sf-book-parts-2",
+     "align": "center",
+     "fixed": true,
+     "size": 100
     }
    ],
-   "built": "zbserr"
+   "built": "8d5q81"
   },
   {
    "id": "sf-gen-3",

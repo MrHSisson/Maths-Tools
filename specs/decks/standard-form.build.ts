@@ -255,12 +255,14 @@ const sheetSlide = (n: number): Slide => {
   return S.textbookSheet(`${P}-sheet-${n}`, { title: data!.title, note: "Write your answers in your book. Show your working.", blocks }, T);
 };
 
-/** Book work: twelve numbers in parts (a to l), in the textbook layout, answers on a click. Every part is checked by toParts. */
-const partsSheet = (): Slide => {
-  const xs = run("SB", 12).map(parts);
-  return S.textbookSheet(`${P}-sheet-parts`, { title: "Standard Form: Numbers in parts", note: "Write your answers in your book. Show your working.",
-    cols: 3, blocks: [{ instruction: "Write each of the following in standard form.", parts: xs.map((x) => `${x.shown} \\times ${pw(x.sp)}`), answers: xs.map((x) => `${x.c} \\times ${pw(x.p)}`) }] }, T);
-};
+/** Book work: twelve numbers in parts on a 3 x 4 grid, plain numbers, answers on a click. Every part is checked by toParts. */
+function bookPartsQ(id: string): CuratedQuestion {
+  const x = parts(id);
+  const lines = [`$${x.shown} \\times ${pw(x.sp)}$`];
+  return { ...Q.open(qid(id), T, "level1", lines[0], `$${x.c} \\times ${pw(x.p)}$`, chainParts(x)), title: `${x.shown} x 10^${x.sp} in standard form`, question: lines,
+    rationale: "The first number is not between 1 and 10: write it as a number between 1 and 10 times a power of ten, then combine the tens." };
+}
+const partsBook = (): Slide => S.plainBook(`${P}-book-parts`, run("SB", 12).map(bookPartsQ), 3, "Copy into your book. Write each in standard form.", "Numbers in parts book work");
 
 // ---------- the worked slides ----------
 const hook = makeSlide(`${P}-hook`, "teach", "Say each number aloud", [
@@ -425,7 +427,7 @@ export default () => ({
     wb("wpl", "Numbers in parts (large)", WPL, "Peel a ten off the first number until it is between 1 and 10. Five whiteboards."),
     smallParts,
     wb("wps", "Numbers in parts (small)", WPS, "Too big (70 × 10⁻⁴) and too small (0.9 × 10⁷). Five whiteboards."),
-    partsSheet(),
+    partsBook(),
     S.general(`${P}-gen-3`, "Converting: Level 3 (numbers in parts)", T, { sub: "converting", level: "level3" }, 13),
     S.summary(`${P}-summary`, "Summary", ["Standard form is $A \\times 10^{n}$ with $1 \\le A < 10$ and $n$ an integer.", "Large: write the number as $A$ times a 1 with zeros, then as a power of ten; or peel off one ten at a time.", "Small: write $A$, divide by a power of ten, and the power is negative.", "Down one place, the power goes up by $1$. Up one place, the power goes down by $1$."]),
   ] as Slide[],
