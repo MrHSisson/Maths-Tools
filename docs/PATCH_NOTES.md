@@ -80,7 +80,7 @@ Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/to
 - **Full Diagram switch** in the Question Options (off by default): on, the whole diagram shows from the start with no blur (`DiagramDisplay` `"full"`); it is also what the enlarged question shows.
 
 Agent: Claude Code
-Notes: Build Log block to be added by the next planner update (planner not updated this session).
+Notes: Maths Tools — Build Log, block "Further Mechanics: blurred diagrams, A2 Questions option, tick-any question kinds, enlarge-question everywhere (Claude Code)" (branch claude/peaceful-mccarthy-amt1m9, PR #165).
 
 ## 2026-11-24 — Decks as a file explorer (deck folders, step 2)
 
