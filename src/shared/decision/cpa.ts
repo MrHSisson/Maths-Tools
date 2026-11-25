@@ -746,6 +746,9 @@ export function floorSentence(f: CutFloor, unit: string, T: number, fewer: numbe
 }
 
 /** The fewest moves (at most `maxMoves` activities away from where `base` has them, pushed ones included) that bring the peak to `n` or less without the project finishing later. */
+/** the most activities a "cut the peak" question moves (the ones asked for and the ones they push) */
+const CUT_MOVES = 3;
+
 function cutSearch(acts: CpaActivity[], t: CpaTimes, base: Record<string, number>, n: number, maxMoves: number): { starts: Record<string, number>; chosen: string[] } | null {
   const dur = Object.fromEntries(acts.map((a) => [a.id, a.duration]));
   const topo = fullGraph(acts).filter((a) => a.id !== START && a.id !== END);
@@ -778,6 +781,8 @@ function cutSearch(acts: CpaActivity[], t: CpaTimes, base: Record<string, number
   const range = (id: string) => Array.from({ length: lsOf(id) - t.es[id] + 1 }, (_, k) => t.es[id] + k).filter((v) => v !== base[id]);
   for (const a of free) for (const v of range(a)) consider({ [a]: v });
   if (maxMoves >= 2) for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) for (const v of range(free[i])) for (const w of range(free[j])) consider({ [free[i]]: v, [free[j]]: w });
+  // three activities picked (only worth the search when nothing smaller has done it)
+  if (maxMoves >= 3 && (!best || (best as { moved: number }).moved >= 3)) for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) for (let k = j + 1; k < free.length; k++) for (const v of range(free[i])) for (const w of range(free[j])) for (const x of range(free[k])) consider({ [free[i]]: v, [free[j]]: w, [free[k]]: x });
   return best ? { starts: (best as { starts: Record<string, number> }).starts, chosen: (best as { chosen: string[] }).chosen } : null;
 }
 
@@ -1254,27 +1259,29 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   // the three-level levelling questions test each network for a question of the level before laying it out
   levelStash.cur = null; histStash.cur = null;
   const DROPS = [{ from: 4, to: 3 }, { from: 3, to: 2 }, { from: 4, to: 2 }];
-  const dropWanted = pickOne(DROPS);
+  // 4 down to 2 is the hardest drop to find (it turns up in about 1 network in 100), so it is looked for first and longest (200 tries, on half the draws); when it
+  // has not turned up the other two are looked for in a random order (80 tries each), so what is produced comes out about evenly across the three
+  const dropOrder = Math.random() < 0.5 ? [DROPS[2], ...[DROPS[0], DROPS[1]].sort(() => Math.random() - 0.5)] : [...DROPS].sort(() => Math.random() - 0.5);
+  const tierEnd = [200, 280, 360];
   let attemptNo = 0;
   const pre = kind === "cpaLevel" && opts.levelLevel && !opts.fixed
     ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelSize ?? "exam", opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
     : kind === "cpaHistogram" && opts.histLevel === 3 && !opts.fixed && (opts.histWorkers ?? "one") === "one"
     // cut the peak, one worker each: the peak is just how many activities run at once, so left alone it is nearly always 4 down to 3 (3 down to 2 now
     // and then, 4 down to 2 almost never). The kind of drop is chosen first, an even third each, and the first network that gives it is kept; if it has not
-    // turned up after 250 tries any of the three will do, and after 500 any network (so a draw never takes more than about a second or fails).
+    // turned up after 200 tries (80 for the second kind) the next kind is looked for, and after 360 any network will do (so a draw never takes more than about a second or fails).
     ? (c: CpaActivity[]) => {
-        if (attemptNo >= 500) return true;
+        if (attemptNo >= 360) return true;
         c.forEach((a) => { a.workers = 1; });
         const tm = cpaTimes(c);
         const h = histogramData(c, tm, opts.histStart === "late" ? "late" : "early", "step");
         if (!h) return false;
-        const wants = attemptNo < 250 ? [dropWanted] : DROPS;
+        const wants = [dropOrder[tierEnd.findIndex((e) => attemptNo < e)]];
         // the fewest is exactly `to`: the overlap argument shows no fewer will do (cheap), and one levelling run shows `to` is enough (the costly search, once)
         return wants.some((w) => {
           if (h.peak !== w.from || !proveFewest(c, tm, w.to)) return false;
           const r = levelSchedule(c, tm, w.to);
-          // and the peak can be cut to it with at most two activities moved (the question's own limit), or the draw would be thrown away afterwards
-          return !!r && r.makespan === tm.projectTime && !!cutSearch(c, tm, Object.fromEntries(h.blocks.map((b) => [b.id, b.start])), w.to, 2);
+          return !!r && r.makespan === tm.projectTime;
         });
       }
     : kind === "cpaHistogram" && !opts.histLevel && !opts.fixed
@@ -1373,7 +1380,7 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       if (r && r.makespan === T) best = n; else break;
     }
     if (best >= before.peak) throw new Error("histogram: no hole-free stack");
-    const cs = cutSearch(acts, times, base, best, 2); // at most two activities have to move
+    const cs = cutSearch(acts, times, base, best, CUT_MOVES); // at most three activities have to move (pushed ones count)
     if (!cs) throw new Error("histogram: no hole-free stack");
     // what proves no fewer will do: where activities overlap and cannot slide clear within their float
     const floor = proveFewest(acts, times, best);

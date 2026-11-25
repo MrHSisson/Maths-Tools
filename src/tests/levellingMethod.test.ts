@@ -190,7 +190,7 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
     { w: "one", ask: "fewest", start: "early" }, { w: "several", ask: "show", start: "early" }, { w: "mixed", ask: "canFewer", start: "late" }, { w: "one", ask: "fewest", start: "late" },
   ] as const;
   for (const c of cases) {
-    it(`${c.w} workers, ${c.ask}, ${c.start} start: the fewest is true, at most two activities move, the project time is unchanged, the floor proves it`, () => {
+    it(`${c.w} workers, ${c.ask}, ${c.start} start: the fewest is true, at most three activities move, the project time is unchanged, the floor proves it`, () => {
       withSeededRandom(404, () => {
         for (let i = 0; i < 5; i++) {
           const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: c.w, histCut: c.ask, histStart: c.start });
@@ -209,7 +209,7 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
             a.preds.forEach((q) => expect(start[a.id]).toBeGreaterThanOrEqual(start[q] + acts.find((x) => x.id === q)!.duration));
           }
           expect(final.T).toBe(T);
-          expect(cut.moves.length).toBeLessThanOrEqual(2);
+          expect(cut.moves.length).toBeLessThanOrEqual(3);
           expect(cut.moves.length).toBeGreaterThan(0);
           // one state per move, each a step further from the question's histogram
           expect(cut.states.length).toBe(cut.moves.length + 1);
