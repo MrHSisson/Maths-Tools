@@ -69,7 +69,7 @@ describe("Solving trig equations: every question is correct", () => {
         const q = buildTrigQuestion(s);
         if (!q) continue;
         built++;
-        const [lo, hi] = RANGES[s.range];
+        const [lo, hi] = Array.isArray(s.range) ? s.range : RANGES[s.range];
         const k = kNumber(s);
         const c = (s.cDeg * Math.PI) / 180;
         for (const th of q.solutions) {
@@ -132,6 +132,28 @@ describe("Solving trig equations: every string renders", () => {
       }
       expect(built).toBeGreaterThan(500);
       expect(forms.size).toBe(16);                                             // every unit × form × value-kind was exercised
+    });
+  });
+});
+
+describe("Solving trig equations: range bar ranges", () => {
+  it("builds questions over wide and negative ranges, with every solution in range", () => {
+    withSeededRandom(5, () => {
+      for (const [lo, hi] of [[-720, 1080], [-180, 0], [360, 540], [-720, 1080]] as [number, number][]) {
+        let built = 0;
+        for (let i = 0; i < 300; i++) {
+          const fn = (["sin", "cos", "tan"] as const)[i % 3];
+          const q = buildTrigQuestion({ fn, unit: i % 2 ? "rad" : "deg", form: "direct", a: 1, b: 0, kArg: [1, 2, 3, 0.5][i % 4], cDeg: 0, range: [lo, hi], kEx: exactValues(fn, false)[i % 6] });
+          if (!q) continue;
+          built++;
+          for (const th of q.solutions) {
+            const d = i % 2 ? (th * 180) / Math.PI : th;
+            expect(d).toBeGreaterThanOrEqual(lo - 1e-6);
+            expect(d).toBeLessThanOrEqual(hi + 1e-6);
+          }
+        }
+        expect(built).toBeGreaterThan(20);
+      }
     });
   });
 });

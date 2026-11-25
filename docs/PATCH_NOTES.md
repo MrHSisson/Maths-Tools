@@ -31,6 +31,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-25 — Solving Trig Equations: a draggable range bar
+
+Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/components/QOPopovers.tsx`, `src/shared/calibration.ts`, `src/tools/Algebra/SolvingTrigEquations.tsx` (+ `.about.ts`), `src/tools/Algebra/trigEquations.ts`, `src/tests/trigEquations.test.ts`.
+
+- **The four Range buttons are now one bar.** Eleven dots, −4π to 6π, with a handle at each end to drag (or the arrow keys); at least two dots stay on. Quick buttons under the bar jump to 0 to 2π, 0 to 4π, −π to π and −2π to 2π. One range per sheet (it used to mix the ticked ranges). Default 0 to 2π at every level.
+- **Wide ranges work.** The cap of 6 solutions now grows with the range (about two per turn of the function), so any bar setting finds questions.
+- **A new shared option: `ToolMultiSelect.rangeBar`.** A pool drawn as a bar: its options are the dots, the ticked run is the range, the generator reads the first and last ticked. Saved state, share links, levels and the worksheet builder are unchanged because it is still a multiSelect. Other tools can use it.
+- **The range sits on its own line** under the equation (whiteboard, worked example and worksheet).
+- Level 1 now also opens on "2 sin θ = 1" so the one fixed range still gives a full 30-question sheet.
+- Not done: an old shared link that ticked the previous range ids falls back to 0 to 2π; the Handoff note and dashboard review were not updated (the planner was unreachable this session).
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was unreachable); see this entry.
+
+## 2026-11-25 — Standard form deck: a book-work slide of numbers in parts
+
+Branch `claude/relaxed-cannon-ppjzr2`. Area: `specs/decks/standard-form.build.ts`, `specs/decks/_check/standard-form-converting.json`, `src/decks/data/standard-form.json`.
+
+- **New book-work slide `sf-book-parts` (slide 50 of 52)**: twelve numbers in parts on the standard 3 × 4 grid (plain numbers, answers on a click). It sits after the small numbers-in-parts whiteboards and before the Level 3 generator. Six too big and large (`12 × 10⁴`, `35 × 10⁶` …), three too big and small (`56 × 10⁻⁵` …), three with a first number below 1 (`0.3 × 10⁸` …).
+- Every answer is recomputed by the build script and the independent check script (168 questions, none repeated). Layout checked with `deck verify`; pushed to the shared deck.
+- Not done: the plan file `specs/decks/standard-form-converting.md` does not yet mention the slide; the planner was unreachable.
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was unreachable); see this entry.
+
 ## 2026-11-24 — Number recap deck for Year 9 (Foundation assessment)
 
 Branch `claude/confident-rubin-7kdxat`. Area: `specs/decks/number-recap-y9.build.ts` and `.md`, `src/decks/data/number-recap-y9.json`.

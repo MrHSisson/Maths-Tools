@@ -162,6 +162,77 @@ export const DropdownSection = ({
   </div>
 );
 
+/** A pool drawn as a range bar (`ToolMultiSelect.rangeBar`): the options are dots on a line, the ticked ones one unbroken run, and the
+ *  two ends are dragged (or moved with the arrow keys) to set it. At least two dots stay on. */
+const RangeBar = ({ multiSelect, values, onChange }: {
+  multiSelect: { options: { value: string; label: string }[]; rangeBar?: { presets?: { label: string; from: string; to: string }[] } };
+  values: Record<string, boolean>;
+  onChange: (k: string, v: boolean) => void;
+}) => {
+  const opts = multiSelect.options;
+  const n = opts.length;
+  const on = opts.map(o => values[o.value] ?? false);
+  const first = on.indexOf(true), last = on.lastIndexOf(true);
+  const lo = first < 0 ? 0 : first, hi = last < 0 ? Math.min(n - 1, lo + 1) : Math.max(last, lo + 1);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<"lo" | "hi" | null>(null);
+  const set = (a: number, b: number) => opts.forEach((o, i) => { const want = i >= a && i <= b; if ((values[o.value] ?? false) !== want) onChange(o.value, want); });
+  const idxAt = (clientX: number) => {
+    const r = trackRef.current!.getBoundingClientRect();
+    return Math.max(0, Math.min(n - 1, Math.round(((clientX - r.left) / r.width) * (n - 1))));
+  };
+  const move = (which: "lo" | "hi", i: number) => {
+    if (which === "lo") { const v = Math.min(i, hi - 1); if (v !== lo) set(Math.max(0, v), hi); }
+    else { const v = Math.max(i, lo + 1); if (v !== hi) set(lo, Math.min(n - 1, v)); }
+  };
+  const pct = (i: number) => `${(i / (n - 1)) * 100}%`;
+  const handle = (which: "lo" | "hi", i: number) => (
+    <div key={which} role="slider" tabIndex={0} aria-label={which === "lo" ? "Range start" : "Range end"} aria-valuemin={0} aria-valuemax={n - 1} aria-valuenow={i} aria-valuetext={opts[i].label}
+      onKeyDown={e => {
+        const d = e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : 0;
+        if (d) { e.preventDefault(); move(which, i + d); }
+      }}
+      style={{ left: pct(i) }}
+      className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-blue-900 border-2 border-white shadow-card cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-blue-400" />
+  );
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="px-3">
+        <div ref={trackRef} className="relative h-9 select-none" style={{ touchAction: "none" }}
+          onPointerDown={e => {
+            const i = idxAt(e.clientX);
+            drag.current = Math.abs(i - lo) <= Math.abs(i - hi) && !(i === hi && lo === hi - 1 && i > lo) ? "lo" : "hi";
+            if (i > lo && i < hi) drag.current = i - lo <= hi - i ? "lo" : "hi";
+            (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+            move(drag.current, i);
+          }}
+          onPointerMove={e => { if (drag.current) move(drag.current, idxAt(e.clientX)); }}
+          onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
+          <div className="absolute top-1/2 -translate-y-1/2 h-1 w-full rounded bg-slate-200" />
+          <div className="absolute top-1/2 -translate-y-1/2 h-1 rounded bg-blue-900" style={{ left: pct(lo), width: `${((hi - lo) / (n - 1)) * 100}%` }} />
+          {opts.map((o, i) => (
+            <div key={o.value} className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${i >= lo && i <= hi ? "bg-blue-900" : "bg-slate-400"}`} style={{ left: pct(i) }} />
+          ))}
+          {handle("lo", lo)}{handle("hi", hi)}
+        </div>
+        <div className="relative h-4 text-xs text-gray-500">
+          {opts.map((o, i) => <span key={o.value} className={`absolute -translate-x-1/2 whitespace-nowrap ${i >= lo && i <= hi ? "font-semibold text-gray-700" : ""}`} style={{ left: pct(i) }}>{o.label}</span>)}
+        </div>
+      </div>
+      <p className="text-center text-sm font-semibold text-gray-700">{opts[lo].label} to {opts[hi].label}</p>
+      {multiSelect.rangeBar?.presets && (
+        <OptionGrid
+          items={multiSelect.rangeBar.presets.map(p => ({ value: p.label, label: p.label, active: opts[lo].value === p.from && opts[hi].value === p.to }))}
+          onPress={v => {
+            const p = multiSelect.rangeBar!.presets!.find(x => x.label === v)!;
+            const a = opts.findIndex(o => o.value === p.from), b = opts.findIndex(o => o.value === p.to);
+            if (a >= 0 && b > a) set(a, b);
+          }} />
+      )}
+    </div>
+  );
+};
+
 export const MultiSelectSection = ({
   multiSelect,
   values,
@@ -169,7 +240,7 @@ export const MultiSelectSection = ({
   offered,
   labelOf,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; rangeBar?: { presets?: { label: string; from: string; to: string }[] } };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
   // every value on offer in the whole popover (not just this pool), so a `requires` clause can name another pool's option
@@ -181,7 +252,7 @@ export const MultiSelectSection = ({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-bold text-gray-400 uppercase tracking-wider self-start">{multiSelect.label}</span>
-      <OptionGrid
+      {multiSelect.rangeBar ? <RangeBar multiSelect={multiSelect} values={values} onChange={onChange} /> : <OptionGrid
         items={multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
           const blocked = unmet.length > 0;
@@ -200,12 +271,12 @@ export const MultiSelectSection = ({
             if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === v));
           } else if (!isLast) onChange(v, !isActive);
         }}
-      />
+      />}
     </div>
   );
 };
 
-type MSGroup = { key: string; label: string; tab?: QOTab; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; };
+type MSGroup = { key: string; label: string; tab?: QOTab; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; rangeBar?: { presets?: { label: string; from: string; to: string }[] }; };
 
 export const VariablesSection = ({
   variables,
