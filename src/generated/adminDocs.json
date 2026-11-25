@@ -334,6 +334,10 @@
     {
      "t": "p",
      "s": "**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class works like a file explorer: a trail across the top (Classes › Year 9 › 9M6), the folders inside the one you are in as tiles, and its decks below as the usual preview cards, most recently made first from the left. The years and classes are folders to start with (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), and you can make folders inside folders, rename them, move them, put them in the order you want and delete them (deleting a folder never deletes a deck: its decks and folders move up a level). **Drag** a deck card or a folder onto a folder tile or a breadcrumb to move it; **Add a deck…** puts a deck in a folder as well, so one deck can live in several folders (it is not copied); the cross on a card takes it out of that folder. On a touch screen use the **Move into…** menu. Only the folder you open loads its decks. A phone browses but does not edit."
+    },
+    {
+     "t": "p",
+     "s": "**List or previews:** inside a folder the decks show as a plain list by default (name, band, slides, made, last edited, published), and a toggle switches to the preview cards. The **band** tag is the lesson pitch (Upper, Middle or Lower band). Click a column heading to sort."
     }
    ]
   },
@@ -1324,7 +1328,7 @@
    "title": "Deck folders",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-24",
+   "updated": "2026-11-25",
    "sections": [
     {
      "title": "Intention",
@@ -1351,6 +1355,12 @@
        "items": [
         "2026-11-24, **step 2 done (on the branch, not merged):** the explorer screen for the `class` tree: a breadcrumb trail, subfolder tiles beside the deck cards, any depth (capped at 6), New folder, rename, reorder, Move into…, delete (a folder's decks go up to its parent and its subfolders move up a level; no deck is deleted), and drag a deck card or a folder onto a folder tile or a breadcrumb. Rules live in `applyFolderOp` and are tested. A touch screen uses Move into… and Add a deck… instead of dragging; a phone browses only."
        ]
+      },
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-25, **step 4, first part (on the branch, not merged):** a plain **list view** as the default for a folder's decks (title, band tag, slides, made, edited, published; sort by column), with the preview cards kept as a toggle. Folders are rows in the list. The band is the existing lesson pitch."
+       ]
       }
      ]
     },
@@ -1362,7 +1372,7 @@
        "t": "ul",
        "items": [
         "**Step 3, By topic on the same engine (it uses the explorer already built):** copy the strands, topics and `deck_filing` into the `topic` tree (a migration; the old tables stay until the new view has been used), swap the By topic view, then retire `api/_categories.ts` and the Manage categories controls.",
-        "**Step 4, sort, list view and search:** sort by made, last edited or name; a list/grid toggle; one search across every folder."
+        "**Step 4, the rest:** one search across every folder; filter by band; show the band tag in the By topic list too (list and sort are done for By class)."
        ]
       }
      ]
