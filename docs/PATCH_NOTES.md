@@ -31,6 +31,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-24 — Number recap deck for Year 9 (Foundation assessment)
+
+Branch `claude/confident-rubin-7kdxat`. Area: `specs/decks/number-recap-y9.build.ts` and `.md`, `src/decks/data/number-recap-y9.json`.
+
+- **A new whiteboard recap deck, `number-recap-y9` (13 slides).** Five blocks in order of the marks each carries on the Number 1 assessment: decimals, scaling and multiplying (with "closest to a fraction"); estimating and money; prime factors to HCF (no Venn diagrams); order of operations; negatives and squares. Question 1 of each block is cold, and the tally on the last slide picks the next lesson's starter. The third question in each set is a spare.
+- **Fresh questions only.** No test question appears; every answer is recomputed in the build script and the deck check and layout check pass.
+- Not done: pushing or publishing the shared copy (Harry decides), and the Friday starter, which waits for Thursday's tally. The test's last three questions (cube-root equation, a/b HCF and LCM, error intervals) are deliberately not covered.
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session); plan in `specs/decks/number-recap-y9.md`.
+
 ## 2026-11-24 — Further Mechanics: blurred diagram with a Reveal button
 
 Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/tools/FurtherMechanics/`, `src/shared/decision/DecisionShell.tsx`.
@@ -45,6 +56,33 @@ Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/to
 
 Agent: Claude Code
 Notes: Build Log block to be added by the next planner update (planner not updated this session).
+
+## 2026-11-24 — Decks as a file explorer (deck folders, step 2)
+
+Branch `claude/confident-rubin-7kdxat`. Area: `api/_folders.ts`, `api/decks.ts`, `src/decks/folders.ts`, `src/components/FolderView.tsx`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.
+
+- **By class is now a file explorer.** A breadcrumb trail, the opened folder's subfolders as tiles (decks and folders inside each) and its decks below as the usual preview cards, most recently made first from the left. Folders go inside folders, up to six levels.
+- **Edit the folders in place** (not on a phone): New folder, rename, reorder, Move into…, delete, and drag a deck card or a folder onto a folder tile or a breadcrumb. Add a deck… still puts a deck in a second folder.
+- **Safe by rules, tested on the server:** names unique among siblings, no folder inside itself, the depth cap, no moving between kinds of folders, and **deleting a folder never deletes a deck** (its decks go up to its parent; its subfolders move up a level).
+- **Server code, so merge before use.** The live site runs `main`'s API, so the explorer needs this merged and deployed first.
+- Next (see the pathway): By topic on the same folders (a migration of the existing strands and filing), then sort, list view and search.
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session).
+
+## 2026-11-24 — Decks by class, on a new folder engine (deck folders, step 1)
+
+Branch `claude/confident-rubin-7kdxat`. Area: `api/_folders.ts`, `api/_db.ts`, `api/_deckStore.ts`, `api/decks.ts`, `src/decks/folders.ts`, `src/components/FolderView.tsx`, `src/components/DecksTab.tsx`, `src/components/DeckGallery.tsx`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.
+
+- **By class, signed in only, and the default view.** A heading per year (7, 8, 9, 10, 11, A-Level), the classes in it as buttons (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM) with a deck count, and, on click, that class's decks as the usual preview cards, most recently made first from the left. Signed out, the page shows only the published list: no tabs, no classes. The choice of view is remembered on the device.
+- **Built on folders, not a fixed list.** Folders of any depth live in new tables (`maths.deck_folders`, `maths.deck_folder_items`) in a named tree; the class tree is seeded once. A deck can be in several folders. Filing never touches a deck, so decks, their links and published copies are unaffected. Step 1 draws year and class only; the data and tests already hold folders six levels deep.
+- **Loaded on open.** Only the opened folder's decks and their first slides are read.
+- **New "made" date.** `maths.decks.created_at` is set when a deck is first saved; existing decks were back-filled from their earliest saved version (an approximation).
+- **Server code, so merge before use.** The live site runs `main`'s API, so By class needs this merged and deployed first.
+- Next (see the pathway): the explorer screen (breadcrumbs, new folder, rename, move, drag), By topic on the same folders, then sort, list view and search.
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session).
 
 ## 2026-11-24 — Composite shapes: a Year 7 authored lesson deck
 
