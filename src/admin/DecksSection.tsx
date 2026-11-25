@@ -4,8 +4,7 @@ import { Search } from "lucide-react";
 import { deckSummaries, type DeckSummary } from "../decks/store";
 import { useSyncedDecks } from "../decks/useSyncedDecks";
 import { usePublishedIndex } from "../decks/published";
-import { useCategories } from "../decks/categories";
-import { menuOptions, pathOf, placeOf } from "../decks/categoryTree";
+import { flatten, pathTo, useTree } from "../decks/folders";
 import { FAMILY_STYLE, type DeckFamily } from "../decks/types";
 import { TOOLS } from "./facts";
 import { Drawer, PageHead, Status, panel } from "./ui";
@@ -22,17 +21,19 @@ export function DecksSection() {
   const published = usePublishedIndex();
   const synced = useSyncedDecks();
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");            // "all", "none" (not filed) or a category id (a strand takes its topics with it)
-  const { data: cats } = useCategories(true);
-  const placeId = (d: DeckSummary) => (cats ? placeOf({ id: d.id, strand: d.strand }, cats) : null);
+  const [category, setCategory] = useState("all");            // "all", "none" (not in a topic folder) or a topic folder id (a folder takes the folders inside it too)
+  const tree = useTree("topic", 0);
+  const folderIds = (d: DeckSummary) => tree?.byDeck[d.id] ?? [];
+  const inside = (id: string, root: string) => pathTo(tree?.folders ?? [], id).some((f) => f.id === root);
+  const where = (d: DeckSummary) => { const first = folderIds(d)[0]; return first ? pathTo(tree?.folders ?? [], first).map((f) => f.name).join(" › ") : "Not filed"; };
   const [state, setState] = useState<"all" | "published" | "not">("all");
   const [open, setOpen] = useState<string | null>(null);
 
   const rows: Row[] = useMemo(() => deckSummaries().map(deck => ({ deck, mine: true, edited: deck.edited, publishedAt: published?.[deck.id]?.publishedAt })), [published, synced]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: synced changes when the shared decks have been read into this device
   const shown = rows.filter(r => {
     if (category !== "all") {
-      const at = placeId(r.deck), parent = cats?.categories.find(c => c.id === at)?.parent;
-      if (category === "none" ? at !== null : at !== category && parent !== category) return false;
+      const ids = folderIds(r.deck);
+      if (category === "none" ? ids.length > 0 : !ids.some(f => inside(f, category))) return false;
     }
     if (state === "published" && !r.publishedAt) return false;
     if (state === "not" && r.publishedAt) return false;
@@ -52,9 +53,9 @@ export function DecksSection() {
           <Search size={16} className="text-slate-400" />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search decks" className="w-full bg-transparent text-sm outline-none" />
         </label>
-        <select value={category} onChange={e => setCategory(e.target.value)} aria-label="Category" className={field}>
-          <option value="all">All categories</option>
-          {menuOptions(cats).map(o => <option key={o.id} value={o.id}>{o.depth ? "\u00a0\u00a0\u00a0" : ""}{o.label}</option>)}
+        <select value={category} onChange={e => setCategory(e.target.value)} aria-label="Topic folder" className={field}>
+          <option value="all">All topics</option>
+          {flatten(tree?.folders ?? []).map(o => <option key={o.folder.id} value={o.folder.id}>{"\u00a0\u00a0\u00a0".repeat(o.depth)}{o.folder.name}</option>)}
           <option value="none">Not filed</option>
         </select>
         <select value={state} onChange={e => setState(e.target.value as typeof state)} aria-label="Published" className={field}>
@@ -69,7 +70,7 @@ export function DecksSection() {
               <button onClick={() => setOpen(r.deck.id)} className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50">
                 <div className="min-w-0">
                   <div className="font-semibold text-slate-900">{r.deck.title}</div>
-                  <div className="text-xs text-slate-500">{[pathOf(placeId(r.deck), cats), toolName(r.deck.tool), `${r.deck.slides} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
+                  <div className="text-xs text-slate-500">{[where(r.deck), toolName(r.deck.tool), `${r.deck.slides} slides`, r.mine ? "your deck" : undefined].filter(Boolean).join(" · ")}</div>
                 </div>
                 <Status colour={r.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={r.publishedAt ? `Published ${dateOf(r.publishedAt)}` : "Not published"} />
               </button>
@@ -80,7 +81,7 @@ export function DecksSection() {
 
       {sel && (
         <Drawer title={sel.deck.title} onClose={() => setOpen(null)}
-          sub={<><Status colour={sel.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={sel.publishedAt ? `Published ${dateOf(sel.publishedAt)}` : "Not published"} /><span>{pathOf(placeId(sel.deck), cats)}</span></>}
+          sub={<><Status colour={sel.publishedAt ? "bg-emerald-500" : "bg-amber-500"} label={sel.publishedAt ? `Published ${dateOf(sel.publishedAt)}` : "Not published"} /><span>{where(sel.deck)}</span></>}
           footer={<div className="flex gap-2">
             <Link to={`/decks/${sel.deck.id}`} className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white">Play</Link>
             <Link to={`/decks/${sel.deck.id}?edit=1`} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</Link>

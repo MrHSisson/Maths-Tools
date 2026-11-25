@@ -56,11 +56,38 @@ Branch `claude/relaxed-cannon-ppjzr2`. Area: `specs/decks/standard-form.build.ts
 Agent: Claude Code
 Notes: Build Log block "Trig range bar, range on its own line, standard form numbers-in-parts (Claude Code)" (written after the merge).
 
+## 2026-11-25 — Repeat a deck into a second folder; no more "Add a deck" dropdown
+
+Branch `claude/confident-rubin-7kdxat`. Area: `src/components/FolderView.tsx`, `src/components/DeckList.tsx`, `src/decks/folders.ts`, `api/_folders.ts`, `api/decks.ts`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.
+
+- **The same deck in two places.** Each deck has a **Repeat** button (list, preview card and search results). Press it, browse the folders as normal, open the folder where the deck should also appear, and press **Place here**. It is one deck shown in both places, not a copy, so changing it changes it everywhere. **Cancel** leaves the mode; Place here is off at the top level and in Not filed, and reads Already here where the deck already is.
+- **Dragging only moves.** A drag takes a deck out of the open folder and into the target, so a deck stays in one place unless Repeat is used. The "Add a deck…" dropdown is gone.
+- The take-out cross removes a deck from just the open folder (its other places stay).
+- The folder reads no longer include a list of every deck's title (it only fed the dropdown).
+- The deck editor's About the deck still has its folder tick boxes, which is how a deck is moved on a touch screen (a touch screen cannot drag).
+- **Server code, so merge before use** (the API change is small; the rest is the screen).
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session).
+
 ## 2026-11-25 — Decks: a plain list view with band tags
 
 Branch `claude/festive-bell-tzcbwf`. Area: `api/_folders.ts`, `api/decks.ts`, `src/decks/folders.ts`, `src/components/FolderView.tsx`, `src/components/DeckList.tsx`, tests, docs, `docs/pathways/deck-folders.md`.
 
 **What changed for teachers.** Inside a folder on the Decks page the decks now show as a list by default: title (with its summary beneath), the band the lesson is pitched at (Upper, Middle or Lower band, as a labelled tag), slides, date made, date last edited and whether it is published. Click a column heading to sort. A toggle at the top right switches back to the preview cards, and the choice is remembered on the device. Subfolders are rows in the list view. The list reads no slide pictures, so a big folder opens lighter. The preview cards now also show the band in their (i). Not done: search across folders, filtering by band, and the same list for By topic.
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session).
+
+## 2026-11-25 — Search across every deck, reconciled with the list view (deck folders, step 4)
+
+Branch `claude/confident-rubin-7kdxat`. Area: `api/_folders.ts`, `api/decks.ts`, `src/decks/folders.ts`, `src/components/FolderView.tsx`, `src/components/DeckGallery.tsx`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.
+
+- **Search.** A search box at the top of By class and By topic looks through every deck, in every folder and in none (a word in the title or summary, any case, up to 60 results). Each result shows which folder it is in, and a folder whose name matches shows as a chip that opens it. Escape or the cross clears it. Signed out it searches published decks only.
+- **Same list and sorting as the list view already in `main`** (PR 169): search results use the folder list's columns (name, band, slides, made, edited) and its Previews toggle, and show the folder each deck is in under its title. One `editedAt` field, one sort, one list view: the two parallel step 4 branches were reconciled here, and this note's earlier sort dropdown and list were dropped in favour of that one.
+- The list and search read no slide pictures (`previews=0`), so a big folder or a long result list opens lighter; the signed-out search works the same way.
+- **Server code, so merge before use.** The live site runs `main`'s API, so search needs this merged and deployed.
+- All four steps of the deck folders pathway are now built. Left for later: dropping the old category tables once By topic has been used for a while.
 
 Agent: Claude Code
 Notes: Build Log block not written (the planner was not used this session).
@@ -90,6 +117,22 @@ Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/to
 
 Agent: Claude Code
 Notes: Maths Tools — Build Log, block "Further Mechanics: blurred diagrams, A2 Questions option, tick-any question kinds, enlarge-question everywhere (Claude Code)" (branch claude/peaceful-mccarthy-amt1m9, PR #165).
+
+## 2026-11-24 — By topic on the folder explorer (deck folders, step 3)
+
+Branch `claude/confident-rubin-7kdxat`. Area: `api/_folders.ts`, `api/decks.ts`, `api/_db.ts`, `src/decks/folders.ts`, `src/decks/FileUnder.tsx`, `src/components/FolderView.tsx`, `src/components/DecksTab.tsx`, `src/components/DeckGallery.tsx`, `src/admin/DecksSection.tsx`, `scripts/deck.mjs`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.
+
+- **By topic is the same file explorer as By class.** Your strands, topics and filing were copied once into the new topic folders (same order, same filing; decks that carried a strand but were never filed went into it). You can now make folders inside folders there too. The old tables are left in place and no longer read.
+- **Not filed.** A deck in no folder is under a **Not filed** tile at the top level, so nothing is unreachable. A brand-new deck is filed under the strand it carries when first saved.
+- **Signed-out visitors** get a read-only explorer over the topic folders with published decks only: no tabs, no editing, no admin key. The class folders stay signed-in only.
+- **Folder choices in the deck editor.** About the deck has tick boxes for the topic folders and the class folders.
+- **Toolbar back.** New deck, Slide library and Check for changes show again on the signed-in page (they had been missing from the By class view).
+- **Retired:** the old categories code, its API reads and writes, the Manage categories controls and their tests. The dashboard's deck list filters by topic folder; the `deck` CLI's `categories` and `file` commands work on folders (`--tree class` for classes).
+- **Server code, so merge before use.** The live site runs `main`'s API, so this needs merging and deploying; the first read of the topic tree does the one-time copy.
+- Next: sort, list view and search (step 4).
+
+Agent: Claude Code
+Notes: Build Log block not written (the planner was not used this session).
 
 ## 2026-11-24 — Decks as a file explorer (deck folders, step 2)
 

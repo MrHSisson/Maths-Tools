@@ -328,26 +328,12 @@
    ]
   },
   {
-   "title": "Decks by class (finding a deck like files in folders)",
+   "title": "Decks in folders (finding a deck like files in folders)",
    "level": 3,
    "blocks": [
     {
      "t": "p",
-     "s": "**For:** finding a lesson by the class you are teaching, now that there are a lot of decks. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic** (the strands and topics); signed out there is only the published list. By class works like a file explorer: a trail across the top (Classes › Year 9 › 9M6), the folders inside the one you are in as tiles, and its decks below as the usual preview cards, most recently made first from the left. The years and classes are folders to start with (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM), and you can make folders inside folders, rename them, move them, put them in the order you want and delete them (deleting a folder never deletes a deck: its decks and folders move up a level). **Drag** a deck card or a folder onto a folder tile or a breadcrumb to move it; **Add a deck…** puts a deck in a folder as well, so one deck can live in several folders (it is not copied); the cross on a card takes it out of that folder. On a touch screen use the **Move into…** menu. Only the folder you open loads its decks. A phone browses but does not edit."
-    },
-    {
-     "t": "p",
-     "s": "**List or previews:** inside a folder the decks show as a plain list by default (name, band, slides, made, last edited, published), and a toggle switches to the preview cards. The **band** tag is the lesson pitch (Upper, Middle or Lower band). Click a column heading to sort."
-    }
-   ]
-  },
-  {
-   "title": "Deck strands and topics (filing the Decks page)",
-   "level": 3,
-   "blocks": [
-    {
-     "t": "p",
-     "s": "**For:** keeping the Decks page in the order and under the headings you want, instead of five fixed names. **How it works:** decks are filed under a strand (Number ... Probability & Statistics, A-Level with Maths and Further Maths inside it, Starters; you can change all of these) and, if you want, a topic inside it (Factors & multiples inside Number). You make, rename, reorder, move and delete them yourself with **Manage categories** on the Decks page (it appears once Developing tools is on), and file a deck by **dragging its card onto a heading**. On a touch screen, where dragging does not work, open the card's (i) and use **Filed under**; the same menu is in the deck editor's About the deck. A deck sits in one place; empty headings show only to you (with a hint) and anyone else sees just the strands and topics that have published decks, in your order. Each deck can also carry a **lesson pitch** (Upper, Middle or Lower band), set in the editor's About the deck and shown only in the card's (i). Decks not filed appear under **Not filed** (**Other decks** to everyone else)."
+     "s": "**For:** finding a lesson, now that there are a lot of decks, by the class you are teaching or by topic. **How it works:** once signed in, the Decks page opens on **By class** and also has **By topic**; both work like a file explorer: a trail across the top (Classes › Year 9 › 9M6), the folders inside the one you are in, and its decks below, as a plain list (name, band, slides, made, last edited, published) or as the usual preview cards, most recently made first from the left. By class starts as a folder per year (7, 8, 9, 10, 11, A-Level) holding your classes (7M1; 9M6, 9M3, 9M2; 12FM, 13MA, 13FM); By topic starts as your strands and topics (Number ... Probability & Statistics, A-Level with Maths and Further Maths, Starters), copied from how you had them. You can make folders inside folders (up to six deep), rename them, put them in the order you want, move them, and delete them (deleting a folder never deletes a deck: its decks and folders move up a level). **Drag** a deck or a folder onto a folder or a breadcrumb to move it: a drag always moves, so a deck stays in one place unless you ask otherwise. To have the **same deck in two places**, press **Repeat** on it (the small copy icon): a bar appears, you browse the folders as usual, open the folder where it should also appear and press **Place here**. It is one deck shown in both places (it is not copied, so changing it changes it everywhere), and the cross on a deck takes it out of just that folder. A deck in no folder is under **Not filed** at the top level. In the deck editor, **About the deck** has the same choice as tick boxes. On a touch screen use the **Move into…** menu for folders, and the editor's tick boxes to move a deck. A **search box** at the top looks through every deck in every folder (by a word in its title or summary) and shows which folder each result is in. The list opens by default and the **List / Previews** buttons switch between it and the preview cards (your choice is remembered); the **band** tag is the lesson pitch (Upper, Middle or Lower band), and clicking a column heading (name, band, slides, made, edited) sorts the decks, in the folder and in search results. Only the folder you open loads its decks. A phone browses but does not edit. Signed out, anyone sees only the published decks, in the topic folders, with the same search, list, sorting and previews and nothing to edit."
     }
    ]
   },
@@ -1336,7 +1322,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "Decks in a file-explorer structure: folders inside folders, to a sensible depth, for the Decks page's two views (By class and By topic), instead of a fixed two-level strand list and a fixed class list. A deck can sit in several folders (like a shortcut; the deck is never copied). One folder engine and one explorer screen serve both views. Decks themselves are never touched by filing, so Harry's decks, their links and their published copies are not disrupted. Decided with Harry, 2026-11-24."
+       "s": "Decks in a file-explorer structure: folders inside folders, to a sensible depth, for the Decks page's two views (By class and By topic), instead of a fixed two-level strand list and a fixed class list. A deck can sit in several folders (like a shortcut; the deck is never copied). One folder engine and one explorer screen serve both views. Decks themselves are never touched by filing, so Harry's decks, their links and their published copies are not disrupted. Decided with Harry, 2026-11-24. All four steps are built."
       }
      ]
     },
@@ -1347,19 +1333,17 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-24, **step 1 done (on the branch, not merged):** the folder engine (`api/_folders.ts`, tables `maths.deck_folders` and `maths.deck_folder_items`, a `class` and a `topic` tree) and By class running on it, drawn from the folders (`src/components/FolderView.tsx`, `src/decks/folders.ts`). The class tree is seeded once with Harry's years and classes. The screen is unchanged for Harry: a heading per year, the classes as buttons, a folder's deck cards (with previews) most recently made first, loaded only when the folder is opened. Signed in only; By class is the default view. A deck's made date is new (`maths.decks.created_at`). There were no class assignments to migrate: the earlier class tables were never deployed."
+        "2026-11-24, **step 1 (merged, PR 164):** the folder engine (`api/_folders.ts`, tables `maths.deck_folders` and `maths.deck_folder_items`, a `class` and a `topic` tree) and By class running on it. The class tree is seeded once with Harry's years and classes. By class is signed-in only and the default view. A deck's made date is new (`maths.decks.created_at`).",
+        "2026-11-24, **step 2 (merged, PR 164):** the explorer screen: a breadcrumb trail, subfolder tiles beside the deck cards, any depth (capped at 6), New folder, rename, reorder, Move into…, delete (a folder's decks go up to its parent and its subfolders move up a level; no deck is deleted), and drag a deck card or a folder onto a folder tile or a breadcrumb. Rules live in `applyFolderOp` and are tested. A touch screen uses Move into…; a phone browses only.",
+        "2026-11-24, **step 3 (on its branch, not merged):** By topic runs on the same explorer. The existing strands, topics and filing are copied once into the `topic` tree (same ids and order; decks carrying a strand but unfiled are filed under it; the old `deck_categories` and `deck_filing` tables are left in place, no longer read). The old categories code, API reads and writes, Manage categories controls and their tests are removed. New with this step: a **Not filed** tile (so a deck in no folder is always reachable), a read-only **public** explorer for signed-out visitors (published decks, topic tree only), the editor's About the deck as folder checklists for both trees, the dashboard's deck list filtering by topic folder, the `deck` CLI's `categories` and `file` commands on folders, and a brand-new deck filed under the strand it carries on its first save. The New deck / Slide library / Check for changes toolbar is back on the signed-in page (it had been missing from the By class view).",
+        "2026-11-25, **step 4, the list view (merged, PR 169):** a plain **list view** is the default for a folder's decks (title, band tag, slides, made, edited, published; click a column heading to sort), with the preview cards kept as a toggle. Folders are rows in the list, and the list reads no slide pictures. The band is the existing lesson pitch.",
+        "2026-11-25, **step 4, search (on its branch, not merged):** search across every deck (title or summary; results show each deck's folder; matching folders as chips; also for the signed-out view, published decks only), using the same list and sorting. The two step 4 branches were reconciled on 2026-11-25: one `editedAt` field, one sort, one list view."
        ]
       },
       {
        "t": "ul",
        "items": [
-        "2026-11-24, **step 2 done (on the branch, not merged):** the explorer screen for the `class` tree: a breadcrumb trail, subfolder tiles beside the deck cards, any depth (capped at 6), New folder, rename, reorder, Move into…, delete (a folder's decks go up to its parent and its subfolders move up a level; no deck is deleted), and drag a deck card or a folder onto a folder tile or a breadcrumb. Rules live in `applyFolderOp` and are tested. A touch screen uses Move into… and Add a deck… instead of dragging; a phone browses only."
-       ]
-      },
-      {
-       "t": "ul",
-       "items": [
-        "2026-11-25, **step 4, first part (on the branch, not merged):** a plain **list view** as the default for a folder's decks (title, band tag, slides, made, edited, published; sort by column), with the preview cards kept as a toggle. Folders are rows in the list. The band is the existing lesson pitch."
+        "2026-11-25, **placing a deck in two places (on the branch, not merged):** the \"Add a deck…\" dropdown is gone. A drag always moves a deck; **Repeat** on a deck starts a placing mode where the folders are browsed and **Place here** adds the second place (one deck in several folders, not a copy). The tree reads no longer carry a list of every deck's title."
        ]
       }
      ]
@@ -1371,8 +1355,8 @@
       {
        "t": "ul",
        "items": [
-        "**Step 3, By topic on the same engine (it uses the explorer already built):** copy the strands, topics and `deck_filing` into the `topic` tree (a migration; the old tables stay until the new view has been used), swap the By topic view, then retire `api/_categories.ts` and the Manage categories controls.",
-        "**Step 4, the rest:** one search across every folder; filter by band; show the band tag in the By topic list too (list and sort are done for By class)."
+        "**Once By topic has been used for a while:** drop the old `maths.deck_categories` and `maths.deck_filing` tables and the migration that reads them.",
+        "**Possible:** a New deck made inside the open folder files itself there; reorder decks by hand inside a folder; filter by band; search inside slide text."
        ]
       }
      ]
@@ -1385,7 +1369,7 @@
        "t": "ul",
        "items": [
         "`docs/reference/decks-building.md` (\"Decks in folders\")",
-        "`docs/FEATURES.md` (\"Decks by class\")"
+        "`docs/FEATURES.md` (\"Decks in folders\")"
        ]
       }
      ]
@@ -1419,7 +1403,7 @@
         "Composite shapes (2026-11-24): Year 7 end-of-topic lesson, 20 slides, fully authored (eight whiteboard questions and three models, an eight-question picture worksheet, exit ticket; trapezia worked with the formula, houses give the total height). Pictures are authored SVG images, no site code; plan in `specs/decks/composite-shapes.md`.",
         "Sharing in a ratio (2026-11-15, rebuilt after Harry's first look): 30-slide recap lesson for the middle band, built round the mistakes. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions, the tool's live generator at Level 2, then an independent set (a 3 × 3 board grid, then printed sheets of nine, nine and fifteen in the cells layout). All 62 questions authored in difficulty ladders (a : b from the start, no hints) and recomputed by test. Ratio Sharing gained three-part ratios, unsimplified ratios, quantity contexts, a check step and its first Depth bank (15 items). The bar-model slide piece now stages values and shares as separate clicks and a row's total can be `given`; generator slides always centre their question. A working copy in the shared deck store, not published. Plan: `specs/decks/ratio-sharing.md`.",
         "Lesson pitch (2026-11-14): a deck can be labelled Upper, Middle or Lower band (editor's About the deck); shown only in the card's (i); kept in the published listing.",
-        "Deck strands and topics Harry controls (2026-11-14): replaces the five fixed strands. A two-level tree (strand, then topic) and the filing of each deck live in their own tables (so filing never touches a deck); Manage categories on the Decks page, drag a card onto a heading (or Filed under in its (i) for touch), the same menu in the editor's About the deck, the dashboard filtered by it; the public sees only strands and topics with published decks. Seeded as five maths strands, A-Level (Maths, Further Maths) and Starters. `deck categories` / `deck file` for Claude. Before this the page showed Number as the only strand with decks and put the rest under Other decks.",
+        "Deck strands and topics Harry controls (2026-11-14; replaced on 2026-11-24 by deck folders, see `docs/pathways/deck-folders.md`): replaces the five fixed strands. A two-level tree (strand, then topic) and the filing of each deck live in their own tables (so filing never touches a deck); Manage categories on the Decks page, drag a card onto a heading (or Filed under in its (i) for touch), the same menu in the editor's About the deck, the dashboard filtered by it; the public sees only strands and topics with published decks. Seeded as five maths strands, A-Level (Maths, Further Maths) and Starters. `deck categories` / `deck file` for Claude. Before this the page showed Number as the only strand with decks and put the rest under Other decks.",
         "Deck quality system (2026-11-14, after an audit of the repeated deck problems: repeated numbers, layout and sizing, pitch and length, answer give-aways, checks that pass without anyone looking, rework from ambiguous feedback): the look card (`deck looks`) and a visual review (`deck review`, `sheet` revealing clicks); shared pieces and `LOOK` tokens (`src/decks/pieces.ts`); build rules (`deckRules.ts`) with `build` failing on a repeated number; layout checks that measure every question, the working-open and answers-shown views and warn on an orphaned number; a title-consistency warning; an unmerged-code warning; `verify`, `sheet` and `check --layout` fixed for decks that exist only as a file; the plan template, lesson style, checklist and reference updated. Worked example: `specs/decks/factors-hcf-systematic-listing.build.ts`.",
         "Factors, common factors and HCF (2026-11-13, reformatted 2026-11-14 after Harry's first look: 17 slides, no drawn calculator, full-width centred whiteboards, factor-pairs tables for two numbers, plain large book sets): Set 6 lesson after the multiples deck, one lesson. List factors, common factors, HCF; Casio fx-85GT CW key-press slides teach the calculator method (whole number means factor, stop when the answer is smaller than the divisor); bigger whiteboard numbers with partly completed working, then a count, then a hint, then none; six-question book sets. All 36 questions authored and recomputed in the build script. Built and in the repo, awaiting Harry's visual check. Plan: `specs/decks/factors-hcf-systematic-listing.md`.",
         "Multiples and common multiples (2026-11-11): 13-slide Set 6 lesson, 45 minutes after Harry's separate TT starter. All 35 questions are authored by hand: listing first, two-list common multiples, then LCM by systematic listing and circling both matches. Repitched after Harry’s review: first five multiples of two-digit numbers (15, 18, 21, 30 etc.) and selected two-digit LCM pairs (12/16, 15/20, 21/14 etc.). Includes fading scaffolds, optional times-table-grid support, nine fresh first-five-multiples book questions before common multiples (3 × 3), then twelve fresh LCM-only book questions and a common-multiple/LCM exit. The addition model uses arrows between terms with +15 underneath. See `specs/decks/multiples-systematic-listing.md`. Alignment refined after review: native definition slides without added footer sentences, aligned list labels/columns/circles and guided answer rows. Saved to the shared Neon-backed deck service and read back with all 13 slides matching; the repo JSON is the backup.",

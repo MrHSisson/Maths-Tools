@@ -130,7 +130,7 @@ spine of the matching skill. Browse skills at **`/skills`** (Developing-tools mo
 |---|---|
 | **Teach deck** | The whole Teach-mode slide sequence for a tool (Developing-tools only; being replaced by the whole-lesson **Deck** in §6a). |
 | **Lesson pitch** | A deck's label for who it is pitched at: **Upper band**, **Middle band** or **Lower band** (`DeckDef.pitch`). Set in the editor's About the deck; shown only in the deck card's (i). | `src/decks/types.ts` |
-| **Deck strand and topic** | How decks are filed on the Decks page: a **strand** (Number ... Probability & Statistics, A-Level with the topics Maths and Further Maths, Starters) with optional **topics** inside it, both Harry's to control (Manage categories, drag a card onto a heading); a deck sits in exactly one. *Not* a Depth deck category (below). | `api/_categories.ts`, `src/decks/categoryTree.ts` |
+| **Deck folder** | How decks are filed and found on the Decks page: a folder (inside another folder, to six levels) in one of two trees: **topics** (Number ... Probability & Statistics, A-Level with Maths and Further Maths, Starters) and **classes** (a year, then its classes such as 9M6). Harry's to control (New folder, rename, move, drag a card); a deck can be in several folders, and decks in none are under **Not filed**. *Not* a Depth deck category (below). | `api/_folders.ts`, `src/components/FolderView.tsx` |
 | **Deck category** | A group of slides within a deck: **Concepts**, **True or False**, **Spot the Mistake** (`concept` / `trueFalse` / `spotMistake`). |
 | **Phase** | Legacy field (`iDo` / `weDo` / `youDo`); no longer drawn on slides. |
 | **Slide** | One card in a deck. Either **static** (body blocks + one reveal) or **anim** (a scene choreographed across beats). |

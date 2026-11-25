@@ -4,6 +4,8 @@ Status: implemented (build script `number-recap-y9.build.ts`, deck `number-recap
 
 One whiteboard lesson before the Year 9 Number 1 Foundation assessment (14 questions, 38 marks). It revises the skills the test needs through fresh numbers and contexts, not test-style questions. Blocks began in order of the marks they carry; Harry then moved the two quick 2-mark blocks (order of operations, negatives) earlier and "closest to a fraction" to the end, so the deck runs: decimals, scaling, multiplying, order of operations, negatives, estimating, money, prime factors, HCF, closest to a fraction, Friday's list. Anything cut for time is cut from the end.
 
+Opening: a **starter** of six quick questions (one each on adding decimals, ÷ 10, estimating, prime factors, order of operations and squaring a negative), five minutes on a timer, answers on a click, before anything is taught.
+
 How each block runs: question 1 is cold (no help, tally the boards: this tally chooses the next lesson's starter), then the fix, then a confirmer; the third question is a spare. All on mini-whiteboards.
 
 | Order | Block | Test marks | Questions (all fixed, answers recomputed in the build script) |
