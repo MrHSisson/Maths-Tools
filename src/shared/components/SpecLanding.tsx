@@ -149,45 +149,65 @@ function ResourceLink({ r }: { r: SpecResource }) {
   );
 }
 
-function StatementRow({ s, planning }: { s: SpecStatement; planning: boolean }) {
+/** a statement of the specification as the spec words it. What A2 adds to a statement that is in both courses sits on its own line, with the tag at the end;
+ *  a statement that is A2 throughout carries the tag after its wording. */
+function StatementText({ s }: { s: SpecStatement }) {
   return (
-    <li className="px-4 py-3.5 sm:px-5">
-      <div className="flex gap-3">
-        <span className="mt-0.5 h-fit shrink-0 rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{s.ref}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[15px] leading-snug text-slate-900">
-            {s.text}
-            {!s.as && <span className={`${a2Tag} ml-2 align-middle`}>A2</span>}
-            {s.a2Adds && <span className="text-slate-500"> (<span className="font-semibold text-violet-800">A2</span>: {s.a2Adds})</span>}
-          </p>
-          <LinkRow links={s.links} a2Only={!s.as} planning={planning} />
-        </div>
-      </div>
+    <div className="min-w-0 text-[15px] leading-snug text-slate-900">
+      <p>{s.text}{!s.as && <span className={`${a2Tag} ml-2 align-middle`}>A2</span>}</p>
+      {s.a2Adds && <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-slate-500"><span>{s.a2Adds}</span><span className={a2Tag}>A2</span></p>}
+    </div>
+  );
+}
+
+function StatementRows({ items }: { items: SpecStatement[] }) {
+  return (
+    <ul className="divide-y divide-slate-200">
+      {items.map(x => (
+        <li key={x.ref} className="grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-3 py-2.5">
+          <span className="h-fit w-fit rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{x.ref}</span>
+          <StatementText s={x} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** one skill (a sub-tool) as a plain row that opens it; A2 practice carries its tag at the end */
+function SkillRow({ l, planning }: { l: SpecLink; planning: boolean }) {
+  return (
+    <li>
+      <a href={l.href} className="flex min-h-[44px] items-center gap-2 px-4 py-2.5 text-[15px] text-slate-900 hover:bg-blue-50/70 sm:px-5">
+        <span className="min-w-0 flex-1">{l.label}</span>
+        {!l.as && <span className={a2Tag}>A2</span>}
+        {planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+        <ChevronRight size={16} className="shrink-0 text-slate-300" />
+      </a>
     </li>
   );
 }
 
-/** the generators for a statement or group; a visitor sees the live ones. One row: the ones in the AS course, then (tinted violet, so A2 reads at a glance) the ones that go beyond AS.
- *  A statement that is A2 throughout (`a2Only`) is already marked A2, so its buttons stay plain. Planned, unbuilt ones are greyed out and are not links. */
-function LinkRow({ links, a2Only, planning }: { links?: SpecLink[]; a2Only?: boolean; planning: boolean }) {
-  const { phone } = useLayoutMode();
-  const shown = (links ?? []).filter(l => planning || l.live || l.provisional);
-  if (!shown.length) return null;
-  const size = phone ? "min-h-[44px] w-full px-3.5" : "px-2.5 py-1";
-  const chip = (l: SpecLink) => {
-    if (l.provisional) return (
-      <span key={l.label} aria-disabled="true" title="Planned, not built yet"
-        className={`inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm font-semibold text-slate-400 ${size}`}>{l.label}</span>
-    );
-    const beyondAS = !a2Only && !l.as;
-    return (
-      <a key={l.href} href={l.href} title={beyondAS ? "Beyond AS (A2)" : undefined}
-        className={`inline-flex items-center justify-between gap-1 rounded-lg border text-sm font-semibold hover:border-slate-400 ${beyondAS ? "border-violet-200 bg-violet-50 text-violet-900" : "border-slate-200 text-blue-900 hover:bg-slate-50"} ${size}`}>
-        <span>{l.label}</span>{planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
-      </a>
-    );
-  };
-  return <div className={`mt-2.5 ${phone ? "flex flex-col gap-1.5" : "flex flex-wrap gap-1.5"}`}>{[...shown.filter(l => a2Only || l.as), ...shown.filter(l => !a2Only && !l.as)].map(chip)}</div>;
+interface ToolCardData { name: string; path: string; live: boolean; skills: SpecLink[]; statements: SpecStatement[] }
+
+/** the chapter's practice grouped by tool, with the statements each tool covers. Statements no built skill covers come back as `uncovered`
+ *  (with the planned, unbuilt skills for them); skills that match no tool of the chapter go under "More practice". */
+function practiceByTool(c: SpecChapter, planning: boolean): { cards: ToolCardData[]; uncovered: SpecStatement[] } {
+  const visible = (l: SpecLink) => !l.provisional && (planning || l.live);
+  const owns = (t: SpecTool, l: SpecLink) => l.href === t.path || l.href.startsWith(`${t.path}?`);
+  const groupLinks = (c.groups ?? []).filter(g => planning || !g.devOnly).flatMap(g => g.links);
+  const seen = new Set<string>();
+  const skills = [...c.statements.flatMap(x => x.links ?? []), ...groupLinks].filter(visible).filter(l => (seen.has(l.href) ? false : (seen.add(l.href), true)));
+  // AS practice first, then what goes beyond AS; the order within each follows the specification
+  const ordered = [...skills.filter(l => l.as), ...skills.filter(l => !l.as)];
+  const cards: ToolCardData[] = shownTools(c.tools, planning).map(t => ({
+    ...t,
+    skills: ordered.filter(l => owns(t, l)),
+    statements: c.statements.filter(x => (x.links ?? []).some(l => visible(l) && owns(t, l))),
+  }));
+  const rest = ordered.filter(l => !c.tools.some(t => owns(t, l)));
+  if (rest.length) cards.push({ name: "More practice", path: "", live: true, skills: rest, statements: [] });
+  const uncovered = c.statements.filter(x => !(x.links ?? []).some(visible));
+  return { cards, uncovered };
 }
 
 export function SpecLanding(p: SpecLandingProps): JSX.Element {
@@ -249,10 +269,10 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {p.chapters.map(c => {
-                const n = c.statements.length;
+                const open = shownTools(c.tools, planning);
                 return (
                   <button key={c.id} onClick={() => setView({ kind: "chapter", id: c.id })}
-                    className={`${card} group flex min-h-[112px] min-w-0 flex-col justify-between p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift`}>
+                    className={`${card} group flex min-h-[128px] min-w-0 flex-col justify-between gap-3 p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift ${open.length === 0 ? "bg-slate-50/60" : ""}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <span className="font-mono text-xs font-semibold text-slate-400">{c.id}</span>
@@ -260,10 +280,9 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                       </div>
                       <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />
                     </div>
-                    <div className="mt-3 flex flex-col items-start gap-1 text-sm text-slate-500">
-                      <span>{`${n} statement${n === 1 ? "" : "s"}`}</span>
-                      <span className={`text-xs ${c.tools.some(t => t.live) ? "font-semibold text-emerald-700" : "text-slate-400"}`}>{toolState(c, planning)}</span>
-                    </div>
+                    <p className={`line-clamp-2 text-sm ${open.length ? "text-slate-600" : "text-slate-400"}`}>
+                      {open.length ? open.map(t => t.name).join(" · ") : planning ? toolState(c, planning) : "Coming soon"}
+                    </p>
                   </button>
                 );
               })}
@@ -289,59 +308,79 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
           </>
         )}
 
-        {chapter && (
-          <>
-            <div className="flex flex-wrap items-baseline gap-x-3">
-              <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
-              <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
-            </div>
-            {chapter.notice && <div className="mt-3 overflow-hidden rounded-xl border border-amber-200"><DevNotice id={`/hub/${chapter.id}`} text={chapter.notice} /></div>}
-            {shownTools(chapter.tools, planning).length > 0 ? (
-              <div className={phone ? "mt-5 flex flex-col gap-2" : "mt-5 flex flex-wrap gap-2"}>
-                {shownTools(chapter.tools, planning).map(t => (
-                  <a key={t.path} href={t.path} className={`inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-semibold text-white hover:bg-blue-800 ${phone ? "min-h-[48px] justify-between" : "py-2.5"}`}>
-                    Open {t.name}
-                    {planning && !t.live && <span className={`${tag} bg-amber-100 text-amber-900`}>Dev</span>}
-                    <ChevronRight size={16} />
-                  </a>
-                ))}
+        {chapter && (() => {
+          const { cards, uncovered } = practiceByTool(chapter, planning);
+          const planned = (x: SpecStatement) => (x.links ?? []).filter(l => l.provisional);
+          const showsA2 = chapter.statements.some(x => !x.as || x.a2Adds) || cards.some(t => t.skills.some(l => !l.as));
+          return (
+            <>
+              <div className="flex flex-wrap items-baseline gap-x-3">
+                <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
+                <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
               </div>
-            ) : (
-              <p className="mt-3 text-sm text-slate-500">{chapter.tools.length === 0 ? "No generators for this part of the specification yet." : "The generators for this part are on their way."}</p>
-            )}
+              {chapter.notice && <div className="mt-3 overflow-hidden rounded-xl border border-amber-200"><DevNotice id={`/hub/${chapter.id}`} text={chapter.notice} /></div>}
 
-            {chapter.exam && (planning || chapter.exam.link.live) && (
-              <a href={chapter.exam.link.href} className={`${card} group mt-4 flex items-center justify-between gap-4 p-3.5 hover:shadow-lift sm:px-5`}>
-                <span className="min-w-0">
-                  <span className="block font-semibold text-slate-900">Exam-style questions</span>
-                  <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
-                </span>
-                <ChevronRight size={20} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
-              </a>
-            )}
+              <div className="mt-5 flex flex-col gap-3">
+                {cards.map(t => (
+                  <section key={t.name} className={`${card} overflow-hidden`}>
+                    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 pb-3 pt-4 sm:px-5">
+                      <h2 className="text-lg font-semibold text-slate-900">{t.name}</h2>
+                      <span className="text-sm text-slate-500">{t.skills.length} skill{t.skills.length === 1 ? "" : "s"}</span>
+                      {planning && !t.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
+                      {t.path && (
+                        <a href={t.path} className={`ml-auto inline-flex items-center gap-1 font-semibold text-blue-900 hover:underline ${phone ? "min-h-[44px]" : ""}`}>
+                          Open the tool <ChevronRight size={16} />
+                        </a>
+                      )}
+                    </header>
+                    {t.skills.length > 0 && (
+                      <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-t border-slate-200">
+                        {t.skills.map(l => <SkillRow key={l.href} l={l} planning={planning} />)}
+                      </ul>
+                    )}
+                    {t.statements.length > 0 && (
+                      <div className="border-t border-slate-200 bg-slate-50/70 px-4 pb-2 pt-3 sm:px-5">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Covers in the specification</h3>
+                        <StatementRows items={t.statements} />
+                      </div>
+                    )}
+                  </section>
+                ))}
 
-            {(() => {
-              const hasA2 = chapter.statements.some(x => !x.as || x.a2Adds || (x.links ?? []).some(l => !l.as));
-              const hasPlanned = chapter.statements.some(x => (x.links ?? []).some(l => l.provisional));
-              return (hasA2 || hasPlanned) && (
-                <p className="mt-5 px-1 text-sm text-slate-500">
-                  {hasA2 && <>The whole A-level course is listed here. Anything beyond AS is marked <span className={a2Tag}>A2</span>, and its practice is tinted the same colour. </>}
-                  {hasPlanned && <>Greyed buttons are planned and not built yet.</>}
-                </p>
-              );
-            })()}
-            <ul className={`${card} mt-3 divide-y divide-slate-200 overflow-hidden`}>
-              {chapter.statements.map(x => <StatementRow key={x.ref} s={x} planning={planning} />)}
-            </ul>
-            {(chapter.groups ?? []).filter(g => planning || !g.devOnly).map(g => {
-              const any = g.links.some(l => planning || l.live);
-              return any ? (
-                <div key={g.heading} className={`${card} mt-4 px-4 py-3`}>
-                  <h2 className="font-semibold text-slate-800">{g.heading}</h2>
-                  <LinkRow links={g.links} planning={planning} />
-                </div>
-              ) : null;
-            })}
+                {uncovered.length > 0 && (
+                  <section className={`${card} overflow-hidden`}>
+                    <header className="px-4 pb-1 pt-4 sm:px-5">
+                      <h2 className="text-lg font-semibold text-slate-900">{cards.length ? "Not built yet" : "What the specification asks"}</h2>
+                      <p className="mt-0.5 text-sm text-slate-500">{cards.length ? "Parts of this chapter with no generator yet." : "No generators for this part of the specification yet."}</p>
+                    </header>
+                    <div className="px-4 pb-2 sm:px-5">
+                      <ul className="divide-y divide-slate-200">
+                        {uncovered.map(x => (
+                          <li key={x.ref} className="grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-3 py-2.5">
+                            <span className="h-fit w-fit rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{x.ref}</span>
+                            <div className="min-w-0">
+                              <StatementText s={x} />
+                              {planned(x).length > 0 && <p className="mt-1 text-sm text-slate-400">Planned: {planned(x).map(l => l.label).join(", ")}</p>}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </section>
+                )}
+
+                {chapter.exam && (planning || chapter.exam.link.live) && (
+                  <a href={chapter.exam.link.href} className={`${card} group flex items-center justify-between gap-4 p-4 hover:shadow-lift sm:px-5`}>
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-slate-900">Exam-style questions</span>
+                      <span className="mt-0.5 block text-sm text-slate-500">{chapter.exam.text}</span>
+                    </span>
+                    <ChevronRight size={20} className="shrink-0 text-slate-300 group-hover:text-blue-900" />
+                  </a>
+                )}
+              </div>
+              {showsA2 && <p className="mt-3 px-1 text-sm text-slate-500"><span className={a2Tag}>A2</span> marks anything beyond the AS course.</p>}
+
             {planning && chapter.statements.some(x => x.legacy.length > 0 || x.note) && (
               <details className={`${card} mt-4 px-4 py-3`}>
                 <summary className="cursor-pointer font-semibold text-slate-800">The older specification <span className={`${tag} ml-1 bg-amber-50 text-amber-800`}>Developing</span></summary>
@@ -364,8 +403,9 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                 <div className="mt-3 grid gap-2 md:grid-cols-2">{chapter.resources.map(r => <ResourceLink key={r.url} r={r} />)}</div>
               </details>
             )}
-          </>
-        )}
+            </>
+          );
+        })()}
 
         {view.kind === "papers" && planning && SHOW_OLDER_PAPERS && (
           <>
