@@ -313,7 +313,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
           const planned = (x: SpecStatement) => (x.links ?? []).filter(l => l.provisional);
           const showsA2 = chapter.statements.some(x => !x.as || x.a2Adds) || cards.some(t => t.skills.some(l => !l.as));
           return (
-            <>
+            <div className="lg:max-w-[70%]">
               <div className="flex flex-wrap items-baseline gap-x-3">
                 <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
                 <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
@@ -403,7 +403,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                 <div className="mt-3 grid gap-2 md:grid-cols-2">{chapter.resources.map(r => <ResourceLink key={r.url} r={r} />)}</div>
               </details>
             )}
-            </>
+            </div>
           );
         })()}
 
