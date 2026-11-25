@@ -107,9 +107,9 @@ function GeneratingBadge() {
   if (!on) return null;
   return (
     <div role="status" aria-live="polite" className="fixed left-1/2 top-4 z-[300] -translate-x-1/2 pointer-events-none">
-      <style>{`@keyframes mtSpin{to{transform:rotate(360deg)}}@keyframes mtFade{from{opacity:0}to{opacity:1}}`}</style>
+      <style>{`@keyframes mtSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes mtFade{from{opacity:0}to{opacity:1}}`}</style>
       <div className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-lift" style={{ animation: "mtFade 0.2s ease 0.2s both" }}>
-        <span className="block h-4 w-4 rounded-full border-2 border-slate-300" style={{ borderTopColor: "#1e3a8a", animation: "mtSpin 0.8s linear infinite", willChange: "transform", transform: "translateZ(0)" }} />
+        <span className="block h-4 w-4 rounded-full border-2 border-slate-300" style={{ borderTopColor: "#1e3a8a", animation: "mtSpin 0.8s linear infinite", willChange: "transform" }} />
         Making a new question…
       </div>
     </div>
