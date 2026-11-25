@@ -1253,8 +1253,30 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   let acts: CpaActivity[] | null = null, layout: CpaLayout | null = null, bestCost = Infinity, found = 0;
   // the three-level levelling questions test each network for a question of the level before laying it out
   levelStash.cur = null; histStash.cur = null;
+  const DROPS = [{ from: 4, to: 3 }, { from: 3, to: 2 }, { from: 4, to: 2 }];
+  const dropWanted = pickOne(DROPS);
+  let attemptNo = 0;
   const pre = kind === "cpaLevel" && opts.levelLevel && !opts.fixed
     ? (c: CpaActivity[]) => { const r = searchLevel(c, cpaTimes(c), opts.levelLevel!, opts.levelLevel === 1 ? "one" : opts.levelLevel === 2 ? "mixed" : opts.levelWorkers ?? "one", opts.levelSize ?? "exam", opts.histShape ?? "step", false); if (r) levelStash.cur = { acts: c, found: r }; return !!r; }
+    : kind === "cpaHistogram" && opts.histLevel === 3 && !opts.fixed && (opts.histWorkers ?? "one") === "one"
+    // cut the peak, one worker each: the peak is just how many activities run at once, so left alone it is nearly always 4 down to 3 (3 down to 2 now
+    // and then, 4 down to 2 almost never). The kind of drop is chosen first, an even third each, and the first network that gives it is kept; if it has not
+    // turned up after 250 tries any of the three will do, and after 500 any network (so a draw never takes more than about a second or fails).
+    ? (c: CpaActivity[]) => {
+        if (attemptNo >= 500) return true;
+        c.forEach((a) => { a.workers = 1; });
+        const tm = cpaTimes(c);
+        const h = histogramData(c, tm, opts.histStart === "late" ? "late" : "early", "step");
+        if (!h) return false;
+        const wants = attemptNo < 250 ? [dropWanted] : DROPS;
+        // the fewest is exactly `to`: the overlap argument shows no fewer will do (cheap), and one levelling run shows `to` is enough (the costly search, once)
+        return wants.some((w) => {
+          if (h.peak !== w.from || !proveFewest(c, tm, w.to)) return false;
+          const r = levelSchedule(c, tm, w.to);
+          // and the peak can be cut to it with at most two activities moved (the question's own limit), or the draw would be thrown away afterwards
+          return !!r && r.makespan === tm.projectTime && !!cutSearch(c, tm, Object.fromEntries(h.blocks.map((b) => [b.id, b.start])), w.to, 2);
+        });
+      }
     : kind === "cpaHistogram" && !opts.histLevel && !opts.fixed
     // the drawing questions: a network whose histogram does not stack as asked is thrown away before it is laid out
     ? (c: CpaActivity[]) => {
@@ -1270,7 +1292,8 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
   // Choose the three-way family before scoring: otherwise the narrowest layout always wins.
   const wantThree = level === 1 && !opts.fixed && Math.random() < 0.4;
   // keep the tidiest of several acceptable networks, rather than the first
-  for (let attempt = 0; attempt < 4000 && found < (kind === "cpaLevel" && opts.levelLevel ? 3 : 8); attempt++) {
+  for (let attempt = 0; attempt < 4000 && found < (kind === "cpaLevel" && opts.levelLevel ? 3 : kind === "cpaHistogram" && opts.histLevel === 3 && !opts.fixed && (opts.histWorkers ?? "one") === "one" ? 1 : 8); attempt++) {
+    attemptNo = attempt;
     let c: CpaActivity[] | null = candidate(level, range, level === 3 || !!opts.skip);
     // "more than one critical path": start from a network with a single one and add another (the float of a non-critical activity, absorbed)
     if (paths !== "one" && (paths === "more" || Math.random() < 0.5)) c = addCriticalPath(c, range[1] * 2);
