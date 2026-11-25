@@ -14,6 +14,12 @@ const linkOf = (r: MechSubRef): SpecLink[] => {
   return t ? [{ label: r.label, href: `${t.path}?tool=${r.sub}${r.practice ? `&o_practice=${r.practice}` : ""}`, live: t.enabled !== false, as: !r.a2 }] : [];
 };
 
+// revision tools (flashcards): each is a card at the end of its chapter, labelled Revision, and is not counted as a generator
+const REVISION = ["further-maths-flashcards"].flatMap((id) => {
+  const t = ALL_TOOLS.find((x) => x.id === id);
+  return t ? [{ name: t.name, path: t.path, live: t.enabled !== false, revision: true }] : [];
+});
+
 const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
   ...c,
   notice: c.id === "MC" ? MC_NOTICE : undefined,
@@ -28,16 +34,13 @@ const chapters: SpecChapter[] = CHAPTERS.map((c) => ({
   tools: [...c.tools, ...(MECHANICS_TOOLS[c.id] ?? []).flatMap((id) => {
     const t = ALL_TOOLS.find((x) => x.id === id);
     return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];
-  })],
+  }),
+  // the flashcards are revision for Work, energy and power: a card at the end of that chapter, not a generator
+  ...(c.id === "MC" ? REVISION : [])],
   groups: (MECHANICS_GROUPS[c.id] ?? []).filter((g) => !g.hidden).map((g) => ({ heading: g.heading, devOnly: g.devOnly, links: g.links.flatMap(linkOf) })),
   exam: MECHANICS_EXAM[c.id] ? (l => (l[0] ? { text: MECHANICS_EXAM[c.id].text, link: l[0] } : undefined))(linkOf(MECHANICS_EXAM[c.id].ref)) : undefined,
 }));
 
-// revision tools that belong to the whole option, not to one chapter: listed under the chapters on the hub (a visitor sees only the live ones)
-const REVISION = ["further-maths-flashcards"].flatMap((id) => {
-  const t = ALL_TOOLS.find((x) => x.id === id);
-  return t ? [{ name: t.name, path: t.path, live: t.enabled !== false }] : [];
-});
 
 export default function FurtherMechanics() {
   return (
@@ -50,7 +53,6 @@ export default function FurtherMechanics() {
       generalResources={GENERAL_RESOURCES}
       papers={{ heading: "Older papers and question banks", intro: "The legacy AQA mechanics papers have a much deeper bank than the current spec.", cardText: "AQA M1–M3 papers and the checked legacy map" }}
       check={CHECK_NOTES}
-      workspace={{ heading: "Revision", tools: REVISION }}
     />
   );
 }

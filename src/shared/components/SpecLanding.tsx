@@ -48,7 +48,8 @@ export interface SpecResource {
   from: string;
 }
 
-interface SpecTool { name: string; path: string; live: boolean }
+/** `revision`: a revision tool (flashcards) rather than a generator: shown as a card in its chapter, labelled Revision, and not counted as a generator */
+interface SpecTool { name: string; path: string; live: boolean; revision?: boolean }
 
 export interface SpecChapter {
   id: string;
@@ -187,7 +188,7 @@ function SkillRow({ l, planning }: { l: SpecLink; planning: boolean }) {
   );
 }
 
-interface ToolCardData { name: string; path: string; live: boolean; skills: SpecLink[]; statements: SpecStatement[] }
+interface ToolCardData { name: string; path: string; live: boolean; revision?: boolean; skills: SpecLink[]; statements: SpecStatement[] }
 
 /** the chapter's practice grouped by tool, with the statements each tool covers. Statements no built skill covers come back as `uncovered`
  *  (with the planned, unbuilt skills for them); skills that match no tool of the chapter go under "More practice". */
@@ -269,7 +270,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {p.chapters.map(c => {
-                const open = shownTools(c.tools, planning);
+                const open = shownTools(c.tools, planning).filter(t => !t.revision);
                 return (
                   <button key={c.id} onClick={() => setView({ kind: "chapter", id: c.id })}
                     className={`${card} group flex min-h-[128px] min-w-0 flex-col justify-between gap-3 p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift ${open.length === 0 ? "bg-slate-50/60" : ""}`}>
@@ -325,7 +326,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                   <section key={t.name} className={`${card} overflow-hidden`}>
                     <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 pb-3 pt-4 sm:px-5">
                       <h2 className="text-lg font-semibold text-slate-900">{t.name}</h2>
-                      <span className="text-sm text-slate-500">{t.skills.length} skill{t.skills.length === 1 ? "" : "s"}</span>
+                      {t.revision ? <span className="text-sm text-slate-500">Revision</span> : <span className="text-sm text-slate-500">{t.skills.length} skill{t.skills.length === 1 ? "" : "s"}</span>}
                       {planning && !t.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
                       {t.path && (
                         <a href={t.path} className={`ml-auto inline-flex items-center gap-1 font-semibold text-blue-900 hover:underline ${phone ? "min-h-[44px]" : ""}`}>

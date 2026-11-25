@@ -64,6 +64,7 @@ Branch `claude/jolly-lovelace-tn70so`. Area: `src/shared/components/SpecLanding.
 - **A2 reads at a glance.** What A2 adds to a statement sits on its own line with the A2 tag at the end; A2 skills carry the tag at the end of the row.
 - **Nothing in the spec is dropped.** Statements no built skill covers go in a "Not built yet" card (with the planned, unbuilt skills named); a chapter with no tool shows its whole specification.
 - **Landing page:** the Decision Maths and Further Mechanics cards are double width (half of the four columns on a wide screen; full width below that) and coloured (green and indigo), with the registry description as a subtitle and no (i). A hub is any tool other tools name as their `hub`.
+- **Flashcards moved into Work, energy and power:** they are a "Revision" card at the end of that chapter page (not counted as a generator), and the hub home no longer has a separate Revision card.
 - **Chapter page** is centred at about 70% of the page width on large screens.
 - **Hub home** cards now say how many generators are available ("Coming soon" where there are none) instead of a statement count.
 - **Exam-style questions** are a lighter row after the tools, shown only where a chapter has them.
