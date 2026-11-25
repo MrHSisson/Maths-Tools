@@ -9,7 +9,7 @@ Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/
 - **A new shared option: `ToolMultiSelect.rangeBar`.** A pool drawn as a bar: its options are the dots, the ticked run is the range, the generator reads the first and last ticked. Saved state, share links, levels and the worksheet builder are unchanged because it is still a multiSelect. Other tools can use it.
 - **The range sits on its own line** under the equation (whiteboard, worked example and worksheet).
 - Level 1 now also opens on "2 sin θ = 1" so the one fixed range still gives a full 30-question sheet.
-- Not done: an old shared link that ticked the previous range ids falls back to 0 to 2π; the Handoff note and dashboard review were not updated (the planner was unreachable this session).
+- Not done: an old shared link that ticked the previous range ids falls back to 0 to 2π; the dashboard Review for Solving Trig Equations is not set.
 
 Agent: Claude Code
-Notes: Build Log block not written (the planner was unreachable); see this entry.
+Notes: Build Log block "Trig range bar, range on its own line, standard form numbers-in-parts (Claude Code)" (written after the merge).
