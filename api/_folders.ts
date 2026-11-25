@@ -8,7 +8,7 @@ export const TREES: Tree[] = ["class", "topic"];
 export const validTree = (v: unknown): v is Tree => typeof v === "string" && (TREES as string[]).includes(v);
 export interface Folder { id: string; tree: Tree; name: string; /** null for a top-level folder; another folder's id otherwise. */ parent: string | null; position: number }
 /** A deck as a folder lists it: its summary and its first slide for the card, with when it was made. Only the opened folder's decks are read. */
-export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; published: boolean; preview?: unknown }
+export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; /** When the deck was last saved. */ editedAt: string; published: boolean; /** The lesson pitch (upper, middle or lower band), when set. */ pitch?: string; preview?: unknown }
 type Row = Record<string, unknown>;
 
 export const MAX_NAME = 60;
@@ -55,15 +55,15 @@ export async function listTree(db: Db, tree: Tree): Promise<{ folders: Folder[];
   return { folders, counts, byDeck, decks: titles.map((r) => ({ id: r.id as string, title: r.title as string })) };
 }
 
-/** The decks in one folder, most recently made first, each with its first slide. Null when there is no such folder. */
-export async function decksInFolder(db: Db, folderId: string): Promise<FolderDeck[] | null> {
+/** The decks in one folder, most recently made first, each with its first slide (left out with `previews: false`, for the list view). Null when there is no such folder. */
+export async function decksInFolder(db: Db, folderId: string, previews = true): Promise<FolderDeck[] | null> {
   if (!(await db.query<Row>(`SELECT 1 FROM maths.deck_folders WHERE id = $1`, [folderId])).length) return null;
   const rows = await db.query<Row>(`SELECT d.id, d.title, d.summary, d.slides,
-      CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END AS preview,
-      COALESCE(d.created_at, d.updated_at) AS made, (p.id IS NOT NULL) AS published
+      ${previews ? `CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END` : "NULL"} AS preview,
+      d.data->>'pitch' AS pitch, d.updated_at AS edited, COALESCE(d.created_at, d.updated_at) AS made, (p.id IS NOT NULL) AS published
     FROM maths.deck_folder_items i JOIN maths.decks d ON d.id = i.deck_id LEFT JOIN maths.published_decks p ON p.id = d.id
     WHERE i.folder_id = $1 ORDER BY made DESC, d.id`, [folderId]);
-  return rows.map((r) => ({ id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, published: r.published === true, ...(r.preview ? { preview: r.preview } : {}) }));
+  return rows.map((r) => ({ id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, editedAt: r.edited as string, published: r.published === true, ...(r.pitch ? { pitch: r.pitch as string } : {}), ...(r.preview ? { preview: r.preview } : {}) }));
 }
 
 /** Replaces the folders a deck is in within one tree (its place in the other tree is left alone). Folders that are not in that tree are ignored. Returns the folders now set. */

@@ -1,6 +1,6 @@
 # Deck folders
 - **Status:** building
-- **Updated:** 2026-11-24
+- **Updated:** 2026-11-25
 
 ## Intention
 Decks in a file-explorer structure: folders inside folders, to a sensible depth, for the Decks page's two views (By class and By topic), instead of a fixed two-level strand list and a fixed class list. A deck can sit in several folders (like a shortcut; the deck is never copied). One folder engine and one explorer screen serve both views. Decks themselves are never touched by filing, so Harry's decks, their links and their published copies are not disrupted. Decided with Harry, 2026-11-24.
@@ -10,9 +10,11 @@ Decks in a file-explorer structure: folders inside folders, to a sensible depth,
 
 - 2026-11-24, **step 2 done (on the branch, not merged):** the explorer screen for the `class` tree: a breadcrumb trail, subfolder tiles beside the deck cards, any depth (capped at 6), New folder, rename, reorder, Move into…, delete (a folder's decks go up to its parent and its subfolders move up a level; no deck is deleted), and drag a deck card or a folder onto a folder tile or a breadcrumb. Rules live in `applyFolderOp` and are tested. A touch screen uses Move into… and Add a deck… instead of dragging; a phone browses only.
 
+- 2026-11-25, **step 4, first part (on the branch, not merged):** a plain **list view** as the default for a folder's decks (title, band tag, slides, made, edited, published; sort by column), with the preview cards kept as a toggle. Folders are rows in the list. The band is the existing lesson pitch.
+
 ## Next steps
 - **Step 3, By topic on the same engine (it uses the explorer already built):** copy the strands, topics and `deck_filing` into the `topic` tree (a migration; the old tables stay until the new view has been used), swap the By topic view, then retire `api/_categories.ts` and the Manage categories controls.
-- **Step 4, sort, list view and search:** sort by made, last edited or name; a list/grid toggle; one search across every folder.
+- **Step 4, the rest:** one search across every folder; filter by band; show the band tag in the By topic list too (list and sort are done for By class).
 
 ## Where to read more
 - `docs/reference/decks-building.md` ("Decks in folders")

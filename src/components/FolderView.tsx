@@ -1,17 +1,25 @@
-import { useState, type DragEvent, type ReactNode } from 'react';
+import { useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Folder as FolderIcon, FolderPlus, Pencil, Trash2, X } from 'lucide-react';
-import { pathTo, sendFolderOp, setDeckFolders, useFolderDecks, useReload, useTree, type Folder, type FolderOp, type Tree } from '../decks/folders';
-import type { Slide } from '../decks/types';
+import { ChevronLeft, ChevronRight, Folder as FolderIcon, FolderPlus, LayoutGrid, List, Pencil, Trash2, X } from 'lucide-react';
+import { FIRST_DIR, pathTo, sendFolderOp, setDeckFolders, sortDecks, useFolderDecks, useReload, useTree, type Folder, type FolderOp, type SortDir, type SortKey, type Tree } from '../decks/folders';
+import type { Pitch, Slide } from '../decks/types';
 import { DeckCard, type GalleryDeck } from './DeckGallery';
+import DeckList from './DeckList';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const ROOT_NAME: Record<Tree, string> = { class: 'Classes', topic: 'Topics' };
 type Drag = { kind: 'deck' | 'folder'; id: string } | null;
+type Layout = 'list' | 'cards';
+const LAYOUT_KEY = 'mt-folder-layout';
+/** A plain list (title, band, dates) unless the preview cards were chosen, remembered on this device. */
+function useLayout(): [Layout, (l: Layout) => void] {
+  const [layout, set] = useState<Layout>(() => { try { return localStorage.getItem(LAYOUT_KEY) === 'cards' ? 'cards' : 'list'; } catch { return 'list'; } });
+  return [layout, (l) => { set(l); try { localStorage.setItem(LAYOUT_KEY, l); } catch { /* the choice just is not remembered */ } }];
+}
 const iconBtn = 'grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30';
 
-/** Decks as a file explorer (signed in only): a breadcrumb trail, the opened folder's subfolders as tiles, and its decks as the usual preview cards, most
- *  recently made first from the left. Folders go inside folders. Only the opened folder's decks (and their first slides) are read. With `canEdit` (not on a
+/** Decks as a file explorer (signed in only): a breadcrumb trail, the opened folder's subfolders, and its decks, either as a plain list (name, band, dates,
+ *  sortable by column; the default) or as preview cards, most recently made first from the left. Folders go inside folders. Only the opened folder's decks (and their first slides) are read. With `canEdit` (not on a
  *  phone, which only previews) folders can be made, renamed, moved, reordered and deleted, and a card or a folder can be dragged onto a folder or a breadcrumb. */
 export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boolean }) {
   const [params, setParams] = useSearchParams();
@@ -21,11 +29,15 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
   const [over, setOver] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [layout, setLayout] = useLayout();
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'made', dir: 'desc' });
+  const asCards = layout === 'cards';
   const wanted = params.get('folder');
   const folders = data?.folders ?? [];
   const here = wanted && folders.some((f) => f.id === wanted) ? wanted : null;       // an unknown or deleted folder shows the top level
   const go = (id: string | null) => setParams((p) => { const n = new URLSearchParams(p); if (id) n.set('folder', id); else n.delete('folder'); return n; }, { replace: true });
-  const decks = useFolderDecks(here, reload);
+  const decks = useFolderDecks(here, reload, asCards);       // the list needs no pictures, so none are read for it
+  const sorted = useMemo(() => (decks ? sortDecks(decks, sort.key, sort.dir) : decks), [decks, sort]);
   if (data === null) return <p className="mt-8 text-slate-500">Folders come from the website, so they can't be shown here.</p>;
   if (data === undefined) return <p className="mt-8 text-slate-500" role="status">Loading…</p>;
 
@@ -54,13 +66,15 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
   const lit = (id: string | null) => (over === (id ?? '__root') && drag ? 'bg-blue-50 ring-2 ring-blue-400' : '');
 
   const subtreeDecks = (id: string) => new Set(Object.entries(data.byDeck).filter(([, fs]) => fs.some((f) => inSubtree(f, id))).map(([d]) => d)).size;
-  const cards: GalleryDeck[] = (decks ?? []).map((d) => ({
-    id: d.id, title: d.title, summary: d.summary, slides: d.slides, preview: d.preview as Slide | undefined,
+  const onSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: FIRST_DIR[key] }));
+  const takeOut = async (id: string) => { setError(await setDeckFolders(id, tree, (data.byDeck[id] ?? []).filter((f) => f !== here))); bump(); };
+  const cards: GalleryDeck[] = (asCards ? decks ?? [] : []).map((d) => ({
+    id: d.id, title: d.title, summary: d.summary, pitch: d.pitch as Pitch | undefined, slides: d.slides, preview: d.preview as Slide | undefined,
     badge: d.published ? undefined : 'Not published', notes: [`made ${dateOf(d.madeAt)}`, d.published ? 'published' : 'not published'],
     action: canEdit && here ? (
       <>
         <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className={iconBtn}><Pencil size={16} /></Link>
-        <button onClick={async () => { setError(await setDeckFolders(d.id, tree, (data.byDeck[d.id] ?? []).filter((f) => f !== here))); bump(); }} aria-label={`Take ${d.title} out of ${byId.get(here)?.name}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={16} /></button>
+        <button onClick={() => void takeOut(d.id)} aria-label={`Take ${d.title} out of ${byId.get(here)?.name}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={16} /></button>
       </>
     ) : undefined,
   }));
@@ -75,8 +89,14 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
           <span key={c.id} className="flex items-center gap-1"><ChevronRight size={14} className="text-slate-400" />
             <Crumb onClick={() => go(c.id)} current={i === crumbs.length - 1} extra={{ ...target(c.id), className: lit(c.id) }}>{c.name}</Crumb></span>
         ))}
-        {canEdit && (
-          <span className="ml-auto flex flex-wrap items-center gap-2">
+        <span className="ml-auto flex flex-wrap items-center gap-2">
+          <span role="group" aria-label="Show decks as" className="inline-flex overflow-hidden rounded-xl border border-slate-300 bg-white shadow-card">
+            {([['list', 'List', List], ['cards', 'Previews', LayoutGrid]] as const).map(([l, name, Icon]) => (
+              <button key={l} onClick={() => setLayout(l)} aria-pressed={layout === l} title={`${name} view`} aria-label={`${name} view`}
+                className={`grid h-8 w-9 place-items-center ${layout === l ? 'bg-blue-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}><Icon size={16} /></button>
+            ))}
+          </span>
+        {canEdit && (<>
             {here && addable.length > 0 && (
               <select value="" aria-label={`Add a deck to ${byId.get(here)?.name}`} onChange={(e) => { const id = e.target.value; if (id) void (async () => { setError(await setDeckFolders(id, tree, [...(data.byDeck[id] ?? []), here])); bump(); })(); }}
                 className="max-w-[14rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700">
@@ -85,8 +105,8 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
               </select>
             )}
             <button onClick={() => setAdding((a) => !a)} aria-expanded={adding} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-card hover:bg-slate-50"><FolderPlus size={15} />New folder</button>
-          </span>
-        )}
+        </>)}
+        </span>
       </nav>
       {canEdit && adding && (
         <form className="mt-3 flex items-center gap-2" onSubmit={async (e) => { e.preventDefault(); const name = ((new FormData(e.currentTarget).get('name') as string) ?? '').trim(); if (name && !(await act({ op: 'add', tree, name, parent: here }))) setAdding(false); }}>
@@ -97,9 +117,9 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
       {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
 
       {tiles.length > 0 && (
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={asCards ? 'mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4' : 'mt-5 flex flex-col gap-2'}>
           {tiles.map((f, i) => (
-            <Tile key={f.id} f={f} canEdit={canEdit} first={i === 0} last={i === tiles.length - 1} decks={subtreeDecks(f.id)} folders={folders.filter((x) => x.parent === f.id).length}
+            <Tile key={f.id} f={f} row={!asCards} canEdit={canEdit} first={i === 0} last={i === tiles.length - 1} decks={subtreeDecks(f.id)} folders={folders.filter((x) => x.parent === f.id).length}
               moveTargets={folders.filter((x) => !inSubtree(x.id, f.id) && x.id !== f.parent)}
               label={label} lit={lit(f.id)} dropProps={target(f.id)} onOpen={() => go(f.id)} onAct={act}
               onDragStart={() => setDrag({ kind: 'folder', id: f.id })} onDragEnd={() => { setDrag(null); setOver(null); }}
@@ -112,6 +132,10 @@ export default function FolderView({ tree, canEdit }: { tree: Tree; canEdit: boo
 
       {here && decks === undefined && <p className="mt-5 text-slate-500" role="status">Loading…</p>}
       {here && decks === null && <p className="mt-5 text-slate-500">This folder's decks can't be listed here.</p>}
+      {here && !asCards && sorted && sorted.length > 0 && (
+        <DeckList decks={sorted} canEdit={canEdit} sortKey={sort.key} sortDir={sort.dir} onSort={onSort} onRemove={(id) => void takeOut(id)} folderName={byId.get(here)?.name}
+          onDragStart={(id) => setDrag({ kind: 'deck', id })} onDragEnd={() => { setDrag(null); setOver(null); }} />
+      )}
       {here && cards.length > 0 && (
         <>
           <h4 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">Decks <span className="font-normal normal-case text-slate-400">most recently made first</span></h4>
@@ -130,16 +154,16 @@ function Crumb({ children, current, onClick, extra }: { children: ReactNode; cur
 }
 
 /** A folder as a tile: opens on a click; with edit controls it renames, moves, reorders, deletes, and takes a dragged card or folder. */
-function Tile({ f, canEdit, first, last, decks, folders, moveTargets, label, lit, dropProps, onOpen, onAct, onDragStart, onDragEnd, onDelete }: {
-  f: Folder; canEdit: boolean; first: boolean; last: boolean; decks: number; folders: number; moveTargets: Folder[]; label: (f: Folder) => string; lit: string;
+function Tile({ f, row, canEdit, first, last, decks, folders, moveTargets, label, lit, dropProps, onOpen, onAct, onDragStart, onDragEnd, onDelete }: {
+  f: Folder; row?: boolean; canEdit: boolean; first: boolean; last: boolean; decks: number; folders: number; moveTargets: Folder[]; label: (f: Folder) => string; lit: string;
   dropProps: Record<string, unknown>; onOpen: () => void; onAct: (op: FolderOp) => Promise<string | null>; onDragStart: () => void; onDragEnd: () => void; onDelete: () => void;
 }) {
   const [renaming, setRenaming] = useState(false);
   const commit = (v: string) => { setRenaming(false); if (v.trim() && v.trim() !== f.name) void onAct({ op: 'rename', id: f.id, name: v }); };
   return (
     <div {...dropProps} draggable={canEdit} onDragStart={canEdit ? (e) => { e.dataTransfer.setData('text/plain', `folder:${f.id}`); e.dataTransfer.effectAllowed = 'move'; onDragStart(); } : undefined} onDragEnd={canEdit ? onDragEnd : undefined}
-      data-folder={f.id} className={`rounded-2xl border border-slate-300 bg-white p-3 shadow-card transition-colors ${lit}`}>
-      <div className="flex items-center gap-2">
+      data-folder={f.id} className={`border border-slate-300 bg-white shadow-card transition-colors ${row ? 'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2' : 'rounded-2xl p-3'} ${lit}`}>
+      <div className={`flex items-center gap-2 ${row ? 'min-w-[12rem] flex-1' : ''}`}>
         <FolderIcon size={22} className="shrink-0 text-blue-900" />
         {renaming
           ? <input autoFocus defaultValue={f.name} maxLength={60} aria-label="Folder name" onBlur={(e) => commit(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenaming(false); }} className="min-w-0 flex-1 rounded-lg border border-blue-400 px-2 py-1 text-base font-semibold outline-none" />
@@ -149,7 +173,7 @@ function Tile({ f, canEdit, first, last, decks, folders, moveTargets, label, lit
             </button>}
       </div>
       {canEdit && (
-        <div className="mt-2 flex flex-wrap items-center gap-0.5 border-t border-slate-200 pt-2">
+        <div className={`flex flex-wrap items-center gap-0.5 ${row ? '' : 'mt-2 border-t border-slate-200 pt-2'}`}>
           <button className={iconBtn} disabled={first} onClick={() => void onAct({ op: 'reorder', id: f.id, direction: 'up' })} aria-label={`Move ${f.name} earlier`} title="Move earlier"><ChevronLeft size={15} /></button>
           <button className={iconBtn} disabled={last} onClick={() => void onAct({ op: 'reorder', id: f.id, direction: 'down' })} aria-label={`Move ${f.name} later`} title="Move later"><ChevronRight size={15} /></button>
           <button className={iconBtn} onClick={() => setRenaming(true)} aria-label={`Rename ${f.name}`} title="Rename"><Pencil size={14} /></button>

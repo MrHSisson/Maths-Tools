@@ -12,7 +12,7 @@
 // GET  /api/decks?categories=all          → the same with every deck's filing (admin)
 // POST /api/decks {categories: <op>}      → change the tree or the filing: add / rename / move / setParent / delete a category, or file a deck (api/_categories.ts); answers with the whole tree and filing
 // GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, and every deck's id and title (admin)
-// GET  /api/decks?folder=<id>             → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin)
+// GET  /api/decks?folder=<id>[&previews=0] → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin)
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
   if (cats === "all") return json(await listCategories(db));
   if (folder !== null) {                              // the folder view is for signed-in use only
     if (!validFolderId(folder)) return json({ error: "Bad folder" }, 400);
-    const decks = await decksInFolder(db, folder);
+    const decks = await decksInFolder(db, folder, params.get("previews") !== "0");   // previews=0: the list view needs no pictures
     return decks ? json({ decks }) : json({ error: "No such folder" }, 404);
   }
   if (tree !== null) return validTree(tree) ? json(await listTree(db, tree)) : json({ error: "Bad tree" }, 400);

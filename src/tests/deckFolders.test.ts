@@ -14,12 +14,12 @@ const slide = (id: string) => ({ id, family: "teach", title: id, els: [{ id: `${
 const deck = (id: string, updatedAt: string) => ({ id, title: `Deck ${id}`, summary: `About ${id}`, slides: [slide("a"), slide("b")], updatedAt });
 const post = (body: unknown, key: string | null = "k") => POST(new Request("http://x/api/decks", { method: "POST", headers: key ? { "x-admin-key": key } : {}, body: JSON.stringify(body) }));
 const get = (q: string, key: string | null = "k") => GET(new Request(`http://x/api/decks${q}`, { headers: key ? { "x-admin-key": key } : {} }));
-type FolderDeck = { id: string; title: string; slides: number; madeAt: string; published: boolean; preview?: { id: string } };
+type FolderDeck = { id: string; title: string; slides: number; madeAt: string; editedAt: string; published: boolean; pitch?: string; preview?: { id: string } };
 type Tree = { folders: { id: string; tree: string; name: string; parent: string | null; position: number }[]; counts: Record<string, number>; byDeck: Record<string, string[]>; decks: { id: string; title: string }[] };
 const tree = async (t = "class") => (await (await get(`?folders=${t}`)).json()) as Tree;
 const fid = (t: Tree, name: string) => t.folders.find((f) => f.name === name)!.id;
 const file = (deckId: string, folderIds: string[], t = "class") => post({ folders: { deckId, tree: t, folderIds } });
-const inFolder = async (id: string) => (await (await get(`?folder=${id}`)).json()) as { decks: FolderDeck[] };
+const inFolder = async (id: string, extra = "") => (await (await get(`?folder=${id}${extra}`)).json()) as { decks: FolderDeck[] };
 
 describe("deck folders", () => {
   beforeEach(async () => { await db.reset(); });
@@ -61,6 +61,22 @@ describe("deck folders", () => {
     const f = fid(await tree(), "7M1");
     for (const id of ["a", "b"]) await file(id, [f]);
     expect((await inFolder(f)).decks.map((d) => d.id)).toEqual(["b", "a"]);
+  });
+
+  it("the list view gets each deck's band and last-edited time, and can ask for no pictures", async () => {
+    await post({ deck: { ...deck("a", "2026-11-01T10:00:00.000Z"), pitch: "middle" } });
+    await post({ deck: deck("b", "2026-11-05T10:00:00.000Z") });
+    await post({ deck: { ...deck("a", "2026-11-30T10:00:00.000Z"), pitch: "middle" } });
+    const f = fid(await tree(), "7M1");
+    for (const id of ["a", "b"]) await file(id, [f]);
+    const { decks } = await inFolder(f, "&previews=0");
+    const a = decks.find((d) => d.id === "a")!, b = decks.find((d) => d.id === "b")!;
+    expect(a.pitch).toBe("middle");
+    expect(b.pitch).toBeUndefined();
+    expect(a.editedAt).toBe("2026-11-30T10:00:00.000Z");
+    expect(a.madeAt).toBe("2026-11-01T10:00:00.000Z");
+    expect(decks.every((d) => d.preview === undefined)).toBe(true);
+    expect((await inFolder(f)).decks.every((d) => d.preview?.id === "a")).toBe(true);        // pictures stay the default
   });
 
   it("works for a folder inside a folder, to any depth", async () => {

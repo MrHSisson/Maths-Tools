@@ -17,7 +17,7 @@ async function read<T>(query: string): Promise<T | null> {
   } catch { return null; }
 }
 const fetchTree = (tree: Tree) => read<TreeData>(`folders=${tree}`);
-const fetchFolderDecks = async (folderId: string) => (await read<{ decks: FolderDeck[] }>(`folder=${encodeURIComponent(folderId)}`))?.decks ?? null;
+const fetchFolderDecks = async (folderId: string, previews: boolean) => (await read<{ decks: FolderDeck[] }>(`folder=${encodeURIComponent(folderId)}${previews ? "" : "&previews=0"}`))?.decks ?? null;
 
 /** Sets the folders a deck is in within one tree. Resolves to null when it worked, else the reason in words. */
 export async function setDeckFolders(deckId: string, tree: Tree, folderIds: string[]): Promise<string | null> {
@@ -40,15 +40,15 @@ export async function sendFolderOp(op: FolderOp): Promise<string | null> {
 }
 
 /** One folder's decks for a page: undefined while loading, null when unavailable. `reload` asks again (after a change). */
-export function useFolderDecks(folderId: string | null, reload: number): FolderDeck[] | null | undefined {
+export function useFolderDecks(folderId: string | null, reload: number, previews = true): FolderDeck[] | null | undefined {
   const [state, setState] = useState<{ key: string; decks: FolderDeck[] | null } | undefined>(undefined);
-  const key = folderId ? `${folderId}|${reload}` : "";
+  const key = folderId ? `${folderId}|${reload}|${previews}` : "";
   useEffect(() => {
     if (!folderId) return;
     let on = true;
-    void fetchFolderDecks(folderId).then((decks) => { if (on) setState({ key, decks }); });
+    void fetchFolderDecks(folderId, previews).then((decks) => { if (on) setState({ key, decks }); });
     return () => { on = false; };
-  }, [folderId, key]);
+  }, [folderId, key, previews]);
   return !folderId ? undefined : state?.key === key ? state.decks : undefined;
 }
 
@@ -73,4 +73,31 @@ export function pathTo(folders: Folder[], id: string): Folder[] {
   const out: Folder[] = [];
   for (let f = byId.get(id); f && out.length < 20; f = f.parent ? byId.get(f.parent) : undefined) out.unshift(f);
   return out;
+}
+
+// ── The list view: sorting and the band tag ──
+
+export type SortKey = "name" | "band" | "slides" | "made" | "edited";
+export type SortDir = "asc" | "desc";
+/** What a column sorts by first (a date or a count starts newest or biggest first; a name or a band starts A to Z, upper band first). */
+export const FIRST_DIR: Record<SortKey, SortDir> = { name: "asc", band: "asc", slides: "desc", made: "desc", edited: "desc" };
+const BAND_ORDER: Record<string, number> = { upper: 0, middle: 1, lower: 2 };
+
+/** A folder's decks in the order a column asks for. A deck with no band sorts last either way; ties fall back to most recently made, then title. */
+export function sortDecks(decks: FolderDeck[], key: SortKey, dir: SortDir): FolderDeck[] {
+  const sign = dir === "asc" ? 1 : -1;
+  const cmp = (a: FolderDeck, b: FolderDeck): number => {
+    switch (key) {
+      case "name": return a.title.localeCompare(b.title, "en", { sensitivity: "base", numeric: true }) * sign;
+      case "slides": return (a.slides - b.slides) * sign;
+      case "made": return a.madeAt.localeCompare(b.madeAt) * sign;
+      case "edited": return a.editedAt.localeCompare(b.editedAt) * sign;
+      case "band": {
+        const x = BAND_ORDER[a.pitch ?? ""], y = BAND_ORDER[b.pitch ?? ""];
+        if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
+        return (x - y) * sign;
+      }
+    }
+  };
+  return [...decks].sort((a, b) => cmp(a, b) || b.madeAt.localeCompare(a.madeAt) || a.title.localeCompare(b.title));
 }
