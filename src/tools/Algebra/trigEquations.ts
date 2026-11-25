@@ -276,7 +276,7 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
       }
     }
   }
-  const displayLatex = `${lhs} = ${rhs},\\quad ${rangeTex}`;
+  const displayLatex = `\\begin{array}{c} ${lhs} = ${rhs}, \\\\[0.7em] ${rangeTex} \\end{array}`;
 
   // ── The working ──
   type Tag = "pre" | "range" | "principal" | "second" | "period" | "reverse" | "answer";
@@ -392,6 +392,6 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
   const working = steps.map((x, i) => (i >= firstStamped ? graphStep(x.s, spec, stamp[x.tag] ?? 1) : x.s));
 
   const key = `${fn}-${s.form}-${s.kEx ? `${s.kEx.p}/${s.kEx.q}r${s.kEx.r}` : `d${s.kDec}`}-a${A}b${B}-k${kArg}c${s.cDeg}-${Array.isArray(s.range) ? s.range.join("to") : s.range}-${unit}`;
-  const display0 = toPlain(displayLatex);
+  const display0 = toPlain(`${lhs} = ${rhs},\\quad ${rangeTex}`);
   return { key, display: display0, displayLatex, answer: toPlain(answerLatex), answerLatex, working, solutions: sols.map((x) => x.theta) };
 }
