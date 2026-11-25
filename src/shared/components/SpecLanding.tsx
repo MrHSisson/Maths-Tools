@@ -162,7 +162,7 @@ function StatementText({ s }: { s: SpecStatement }) {
 
 function StatementRows({ items }: { items: SpecStatement[] }) {
   return (
-    <ul className="divide-y divide-slate-200">
+    <ul className="divide-y divide-slate-300">
       {items.map(x => (
         <li key={x.ref} className="grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-3 py-2.5">
           <span className="h-fit w-fit rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{x.ref}</span>
@@ -176,8 +176,8 @@ function StatementRows({ items }: { items: SpecStatement[] }) {
 /** one skill (a sub-tool) as a plain row that opens it; A2 practice carries its tag at the end */
 function SkillRow({ l, planning }: { l: SpecLink; planning: boolean }) {
   return (
-    <li>
-      <a href={l.href} className="flex min-h-[44px] items-center gap-2 px-4 py-2.5 text-[15px] text-slate-900 hover:bg-blue-50/70 sm:px-5">
+    <li className="shadow-[inset_-1px_-1px_0_0_#cbd5e1]">
+      <a href={l.href} className="flex min-h-[48px] items-center gap-2 px-4 py-3 text-[15px] text-slate-900 hover:bg-blue-50/70 sm:px-5">
         <span className="min-w-0 flex-1">{l.label}</span>
         {!l.as && <span className={a2Tag}>A2</span>}
         {planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
@@ -242,7 +242,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ background: PAGE_BG }}>
-      <div className={`mx-auto max-w-5xl ${phone ? "px-4 py-4" : "px-6 py-8"}`}>
+      <div className={`mx-auto max-w-5xl ${view.kind === "chapter" ? "lg:max-w-[52rem]" : ""} ${phone ? "px-4 py-4" : "px-6 py-8"}`}>
         {view.kind === "home" ? (
           <button onClick={() => { window.location.href = "/"; }} className="mb-3 inline-flex items-center gap-2 rounded-xl py-1 pr-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
             <Home size={18} /> Home
@@ -313,7 +313,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
           const planned = (x: SpecStatement) => (x.links ?? []).filter(l => l.provisional);
           const showsA2 = chapter.statements.some(x => !x.as || x.a2Adds) || cards.some(t => t.skills.some(l => !l.as));
           return (
-            <div className="lg:max-w-[70%]">
+            <div>
               <div className="flex flex-wrap items-baseline gap-x-3">
                 <h1 className="text-3xl font-semibold text-slate-900">{chapter.name}</h1>
                 <span className="font-mono text-sm font-semibold text-slate-400">{chapter.id}</span>
@@ -334,12 +334,12 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                       )}
                     </header>
                     {t.skills.length > 0 && (
-                      <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-t border-slate-200">
+                      <ul className="-mb-px -mr-px grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-t border-slate-300">
                         {t.skills.map(l => <SkillRow key={l.href} l={l} planning={planning} />)}
                       </ul>
                     )}
                     {t.statements.length > 0 && (
-                      <div className="border-t border-slate-200 bg-slate-50/70 px-4 pb-2 pt-3 sm:px-5">
+                      <div className="border-t border-slate-300 bg-slate-50/70 px-4 pb-2 pt-3 sm:px-5">
                         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Covers in the specification</h3>
                         <StatementRows items={t.statements} />
                       </div>
