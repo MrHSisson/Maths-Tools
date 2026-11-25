@@ -332,9 +332,26 @@ function DecisionShellInner({ generate, solve, renderCanvas, renderSolution, con
       }
     };
     if (!config.slowGenerate) { make(); return; }
-    // a slow generator: show the spinner, let the page paint it, then work (a newer request replaces one still waiting)
     const mine = ++newTicket.current;
     setGenerating(true);
+    const generateAsync = config.generateAsync;
+    if (generateAsync) {
+      // off the page: the page stays free (the spinner turns) while a Web Worker makes the question; a repeat of a recent one is asked for again
+      (async () => {
+        try {
+          let q: DecisionProblem | null = null;
+          for (let i = 0; i < 4; i++) { q = await generateAsync(lv, ctxOf(sub, opts, lv)); if (mine !== newTicket.current || recent.isFresh(q)) break; }
+          if (mine !== newTicket.current) return;
+          setProblem(q!); setStepIdx(-1); setShowAll(false); setGenerating(false);
+        } catch (e) {
+          if (mine !== newTicket.current) return;
+          if (e instanceof Error && e.name === "WorkerUnavailable") { try { make(); } finally { setGenerating(false); } return; }
+          setFailed(true); setGenerating(false);
+        }
+      })();
+      return;
+    }
+    // a slow generator on the page: show the spinner, let the page paint it, then work (a newer request replaces one still waiting)
     // a short wait after the first paint, so the browser has started the animation before the page is blocked
     requestAnimationFrame(() => setTimeout(() => {
       if (mine !== newTicket.current) return;

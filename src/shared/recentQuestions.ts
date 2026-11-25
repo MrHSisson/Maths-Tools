@@ -111,5 +111,5 @@ export function pickFresh<T extends object>(gen: () => T, seen: Recent, attempts
 export function useRecentQuestions<T extends object>(current: T, attempts = FRESH_ATTEMPTS) {
   const seen = useRef<Recent>([]);
   useEffect(() => { seen.current = remember(seen.current, fingerprintsOf(current)); }, [current]);
-  return { fresh: (gen: () => T): T => pickFresh(gen, seen.current, attempts) };
+  return { fresh: (gen: () => T): T => pickFresh(gen, seen.current, attempts), isFresh: (q: T): boolean => !isRepeat(seen.current, fingerprintsOf(q)) };
 }
