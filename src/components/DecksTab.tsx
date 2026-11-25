@@ -7,6 +7,7 @@ import { usePublishedIndex } from '../decks/published';
 import { deckSummaries, newDeckId, saveDeck, syncAllDecks, syncFromCloud } from '../decks/store';
 import { titleSlide } from '../decks/layouts';
 import { DeckSections, type GalleryDeck } from './DeckGallery';
+import FolderView from './FolderView';
 
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 /** How long the signed-in list waits for the shared copies, so a deck's older title or preview is not shown and then swapped. */
@@ -19,7 +20,30 @@ const LIVE_WAIT_MS = 4000;
 export default function DecksTab() {
   const unlocked = useDevMode();
   const phone = usePhoneDevice();
-  return unlocked ? <EditableList viewOnly={phone} /> : <PublishedList />;
+  const [view, setView] = useView();
+  if (!unlocked) return <PublishedList />;                        // classes are for signed-in use: signed out there is only the published list
+  return (
+    <>
+      <ViewSwitch view={view} onChange={setView} />
+      {view === 'class' ? <FolderView tree="class" canEdit={!phone} /> : <EditableList viewOnly={phone} />}
+    </>
+  );
+}
+
+type View = 'topic' | 'class';
+const VIEW_KEY = 'mt-decks-view';
+/** Which way the Decks page is organised (By class unless By topic was chosen), remembered on this device. */
+function useView(): [View, (v: View) => void] {
+  const [view, set] = useState<View>(() => { try { return localStorage.getItem(VIEW_KEY) === 'topic' ? 'topic' : 'class'; } catch { return 'class'; } });
+  return [view, (v) => { set(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* the choice just is not remembered */ } }];
+}
+/** By topic (the strands and topics) or By class (a year, then its classes). */
+function ViewSwitch({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  const tab = (v: View, label: string) => (
+    <button key={v} role="tab" aria-selected={view === v} onClick={() => onChange(v)}
+      className={`border-b-2 px-1 pb-2 text-sm font-semibold ${view === v ? 'border-blue-900 text-blue-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{label}</button>
+  );
+  return <div role="tablist" aria-label="Organise decks" className="mt-6 flex gap-6 border-b border-slate-200">{tab('topic', 'By topic')}{tab('class', 'By class')}</div>;
 }
 
 /** What anyone sees: the published decks, newest first. */

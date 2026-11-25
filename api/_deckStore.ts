@@ -43,7 +43,7 @@ export interface DeckWrite { id: string; title: string; summary: string; slides:
 export async function writeDeck(db: Db, w: DeckWrite, expected: number | null): Promise<boolean> {
   const cols = [w.id, w.title.slice(0, 200), w.summary.slice(0, 500), w.slides, w.updatedAt, w.updatedBy, w.body];
   const rows = expected === null
-    ? await db.query(`INSERT INTO maths.decks (id, title, summary, slides, updated_at, updated_by, data) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb) ON CONFLICT (id) DO NOTHING RETURNING version`, cols)
+    ? await db.query(`INSERT INTO maths.decks (id, title, summary, slides, updated_at, updated_by, data, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$5) ON CONFLICT (id) DO NOTHING RETURNING version`, cols)
     : await db.query(`UPDATE maths.decks SET title=$2, summary=$3, slides=$4, updated_at=$5, updated_by=$6, data=$7::jsonb, version=version+1 WHERE id=$1 AND version=$8 RETURNING version`, [...cols, expected]);
   return rows.length > 0;
 }

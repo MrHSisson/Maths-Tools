@@ -64,6 +64,22 @@ const SCHEMA = [
      deck_id text PRIMARY KEY,
      category_id text NOT NULL
    )`,
+  // When a deck was made (not last saved), for the class view's "most recently made first". Existing decks get their earliest known time.
+  `ALTER TABLE maths.decks ADD COLUMN IF NOT EXISTS created_at text`,
+  `UPDATE maths.decks d SET created_at = COALESCE((SELECT min(v.saved_at) FROM maths.deck_versions v WHERE v.deck_id = d.id), d.updated_at) WHERE d.created_at IS NULL`,
+  // Folders (any depth, in a named tree) and which decks are in which folder (a deck may be in several). Kept apart from the decks, like the categories.
+  `CREATE TABLE IF NOT EXISTS maths.deck_folders (
+     id text PRIMARY KEY,
+     tree text NOT NULL,
+     name text NOT NULL,
+     parent text,
+     position integer NOT NULL DEFAULT 0
+   )`,
+  `CREATE TABLE IF NOT EXISTS maths.deck_folder_items (
+     folder_id text NOT NULL,
+     deck_id text NOT NULL,
+     PRIMARY KEY (folder_id, deck_id)
+   )`,
   `CREATE TABLE IF NOT EXISTS maths.deck_meta (
      key text PRIMARY KEY,
      value text NOT NULL
