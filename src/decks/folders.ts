@@ -5,7 +5,7 @@ import type { Folder, FolderDeck, FolderOp, Tree } from "../../api/_folders";
 import { DEV_PASSWORD } from "../devAccess";
 
 export type { Folder, FolderDeck, FolderOp, Tree };
-interface TreeData { folders: Folder[]; /** Decks held directly in each folder. */ counts: Record<string, number>; /** deck id → the folders it is in. */ byDeck: Record<string, string[]>; /** How many decks are in no folder of this tree. */ unfiled: number; /** Every deck's id and title, for the Add a deck picker (empty on the public read). */ decks: { id: string; title: string }[] }
+interface TreeData { folders: Folder[]; /** Decks held directly in each folder. */ counts: Record<string, number>; /** deck id → the folders it is in. */ byDeck: Record<string, string[]>; /** How many decks are in no folder of this tree. */ unfiled: number; }
 /** Not a real folder: the decks that are in no folder of a tree (the same id as `UNFILED` in api/_folders.ts). */
 export const UNFILED = "unfiled";
 const URL_ = "/api/decks";

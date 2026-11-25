@@ -1,6 +1,6 @@
 import { useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Folder as FolderIcon, FolderPlus, LayoutGrid, List, Pencil, Search, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CopyPlus, Folder as FolderIcon, FolderPlus, LayoutGrid, List, Pencil, Search, Trash2, X } from 'lucide-react';
 import { FIRST_DIR, UNFILED, pathTo, sendFolderOp, setDeckFolders, sortDecks, useFolderDecks, useReload, useSearch, useTree, type Folder, type FolderDeck, type FolderOp, type SortDir, type SortKey, type Tree } from '../decks/folders';
 import type { Pitch, Slide } from '../decks/types';
 import { DeckCard, type GalleryDeck } from './DeckGallery';
@@ -32,6 +32,8 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
   const [over, setOver] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [placing, setPlacing] = useState<{ id: string; title: string } | null>(null);       // a deck being put in a second folder: browse, then Place here
+  const [notice, setNotice] = useState<string | null>(null);
   const wanted = params.get('folder');
   const folders = data?.folders ?? [];
   const here = wanted === UNFILED ? UNFILED : wanted && folders.some((f) => f.id === wanted) ? wanted : null;       // an unknown or deleted folder shows the top level
@@ -69,6 +71,16 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
     else if (target) void moveDeck(d.id, target);
   };
   const unfileDeck = async (deckId: string) => { setError(await setDeckFolders(deckId, tree, (data.byDeck[deckId] ?? []).filter((f) => f !== realHere))); bump(); };
+  /** Start putting a deck in a second folder: the search is cleared so the folders can be browsed, and a bar says what to do. */
+  const startPlacing = (d: { id: string; title: string }) => { setPlacing({ id: d.id, title: d.title }); setNotice(null); setQuery(''); setError(null); };
+  const placeHere = async () => {
+    if (!placing || !realHere) return;
+    const name = byId.get(realHere)?.name ?? 'this folder';
+    const e = await setDeckFolders(placing.id, tree, [...new Set([...(data.byDeck[placing.id] ?? []), realHere])]);
+    setError(e);
+    if (!e) { setNotice(`“${placing.title}” is now in ${name} as well.`); setPlacing(null); }
+    bump();
+  };
   const target = (id: string | null) => canEdit && drag ? {
     onDragOver: (e: DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; },
     onDragEnter: () => setOver(id ?? '__root'), onDragLeave: () => setOver((o) => (o === (id ?? '__root') ? null : o)), onDrop: drop(id),
@@ -90,6 +102,7 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
     action: canEdit ? (
       <>
         <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className={iconBtn}><Pencil size={16} /></Link>
+        <button onClick={() => startPlacing(d)} aria-label={`Repeat ${d.title} in another folder`} title="Repeat in another folder" className={iconBtn}><CopyPlus size={16} /></button>
         {inFolder && realHere && <button onClick={() => void unfileDeck(d.id)} aria-label={`Take ${d.title} out of ${byId.get(realHere)?.name}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={16} /></button>}
       </>
     ) : undefined,
@@ -100,8 +113,6 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{list.map((d) => <DeckCard key={d.id} d={d} admin={canEdit} where={where} {...dragProps} />)}</div>
   );
   const folderMatches = q ? folders.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())).slice(0, 12) : [];
-  const hereIds = new Set((decks ?? []).map((d) => d.id));
-  const addable = data.decks.filter((d) => !hereIds.has(d.id));
 
   const controls = (
     <div className="flex flex-wrap items-center gap-2">
@@ -136,7 +147,7 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
         {results && results.length === 0 && folderMatches.length === 0 && <p className="mt-4 text-slate-500">No decks match.</p>}
         {results && results.length > 0 && (asCards
           ? <div className="mt-4">{cardGrid(results.map((d) => toCard(d, false)))}</div>
-          : <DeckList decks={sortedResults ?? []} canEdit={canEdit} sortKey={sort.key} sortDir={sort.dir} onSort={onSort} pathOf={pathText} {...dragProps} />)}
+          : <DeckList decks={sortedResults ?? []} canEdit={canEdit} sortKey={sort.key} sortDir={sort.dir} onSort={onSort} pathOf={pathText} onRepeat={canEdit ? (d) => startPlacing(d) : undefined} {...dragProps} />)}
       </div>
     );
   }
@@ -152,13 +163,6 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
         ))}
         {canEdit && here !== UNFILED && (
           <span className="ml-auto flex flex-wrap items-center gap-2">
-            {realHere && addable.length > 0 && (
-              <select value="" aria-label={`Add a deck to ${byId.get(realHere)?.name}`} onChange={(e) => { const id = e.target.value; if (id) void (async () => { setError(await setDeckFolders(id, tree, [...(data.byDeck[id] ?? []), realHere])); bump(); })(); }}
-                className="max-w-[14rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700">
-                <option value="">Add a deck…</option>
-                {addable.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
-              </select>
-            )}
             <button onClick={() => setAdding((a) => !a)} aria-expanded={adding} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-card hover:bg-slate-50"><FolderPlus size={15} />New folder</button>
           </span>
         )}
@@ -169,6 +173,20 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
           <button className="rounded-lg bg-blue-900 px-3 py-1.5 text-sm font-semibold text-white">Add</button>
         </form>
       )}
+      {canEdit && placing && (
+        <div role="status" className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-blue-300 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+          <CopyPlus size={18} className="shrink-0 text-blue-900" />
+          <span className="min-w-0 flex-1">
+            Repeating <strong>“{placing.title}”</strong>. Open the folder where it should also appear, then press Place here.
+            {!realHere && <span className="text-blue-800"> {here === UNFILED ? 'Not filed is not a folder: open a folder.' : 'Open a folder first.'}</span>}
+          </span>
+          <button onClick={() => void placeHere()} disabled={!realHere || (data.byDeck[placing.id] ?? []).includes(realHere ?? '')} className="rounded-xl bg-blue-900 px-3 py-1.5 font-semibold text-white disabled:opacity-40">
+            {realHere && (data.byDeck[placing.id] ?? []).includes(realHere) ? 'Already here' : realHere ? `Place here (${byId.get(realHere)?.name})` : 'Place here'}
+          </button>
+          <button onClick={() => setPlacing(null)} className="rounded-xl border border-blue-300 bg-white px-3 py-1.5 font-semibold text-blue-950 hover:bg-blue-100">Cancel</button>
+        </div>
+      )}
+      {notice && !placing && <p className="mt-3 text-sm font-semibold text-emerald-700" role="status">{notice}</p>}
       {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
 
       {(tiles.length > 0 || (!here && (data.unfiled > 0 || canEdit))) && (
@@ -190,13 +208,13 @@ export default function FolderView({ tree, canEdit: editable, publicMode = false
           )}
         </div>
       )}
-      {here && tiles.length === 0 && decks && decks.length === 0 && <p className="mt-5 text-slate-500">{canEdit ? 'Empty: drag a deck here, use Add a deck, or make a folder.' : 'Nothing in this folder yet.'}</p>}
+      {here && tiles.length === 0 && decks && decks.length === 0 && <p className="mt-5 text-slate-500">{canEdit ? 'Empty: drag a deck here, repeat a deck into it, or make a folder.' : 'Nothing in this folder yet.'}</p>}
       {!here && tiles.length === 0 && data.unfiled === 0 && <p className="mt-5 text-slate-500">{canEdit ? 'No folders yet: make one with New folder.' : 'Nothing is published yet.'}</p>}
 
       {here && decks === undefined && <p className="mt-5 text-slate-500" role="status">Loading…</p>}
       {here && decks === null && <p className="mt-5 text-slate-500">This folder's decks can't be listed here.</p>}
       {here && !asCards && sorted && sorted.length > 0 && (
-        <DeckList decks={sorted} canEdit={canEdit} sortKey={sort.key} sortDir={sort.dir} onSort={onSort} onRemove={realHere ? (id) => void unfileDeck(id) : undefined} folderName={here === UNFILED ? 'Not filed' : byId.get(here)?.name} {...dragProps} />
+        <DeckList decks={sorted} canEdit={canEdit} sortKey={sort.key} sortDir={sort.dir} onSort={onSort} onRemove={realHere ? (id) => void unfileDeck(id) : undefined} onRepeat={canEdit ? (d) => startPlacing(d) : undefined} folderName={here === UNFILED ? 'Not filed' : byId.get(here)?.name} {...dragProps} />
       )}
       {here && cards.length > 0 && (
         <>

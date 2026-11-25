@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowDown, ArrowUp, FileText, Pencil, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CopyPlus, FileText, Pencil, X } from 'lucide-react';
 import type { FolderDeck, SortDir, SortKey } from '../decks/folders';
 import { PITCH_LABEL, type Pitch } from '../decks/types';
 
@@ -16,10 +16,12 @@ function BandTag({ pitch }: { pitch?: string }) {
 }
 
 /** A folder's decks as a plain list: title (with its summary beneath), band, slides, made, last edited and whether it is published. Click a column to sort. */
-export default function DeckList({ decks, canEdit, sortKey, sortDir, onSort, onRemove, onDragStart, onDragEnd, folderName, pathOf }: {
+export default function DeckList({ decks, canEdit, sortKey, sortDir, onSort, onRemove, onRepeat, onDragStart, onDragEnd, folderName, pathOf }: {
   decks: FolderDeck[]; canEdit: boolean; sortKey: SortKey; sortDir: SortDir; onSort: (k: SortKey) => void;
   /** Takes a deck out of the open folder; left out where there is no folder to take it from (search results, Not filed). */
-  onRemove?: (id: string) => void; onDragStart: (id: string) => void; onDragEnd: () => void; folderName?: string;
+  onRemove?: (id: string) => void;
+  /** Starts putting a deck in a second folder as well (Repeat); left out where that is not offered. */
+  onRepeat?: (deck: FolderDeck) => void; onDragStart: (id: string) => void; onDragEnd: () => void; folderName?: string;
   /** Where a deck is filed, shown under its title (for search results). */
   pathOf?: (id: string) => string;
 }) {
@@ -34,7 +36,7 @@ export default function DeckList({ decks, canEdit, sortKey, sortDir, onSort, onR
       <div role="row" className={`${COLS} border-b border-slate-200 bg-slate-50 px-3 py-2`}>
         {head('name', 'Name')}{head('band', 'Band')}{head('slides', 'Slides', 'hidden md:flex')}{head('made', 'Made', 'hidden md:flex')}{head('edited', 'Edited', 'hidden md:flex')}
         <span className="hidden text-xs font-semibold uppercase tracking-wide text-slate-500 md:block">Status</span>
-        <span className="w-[4.5rem]" />
+        <span className="w-[6.5rem]" />
       </div>
       {decks.map((d) => (
         <div role="row" key={d.id} data-deck={d.id} draggable={canEdit}
@@ -54,10 +56,11 @@ export default function DeckList({ decks, canEdit, sortKey, sortDir, onSort, onR
           <span role="cell" className="hidden text-sm text-slate-600 md:block">{dateOf(d.madeAt)}</span>
           <span role="cell" className="hidden text-sm text-slate-600 md:block">{dateOf(d.editedAt)}</span>
           <span role="cell" className={`hidden text-sm md:block ${d.published ? 'text-emerald-700' : 'text-slate-400'}`}>{d.published ? 'Published' : 'Not published'}</span>
-          <span className="flex w-[4.5rem] justify-end">
+          <span className="flex w-[6.5rem] justify-end">
             {canEdit && (
               <>
                 <Link to={`/decks/${d.id}?edit=1`} aria-label={`Edit ${d.title}`} title="Edit this deck" className={iconBtn}><Pencil size={15} /></Link>
+                {onRepeat && <button onClick={() => onRepeat(d)} aria-label={`Repeat ${d.title} in another folder`} title="Repeat in another folder" className={iconBtn}><CopyPlus size={15} /></button>}
                 {onRemove && <button onClick={() => onRemove(d.id)} aria-label={`Take ${d.title} out of ${folderName ?? 'this folder'}`} title="Take out of this folder" className={`${iconBtn} hover:bg-red-50 hover:text-red-600`}><X size={15} /></button>}
               </>
             )}

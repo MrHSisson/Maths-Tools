@@ -15,7 +15,7 @@ const deck = (id: string, updatedAt: string) => ({ id, title: `Deck ${id}`, summ
 const post = (body: unknown, key: string | null = "k") => POST(new Request("http://x/api/decks", { method: "POST", headers: key ? { "x-admin-key": key } : {}, body: JSON.stringify(body) }));
 const get = (q: string, key: string | null = "k") => GET(new Request(`http://x/api/decks${q}`, { headers: key ? { "x-admin-key": key } : {} }));
 type FolderDeck = { id: string; title: string; slides: number; madeAt: string; editedAt: string; published: boolean; pitch?: string; preview?: { id: string } };
-type Tree = { unfiled: number; folders: { id: string; tree: string; name: string; parent: string | null; position: number }[]; counts: Record<string, number>; byDeck: Record<string, string[]>; decks: { id: string; title: string }[] };
+type Tree = { unfiled: number; folders: { id: string; tree: string; name: string; parent: string | null; position: number }[]; counts: Record<string, number>; byDeck: Record<string, string[]> };
 const tree = async (t = "class") => (await (await get(`?folders=${t}`)).json()) as Tree;
 const fid = (t: Tree, name: string) => t.folders.find((f) => f.name === name)!.id;
 const file = (deckId: string, folderIds: string[], t = "class") => post({ folders: { deckId, tree: t, folderIds } });
@@ -138,14 +138,13 @@ describe("deck folders", () => {
     expect((await r.json() as { folderIds: string[] }).folderIds).toEqual([fid(await tree(), "9M6")]);
   });
 
-  it("the admin list says which decks are published and gives every deck's title for the picker", async () => {
+  it("the admin list says which decks are published", async () => {
     await post({ deck: deck("live", "2026-11-01T10:00:00.000Z") });
     await post({ deck: deck("draft", "2026-11-02T10:00:00.000Z") });
     const f = fid(await tree(), "12FM");
     for (const id of ["live", "draft"]) await file(id, [f]);
     await post({ publish: deck("live", "2026-11-01T10:00:00.000Z") });
     expect((await inFolder(f)).decks.map((d) => [d.id, d.published])).toEqual([["draft", false], ["live", true]]);
-    expect((await tree()).decks).toEqual([{ id: "draft", title: "Deck draft" }, { id: "live", title: "Deck live" }]);
   });
 
   it("every read and change needs the admin key; a bad tree, folder or request is refused", async () => {
@@ -340,7 +339,6 @@ describe("deck folders", () => {
       expect(r.folders.map((f) => f.name).sort()).toEqual(["A-Level", "Further Maths"]);        // not Algebra: its only deck is a draft
       expect(r.counts[fid(t, "Further Maths")]).toBe(1);
       expect(r.byDeck).toEqual({ live: [fid(t, "Further Maths")] });
-      expect(r.decks).toEqual([]);
       expect(r.unfiled).toBe(0);
     });
 

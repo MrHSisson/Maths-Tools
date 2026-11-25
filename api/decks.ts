@@ -8,9 +8,9 @@
 // GET  /api/decks?history=<id>&key=<key>  → one snapshot (a deck), to restore from; the client restores it as an ordinary save
 // GET  /api/decks?published               → { decks }: the published decks (anyone may read this and the next; cached for a minute)
 // GET  /api/decks?published=<id>          → one published deck, a frozen copy
-// GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, unfiled, decks }: one tree's folders (any depth), the decks in each, which folders each deck is in, how many are in none, and every deck's id and title (admin)
+// GET  /api/decks?folders=<tree>          → { folders, counts, byDeck, unfiled }: one tree's folders (any depth), the decks in each, which folders each deck is in, and how many are in none (admin)
 // GET  /api/decks?folder=<id>[&previews=0] → { decks }: the decks in one folder, most recently made first, each with its first slide for the card (admin). `folder=unfiled&of=<tree>` is the decks in no folder of that tree
-// GET  /api/decks?folders=topic&public=1  → the same for everyone: published decks only, only the folders that lead to one, no titles list (cached a minute). `?folder=<id>&public=1` likewise. The class tree is signed-in only
+// GET  /api/decks?folders=topic&public=1  → the same for everyone: published decks only, only the folders that lead to one (cached a minute). `?folder=<id>&public=1` likewise. The class tree is signed-in only
 // GET  /api/decks?search=<text>           → { decks }: decks whose title or summary contains the text, across every folder, most recently made first, up to 60, each with its first slide (admin; with &public=1 anyone, published decks only)
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree

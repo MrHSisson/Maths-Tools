@@ -106,9 +106,9 @@ const ensureSeed = (db: Db, tree: Tree) => (tree === "class" ? ensureClassSeed(d
 
 const toFolder = (r: Row): Folder => ({ id: r.id as string, tree: r.tree as Tree, name: r.name as string, parent: (r.parent as string | null) ?? null, position: r.position as number });
 
-/** One tree's folders in order, how many decks each holds directly, which folders each deck is in, how many decks are in none, and every deck's id and title (for the
- *  "Add a deck" picker). `publicOnly` (the read anyone may make) counts only published decks, drops folders with no published deck anywhere inside, and lists no titles. */
-export async function listTree(db: Db, tree: Tree, o: { publicOnly?: boolean } = {}): Promise<{ folders: Folder[]; counts: Record<string, number>; byDeck: Record<string, string[]>; unfiled: number; decks: { id: string; title: string }[] }> {
+/** One tree's folders in order, how many decks each holds directly, which folders each deck is in, how many decks are in none.
+ *  `publicOnly` (the read anyone may make) counts only published decks and drops folders with no published deck anywhere inside. */
+export async function listTree(db: Db, tree: Tree, o: { publicOnly?: boolean } = {}): Promise<{ folders: Folder[]; counts: Record<string, number>; byDeck: Record<string, string[]>; unfiled: number }> {
   await ensureSeed(db, tree);
   let folders = (await db.query<Row>(`SELECT id, tree, name, parent, position FROM maths.deck_folders WHERE tree = $1 ORDER BY position, id`, [tree])).map(toFolder);
   const items = await db.query<Row>(`SELECT i.deck_id, i.folder_id FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id ${o.publicOnly ? "JOIN maths.published_decks p ON p.id = i.deck_id" : ""} WHERE f.tree = $1`, [tree]);
@@ -123,8 +123,7 @@ export async function listTree(db: Db, tree: Tree, o: { publicOnly?: boolean } =
   for (const r of items) { const d = r.deck_id as string, f = r.folder_id as string; counts[f] = (counts[f] ?? 0) + 1; (byDeck[d] ??= []).push(f); }
   const table = o.publicOnly ? "maths.published_decks" : "maths.decks";
   const unfiled = Number((await db.query<Row>(`SELECT count(*) AS n FROM ${table} d WHERE NOT EXISTS (SELECT 1 FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id WHERE i.deck_id = d.id AND f.tree = $1)`, [tree]))[0].n);
-  const titles = o.publicOnly ? [] : await db.query<Row>(`SELECT id, title FROM maths.decks ORDER BY COALESCE(created_at, updated_at) DESC, id`);
-  return { folders, counts, byDeck, unfiled, decks: titles.map((r) => ({ id: r.id as string, title: r.title as string })) };
+  return { folders, counts, byDeck, unfiled };
 }
 
 /** The decks in one folder (or, for `UNFILED`, those in no folder of tree `of`), most recently made first, each with its first slide. Null when there is no such folder.
