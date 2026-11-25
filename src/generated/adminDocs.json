@@ -3947,6 +3947,10 @@
    ],
    "changes": [
     {
+     "date": "2026-11-25",
+     "title": "Solving Trig Equations: a draggable range bar"
+    },
+    {
      "date": "2026-11-17",
      "title": "Solving Trig Equations (A-level) and the grapher's angle axis"
     }

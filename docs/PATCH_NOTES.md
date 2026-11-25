@@ -31,6 +31,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-25 — Solving Trig Equations: a draggable range bar
+
+Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/components/QOPopovers.tsx`, `src/shared/calibration.ts`, `src/tools/Algebra/SolvingTrigEquations.tsx` (+ `.about.ts`), `src/tools/Algebra/trigEquations.ts`, `src/tests/trigEquations.test.ts`.
+
+- **The four Range buttons are now one bar.** Eleven dots, −4π to 6π, with a handle at each end to drag (or the arrow keys); at least two dots stay on. Quick buttons under the bar jump to 0 to 2π, 0 to 4π, −π to π and −2π to 2π. One range per sheet (it used to mix the ticked ranges). Default 0 to 2π at every level.
+- **Wide ranges work.** The cap of 6 solutions now grows with the range (about two per turn of the function), so any bar setting finds questions.
+- **A new shared option: `ToolMultiSelect.rangeBar`.** A pool drawn as a bar: its options are the dots, the ticked run is the range, the generator reads the first and last ticked. Saved state, share links, levels and the worksheet builder are unchanged because it is still a multiSelect. Other tools can use it.
+- **The range sits on its own line** under the equation (whiteboard, worked example and worksheet).
+- Level 1 now also opens on "2 sin θ = 1" so the one fixed range still gives a full 30-question sheet.
+- Not done: an old shared link that ticked the previous range ids falls back to 0 to 2π; the dashboard Review for Solving Trig Equations is not set.
+
+Agent: Claude Code
+Notes: Build Log block "Trig range bar, range on its own line, standard form numbers-in-parts (Claude Code)" (written after the merge).
+
+## 2026-11-25 — Standard form deck: a book-work slide of numbers in parts
+
+Branch `claude/relaxed-cannon-ppjzr2`. Area: `specs/decks/standard-form.build.ts`, `specs/decks/_check/standard-form-converting.json`, `src/decks/data/standard-form.json`.
+
+- **New book-work slide `sf-book-parts` (slide 50 of 52)**: twelve numbers in parts on the standard 3 × 4 grid (plain numbers, answers on a click). It sits after the small numbers-in-parts whiteboards and before the Level 3 generator. Six too big and large (`12 × 10⁴`, `35 × 10⁶` …), three too big and small (`56 × 10⁻⁵` …), three with a first number below 1 (`0.3 × 10⁸` …).
+- Every answer is recomputed by the build script and the independent check script (168 questions, none repeated). Layout checked with `deck verify`; pushed to the shared deck.
+- Not done: the plan file `specs/decks/standard-form-converting.md` does not yet mention the slide.
+
+Agent: Claude Code
+Notes: Build Log block "Trig range bar, range on its own line, standard form numbers-in-parts (Claude Code)" (written after the merge).
+
 ## 2026-11-25 — Decks: a plain list view with band tags
 
 Branch `claude/festive-bell-tzcbwf`. Area: `api/_folders.ts`, `api/decks.ts`, `src/decks/folders.ts`, `src/components/FolderView.tsx`, `src/components/DeckList.tsx`, tests, docs, `docs/pathways/deck-folders.md`.
@@ -50,6 +75,21 @@ Branch `claude/confident-rubin-7kdxat`. Area: `specs/decks/number-recap-y9.build
 
 Agent: Claude Code
 Notes: Build Log block not written (the planner was not used this session); plan in `specs/decks/number-recap-y9.md`.
+
+## 2026-11-24 — Further Mechanics: blurred diagram with a Reveal button
+
+Branch `claude/peaceful-mccarthy-amt1m9`. Area: `src/shared/mechanics/`, `src/tools/FurtherMechanics/`, `src/shared/decision/DecisionShell.tsx`.
+
+- **Blurred by default.** The Diagram option on Work Done, Energy, Power and Elastic has a new default, "Blurred until revealed". The picture and the information taken from the question (the givens) are blurred, with two buttons: **Reveal Full** (the whole picture, givens clear) and **Build Diagram** (givens clear, the picture drawn up part by part as the working goes on). Starting the working without choosing counts as Reveal Full; a new question blurs again. The Diagram option is gone from the popover: the picture always starts blurred. Printed worksheets leave the picture out for blurred questions. Shared rule: `DiagramDisplay` gains `"blurred"`; the canvas is `MechCanvas`.
+- **Enlarge the question, everywhere in the Decision shell.** The enlarge button (the question stage first built for Simplex and Formulating LP) is now on every Decision tool, not an opt-in: the question shown large and centred, laptop and tablet landscape. `config.questionStage` now only adds a figure. Further Mechanics adds its diagram to the stage only when the question gives it (`MECH_STAGE`). ToolShell tools do not have it yet.
+
+- **Question kinds are tick-any, not either/or.** In Work Done, Power and Energy the options that choose a kind of question are now multi (tick several to mix, tick one to restrict): Force Acts (with / against the motion, both by default), By or Against gravity (both by default), Setting (Work Done, work-energy and conservation), Context, Motion, Vehicle, Resistance, Angle Given As, Data, Forces, Parts Shown, Velocity As. Each keeps its old default except the two direction options. The shell's `when` rule now reads a multi option's ticks, so "Working Shown" still appears only when a slope can be drawn. Course, g, units and answer format stay single.
+
+- **A2 Questions option instead of the AS / A2 selector** (Work Done, Power, Energy, Elastic): Included, Only A2 or Left out. Nothing is hidden: the A2 tabs (Force at an Angle, Power on a Slope) and A2 choices (a slope, vectors, a rough table, μ…) always show, marked "(A2)". **Included** (default): A2 questions come up when their choices are ticked. **Only A2** (strict): every question needs A2 content (each tab draws from its A2 choices at every level); tabs and choices with none (Force and Distance, Variable Force, Average Power, Power from Motion Data, Elastic Potential Energy, vertical settings…) are greyed out. **Left out**: no A2 question is drawn and the A2 tabs and choices are greyed out; if the current tab is disabled you move to the first one still on. The setting is kept across tabs and levels. New shared pieces in the Decision shell: `disabledWhen` (on a tab or a choice), `shared` (an option kept across tabs but drawn in the popover) and a multi-aware `when`. The Work Done "grav" re-derivation test no longer flakes on an exact rounding tie.
+- **Full Diagram switch** in the Question Options (off by default): on, the whole diagram shows from the start with no blur (`DiagramDisplay` `"full"`); it is also what the enlarged question shows.
+
+Agent: Claude Code
+Notes: Maths Tools — Build Log, block "Further Mechanics: blurred diagrams, A2 Questions option, tick-any question kinds, enlarge-question everywhere (Claude Code)" (branch claude/peaceful-mccarthy-amt1m9, PR #165).
 
 ## 2026-11-24 — Decks as a file explorer (deck folders, step 2)
 
