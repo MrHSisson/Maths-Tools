@@ -11,9 +11,9 @@ export const u = (x: number, unit: string): string => `${numTex(x)}\\ ${unitTex(
 export const ut = (x: number, unit: string): string => `${numText(x)} ${unit}`;
 export const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** The scene as the question asks to show it: built from nothing in the order given, or whole (the renderer hides it for `hidden`). */
+/** The scene as the question asks to show it: built from nothing in the order given, or whole (the renderer hides it for `hidden`); a blurred question carries the build order too, for the "Build diagram" button. */
 export function staged(scene: Scene, display: DiagramDisplay, order: (string | string[])[]): Scene {
-  return display === "build" ? buildInOrder(scene, order) : scene;
+  return display === "build" || display === "blurred" ? buildInOrder(scene, order) : scene;
 }
 
 export interface Common {

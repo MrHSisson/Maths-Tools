@@ -34,7 +34,7 @@ describe("Further Mechanics pairings", () => {
       const practice = s.when.find((w) => w.key === "practice")?.values[0];
       if (practice !== r.practice) problems.push(`${r.sub}: practice is ${practice}, the pairing says ${r.practice}`);
       // a sub-tool that is only offered at A2 is shown on the A2 row
-      const a2 = s.when.some((w) => w.key === "course" && w.values.length === 1 && w.values[0] === "A2");
+      const a2 = /\(A2\)/.test(s.label) || s.when.some((w) => w.key === "course" && w.values.length === 1 && w.values[0] === "A2");
       if (a2 !== !!r.a2) problems.push(`${r.sub}: A2 is ${a2} in the tool, ${!!r.a2} in the pairing`);
     }
     expect(problems).toEqual([]);

@@ -1,6 +1,6 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MechCanvas, MECH_STAGE, pickOne, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { MC_NOTICE } from "./mcNotice";
 import { MC_PRINT } from "./mcPrint";
 import { generateAvgPower } from "./power/avgpower";
@@ -18,29 +18,36 @@ import { generateMotion } from "./power/motion";
 // The maths is in the builders in ./power/ (question, picture, working and answer from one set of inputs); the shared pieces are in shared/mechanics.
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-const A2 = { key: "course", values: ["A2"] };
+
+const A2_OFF = { key: "a2", values: ["off"] };
+const A2_ONLY = { key: "a2", values: ["only"] };
 
 const SUB_TOOLS = [
-  { key: "avgpower", label: "Average Power", levels: 3, blurb: "Power = work done ÷ time" },
+  { key: "avgpower", label: "Average Power", levels: 3, blurb: "Power = work done ÷ time", disabledWhen: A2_ONLY },
   { key: "forcespeed", label: "Force and Speed", levels: 3, blurb: "Power = driving force × speed" },
-  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope", when: [A2] },
-  { key: "motion", label: "Power from Motion Data", levels: 2, blurb: "Power from s(t) or a speed-time graph" },
+  { key: "powerslope", label: "Power on a Slope (A2)", levels: 3, blurb: "Power with the weight resolved along a slope", disabledWhen: A2_OFF },
+  { key: "motion", label: "Power from Motion Data", levels: 2, blurb: "Power from s(t) or a speed-time graph", disabledWhen: A2_ONLY },
 ];
 
 const opt = (o: Record<string, string>, key: string, fallback: string): string => (o[key] !== undefined && o[key] !== "" ? o[key] : fallback);
 
+const A2_FORCED: Record<string, Record<string, string>> = {
+  forcespeed: { fsAsk: "vector", fsResist: "const" },
+};   // Only A2: the choices that carry the content, whichever level
+
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "avgpower";
-  const o = ctx?.options ?? {};
-  const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display = opt(o, "diagram", "given") as DiagramDisplay;
-  const context = opt(o, "context", level === 1 ? "particle" : "story");
+  const a2Only = (ctx?.options ?? {}).a2 === "only";
+  const o = a2Only ? { ...(ctx?.options ?? {}), ...(A2_FORCED[sub] ?? {}) } : ctx?.options ?? {};
+  const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
+  const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
+  const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
   let m: MechProblemData;
-  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: opt(o, "fsMotion", "constant"), resist: opt(o, "fsResist", "const"), vehicle: opt(o, "fsVehicle", "single"), units, context, display, course });
-  else if (sub === "powerslope") m = generatePowerSlope(level, { ask: opt(o, "psAsk", "speed"), dir: opt(o, "psDir", "up"), resist: opt(o, "psResist", "const"), angleAs: opt(o, "psAngle", "deg"), units, context, g, display, course });
-  else if (sub === "motion") m = generateMotion(level, { data: opt(o, "mtData", level === 1 ? "function" : "graph"), phase: opt(o, "mtPhase", "accel,const,decel"), resist: opt(o, "mtResist", "none,const"), context, display, course });
+  if (sub === "forcespeed") m = generateForceSpeed(level, { ask: opt(o, "fsAsk", "power"), motion: pickOne(opt(o, "fsMotion", "constant"), "constant"), resist: pickOne(opt(o, "fsResist", "const"), "const"), vehicle: pickOne(opt(o, "fsVehicle", "single"), "single"), units, context, display, course });
+  else if (sub === "powerslope") m = generatePowerSlope(level, { ask: opt(o, "psAsk", "speed"), dir: opt(o, "psDir", "up"), resist: pickOne(opt(o, "psResist", "const"), "const"), angleAs: pickOne(opt(o, "psAngle", "deg"), "deg"), units, context, g, display, course });
+  else if (sub === "motion") m = generateMotion(level, { data: pickOne(opt(o, "mtData", level === 1 ? "function" : "graph"), "graph"), phase: opt(o, "mtPhase", "accel,const,decel"), resist: opt(o, "mtResist", "none,const"), context, display, course });
   else m = generateAvgPower(level, { doing: opt(o, "apDoing", "lift"), ask: opt(o, "apAsk", "power"), units, format: opt(o, "format", level === 1 ? "w" : "kw"), context, g, display, course });
   return mechProblem(m, `power-${sub}`);
 }
@@ -51,15 +58,14 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to power on level ground. A2 adds Power on a Slope, where the weight has to be resolved along the road.",
-    defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes slopes" }, { value: "AS", label: "AS" }],
+    key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
+    displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
-    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, or has none.",
-    displayOnly: true, tab: "display", defaultFor: () => "given",
-    choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up when their choices are ticked. Only A2, every question needs A2 content: the tabs and choices with none are greyed out. Left out, no A2 question is drawn and the A2 tabs and choices are greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "only", label: "Only A2" }, { value: "off", label: "Left out" }],
   },
-  { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
+  { key: "context", label: "Context", info: "A particle or a plain vehicle with no story, or a worded situation (a car, a crane, a cyclist) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "apDoing", label: "Doing the Work", info: "What supplies or removes the energy: a lift raising a load, brakes stopping a vehicle, a pump moving water, or an engine speeding a vehicle up.", forSubTools: ["avgpower"], multi: true,
     defaultFor: lv({ 1: "lift", 2: "lift,brake", 3: "pump,accel" }),
@@ -73,18 +79,21 @@ const OPTIONS: ShellOption[] = [
   {
     key: "fsAsk", label: "Ask for", info: "What to find: the power, the driving force, the speed, the resistance or the acceleration; the power needed for a higher speed; and with a resistance that depends on speed, k, the maximum speed or the maximum power; and (A2) the work done by a force and the power from a vector force and displacement.", forSubTools: ["forcespeed"], multi: true,
     defaultFor: lv({ 1: "power,force,speed,resist", 2: "acc,resist,speed,newpower", 3: "k,maxpower,acc,maxspeed" }),
-    choices: [{ value: "power", label: "The power" }, { value: "force", label: "The driving force" }, { value: "speed", label: "The speed" }, { value: "resist", label: "The resistance" }, { value: "acc", forLevels: [2, 3], label: "The acceleration" }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed" }, { value: "k", forLevels: [3], label: "The constant k" }, { value: "maxspeed", forLevels: [3], label: "The maximum speed" }, { value: "maxpower", forLevels: [3], label: "The maximum power" }, { value: "vector", forLevels: [3], label: "Work and power from vectors (A2)" }],
+    choices: [{ value: "power", label: "The power", disabledWhen: A2_ONLY }, { value: "force", label: "The driving force", disabledWhen: A2_ONLY }, { value: "speed", label: "The speed", disabledWhen: A2_ONLY }, { value: "resist", label: "The resistance", disabledWhen: A2_ONLY }, { value: "acc", forLevels: [2, 3], label: "The acceleration", disabledWhen: A2_ONLY }, { value: "newpower", forLevels: [2, 3], label: "Power for a new speed", disabledWhen: A2_ONLY }, { value: "k", forLevels: [3], label: "The constant k", disabledWhen: A2_ONLY }, { value: "maxspeed", forLevels: [3], label: "The maximum speed", disabledWhen: A2_ONLY }, { value: "maxpower", forLevels: [3], label: "The maximum power", disabledWhen: A2_ONLY }, { value: "vector", forLevels: [3], label: "Work and power from vectors (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "fsMotion", label: "Motion", info: "Whether the vehicle is at constant speed (the resultant force is zero) or accelerating at the instant. It applies to a constant resistance; the acceleration question is always accelerating.", forSubTools: ["forcespeed"],
+    multi: true,
     defaultFor: lv({ 1: "constant", 2: "accel", 3: "accel" }), choices: [{ value: "constant", label: "Constant speed" }, { value: "accel", label: "Accelerating" }],
   },
   {
     key: "fsVehicle", label: "Vehicle", info: "A single vehicle, or a train of an engine and coaches: the acceleration of the whole train, then the tension in the coupling to the coaches.", forSubTools: ["forcespeed"], forLevels: [3],
+    multi: true,
     defaultFor: () => "single", choices: [{ value: "single", label: "A single vehicle" }, { value: "train", label: "Engine and coaches" }],
   },
   {
     key: "fsResist", label: "Resistance", info: "A constant resistance, or one proportional to the speed (kv) or to its square (kv²), which makes the maximum power depend on the maximum speed.", forSubTools: ["forcespeed"], forLevels: [3],
+    multi: true,
     defaultFor: lv({ 1: "const", 2: "const", 3: "speed" }), choices: [{ value: "const", label: "Constant" }, { value: "speed", label: "Proportional to speed" }, { value: "speed2", label: "Proportional to speed squared" }],
   },
   {
@@ -98,14 +107,17 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "psResist", label: "Resistance", info: "A constant resistance, or one proportional to the speed, which makes the steady speed the root of a quadratic.", forSubTools: ["powerslope"], forLevels: [3],
+    multi: true,
     defaultFor: lv({ 1: "const", 2: "const", 3: "const" }), choices: [{ value: "const", label: "Constant" }, { value: "kv", label: "Proportional to speed" }],
   },
   {
     key: "psAngle", label: "Angle Given As", info: "The slope as an angle in degrees, or by its sine (for example sin α = 1/20), which needs no calculator. The angle question always gives degrees.", forSubTools: ["powerslope"],
+    multi: true,
     defaultFor: () => "deg", choices: [{ value: "deg", label: "Degrees" }, { value: "sine", label: "Sine", sub: "sin α = 1/n" }],
   },
   {
     key: "mtData", label: "Data", info: "A displacement function s(t) to differentiate, or a speed-time graph of a vehicle to read.", forSubTools: ["motion"],
+    multi: true,
     defaultFor: lv({ 1: "function", 2: "graph" }), choices: [{ value: "function", label: "A function s(t)" }, { value: "graph", label: "A speed-time graph" }],
   },
   {
@@ -144,6 +156,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: MECH_STAGE,
         skillPrint: MC_PRINT,
         devNotice: MC_NOTICE,
         noSandbox: true,
