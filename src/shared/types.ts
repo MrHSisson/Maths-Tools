@@ -168,6 +168,10 @@ export interface ToolMultiSelect {
    *  (a level has only one `dropdown`) or that sit alongside other pools. Give exactly
    *  one option `defaultActive: true`. */
   exclusive?: true;
+  /** Draw the pool as a range bar instead of buttons: its options, in order, are the dots on a line, and the ticked options are
+   *  one unbroken run of dots, set by dragging the two ends (at least two dots stay on). The generator reads the first and
+   *  last ticked option. `presets` are quick buttons that jump the ends to two option values. */
+  rangeBar?: { presets?: { label: string; from: string; to: string }[] };
 }
 
 // A tool may need several independent option pools at once (e.g. "Constants"
