@@ -9,7 +9,7 @@ import type { FOI } from "../../shared";
 export type Fn = "sin" | "cos" | "tan";
 export type Unit = "deg" | "rad";
 export type FormKind = "direct" | "scaled" | "shifted" | "negative";
-export type RangeId = "r360" | "r720" | "rSym180" | "rSym360" | "r180";
+type RangeId = "r360" | "r720" | "rSym180" | "rSym360" | "r180";
 
 /** Range of θ in degrees (shown as multiples of π in radians). */
 export const RANGES: Record<RangeId, [number, number]> = {
@@ -90,7 +90,8 @@ export interface TrigSpec {
   b: number;        // constant on the left (rearranged forms)
   kArg: number;     // coefficient of θ inside: 1, 2, 3 or 0.5
   cDeg: number;     // shift inside, in degrees (π/12 multiples when in radians)
-  range: RangeId;
+  /** A named range, or any [low, high] in degrees (the range bar gives multiples of 180). */
+  range: RangeId | [number, number];
   /** Allow a solution exactly on an end of the range (only with "Include 0 and ±1"); otherwise such questions are rejected. */
   allowEdge?: boolean;
 }
@@ -174,7 +175,7 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
   const P = fn === "tan" ? HALF : FULL;
   const c = natOf(unit, s.cDeg);
   const kArg = s.kArg;
-  const [loDeg, hiDeg] = RANGES[s.range];
+  const [loDeg, hiDeg] = Array.isArray(s.range) ? s.range : RANGES[s.range];
   const lo = natOf(unit, loDeg), hi = natOf(unit, hiDeg);
   const uLo = kArg * lo + c, uHi = kArg * hi + c;
   const hasArg = kArg !== 1 || Math.abs(c) > 1e-9;
@@ -184,13 +185,15 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
   const alpha = principal(fn, k, mode === "exact", unit);
   const bs = bases(fn, alpha, HALF, FULL, eps);
   const sols: Solution[] = [];
-  for (const b of bs) for (let n = -12; n <= 12; n++) {
+  for (const b of bs) for (let n = -40; n <= 40; n++) {
     const u = b.val + n * P;
     if (u >= uLo - eps && u <= uHi + eps) sols.push({ u, base: b.val, n, theta: (u - c) / kArg });
   }
   sols.sort((x, y) => x.u - y.u);
   for (let i = sols.length - 1; i > 0; i--) if (Math.abs(sols[i].u - sols[i - 1].u) < eps * 10) sols.splice(i, 1);
-  if (sols.length < 1 || sols.length > 6) return null;
+  // up to 6 solutions, or as many as a wide range naturally gives (about two per turn of the function)
+  const maxSols = Math.max(6, Math.ceil((uHi - uLo) / P) * 2);
+  if (sols.length < 1 || sols.length > maxSols) return null;
   if (!s.allowEdge && sols.some((x) => Math.abs(x.theta - lo) < eps * 10 || Math.abs(x.theta - hi) < eps * 10)) return null;
   // decimal answers must not sit on a range boundary
   if (mode === "decimal" && sols.some((x) => Math.abs(x.theta - lo) < 1e-3 || Math.abs(x.theta - hi) < 1e-3)) return null;
@@ -273,7 +276,7 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
       }
     }
   }
-  const displayLatex = `${lhs} = ${rhs},\\quad ${rangeTex}`;
+  const displayLatex = `\\begin{array}{c} ${lhs} = ${rhs}, \\\\[0.7em] ${rangeTex} \\end{array}`;
 
   // ── The working ──
   type Tag = "pre" | "range" | "principal" | "second" | "period" | "reverse" | "answer";
@@ -388,7 +391,7 @@ export function buildTrigQuestion(s: TrigSpec): TrigBuilt | null {
   };
   const working = steps.map((x, i) => (i >= firstStamped ? graphStep(x.s, spec, stamp[x.tag] ?? 1) : x.s));
 
-  const key = `${fn}-${s.form}-${s.kEx ? `${s.kEx.p}/${s.kEx.q}r${s.kEx.r}` : `d${s.kDec}`}-a${A}b${B}-k${kArg}c${s.cDeg}-${s.range}-${unit}`;
-  const display0 = toPlain(displayLatex);
+  const key = `${fn}-${s.form}-${s.kEx ? `${s.kEx.p}/${s.kEx.q}r${s.kEx.r}` : `d${s.kDec}`}-a${A}b${B}-k${kArg}c${s.cDeg}-${Array.isArray(s.range) ? s.range.join("to") : s.range}-${unit}`;
+  const display0 = toPlain(`${lhs} = ${rhs},\\quad ${rangeTex}`);
   return { key, display: display0, displayLatex, answer: toPlain(answerLatex), answerLatex, working, solutions: sols.map((x) => x.theta) };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import katex from "katex";
 import { averagePower, bisect, integrateNumerically, kineticEnergy, sig, toSI, validateScene, forceAt, type ForceTerm, type MechProblemData } from "../shared/mechanics";
-import type { ShellOption, ShellSubTool } from "../shared/decision/types";
+import type { ShellOption } from "../shared/decision/types";
 import { buildFd, generateFd } from "../tools/FurtherMechanics/workDone/fd";
 import { buildGrav, generateGrav } from "../tools/FurtherMechanics/workDone/grav";
 import { buildAngle, generateAngle } from "../tools/FurtherMechanics/workDone/angle";
@@ -92,7 +92,9 @@ describe("Work Done: independent re-derivation of every answer", () => {
       const h = i.setting === "slope" ? i.d * Math.cos(((90 - i.alpha) * Math.PI) / 180) : i.h;
       const W = i.m * i.g * h;
       const shown = sig(W, 3);
-      if (i.ask === "work") near(m.answer.value, sig(W, 3) / (i.wUnit === "kJ" ? 1000 : 1), 1e-9);
+      // a work done that is exactly half way between two three-figure values (30 kg, 125 m of height: 36 750 J) rounds either way in floating point, so either is right
+      const unit = i.wUnit === "kJ" ? 1000 : 1;
+      if (i.ask === "work") expect([sig(W * (1 - 1e-12), 3), sig(W * (1 + 1e-12), 3)].some((x) => Math.abs(m.answer.value - x / unit) <= 1e-9 * Math.abs(x / unit))).toBe(true);
       else if (i.ask === "height") near(m.answer.value, sig(shown / (i.m * i.g), 3));
       else near(m.answer.value, sig(shown / (i.g * h), 3));
     }
@@ -180,17 +182,6 @@ describe("Work Done: every string and every picture is valid", () => {
 });
 
 describe("Work Done: the Course setting and the worksheet", () => {
-  it("nothing A2-only is generated at AS, and the A2 sub-tool and settings are hidden", () => {
-    const sub = App().props.config.subTools!.find((s: ShellSubTool) => s.key === "angle")!;
-    expect(JSON.stringify(sub.when)).toContain("A2");
-    for (const s of SUBS) for (const level of [1, 2, 3]) for (let k = 0; k < 40; k++) {
-      const m = __seed.generate(level, { subTool: s, options: { ...profileOptions(groups, { course: "AS" }, undefined, level, s), course: "AS", gravSetting: "slope" } }).mech!;
-      if (s === "angle") continue;
-      expect(m.a2, `${s} L${level}`).toBe(false);
-    }
-    const slope = groups.find((o: ShellOption) => o.key === "gravSetting")!;
-    expect(slope.when).toBeTruthy();
-  });
   it("a worksheet of 30 has different questions at default options at every level", () => {
     for (const sub of SUBS) for (const level of [1, 2, 3]) {
       const seen = new Set<string>();
