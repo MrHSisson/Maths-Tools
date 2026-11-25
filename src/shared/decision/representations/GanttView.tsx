@@ -85,6 +85,12 @@ export default function GanttView({ data, view, unit, axisT, rowH: rowHProp, fin
       <line x1={LEFT} y1={TOP} x2={LEFT} y2={bodyBottom} stroke="#334155" strokeWidth={1.6} />
       <text x={LEFT + PLOT / 2} y={bodyBottom + 38} textAnchor="middle" fontSize={13} fill="#334155">Time ({unit})</text>
 
+      {view.band && (
+        <g>
+          <rect x={x(view.band.from)} y={TOP} width={x(view.band.to) - x(view.band.from)} height={bodyBottom - TOP} fill="#ef4444" fillOpacity={0.1} stroke="#dc2626" strokeWidth={1.6} strokeDasharray="6 3" />
+          <text x={(x(view.band.from) + x(view.band.to)) / 2} y={TOP - 1} textAnchor="middle" fontSize={11} fontWeight={700} fill="#dc2626">time {view.band.from}–{view.band.to}</text>
+        </g>
+      )}
       {view.mustRunAt !== undefined && (
         <g>
           <line x1={x(view.mustRunAt + 0.5)} y1={TOP} x2={x(view.mustRunAt + 0.5)} y2={bodyBottom} stroke="#dc2626" strokeWidth={2} strokeDasharray="6 3" />

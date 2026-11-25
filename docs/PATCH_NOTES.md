@@ -56,6 +56,23 @@ Branch `claude/relaxed-cannon-ppjzr2`. Area: `specs/decks/standard-form.build.ts
 Agent: Claude Code
 Notes: Build Log block "Trig range bar, range on its own line, standard form numbers-in-parts (Claude Code)" (written after the merge).
 
+## 2026-11-25 — Critical Path histogram: show what props up the fewest workers
+
+Branch `claude/stoic-goldberg-xmi9tw`. Area: `src/shared/decision/cpa.ts` (`proveFewest`, `floorSentence`), `cpaSolve.ts` (`propView`), `representations/GanttView.tsx`, `representations/HistogramView.tsx`, `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
+
+- **Every "fewest" and "show N − 1 is not enough" question now shows where activities overlap and cannot slide clear within their float.** Before, only about a third of them did: when the total work ÷ the time also gave the answer, that sum was used and no overlap was drawn.
+- **Order of proof:** (1) one moment where the activities that must be running add up to the answer (red stretches on the cascade chart and a dashed line at that time, as before, now chosen first); (2) new: the shortest stretch of time whose guaranteed work ÷ its length needs the answer. That stretch is shaded as a band on the cascade chart and on the histogram, and the sentence says how much of each activity must fall inside it however it is slid; (3) only if nothing shorter works, all the work ÷ the minimum time.
+- The answer sheet and the "Why no fewer" / "Must run together" steps use the same sentence (`floorSentence`), so the working and the answer cannot disagree.
+- Measured over 150 generated one-, several- and mixed-worker questions, a moment or a window proves the answer in every one-worker question and in about 55–60% of several- and mixed-worker ones; the rest are the "show N is enough" questions, which never claimed a minimum.
+- **Cut-the-peak questions may now move up to three activities** (pushed ones count), instead of two, for every Workers setting. About half still need only one move. Spec updated (`specs/resource-levelling.md`).
+- **One-worker questions are balanced between 4 → 3, 3 → 2 and 4 → 2.** Before, about 78% went from 4 workers to 3, 20% from 3 to 2 and about 2% from 4 to 2. The generator now looks for 4 → 2 first on half the draws (it is rare, about 1 network in 100), then the other two kinds in a random order, and takes any network after 360 tries so a draw never fails. Measured over 90 draws: about 40% / 38% / 22%. Generation averages about 0.7 s (was about 0.2 s) and now and then takes several seconds.
+- **A spinner for slow questions.** Critical Path now shows "Making a new question…" with a small turning wheel while a new question is generated (it fades in after 0.2 s, so quick ones show nothing, and it keeps turning even when the device has Reduce motion on). New shell setting `slowGenerate` on `DecisionShell`'s config, off for every other Decision tool. The first question of a visit is made before the page draws, so it has none.
+- **The new-question work now runs in a Web Worker** (Critical Path), so the page stays free and the spinner turns in any browser (before, a browser could stop the wheel while the page was busy). Measured: during questions taking up to 3 s the longest gap between page frames was 33 ms. The generator moved to `src/tools/Decision/criticalPathGenerate.ts` (no React), with `criticalPath.worker.ts` and `criticalPathAsync.ts`; if the worker cannot start, the page makes the question itself as before. New shell setting `generateAsync`.
+- **Spinner fix:** the wheel was stuck at its starting angle in Chrome on Windows (an earlier tweak gave it a `translateZ(0)` transform, which the half-written keyframes blended into no movement at all). The keyframes now say `from` and `to`; checked by reading the wheel's angle every 50 ms (one turn per 0.8 s, with and without Reduce motion).
+- Not done: "Show that N is enough" questions still do not draw a proof (they do not claim N is the fewest); the dashboard Review for the Critical Path tool is not set; the planner Build Log is not written.
+Agent: Claude Code
+Notes: planner Build Log block not written (still to do).
+
 ## 2026-11-25 — Repeat a deck into a second folder; no more "Add a deck" dropdown
 
 Branch `claude/confident-rubin-7kdxat`. Area: `src/components/FolderView.tsx`, `src/components/DeckList.tsx`, `src/decks/folders.ts`, `api/_folders.ts`, `api/decks.ts`, `src/tests/deckFolders.test.ts`, docs, `docs/pathways/deck-folders.md`.

@@ -2025,7 +2025,7 @@
    "title": "Resource histogram and resource levelling",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-08 (later session: print grid, basket Reload, Show N − 1)",
+   "updated": "2026-11-25 (what props up the fewest workers; three moves; balanced drops; spinner)",
    "sections": [
     {
      "title": "Intention",
@@ -2052,6 +2052,7 @@
         "**Drawing order:** critical along the bottom, then longest first, no holes or overhangs.",
         "**Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); \"new start of the last activity\" is not offered at levelling Level 3.",
         "**Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask \"Show N − 1 is not enough\", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.",
+        "**2026-11-25 (branch `claude/stoic-goldberg-xmi9tw`):** (1) the histogram Level 3 \"Why no fewer\" step always shows overlap: a moment where must-run activities add up, else the shortest window of time whose guaranteed work ÷ its length needs the answer (banded on the cascade chart and histogram), the total-work sum only as the last resort; (2) cut-the-peak questions may move up to three activities (was two); (3) one-worker questions are balanced across 4 → 3, 3 → 2 and 4 → 2 (about 40 / 38 / 22%); (4) Critical Path shows a \"Making a new question…\" spinner while a slow question is made (`slowGenerate` on the Decision shell).",
         "**Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed."
        ]
       },
@@ -2073,7 +2074,7 @@
        "t": "ul",
        "items": [
         "Check the new levelling and histogram steps on phone and tablet, then merge `claude/new-session-6gg0my` (a PR has not been opened).",
-        "Generation time: histogram Level 3 and Level 2 can still take up to about a second now and then.",
+        "Generation time: histogram Level 3 one-worker questions now average about 0.7 s and now and then take several seconds (the spinner covers it). If that is still too slow, generate in a background thread.",
         "\"Last start\" is still a selectable wording at levelling Level 3 (the shell cannot hide one choice by level); it asks for the time there.",
         "Print basket: questions can be saved and printed later, on this device or by link (`printBasket.ts`).",
         "Printing: question and answer sheets exist for the histogram and levelling tabs (one question per A4 page); several questions per sheet and squared-paper histograms are not built.",
@@ -4135,6 +4136,10 @@
   "critical-path": {
    "changes": [
     {
+     "date": "2026-11-25",
+     "title": "Critical Path histogram: show what props up the fewest workers"
+    },
+    {
      "date": "2026-11-13",
      "title": "Decision shell: a problem no longer needs a network"
     },
@@ -4149,10 +4154,6 @@
     {
      "date": "2026-11-10",
      "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
-    },
-    {
-     "date": "2026-11-10",
-     "title": "Critical Path: a Backward pass sub-tool"
     }
    ]
   },

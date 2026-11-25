@@ -1,5 +1,5 @@
 import { holds, levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, PictureInPicture2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, ShellWhen, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
@@ -96,7 +96,36 @@ function readUrl(config: DecisionShellProps["config"]) {
 }
 
 let problemCount = 0;
-export default function DecisionShell({ generate, solve, renderCanvas, renderSolution, config }: DecisionShellProps) {
+// ── "Making a new question…": a tool whose generator is slow (`config.slowGenerate`) shows a small spinner while it works ──────────────────────────
+// Generating blocks the page, so the spinner is painted first (one frame), and it is only CSS transform / opacity, which keeps turning while the page is busy. It fades in after
+// 0.2 s, so a question that comes at once shows nothing. It keeps turning even when the device asks for reduced motion: it is the only sign that the page is working.
+let generating = false;
+const generatingSubs = new Set<() => void>();
+const setGenerating = (v: boolean) => { generating = v; generatingSubs.forEach((f) => f()); };
+function GeneratingBadge() {
+  const on = useSyncExternalStore((f) => { generatingSubs.add(f); return () => { generatingSubs.delete(f); }; }, () => generating);
+  if (!on) return null;
+  return (
+    <div role="status" aria-live="polite" className="fixed left-1/2 top-4 z-[300] -translate-x-1/2 pointer-events-none">
+      <style>{`@keyframes mtSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes mtFade{from{opacity:0}to{opacity:1}}`}</style>
+      <div className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-lift" style={{ animation: "mtFade 0.2s ease 0.2s both" }}>
+        <span className="block h-4 w-4 rounded-full border-2 border-slate-300" style={{ borderTopColor: "#1e3a8a", animation: "mtSpin 0.8s linear infinite", willChange: "transform" }} />
+        Making a new question…
+      </div>
+    </div>
+  );
+}
+
+export default function DecisionShell(props: DecisionShellProps) {
+  return (
+    <>
+      <DecisionShellInner {...props} />
+      <GeneratingBadge />
+    </>
+  );
+}
+
+function DecisionShellInner({ generate, solve, renderCanvas, renderSolution, config }: DecisionShellProps) {
   const init = useMemo(() => readUrl(config), []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: read from the address bar once, when the page opens
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
@@ -290,14 +319,44 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     } catch { /* keep the problem as it is */ }
   };
 
+  const newTicket = useRef(0);
+  useEffect(() => () => { newTicket.current++; setGenerating(false); }, []);
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
-    try {
-      setProblem(recent.fresh(() => generateSeeded(() => generate(lv, ctxOf(sub, opts, lv)))));
-      setStepIdx(-1);
-      setShowAll(false);
-    } catch {
-      setFailed(true);
+    const make = () => {
+      try {
+        setProblem(recent.fresh(() => generateSeeded(() => generate(lv, ctxOf(sub, opts, lv)))));
+        setStepIdx(-1);
+        setShowAll(false);
+      } catch {
+        setFailed(true);
+      }
+    };
+    if (!config.slowGenerate) { make(); return; }
+    const mine = ++newTicket.current;
+    setGenerating(true);
+    const generateAsync = config.generateAsync;
+    if (generateAsync) {
+      // off the page: the page stays free (the spinner turns) while a Web Worker makes the question; a repeat of a recent one is asked for again
+      (async () => {
+        try {
+          let q: DecisionProblem | null = null;
+          for (let i = 0; i < 4; i++) { q = await generateAsync(lv, ctxOf(sub, opts, lv)); if (mine !== newTicket.current || recent.isFresh(q)) break; }
+          if (mine !== newTicket.current) return;
+          setProblem(q!); setStepIdx(-1); setShowAll(false); setGenerating(false);
+        } catch (e) {
+          if (mine !== newTicket.current) return;
+          if (e instanceof Error && e.name === "WorkerUnavailable") { try { make(); } finally { setGenerating(false); } return; }
+          setFailed(true); setGenerating(false);
+        }
+      })();
+      return;
     }
+    // a slow generator on the page: show the spinner, let the page paint it, then work (a newer request replaces one still waiting)
+    // a short wait after the first paint, so the browser has started the animation before the page is blocked
+    requestAnimationFrame(() => setTimeout(() => {
+      if (mine !== newTicket.current) return;
+      try { make(); } finally { setGenerating(false); }
+    }, 60));
   };
 
   // ── Recent and pinned questions (burger menu; this visit only) ───────────────

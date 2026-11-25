@@ -190,7 +190,7 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
     { w: "one", ask: "fewest", start: "early" }, { w: "several", ask: "show", start: "early" }, { w: "mixed", ask: "canFewer", start: "late" }, { w: "one", ask: "fewest", start: "late" },
   ] as const;
   for (const c of cases) {
-    it(`${c.w} workers, ${c.ask}, ${c.start} start: the fewest is true, at most two activities move, the project time is unchanged, the floor proves it`, () => {
+    it(`${c.w} workers, ${c.ask}, ${c.start} start: the fewest is true, at most three activities move, the project time is unchanged, the floor proves it`, () => {
       withSeededRandom(404, () => {
         for (let i = 0; i < 5; i++) {
           const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: c.w, histCut: c.ask, histStart: c.start });
@@ -209,7 +209,7 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
             a.preds.forEach((q) => expect(start[a.id]).toBeGreaterThanOrEqual(start[q] + acts.find((x) => x.id === q)!.duration));
           }
           expect(final.T).toBe(T);
-          expect(cut.moves.length).toBeLessThanOrEqual(2);
+          expect(cut.moves.length).toBeLessThanOrEqual(3);
           expect(cut.moves.length).toBeGreaterThan(0);
           // one state per move, each a step further from the question's histogram
           expect(cut.states.length).toBe(cut.moves.length + 1);
@@ -226,6 +226,9 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
             expect(g.prompt).toMatch(/cannot be completed/);
             if (cut.floor!.kind === "workerDays") {
               expect(cut.floor!.total! / cut.target).toBeGreaterThan(T);
+              expect(g.answerText).toContain(`${cut.floor!.total} ÷ ${cut.target}`);
+            } else if (cut.floor!.kind === "window") {
+              expect(cut.floor!.total! / cut.target).toBeGreaterThan(cut.floor!.to! - cut.floor!.from!);
               expect(g.answerText).toContain(`${cut.floor!.total} ÷ ${cut.target}`);
             } else expect(cut.floor!.value).toBeGreaterThan(cut.target);
             continue;
@@ -249,7 +252,29 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
             const at = gv.mustRunAt!;
             const sum = gv.mustRun!.filter((w) => w.from <= at && at < w.to).reduce((n, w) => n + (acts.find((x) => x.id === w.id)!.workers ?? 1), 0);
             expect(sum).toBe(cut.best);
-          } else if (why) expect(why.ganttView?.mustRun).toBeUndefined();
+          } else if (cut.floor?.kind === "window" && why) {
+            // window: the stretch is shaded on the cascade chart and the histogram, and each share is what the activity cannot avoid putting inside it
+            const f = cut.floor, gv = why.ganttView!;
+            expect(gv.band).toEqual({ from: f.from, to: f.to });
+            expect(why.histView?.band).toMatchObject({ from: f.from, to: f.to });
+            expect(f.to! - f.from!).toBeGreaterThan(1);
+            let total = 0;
+            for (const q of f.shares!) {
+              const a = acts.find((x) => x.id === q.id)!;
+              let least = Infinity;
+              for (let p = times.es[a.id]; p <= times.lf[a.id] - a.duration; p++) least = Math.min(least, Math.max(0, Math.min(p + a.duration, f.to!) - Math.max(p, f.from!)));
+              expect(q.share).toBe(least);
+              expect(q.share).toBeGreaterThan(0);
+              total += q.share * (a.workers ?? 1);
+            }
+            expect(total).toBe(f.total);
+            expect(Math.ceil(total / (f.to! - f.from!))).toBe(cut.best);
+            // the window is the shortest that proves it: nothing shorter does
+            expect(why.caption).toContain(`${f.total} ÷ ${cut.best - 1}`);
+          } else if (why) {
+            expect(why.ganttView?.mustRun).toBeUndefined();
+            expect(why.ganttView?.band).toBeUndefined();
+          }
         }
       });
     }, 120_000);
@@ -269,6 +294,35 @@ describe("resource histogram, Level 3 — cut the peak within the float", () => 
         expect(cut.floor.ids!.every((id) => gv.mustRun!.some((w) => w.id === id && w.from <= cut.floor!.at! && cut.floor!.at! < w.to))).toBe(true);
       }
       expect(seen, "a must-run floor appeared").toBeGreaterThan(0);
+    });
+  }, 200_000);
+});
+
+describe("what props up the fewest workers — where activities overlap and cannot slide clear", () => {
+  it("every asked-for minimum is proved by overlap (a moment or a window), the total work only when nothing shorter does", () => {
+    withSeededRandom(77, () => {
+      const seen = { mustRun: 0, window: 0, workerDays: 0 };
+      for (let i = 0; i < 90; i++) {
+        const g = generateCpa(3, "cpaHistogram", { paths: "one", histLevel: 3, histWorkers: (["one", "several", "mixed"] as const)[i % 3], histCut: (["fewest", "canFewer"] as const)[i % 2], histStart: "early" });
+        const cut = g.data.extra!.cut!, acts = g.data.acts, times = g.data.times, T = times.projectTime;
+        if (cut.ask === "show") continue;
+        const f = cut.floor!;
+        seen[f.kind]++;
+        // if one moment's must-run activities add up to the answer, that is the proof given (never the total work)
+        const run = Array.from({ length: T }, (_, x) => acts.reduce((n, a) => n + (times.lf[a.id] - a.duration <= x && x < times.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
+        if (Math.max(...run) === cut.best) expect(f.kind).toBe("mustRun");
+        if (f.kind === "workerDays") {
+          // the whole project is the shortest stretch that works: no shorter window and no single moment gets there
+          expect(Math.max(...run)).toBeLessThan(cut.best);
+          expect(f.total).toBe(acts.reduce((n, a) => n + a.duration * (a.workers ?? 1), 0));
+        }
+        const steps = solveCpa({ network: { nodes: [], edges: [] }, prompt: g.prompt, answer: { text: g.answerText }, cpa: g.data, kind: "cpaHistogram" } as never);
+        const text = steps.map((s) => s.caption).join(" ");
+        if (f.kind !== "workerDays") expect(text).toContain("within their float");
+        expect(g.answerText).toMatch(f.kind === "mustRun" ? /must (both|all) be running|must be running/ : f.kind === "window" ? /Between \d+ and \d+/ : /÷/);
+      }
+      expect(seen.mustRun, "must-run proofs appear").toBeGreaterThan(0);
+      expect(seen.window, "window proofs appear").toBeGreaterThan(0);
     });
   }, 200_000);
 });
