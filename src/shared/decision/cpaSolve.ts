@@ -4,7 +4,7 @@
 // starts compared and the smallest taken), then the float and the critical path. Every number is read from cpaTimes (cpa.ts).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { END, START, clockTime, cpaEdges, histBaseAt, cpaList, cpaTimes, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
+import { END, START, clockTime, floorSentence, type CutFloor, cpaEdges, histBaseAt, cpaList, cpaTimes, criticalActivities, fullGraph, successorsOf, type CpaViewState } from "./cpa";
 import type { DecisionProblem, SolveStep } from "./types";
 
 const beat = (caption: string, view: CpaViewState, phase?: string, extra?: Partial<SolveStep>): SolveStep => ({
@@ -611,6 +611,17 @@ function solveHistogramDraw(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
+// What props up the fewest workers, drawn: the stretches where an activity must be running whatever its float allows are shaded on the cascade chart, with the moment
+// (or the window of time) picked out on it and on the histogram
+function propView(d: NonNullable<DecisionProblem["cpa"]>, f: CutFloor): { hist: Partial<NonNullable<SolveStep["histView"]>>; gantt?: NonNullable<SolveStep["ganttView"]> } {
+  const { times: t } = d;
+  const ids = d.acts.map((a) => a.id);
+  if (f.kind === "workerDays") return { hist: {} };
+  const mustRun = d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration }));
+  const gantt = { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun, ...(f.kind === "mustRun" ? { mustRunAt: f.at } : { band: { from: f.from!, to: f.to! } }) };
+  return { hist: f.kind === "mustRun" ? { markAt: f.at } : { band: { from: f.from!, to: f.to!, label: `time ${f.from}–${f.to}` } }, gantt };
+}
+
 // ── Resource histogram, Level 3: cut the peak by sliding activities within their float ──
 function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   const d = p.cpa!;
@@ -662,12 +673,10 @@ function solveHistogramCut(p: DecisionProblem): SolveStep[] {
   const fin = c.states[c.states.length - 1];
   steps.push(mk(`Check the histogram again: the most needed is now ${fin.peak}, and the project still finishes at ${T} ${u}.`, "Check", { tryIndex: c.states.length - 1 }));
   if (c.floor && c.ask !== "show") {
+    const pv = propView(d, c.floor);
     steps.push(mk(
-      c.floor.kind === "workerDays"
-        ? `Why no fewer: the work is ${c.floor.total} worker-${u}. ${c.floor.total} ÷ ${T} = ${(c.floor.total! / T).toFixed(2)}, so at least ${nWorkers(c.floor.value)}.`
-        : `Why no fewer: red is where an activity must be running whatever we do (latest start to earliest finish). At time ${c.floor.at}, ${cpaList((c.floor.ids ?? []).map(tagW))} must ${(c.floor.ids ?? []).length === 2 ? "both" : "all"} be running: ${(c.floor.ids ?? []).map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(c.floor.value)}.`,
-      "Why no fewer", { tryIndex: c.states.length - 1, ...(c.floor.kind === "mustRun" ? { markAt: c.floor.at } : {}) }, undefined,
-      c.floor.kind === "mustRun" ? { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: c.floor.at } } : undefined,
+      `Why no fewer: red is where an activity has to be running, or has to have work done, whatever it does within its float. ${floorSentence(c.floor, u, T, c.best - 1, tagW)}`,
+      "Why no fewer", { tryIndex: c.states.length - 1, ...pv.hist }, undefined, pv.gantt ? { ganttView: pv.gantt } : undefined,
     ));
   }
   steps.push(mk(
@@ -694,6 +703,7 @@ function solveCannotFewer(p: DecisionProblem): SolveStep[] {
     ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id) },
     ...extra,
   });
+  const tagW = (id: string) => (d.acts.some((a) => (a.workers ?? 1) > 1) ? `${id}(${d.acts.find((a) => a.id === id)!.workers ?? 1})` : id);
   if (f.kind === "workerDays") {
     const terms = d.acts.map((a) => ((a.workers ?? 1) > 1 ? `${a.duration}×${a.workers}` : `${a.duration}`)).join(" + ");
     const ratio = (f.total! / n).toFixed(2);
@@ -703,12 +713,11 @@ function solveCannotFewer(p: DecisionProblem): SolveStep[] {
       mk(`${ratio} is more than ${T}, so ${nWorkers(n)} cannot finish in ${T} ${u}.`, "Answer", {}, { runningTotal: n, totalLabel: "Workers" }),
     ];
   }
-  const run = f.ids ?? [];
+  const pv = propView(d, f);
   return [
-    mk(`Red is where an activity must be running whatever we do (latest start to earliest finish). At time ${f.at}, ${cpaList(run)} must ${run.length === 2 ? "both" : "all"} be running: ${run.map((id) => d.acts.find((a) => a.id === id)!.workers ?? 1).join(" + ")} = ${nWorkers(f.value)}.`,
-      "Must run together", { markAt: f.at },
-      { ganttView: { bars: ids, floats: d.acts.filter((x) => t.float[x.id] > 0).map((x) => x.id), mustRun: d.acts.filter((a) => t.lf[a.id] - a.duration < t.es[a.id] + a.duration).map((a) => ({ id: a.id, from: t.lf[a.id] - a.duration, to: t.es[a.id] + a.duration })), mustRunAt: f.at } }),
-    mk(`${f.value} is more than ${n}, so ${nWorkers(n)} cannot do it in ${T} ${u}.`, "Answer", { markAt: f.at }, { runningTotal: n, totalLabel: "Workers" }),
+    mk(`Red is where an activity has to be running, or has to have work done, whatever it does within its float. ${floorSentence(f, u, T, n, tagW)}`,
+      f.kind === "mustRun" ? "Must run together" : "Must be done in this time", pv.hist, { ganttView: pv.gantt }),
+    mk(`${f.kind === "mustRun" ? `${f.value} is more than ${n}` : `${f.total} ÷ ${n} is more than ${f.to! - f.from!}`}, so ${nWorkers(n)} cannot do it in ${T} ${u}.`, "Answer", pv.hist, { runningTotal: n, totalLabel: "Workers" }),
   ];
 }
 

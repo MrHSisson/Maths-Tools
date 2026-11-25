@@ -145,6 +145,12 @@ export default function HistogramView({ data, view, unit, limit, over, axisT, ax
           <text x={(x(view.peak.from) + x(view.peak.to)) / 2} y={yOf(view.peak.need) - 5} textAnchor="middle" fontSize={12} fontWeight={700} fill={RED} stroke="#fff" strokeWidth={3} paintOrder="stroke">peak {view.peak.need}</text>
         </g>
       )}
+      {view.band && (
+        <g>
+          <rect x={x(view.band.from)} y={TOP} width={x(view.band.to) - x(view.band.from)} height={bodyBottom - TOP} fill="#ef4444" fillOpacity={0.1} stroke={RED} strokeWidth={1.6} strokeDasharray="6 3" />
+          <text x={(x(view.band.from) + x(view.band.to)) / 2} y={TOP - 1} textAnchor="middle" fontSize={11} fontWeight={700} fill={RED}>{view.band.label}</text>
+        </g>
+      )}
       {view.markAt !== undefined && (
         <g>
           <line x1={x(view.markAt + 0.5)} y1={TOP} x2={x(view.markAt + 0.5)} y2={bodyBottom} stroke={RED} strokeWidth={2} strokeDasharray="6 3" />

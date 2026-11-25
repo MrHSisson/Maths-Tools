@@ -303,6 +303,8 @@ export interface GanttViewState {
   bars: string[]; floats: string[]; current?: string;
   /** must-run windows (an activity is running in every schedule from its latest start to its earliest finish) shaded on their bars, and the time picked out */
   mustRun?: { id: string; from: number; to: number }[]; mustRunAt?: number;
+  /** a stretch of time picked out across every row (the window whose guaranteed work props up the fewest workers) */
+  band?: { from: number; to: number };
 }
 
 /** The cascade chart for a network: where every activity sits, from the same times the passes found. */
@@ -365,6 +367,8 @@ export interface HistViewState {
   clash?: { from: number; to: number; need: number }[];
   /** a dashed line at this time (the busiest moment in the must-run step) */
   markAt?: number;
+  /** a stretch of time picked out, labelled (the window whose guaranteed work props up the fewest workers) */
+  band?: { from: number; to: number; label: string };
   /** label every shaded clash "needs 10 / limit 9" */
   labelOver?: boolean;
   /** the peak picked out: the top worker of the tallest stretch, labelled */
@@ -684,9 +688,61 @@ interface CutData {
   /** the histogram the question gives (index 0) and after each move: the last is the answer */
   states: HistogramData[];
   moves: { id: string; from: number; to: number; float: number; knock: boolean }[];
-  /** what proves no fewer will do: worker-days ÷ time (rounded up), or the workers each activity must have running from its latest start to its earliest finish */
-  floor: { kind: "workerDays" | "mustRun"; value: number; total?: number; at?: number; /** must-run: the activities that must be running at `at` */ ids?: string[] } | null;
+  /** what proves no fewer will do, whatever is slid within the float: the activities that must be running at one moment (mustRun), the work that must fall inside a stretch of time (window), or all the work ÷ the time (workerDays: the stretch is the whole project) */
+  floor: CutFloor | null;
   peak: { from: number; to: number; need: number };
+}
+
+export interface CutFloor {
+  kind: "workerDays" | "mustRun" | "window"; value: number;
+  /** workerDays and window: the worker-time that has to fit (every activity's, or only what must fall inside the window) */
+  total?: number;
+  /** mustRun: the moment, and the activities that must be running at it */
+  at?: number; ids?: string[]; /** the workers each of those needs */ needs?: number[];
+  /** window: the stretch [from, to), and how much of each activity must fall inside it (in time units, before multiplying by its workers) */
+  from?: number; to?: number; shares?: { id: string; share: number; workers: number }[];
+}
+
+/** How much of activity `a` must fall inside [from, to) however it is slid within its float: the least overlap over every start it is allowed. */
+const mustFall = (a: CpaActivity, t: CpaTimes, from: number, to: number): number => {
+  let least = Infinity;
+  for (let p = t.es[a.id]; p <= t.lf[a.id] - a.duration; p++) least = Math.min(least, Math.max(0, Math.min(p + a.duration, to) - Math.max(p, from)));
+  return least === Infinity ? 0 : least;
+};
+
+/**
+ * What props up the fewest workers (`best`), looked for where jobs overlap and cannot slide clear within their float, in order of how plainly it reads:
+ * 1) one moment where the activities that must be running add up to `best`; 2) the shortest stretch of time whose guaranteed work ÷ its length needs `best`
+ * (the longest stretch is the whole project: all the work ÷ the minimum time); otherwise null (the question then only asks to show it can be done).
+ */
+function proveFewest(acts: CpaActivity[], t: CpaTimes, best: number): CutFloor | null {
+  const T = t.projectTime;
+  const w = (a: CpaActivity) => a.workers ?? 1;
+  const at = (x: number) => acts.filter((a) => t.lf[a.id] - a.duration <= x && x < t.es[a.id] + a.duration);
+  const run = Array.from({ length: T }, (_, x) => at(x).reduce((n, a) => n + w(a), 0));
+  const mr = Math.max(...run);
+  if (mr === best) { const x = run.indexOf(mr); return { kind: "mustRun", value: mr, at: x, ids: at(x).map((a) => a.id), needs: at(x).map(w) }; }
+  let found: CutFloor | null = null;
+  for (let len = 2; len <= T && !found; len++) {
+    for (let from = 0; from + len <= T && !found; from++) {
+      const shares = acts.map((a) => ({ id: a.id, share: mustFall(a, t, from, from + len), workers: w(a) })).filter((q) => q.share > 0);
+      const total = shares.reduce((n, q) => n + q.share * q.workers, 0);
+      if (Math.ceil(total / len) === best) found = len === T ? { kind: "workerDays", value: best, total } : { kind: "window", value: best, total, from, to: from + len, shares };
+    }
+  }
+  return found;
+}
+
+/** The sentence that says what props the fewest up, for the answer and the walkthrough. `name` writes an activity (D, or D(3) when workers differ). */
+export function floorSentence(f: CutFloor, unit: string, T: number, fewer: number, name: (id: string) => string = (id) => id): string {
+  const wkr = (k: number) => `${k} worker${k === 1 ? "" : "s"}`;
+  if (f.kind === "workerDays") return `The work is ${f.total} worker-${unit}. ${f.total} ÷ ${fewer} = ${(f.total! / fewer).toFixed(2)}, which is more than ${T}, so ${wkr(fewer)} cannot finish in ${T} ${unit}.`;
+  if (f.kind === "window") {
+    const parts = f.shares!.map((q) => `${name(q.id)}: at least ${q.share}${q.workers > 1 ? ` × ${q.workers} workers` : ""}`);
+    return `Between ${f.from} and ${f.to} (${f.to! - f.from!} ${unit}), however the activities are slid within their float, at least this much work must fall inside it: ${parts.join("; ")}. That is ${f.total} worker-${unit}, and ${f.total} ÷ ${fewer} = ${(f.total! / fewer).toFixed(2)}, which is more than ${f.to! - f.from!}, so ${wkr(fewer)} cannot do it.`;
+  }
+  const ids = f.ids ?? [];
+  return `At time ${f.at}, ${ids.map(name).join(", ")} must ${ids.length === 2 ? "both" : "all"} be running, however they are slid within their float: ${(f.needs ?? []).join(" + ")} = ${wkr(f.value)}. That is more than ${fewer}, so ${wkr(fewer)} cannot do it.`;
 }
 
 /** The fewest moves (at most `maxMoves` activities away from where `base` has them, pushed ones included) that bring the peak to `n` or less without the project finishing later. */
@@ -1296,12 +1352,8 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
     if (best >= before.peak) throw new Error("histogram: no hole-free stack");
     const cs = cutSearch(acts, times, base, best, 2); // at most two activities have to move
     if (!cs) throw new Error("histogram: no hole-free stack");
-    // what proves no fewer will do
-    const total = acts.reduce((sum, a) => sum + a.duration * (a.workers ?? 1), 0);
-    const wd = Math.ceil(total / T);
-    const mustRun = Array.from({ length: T }, (_, x) => acts.reduce((sum, a) => sum + (times.lf[a.id] - a.duration <= x && x < times.es[a.id] + a.duration ? (a.workers ?? 1) : 0), 0));
-    const mr = Math.max(...mustRun);
-    const floor: CutData["floor"] = wd === best ? { kind: "workerDays", value: wd, total } : mr === best ? { kind: "mustRun", value: mr, at: mustRun.indexOf(mr), ids: acts.filter((a) => times.lf[a.id] - a.duration <= mustRun.indexOf(mr) && mustRun.indexOf(mr) < times.es[a.id] + a.duration).map((a) => a.id) } : null;
+    // what proves no fewer will do: where activities overlap and cannot slide clear within their float
+    const floor = proveFewest(acts, times, best);
     const ask = opts.histCut === "canFewer" && (!floor || best < 2) ? "show" : opts.histCut && opts.histCut !== "show" && !floor ? "show" : opts.histCut ?? "fewest";
     // the states: the histogram given, then after each move (the ones asked for first, then the ones they push)
     const order = [...acts.filter((a) => cs.starts[a.id] !== base[a.id])].sort((a, b) => Number(!cs.chosen.includes(a.id)) - Number(!cs.chosen.includes(b.id)) || cs.starts[a.id] - cs.starts[b.id] || a.id.localeCompare(b.id));
@@ -1334,8 +1386,10 @@ function generateCpaOnce(level: CpaLevel, kind: CpaKind, opts: CpaGenOptions = {
       : ask === "show" ? `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project can be completed in the minimum time of ${T} ${unit} with only ${wkr(best)}.`
       : `The activity network represents ${subject}. The times are in ${unit}. ${given} Show that the project cannot be completed in the minimum time of ${T} ${unit} with only ${wkr(best - 1)}.`;
     const slide = moves.filter((m) => !m.knock).map((m) => `${m.id} from ${m.from} to ${m.to}`).join(" and ");
-    const why = floor ? (floor.kind === "workerDays" ? ` No fewer will do: the work is ${floor.total} worker-${unit} and ${floor.total} ÷ ${T} = ${(floor.total! / T).toFixed(2)}, so at least ${wkr(floor.value)} are needed.` : ` No fewer will do: at time ${floor.at}, ${wkr(floor.value)} are needed whatever happens, because those activities must be running then.`) : "";
-    answerText = ask === "canFewer" ? (floor!.kind === "workerDays" ? `The work is ${floor!.total} worker-${unit}. ${floor!.total} ÷ ${best - 1} = ${(floor!.total! / (best - 1)).toFixed(2)}, which is more than ${T}, so ${wkr(best - 1)} cannot finish in ${T} ${unit}.` : `At time ${floor!.at}, ${wkr(floor!.value)} are needed whatever happens, because those activities must be running then. That is more than ${best - 1}, so it cannot be done.`)
+    const sev = acts.some((a) => (a.workers ?? 1) > 1);
+    const nameW = (id: string) => (sev ? `${id}(${acts.find((a) => a.id === id)!.workers ?? 1})` : id);
+    const why = floor ? ` No fewer will do. ${floorSentence(floor, unit, T, best - 1, nameW)}` : "";
+    answerText = ask === "canFewer" ? floorSentence(floor!, unit, T, best - 1, nameW)
       : ask === "show" ? `Slide ${slide}: the most workers needed at once is then ${best}, and the project still finishes at ${T}.`
       : `${wkr(best)}. Slide ${slide}${moves.some((m) => m.knock) ? `, which pushes ${moves.filter((m) => m.knock).map((m) => m.id).join(", ")}` : ""}; the project still finishes at ${T}.${why}`;
   } else if (kind === "cpaHistogram") {

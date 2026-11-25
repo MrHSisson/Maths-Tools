@@ -2068,6 +2068,7 @@
         "**Drawing order:** critical along the bottom, then longest first, no holes or overhangs.",
         "**Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); \"new start of the last activity\" is not offered at levelling Level 3.",
         "**Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask \"Show N − 1 is not enough\", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.",
+        "**2026-11-25 (branch `claude/stoic-goldberg-xmi9tw`):** the histogram Level 3 \"Why no fewer\" step always shows overlap: a moment where must-run activities add up, else the shortest window of time whose guaranteed work ÷ its length needs the answer (banded on the cascade chart and histogram), the total-work sum only as the last resort.",
         "**Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed."
        ]
       },
@@ -4151,6 +4152,10 @@
   "critical-path": {
    "changes": [
     {
+     "date": "2026-11-25",
+     "title": "Critical Path histogram: show what props up the fewest workers"
+    },
+    {
      "date": "2026-11-13",
      "title": "Decision shell: a problem no longer needs a network"
     },
@@ -4165,10 +4170,6 @@
     {
      "date": "2026-11-10",
      "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
-    },
-    {
-     "date": "2026-11-10",
-     "title": "Critical Path: a Backward pass sub-tool"
     }
    ]
   },

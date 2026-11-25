@@ -480,7 +480,7 @@ function CpaCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefine
     const cut = cutQ;
     const cas = d.extra!.cascade;
     // the must-run step is drawn on the cascade chart, so it switches there by itself
-    const onNetwork = refIdx === 0 && !step?.ganttView?.mustRun;
+    const onNetwork = refIdx === 0 && !step?.ganttView?.mustRun && !step?.ganttView?.band;
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 6, padding: "6px 0" }}>
         <div ref={box} style={{ flex: "5 1 0", minHeight: 0, overflow: "auto", display: "flex" }}>
