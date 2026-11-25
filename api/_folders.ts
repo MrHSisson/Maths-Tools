@@ -1,6 +1,7 @@
-// Folders: the file-explorer way to find a deck. A folder has a parent (so folders sit inside folders, to any depth) and belongs to one tree
-// (`class` today; `topic` joins it when the strands are moved onto this). A deck can sit in several folders, like a shortcut: the deck is never copied.
-// Kept in their own tables, apart from the decks, so filing a deck makes no deck version and cannot clash with an edit.
+// Folders: the file-explorer way to find a deck. A folder has a parent (so folders sit inside folders, to any depth) and belongs to one tree:
+// `class` (years and classes, signed-in only) or `topic` (the strands and topics, also read-only and published-only for everyone). A deck can sit in
+// several folders, like a shortcut: the deck is never copied. Kept in their own tables, apart from the decks, so filing a deck makes no deck version and
+// cannot clash with an edit. The old two-level categories (`deck_categories`, `deck_filing`) are no longer read after the topic tree has been copied from them.
 import type { Db } from "./_db.js";
 
 export type Tree = "class" | "topic";
@@ -8,7 +9,7 @@ export const TREES: Tree[] = ["class", "topic"];
 export const validTree = (v: unknown): v is Tree => typeof v === "string" && (TREES as string[]).includes(v);
 export interface Folder { id: string; tree: Tree; name: string; /** null for a top-level folder; another folder's id otherwise. */ parent: string | null; position: number }
 /** A deck as a folder lists it: its summary and its first slide for the card, with when it was made. Only the opened folder's decks are read. */
-export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; /** When the deck was last saved. */ editedAt: string; published: boolean; /** The lesson pitch (upper, middle or lower band), when set. */ pitch?: string; preview?: unknown }
+export interface FolderDeck { id: string; title: string; summary: string; slides: number; madeAt: string; /** When it was last saved (for the public read, when it was last published). */ editedAt: string; published: boolean; /** The lesson pitch (upper, middle or lower), if set. */ pitch?: string; preview?: unknown }
 type Row = Record<string, unknown>;
 
 export const MAX_NAME = 60;
@@ -27,47 +28,152 @@ export const DEFAULT_CLASS_TREE: { year: string; classes: string[] }[] = [
   { year: "A-Level", classes: ["12FM", "13MA", "13FM"] },
 ];
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const SEED_KEY = "class_folders_seeded";
+const CLASS_SEED_KEY = "class_folders_seeded";
+const TOPIC_SEED_KEY = "topic_folders_seeded";
+/** The topic tree a fresh start gets: the five GCSE strands, A-Level with Maths and Further Maths, and Starters. (A database that already had categories is copied instead.) */
+export const DEFAULT_TOPIC_TREE: { name: string; topics?: string[] }[] = [
+  { name: "Number" }, { name: "Algebra" }, { name: "Ratio & Proportion" }, { name: "Geometry" }, { name: "Probability & Statistics" },
+  { name: "A-Level", topics: ["Maths", "Further Maths"] }, { name: "Starters" },
+];
+/** A strand name a deck carried before filing was Harry's to control, and where it now belongs (a top-level folder and a folder inside it). */
+const ALIASES: Record<string, [string, string]> = { "decision mathematics": ["A-Level", "Further Maths"] };
+/** Not a real folder: the decks that are in no folder of a tree, shown as "Not filed". */
+export const UNFILED = "unfiled";
+
+const marked = async (db: Db, key: string) => (await db.query<Row>(`SELECT value FROM maths.deck_meta WHERE key = $1`, [key])).length > 0;
+const mark = (db: Db, key: string) => db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ($1,$2) ON CONFLICT (key) DO NOTHING`, [key, new Date().toISOString()]);
 
 /** Seeds the class tree once (a marker row says it has been done, so a folder deleted later stays deleted). Deterministic ids and DO NOTHING make a race harmless. */
-async function ensureSeed(db: Db) {
-  if ((await db.query<Row>(`SELECT value FROM maths.deck_meta WHERE key = $1`, [SEED_KEY])).length) return;
+async function ensureClassSeed(db: Db) {
+  if (await marked(db, CLASS_SEED_KEY)) return;
   let position = 0;
   for (const g of DEFAULT_CLASS_TREE) {
     const yearId = `class-${slug(g.year)}`;
     await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) VALUES ($1,'class',$2,NULL,$3) ON CONFLICT (id) DO NOTHING`, [yearId, g.year, position++]);
     for (const [i, c] of g.classes.entries()) await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) VALUES ($1,'class',$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [`class-${slug(c)}`, c, yearId, i]);
   }
-  await db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ($1,$2) ON CONFLICT (key) DO NOTHING`, [SEED_KEY, new Date().toISOString()]);
+  await mark(db, CLASS_SEED_KEY);
 }
+
+/** The folder a strand name belongs in (a top-level topic folder, or the one an old name is aliased to), or null. */
+async function folderForStrand(db: Db, strand: string): Promise<string | null> {
+  const s = clean(strand).toLowerCase();
+  if (!s) return null;
+  const folders = (await db.query<Row>(`SELECT id, name, parent FROM maths.deck_folders WHERE tree = 'topic'`)).map((r) => ({ id: r.id as string, name: (r.name as string).toLowerCase(), parent: (r.parent as string | null) ?? null }));
+  const alias = ALIASES[s];
+  if (alias) {
+    const top = folders.find((f) => f.parent === null && f.name === alias[0].toLowerCase());
+    const inner = top ? folders.find((f) => f.parent === top.id && f.name === alias[1].toLowerCase()) : undefined;
+    if (inner) return inner.id;
+  }
+  return folders.find((f) => f.parent === null && f.name === s)?.id ?? null;
+}
+
+/** Files a brand-new deck under the strand it carries (a deck built with `strand: "Number"` lands in Number), once, when it is first saved. Later saves never refile it. */
+export async function fileNewDeckByStrand(db: Db, deckId: string, strand: unknown): Promise<void> {
+  if (typeof strand !== "string") return;
+  await ensureTopicSeed(db);
+  const folder = await folderForStrand(db, strand);
+  if (folder) await db.query(`INSERT INTO maths.deck_folder_items (folder_id, deck_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [folder, deckId]);
+}
+
+/** Builds the topic tree once. A database that already had categories gets them copied as they are (same ids, same order, same filing; the old tables are left alone);
+ *  a new one gets the default tree. Decks that carry a strand but were never filed are then filed under it, as the old Decks page showed them. */
+async function ensureTopicSeed(db: Db) {
+  if (await marked(db, TOPIC_SEED_KEY)) return;
+  if (await marked(db, "categories_seeded")) {
+    await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) SELECT id, 'topic', name, parent, position FROM maths.deck_categories ON CONFLICT (id) DO NOTHING`);
+    await db.query(`INSERT INTO maths.deck_folder_items (folder_id, deck_id) SELECT f.category_id, f.deck_id FROM maths.deck_filing f WHERE f.category_id IN (SELECT id FROM maths.deck_folders WHERE tree = 'topic') ON CONFLICT DO NOTHING`);
+  } else {
+    let position = 0;
+    for (const t of DEFAULT_TOPIC_TREE) {
+      const id = `topic-${slug(t.name)}`;
+      await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) VALUES ($1,'topic',$2,NULL,$3) ON CONFLICT (id) DO NOTHING`, [id, t.name, position++]);
+      for (const [i, topic] of (t.topics ?? []).entries()) await db.query(`INSERT INTO maths.deck_folders (id, tree, name, parent, position) VALUES ($1,'topic',$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [`${id}-${slug(topic)}`, topic, id, i]);
+    }
+  }
+  const strands = new Map<string, string>();
+  for (const r of await db.query<Row>(`SELECT id, data->>'strand' AS strand FROM maths.decks`)) if (clean(r.strand)) strands.set(r.id as string, clean(r.strand));
+  for (const r of await db.query<Row>(`SELECT id, strand FROM maths.published_decks`)) if (clean(r.strand) && !strands.has(r.id as string)) strands.set(r.id as string, clean(r.strand));
+  for (const [deck, strand] of strands) {
+    const filed = await db.query<Row>(`SELECT 1 FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id WHERE i.deck_id = $1 AND f.tree = 'topic' LIMIT 1`, [deck]);
+    const folder = filed.length ? null : await folderForStrand(db, strand);
+    if (folder) await db.query(`INSERT INTO maths.deck_folder_items (folder_id, deck_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [folder, deck]);
+  }
+  await mark(db, TOPIC_SEED_KEY);
+}
+const ensureSeed = (db: Db, tree: Tree) => (tree === "class" ? ensureClassSeed(db) : ensureTopicSeed(db));
 
 const toFolder = (r: Row): Folder => ({ id: r.id as string, tree: r.tree as Tree, name: r.name as string, parent: (r.parent as string | null) ?? null, position: r.position as number });
 
-/** One tree's folders in order, how many decks each holds directly, which folders each deck is in, and every deck's id and title (for the "Add a deck" picker). */
-export async function listTree(db: Db, tree: Tree): Promise<{ folders: Folder[]; counts: Record<string, number>; byDeck: Record<string, string[]>; decks: { id: string; title: string }[] }> {
-  if (tree === "class") await ensureSeed(db);
-  const folders = (await db.query<Row>(`SELECT id, tree, name, parent, position FROM maths.deck_folders WHERE tree = $1 ORDER BY position, id`, [tree])).map(toFolder);
-  const items = await db.query<Row>(`SELECT i.deck_id, i.folder_id FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id WHERE f.tree = $1`, [tree]);
+/** One tree's folders in order, how many decks each holds directly, which folders each deck is in, how many decks are in none.
+ *  `publicOnly` (the read anyone may make) counts only published decks and drops folders with no published deck anywhere inside. */
+export async function listTree(db: Db, tree: Tree, o: { publicOnly?: boolean } = {}): Promise<{ folders: Folder[]; counts: Record<string, number>; byDeck: Record<string, string[]>; unfiled: number }> {
+  await ensureSeed(db, tree);
+  let folders = (await db.query<Row>(`SELECT id, tree, name, parent, position FROM maths.deck_folders WHERE tree = $1 ORDER BY position, id`, [tree])).map(toFolder);
+  const items = await db.query<Row>(`SELECT i.deck_id, i.folder_id FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id ${o.publicOnly ? "JOIN maths.published_decks p ON p.id = i.deck_id" : ""} WHERE f.tree = $1`, [tree]);
+  if (o.publicOnly) {                                                                      // only the folders that lead to a published deck
+    const byId = new Map(folders.map((f) => [f.id, f]));
+    const keep = new Set<string>();
+    for (const r of items) for (let f = byId.get(r.folder_id as string), n = 0; f && n < 20; f = f.parent ? byId.get(f.parent) : undefined, n++) keep.add(f.id);
+    folders = folders.filter((f) => keep.has(f.id));
+  }
   const counts: Record<string, number> = Object.fromEntries(folders.map((f) => [f.id, 0]));
   const byDeck: Record<string, string[]> = {};
   for (const r of items) { const d = r.deck_id as string, f = r.folder_id as string; counts[f] = (counts[f] ?? 0) + 1; (byDeck[d] ??= []).push(f); }
-  const titles = await db.query<Row>(`SELECT id, title FROM maths.decks ORDER BY COALESCE(created_at, updated_at) DESC, id`);
-  return { folders, counts, byDeck, decks: titles.map((r) => ({ id: r.id as string, title: r.title as string })) };
+  const table = o.publicOnly ? "maths.published_decks" : "maths.decks";
+  const unfiled = Number((await db.query<Row>(`SELECT count(*) AS n FROM ${table} d WHERE NOT EXISTS (SELECT 1 FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id WHERE i.deck_id = d.id AND f.tree = $1)`, [tree]))[0].n);
+  return { folders, counts, byDeck, unfiled };
 }
 
-/** The decks in one folder, most recently made first, each with its first slide (left out with `previews: false`, for the list view). Null when there is no such folder. */
-export async function decksInFolder(db: Db, folderId: string, previews = true): Promise<FolderDeck[] | null> {
-  if (!(await db.query<Row>(`SELECT 1 FROM maths.deck_folders WHERE id = $1`, [folderId])).length) return null;
-  const rows = await db.query<Row>(`SELECT d.id, d.title, d.summary, d.slides,
-      ${previews ? `CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END` : "NULL"} AS preview,
-      d.data->>'pitch' AS pitch, d.updated_at AS edited, COALESCE(d.created_at, d.updated_at) AS made, (p.id IS NOT NULL) AS published
-    FROM maths.deck_folder_items i JOIN maths.decks d ON d.id = i.deck_id LEFT JOIN maths.published_decks p ON p.id = d.id
-    WHERE i.folder_id = $1 ORDER BY made DESC, d.id`, [folderId]);
-  return rows.map((r) => ({ id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, editedAt: r.edited as string, published: r.published === true, ...(r.pitch ? { pitch: r.pitch as string } : {}), ...(r.preview ? { preview: r.preview } : {}) }));
+/** The decks in one folder (or, for `UNFILED`, those in no folder of tree `of`), most recently made first, each with its first slide. Null when there is no such folder.
+ *  `publicOnly` lists only published decks, from their published copies, and only for the topic tree. */
+export async function decksInFolder(db: Db, folderId: string, o: { publicOnly?: boolean; of?: Tree; previews?: boolean } = {}): Promise<FolderDeck[] | null> {
+  let param: string;
+  let cond: (id: string) => string;
+  if (folderId === UNFILED) {
+    if (!o.of) return null;
+    await ensureSeed(db, o.of);
+    param = o.of;
+    cond = (id) => `NOT EXISTS (SELECT 1 FROM maths.deck_folder_items i JOIN maths.deck_folders f ON f.id = i.folder_id WHERE i.deck_id = ${id} AND f.tree = $1)`;
+    if (o.publicOnly && o.of !== "topic") return null;
+  } else {
+    const f = await db.query<Row>(`SELECT tree FROM maths.deck_folders WHERE id = $1`, [folderId]);
+    if (!f.length) return null;
+    if (o.publicOnly && f[0].tree !== "topic") return null;
+    param = folderId;
+    cond = (id) => `EXISTS (SELECT 1 FROM maths.deck_folder_items i WHERE i.deck_id = ${id} AND i.folder_id = $1)`;
+  }
+  const rows = o.publicOnly
+    ? await db.query<Row>(`SELECT ${publicColumns(o.previews !== false)} FROM maths.published_decks p LEFT JOIN maths.decks d ON d.id = p.id WHERE ${cond("p.id")} ORDER BY made DESC, p.id`, [param])
+    : await db.query<Row>(`SELECT ${adminColumns(o.previews !== false)} FROM maths.decks d LEFT JOIN maths.published_decks p ON p.id = d.id WHERE ${cond("d.id")} ORDER BY made DESC, d.id`, [param]);
+  return rows.map((r) => toDeck(r, !!o.publicOnly));
+}
+
+// What a deck card or row needs, read the same way wherever decks are listed. The admin read uses the working copy; the public read the published copy.
+// `previews: false` (the list view) leaves the first slide out, so a big folder opens lighter.
+const adminColumns = (previews: boolean) => `d.id, d.title, d.summary, d.slides,
+  ${previews ? `CASE WHEN length((d.data->'slides'->0)::text) <= ${MAX_PREVIEW_CHARS} THEN d.data->'slides'->0 END` : "NULL"} AS preview,
+  d.data->>'pitch' AS pitch, COALESCE(d.created_at, d.updated_at) AS made, d.updated_at AS edited, (p.id IS NOT NULL) AS published`;
+const publicColumns = (previews: boolean) => `p.id, p.title, p.summary, p.slides, ${previews ? "p.preview" : "NULL"} AS preview, p.pitch, COALESCE(d.created_at, p.published_at) AS made, p.published_at AS edited`;
+const toDeck = (r: Row, publicOnly: boolean): FolderDeck => ({
+  id: r.id as string, title: r.title as string, summary: r.summary as string, slides: r.slides as number, madeAt: r.made as string, editedAt: r.edited as string,
+  published: publicOnly ? true : r.published === true, ...(r.pitch ? { pitch: r.pitch as string } : {}), ...(r.preview ? { preview: r.preview } : {}),
+});
+
+export const MAX_SEARCH_RESULTS = 60;
+/** Decks whose title or summary contains the text (any case), most recently made first, across every folder (and the decks in none). `publicOnly` searches only published decks. */
+export async function searchDecks(db: Db, text: string, o: { publicOnly?: boolean; previews?: boolean } = {}): Promise<FolderDeck[]> {
+  const like = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = o.publicOnly
+    ? await db.query<Row>(`SELECT ${publicColumns(o.previews !== false)} FROM maths.published_decks p LEFT JOIN maths.decks d ON d.id = p.id WHERE p.title ILIKE $1 ESCAPE '\\' OR p.summary ILIKE $1 ESCAPE '\\' ORDER BY made DESC, p.id LIMIT ${MAX_SEARCH_RESULTS}`, [like])
+    : await db.query<Row>(`SELECT ${adminColumns(o.previews !== false)} FROM maths.decks d LEFT JOIN maths.published_decks p ON p.id = d.id WHERE d.title ILIKE $1 ESCAPE '\\' OR d.summary ILIKE $1 ESCAPE '\\' ORDER BY made DESC, d.id LIMIT ${MAX_SEARCH_RESULTS}`, [like]);
+  return rows.map((r) => toDeck(r, !!o.publicOnly));
 }
 
 /** Replaces the folders a deck is in within one tree (its place in the other tree is left alone). Folders that are not in that tree are ignored. Returns the folders now set. */
 export async function setDeckFolders(db: Db, deckId: string, tree: Tree, folderIds: string[]): Promise<string[]> {
+  await ensureSeed(db, tree);
   const inTree = (await db.query<Row>(`SELECT id FROM maths.deck_folders WHERE tree = $1 ORDER BY position, id`, [tree])).map((r) => r.id as string);
   const keep = inTree.filter((f) => folderIds.includes(f));
   await db.query(`DELETE FROM maths.deck_folder_items WHERE deck_id = $1 AND folder_id IN (SELECT id FROM maths.deck_folders WHERE tree = $2)`, [deckId, tree]);
@@ -110,6 +216,7 @@ const fail = (error: string, status = 400): FolderOpResult => ({ ok: false, erro
 /** Applies one change to the folders and returns the whole tree as it now stands. A folder is only ever renamed, moved or removed: no deck is touched.
  *  Deleting a folder moves what is in it up one level: its decks go into its parent (if it has one) and its subfolders become the parent's. */
 export async function applyFolderOp(db: Db, op: FolderOp): Promise<FolderOpResult> {
+  await ensureSeed(db, "class"); await ensureSeed(db, "topic");
   const all = (await db.query<Row>(`SELECT id, tree, name, parent, position FROM maths.deck_folders`)).map(toFolder);
   const byId = new Map(all.map((f) => [f.id, f]));
   const kids = (parent: string | null, tree: Tree) => all.filter((f) => f.tree === tree && f.parent === parent).sort((a, b) => a.position - b.position || (a.id < b.id ? -1 : 1));

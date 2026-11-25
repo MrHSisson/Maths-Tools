@@ -1,21 +1,39 @@
-// "Filed under": which category (a strand, or a topic inside one) a deck sits in on the Decks page. The categories are Harry's to control
-// (src/decks/categoryTree.ts); this is the same filing as dragging a card, from inside the deck editor.
+// "Filed under" in the deck editor's About the deck: which folders a deck is in, in the topic tree and in the class tree. The same filing as dragging a card
+// on the Decks page (components/FolderView.tsx). A deck can be in several folders; ticking one adds it, unticking takes it out.
 import { useState } from "react";
-import { useCategories } from "./categories";
-import { menuOptions, placeOf } from "./categoryTree";
+import { flatten, setDeckFolders, useReload, useTree, type Tree } from "./folders";
 
-export function FileUnder({ deckId, strand }: { deckId: string; /** The strand the deck still carries from before categories were Harry's to control. */ strand?: string }) {
-  const { data, act } = useCategories(true);
-  const [error, setError] = useState<string | null>(null);
-  if (data === undefined) return <p className="text-xs text-slate-400">Loading the categories…</p>;
-  if (data === null) return <p className="text-xs text-slate-400">The categories are not available here (the sharing service is not reachable).</p>;
+const LABEL: Record<Tree, string> = { topic: "Topic folders", class: "Class folders" };
+
+export function FileUnder({ deckId }: { deckId: string }) {
   return (
-    <div className="space-y-1">
-      <select value={placeOf({ id: deckId, strand }, data) ?? ""} onChange={async (e) => setError(await act({ op: "file", deckId, categoryId: e.target.value || null }))} aria-label="Filed under"
-        className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800">
-        <option value="">Not filed</option>
-        {menuOptions(data).map((o) => <option key={o.id} value={o.id}>{o.depth ? "   " : ""}{o.label}</option>)}
-      </select>
+    <div className="space-y-3">
+      {(["topic", "class"] as Tree[]).map((t) => <Picker key={t} deckId={deckId} tree={t} />)}
+    </div>
+  );
+}
+
+function Picker({ deckId, tree }: { deckId: string; tree: Tree }) {
+  const [reload, bump] = useReload();
+  const data = useTree(tree, reload);
+  const [error, setError] = useState<string | null>(null);
+  const title = <div className="text-xs font-semibold text-slate-500">{LABEL[tree]}</div>;
+  if (data === undefined) return <div>{title}<p className="text-xs text-slate-400">Loading the folders…</p></div>;
+  if (data === null) return <div>{title}<p className="text-xs text-slate-400">The folders are not available here (the sharing service is not reachable).</p></div>;
+  const mine = new Set(data.byDeck[deckId] ?? []);
+  const toggle = async (id: string, on: boolean) => { const next = on ? [...mine, id] : [...mine].filter((f) => f !== id); setError(await setDeckFolders(deckId, tree, next)); bump(); };
+  const rows = flatten(data.folders);
+  return (
+    <div>
+      {title}
+      <div className="max-h-44 overflow-auto rounded-lg border border-slate-300 bg-white p-1 text-sm text-slate-800">
+        {rows.length === 0 && <p className="px-2 py-1 text-xs text-slate-400">No folders yet: make one on the Decks page.</p>}
+        {rows.map(({ folder, depth }) => (
+          <label key={folder.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-slate-50" style={{ paddingLeft: 8 + depth * 16 }}>
+            <input type="checkbox" className="h-4 w-4 accent-blue-900" checked={mine.has(folder.id)} onChange={(e) => void toggle(folder.id, e.target.checked)} />{folder.name}
+          </label>
+        ))}
+      </div>
       {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
     </div>
   );

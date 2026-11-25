@@ -15,7 +15,7 @@ const deck = (id: string, updatedAt: string) => ({ id, title: `Deck ${id}`, summ
 const post = (body: unknown, key: string | null = "k") => POST(new Request("http://x/api/decks", { method: "POST", headers: key ? { "x-admin-key": key } : {}, body: JSON.stringify(body) }));
 const get = (q: string, key: string | null = "k") => GET(new Request(`http://x/api/decks${q}`, { headers: key ? { "x-admin-key": key } : {} }));
 type FolderDeck = { id: string; title: string; slides: number; madeAt: string; editedAt: string; published: boolean; pitch?: string; preview?: { id: string } };
-type Tree = { folders: { id: string; tree: string; name: string; parent: string | null; position: number }[]; counts: Record<string, number>; byDeck: Record<string, string[]>; decks: { id: string; title: string }[] };
+type Tree = { unfiled: number; folders: { id: string; tree: string; name: string; parent: string | null; position: number }[]; counts: Record<string, number>; byDeck: Record<string, string[]> };
 const tree = async (t = "class") => (await (await get(`?folders=${t}`)).json()) as Tree;
 const fid = (t: Tree, name: string) => t.folders.find((f) => f.name === name)!.id;
 const file = (deckId: string, folderIds: string[], t = "class") => post({ folders: { deckId, tree: t, folderIds } });
@@ -79,6 +79,21 @@ describe("deck folders", () => {
     expect((await inFolder(f)).decks.every((d) => d.preview?.id === "a")).toBe(true);        // pictures stay the default
   });
 
+  it("the band and the no-pictures switch also work for Not filed, search and the public reads", async () => {
+    await post({ deck: { ...deck("live", "2026-11-01T10:00:00.000Z"), pitch: "upper", title: "Lesson one" } });
+    await post({ publish: { ...deck("live", "2026-11-01T10:00:00.000Z"), pitch: "upper", title: "Lesson one" } });
+    const lean = async (q: string, key: string | null) => ((await (await get(q, key)).json()) as { decks: FolderDeck[] }).decks;
+    for (const [q, key] of [["?folder=unfiled&of=topic&previews=0", "k"], ["?search=lesson&previews=0", "k"], ["?search=lesson&previews=0&public=1", null], ["?folder=unfiled&of=topic&previews=0&public=1", null]] as const) {
+      const [d] = await lean(q, key);
+      expect(d.id, q).toBe("live");
+      expect(d.pitch, q).toBe("upper");
+      expect(d.preview, q).toBeUndefined();
+      expect(d.editedAt, q).toBeTruthy();
+    }
+    expect((await lean("?search=lesson", "k"))[0].preview).toBeTruthy();                      // pictures stay the default everywhere
+    expect((await lean("?search=lesson&public=1", null))[0].preview).toBeTruthy();
+  });
+
   it("works for a folder inside a folder, to any depth", async () => {
     await post({ deck: deck("x", "2026-11-01T10:00:00.000Z") });
     const t = await tree();
@@ -123,14 +138,13 @@ describe("deck folders", () => {
     expect((await r.json() as { folderIds: string[] }).folderIds).toEqual([fid(await tree(), "9M6")]);
   });
 
-  it("the admin list says which decks are published and gives every deck's title for the picker", async () => {
+  it("the admin list says which decks are published", async () => {
     await post({ deck: deck("live", "2026-11-01T10:00:00.000Z") });
     await post({ deck: deck("draft", "2026-11-02T10:00:00.000Z") });
     const f = fid(await tree(), "12FM");
     for (const id of ["live", "draft"]) await file(id, [f]);
     await post({ publish: deck("live", "2026-11-01T10:00:00.000Z") });
     expect((await inFolder(f)).decks.map((d) => [d.id, d.published])).toEqual([["draft", false], ["live", true]]);
-    expect((await tree()).decks).toEqual([{ id: "draft", title: "Deck draft" }, { id: "live", title: "Deck live" }]);
   });
 
   it("every read and change needs the admin key; a bad tree, folder or request is refused", async () => {
@@ -247,6 +261,164 @@ describe("deck folders", () => {
       expect((await post({ folderOp: { op: "delete", id: fid(t, "9M6") } }, null)).status).toBe(401);
       expect((await op({ op: "explode", id: "x" })).status).toBe(400);
       expect((await op({ op: "add", tree: "nope", name: "x" })).status).toBe(400);
+    });
+  });
+
+  describe("the topic tree (the old strands and topics)", () => {
+    const names = (t: Tree, parent: string | null) => t.folders.filter((f) => f.parent === parent).sort((a, b) => a.position - b.position).map((f) => f.name);
+
+    it("a new database gets the default strands, with A-Level holding Maths and Further Maths", async () => {
+      const t = await tree("topic");
+      expect(names(t, null)).toEqual(["Number", "Algebra", "Ratio & Proportion", "Geometry", "Probability & Statistics", "A-Level", "Starters"]);
+      expect(names(t, fid(t, "A-Level"))).toEqual(["Maths", "Further Maths"]);
+      expect(t.folders.every((f) => f.tree === "topic")).toBe(true);
+    });
+
+    it("a database that already had categories gets them copied as they were: same ids, order and filing, and the old tables are left alone", async () => {
+      await post({ deck: deck("est", "2026-11-01T10:00:00.000Z") });             // creates the tables
+      await post({ deck: deck("res", "2026-11-02T10:00:00.000Z") });
+      await db.query(`DELETE FROM maths.deck_folder_items`);                      // (a new deck's own filing is not what this is about)
+      await db.query(`INSERT INTO maths.deck_categories (id, name, parent, position) VALUES ('seed-number','Number',NULL,0),('c_x','Factors & multiples','seed-number',0),('c_y','Mine',NULL,1)`);
+      await db.query(`INSERT INTO maths.deck_meta (key, value) VALUES ('categories_seeded','v2:2026-11-14')`);
+      await db.query(`INSERT INTO maths.deck_filing (deck_id, category_id) VALUES ('est','c_x'),('res','c_y')`);
+      const t = await tree("topic");
+      expect(t.folders.map((f) => [f.id, f.name, f.parent, f.position]).sort((a, b) => (a[0] as string) < (b[0] as string) ? -1 : 1)).toEqual([["c_x", "Factors & multiples", "seed-number", 0], ["c_y", "Mine", null, 1], ["seed-number", "Number", null, 0]]);
+      expect(t.byDeck).toEqual({ est: ["c_x"], res: ["c_y"] });
+      expect((await db.query(`SELECT count(*) AS n FROM maths.deck_categories`))[0].n).toBe(3);
+      expect((await db.query(`SELECT count(*) AS n FROM maths.deck_filing`))[0].n).toBe(2);
+    });
+
+    it("a deck that carried a strand but was never filed is filed under it, once, when the tree is copied; Decision Mathematics goes into Further Maths", async () => {
+      await post({ deck: deck("a", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("b", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("c", "2026-11-01T10:00:00.000Z") });
+      await db.query(`DELETE FROM maths.deck_folder_items`);
+      await db.query(`UPDATE maths.decks SET data = jsonb_set(data, '{strand}', '"Number"') WHERE id = 'a'`);
+      await db.query(`UPDATE maths.decks SET data = jsonb_set(data, '{strand}', '"Decision Mathematics"') WHERE id = 'b'`);
+      await db.query(`UPDATE maths.decks SET data = jsonb_set(data, '{strand}', '"Weird"') WHERE id = 'c'`);
+      const t = await tree("topic");
+      expect(t.byDeck).toEqual({ a: [fid(t, "Number")], b: [fid(t, "Further Maths")] });
+      expect(t.unfiled).toBe(1);                                                   // c: its strand names nothing
+    });
+
+    it("a brand-new deck is filed under the strand it carries when first saved, and later saves never refile it", async () => {
+      await tree("topic");
+      await post({ deck: { ...deck("new", "2026-11-01T10:00:00.000Z"), strand: "Algebra" } });
+      const t = await tree("topic");
+      expect(t.byDeck).toEqual({ new: [fid(t, "Algebra")] });
+      await file("new", [], "topic");                                              // Harry takes it out
+      await post({ deck: { ...deck("new", "2026-11-03T10:00:00.000Z"), strand: "Algebra" } });
+      expect((await tree("topic")).byDeck).toEqual({});
+    });
+
+    it("'Not filed' lists the decks in no folder of the tree, newest first", async () => {
+      await post({ deck: deck("one", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("two", "2026-11-09T10:00:00.000Z") });
+      await post({ deck: deck("three", "2026-11-05T10:00:00.000Z") });
+      const t = await tree("topic");
+      await file("three", [fid(t, "Number")], "topic");
+      expect((await tree("topic")).unfiled).toBe(2);
+      const r = await (await get("?folder=unfiled&of=topic")).json() as { decks: FolderDeck[] };
+      expect(r.decks.map((d) => d.id)).toEqual(["two", "one"]);
+      expect((await get("?folder=unfiled")).status).toBe(404);                     // needs to say which tree
+      expect((await tree("class")).unfiled).toBe(3);                               // none of them is in a class folder
+    });
+  });
+
+  describe("what anyone may read (published decks in the topic tree)", () => {
+    const open = (q: string) => get(`${q}${q.includes("?") ? "&" : "?"}public=1`, null);
+
+    it("lists only the folders that lead to a published deck, with published counts, and no titles", async () => {
+      await post({ deck: deck("live", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("draft", "2026-11-02T10:00:00.000Z") });
+      const t = await tree("topic");
+      await file("live", [fid(t, "Further Maths")], "topic");
+      await file("draft", [fid(t, "Algebra")], "topic");
+      await post({ publish: deck("live", "2026-11-01T10:00:00.000Z") });
+      const r = await (await open("?folders=topic")).json() as Tree;
+      expect(r.folders.map((f) => f.name).sort()).toEqual(["A-Level", "Further Maths"]);        // not Algebra: its only deck is a draft
+      expect(r.counts[fid(t, "Further Maths")]).toBe(1);
+      expect(r.byDeck).toEqual({ live: [fid(t, "Further Maths")] });
+      expect(r.unfiled).toBe(0);
+    });
+
+    it("a folder lists its published decks from their published copies, newest made first, and a draft is not there", async () => {
+      await post({ deck: deck("live", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: deck("draft", "2026-11-02T10:00:00.000Z") });
+      const f = fid(await tree("topic"), "Number");
+      await file("live", [f], "topic"); await file("draft", [f], "topic");
+      await post({ publish: deck("live", "2026-11-01T10:00:00.000Z") });
+      const r = await (await open(`?folder=${f}`)).json() as { decks: FolderDeck[] };
+      expect(r.decks.map((d) => [d.id, d.published])).toEqual([["live", true]]);
+      expect(r.decks[0].preview).toBeTruthy();
+      const un = await (await open("?folder=unfiled&of=topic")).json() as { decks: FolderDeck[] };
+      expect(un.decks).toEqual([]);
+    });
+
+    it("the class tree is not public, and the signed-in reads still need the key", async () => {
+      const f = fid(await tree("class"), "9M6");
+      expect((await open("?folders=class")).status).toBe(404);
+      expect((await open(`?folder=${f}`)).status).toBe(404);
+      expect((await get("?folders=topic", null)).status).toBe(401);
+    });
+  });
+
+  describe("search and sorting", () => {
+    const named = (id: string, title: string, summary: string, updatedAt: string) => ({ ...deck(id, updatedAt), title, summary });
+    const search = async (q: string, key: string | null = "k", pub = false) => (await get(`?search=${encodeURIComponent(q)}${pub ? "&public=1" : ""}`, key));
+    const ids = async (q: string, pub = false) => ((await (await search(q, pub ? null : "k", pub)).json()) as { decks: FolderDeck[] }).decks.map((d) => d.id);
+
+    it("finds decks by a word in the title or summary, any case, across every folder and the decks in none, newest made first", async () => {
+      await post({ deck: named("a", "Factors and HCF", "Common factors", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("b", "Ratio sharing", "Share in a ratio, with factors", "2026-11-05T10:00:00.000Z") });
+      await post({ deck: named("c", "Estimation", "Round first", "2026-11-09T10:00:00.000Z") });
+      const t = await tree("topic");
+      await file("a", [fid(t, "Number")], "topic");                               // a is in a folder, b is in none
+      expect(await ids("FACTORS")).toEqual(["b", "a"]);
+      expect(await ids("round")).toEqual(["c"]);
+      expect(await ids("nothing like this")).toEqual([]);
+    });
+
+    it("treats % and _ and \\ as ordinary characters, not wildcards", async () => {
+      await post({ deck: named("p", "100% sure", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("q", "Plain", "", "2026-11-02T10:00:00.000Z") });
+      await post({ deck: named("r", "a_b", "", "2026-11-03T10:00:00.000Z") });
+      expect(await ids("%")).toEqual(["p"]);
+      expect(await ids("_")).toEqual(["r"]);
+      expect(await ids("\\")).toEqual([]);
+    });
+
+    it("gives each result its first slide and when it was last saved, for the cards and for sorting", async () => {
+      await post({ deck: named("a", "Alpha", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("a", "Alpha", "", "2026-11-20T10:00:00.000Z") });     // edited later
+      const [d] = ((await (await search("alpha")).json()) as { decks: FolderDeck[] }).decks;
+      expect(d.preview?.id).toBe("a");
+      expect(d.madeAt).toBe("2026-11-01T10:00:00.000Z");
+      expect(d.editedAt).toBe("2026-11-20T10:00:00.000Z");
+      const f = fid(await tree(), "7M1");
+      await file("a", [f]);
+      expect((await inFolder(f)).decks[0].editedAt).toBe("2026-11-20T10:00:00.000Z");
+    });
+
+    it("is capped at 60 results", async () => {
+      for (let i = 0; i < 65; i++) await post({ deck: named(`d${i}`, `Common title ${i}`, "", `2026-11-01T10:00:${String(i % 60).padStart(2, "0")}.000Z`) });
+      expect((await ids("common")).length).toBe(60);
+    });
+
+    it("the public search sees only published decks, from their published copies, and nothing else", async () => {
+      await post({ deck: named("live", "Public lesson", "", "2026-11-01T10:00:00.000Z") });
+      await post({ deck: named("draft", "Public draft", "", "2026-11-02T10:00:00.000Z") });
+      await post({ publish: named("live", "Public lesson", "", "2026-11-01T10:00:00.000Z") });
+      expect(await ids("public", true)).toEqual(["live"]);
+      expect(await ids("public")).toEqual(["draft", "live"]);
+      const [d] = ((await (await search("lesson", null, true)).json()) as { decks: FolderDeck[] }).decks;
+      expect(d.published).toBe(true);
+    });
+
+    it("needs a search of 1 to 80 characters, and the signed-in search needs the key", async () => {
+      expect((await search("   ")).status).toBe(400);
+      expect((await search("x".repeat(81))).status).toBe(400);
+      expect((await search("lesson", null)).status).toBe(401);
     });
   });
 });
