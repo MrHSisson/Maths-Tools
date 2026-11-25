@@ -176,8 +176,8 @@ function StatementRows({ items }: { items: SpecStatement[] }) {
 /** one skill (a sub-tool) as a plain row that opens it; A2 practice carries its tag at the end */
 function SkillRow({ l, planning }: { l: SpecLink; planning: boolean }) {
   return (
-    <li className="shadow-[inset_-1px_-1px_0_0_#cbd5e1]">
-      <a href={l.href} className="flex min-h-[48px] items-center gap-2 px-4 py-3 text-[15px] text-slate-900 hover:bg-blue-50/70 sm:px-5">
+    <li>
+      <a href={l.href} className="flex min-h-[44px] items-center gap-2 px-4 py-2.5 text-[15px] text-slate-900 hover:bg-blue-50/70 sm:px-5">
         <span className="min-w-0 flex-1">{l.label}</span>
         {!l.as && <span className={a2Tag}>A2</span>}
         {planning && !l.live && <span className={`${tag} bg-amber-50 text-amber-800`}>Dev</span>}
@@ -242,7 +242,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
 
   return (
     <div className="min-h-screen" style={{ background: PAGE_BG }}>
-      <div className={`mx-auto max-w-5xl ${view.kind === "chapter" ? "lg:max-w-[52rem]" : ""} ${phone ? "px-4 py-4" : "px-6 py-8"}`}>
+      <div className={`mx-auto max-w-5xl ${view.kind === "chapter" ? "lg:max-w-[46rem]" : ""} ${phone ? "px-4 py-4" : "px-6 py-8"}`}>
         {view.kind === "home" ? (
           <button onClick={() => { window.location.href = "/"; }} className="mb-3 inline-flex items-center gap-2 rounded-xl py-1 pr-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
             <Home size={18} /> Home
@@ -281,7 +281,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                       <ChevronRight size={20} className="mt-1 shrink-0 text-slate-300 group-hover:text-blue-900" />
                     </div>
                     <p className={`line-clamp-2 text-sm ${open.length ? "text-slate-600" : "text-slate-400"}`}>
-                      {open.length ? open.map(t => t.name).join(" · ") : planning ? toolState(c, planning) : "Coming soon"}
+                      {open.length ? `${open.length} generator${open.length === 1 ? "" : "s"} available` : planning ? toolState(c, planning) : "Coming soon"}
                     </p>
                   </button>
                 );
@@ -334,7 +334,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                       )}
                     </header>
                     {t.skills.length > 0 && (
-                      <ul className="-mb-px -mr-px grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-t border-slate-300">
+                      <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-t border-slate-300">
                         {t.skills.map(l => <SkillRow key={l.href} l={l} planning={planning} />)}
                       </ul>
                     )}
