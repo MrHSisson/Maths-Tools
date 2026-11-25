@@ -18,18 +18,25 @@ import { generateElastic } from "./elastic/elastic";
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 const A2_OFF = { key: "a2", values: ["off"] };
+const A2_ONLY = { key: "a2", values: ["only"] };
 
 const SUB_TOOLS = [
   { key: "hooke", label: "Hooke's Law", levels: 3, blurb: "T = λx ÷ l and T = kx" },
-  { key: "epe", label: "Elastic Potential Energy", levels: 2, blurb: "Energy stored = λx² ÷ 2l" },
+  { key: "epe", label: "Elastic Potential Energy", levels: 2, blurb: "Energy stored = λx² ÷ 2l", disabledWhen: A2_ONLY },
   { key: "elastic", label: "Elastic Energy Problems", levels: 3, blurb: "Conservation of energy with a spring or string" },
 ];
 
 const opt = (o: Record<string, string>, key: string, fallback: string): string => (o[key] !== undefined && o[key] !== "" ? o[key] : fallback);
 
+const A2_FORCED: Record<string, Record<string, string>> = {
+  elastic: { elSetting: "rough,slope" },
+  hooke: { hkSetting: "points" },
+};   // Only A2: the choices that carry the content, whichever level
+
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "hooke";
-  const o = ctx?.options ?? {};
+  const a2Only = (ctx?.options ?? {}).a2 === "only";
+  const o = a2Only ? { ...(ctx?.options ?? {}), ...(A2_FORCED[sub] ?? {}) } : ctx?.options ?? {};
   const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
   const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
@@ -63,7 +70,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "hkSetting", label: "Setting", info: "A spring or string along a table, a mass hanging in equilibrium, a particle held between two vertical strings, or (A2) a particle on two strings fixed at two points on one level, which needs the triangle and resolving.", forSubTools: ["hooke"], multi: true,
     defaultFor: lv({ 1: "horizontal", 2: "horizontal,hanging", 3: "hanging,two" }),
-    choices: [{ value: "horizontal", label: "Along a table" }, { value: "hanging", forLevels: [2, 3], label: "Hanging" }, { value: "two", forLevels: [3], label: "Between two strings" }, { value: "points", forLevels: [3], label: "Two fixed points (A2)", disabledWhen: A2_OFF }],
+    choices: [{ value: "horizontal", label: "Along a table", disabledWhen: A2_ONLY }, { value: "hanging", forLevels: [2, 3], label: "Hanging", disabledWhen: A2_ONLY }, { value: "two", forLevels: [3], label: "Between two strings", disabledWhen: A2_ONLY }, { value: "points", forLevels: [3], label: "Two fixed points (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "hkAsk", label: "Ask for", info: "What to find: the tension or thrust, the extension (or the length of a hanging string), the stiffness k, the modulus of elasticity, or the mass. Between two strings the extension of the upper one is asked; on two fixed points the modulus of one string and the mass.", forSubTools: ["hooke"], multi: true,
@@ -82,7 +89,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "elSetting", label: "Setting", info: "A particle on a smooth table released from a stretched or compressed spring, a particle dropped from the support of a string, or (A2) a rough table or a smooth slope where the string is fixed at the top.", forSubTools: ["elastic"], multi: true,
     defaultFor: lv({ 1: "horizontal", 2: "vertical", 3: "vertical,rough" }),
-    choices: [{ value: "horizontal", label: "Smooth table" }, { value: "vertical", forLevels: [2, 3], label: "Dropped on a string" }, { value: "rough", forLevels: [3], label: "Rough table (A2)", disabledWhen: A2_OFF }, { value: "slope", forLevels: [3], label: "Down a slope (A2)", disabledWhen: A2_OFF }],
+    choices: [{ value: "horizontal", label: "Smooth table", disabledWhen: A2_ONLY }, { value: "vertical", forLevels: [2, 3], label: "Dropped on a string", disabledWhen: A2_ONLY }, { value: "rough", forLevels: [3], label: "Rough table (A2)", disabledWhen: A2_OFF }, { value: "slope", forLevels: [3], label: "Down a slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "elAsk", label: "Ask for", info: "What to find: the speed at the natural length or at a given extension, or the distance slid after the string goes slack (a rough table); for a drop, the greatest extension, the distance below the support, the acceleration at the lowest point or the greatest speed.", forSubTools: ["elastic"], multi: true,

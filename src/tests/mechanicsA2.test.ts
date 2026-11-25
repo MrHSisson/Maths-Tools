@@ -22,6 +22,16 @@ describe("Further Mechanics: leaving out A2 questions", () => {
         expect(m.a2, `${name} ${s.key} L${level}`).toBe(false);
       }
     });
+    it(`${name}: with Only A2 every question needs A2 content, at every level of every tab that can have any`, () => {
+      for (const s of t.subTools as Array<{ key: string; levels?: number; disabledWhen?: { values: string[] } }>) {
+        const none = s.disabledWhen?.values.includes("only");   // a tab with no A2 content is greyed out, not drawn from
+        for (const level of [1, 2, 3].slice(0, s.levels ?? 3)) for (let k = 0; k < 40; k++) {
+          if (none) continue;
+          const m = t.generate(level, { subTool: s.key, options: { a2: "only" } }).mech!;
+          expect(m.a2, `${name} ${s.key} L${level}`).toBe(true);
+        }
+      }
+    });
     it(`${name}: A2 tabs and choices stay on show, only disabled`, () => {
       const subs = t.subTools as Array<{ key: string; when?: unknown; disabledWhen?: unknown }>;
       expect(subs.every((s) => !s.when)).toBe(true);
@@ -33,5 +43,7 @@ describe("Further Mechanics: leaving out A2 questions", () => {
     expect(fs.fsAsk).not.toContain("vector");
     expect(fs.fsAsk.length).toBeGreaterThan(0);
     expect(resolvedOptions(groups, { a2: "on", fsAsk: "vector" }, 3, "forcespeed").fsAsk).toBe("vector");
+    // Only A2 greys the choices with no A2 content, so a pool left with the A2 choice draws only that
+    expect(resolvedOptions(groups, { a2: "only", fsAsk: "power,vector" }, 3, "forcespeed").fsAsk).toBe("vector");
   });
 });

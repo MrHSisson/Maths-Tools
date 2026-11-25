@@ -20,20 +20,27 @@ import { generateVariable } from "./workDone/variable";
 
 
 const A2_OFF = { key: "a2", values: ["off"] };
+const A2_ONLY = { key: "a2", values: ["only"] };
 
 const SUB_TOOLS = [
-  { key: "fd", label: "Force and Distance", levels: 3, blurb: "Work done = force × distance" },
+  { key: "fd", label: "Force and Distance", levels: 3, blurb: "Work done = force × distance", disabledWhen: A2_ONLY },
   { key: "grav", label: "Work and Gravity", levels: 3, blurb: "Work done by or against gravity, mgh" },
   { key: "angle", label: "Force at an Angle (A2)", levels: 3, blurb: "Work done = F d cos θ", disabledWhen: A2_OFF },
   { key: "several", label: "Several Forces", levels: 3, blurb: "Totals over forces, stages and heights" },
-  { key: "variable", label: "Variable Force", levels: 3, blurb: "Work done as an integral" },
+  { key: "variable", label: "Variable Force", levels: 3, blurb: "Work done as an integral", disabledWhen: A2_ONLY },
 ];
 
 const opt = (o: Record<string, string>, key: string, fallback: string): string => (o[key] !== undefined && o[key] !== "" ? o[key] : fallback);
 
+const A2_FORCED: Record<string, Record<string, string>> = {
+  grav: { gravSetting: "slope" },
+  several: { sevSituation: "slope" },
+};   // Only A2: the choices that carry the content, whichever level
+
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "fd";
-  const o = ctx?.options ?? {};
+  const a2Only = (ctx?.options ?? {}).a2 === "only";
+  const o = a2Only ? { ...(ctx?.options ?? {}), ...(A2_FORCED[sub] ?? {}) } : ctx?.options ?? {};
   const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
   const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
@@ -58,8 +65,8 @@ const OPTIONS: ShellOption[] = [
     displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
-    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up. Left out, they are not drawn: their choices and tabs stay on show but greyed out.",
-    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "off", label: "Left out" }],
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up when their choices are ticked. Only A2, every question needs A2 content: the tabs and choices with none are greyed out. Left out, no A2 question is drawn and the A2 tabs and choices are greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "only", label: "Only A2" }, { value: "off", label: "Left out" }],
   },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a crate, a car, a climber) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
@@ -80,7 +87,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "gravSetting", label: "Setting", info: "Lifting or falling straight up and down, or moving along a slope (A2, where the height gained is d sin α).", forSubTools: ["grav"],
     multi: true,
-    defaultFor: () => "vertical", choices: [{ value: "vertical", label: "Vertical" }, { value: "slope", label: "Along a slope (A2)", disabledWhen: A2_OFF }],
+    defaultFor: () => "vertical", choices: [{ value: "vertical", label: "Vertical", disabledWhen: A2_ONLY }, { value: "slope", label: "Along a slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "gravBy", label: "By or Against", info: "Work done against gravity (lifting, climbing) or by gravity (falling, sliding down).", forSubTools: ["grav"],
@@ -99,7 +106,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "sevSituation", label: "Situation", info: "Two forces over one distance; a journey with a height change; the two-step question that finds a distance first; a journey in two stages; or (A2) a road given by its angle, where gravity needs the height gained.", forSubTools: ["several"], multi: true,
     defaultFor: lv({ 1: "two", 2: "journey", 3: "twostep,stages" }),
-    choices: [{ value: "two", label: "Two forces" }, { value: "journey", label: "A journey with a height change" }, { value: "twostep", forLevels: [3], label: "Find a distance first" }, { value: "stages", forLevels: [3], label: "Two stages" }, { value: "slope", forLevels: [3], label: "Up a slope by its angle (A2)", disabledWhen: A2_OFF }],
+    choices: [{ value: "two", label: "Two forces", disabledWhen: A2_ONLY }, { value: "journey", label: "A journey with a height change", disabledWhen: A2_ONLY }, { value: "twostep", forLevels: [3], label: "Find a distance first", disabledWhen: A2_ONLY }, { value: "stages", forLevels: [3], label: "Two stages", disabledWhen: A2_ONLY }, { value: "slope", forLevels: [3], label: "Up a slope by its angle (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "varForms", label: "Force Forms", info: "The kind of force to integrate: a polynomial, kx to a power, a square root, a trigonometric force or a reciprocal.", forSubTools: ["variable"], forLevels: [1, 2], multi: true,

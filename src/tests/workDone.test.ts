@@ -92,7 +92,9 @@ describe("Work Done: independent re-derivation of every answer", () => {
       const h = i.setting === "slope" ? i.d * Math.cos(((90 - i.alpha) * Math.PI) / 180) : i.h;
       const W = i.m * i.g * h;
       const shown = sig(W, 3);
-      if (i.ask === "work") near(m.answer.value, sig(W, 3) / (i.wUnit === "kJ" ? 1000 : 1), 1e-9);
+      // a work done that is exactly half way between two three-figure values (30 kg, 125 m of height: 36 750 J) rounds either way in floating point, so either is right
+      const unit = i.wUnit === "kJ" ? 1000 : 1;
+      if (i.ask === "work") expect([sig(W * (1 - 1e-12), 3), sig(W * (1 + 1e-12), 3)].some((x) => Math.abs(m.answer.value - x / unit) <= 1e-9 * Math.abs(x / unit))).toBe(true);
       else if (i.ask === "height") near(m.answer.value, sig(shown / (i.m * i.g), 3));
       else near(m.answer.value, sig(shown / (i.g * h), 3));
     }

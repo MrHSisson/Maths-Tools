@@ -19,6 +19,7 @@ import { generateConserve } from "./energy/conserve";
 
 
 const A2_OFF = { key: "a2", values: ["off"] };
+const A2_ONLY = { key: "a2", values: ["only"] };
 
 const SUB_TOOLS = [
   { key: "kepe", label: "Kinetic and Potential Energy", levels: 3, blurb: "KE = ½mv² and GPE = mgh" },
@@ -28,9 +29,16 @@ const SUB_TOOLS = [
 
 const opt = (o: Record<string, string>, key: string, fallback: string): string => (o[key] !== undefined && o[key] !== "" ? o[key] : fallback);
 
+const A2_FORCED: Record<string, Record<string, string>> = {
+  kepe: { keVelocity: "vector", keEnergy: "ke", keAsk: "change" },
+  conserve: { cvSetting: "slope", cvAsk: "stop" },
+  workenergy: { weSetting: "rough", weAsk: "speed,distance,mu" },
+};   // Only A2: the choices that carry the content, whichever level
+
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "kepe";
-  const o = ctx?.options ?? {};
+  const a2Only = (ctx?.options ?? {}).a2 === "only";
+  const o = a2Only ? { ...(ctx?.options ?? {}), ...(A2_FORCED[sub] ?? {}) } : ctx?.options ?? {};
   const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
   const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
   const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
@@ -58,8 +66,8 @@ const OPTIONS: ShellOption[] = [
     displayOnly: true, tab: "display", defaultFor: () => "diagram", choices: [{ value: "diagram", label: "The diagram" }, { value: "bars", label: "Energy bars" }],
   },
   {
-    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up. Left out, they are not drawn: their choices and tabs stay on show but greyed out.",
-    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "off", label: "Left out" }],
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up when their choices are ticked. Only A2, every question needs A2 content: the tabs and choices with none are greyed out. Left out, no A2 question is drawn and the A2 tabs and choices are greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "only", label: "Only A2" }, { value: "off", label: "Left out" }],
   },
   { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a car, a ball, a skier) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
@@ -74,17 +82,17 @@ const OPTIONS: ShellOption[] = [
   {
     key: "keVelocity", label: "Velocity As", info: "For a change in kinetic energy: the speeds are given, or the velocities as vectors in i and j (A2).", forSubTools: ["kepe"], forLevels: [3],
     multi: true,
-    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector (A2)", sub: "i and j", disabledWhen: A2_OFF }],
+    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed", disabledWhen: A2_ONLY }, { value: "vector", label: "A vector (A2)", sub: "i and j", disabledWhen: A2_OFF }],
   },
   {
     key: "weSetting", label: "Setting", info: "Level ground, along a slope given by its length and how far it rises or falls, a load raised by a rope over a pulley, or (A2) a rough slope given by its angle, where friction is μ times the normal reaction.", forSubTools: ["workenergy"],
     multi: true,
-    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }, { value: "pulley", label: "Raised over a pulley" }, { value: "rough", label: "Rough slope (A2)", disabledWhen: A2_OFF }],
+    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal", disabledWhen: A2_ONLY }, { value: "slope", label: "Along a slope", disabledWhen: A2_ONLY }, { value: "pulley", label: "Raised over a pulley", disabledWhen: A2_ONLY }, { value: "rough", label: "Rough slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force (or the pulling force over a pulley), the work done by the driving force, or on a rough slope the coefficient of friction.", forSubTools: ["workenergy"], multi: true,
     defaultFor: lv({ 1: "speed,distance", 2: "force", 3: "speed,force,work" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)", disabledWhen: A2_OFF }],
+    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force", disabledWhen: A2_ONLY }, { value: "work", forLevels: [2, 3], label: "The work done by the driver", disabledWhen: A2_ONLY }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "weForces", label: "Forces", info: "Which forces act along the motion: a driving force only, a resistance only, or both.", forSubTools: ["workenergy"],
@@ -98,7 +106,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "cvSetting", label: "Setting", info: "A vertical fall or projection, or a slide down a slope.", forSubTools: ["conserve"],
     multi: true,
-    defaultFor: (l: number) => (l === 3 ? "slope" : "vertical"), choices: [{ value: "vertical", label: "Vertical" }, { value: "slope", label: "Down a slope" }],
+    defaultFor: (l: number) => (l === 3 ? "slope" : "vertical"), choices: [{ value: "vertical", label: "Vertical", disabledWhen: A2_ONLY }, { value: "slope", label: "Down a slope" }],
   },
   {
     key: "cvStarts", label: "Starts", info: "Released from rest, projected downwards, or projected upwards (a vertical setting only).", forSubTools: ["conserve"], multi: true,
@@ -107,7 +115,7 @@ const OPTIONS: ShellOption[] = [
   {
     key: "cvAsk", label: "Ask for", info: "What to find: the speed after the drop or rise, the maximum height of a projection up, or (A2) how far up a slope a projection goes.", forSubTools: ["conserve"], multi: true,
     defaultFor: lv({ 1: "speed", 2: "speed,max", 3: "speed" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "max", forLevels: [2, 3], label: "The maximum height" }, { value: "stop", forLevels: [3], label: "Distance up a slope (A2)", disabledWhen: A2_OFF }],
+    choices: [{ value: "speed", label: "The speed", disabledWhen: A2_ONLY }, { value: "max", forLevels: [2, 3], label: "The maximum height", disabledWhen: A2_ONLY }, { value: "stop", forLevels: [3], label: "Distance up a slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "cvParts", label: "Parts Shown", info: "One answer, or the chain of parts a to d: kinetic energy at the start, potential energy lost, kinetic energy at the bottom, then the speed.", forSubTools: ["conserve"], forLevels: [2, 3],

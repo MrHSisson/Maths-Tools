@@ -1106,7 +1106,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       {tabs.map((t) => (
                         <button
                           key={t.key}
-                          disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Switch A2 questions on to use this" : undefined}
+                          disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Not available with this A2 Questions setting" : undefined}
                           onClick={() => { chooseSubTool(t.key); setDrawer(false); }}
                           className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
@@ -1173,7 +1173,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 {tabs.map((t) => (
                   <button
                     key={t.key}
-                    disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Switch A2 questions on to use this" : undefined}
+                    disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Not available with this A2 Questions setting" : undefined}
                     onClick={() => {
                       setSubTool(t.key);
                       newQuestion(level, t.key, options);
@@ -1246,7 +1246,7 @@ function OptionControl({ o, value, all, onChange, level, sub }: { o: NonNullable
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
-  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) && !off(c), disabled: off(c), title: off(c) ? "Switch A2 questions on to use this" : undefined }))} onPress={press} />;
+  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) && !off(c), disabled: off(c), title: off(c) ? "Not available with this A2 Questions setting" : undefined }))} onPress={press} />;
 }
 
 const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {
