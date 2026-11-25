@@ -84,6 +84,10 @@ interface SpecLandingProps {
 
 type View = { kind: "home" } | { kind: "chapter"; id: string } | { kind: "papers" };
 
+/** the links out to older papers and question banks (the "Older papers" card and page, each chapter's "Question banks"): hidden for now while the
+ *  hubs are redesigned; the data stays in each subject's spec file, so set this to true to bring them back */
+const SHOW_OLDER_PAPERS = false;
+
 const card = "rounded-2xl border border-slate-300 bg-white shadow-card";
 /** the label on A2 content: the part of the course beyond AS (AS content needs no label, since A-level covers it too) */
 const a2Tag = "inline-block rounded-md bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800";
@@ -291,7 +295,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
               </div>
             )}
 
-            {planning && <button type="button" onClick={() => setView({ kind: "papers" })}
+            {planning && SHOW_OLDER_PAPERS && <button type="button" onClick={() => setView({ kind: "papers" })}
               className={`${card} mt-6 flex w-full items-center justify-between p-4 text-left hover:shadow-lift`}>
               <span>
                 <span className="block font-semibold text-slate-900">{p.papers.heading}</span>
@@ -355,7 +359,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
                 </div>
               ) : null;
             })}
-            {planning && chapter.resources.length > 0 && (
+            {planning && SHOW_OLDER_PAPERS && chapter.resources.length > 0 && (
               <details className={`${card} mt-4 px-4 py-3`}>
                 <summary className="cursor-pointer font-semibold text-slate-800">Question banks ({chapter.resources.length})</summary>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">{chapter.resources.map(r => <ResourceLink key={r.url} r={r} />)}</div>
@@ -364,7 +368,7 @@ export function SpecLanding(p: SpecLandingProps): JSX.Element {
           </>
         )}
 
-        {view.kind === "papers" && planning && (
+        {view.kind === "papers" && planning && SHOW_OLDER_PAPERS && (
           <>
             <h1 className="text-3xl font-semibold text-slate-900">{p.papers.heading}</h1>
             <p className="mt-1 text-slate-500">{p.papers.intro}</p>
