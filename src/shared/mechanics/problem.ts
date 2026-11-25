@@ -37,3 +37,9 @@ export interface MechViewState {
   lines: string[];
   fresh: number;
 }
+
+/** One value from a multi option's ticks (a comma list), drawn fresh for each question, so a teacher can tick several kinds to mix them or exactly one to restrict to it. */
+export function pickOne(ticks: string, fallback: string): string {
+  const xs = ticks.split(",").filter(Boolean);
+  return xs.length ? xs[Math.floor(Math.random() * xs.length)] : fallback;
+}

@@ -19,7 +19,7 @@ async function read<T>(query: string, pub: boolean): Promise<T | null> {
   } catch { return null; }
 }
 const fetchTree = (tree: Tree, pub: boolean) => read<TreeData>(`folders=${tree}`, pub);
-const fetchFolderDecks = async (folderId: string, tree: Tree, pub: boolean) => (await read<{ decks: FolderDeck[] }>(`folder=${encodeURIComponent(folderId)}${folderId === UNFILED ? `&of=${tree}` : ""}`, pub))?.decks ?? null;
+const fetchFolderDecks = async (folderId: string, tree: Tree, pub: boolean, previews: boolean) => (await read<{ decks: FolderDeck[] }>(`folder=${encodeURIComponent(folderId)}${folderId === UNFILED ? `&of=${tree}` : ""}${previews ? "" : "&previews=0"}`, pub))?.decks ?? null;
 
 /** Sets the folders a deck is in within one tree. Resolves to null when it worked, else the reason in words. */
 export async function setDeckFolders(deckId: string, tree: Tree, folderIds: string[]): Promise<string | null> {
@@ -42,15 +42,15 @@ export async function sendFolderOp(op: FolderOp): Promise<string | null> {
 }
 
 /** One folder's decks for a page: undefined while loading, null when unavailable. `reload` asks again (after a change). */
-export function useFolderDecks(folderId: string | null, tree: Tree, reload: number, pub = false): FolderDeck[] | null | undefined {
+export function useFolderDecks(folderId: string | null, tree: Tree, reload: number, pub = false, previews = true): FolderDeck[] | null | undefined {
   const [state, setState] = useState<{ key: string; decks: FolderDeck[] | null } | undefined>(undefined);
-  const key = folderId ? `${folderId}|${tree}|${reload}|${pub}` : "";
+  const key = folderId ? `${folderId}|${tree}|${reload}|${pub}|${previews}` : "";
   useEffect(() => {
     if (!folderId) return;
     let on = true;
-    void fetchFolderDecks(folderId, tree, pub).then((decks) => { if (on) setState({ key, decks }); });
+    void fetchFolderDecks(folderId, tree, pub, previews).then((decks) => { if (on) setState({ key, decks }); });
     return () => { on = false; };
-  }, [folderId, tree, pub, key]);
+  }, [folderId, tree, pub, previews, key]);
   return !folderId ? undefined : state?.key === key ? state.decks : undefined;
 }
 
@@ -87,36 +87,45 @@ export function flatten(folders: Folder[]): { folder: Folder; depth: number }[] 
   return out;
 }
 
-// ── Sorting, search and the choices remembered on this device ──
+// ── The list view: sorting and the band tag ──
 
-export type SortBy = "made" | "edited" | "name";
-export const SORTS: readonly SortBy[] = ["made", "edited", "name"];
-export const SORT_LABEL: Record<SortBy, string> = { made: "Most recently made", edited: "Last edited", name: "Name (A to Z)" };
+export type SortKey = "name" | "band" | "slides" | "made" | "edited";
+export type SortDir = "asc" | "desc";
+/** What a column sorts by first (a date or a count starts newest or biggest first; a name or a band starts A to Z, upper band first). */
+export const FIRST_DIR: Record<SortKey, SortDir> = { name: "asc", band: "asc", slides: "desc", made: "desc", edited: "desc" };
+const BAND_ORDER: Record<string, number> = { upper: 0, middle: 1, lower: 2 };
 
-/** The decks in the order asked for: newest made or newest edited first, or by name (numbers in names count as numbers, so "Unit 2" comes before "Unit 10"). */
-export function sortDecks(decks: FolderDeck[], by: SortBy): FolderDeck[] {
-  const stable = (a: FolderDeck, b: FolderDeck) => (a.id < b.id ? -1 : 1);
-  if (by === "name") return [...decks].sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true, sensitivity: "base" }) || stable(a, b));
-  const when = (d: FolderDeck) => (by === "made" ? d.madeAt : d.updatedAt);
-  return [...decks].sort((a, b) => when(b).localeCompare(when(a)) || stable(a, b));
+/** A folder's decks in the order a column asks for. A deck with no band sorts last either way; ties fall back to most recently made, then title. */
+export function sortDecks(decks: FolderDeck[], key: SortKey, dir: SortDir): FolderDeck[] {
+  const sign = dir === "asc" ? 1 : -1;
+  const cmp = (a: FolderDeck, b: FolderDeck): number => {
+    switch (key) {
+      case "name": return a.title.localeCompare(b.title, "en", { sensitivity: "base", numeric: true }) * sign;
+      case "slides": return (a.slides - b.slides) * sign;
+      case "made": return a.madeAt.localeCompare(b.madeAt) * sign;
+      case "edited": return a.editedAt.localeCompare(b.editedAt) * sign;
+      case "band": {
+        const x = BAND_ORDER[a.pitch ?? ""], y = BAND_ORDER[b.pitch ?? ""];
+        if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
+        return (x - y) * sign;
+      }
+    }
+  };
+  return [...decks].sort((a, b) => cmp(a, b) || b.madeAt.localeCompare(a.madeAt) || a.title.localeCompare(b.title));
 }
 
-/** A choice kept on this device (a sort order, grid or list). Anything else stored there is ignored. */
-export function usePref<T extends string>(key: string, allowed: readonly T[], fallback: T): [T, (v: T) => void] {
-  const [value, set] = useState<T>(() => { try { const v = localStorage.getItem(key); return allowed.includes(v as T) ? (v as T) : fallback; } catch { return fallback; } });
-  return [value, (v) => { set(v); try { localStorage.setItem(key, v); } catch { /* the choice just is not remembered */ } }];
-}
+// ── Search ──
 
 const SEARCH_WAIT_MS = 300;
 /** Decks matching the text, from every folder, read a moment after typing stops: undefined while waiting (or when there is no text), null when the service is not reachable. */
-export function useSearch(text: string, pub: boolean): FolderDeck[] | null | undefined {
+export function useSearch(text: string, pub: boolean, previews = true): FolderDeck[] | null | undefined {
   const [state, setState] = useState<{ key: string; decks: FolderDeck[] | null } | undefined>(undefined);
-  const key = `${text}|${pub}`;
+  const key = `${text}|${pub}|${previews}`;
   useEffect(() => {
     if (!text) return;
     let on = true;
-    const timer = window.setTimeout(() => { void read<{ decks: FolderDeck[] }>(`search=${encodeURIComponent(text)}`, pub).then((r) => { if (on) setState({ key, decks: r?.decks ?? null }); }); }, SEARCH_WAIT_MS);
+    const timer = window.setTimeout(() => { void read<{ decks: FolderDeck[] }>(`search=${encodeURIComponent(text)}${previews ? "" : "&previews=0"}`, pub).then((r) => { if (on) setState({ key, decks: r?.decks ?? null }); }); }, SEARCH_WAIT_MS);
     return () => { on = false; window.clearTimeout(timer); };
-  }, [text, pub, key]);
+  }, [text, pub, previews, key]);
   return text && state?.key === key ? state.decks : undefined;
 }

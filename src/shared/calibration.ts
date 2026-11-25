@@ -63,7 +63,10 @@ export function randomSetup(config: ToolConfig, subTool: string, level: Difficul
   for (const g of pools) {
     const n = g.options.length;
     let on: boolean[];
-    if (g.exclusive) {
+    if (g.rangeBar) {
+      const a = Math.floor(rng() * (n - 1)), b = a + 1 + Math.floor(rng() * (n - 1 - a));
+      on = g.options.map((_, i) => i >= a && i <= b);
+    } else if (g.exclusive) {
       const k = Math.floor(rng() * n);
       on = g.options.map((_, i) => i === k);
     } else {

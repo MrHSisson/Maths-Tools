@@ -4,7 +4,7 @@ import {
   pickActive, randInt, pick, applyAbout, graphStepVisual,
 } from "../../shared";
 import { ABOUT } from "./SolvingTrigEquations.about";
-import { buildTrigQuestion, exactValues, decimalValues, type Fn, type Unit, type FormKind, type RangeId, type TrigSpec } from "./trigEquations";
+import { buildTrigQuestion, exactValues, decimalValues, type Fn, type Unit, type FormKind, type TrigSpec } from "./trigEquations";
 
 // ── 1. Option pools ──────────────────────────────────────────────────────────────────────────────────────────────────────
 // Option ids are unique across the pools of a level: the generator reads one flat set of ticks.
@@ -15,13 +15,19 @@ const pool = (key: string, label: string, tab: "questions" | "numbers", options:
 const FUNCTION_OPTS = [opt("sin", "sin"), opt("cos", "cos"), opt("tan", "tan")];
 const FUNCTIONS_MS = pool("functions", "Functions", "questions", FUNCTION_OPTS);
 
-const RANGE_OPTS: Record<"l1" | "l23", ReturnType<typeof opt>[]> = {
-  l1: [opt("r360", "0 – 360°", true, "0 – 2π"), opt("r720", "0 – 720°", true, "0 – 4π"), opt("rSym180", "−180 – 180°", true, "−π – π"), opt("rSym360", "−360 – 360°", false, "−2π – 2π")],
-  // Levels 2 and 3 open on different ranges from Level 1, so they need their own option ids (ticks carry over between levels by id).
-  l23: [opt("w360", "0 – 360°", true, "0 – 2π"), opt("w180", "0 – 180°", true, "0 – π"), opt("w720", "0 – 720°", false, "0 – 4π"), opt("wSym180", "−180 – 180°", false, "−π – π")],
+// The range is one draggable bar: 11 dots, −4π to 6π, the ticked dots are an unbroken run and its two ends are the range (degrees = 180 × n).
+// Option ids are "p-4" … "p6" (n multiples of π); Levels 1–3 share them, so the ticks carry over between levels.
+const STOPS = Array.from({ length: 11 }, (_, i) => i - 4);
+const stopLabel = (n: number) => (n === 0 ? "0" : n === 1 ? "π" : n === -1 ? "−π" : `${n < 0 ? "−" : ""}${Math.abs(n)}π`);
+const RANGE_OPTS = STOPS.map((n) => opt(`p${n}`, stopLabel(n), n >= 0 && n <= 2));
+const RANGE_PRESETS = [[0, 2], [0, 4], [-1, 1], [-2, 2]].map(([a, b]) => ({ label: `${stopLabel(a)} to ${stopLabel(b)}`, from: `p${a}`, to: `p${b}` }));
+const rangesMs = (): ToolMultiSelect => ({ ...pool("ranges", "Range", "questions", RANGE_OPTS), allowEmpty: true, rangeBar: { presets: RANGE_PRESETS } });
+
+/** The [low, high] in degrees from the ticked dots (first and last ticked); a stale or empty tick set falls back to 0 – 2π. */
+const rangeFrom = (msv: Record<string, boolean>): [number, number] => {
+  const on = STOPS.filter((n) => msv[`p${n}`]);
+  return on.length >= 2 ? [on[0] * 180, on[on.length - 1] * 180] : [0, 360];
 };
-const RANGE_OF: Record<string, RangeId> = { r360: "r360", r720: "r720", rSym180: "rSym180", rSym360: "rSym360", w360: "r360", w180: "r180", w720: "r720", wSym180: "rSym180" };
-const rangesMs = (l: "l1" | "l23") => pool("ranges", "Ranges", "questions", RANGE_OPTS[l]);
 
 const ANGLE_L2 = pool("angleForms", "Angle Forms", "questions", [opt("multiple", "kθ", true, "k = 2 or 3"), opt("half", "θ/2", false), opt("shift", "θ ± c", false, "shift only")]);
 const ANGLE_L3 = pool("angleForms", "Angle Forms", "questions", [opt("both", "kθ ± c", true, "k = 2 or 3"), opt("half", "θ/2 ± c", false)]);
@@ -33,6 +39,8 @@ const FORM_OPTS = [
   opt("negative", "1 − 2 sin θ = 2", false),
 ];
 const FORMS_MS = pool("equationForms", "Equation Forms", "questions", FORM_OPTS);
+// With one range per sheet, Level 1's plain "sin θ = k" has only 18 different questions, fewer than a worksheet: it also opens on "2 sin θ = 1".
+const FORMS_L1 = pool("equationForms", "Equation Forms", "questions", FORM_OPTS.map((o) => (o.value === "scaled" ? { ...o, defaultActive: true } : o)));
 
 const UNIT_MS = pool("angleUnit", "Angle Unit", "numbers", [opt("deg", "Degrees", true), opt("rad", "Radians", false)], true);
 const VALUES_MS = pool("values", "Values", "numbers", [opt("exact", "Exact", true, "½, √3/2…"), opt("decimal", "Decimal", false, "0.3, −0.72")]);
@@ -47,9 +55,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [EXTREMES_VAR],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs("l1"), FORMS_MS, UNIT_MS, VALUES_MS] },
-        level2: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs("l23"), ANGLE_L2, FORMS_MS, UNIT_MS, VALUES_MS] },
-        level3: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs("l23"), ANGLE_L3, FORMS_MS, UNIT_MS, VALUES_MS] },
+        level1: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs(), FORMS_L1, UNIT_MS, VALUES_MS] },
+        level2: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs(), ANGLE_L2, FORMS_MS, UNIT_MS, VALUES_MS] },
+        level3: { variables: [EXTREMES_VAR], dropdown: null, multiSelect: [FUNCTIONS_MS, rangesMs(), ANGLE_L3, FORMS_MS, UNIT_MS, VALUES_MS] },
       },
     },
   },
@@ -69,7 +77,7 @@ const generateQuestion = (tool: string, level: DifficultyLevel, variables: Recor
   for (let attempt = 0; attempt < 400; attempt++) {
     const fn = pickActive(msv, opts(FUNCTION_OPTS)) as Fn;
     const unit = pickActive(msv, [{ value: "deg" }, { value: "rad" }]) as Unit;
-    const range = RANGE_OF[pickActive(msv, level === "level1" ? RANGE_OPTS.l1 : RANGE_OPTS.l23)];
+    const range = rangeFrom(msv);
     const form = pickActive(msv, opts(FORM_OPTS)) as FormKind;
     const decimal = pickActive(msv, [{ value: "exact" }, { value: "decimal" }]) === "decimal";
 

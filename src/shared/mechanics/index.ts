@@ -33,6 +33,7 @@ export { buildForceDiagram } from "./templates/forceDiagram";
 export type { ForceDiagramParams, DiagramForce } from "./templates/forceDiagram";
 export { buildHole } from "./templates/hole";
 export type { HoleParams } from "./templates/hole";
-export { default as MechCanvas } from "./MechWorking";
+export { default as MechCanvas, MECH_STAGE } from "./MechWorking";
 export type { MechProblemData, MechStepData, MechViewState } from "./problem";
+export { pickOne } from "./problem";
 export * from "./core";
