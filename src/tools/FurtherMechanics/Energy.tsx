@@ -1,6 +1,6 @@
 import { DecisionShell, mechProblem, solveMech, type DecisionProblem, type GenerateContext, type SolveStep } from "../../shared/decision";
 import type { ShellOption } from "../../shared/decision/types";
-import { MechCanvas, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
+import { MechCanvas, MECH_STAGE, pickOne, type DiagramDisplay, type MechProblemData } from "../../shared/mechanics";
 import { MC_NOTICE } from "./mcNotice";
 import { MC_PRINT } from "./mcPrint";
 import { generateKepe } from "./energy/kepe";
@@ -17,7 +17,9 @@ import { generateConserve } from "./energy/conserve";
 // The maths is in shared/mechanics/core.ts, the builders (question, picture, working and answer from one set of inputs) in ./energy/.
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-const A2 = { key: "course", values: ["A2"] };
+
+const A2_OFF = { key: "a2", values: ["off"] };
+const A2_ONLY = { key: "a2", values: ["only"] };
 
 const SUB_TOOLS = [
   { key: "kepe", label: "Kinetic and Potential Energy", levels: 3, blurb: "KE = ½mv² and GPE = mgh" },
@@ -27,18 +29,25 @@ const SUB_TOOLS = [
 
 const opt = (o: Record<string, string>, key: string, fallback: string): string => (o[key] !== undefined && o[key] !== "" ? o[key] : fallback);
 
+const A2_FORCED: Record<string, Record<string, string>> = {
+  kepe: { keVelocity: "vector", keEnergy: "ke", keAsk: "change" },
+  conserve: { cvSetting: "slope", cvAsk: "stop" },
+  workenergy: { weSetting: "rough", weAsk: "speed,distance,mu" },
+};   // Only A2: the choices that carry the content, whichever level
+
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "kepe";
-  const o = ctx?.options ?? {};
-  const course = (opt(o, "course", "A2") === "AS" ? "AS" : "A2") as "AS" | "A2";
-  const display = opt(o, "diagram", "given") as DiagramDisplay;
-  const context = opt(o, "context", level === 1 ? "particle" : "story");
+  const a2Only = (ctx?.options ?? {}).a2 === "only";
+  const o = a2Only ? { ...(ctx?.options ?? {}), ...(A2_FORCED[sub] ?? {}) } : ctx?.options ?? {};
+  const course: "AS" | "A2" = opt(o, "a2", "on") === "off" ? "AS" : "A2";   // A2 questions left out: the generators then draw none
+  const display: DiagramDisplay = opt(o, "fullDiagram", "off") === "on" ? "full" : "blurred";   // the picture always starts blurred: students draw it first, then Reveal Full or Build Diagram
+  const context = pickOne(opt(o, "context", level === 1 ? "particle" : "story"), "story");
   const g = opt(o, "g", "9.8") === "10" ? 10 : 9.8;
   const units = opt(o, "units", level === 1 ? "si" : "conv");
   let m: MechProblemData;
-  if (sub === "workenergy") m = generateWorkEnergy(level, { setting: opt(o, "weSetting", "horizontal"), ask: opt(o, "weAsk", "speed"), forces: opt(o, "weForces", "both"), method: opt(o, "weMethod", "work"), units, context, g, display, course });
-  else if (sub === "conserve") m = generateConserve(level, { setting: opt(o, "cvSetting", "vertical"), starts: opt(o, "cvStarts", "rest"), ask: opt(o, "cvAsk", "speed"), parts: opt(o, "cvParts", "one"), context, g, display, course });
-  else m = generateKepe(level, { energy: opt(o, "keEnergy", "ke,gpe"), ask: opt(o, "keAsk", "energy"), units, format: opt(o, "format", "j"), velocity: opt(o, "keVelocity", "speed"), context, g, display, course });
+  if (sub === "workenergy") m = generateWorkEnergy(level, { setting: pickOne(opt(o, "weSetting", "horizontal"), "horizontal"), ask: opt(o, "weAsk", "speed"), forces: pickOne(opt(o, "weForces", "both"), "both"), method: opt(o, "weMethod", "work"), units, context, g, display, course });
+  else if (sub === "conserve") m = generateConserve(level, { setting: pickOne(opt(o, "cvSetting", "vertical"), "vertical"), starts: opt(o, "cvStarts", "rest"), ask: opt(o, "cvAsk", "speed"), parts: pickOne(opt(o, "cvParts", "one"), "one"), context, g, display, course });
+  else m = generateKepe(level, { energy: opt(o, "keEnergy", "ke,gpe"), ask: opt(o, "keAsk", "energy"), units, format: opt(o, "format", "j"), velocity: pickOne(opt(o, "keVelocity", "speed"), "speed"), context, g, display, course });
   if (opt(o, "picture", "diagram") === "bars") m = withEnergyBars(m);
   return mechProblem(m, `energy-${sub}`);
 }
@@ -49,19 +58,18 @@ const lv = (v: Record<number, string>) => (level: number) => v[level] ?? v[1];
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "course", label: "Course", info: "AS keeps to energy with no resolving: slopes are given by their length and drop. A2 adds velocity vectors, and slopes given by their angle.",
-    defaultFor: () => "A2", choices: [{ value: "A2", label: "A2", sub: "Includes vectors and angled slopes" }, { value: "AS", label: "AS" }],
-  },
-  {
-    key: "diagram", label: "Diagram", info: "Whether a question gives its picture straight away, draws it up part by part as the working goes on, or has none.",
-    displayOnly: true, tab: "display", defaultFor: () => "given",
-    choices: [{ value: "given", label: "With the question" }, { value: "build", label: "Built in the working" }, { value: "hidden", label: "None" }],
+    key: "fullDiagram", label: "Full Diagram", info: "Show the whole diagram straight away. Off, the diagram and the information taken from the question start blurred, so students draw it first, then choose Reveal Full or Build Diagram.",
+    displayOnly: true, tab: "display", defaultFor: () => "off", choices: [{ value: "off", label: "Off" }, { value: "on", label: "On" }],
   },
   {
     key: "picture", label: "Working Picture", info: "The diagram of the situation, or energy bars: one column for the start and one for the end, each stacked from gravitational, elastic and kinetic energy and work, so the two columns are the same height. The bars appear once the energy equation is written.", forSubTools: ["workenergy", "conserve"],
     displayOnly: true, tab: "display", defaultFor: () => "diagram", choices: [{ value: "diagram", label: "The diagram" }, { value: "bars", label: "Energy bars" }],
   },
-  { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a car, a ball, a skier) with realistic sizes.", defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
+  {
+    key: "a2", label: "A2 Questions", info: "Included, the questions that need A2 content (marked A2) can come up when their choices are ticked. Only A2, every question needs A2 content: the tabs and choices with none are greyed out. Left out, no A2 question is drawn and the A2 tabs and choices are greyed out.",
+    shared: true, defaultFor: () => "on", choices: [{ value: "on", label: "Included" }, { value: "only", label: "Only A2" }, { value: "off", label: "Left out" }],
+  },
+  { key: "context", label: "Context", info: "A particle with no story, or a worded situation (a car, a ball, a skier) with realistic sizes.", multi: true, defaultFor: lv({ 1: "particle", 2: "story" }), choices: [{ value: "particle", label: "Particle", sub: "No story" }, { value: "story", label: "A situation" }] },
   {
     key: "keEnergy", label: "Energy", info: "Kinetic energy, gravitational potential energy, or both mixed.", forSubTools: ["kepe"], multi: true, defaultFor: () => "ke,gpe",
     choices: [{ value: "ke", label: "Kinetic" }, { value: "gpe", label: "Gravitational potential" }],
@@ -72,20 +80,23 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "energy", label: "The energy" }, { value: "mass", forLevels: [2, 3], label: "The mass" }, { value: "speed", forLevels: [2, 3], label: "The speed" }, { value: "height", forLevels: [2, 3], label: "The height" }, { value: "change", forLevels: [3], label: "A gain or loss" }],
   },
   {
-    key: "keVelocity", label: "Velocity As", info: "For a change in kinetic energy: the speeds are given, or the velocities as vectors in i and j (A2).", forSubTools: ["kepe"], forLevels: [3], when: A2,
-    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed" }, { value: "vector", label: "A vector", sub: "i and j" }],
+    key: "keVelocity", label: "Velocity As", info: "For a change in kinetic energy: the speeds are given, or the velocities as vectors in i and j (A2).", forSubTools: ["kepe"], forLevels: [3],
+    multi: true,
+    defaultFor: () => "speed", choices: [{ value: "speed", label: "A speed", disabledWhen: A2_ONLY }, { value: "vector", label: "A vector (A2)", sub: "i and j", disabledWhen: A2_OFF }],
   },
   {
     key: "weSetting", label: "Setting", info: "Level ground, along a slope given by its length and how far it rises or falls, a load raised by a rope over a pulley, or (A2) a rough slope given by its angle, where friction is μ times the normal reaction.", forSubTools: ["workenergy"],
-    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal" }, { value: "slope", label: "Along a slope" }, { value: "pulley", label: "Raised over a pulley" }, { value: "rough", label: "Rough slope (A2)" }],
+    multi: true,
+    defaultFor: (l: number) => (l === 3 ? "slope" : "horizontal"), choices: [{ value: "horizontal", label: "Horizontal", disabledWhen: A2_ONLY }, { value: "slope", label: "Along a slope", disabledWhen: A2_ONLY }, { value: "pulley", label: "Raised over a pulley", disabledWhen: A2_ONLY }, { value: "rough", label: "Rough slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "weAsk", label: "Ask for", info: "What to find: the speed at the end, the distance, an unknown braking or resisting force (or the pulling force over a pulley), the work done by the driving force, or on a rough slope the coefficient of friction.", forSubTools: ["workenergy"], multi: true,
     defaultFor: lv({ 1: "speed,distance", 2: "force", 3: "speed,force,work" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force" }, { value: "work", forLevels: [2, 3], label: "The work done by the driver" }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)" }],
+    choices: [{ value: "speed", label: "The speed" }, { value: "distance", label: "The distance", sub: "Horizontal, or up a rough slope" }, { value: "force", label: "A force", disabledWhen: A2_ONLY }, { value: "work", forLevels: [2, 3], label: "The work done by the driver", disabledWhen: A2_ONLY }, { value: "mu", forLevels: [3], label: "The coefficient of friction (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "weForces", label: "Forces", info: "Which forces act along the motion: a driving force only, a resistance only, or both.", forSubTools: ["workenergy"],
+    multi: true,
     defaultFor: lv({ 1: "drive", 2: "resist", 3: "both" }), choices: [{ value: "drive", label: "Driving force only" }, { value: "resist", label: "Resistance only" }, { value: "both", label: "Both" }],
   },
   {
@@ -94,7 +105,8 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "cvSetting", label: "Setting", info: "A vertical fall or projection, or a slide down a slope.", forSubTools: ["conserve"],
-    defaultFor: (l: number) => (l === 3 ? "slope" : "vertical"), choices: [{ value: "vertical", label: "Vertical" }, { value: "slope", label: "Down a slope" }],
+    multi: true,
+    defaultFor: (l: number) => (l === 3 ? "slope" : "vertical"), choices: [{ value: "vertical", label: "Vertical", disabledWhen: A2_ONLY }, { value: "slope", label: "Down a slope" }],
   },
   {
     key: "cvStarts", label: "Starts", info: "Released from rest, projected downwards, or projected upwards (a vertical setting only).", forSubTools: ["conserve"], multi: true,
@@ -103,10 +115,11 @@ const OPTIONS: ShellOption[] = [
   {
     key: "cvAsk", label: "Ask for", info: "What to find: the speed after the drop or rise, the maximum height of a projection up, or (A2) how far up a slope a projection goes.", forSubTools: ["conserve"], multi: true,
     defaultFor: lv({ 1: "speed", 2: "speed,max", 3: "speed" }),
-    choices: [{ value: "speed", label: "The speed" }, { value: "max", forLevels: [2, 3], label: "The maximum height" }, { value: "stop", forLevels: [3], label: "Distance up a slope (A2)" }],
+    choices: [{ value: "speed", label: "The speed", disabledWhen: A2_ONLY }, { value: "max", forLevels: [2, 3], label: "The maximum height", disabledWhen: A2_ONLY }, { value: "stop", forLevels: [3], label: "Distance up a slope (A2)", disabledWhen: A2_OFF }],
   },
   {
     key: "cvParts", label: "Parts Shown", info: "One answer, or the chain of parts a to d: kinetic energy at the start, potential energy lost, kinetic energy at the bottom, then the speed.", forSubTools: ["conserve"], forLevels: [2, 3],
+    multi: true,
     defaultFor: () => "one", choices: [{ value: "one", label: "One answer" }, { value: "chain", label: "The chain a to d" }],
   },
   {
@@ -137,6 +150,7 @@ export default function App() {
         levelInfo: true,
         hideMatrix: true,
         skillSheet: true,
+        questionStage: MECH_STAGE,
         skillPrint: MC_PRINT,
         devNotice: MC_NOTICE,
         noSandbox: true,

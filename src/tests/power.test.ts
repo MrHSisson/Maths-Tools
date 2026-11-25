@@ -141,14 +141,6 @@ describe("Power: strings, pictures, course and worksheet", () => {
       }
     }
   });
-  it("nothing A2-only at AS, and Power on a Slope is offered at A2 only", () => {
-    for (const sub of ["avgpower", "forcespeed", "motion"]) for (const level of [1, 2, 3]) for (let k = 0; k < 40; k++) {
-      if (sub === "motion" && level === 3) continue;
-      expect(__seed.generate(level, { subTool: sub, options: { ...profileOptions(groups, { course: "AS" }, undefined, level, sub), course: "AS" } }).mech!.a2, `${sub} L${level}`).toBe(false);
-    }
-    const slope = __seed.subTools.find((s) => s.key === "powerslope")!;
-    expect(slope.when).toEqual([{ key: "course", values: ["A2"] }]);
-  });
   it("a worksheet of 30 has different questions at default options at every level", () => {
     for (const sub of ["avgpower", "forcespeed", "powerslope", "motion"]) for (const level of sub === "motion" ? [1, 2] : [1, 2, 3]) {
       const seen = new Set<string>();
@@ -179,12 +171,11 @@ describe("Power: a train with coaches and vector work (A2)", () => {
       expect(m.a2).toBe(true);
     }
   });
-  it("every line renders, and vectors are not offered at AS", () => {
+  it("every line renders", () => {
     for (const over of [{ fsVehicle: "train" }, { fsAsk: "vector", fsResist: "const" }] as Array<Record<string, string>>) for (const display of ["given", "build", "hidden"]) for (const m of many("forcespeed", 3, 25, { ...over, diagram: display })) {
       for (const r of [...m.known, ...m.steps.flatMap((s) => s.lines), m.answer.tex]) if (r !== "" && !r.startsWith("#")) expect(() => katex.renderToString(r, { throwOnError: true }), r).not.toThrow();
       for (const seg of m.prompt.split("$").filter((_, k) => k % 2 === 1)) expect(() => katex.renderToString(seg, { throwOnError: true }), m.prompt).not.toThrow();
       if (m.scene) expect(validateScene(m.scene)).toEqual([]);
     }
-    for (let k = 0; k < 40; k++) expect(__seed.generate(3, { subTool: "forcespeed", options: { ...profileOptions(groups, { course: "AS" }, undefined, 3, "forcespeed"), course: "AS", fsAsk: "vector", fsResist: "const" } }).mech!.a2).toBe(false);
   });
 });

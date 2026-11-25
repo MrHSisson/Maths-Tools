@@ -1,7 +1,7 @@
-import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
+import { holds, levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "./options";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, RotateCw, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, PictureInPicture2, FastForward, Move, SlidersHorizontal, Eye } from "lucide-react";
-import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
+import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, ShellWhen, SolveStep, StepList, StepListItem } from "./types";
 import { netOf } from "./types";
 import { InlineMath } from "../components/MathRenderer";
 import QuestionText from "./QuestionText";
@@ -62,11 +62,17 @@ const ticksOf = (o: NonNullable<DecisionShellProps["config"]["options"]>[number]
 // ── URL ⇄ state (only non-default values) ───────────────────────────────────────
 /** Does this tab / option's `when` hold for these option values? */
 const whenOk = (w: { key: string; values: string[] } | { key: string; values: string[] }[] | undefined, opts: Record<string, string>): boolean =>
-  !w || (Array.isArray(w) ? w : [w]).every((c) => c.values.includes(opts[c.key]));
+  !w || (Array.isArray(w) ? w : [w]).every((c) => (opts[c.key] ?? "").split(",").some((x) => c.values.includes(x)));
+/** The option values with every multi option that is still following its default replaced by the ticks it shows, so a `when` can read it (a multi option matches when ANY tick is listed). */
+const withTicks = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number, sub: string): Record<string, string> => {
+  const out = { ...opts };
+  for (const o of config.options ?? []) if (o.multi && !out[o.key]) out[o.key] = ticksOf(o, "", level, sub).join(",");
+  return out;
+};
 /** An option that is no longer on offer (its `when` fails) goes back to its default, so a hidden choice can never keep the page on a tab that is not there. */
 const settle = (config: DecisionShellProps["config"], opts: Record<string, string>, level: number): Record<string, string> => {
   const out = { ...opts };
-  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, out)) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
+  for (const o of config.options ?? []) if (o.when && !whenOk(o.when, withTicks(config, out, level, ""))) out[o.key] = o.multi ? "" : o.defaultFor?.(level) ?? o.choices[0].value;
   return out;
 };
 /** The question-type tabs on offer for these option values (an AS / A-level choice can hide some). */
@@ -109,8 +115,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     const opts = optionsFor(sub, lv);
     setLevel(lv); setSubTool(sub); setOptions(opts); newQuestion(lv, sub, opts);
   };
+  // a tab that is switched off (A2 questions left out) stays on show, greyed
+  const tabOff = (t: { disabledWhen?: ShellWhen | ShellWhen[] }, opts: Record<string, string>, lv: number, sub: string) => !!t.disabledWhen && holds(t.disabledWhen, withTicks(config, opts, lv, sub));
   // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
-  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, opts) && levelOption(o, lv).choices.length > 0;
+  const shownFor = (sub: string, opts: Record<string, string>, lv: number) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => offeredAt(o, lv, sub) && whenOk(o.when, withTicks(config, opts, lv, sub)) && levelOption(o, lv).choices.length > 0;
   const ctxOf = (sub: string, opts: Record<string, string>, lv: number): GenerateContext => ({
     subTool: sub,
     options: resolvedOptions(config.options ?? [], opts, lv, sub),
@@ -209,7 +217,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
     if (!tabsFor(config, opts).some((x) => x.key === t.subTool)) return;
     setLevel(lv); setOptions(opts); setSubTool(t.subTool); newQuestion(lv, t.subTool, opts);
   };
-  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, options));
+  const topOptions = (config.options ?? []).filter((o) => o.top && (!o.forSubTools || o.forSubTools.includes(subTool)) && (!o.forLevels || o.forLevels.includes(level)) && whenOk(o.when, withTicks(config, options, level, subTool)));
   const tabs = tabsFor(config, options);
   // picking a top-tier option can hide the current tab (AS has fewer): move to the first tab that is still on offer
   const chooseTop = (key: string, value: string) => {
@@ -263,6 +271,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // changes how the same problem is shown: then it is redrawn at once from its saved seed.
   const changeOption = (o: { key: string; displayOnly?: boolean }, v: string) => {
     const opts = { ...options, [o.key]: v };
+    // an option can switch the current tab off: move to the first tab still on
+    const here = tabs.find((t) => t.key === subTool);
+    if (here && tabOff(here, opts, level, subTool)) {
+      const next = tabs.find((t) => !tabOff(t, opts, level, t.key));
+      if (next) {
+        const lv = Math.min(level, next.levels ?? config.levels ?? 1);
+        const scoped = optionsFor(next.key, lv, opts);
+        setLevel(lv); setOptions(scoped); setSubTool(next.key); newQuestion(lv, next.key, scoped);
+        return;
+      }
+    }
     setOptions(opts);
     if (!o.displayOnly) return;
     try {
@@ -385,7 +404,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         const n = t.levels ?? config.levels ?? 1;
         return {
           key: t.key, name: t.label, purpose: t.blurb ?? "", levels: n > 1 ? labelsFor(t.key).slice(0, n) : [],
-          options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, options))
+          options: (config.options ?? []).filter((o) => (!o.forSubTools || o.forSubTools.includes(t.key)) && whenOk(o.when, withTicks(config, options, level, t.key)))
             .map((o) => { const list = o.choices.map((c) => (c.sub ? `${c.label} ${c.sub}` : c.label)).join(" · "); return { label: o.label, detail: o.info ?? `${list}.`, ...(o.info ? { choices: list } : {}) }; }),
         };
       }),
@@ -628,9 +647,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   // once the working starts the question folds to one line (tap to read it in full) so the working gets the room
   const [qOpen, setQOpen] = useState(false);
   useEffect(() => { if (atQuestion) setQOpen(false); }, [atQuestion, problem]);
-  // question stage (a trial: opt in with config.questionStage; laptop only): before the steps start the question is shown large and centred over the tool, then shrinks away
+  // question stage (every Decision tool; laptop and tablet landscape only; `config.questionStage` adds a figure): before the steps start the question is shown large and centred over the tool, then shrinks away
   // toward the question card at the top right as the first step begins. It stays mounted and is only hidden, so the shrink is a transition.
-  const stageOn = !!config.questionStage && !narrow && !problem.exam;
+  const questionStage = config.questionStage ?? {};   // every Decision tool has the enlarge button; a tool's own `questionStage` only adds its figure
+  const stageOn = !narrow && !problem.exam;
   // it is never open on arrival: the enlarge button on the question card opens it (in the page and in fullscreen), and a step, a new question or its own button closes it
   const [stageOpen, setStageOpen] = useState(false);
   useEffect(() => { setStageOpen(false); }, [stepIdx, problem]);
@@ -667,7 +687,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
         aria-label="Fullscreen"
-        className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
+        className={`absolute top-3 right-3 w-10 h-10 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}
       >
         <Maximize2 size={18} color="#6b7280" />
       </button>
@@ -848,7 +868,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   );
 
   // an exam-style question has its own layout (the picture and lettered parts with marks); everything else is the stepped working above
-  // the question stage (a trial, see config.questionStage): laid over the working in the page and in fullscreen
+  // the question stage (see config.questionStage): laid over the working in the page and in fullscreen
   const stageEl = stageOn ? (
         <div data-question-stage="" aria-hidden={!stageOpen} className="absolute inset-0 z-20 flex items-start justify-center px-4 pt-4 pb-4 bg-slate-50"
           style={{ transformOrigin: "88% 6%", ...(stageOpen
@@ -867,8 +887,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
           )}
             </div>
             <QuestionText prompt={problem.prompt} size={problem.prompt.length > 260 ? "text-lg xl:text-xl" : problem.prompt.length > 150 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"} />
-            {config.questionStage?.hasFigure?.(problem) && (config.questionStage.figure
-          ? <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-4">{config.questionStage.figure(problem)}</div>
+            {questionStage.hasFigure?.(problem) && (questionStage.figure
+          ? <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-4">{questionStage.figure(problem)}</div>
           : <div className="relative shrink-0 rounded-xl border border-slate-200 overflow-hidden" style={{ height: "min(34vh, 320px)", minHeight: "13rem" }}>{shown(undefined)}</div>)}
           </div>
         </div>
@@ -900,7 +920,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
             <div className="relative flex-1 min-h-[320px] rounded-2xl border border-slate-300 shadow-card bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
               {/* in the same corner as the page's Fullscreen button, which this one replaces */}
-              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 ${config.questionStage ? "right-3" : "left-3"} w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
+              <button onClick={() => setFullscreen(false)} title="Exit fullscreen" className={`absolute top-3 right-3 w-9 h-9 rounded-lg flex items-center justify-center bg-black/5 hover:bg-black/10`}>
                 <Minimize2 size={18} color="#6b7280" />
               </button>
               {!config.noSandbox && (
@@ -936,7 +956,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
   if (narrow) {
     const launchSteps: Array<{ title: string; choices: Array<{ value: string; label: string }>; pick: (v: string) => void }> = [
       ...topOptions.map((o) => ({ title: o.label, choices: o.choices, pick: (v: string) => chooseTop(o.key, v) })),
-      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
+      ...(tabs.length > 1 ? [{ title: "What are we practising?", choices: tabs.filter((t) => !tabOff(t, options, level, t.key)).map((t) => ({ value: t.key, label: t.label })), pick: (v: string) => { chooseSubTool(v); } }] : []),
     ];
     if (!started && launchSteps.length && !chooser) {
       const st = launchSteps[Math.min(launchIdx, launchSteps.length - 1)];
@@ -1086,8 +1106,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                       {tabs.map((t) => (
                         <button
                           key={t.key}
+                          disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Not available with this A2 Questions setting" : undefined}
                           onClick={() => { chooseSubTool(t.key); setDrawer(false); }}
-                          className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
+                          className={`w-full text-left px-3.5 py-2 rounded-lg font-semibold text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
                         >
                           {t.label}
                         </button>
@@ -1152,11 +1173,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, renderSol
                 {tabs.map((t) => (
                   <button
                     key={t.key}
+                    disabled={tabOff(t, options, level, t.key)} title={tabOff(t, options, level, t.key) ? "Not available with this A2 Questions setting" : undefined}
                     onClick={() => {
                       setSubTool(t.key);
                       newQuestion(level, t.key, options);
                     }}
-                    className={tabBtn(subTool === t.key)}
+                    className={`${tabBtn(subTool === t.key)} disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {t.label}
                   </button>
@@ -1204,16 +1226,18 @@ function DecisionOptionGroups({ groups, options, level, sub, onChange, sheet = f
     <QOTabs tabs={tabs} active={active} onPick={setPicked} />
     {shown.map(o => <div key={o.key} className={sheet ? "bg-white rounded-2xl border border-slate-300 p-4" : ""}>
       <OptionHeading o={o} sheet={sheet} />
-      <OptionControl o={o} value={options[o.key]} level={level} sub={sub} onChange={v => onChange(o, v)} />
+      <OptionControl o={o} value={options[o.key]} all={options} level={level} sub={sub} onChange={v => onChange(o, v)} />
     </div>)}
   </div>;
 }
 
 // One Question Option: one choice from several (segmented), or — for a `multi` option — any of them ticked (never none). Ticking exactly what the level
 // would have selected goes back to "" so the option keeps following the level.
-function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; onChange: (v: string) => void; level: number; sub: string }) {
+function OptionControl({ o, value, all, onChange, level, sub }: { o: NonNullable<DecisionShellProps["config"]["options"]>[number]; value: string; all: Record<string, string>; onChange: (v: string) => void; level: number; sub: string }) {
   // single buttons, never more than two to a row; an odd last one sits centred on a row of its own
-  const on = o.multi ? ticksOf(o, value, level, sub) : [optionValue(o, value, level, sub)];
+  const off = (c: { disabledWhen?: ShellWhen | ShellWhen[] }) => !!c.disabledWhen && holds(c.disabledWhen, all);
+  const liveOnly = (xs: string[]) => { const kept = xs.filter((x) => !off(o.choices.find((c) => c.value === x) ?? {})); return kept.length ? kept : xs; };
+  const on = o.multi ? liveOnly(ticksOf(o, value, level, sub)) : [optionValue(o, value, level, sub)];
   const auto = o.multi ? ticksOf(o, "", level, sub) : [];
   const press = (v: string) => {
     if (!o.multi) { onChange(v); return; }
@@ -1222,7 +1246,7 @@ function OptionControl({ o, value, onChange, level, sub }: { o: NonNullable<Deci
     const ordered = o.choices.map((c) => c.value).filter((x) => next.includes(x));
     onChange(ordered.length === auto.length && ordered.every((x) => auto.includes(x)) ? "" : ordered.join(","));
   };
-  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) }))} onPress={press} />;
+  return <OptionGrid items={o.choices.map((c) => ({ ...c, active: on.includes(c.value) && !off(c), disabled: off(c), title: off(c) ? "Not available with this A2 Questions setting" : undefined }))} onPress={press} />;
 }
 
 const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {
