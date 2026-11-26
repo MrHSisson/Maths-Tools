@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { DECISION_CHAPTERS, DECISION_PAIRINGS, DECISION_GROUPS, DECISION_EXAM, type SubToolRef } from "../tools/Decision/decisionSpec";
 
 type Sub = { key: string; label: string; when: { key: string; values: string[] }[] };
-const cpaModule: any = await import("../tools/Decision/CriticalPath");
+const cpaModule: any = await import("../shared/decision/CpaTool");
 const SUBS: Sub[] = cpaModule.__seed.subTools;
 
 const all = (): SubToolRef[] => [...Object.values(DECISION_PAIRINGS).flat(), ...Object.values(DECISION_GROUPS).flatMap(gs => gs.flatMap(g => g.links)), ...Object.values(DECISION_EXAM).map(e => e.ref)];

@@ -52,11 +52,11 @@ describe("test areas", () => {
     expect(toolFilter([indices])).toEqual([indices]);
     expect(toolFilter([indices, "src/tools/Number/Indices.about.ts"])).toEqual([indices]);       // the tool's own words count as the tool
     expect(toolFilter([rounding, indices, "docs/TASKS.md", "src/decks/store.ts"])).toEqual([indices, rounding]);   // docs and deck files do not need the all-tool checks
-    expect(toolFilter(["src/tools/Decision/CriticalPath.tsx"])).toEqual(["src/tools/Decision/CriticalPath.tsx"]);
+    expect(toolFilter(["src/tools/Decision/CpaTimes.tsx"])).toEqual(["src/tools/Decision/CpaTimes.tsx"]);
   });
   it("a Decision topic's files map to the Decision tools they can affect", () => {
     const T = "src/tools/Decision/";
-    expect(toolFilter(["src/shared/decision/cpaSolve.ts"])).toEqual([T + "CpaChanges.tsx", T + "CpaCharts.tsx", T + "CpaNetworks.tsx", T + "CpaTimes.tsx", T + "CriticalPath.tsx"]);
+    expect(toolFilter(["src/shared/decision/cpaSolve.ts"])).toEqual([T + "CpaChanges.tsx", T + "CpaCharts.tsx", T + "CpaExam.tsx", T + "CpaNetworks.tsx", T + "CpaTimes.tsx"]);
     expect(toolFilter(["src/shared/decision/flowSolve.ts"])).toEqual([T + "NetworkFlows.tsx"]);
     expect(toolFilter(["src/shared/decision/dimSolve.ts"])).toEqual(["src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]);
     // the graph tools build on two flow files, so those run the graph tools and the graph tests as well
@@ -64,7 +64,7 @@ describe("test areas", () => {
     expect(sorted(areasForChange(["src/shared/decision/flowTemplates.ts"]))).toEqual(["cross", "decision", "docs", "flow", "graphs"]);
     // the shell itself: every Decision and mechanics tool (and every Decision topic's tests)
     const shell = toolFilter(["src/shared/decision/DecisionShell.tsx"]) as string[];
-    expect(shell).toEqual(expect.arrayContaining([T + "CriticalPath.tsx", T + "NetworkFlows.tsx", "src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]));
+    expect(shell).toEqual(expect.arrayContaining([T + "CpaTimes.tsx", T + "NetworkFlows.tsx", "src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]));
     expect(shell.every((t) => /^src\/tools\/(Decision|FurtherMechanics)\//.test(t))).toBe(true);
   });
   it("and for every tool when anything else needs them", () => {

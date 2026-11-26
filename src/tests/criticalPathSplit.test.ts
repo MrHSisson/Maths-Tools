@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { __seed } from "../tools/Decision/CriticalPath";
-import { CPA_ALL_HOMES, CPA_EXAM, CPA_SKILL_TOOLS, cpaHomeOf, cpaRedirect } from "../tools/Decision/CriticalPathHomes";
+import { __seed } from "../shared/decision/CpaTool";
+import { CPA_ALL_HOMES, CPA_EXAM, CPA_SKILL_TOOLS, cpaHomeOf, cpaRedirect } from "../shared/decision/cpaHomes";
 
 describe("Critical Path split: where every old sub-tool lives", () => {
   const old = __seed.subTools.map((t: { key: string }) => t.key);

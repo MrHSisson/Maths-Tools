@@ -1,8 +1,8 @@
-import { CpaTool, __seed as base } from "./CriticalPath";
-import { CPA_SKILL_TOOLS } from "./CriticalPathHomes";
+import { CpaTool, __seed as base } from "../../shared/decision/CpaTool";
+import { CPA_SKILL_TOOLS } from "../../shared/decision/cpaHomes";
 
 // Changes and Reasoning (DE4): one of the four skill tools Critical Path Analysis is being split into
-// (docs/pathways/critical-path-split.md). The tool itself is CpaTool in CriticalPath.tsx; this file picks its tabs.
+// (docs/pathways/critical-path-split.md). The tool itself is CpaTool in src/shared/decision/CpaTool.tsx; this file picks its tabs.
 const HOME = CPA_SKILL_TOOLS.find((h) => h.id === "cpa-changes")!;
 
 export default function CpaChanges() {

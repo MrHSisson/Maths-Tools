@@ -1,6 +1,6 @@
 # Critical Path Analysis: split into skill tools
 - **Status:** building
-- **Updated:** 2026-11-26 (chunk 5: Cascade Charts and Resources built; all four skill tools live)
+- **Updated:** 2026-11-26 (chunk 6: exam page built, old tool retired; waiting for merge)
 
 ## Intention
 Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub.
@@ -21,9 +21,12 @@ Decided with Harry (2026-11-26): the shared generators and solver stay as they a
 - 2026-11-26 (chunk 3): **Activity Networks** (`/cpa-networks`, `CpaNetworks.tsx`) is live on the hub, built the way the chunk 2 note describes. Print templates now show only on tools that draw charts.
 - 2026-11-26 (chunk 4): **Changes and Reasoning** (`/cpa-changes`, `CpaChanges.tsx`) is live on the hub: four tabs in one row, AS and A-level together.
 - 2026-11-26 (chunk 5): **Cascade Charts and Resources** (`/cpa-charts`, `CpaCharts.tsx`) is live on the hub. Every skill tab has moved; `/critical-path` now holds only the exam-style chains.
+- 2026-11-26 (chunk 6): **Critical Path Exam Questions** (`/cpa-exam`, `CpaExam.tsx`): the eleven chains, picked from a chooser in two groups (AS, A-level) with no Course or Practice switch; the hub's DE exam card opens it. **The old tool is retired:** its code moved to `src/shared/decision/` (`CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `cpaAsync.ts`, `cpa.worker.ts`), its registry entry is gone, and `/critical-path` is a redirect route in `App.tsx` (`cpaRedirect`) that sends any old link to the tool and tab it names. `CpaTool` now needs a `home`; the old Course and Practice options and the all-in-one chooser are deleted. The dashboard facts read each wrapper together with `CpaTool.tsx` and count only that tool's tabs (`scripts/toolFacts.mjs`).
 
 ## Next steps
-1. The exam page on the hub (`/cpa-exam`, a thin page over the existing chains, opened from the DE chapter), then retire the old tool and `CpaTool`'s no-`home` mode (the old default export, the chooser and the Course and Practice options).
+1. Harry reviews and merges (no PR yet). After the merge, check the five tools on the live site.
+2. The lesson deck `resource-levelling` still names the old tool (`tool: critical-path`, `toolPath: /critical-path`) in its data, here and in the shared copy: its button works through the redirect, but the deck no longer lists itself on the tool page. Change both to `cpa-charts` and `/cpa-charts` (a one-field edit, pushed with `npm run deck`) when Harry says.
+3. Later: the exam-paper tool the exam page is meant to grow into (a whole paper, mixed chains), and the dashboard Review notes for the five tools.
 
 ## Where to read more
-`src/tools/Decision/CriticalPath.tsx`, `criticalPathGenerate.ts`, `decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`.
+`src/shared/decision/CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `src/tools/Decision/decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`.

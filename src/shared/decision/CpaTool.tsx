@@ -11,11 +11,11 @@ import {
   type CpaViewState,
   type DecisionProblem,
   type SolveStep,
-} from "../../shared/decision";
-import CpaTileArt from "../../shared/decision/CpaTileArt";
-import { cpaMovedTo, type CpaHome } from "./CriticalPathHomes";
-import { generate, EXAM_CHAIN, CHART_SUBS } from "./criticalPathGenerate";
-import { generateInWorker } from "./criticalPathAsync";
+} from "./index";
+import CpaTileArt from "./CpaTileArt";
+import type { CpaHome } from "./cpaHomes";
+import { generate, EXAM_CHAIN, CHART_SUBS } from "./cpaGenerate";
+import { generateInWorker } from "./cpaAsync";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Critical Path Analysis — Decision Maths (AQA Further Maths, Discrete / Edexcel D1). Activity ON NODE, no dummy activities, total float
@@ -543,25 +543,26 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
   );
 }
 
-/** The whole tool (no `home`), or one of the skill tools it is being split into (`home`: its tabs, one row of pills in place of the topic chooser, and only the options those tabs use). */
-export function CpaTool({ home }: { home?: CpaHome }) {
-  const subTools = home ? home.subs.flatMap((k) => SUB_TOOLS.filter((t) => t.key === k)).map((t) => ({ ...t, when: undefined })) : SUB_TOOLS;
+/** One of the five Critical Path tools (`home` in cpaHomes.ts): its tabs, and only the Question Options those tabs use. The four skill tools show their tabs as one row of pills; the exam-style questions (eleven chains) are picked from a chooser in two groups, AS and A-level. */
+export function CpaTool({ home }: { home: CpaHome }) {
+  const exam = home.id === "cpa-exam";
+  const subTools = home.subs.flatMap((k) => SUB_TOOLS.filter((t) => t.key === k)).map((t) => ({ ...t, when: undefined }));
   const scopeOptions = <T extends { key: string; forSubTools?: string[] }>(os: T[]): T[] =>
-    !home ? os : os.filter((o) => o.key !== "course" && o.key !== "practice" && (!o.forSubTools || o.forSubTools.some((k) => home.subs.includes(k))));
+    os.filter((o) => !o.forSubTools || o.forSubTools.some((k) => home.subs.includes(k)));
   return (
     <DecisionShell
       generate={generate}
       solve={solve}
       renderCanvas={renderCanvas}
       config={{
-        pageTitle: home?.name ?? "Critical Path Analysis",
+        pageTitle: home.name,
         slowGenerate: true,
         generateAsync: generateInWorker,
-        purpose: home?.purpose ?? "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
+        purpose: home.purpose,
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
-        printTemplates: !home || home.subs.some((k) => k === "cascade" || k === "histogram"),   // blank histogram and Gantt grids: only where those charts are drawn
-        questionSheet: { tabs: home ? CPA_SHEET_TABS.filter((k) => home.subs.includes(k)) : CPA_SHEET_TABS, build: buildCpaSheet },
+        printTemplates: exam || home.subs.some((k) => k === "cascade" || k === "histogram"),   // blank histogram and Gantt grids: only where those charts are drawn
+        questionSheet: { tabs: CPA_SHEET_TABS.filter((k) => home.subs.includes(k)), build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
@@ -582,44 +583,19 @@ export function CpaTool({ home }: { home?: CpaHome }) {
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
         subTools,
-        chooser: home ? undefined : {
+        chooser: exam ? {
           art: (k: string) => <CpaTileArt k={k} />,
-          filters: ["course", "practice"],
+          filters: [],
           groups: [
-            { title: "Building the network", keys: ["network", "table"] },
-            { title: "Times, floats and critical paths", keys: ["forward", "backward", "full", "floatPaths", "unknown"] },
-            { title: "Changes and reasoning", keys: ["change", "reason", "shorten", "reasonA"] },
-            { title: "Charts and resources", keys: ["cascade", "histogram", "level", "alloc"] },
             { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },
             { title: "A-level exam style questions", keys: ["exAlAny", "exCascade", "exTable", "exHist", "exShorten", "exAlloc"] },
           ],
-        },
+        } : undefined,
         hideMatrix: true,
-        examSheet: !home,
+        examSheet: exam,
         noSandbox: true,
         canvasFooter: (p: DecisionProblem) => <CpaKey p={p} />,
         options: scopeOptions([
-          {
-            key: "course",
-            label: "Course",
-            info: "Which course the questions and tabs are for.",
-            top: true,
-            defaultFor: () => "as",
-            choices: [
-              { value: "as", label: "AS" },
-              { value: "a", label: "A-level" },
-            ],
-          },
-          {
-            key: "practice",
-            label: "Practice",
-            info: "Skills gives single-skill questions. Exam style gives multi-part questions in the style of the exam paper.",
-            top: true,
-            choices: [
-              { value: "skills", label: "Skills" },
-              { value: "exam", label: "Exam style" },
-            ],
-          },
           {
             key: "floatQ",
             label: "Question",
@@ -903,13 +879,6 @@ export function CpaTool({ home }: { home?: CpaHome }) {
       }}
     />
   );
-}
-
-export default function App() {
-  // a tab that now has its own tool opens there (an old saved link or printed sheet keeps working); the tabs not moved yet stay here
-  const moved = typeof window === "undefined" ? null : cpaMovedTo(window.location.search);
-  useEffect(() => { if (moved) window.location.replace(moved.pathname + moved.search); }, [moved?.pathname, moved?.search]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only the address matters
-  return moved ? null : <CpaTool />;
 }
 
 // CI contract surface — checked by src/tests/cpa.test.ts (the shared Decision `__problem` validator is MST/TSP/route-specific).

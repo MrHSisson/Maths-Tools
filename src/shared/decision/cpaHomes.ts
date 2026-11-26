@@ -39,11 +39,3 @@ export function cpaRedirect(search: string): { pathname: string; search: string 
   return { pathname: home.path, search: s ? `?${s}` : "" };
 }
 
-/** The new tools that exist so far. A tab whose new tool is not built yet stays where it is in the old tool, so each chunk of the split switches its own tabs over. */
-const CPA_LIVE: string[] = ["cpa-times", "cpa-networks", "cpa-changes", "cpa-charts"];
-/** The new tool an old sub-tool has already moved to, if any. */
-export const cpaLiveHomeOf = (sub: string): CpaHome | undefined => { const h = cpaHomeOf(sub); return h && CPA_LIVE.includes(h.id) ? h : undefined; };
-/** Where an old-tool address goes now: the new tool's address when its tab has moved, otherwise nothing (the old tool still shows it). */
-export function cpaMovedTo(search: string): { pathname: string; search: string } | null {
-  return cpaLiveHomeOf(new URLSearchParams(search).get("tool") ?? "") ? cpaRedirect(search) : null;
-}

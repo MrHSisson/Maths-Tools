@@ -1,6 +1,6 @@
 # Tool Spec: Critical Path Analysis — Exam style questions
 
-**Status:** implemented (AS and A-level), 2026-10-18. Built on `DecisionShell` inside `src/tools/Decision/CriticalPath.tsx`; generator `src/shared/decision/cpaExam.ts`; layout `ExamView.tsx` (shared with Network Flows); canvas `ExamCanvas` in the tool; tests `src/tests/cpaExam.test.ts`. Evidence: `specs/exam/critical-path-analysis.md` (AS 7366, A-level, legacy papers).
+**Status:** implemented (AS and A-level), 2026-10-18. Built on `DecisionShell` inside `src/shared/decision/CpaTool.tsx`; generator `src/shared/decision/cpaExam.ts`; layout `ExamView.tsx` (shared with Network Flows); canvas `ExamCanvas` in the tool; tests `src/tests/cpaExam.test.ts`. Evidence: `specs/exam/critical-path-analysis.md` (AS 7366, A-level, legacy papers).
 
 > **Update 2026-11-08:** the skill tabs for the resource histogram and resource levelling were reworked (`specs/resource-levelling.md`). The exam-style chains in this file still use the **older** levelling question and walkthrough (no quick-sum method, no tries cap, the older start-time drawing order); moving them onto the new engine is planned in `docs/pathways/decision-exam-questions.md`.
 
