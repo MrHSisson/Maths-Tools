@@ -8,13 +8,13 @@ import { openPrintWindow } from "../shared/print";
 import type { DeckElement, Slide } from "./types";
 import { partLetter } from "./textbookSheet";
 
-export interface BookItem {
+interface BookItem {
   /** The question as the pupil reads it; maths goes between dollar signs ("share $£80$ in the ratio $3 : 5$"). */
   text: string;
   /** The answer, plain text with the same dollar-sign rule ("Ana = £30, Ben = £50"). */
   answer: string;
 }
-export interface BookPart {
+interface BookPart {
   id: string;
   /** "Sharing a total" (the question number is added). */
   title: string;
@@ -32,7 +32,7 @@ export interface BookSheet {
 }
 
 /** The two printed pages of questions: the first holds the first two parts, the second the rest. */
-export const BOOK_QUESTIONS_PER_PAGE = 24;
+const BOOK_QUESTIONS_PER_PAGE = 24;
 export const MAX_BOOK_QUESTIONS = 2 * BOOK_QUESTIONS_PER_PAGE;
 
 /** A part is a numbered question (1, 2, 3 ...) whose items are its lettered parts (a), (b), (c) ... */
