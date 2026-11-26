@@ -57,6 +57,23 @@ Branch `claude/beautiful-noether-aczmnn` (restarted from the latest `main` after
 Agent: Claude Code
 Notes: no planner Build Log block yet for this session (to add).
 
+## 2026-11-26 — Floating project plan
+
+- In Developing tools mode, a small button opens the project plan on any page. A tool page shows the tool's overview and checklist. Home, hubs and other pages show the expandable project map. The panel follows page changes, including a return home that reloads the site.
+- Edit goals and checklists in the panel, nest and reorder items, pin priorities, and link dependencies. A dedicated queue holds explicit requests for Harry to try something. Decks and the feature tracker are still accessible in the Tools dashboard.
+- The shared plan lives in a private Blob and uses a separate access key. The browser remembers the key after entry. The help in AGENTS.md covers agent access and concurrent edits.
+
+Agent: Codex
+Notes: Floating project plan (Codex), Maths Tools — Build Log.
+
+## 2026-11-26 — Project Plan beside the tool
+
+- The floating Project Plan button opens a panel on the left. On laptop-sized screens, the tool fits beside it as a scaled copy of its usual layout. Closing the panel returns the tool to full size at the same place on the page.
+- The panel can widen on a laptop and takes the full width on smaller screens. Ink scales with the tool and draws under the pointer.
+
+Agent: Codex
+Notes: Dock the project plan on the left (Codex), Maths Tools — Build Log.
+
 ## 2026-11-25 — Solving Trig Equations: a draggable range bar
 
 Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/components/QOPopovers.tsx`, `src/shared/calibration.ts`, `src/tools/Algebra/SolvingTrigEquations.tsx` (+ `.about.ts`), `src/tools/Algebra/trigEquations.ts`, `src/tests/trigEquations.test.ts`.

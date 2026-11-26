@@ -281,13 +281,17 @@ function NodeDetail({ node, plan, save, select }: { node: PlanNode; plan: Projec
   </section>;
 }
 
-export default function ProjectPlanPanel() {
+interface PanelProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  panelWidth: number;
+  wide: boolean;
+  toggleWidth: () => void;
+}
+
+export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, toggleWidth }: PanelProps) {
   const { pathname, key: pageKey } = useLocation();
   const tool = contextualTools.find(item => item.path.toLowerCase() === pathname.replace(/\/$/, "").toLowerCase());
-  const [open, setOpen] = useState(() => {
-    try { return sessionStorage.getItem("mt-project-plan-open") === "1"; } catch { return false; }
-  });
-  const [wide, setWide] = useState(false);
   const [selection, setSelection] = useState<{ route: string; id: string | null }>();
   const launcher = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -299,7 +303,6 @@ export default function ProjectPlanPanel() {
   const select = (id: string | null) => setSelection({ route: pageKey, id });
 
   useEffect(() => {
-    try { sessionStorage.setItem("mt-project-plan-open", open ? "1" : "0"); } catch { /* Storage is unavailable. */ }
     if (!open) return;
     closeButton.current?.focus();
     function closeOnEscape(event: KeyboardEvent) {
@@ -310,19 +313,21 @@ export default function ProjectPlanPanel() {
     }
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [open]);
+  }, [open, setOpen]);
 
   return <div className="print:hidden">
-    <button type="button" className={`fixed bottom-20 right-3 z-[155] grid size-11 place-items-center rounded-full border border-slate-300 bg-white text-slate-800 shadow-lift hover:bg-slate-100 sm:right-5 ${open ? "invisible" : ""}`}
+    <button type="button" className={`fixed bottom-20 left-3 z-[2010] grid size-11 place-items-center rounded-full border border-slate-300 bg-white text-slate-800 shadow-lift hover:bg-slate-100 sm:left-5 ${open ? "invisible" : ""}`}
       ref={launcher} title="Project plan" aria-label="Open project plan" aria-expanded={open} aria-controls={open ? "project-plan-panel" : undefined} onClick={() => { setSelection(undefined); setOpen(true); }}>
       <GitFork size={19} />
     </button>
-    {open && <aside id="project-plan-panel" aria-label="Project plan" className={`fixed inset-y-0 right-0 z-[2010] flex w-full flex-col border-l border-slate-300 bg-slate-50 shadow-lift ${wide ? "sm:max-w-4xl" : "sm:max-w-md"}`}>
+    {open && <aside id="project-plan-panel" aria-label="Project plan"
+      className="fixed inset-y-0 left-0 z-[2010] flex w-full flex-col border-r border-slate-300 bg-slate-50 shadow-lift"
+      style={panelWidth ? { width: panelWidth } : undefined}>
       <header className="border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-1">
           <h2 className="mr-auto text-lg font-semibold">Project plan</h2>
           {pathname !== "/" && <Link to="/" className={iconButton} aria-label="Site home"><Home size={17} /></Link>}
-          <button className={`${iconButton} hidden sm:inline-flex`} aria-label={wide ? "Narrow panel" : "Widen panel"} onClick={() => setWide(!wide)}>{wide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>
+          {panelWidth > 0 && <button className={iconButton} aria-label={wide ? "Narrow panel" : "Widen panel"} onClick={toggleWidth}>{wide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>}
           <button ref={closeButton} className={iconButton} aria-label="Close project plan" onClick={() => {
             setOpen(false);
             requestAnimationFrame(() => launcher.current?.focus());

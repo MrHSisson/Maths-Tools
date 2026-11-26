@@ -137,7 +137,7 @@ If a step cannot be done (no network to the dashboard, the planner tool is unava
 
 ## The floating project plan
 
-In Developing tools mode, use the floating project button for the live plan. Tool pages open their checklist; home and hubs open the project tree. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Use the review queue only for a specific thing Harry can try. A request has its own prompt and shares the item's ID; completing the request clears the queue entry independently of the task's tick.
+In Developing tools mode, use the floating project button on the left for the live plan. On laptop-sized screens, the panel docks beside a scaled view of the current page. Tool pages open their checklist; home and hubs open the project tree. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Use the review queue only for a specific thing Harry can try. A request has its own prompt and shares the item's ID; completing the request clears the queue entry independently of the task's tick.
 
 When starting project work, read the shared plan as well as the handoff. After changing the work, update the affected item, close completed checks, and record any specific review request. Keep technical history in the patch notes and Build Log.
 

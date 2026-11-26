@@ -198,19 +198,35 @@ export function InkOverlay() {
     return () => { ro.disconnect(); rootRo.disconnect(); window.removeEventListener("resize", onResize); };
   }, [open, dock.v]);
 
+  const surfaceRef = useRef<SVGSVGElement>(null);
+  // Keep stroke storage and the hotbar in the tool's coordinates when the project panel scales the page.
+  const surfaceCoordinates = () => {
+    const surface = surfaceRef.current;
+    const bounds = surface?.getBoundingClientRect();
+    const scale = surface && bounds && surface.clientWidth ? bounds.width / surface.clientWidth : 1;
+    return (x: number, y: number) => ({
+      x: (x - (bounds?.left ?? 0)) / scale,
+      y: (y - (bounds?.top ?? 0)) / scale,
+    });
+  };
+
   const gripDown = (e: React.PointerEvent) => {
     const el = barRef.current;
     if (!el) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const r = el.getBoundingClientRect();
-    grab.current = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
-    dragRef.current = { px: r.left + r.width / 2, py: r.top + r.height / 2, x: e.clientX, y: e.clientY };
+    const local = surfaceCoordinates();
+    const pointer = local(e.clientX, e.clientY);
+    const centre = local(r.left + r.width / 2, r.top + r.height / 2);
+    grab.current = { dx: pointer.x - centre.x, dy: pointer.y - centre.y };
+    dragRef.current = { px: centre.x, py: centre.y, ...pointer };
     downAt.current = { x: e.clientX, y: e.clientY };
     setDrag(dragRef.current);
   };
   const gripMove = (e: React.PointerEvent) => {
     if (!grab.current) return;
-    dragRef.current = { px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy, x: e.clientX, y: e.clientY };
+    const pointer = surfaceCoordinates()(e.clientX, e.clientY);
+    dragRef.current = { px: pointer.x - grab.current.dx, py: pointer.y - grab.current.dy, ...pointer };
     setDrag(dragRef.current);
   };
   const gripUp = (e: React.PointerEvent) => {
@@ -219,7 +235,7 @@ export function InkOverlay() {
     if (grab.current && d && moved) {
       // use the release position itself when we have it (the final move may not have been processed yet)
       const last = grab.current;
-      const x = e.clientX, y = e.clientY;
+      const { x, y } = surfaceCoordinates()(e.clientX, e.clientY);
       const v = viewport();
       const next = dockFromDrop({ x, y }, { x: x - last.dx, y: y - last.dy }, v.w, v.h, dock.v ? undefined : size);
       setDock(next); saveDock(next);
@@ -254,8 +270,6 @@ export function InkOverlay() {
     return () => window.removeEventListener("keydown", h);
   }, [mode, menu]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: undo works on refs, so an older copy of it is still correct
 
-  const page = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
-
   // paint the live stroke at most once a frame
   const paintLive = () => {
     if (liveRaf.current) return;
@@ -268,7 +282,7 @@ export function InkOverlay() {
     setMenu(null);
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
     layerRef.current?.setPointerCapture(e.pointerId);
-    const p = page(e);
+    const p = surfaceCoordinates()(e.clientX, e.clientY);
     const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => !el.closest("[data-ink-ui]"));
     const target = under?.closest("button, a, input, textarea, select, summary, [role='button'], [role='switch'], [role='checkbox'], [contenteditable='true'], [data-trusted-click], [data-ink-pass-through]");
     if (target) {
@@ -299,7 +313,11 @@ export function InkOverlay() {
     }
   };
   const onMove = (e: React.PointerEvent) => {
-    if (mode === "eraser") moveRing(e.clientX, e.clientY);
+    const local = surfaceCoordinates();
+    if (mode === "eraser") {
+      const point = local(e.clientX, e.clientY);
+      moveRing(point.x, point.y);
+    }
     const pr = press.current;
     if (!pr || !e.isPrimary) return;
     if (pr.target) {
@@ -317,7 +335,7 @@ export function InkOverlay() {
     const native = e.nativeEvent as PointerEvent;
     const evs = typeof native.getCoalescedEvents === "function" ? native.getCoalescedEvents() : [];
     for (const ev of evs.length ? evs : [native]) {
-      const p = { x: ev.clientX, y: ev.clientY };
+      const p = local(ev.clientX, ev.clientY);
       if (mode === "eraser") eraseTo(p);
       else {
         const last = livePts.current[livePts.current.length - 1];
@@ -376,7 +394,7 @@ export function InkOverlay() {
 
       {/* the ink — screen coordinates: it stays where it was drawn. Committed strokes are memoised; the stroke being drawn
           is one <path> updated directly (no React render per pointer move). */}
-      <svg aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
+      <svg ref={surfaceRef} aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
         <Strokes strokes={strokes} />
         <path ref={livePathRef} d="" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
