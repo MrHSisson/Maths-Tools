@@ -1,6 +1,6 @@
 # Critical Path Analysis: split into skill tools
 - **Status:** building
-- **Updated:** 2026-11-26 (chunk 6: exam page built, old tool retired; waiting for merge)
+- **Updated:** 2026-11-26 (chunk 6: exam page built, old tool retired; merged; rounding-up list below)
 
 ## Intention
 Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub.
@@ -24,9 +24,12 @@ Decided with Harry (2026-11-26): the shared generators and solver stay as they a
 - 2026-11-26 (chunk 6): **Critical Path Exam Questions** (`/cpa-exam`, `CpaExam.tsx`): the eleven chains, picked from a chooser in two groups (AS, A-level) with no Course or Practice switch; the hub's DE exam card opens it. **The old tool is retired:** its code moved to `src/shared/decision/` (`CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `cpaAsync.ts`, `cpa.worker.ts`), its registry entry is gone, and `/critical-path` is a redirect route in `App.tsx` (`cpaRedirect`) that sends any old link to the tool and tab it names. `CpaTool` now needs a `home`; the old Course and Practice options and the all-in-one chooser are deleted. The dashboard facts read each wrapper together with `CpaTool.tsx` and count only that tool's tabs (`scripts/toolFacts.mjs`).
 
 ## Next steps
-1. Harry reviews and merges (no PR yet). After the merge, check the five tools on the live site.
-2. The lesson deck `resource-levelling` is **left as it is, by Harry's decision (2026-11-26)**. Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it, and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it later, change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`).
-3. Later: the exam-paper tool the exam page is meant to grow into (a whole paper, mixed chains), and the dashboard Review notes for the five tools.
+Rounding up after the merge (Harry asked for these to be noted, 2026-11-26):
+1. **The exam side needs more work** (Harry). The exam page (`/cpa-exam`) is a thin page over the eleven existing chains; what to change is still to be decided. It is meant to grow into an exam-paper tool (a whole paper, mixed chains). See also `docs/pathways/decision-exam-questions.md`.
+2. **The `resource-levelling` lesson deck is left unattached** (Harry's decision). Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it: change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`).
+3. **Dashboard Review notes** for the five tools (Activity Networks, Times Float and Critical Paths, Changes and Reasoning, Cascade Charts and Resources, Critical Path Exam Questions), through the dashboard notes API (`AGENTS.md`).
+4. **Phone and tablet look** by eye: Changes and Reasoning and Cascade Charts and Resources on a phone; the exam page on a phone and a tablet. (The shell smoke check passes for all five.)
+5. **Handoff block** "split Critical Path Analysis into four skill tools": delete once merged. Then delete this pathway file when items 1 to 4 are settled, with a summary in the Build Log (the Build Log block for the split is written).
 
 ## Where to read more
 `src/shared/decision/CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `src/tools/Decision/decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`.
