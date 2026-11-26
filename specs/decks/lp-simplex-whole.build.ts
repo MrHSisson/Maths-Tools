@@ -49,7 +49,7 @@ const maths = (x: number, y: number, w: number, h: number, latex: string, size: 
 const ml = (x: number, y: number, w: number, h: number, latex: string, size = 48, more: Record<string, unknown> = {}) => maths(x, y, w, h, latex, size, { align: "left", ...more });
 
 // ── the graph: the region, its whole-number points, the objective line ───────
-const SC = 105, OX = 930, OY = 790;
+const SC = 100, OX = 910, OY = 790;
 const px = (x: number) => OX + SC * x, py = (y: number) => OY - SC * y;
 const dot = (x: number, y: number, c: string, r: number, step = 0) => ({ kind: "shape", shape: "ellipse", x: px(x) - r, y: py(y) - r, w: 2 * r, h: 2 * r, fill: c, stroke: c, strokeWidth: 2, ...(step ? { step } : {}) }) as never;
 const seg = (x1: number, y1: number, x2: number, y2: number, colour: string, width: number, step = 0, arrow = false) =>
@@ -64,7 +64,7 @@ function region(points: Array<[number, number]>, fill = "#93c5fd"): unknown {
 }
 const tag = (x: number, y: number, text: string, colour: string, where: "below" | "right" | "above", step = 0): unknown => {
   const o = { colour, bold: true, align: "left" as const, ...(step ? { step } : {}) };
-  if (where === "right") return t(px(x) + 24, py(y) - 22, 260, 46, text, 30, o);
+  if (where === "right") return t(px(x) + 24, py(y) - 22, 190, 46, text, 30, o);
   if (where === "above") return t(px(x) + 14, py(y) - 84, 300, 46, text, 30, o);
   return t(px(x) - 30, py(y) + 18, 260, 46, text, 30, o);
 };
@@ -78,21 +78,21 @@ function graph(o: GOpts = {}): unknown[] {
   const els: unknown[] = [
     region([[0, 0], [6, 0], [3.5, 2.5], [0, 11 / 3]]),
     seg(0, 0, 6.3, 0, LOOK.ink, 6), seg(0, 0, 0, 4.4, LOOK.ink, 6),
-    t(px(6.3) + 5, py(0) - 26, 60, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(4.4) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
+    t(px(6.3) + 5, py(0) - 26, 44, 50, "$x$", 40, { colour: LOOK.ink }), t(px(0) + 16, py(4.4) - 24, 60, 50, "$y$", 40, { colour: LOOK.ink }),
     seg(6.2, -0.2, 1.8, 4.2, BLUE, 7), seg(0, 11 / 3, 6.2, 1.6, PURPLE, 7),
     ...ticks(),
   ];
-  if (o.lines !== false) els.push(t(px(1.95), py(4.3), 300, 44, "$x + y = 6$", 28, { colour: BLUE, bold: true, align: "left" }), t(px(4.55), py(2.55), 340, 44, "$x + 3y = 11$", 28, { colour: PURPLE, bold: true, align: "left" }));
+  if (o.lines !== false) els.push(t(px(1.95), py(4.3), 300, 44, "$x + y = 6$", 28, { colour: BLUE, bold: true, align: "left" }), t(px(4.55), py(2.55), 220, 44, "$x + 3y = 11$", 28, { colour: PURPLE, bold: true, align: "left" }));
   if (o.points) for (const [x, y] of lattice) els.push(dot(x, y, "#475569", 7, o.points === true ? 0 : 0));
   if (o.optimum !== undefined) els.push(dot(3.5, 2.5, ORANGE, 14, o.optimum));
-  if (o.optimum) els.push(maths(px(3.5) + 14, py(2.5) - 92, 300, 70, "(\\tfrac{7}{2}, \\tfrac{5}{2})", 30, { colour: ORANGE, align: "left", ...(o.optimum ? { step: o.optimum } : {}) }));
+  if (o.optimum) els.push(maths(px(3.5) + 14, py(2.5) - 92, 270, 70, "(\\tfrac{7}{2}, \\tfrac{5}{2})", 30, { colour: ORANGE, align: "left", ...(o.optimum ? { step: o.optimum } : {}) }));
   return els;
 }
 
 const slide = (id: string, title: string, els: unknown[], brief?: string): Slide => makeSlide(id, "teach", title, els as never, brief);
 const left = (text: string, y = 250, h = 560, size = 42, more: Record<string, unknown> = {}) => t(60, y, 780, h, text, size, more);
 
-// ── the slides (look card: the five that carry the new look) ─────────────────
+// ── the slides ───────────────────────────────────────────────────────────────
 const slides: Slide[] = [
   S.title(`${P}-title`, "Why rounding fails", "Whole numbers and the simplex answer"),
 
@@ -104,6 +104,33 @@ const slides: Slide[] = [
     left("We cannot make $3\\tfrac{1}{2}$ tables. Only whole numbers of each can be made.", 780, 110, 40, { bold: true, step: 2 }),
     ...graph({ optimum: 1 }),
   ], "The one worked problem for the whole deck. Whole numbers only: the optimum is a corner with fractions in it."),
+
+  S.objective(`${P}-objective`, "Explain why the simplex answer may not be a plan, and find the best whole-number one.", [
+    "See why rounding to the nearest is not safe",
+    "Use the simplex answer as an upper bound",
+    "Test the whole-number points around it and pick the best",
+  ]),
+
+  slide(`${P}-round`, "Can we just round?", [
+    ...titleEls("Can we just round?", "Round to the nearest whole number"),
+    left("$\\tfrac{7}{2}$ rounds to $4$ and $\\tfrac{5}{2}$ rounds to $3$.", 250, 130, 40),
+    ml(60, 395, 780, 90, "(x, y) = (4, 3)", 54, { step: 1 }),
+    left("Is it allowed? Test both limits.", 510, 70, 40, { colour: grey, step: 2 }),
+    ml(60, 590, 780, 170, "\\begin{array}{l}4 + 3 = 7 \\;\\; \\textcolor{" + RED + "}{> 6}\\\\[1.4ex]4 + 3 \\times 3 = 13 \\;\\; \\textcolor{" + RED + "}{> 11}\\end{array}", 46, { step: 2 }),
+    left("It breaks both limits. Rounding to the nearest is not safe.", 780, 100, 40, { bold: true, step: 3 }),
+    ...graph({ optimum: 0 }),
+    dot(4, 3, RED, 15, 2), tag(4, 3, "$(4, 3)$", RED, "right", 2),
+  ], "7/2 rounds to 4 and 5/2 rounds to 3 (halves round up). (4, 3) is outside the region: 7 > 6 and 13 > 11."),
+
+  slide(`${P}-bound`, "An upper bound", [
+    ...titleEls("An upper bound", "No whole-number plan can beat the simplex answer"),
+    left("A whole-number plan is also a plan for the linear programme, so its $P$ cannot be more than the simplex's.", 250, 190, 40),
+    ml(60, 470, 780, 100, "P \\le \\tfrac{41}{2}", 56, { step: 1 }),
+    left("The coefficients are whole numbers, so $P$ is a whole number for a whole-number plan.", 600, 150, 38, { step: 2 }),
+    ml(60, 790, 780, 90, "\\text{So } P \\le 20", 56, { step: 3 }),
+    ...graph({ optimum: 0 }),
+    seg(2.2, 3.475, 5.0, 1.375, ORANGE, 6, 1),
+  ], "The orange line is P = 41/2, through the optimum. A whole-number plan is inside the region, so it cannot be above that line; its P is a whole number, so at most 20."),
 
   slide(`${P}-points`, "The whole-number points", [
     ...titleEls("The whole-number points", "Only these are plans we can make"),
@@ -138,6 +165,20 @@ const slides: Slide[] = [
     t(px(4.15), py(3.35), 200, 44, "$P > 20$", 30, { colour: ORANGE, bold: true, align: "left", step: 1 }),
     seg(4.15, 3.2, 3.6, 2.6, ORANGE, 4, 1),
   ], "The region with P above 20 is the thin sliver by the optimum, and it holds no whole-number point: (4, 2), with P = 20, is the best. The green line is P = 20."),
+
+  S.summary(`${P}-method`, "Finding the best whole-number plan", [
+    "Is the simplex answer a whole number? If not, it is not a plan.",
+    "Its $P$ is an upper bound: a whole-number plan has $P$ at most the whole number just below it.",
+    "Test the whole-number points either side of the optimum: round each variable down and up. A point is a plan only if it satisfies every limit.",
+    "The best of them is the best plan. If it reaches the bound, no practical plan can do better.",
+  ]),
+
+  S.summary(`${P}-mistakes`, "Watch out", [
+    "Rounding to the nearest can break a limit: always test it.",
+    "Rounding down is always practical, but it is not always the best plan.",
+    "Test every limit, not just one: $(3, 3)$ passes one and fails the other.",
+    "The bound is the whole number just below the optimum's $P$: $20\\tfrac{1}{2}$ gives 20, not 21.",
+  ]),
 ];
 
 export default () => ({
