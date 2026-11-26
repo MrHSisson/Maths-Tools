@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { Home, ChevronLeft, ChevronRight, Info, FileText, ExternalLink, Lock } from "lucide-react";
 import { PAGE_BG } from "../colors";
 import { useLayoutMode } from "../layoutMode";
-import { useDevMode, setDevMode } from "../../devMode";
+import { useDevMode, unlockDevMode } from "../../devMode";
 import DevNotice from "./DevNotice";
-import { checkDevPassword } from "../../devAccess";
 
 // A landing page for one specification option (Further Mechanics, Decision): the chapters, each chapter's generators and
 // statements, and the older papers. By default it is a planning page, Developing-tools only: it asks for the Developing tools
@@ -109,16 +108,16 @@ function toolState(c: SpecChapter, planning: boolean): string {
 
 function Gate({ title }: { title: string }) {
   const [password, setPassword] = useState("");
-  const [wrong, setWrong] = useState(false);
+  const [wrong, setWrong] = useState("");
   return (
     <div className="flex min-h-screen items-center justify-center p-4" style={{ background: PAGE_BG }}>
-      <form onSubmit={e => { e.preventDefault(); if (checkDevPassword(password)) setDevMode(true); else setWrong(true); }}
+      <form onSubmit={async e => { e.preventDefault(); setWrong(await unlockDevMode(password) ?? ""); }}
         className={`${card} flex w-full max-w-sm flex-col gap-3 p-6`}>
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-slate-900"><Lock size={20} /> {title}</h1>
         <p className="text-sm text-slate-500">This is in development. Enter the Developing tools password to continue.</p>
-        <input type="password" autoFocus value={password} onChange={e => { setPassword(e.target.value); setWrong(false); }}
+        <input type="password" autoFocus value={password} onChange={e => { setPassword(e.target.value); setWrong(""); }}
           className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900" aria-label="Password" />
-        {wrong && <p className="text-sm text-red-600">That password is not right.</p>}
+        {wrong && <p className="text-sm text-red-600">{wrong}</p>}
         <div className="flex justify-between">
           <button type="button" onClick={() => { window.location.href = "/"; }} className="rounded-lg px-3 py-2 font-semibold text-slate-600 hover:bg-slate-100">Home</button>
           <button type="submit" className="rounded-lg bg-blue-900 px-4 py-2 font-semibold text-white">Unlock</button>

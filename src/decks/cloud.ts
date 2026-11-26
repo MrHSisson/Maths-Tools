@@ -2,12 +2,11 @@
 // to /api/decks in the background; opening the deck list or a deck pulls any newer copy back. If the service is not
 // reachable (the local dev server, no network), everything keeps working on the device and the status says so.
 import { useSyncExternalStore } from "react";
-import { DEV_PASSWORD } from "../devAccess";
 import type { DeckIndexEntry } from "../../api/_decks";
 import type { DeckDef } from "./types";
 
 const URL_ = "/api/decks";
-const headers = { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" };
+const headers = { "content-type": "application/json" };
 
 type CloudState = { mode: "idle" | "shared" | "device" | "error"; message: string };
 let state: CloudState = { mode: "idle", message: "" };

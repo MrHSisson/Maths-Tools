@@ -3,7 +3,6 @@
 // Reading needs no password; publishing and unpublishing send the admin key like every other deck write.
 import { normaliseDeck } from "./normalise";
 import { useEffect, useState } from "react";
-import { DEV_PASSWORD } from "../devAccess";
 import type { DeckDef, Pitch, Slide } from "./types";
 
 const URL_ = "/api/decks";
@@ -32,7 +31,7 @@ export async function fetchPublishedDeck(id: string): Promise<DeckDef | "missing
 
 async function send(body: unknown): Promise<{ ok: true; entry?: PublishedEntry } | { ok: false; message: string }> {
   try {
-    const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" }, body: JSON.stringify({ ...(body as object), by: "Harry" }) });
+    const res = await fetch(URL_, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(body as object), by: "Harry" }) });
     if (!res.ok || !fromService(res)) return { ok: false, message: (fromService(res) ? ((await res.json().catch(() => ({}))) as { error?: string }).error : undefined) ?? "the sharing service isn't available here" };
     return { ok: true, entry: ((await res.json()) as { entry?: PublishedEntry }).entry };
   } catch { return { ok: false, message: "no connection" }; }

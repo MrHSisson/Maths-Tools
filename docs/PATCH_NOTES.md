@@ -74,6 +74,14 @@ Notes: Floating project plan (Codex), Maths Tools — Build Log.
 Agent: Codex
 Notes: Dock the project plan on the left (Codex), Maths Tools — Build Log.
 
+## 2026-11-26 — One Developing tools unlock
+
+- The existing Developing tools password prompt now opens one browser session for Project Plan, Admin, deck editing and the teacher controls. The password is checked on the server.
+- The preview needs a fresh `DEVELOPING_TOOLS_PASSWORD` in Vercel. Agent credentials stay server-side and are documented in AGENTS.md.
+
+Agent: Codex
+Notes: One Developing tools unlock (Codex), Maths Tools — Build Log.
+
 ## 2026-11-25 — Solving Trig Equations: a draggable range bar
 
 Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/components/QOPopovers.tsx`, `src/shared/calibration.ts`, `src/tools/Algebra/SolvingTrigEquations.tsx` (+ `.about.ts`), `src/tools/Algebra/trigEquations.ts`, `src/tests/trigEquations.test.ts`.

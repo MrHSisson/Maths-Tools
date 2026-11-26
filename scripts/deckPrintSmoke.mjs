@@ -21,9 +21,9 @@ for (const { s, n } of pinned) for (const button of ["Print sheet", "Answer shee
   const ctx = await browser.newContext({ viewport: { width: 900, height: 1200 } });
   await ctx.route("https://cdn.jsdelivr.net/npm/katex@*/dist/**", (r) => { const f = r.request().url().split("/dist/")[1].split("?")[0]; const p = `${process.cwd()}/node_modules/katex/dist/${f}`; fs.existsSync(p) ? r.fulfill({ path: p }) : r.abort(); });
   await serveDeck(ctx, id, deck);
+  await ctx.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
   const page = await ctx.newPage();
   await page.addInitScript(() => {
-    localStorage.setItem("mt-dev-mode", "1");
     window.open = () => {
       const f = document.createElement("iframe"); f.id = "print-frame"; f.style.cssText = "position:fixed;left:0;top:0;width:800px;height:1130px;border:0";
       document.body.appendChild(f);

@@ -295,7 +295,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const [selection, setSelection] = useState<{ route: string; id: string | null }>();
   const launcher = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const { plan, saving, error, loadFailed, save, reload, locked, unlock } = useProjectPlan(open);
+  const { plan, saving, error, loadFailed, save, reload } = useProjectPlan(open);
 
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = plan?.nodes.find(node => node.id === selectedId);
@@ -341,19 +341,9 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4" key={pathname}>
         {error && <div role="alert" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
-          {error} {!locked && <button className="ml-1 underline" onClick={reload}>Reload plan</button>}
+          {error} <button className="ml-1 underline" onClick={reload}>Reload plan</button>
         </div>}
-        {locked && <form className="grid gap-3" onSubmit={event => {
-          event.preventDefault();
-          unlock(String(new FormData(event.currentTarget).get("key")));
-        }}>
-          <label className="grid gap-1 text-sm">Shared plan access key
-            <input className={input} type="password" name="key" autoComplete="current-password" required />
-          </label>
-          <p className="text-sm text-slate-600">This browser remembers your key.</p>
-          <button className={`${control} justify-self-start`}>Unlock project plan</button>
-        </form>}
-        {!locked && !plan && !error && <p role="status" className="text-sm text-slate-600">Loading project plan…</p>}
+        {!plan && !error && <p role="status" className="text-sm text-slate-600">Loading project plan…</p>}
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />

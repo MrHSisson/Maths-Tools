@@ -2,13 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { withCatalogue } from "./catalogue";
 import { isProjectPlan, type ProjectPlan } from "../../api/_projectPlan";
 
-const accessKey = "mt-project-plan-access";
+import { refreshDevMode } from "../devMode";
 
-class AccessDenied extends Error {}
-
-async function request(key: string, init: RequestInit = {}): Promise<ProjectPlan> {
-  const response = await fetch("/api/project-plan", { ...init, headers: { "x-project-plan-key": key, "content-type": "application/json" } });
-  if (response.status === 401) throw new AccessDenied("The access key was not accepted.");
+async function request(init: RequestInit = {}): Promise<ProjectPlan> {
+  const response = await fetch("/api/project-plan", { ...init, headers: { "content-type": "application/json" } });
+  if (response.status === 401) refreshDevMode();
   const result: unknown = await response.json().catch(() => null);
   if (!response.ok || !isProjectPlan(result)) {
     const error = result as { error?: string } | null;
@@ -18,9 +16,6 @@ async function request(key: string, init: RequestInit = {}): Promise<ProjectPlan
 }
 
 export function useProjectPlan(open: boolean) {
-  const [key, setKey] = useState(() => {
-    try { return localStorage.getItem(accessKey) ?? ""; } catch { return ""; }
-  });
   const [plan, setPlan] = useState<ProjectPlan>();
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -28,22 +23,17 @@ export function useProjectPlan(open: boolean) {
   const writing = useRef(false);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (writing.current || !key) return;
+    if (writing.current) return;
     try {
-      const next = await request(key, { signal });
+      const next = await request({ signal });
       if (signal?.aborted) return;
       setPlan(current => !current || next.revision > current.revision ? next : current);
       setLoadError("");
     } catch (error) {
       if (signal?.aborted) return;
-      if (error instanceof AccessDenied) {
-        setKey("");
-        setPlan(undefined);
-        try { localStorage.removeItem(accessKey); } catch { /* Storage is unavailable. */ }
-      }
       setLoadError(error instanceof Error ? error.message : "Could not load the shared project plan.");
     }
-  }, [key]);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -60,7 +50,7 @@ export function useProjectPlan(open: boolean) {
   }, [open, refresh]);
 
   async function save(next: ProjectPlan) {
-    if (writing.current || !key) return false;
+    if (writing.current) return false;
     if (!isProjectPlan(next)) {
       setSaveError("Check for a circular dependency or a branch moved inside itself.");
       return false;
@@ -70,7 +60,7 @@ export function useProjectPlan(open: boolean) {
     setSaveError("");
     let saved = false;
     try {
-      const result = await request(key, { method: "POST", body: JSON.stringify(next) });
+      const result = await request({ method: "POST", body: JSON.stringify(next) });
       setPlan(result);
       saved = true;
     } catch (error) {
@@ -83,14 +73,5 @@ export function useProjectPlan(open: boolean) {
     return saved;
   }
 
-  function unlock(value: string) {
-    const next = value.trim();
-    if (!next) return;
-    setSaveError("");
-    setLoadError("");
-    setKey(next);
-    try { localStorage.setItem(accessKey, next); } catch { /* Keep the key for this page only. */ }
-  }
-
-  return { plan, error: loadError || saveError, saving, loadFailed: !!loadError, save, locked: !key, unlock, reload: () => { setSaveError(""); void refresh(); } };
+  return { plan, error: loadError || saveError, saving, loadFailed: !!loadError, save, reload: () => { setSaveError(""); void refresh(); } };
 }

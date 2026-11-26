@@ -1,3 +1,4 @@
+import { hasDevSession, matchesSecret } from "./_devSession.js";
 import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
 import { emptyPlan, isProjectPlan, type ProjectPlan } from "./_projectPlan.js";
 
@@ -7,9 +8,10 @@ const json = (body: unknown, status = 200) => Response.json(body, {
 });
 
 function authorised(req: Request) {
+  if (hasDevSession(req)) return null;
   const key = process.env.PROJECT_PLAN_KEY;
-  if (!key) return json({ error: "The project plan service is not configured." }, 503);
-  return req.headers.get("x-project-plan-key") === key ? null : json({ error: "Not authorised." }, 401);
+  if (!key && !process.env.DEVELOPING_TOOLS_PASSWORD) return json({ error: "The project plan service is not configured." }, 503);
+  return matchesSecret(req.headers.get("x-project-plan-key"), key) ? null : json({ error: "Not authorised." }, 401);
 }
 
 async function read(forWrite = false): Promise<{ plan: ProjectPlan; etag?: string }> {

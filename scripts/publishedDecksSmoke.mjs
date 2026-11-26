@@ -1,11 +1,10 @@
 // Local browser test: published decks (a read-only copy for everyone) and the password in front of the editor.
 // The sharing service is simulated, so nothing real is published or read.   npm run dev, then npm run smoke:published
 import { createRequire } from "node:module";
-import fs from "node:fs";
 const require = createRequire(import.meta.url);
 const { chromium, expect } = require(process.env.PLAYWRIGHT_PATH ?? "playwright/test");
 const base = process.env.SMOKE_URL ?? "http://127.0.0.1:5173";
-const password = fs.readFileSync("src/devAccess.ts", "utf8").match(/DEV_PASSWORD = "([^"]*)"/)[1];
+const password = "local-smoke-password";
 const slide = (id, text) => ({ id, family: "structure", title: text, els: [{ id: `${id}-1`, kind: "text", x: 100, y: 100, w: 1200, h: 200, text, size: 60 }] });
 const demo = { id: "demo", title: "Demo deck", summary: "A published lesson", slides: [slide("s1", "Hello published"), slide("s2", "Second slide")], publishedAt: "2026-10-29T12:00:00Z" };
 const listing = { title: demo.title, summary: demo.summary, slides: 2, publishedAt: demo.publishedAt, preview: demo.slides[0] };
@@ -14,6 +13,16 @@ const sent = [];
 
 async function visitor() {
   const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  let active = false;
+  await context.route("**/api/dev-session", route => {
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON();
+      if (body.lock) active = false;
+      else if (body.password === password) active = true;
+      else return route.fulfill({ status: 401, json: { error: "That password isn't right." } });
+    }
+    return route.fulfill({ json: { active } });
+  });
   const page = await context.newPage();
   const errors = []; page.on("pageerror", (e) => errors.push(e.message));
   await page.route("**/api/decks*", async (route) => {
@@ -80,7 +89,7 @@ try {
   console.log("ok signed in on the Decks page: New deck, Slide library, the editor and Publish this deck");
 
   // 4. Locked again (the switch off): the player goes back to the published copy and has no Edit button.
-  await page.evaluate(() => localStorage.setItem("mt-dev-mode", "0"));
+  await page.evaluate(() => fetch("/api/dev-session", { method: "POST", body: JSON.stringify({ lock: true }) }));
   await page.goto(`${base}/decks/demo`); await expect(page.getByText("Hello published").last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
