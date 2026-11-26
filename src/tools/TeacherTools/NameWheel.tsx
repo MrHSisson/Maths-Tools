@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Home, Plus, Copy, Trash2, X, Settings } from "lucide-react";
+import { Home, Plus, Copy, Trash2, X, Settings, Maximize, Minimize } from "lucide-react";
 import { PAGE_BG } from "../../shared/colors";
 import { useLayoutMode } from "../../shared/layoutMode";
 import { Confetti } from "../../shared/components/Confetti";
@@ -41,7 +41,7 @@ interface Entry { name: string; row: number; pos: number }
 
 const newId = () => Math.random().toString(36).slice(2, 9);
 const emptyWheel = (name: string): Wheel => ({ id: newId(), name, rows: [{ name: "", count: 1 }], winners: [], palette: "bright", style: "classic" });
-const clampCount = (v: string | number) => { const n = parseInt(String(v), 10); return Number.isNaN(n) || n < 1 ? 1 : Math.min(MAX_ENTRIES, n); };
+const clampCount = (v: string | number) => { const n = parseInt(String(v), 10); return Number.isNaN(n) ? 1 : Math.max(0, Math.min(MAX_ENTRIES, n)); };   // 0 keeps a name on the list but off the wheel
 const cleanRows = (rows: unknown): Row[] => {
   const r = Array.isArray(rows) ? rows.map((x: Row) => ({ name: String(x?.name ?? ""), count: clampCount(x?.count ?? 1) })) : [];
   return r.length ? r : [{ name: "", count: 1 }];
@@ -70,7 +70,7 @@ function load(): Store {
 
 /** Each name's entries are spread evenly round the wheel instead of sitting in one block. */
 function buildEntries(rows: Row[]): Entry[] {
-  const valid = rows.map((r, i) => ({ r, i })).filter(x => x.r.name.trim());
+  const valid = rows.map((r, i) => ({ r, i })).filter(x => x.r.name.trim() && x.r.count > 0);
   const m = valid.length, list: Entry[] = [];
   valid.forEach((x, k) => {
     const base = (k + 0.5) / m;
@@ -156,11 +156,21 @@ export default function NameWheel() {
   const audioRef = useRef<AudioContext | null>(null);
   const lastTickRef = useRef(0);
   const nameInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // full screen: just the wheel, sized to fit the screen (the browser's full screen where it has one, the same layout without it where it does not, as on a phone)
+  const [fs, setFs] = useState(false);
+  const enterFs = () => { setFs(true); try { void rootRef.current?.requestFullscreen?.()?.catch(() => { /* the layout still fills the window */ }); } catch { /* same */ } };
+  const exitFs = () => { setFs(false); try { if (document.fullscreenElement) void document.exitFullscreen(); } catch { /* same */ } };
+  useEffect(() => {
+    const h = () => { if (!document.fullscreenElement) setFs(false); };
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
 
   const style = wheel.style, strip = style !== "classic";   // Carnival and Case are strips
   const palette = PALETTES[wheel.palette] ?? PALETTES.bright;
   const entries = useMemo(() => buildEntries(wheel.rows), [wheel.rows]);
-  const names = wheel.rows.filter(r => r.name.trim()).length;
+  const names = wheel.rows.filter(r => r.name.trim() && r.count > 0).length;   // names actually on the wheel
   const total = entries.length;
   const tiny = total > 100 && !strip;   // labels too small to read; the name at the pointer shows while it spins
   const canSpin = !spinning && names >= 2;
@@ -216,6 +226,7 @@ export default function NameWheel() {
   }, [entries, palette, strip, style]);
 
   useEffect(() => { draw(); }, [draw]);
+  useEffect(() => { const id = requestAnimationFrame(draw); return () => cancelAnimationFrame(id); }, [fs, draw]);   // the canvas changes size when full screen starts or stops
   useEffect(() => {
     window.addEventListener("resize", draw);
     return () => window.removeEventListener("resize", draw);
@@ -349,24 +360,26 @@ export default function NameWheel() {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: PAGE_BG }}>
-      <div className={`mx-auto max-w-5xl ${phone ? "px-4 pb-28 pt-4" : "px-6 py-8"}`}>
+    <div ref={rootRef} className={fs ? "fixed inset-0 z-30 overflow-y-auto" : "min-h-screen"} style={{ background: PAGE_BG }}>
+      <div className={fs ? "flex min-h-full items-center justify-center px-4 py-4" : `mx-auto max-w-5xl ${phone ? "px-4 pb-28 pt-4" : "px-6 py-8"}`}>
+        {!fs && <>
         <button onClick={() => { window.location.href = "/"; }} className="mb-3 inline-flex items-center gap-2 rounded-xl py-1 pr-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
           <Home size={18} /> Home
         </button>
         <h1 className="text-3xl font-semibold text-slate-900">Name Wheel</h1>
         {wheel.name.trim() && <p className="mt-1 text-slate-500">{wheel.name}</p>}
+        </>}
 
-        <div className={`mx-auto mt-5 ${style === "case" ? "max-w-3xl" : "max-w-xl"}`}>
+        <div className={fs ? "w-full" : `mx-auto mt-5 ${style === "case" ? "max-w-3xl" : "max-w-xl"}`}>
           {/* the wheel, or the strip */}
           <div>
             {strip ? (
-              <div className={`relative mx-auto w-full ${style === "carnival" ? "max-w-sm" : ""}`}>
+              <div className={`relative mx-auto w-full ${style === "carnival" ? (fs ? "max-w-md" : "max-w-sm") : ""}`}>
                 <canvas key={style} ref={canvasRef} onClick={spin} aria-label={style === "carnival" ? "Name reel. Click to spin." : "Name strip. Click to spin."}
-                  className={`block w-full cursor-pointer rounded-2xl border border-slate-300 shadow-lift ${style === "carnival" ? "h-[360px] sm:h-[440px]" : "h-32 sm:h-40"}`} />
+                  className={`block w-full cursor-pointer rounded-2xl border border-slate-300 shadow-lift ${style === "carnival" ? (fs ? "h-[68vh]" : "h-[360px] sm:h-[440px]") : (fs ? "h-[26vh]" : "h-32 sm:h-40")}`} />
               </div>
             ) : (
-              <div className="relative mx-auto aspect-square w-full max-w-[520px]">
+              <div className={`relative mx-auto aspect-square w-full ${fs ? "" : "max-w-[520px]"}`} style={fs ? { width: "min(76vh, 92vw)" } : undefined}>
                 <canvas key={style} ref={canvasRef} onClick={spin} aria-label="Name wheel. Click to spin." className="block h-full w-full cursor-pointer rounded-full shadow-lift" />
                 <svg viewBox="0 0 36 44" aria-hidden="true" className="pointer-events-none absolute -top-1 left-1/2 z-10 h-11 w-9 -translate-x-1/2 drop-shadow">
                   <path d="M18 44 L2 8 Q18 -6 34 8 Z" fill="#1e3a8a" stroke="#ffffff" strokeWidth="3" strokeLinejoin="round" />
@@ -374,21 +387,25 @@ export default function NameWheel() {
                 <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 flex aspect-square w-[16%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-[11px] font-semibold text-blue-900 shadow-card sm:text-sm">SPIN</div>
               </div>
             )}
-            <p className="mt-3 min-h-[1.75em] text-center text-xl font-semibold text-slate-800 [overflow-wrap:anywhere]" aria-hidden="true">{current}</p>
-            {!phone && <div className="mt-2 flex justify-center gap-3">{actions}</div>}
+            <p className={`mt-3 min-h-[1.75em] text-center font-semibold text-slate-800 [overflow-wrap:anywhere] ${fs ? "text-3xl" : "text-xl"}`} aria-hidden="true">{current}</p>
+            {(!phone || fs) && <div className="mt-2 flex justify-center gap-3">{actions}</div>}
           </div>
 
-          <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
+          {!fs && <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-4 shadow-card">
             <h2 className="text-sm font-semibold text-slate-900">Picked so far</h2>
             {wheel.winners.length === 0
               ? <p className="mt-1 text-sm italic text-slate-400">Nobody yet.</p>
               : <ol className="mt-1.5 list-decimal pl-6 text-slate-800">{wheel.winners.map((w, i) => <li key={i}>{w}</li>)}</ol>}
-          </div>
+          </div>}
         </div>
       </div>
 
+      <button type="button" onClick={fs ? exitFs : enterFs} aria-label={fs ? "Exit full screen" : "Full screen"} title={fs ? "Exit full screen" : "Full screen"}
+        className="fixed right-14 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
+        {fs ? <Minimize size={20} /> : <Maximize size={20} />}
+      </button>
       <button type="button" onClick={() => setSettingsOpen(true)} disabled={spinning} aria-label="Wheel settings" title="Wheel settings"
-        className="fixed right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full text-slate-500 opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:hidden">
+        className="fixed right-4 top-4 z-40flex h-10 w-10 items-center justify-center rounded-full text-slate-500 opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:hidden">
         <Settings size={20} />
       </button>
 
@@ -437,10 +454,10 @@ export default function NameWheel() {
                       onChange={e => edit(i, { name: e.target.value })}
                       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addRow(i + 1); } }}
                       className={field} />
-                    <input type="number" min={1} max={MAX_ENTRIES} value={r.count} aria-label={`Entries, row ${i + 1}`}
+                    <input type="number" min={0} max={MAX_ENTRIES} value={r.count} aria-label={`Entries, row ${i + 1}`}
                       onChange={e => { if (e.target.value !== "") edit(i, { count: clampCount(e.target.value) }); }}
                       className={`${field} text-center`} />
-                    <span className="text-right text-xs text-slate-500">{r.name.trim() && total ? `${Math.round((r.count / total) * 1000) / 10}%` : "–"}</span>
+                    <span className="text-right text-xs text-slate-500">{r.name.trim() && r.count > 0 && total ? `${Math.round((r.count / total) * 1000) / 10}%` : "–"}</span>
                     <button type="button" onClick={() => removeRow(i)} aria-label={`Remove row ${i + 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X size={16} /></button>
                   </div>
                 ))}
@@ -450,7 +467,7 @@ export default function NameWheel() {
               <details className="mt-3 rounded-xl border border-slate-200">
                 <summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-slate-700">Paste a list</summary>
                 <div className="px-3 pb-3">
-                  <p className="mb-2 text-sm text-slate-500">One name per line. For extra entries add a comma and a number, like “Harry, 10”.</p>
+                  <p className="mb-2 text-sm text-slate-500">One name per line. For extra entries add a comma and a number, like “Harry, 10”. Use 0 to keep a name on the list but off the wheel.</p>
                   <textarea value={bulk} onChange={e => setBulk(e.target.value)} spellCheck={false} placeholder={"Amira\nBen\nHarry, 10"} className={`${field} h-28 resize-y`} />
                   <button type="button" onClick={addBulk} className={`${secondary} mt-2`}>Add to table</button>
                 </div>
