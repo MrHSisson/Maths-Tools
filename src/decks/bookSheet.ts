@@ -58,13 +58,32 @@ export function bookSheetProblems(sheet: BookSheet): string[] {
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 /** Text with `$maths$` segments, as HTML (the segments are drawn by KaTeX when the page loads). */
-export const bookHtml = (s: string) => s.split("$").map((seg, i) => (i % 2 ? `<span class="m" data-latex="${esc(seg)}"></span>` : esc(i && /^[.,?!;:]/.test(seg) ? `\u2060${seg}` : seg))).join("");
+export const bookHtml = (s: string) => {
+  const segs = s.split("$");
+  return segs.map((seg, i) => {
+    if (i % 2) {   // maths: kept whole, with any punctuation that follows it, so a ratio never splits across lines and a full stop never starts one
+      const next = segs[i + 1] ?? "", punct = /^[.,?!;:)]+/.exec(next)?.[0] ?? "";
+      if (punct) segs[i + 1] = next.slice(punct.length);
+      return `<span class="nb"><span class="m" data-latex="${esc(seg)}"></span>${esc(punct)}</span>`;
+    }
+    return esc(seg);
+  }).join("");
+};
+
+/** A worded question with its last sentence (what is asked) on a line of its own, so the setting and the question read as two things. A one-sentence question is left whole. */
+export function askLine(text: string): string {
+  const cuts = [...text.matchAll(/[.?!]\s+(?=[A-Z£])/g)];
+  const cut = cuts[cuts.length - 1];
+  if (!cut || cut.index === undefined) return bookHtml(text);
+  const at = cut.index + 1;
+  return `${bookHtml(text.slice(0, at))}<span class="ask">${bookHtml(text.slice(at).trimStart())}</span>`;
+}
 
 /** The page that is printed: questions (two pages), answers (one), or both. A4 portrait, KaTeX from the CDN the tool printing uses. */
 export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   const part = (p: BookPart, pi: number, answers: boolean) => `<div class="part" data-id="${pi}"><h2><b>${questionNumber(pi)}</b><span>${esc(p.title)}</span></h2>
     ${!answers && p.tip ? `<p class="tip">${bookHtml(p.tip)}</p>` : ""}
-    <ol>${p.items.map((it, i) => `<li data-n="${itemLetter(i)}">${bookHtml(answers ? it.answer : it.text)}</li>`).join("")}</ol></div>`;
+    <ol>${p.items.map((it, i) => `<li data-n="${itemLetter(i)}">${answers ? bookHtml(it.answer) : askLine(it.text)}</li>`).join("")}</ol></div>`;
   const head = (answers: boolean, cont: boolean) => `<h1>${esc(sheet.title)}${answers ? " <span>Answers</span>" : ""}${cont ? " <span>continued</span>" : ""}<i class="grow"></i>${!answers && !cont ? "<span>Name ____________________</span>" : ""}</h1>${!answers && !cont && sheet.note ? `<p class="note">${esc(sheet.note)}</p>` : ""}`;
   // the first half of the parts on page 1 (A and B), the rest on page 2 (C and D); the print script then sets the largest type that fits both pages and spreads the spare room evenly
   const half = Math.ceil(sheet.parts.length / 2);
@@ -85,10 +104,13 @@ export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   h2{display:flex;align-items:baseline;gap:3mm;margin:0 0 1.5mm;padding-bottom:1.2mm;border-bottom:.35mm solid #cbd5e1;font-size:17px;color:#1e3a8a}
   h2 b{font-size:1.25em}
   .tip{margin:0 0 .5mm;font-size:13px;color:#475569}
-  ol{margin:0;padding:0;list-style:none}
-  li{position:relative;padding:1.1mm 0 1.1mm 11mm;font-size:var(--fs,15px);line-height:1.34}
-  li::before{content:attr(data-n);position:absolute;left:0;top:1.1mm;width:9mm;color:#64748b;font-weight:600;font-size:.9em;line-height:inherit}
-  .m .katex{font-size:1.05em}
+  ol{margin:0;padding:0;list-style:none;column-count:2;column-gap:9mm}
+  .ans ol{column-count:1}
+  .ask{display:block;margin-top:.6mm;font-weight:600;color:#0f172a}
+  li{break-inside:avoid;text-align:left;hyphens:none;text-wrap:pretty}
+  li{position:relative;padding:2mm 0 2mm 9mm;font-size:var(--fs,15px);line-height:1.34;color:#334155}
+  li::before{content:attr(data-n);position:absolute;left:0;top:2mm;width:8mm;color:#94a3b8;font-weight:600;font-size:.9em;line-height:inherit}
+  .nb{white-space:nowrap} .m .katex{font-size:1.05em}
   .ans li{color:#1e3a8a;font-size:12.5px;padding-top:.7mm;padding-bottom:.7mm} .ans li::before{top:.7mm}
   .acols{column-count:2;column-gap:9mm} .acols .part{margin-top:0;margin-bottom:3mm}
 </style></head><body>${mode !== "answers" ? questions : ""}${mode !== "questions" ? answerPage : ""}
@@ -99,9 +121,9 @@ document.querySelectorAll('.m').forEach(function(e){try{katex.render(e.getAttrib
   var lis=function(pg){return [].slice.call(pg.querySelectorAll('li'))};
   var used=function(pg){return pg.lastElementChild.getBoundingClientRect().bottom-pg.getBoundingClientRect().top};
   var fits=function(){return pages.every(function(pg){return used(pg)<=H})};
-  var fs=15.5;for(;fs>11;fs-=.25){document.body.style.setProperty('--fs',fs+'px');if(fits())break}
+  var fs=17;for(;fs>11;fs-=.25){document.body.style.setProperty('--fs',fs+'px');if(fits())break}
   // spread what is left on each page between its questions, so a lighter page is not bunched at the top
-  pages.forEach(function(pg){var slack=H-used(pg),n=lis(pg).length;if(slack>0&&n){var pad=Math.min(slack/n/2,5*3.78);lis(pg).forEach(function(l){l.style.paddingTop=l.style.paddingBottom=(parseFloat(getComputedStyle(l).paddingTop)+pad)+'px'})}});
+  pages.forEach(function(pg){var slack=H-used(pg),n=lis(pg).length;if(slack>0&&n){var pad=Math.min(.7*slack/n,4*3.78);lis(pg).forEach(function(l){l.style.paddingTop=l.style.paddingBottom=(parseFloat(getComputedStyle(l).paddingTop)+pad)+'px'})}});
 })();
 </script>
 </body></html>`;

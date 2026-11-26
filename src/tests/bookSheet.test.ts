@@ -1,6 +1,6 @@
 // The worded book sheet pinned to a lesson (src/decks/bookSheet.ts): the Sharing in a Ratio worksheet, four lettered parts on two A4 pages.
 import { describe, expect, it } from "vitest";
-import { bookHtml, bookSheetHtml, bookSheetProblems, bookSheetSlide, itemLetter, MAX_BOOK_QUESTIONS, questionNumber, shownParts, type BookSheet } from "../decks/bookSheet";
+import { askLine, bookHtml, bookSheetHtml, bookSheetProblems, bookSheetSlide, itemLetter, MAX_BOOK_QUESTIONS, questionNumber, shownParts, type BookSheet } from "../decks/bookSheet";
 import { buildDeck } from "../decks/builder";
 import { checkDeckContent } from "../decks/deckChecks";
 import { pinnedSheets } from "../decks/worksheets";
@@ -34,8 +34,8 @@ describe("Book sheet", () => {
     const h = bookSheetHtml(sheet(), "questions");
     expect(h).toContain("Ratio &lt;sheet&gt;");
     expect(h).toContain("Part &lt;a&gt;");
-    expect(bookHtml("a <b> $x < 2$")).toBe('a &lt;b&gt; <span class="m" data-latex="x &lt; 2"></span>');
-    expect(bookHtml("in $2 : 5$. Next")).toContain("</span>\u2060. Next");   // a full stop never wraps away from the ratio before it
+    expect(bookHtml("a <b> $x < 2$")).toBe('a &lt;b&gt; <span class="nb"><span class="m" data-latex="x &lt; 2"></span></span>');
+    expect(bookHtml("in $2 : 5$. Next")).toContain("</span>.</span> Next");   // a full stop never wraps away from the ratio before it
   });
   it("checks the sheet: a size limit, ids, empty text, and a slide that names a part the sheet lacks", () => {
     expect(bookSheetProblems(sheet())).toEqual([]);
@@ -60,5 +60,13 @@ describe("Book sheet", () => {
     const el = deck.slides[0].els[0] as { bookSheet: BookSheet };
     el.bookSheet.parts[0].items[0].text = "Find $\\frac{1$.";
     expect((await checkDeckContent(deck)).problems.join(" ")).toContain("maths does not render");
+  });
+});
+
+describe("Book sheet: the asked sentence", () => {
+  it("sets the last sentence on its own line, and leaves a one-sentence question and a decimal alone", () => {
+    expect(askLine("Share £65 in the ratio $2 : 3$.")).not.toContain("ask");
+    expect(askLine("A and B share £22.50 in the ratio $2 : 3$. How much does A get?")).toContain('<span class="ask">How much does A get?</span>');
+    expect(askLine("£22.50 is divided in the ratio $2 : 3$.")).not.toContain("ask");
   });
 });
