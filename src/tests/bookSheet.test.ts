@@ -13,9 +13,9 @@ describe("Book sheet", () => {
     expect([0, 1, 3].map(questionNumber)).toEqual([1, 2, 4]);
     expect([0, 1, 8, 26].map(itemLetter)).toEqual(["(a)", "(b)", "(i)", "(aa)"]);
     const h = bookSheetHtml(sheet(), "questions");
-    expect(h).toContain('data-n="(a)"');
-    expect(h).toContain('data-n="(o)"');
-    expect(h).not.toContain('data-n="1"');
+    expect(h).toContain('<b class="n">(a)</b>');
+    expect(h).toContain('<b class="n">(o)</b>');
+    expect(h).not.toContain('<b class="n">1</b>');
   });
   it("prints questions (the first half of the parts on page 1, the rest on page 2) and a separate answer page", () => {
     const q = bookSheetHtml(sheet(), "questions"), a = bookSheetHtml(sheet(), "answers"), both = bookSheetHtml(sheet(), "both");

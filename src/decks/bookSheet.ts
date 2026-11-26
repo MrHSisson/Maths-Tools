@@ -83,7 +83,7 @@ export function askLine(text: string): string {
 export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   const part = (p: BookPart, pi: number, answers: boolean) => `<div class="part" data-id="${pi}"><h2><b>${questionNumber(pi)}</b><span>${esc(p.title)}</span></h2>
     ${!answers && p.tip ? `<p class="tip">${bookHtml(p.tip)}</p>` : ""}
-    <ol>${p.items.map((it, i) => `<li data-n="${itemLetter(i)}">${answers ? bookHtml(it.answer) : askLine(it.text)}</li>`).join("")}</ol></div>`;
+    <ol>${p.items.map((it, i) => `<li><b class="n">${itemLetter(i)}</b><span class="t">${answers ? bookHtml(it.answer) : askLine(it.text)}</span></li>`).join("")}</ol></div>`;
   const head = (answers: boolean, cont: boolean) => `<h1>${esc(sheet.title)}${answers ? " <span>Answers</span>" : ""}${cont ? " <span>continued</span>" : ""}<i class="grow"></i>${!answers && !cont ? "<span>Name ____________________</span>" : ""}</h1>${!answers && !cont && sheet.note ? `<p class="note">${esc(sheet.note)}</p>` : ""}`;
   // the first half of the parts on page 1 (A and B), the rest on page 2 (C and D); the print script then sets the largest type that fits both pages and spreads the spare room evenly
   const half = Math.ceil(sheet.parts.length / 2);
@@ -108,10 +108,10 @@ export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   .ans ol{column-count:1}
   .ask{display:block;margin-top:.6mm;font-weight:600;color:#0f172a}
   li{break-inside:avoid;text-align:left;hyphens:none;text-wrap:pretty}
-  li{position:relative;padding:2mm 0 2mm 9mm;font-size:var(--fs,15px);line-height:1.34;color:#334155}
-  li::before{content:attr(data-n);position:absolute;left:0;top:2mm;width:8mm;color:#94a3b8;font-weight:600;font-size:.9em;line-height:inherit}
+  li{display:flex;align-items:baseline;padding:2mm 0;font-size:var(--fs,15px);line-height:1.34;color:#334155}
+  .n{flex:0 0 8mm;color:#94a3b8;font-weight:600;font-size:.9em}
   .nb{white-space:nowrap} .m .katex{font-size:1.05em}
-  .ans li{color:#1e3a8a;font-size:12.5px;padding-top:.7mm;padding-bottom:.7mm} .ans li::before{top:.7mm}
+  .ans li{color:#1e3a8a;font-size:12.5px;padding-top:.7mm;padding-bottom:.7mm}
   .acols{column-count:2;column-gap:9mm} .acols .part{margin-top:0;margin-bottom:3mm}
 </style></head><body>${mode !== "answers" ? questions : ""}${mode !== "questions" ? answerPage : ""}
 <script>
