@@ -1,7 +1,7 @@
 // Asks the Critical Path worker for a new question. The generator can take a second or more, and while it runs on the page nothing on the page can move,
 // so the work is done in a Web Worker. A failure of the worker itself (no Worker, a script that will not load, a result that cannot be sent back) is
 // reported as `WorkerUnavailable`, and the shell then makes the question on the page as before; a failure of the generator is an ordinary error.
-import type { DecisionProblem, GenerateContext } from "../../shared/decision/types";
+import type { DecisionProblem, GenerateContext } from "./types";
 
 export class WorkerUnavailable extends Error { name = "WorkerUnavailable"; }
 
@@ -21,7 +21,7 @@ export function generateInWorker(level: number, ctx?: GenerateContext): Promise<
   if (typeof Worker === "undefined") return Promise.reject(new WorkerUnavailable("no Worker"));
   try {
     if (!worker) {
-      worker = new Worker(new URL("./criticalPath.worker.ts", import.meta.url), { type: "module" });
+      worker = new Worker(new URL("./cpa.worker.ts", import.meta.url), { type: "module" });
       worker.onmessage = (e: MessageEvent<{ id: number; problem?: DecisionProblem; error?: string }>) => {
         const p = pending.get(e.data.id);
         if (!p) return;

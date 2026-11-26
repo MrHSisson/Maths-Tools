@@ -6,6 +6,7 @@ import { ALL_TOOLS, PAGES } from './registry';
 import { setLivePaths } from './shared/about';
 import { InkOverlay } from './shared/components/InkOverlay';
 import { usePhoneDevice, useLayoutMode } from './shared/layoutMode';
+import { cpaRedirect } from './shared/decision/cpaHomes';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
 // builds as its own chunk — the landing page stays small and a tool's code
@@ -65,6 +66,12 @@ function AliasRedirect({ to }: { to: string }) {
   return <Navigate to={{ pathname: to, search }} replace />;
 }
 
+// The old Critical Path address: its tabs now live in five tools, so a link (saved list, printed sheet, lesson deck) goes to the one that has the tab it names.
+function CriticalPathRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={cpaRedirect(search)} replace />;
+}
+
 function App() {
   return (
     <ToolErrorBoundary>
@@ -81,6 +88,7 @@ function App() {
           {ALIASES.map(({ from, to }) => (
             <Route key={from} path={from} element={<AliasRedirect to={to} />} />
           ))}
+          <Route path="/critical-path" element={<CriticalPathRedirect />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

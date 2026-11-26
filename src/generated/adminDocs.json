@@ -921,7 +921,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3. Links: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`."
+     "s": "Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3. Links: `src/shared/decision/CpaTool.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`."
     }
    ]
   }
@@ -1077,6 +1077,97 @@
       {
        "t": "p",
        "s": "`docs/reference/pictures.md`, planner note Maths Tools - Representations."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "critical-path-split",
+   "title": "Critical Path Analysis: split into skill tools",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-11-26 (chunk 6: exam page built, old tool retired; waiting for merge)",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub."
+      },
+      {
+       "t": "table",
+       "head": [
+        "Tool",
+        "Tabs",
+        "Spec"
+       ],
+       "rows": [
+        [
+         "Activity Networks",
+         "Network from a table, Table from a network",
+         "DE1"
+        ],
+        [
+         "Times, Float and Critical Paths",
+         "Forward pass, Backward pass, Full analysis, Float and critical paths, Missing time",
+         "DE2, DE3"
+        ],
+        [
+         "Changes and Reasoning",
+         "Delays and changes, Explain and justify, Which to shorten, Limits of the model",
+         "DE4"
+        ],
+        [
+         "Cascade Charts and Resources (A-level)",
+         "Cascade chart, Resource histogram, Resource levelling, Worker allocation",
+         "DE5, DE6"
+        ]
+       ]
+      },
+      {
+       "t": "p",
+       "s": "Decided with Harry (2026-11-26): the shared generators and solver stay as they are; old `/critical-path?tool=...` links redirect to the right new tool and tab; exam questions are opened from the hub for now (a thin exam page over the existing chains), with a proper exam-paper tool as the eventual aim."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-26: design agreed; current layout reviewed at laptop and phone size.",
+        "2026-11-26 (chunk 1): `CriticalPathHomes.ts` (the map of old tab to new tool) and `cpaRedirect`, with `criticalPathSplit.test.ts`.",
+        "2026-11-26 (chunk 2): **Times, Float and Critical Paths** (`/cpa-times`, `CpaTimes.tsx`) is live on the hub. The old tool's component is now `CpaTool` in `CriticalPath.tsx`, which takes a `home` (its tabs; a row of pills instead of the topic chooser; no Course or Practice switch; only the options those tabs use), so the remaining tools are a few lines each. `CPA_LIVE` in `CriticalPathHomes.ts` lists the new tools that exist: a tab that has moved opens its new tool from an old link; the other tabs stay in the old tool until their chunk. The hub's DE links for the moved tabs point at the new tool.",
+        "2026-11-26 (chunk 3): **Activity Networks** (`/cpa-networks`, `CpaNetworks.tsx`) is live on the hub, built the way the chunk 2 note describes. Print templates now show only on tools that draw charts.",
+        "2026-11-26 (chunk 4): **Changes and Reasoning** (`/cpa-changes`, `CpaChanges.tsx`) is live on the hub: four tabs in one row, AS and A-level together.",
+        "2026-11-26 (chunk 5): **Cascade Charts and Resources** (`/cpa-charts`, `CpaCharts.tsx`) is live on the hub. Every skill tab has moved; `/critical-path` now holds only the exam-style chains.",
+        "2026-11-26 (chunk 6): **Critical Path Exam Questions** (`/cpa-exam`, `CpaExam.tsx`): the eleven chains, picked from a chooser in two groups (AS, A-level) with no Course or Practice switch; the hub's DE exam card opens it. **The old tool is retired:** its code moved to `src/shared/decision/` (`CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `cpaAsync.ts`, `cpa.worker.ts`), its registry entry is gone, and `/critical-path` is a redirect route in `App.tsx` (`cpaRedirect`) that sends any old link to the tool and tab it names. `CpaTool` now needs a `home`; the old Course and Practice options and the all-in-one chooser are deleted. The dashboard facts read each wrapper together with `CpaTool.tsx` and count only that tool's tabs (`scripts/toolFacts.mjs`)."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "1. Harry reviews and merges (no PR yet). After the merge, check the five tools on the live site. 2. The lesson deck `resource-levelling` is **left as it is, by Harry's decision (2026-11-26)**. Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it, and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it later, change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`). 3. Later: the exam-paper tool the exam page is meant to grow into (a whole paper, mixed chains), and the dashboard Review notes for the five tools."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`src/shared/decision/CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `src/tools/Decision/decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`."
       }
      ]
     }
@@ -2096,7 +2187,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "`specs/resource-levelling.md` (start with \"As built\"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`."
+       "s": "`specs/resource-levelling.md` (start with \"As built\"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/shared/decision/CpaTool.tsx`, `src/tests/levellingMethod.test.ts`."
       }
      ]
     }
@@ -4140,27 +4231,43 @@
     }
    ]
   },
-  "critical-path": {
+  "cpa-exam": {
    "changes": [
     {
-     "date": "2026-11-25",
-     "title": "Critical Path histogram: show what props up the fewest workers"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: exam questions get their own page, and the old tool is retired"
+    }
+   ]
+  },
+  "cpa-networks": {
+   "changes": [
     {
-     "date": "2026-11-13",
-     "title": "Decision shell: a problem no longer needs a network"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Activity Networks is its own tool"
+    }
+   ]
+  },
+  "cpa-times": {
+   "changes": [
     {
-     "date": "2026-11-12",
-     "title": "Resource levelling: Write it up removed, list of options is a tab"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Times, Float and Critical Paths is its own tool"
+    }
+   ]
+  },
+  "cpa-changes": {
+   "changes": [
     {
-     "date": "2026-11-12",
-     "title": "Resource levelling: Level 3 Question size"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Changes and Reasoning is its own tool"
+    }
+   ]
+  },
+  "cpa-charts": {
+   "changes": [
     {
-     "date": "2026-11-10",
-     "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Cascade Charts and Resources is its own tool"
     }
    ]
   },

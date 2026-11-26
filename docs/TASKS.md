@@ -56,4 +56,4 @@ Links: `scripts/deck.mjs`, `api/_decks.ts`, `docs/reference/decks.md`
 
 ### Critical Path: a backward pass of its own
 Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3.
-Links: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`.
+Links: `src/shared/decision/CpaTool.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`.

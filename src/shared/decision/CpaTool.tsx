@@ -11,10 +11,10 @@ import {
   type CpaViewState,
   type DecisionProblem,
   type SolveStep,
-} from "../../shared/decision";
-import CpaTileArt from "../../shared/decision/CpaTileArt";
-import { generate, EXAM_CHAIN, CHART_SUBS } from "./criticalPathGenerate";
-import { generateInWorker } from "./criticalPathAsync";
+} from "./index";
+import type { CpaHome } from "./cpaHomes";
+import { generate, EXAM_CHAIN, CHART_SUBS } from "./cpaGenerate";
+import { generateInWorker } from "./cpaAsync";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Critical Path Analysis — Decision Maths (AQA Further Maths, Discrete / Edexcel D1). Activity ON NODE, no dummy activities, total float
@@ -542,21 +542,26 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
   );
 }
 
-export default function App() {
+/** One of the five Critical Path tools (`home` in cpaHomes.ts): its tabs, and only the Question Options those tabs use. The four skill tools show their tabs as one row of pills; the exam-style questions (eleven chains) are picked from a chooser in two groups, AS and A-level. */
+export function CpaTool({ home }: { home: CpaHome }) {
+  const exam = home.id === "cpa-exam";
+  const subTools = home.subs.flatMap((k) => SUB_TOOLS.filter((t) => t.key === k)).map((t) => ({ ...t, when: undefined }));
+  const scopeOptions = <T extends { key: string; forSubTools?: string[] }>(os: T[]): T[] =>
+    os.filter((o) => !o.forSubTools || o.forSubTools.some((k) => home.subs.includes(k)));
   return (
     <DecisionShell
       generate={generate}
       solve={solve}
       renderCanvas={renderCanvas}
       config={{
-        pageTitle: "Critical Path Analysis",
+        pageTitle: home.name,
         slowGenerate: true,
         generateAsync: generateInWorker,
-        purpose: "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
+        purpose: home.purpose,
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
-        printTemplates: true,
-        questionSheet: { tabs: CPA_SHEET_TABS, build: buildCpaSheet },
+        printTemplates: exam || home.subs.some((k) => k === "cascade" || k === "histogram"),   // blank histogram and Gantt grids: only where those charts are drawn
+        questionSheet: { tabs: CPA_SHEET_TABS.filter((k) => home.subs.includes(k)), build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
@@ -576,45 +581,19 @@ export default function App() {
           unknown: ["A duration x, on or off the critical path", "A missing earliest start or latest finish in a box"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
-        subTools: SUB_TOOLS,
-        chooser: {
-          art: (k: string) => <CpaTileArt k={k} />,
-          filters: ["course", "practice"],
+        subTools,
+        chooser: exam ? {
+          filters: [],
           groups: [
-            { title: "Building the network", keys: ["network", "table"] },
-            { title: "Times, floats and critical paths", keys: ["forward", "backward", "full", "floatPaths", "unknown"] },
-            { title: "Changes and reasoning", keys: ["change", "reason", "shorten", "reasonA"] },
-            { title: "Charts and resources", keys: ["cascade", "histogram", "level", "alloc"] },
             { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },
             { title: "A-level exam style questions", keys: ["exAlAny", "exCascade", "exTable", "exHist", "exShorten", "exAlloc"] },
           ],
-        },
+        } : undefined,
         hideMatrix: true,
-        examSheet: true,
+        examSheet: exam,
         noSandbox: true,
         canvasFooter: (p: DecisionProblem) => <CpaKey p={p} />,
-        options: [
-          {
-            key: "course",
-            label: "Course",
-            info: "Which course the questions and tabs are for.",
-            top: true,
-            defaultFor: () => "as",
-            choices: [
-              { value: "as", label: "AS" },
-              { value: "a", label: "A-level" },
-            ],
-          },
-          {
-            key: "practice",
-            label: "Practice",
-            info: "Skills gives single-skill questions. Exam style gives multi-part questions in the style of the exam paper.",
-            top: true,
-            choices: [
-              { value: "skills", label: "Skills" },
-              { value: "exam", label: "Exam style" },
-            ],
-          },
+        options: scopeOptions([
           {
             key: "floatQ",
             label: "Question",
@@ -894,7 +873,7 @@ export default function App() {
               { value: "more", label: "More than one" },
             ],
           },
-        ],
+        ]),
       }}
     />
   );

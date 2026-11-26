@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { __seed } from "../tools/Decision/CriticalPath";
+import { __seed } from "../shared/decision/CpaTool";
 import { withSeededRandom } from "./seededRandom";
 
 describe("Delays and changes: question level is independent of network size", () => {

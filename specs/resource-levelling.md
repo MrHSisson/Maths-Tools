@@ -208,6 +208,6 @@ The OUP worked examples give only a Gantt chart (no precedence table), so their 
 - Generators: `src/shared/decision/cpa.ts` (`cpaHistogram` near line 863; `cpaLevel` near lines 895–1000; `levelSchedule`, `levelOptions`).
 - Walkthroughs: `src/shared/decision/cpaSolve.ts` (`solveLevel`, from about line 590).
 - Picture: `src/shared/decision/representations/HistogramView.tsx`; `HistViewState` in `cpa.ts`; `SolveStep` in `types.ts`.
-- Levels and options: `src/tools/Decision/CriticalPath.tsx` (level mapping near lines 100–145; option menus near 640–700).
+- Levels and options: `src/shared/decision/CpaTool.tsx` (level mapping near lines 100–145; option menus near 640–700).
 - Tests: `src/tests/cpaSkills.test.ts`.
 - Background: `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `specs/cpa-exam-questions.md`.
