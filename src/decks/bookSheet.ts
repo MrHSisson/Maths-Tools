@@ -64,9 +64,11 @@ export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   const part = (p: BookPart, pi: number, answers: boolean) => `<div class="part" data-id="${pi}"><h2><span class="badge">${partLetterOf(pi)}</span>${esc(p.title)}</h2>
     ${!answers && p.tip ? `<p class="tip">${bookHtml(p.tip)}</p>` : ""}
     <ol start="${firstNumber(sheet, pi)}">${p.items.map((it) => `<li>${bookHtml(answers ? it.answer : it.text)}</li>`).join("")}</ol></div>`;
-  const head = (answers: boolean, cont: boolean) => `<h1>${esc(sheet.title)}${answers ? " <span>Answers</span>" : ""}${cont ? " <span>continued</span>" : ""}</h1>${!answers && !cont && sheet.note ? `<p class="note">${esc(sheet.note)}</p>` : ""}`;
-  // every part starts on page 1; the print script moves the last questions on to page 2 (a part may carry on there) until page 1 is full, and tightens the type if page 2 would overflow
-  const questions = `<section class="page" id="p1">${head(false, false)}${sheet.parts.map((p, i) => part(p, i, false)).join("")}</section><section class="page" id="p2">${head(false, true)}</section>`;
+  const head = (answers: boolean, cont: boolean) => `<h1>${esc(sheet.title)}${answers ? " <span>Answers</span>" : ""}${cont ? " <span>continued</span>" : ""}<i class="grow"></i>${!answers && !cont ? "<span>Name ____________________</span>" : ""}</h1>${!answers && !cont && sheet.note ? `<p class="note">${esc(sheet.note)}</p>` : ""}`;
+  // the first half of the parts on page 1 (A and B), the rest on page 2 (C and D); the print script then sets the largest type that fits both pages and spreads the spare room evenly
+  const half = Math.ceil(sheet.parts.length / 2);
+  const pageOf = (from: number, to: number, cont: boolean) => `<section class="page">${head(false, cont)}${sheet.parts.slice(from, to).map((p, k) => part(p, from + k, false)).join("")}</section>`;
+  const questions = pageOf(0, half, false) + (sheet.parts.length > half ? pageOf(half, sheet.parts.length, true) : "");
   const answerPage = `<section class="page ans">${head(true, false)}<div class="acols">${sheet.parts.map((p, i) => part(p, i, true)).join("")}</div></section>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(sheet.title)}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -75,38 +77,31 @@ export function bookSheetHtml(sheet: BookSheet, mode: PrintMode): string {
   *{box-sizing:border-box} @page{size:A4 portrait;margin:12mm 13mm 10mm}
   body{margin:0 auto;width:184mm;font-family:"Segoe UI",Arial,sans-serif;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page{break-after:page;height:275mm;overflow:hidden} .page:last-child{break-after:auto}
-  h1{font-size:23px;margin:0 0 2mm;padding-bottom:1.6mm;border-bottom:.5mm solid #1e3a8a;color:#1e3a8a;font-weight:700} h1 span{font-weight:400;color:#64748b;font-size:.62em;margin-left:3mm}
-  .note{margin:0 0 3mm;font-size:12.5px;color:#64748b}
-  .part{margin-top:4.5mm;break-inside:avoid}
-  h2 small{font-weight:400;color:#64748b;font-size:.75em;margin-left:1mm}
-  h2{display:flex;align-items:center;gap:2.5mm;margin:0 0 1.6mm;font-size:16px;color:#1e3a8a}
-  .badge{display:inline-flex;align-items:center;justify-content:center;width:7mm;height:7mm;border-radius:1.6mm;background:#1e3a8a;color:#fff;font-size:14px}
-  .tip{margin:0 0 2.2mm;padding:1.6mm 3mm;background:#eef2ff;border-left:1mm solid #1e3a8a;border-radius:0 1.2mm 1.2mm 0;font-size:13px;color:#1e293b}
+  h1{display:flex;align-items:baseline;gap:3mm;font-size:24px;margin:0 0 1.5mm;padding-bottom:2mm;border-bottom:.6mm solid #1e3a8a;color:#1e3a8a;font-weight:700}
+  h1 span{font-weight:400;color:#64748b;font-size:.55em} h1 .grow{flex:1}
+  .note{margin:0 0 1mm;font-size:12.5px;color:#64748b}
+  .part{margin-top:4.5mm}
+  h2{display:flex;align-items:center;gap:3mm;margin:0 0 1mm;padding:1.6mm 3mm;background:#eef2ff;border-radius:1.6mm;font-size:16px;color:#1e3a8a}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:7.5mm;height:7.5mm;border-radius:50%;background:#1e3a8a;color:#fff;font-size:14px;font-weight:700}
+  .tip{margin:0 0 2mm;font-size:13px;color:#475569}
   ol{margin:0;padding:0;list-style:none}
-  li{position:relative;padding:1.55mm 0 1.55mm 9mm;border-bottom:.25mm solid #e2e8f0;font-size:var(--fs,14.5px);line-height:1.38}
-  li::before{content:attr(data-n);position:absolute;left:0;top:1.55mm;width:7mm;font-weight:700;color:#1e3a8a;font-size:.95em}
-  .m .katex{font-size:1.04em}
-  .ans li{color:#1e3a8a;font-size:12.5px;padding-top:.9mm;padding-bottom:.9mm} .ans li::before{top:.9mm}
+  li{position:relative;padding:1.1mm 0 1.1mm 10mm;border-bottom:.25mm solid #e2e8f0;font-size:var(--fs,15px);line-height:1.32}
+  li::before{content:attr(data-n);position:absolute;left:0;top:50%;transform:translateY(-50%);width:6.6mm;height:6.6mm;border-radius:50%;border:.35mm solid #94a3b8;color:#334155;font-weight:700;font-size:.72em;text-align:center;line-height:6mm}
+  .m .katex{font-size:1.05em}
+  .ans li{color:#1e3a8a;font-size:12.5px;padding-top:.9mm;padding-bottom:.9mm}
   .acols{column-count:2;column-gap:9mm} .acols .part{margin-top:0;margin-bottom:3mm}
 </style></head><body>${mode !== "answers" ? questions : ""}${mode !== "questions" ? answerPage : ""}
 <script>
 document.querySelectorAll('ol').forEach(function(o){var n=+o.getAttribute('start')||1;o.querySelectorAll('li').forEach(function(l){l.setAttribute('data-n',n++)})});
 document.querySelectorAll('.m').forEach(function(e){try{katex.render(e.getAttribute('data-latex'),e,{throwOnError:false})}catch(x){e.textContent=e.getAttribute('data-latex')}});
-(function(){var p1=document.getElementById('p1'),p2=document.getElementById('p2');if(!p1)return;
+(function(){var pages=[].slice.call(document.querySelectorAll('.page:not(.ans)'));if(!pages.length)return;
   var d=document.createElement('div');d.style.cssText='height:275mm;position:absolute;visibility:hidden';document.body.appendChild(d);var H=d.offsetHeight;d.remove();
-  var fit=function(el){return el.scrollHeight<=H+1};
-  [14.5,14,13.5,13,12.5].some(function(fs){
-    document.body.style.setProperty('--fs',fs+'px');
-    [].slice.call(p2.querySelectorAll('.part')).forEach(function(x){var home=p1.querySelector('.part[data-id="'+x.getAttribute('data-id')+'"]');[].slice.call(x.querySelectorAll('li')).forEach(function(l){home.querySelector('ol').appendChild(l)});home.style.display='';x.remove()});
-    var parts=[].slice.call(p1.querySelectorAll('.part'));
-    while(!fit(p1)){
-      var last=parts.slice().reverse().filter(function(x){return x.querySelector('li')})[0];if(!last)break;
-      var id=last.getAttribute('data-id'),dest=p2.querySelector('.part[data-id="'+id+'"]');
-      if(!dest){dest=document.createElement('div');dest.className='part';dest.setAttribute('data-id',id);dest.innerHTML=last.querySelector('h2').outerHTML+'<ol></ol>';dest.querySelector('h2').insertAdjacentHTML('beforeend','<small>continued</small>');var after=[].slice.call(p2.querySelectorAll('.part')).filter(function(x){return +x.getAttribute('data-id')>+id})[0];p2.insertBefore(dest,after||null)}
-      var lis=last.querySelectorAll('li'),li=lis[lis.length-1],o=dest.querySelector('ol');o.insertBefore(li,o.firstChild);
-      if(!last.querySelector('li'))last.style.display='none'}
-    [].slice.call(p2.querySelectorAll('.part')).forEach(function(x){var home=p1.querySelector('.part[data-id="'+x.getAttribute('data-id')+'"]');if(home.style.display==='none'){var sm=x.querySelector('small');if(sm)sm.remove();var tip=home.querySelector('.tip');if(tip)x.querySelector('h2').insertAdjacentHTML('afterend',tip.outerHTML)}});
-    return fit(p2)});
+  var lis=function(pg){return [].slice.call(pg.querySelectorAll('li'))};
+  var used=function(pg){return pg.lastElementChild.getBoundingClientRect().bottom-pg.getBoundingClientRect().top};
+  var fits=function(){return pages.every(function(pg){return used(pg)<=H})};
+  var fs=15.5;for(;fs>11;fs-=.25){document.body.style.setProperty('--fs',fs+'px');if(fits())break}
+  // spread what is left on each page between its questions, so a lighter page is not bunched at the top
+  pages.forEach(function(pg){var slack=H-used(pg),n=lis(pg).length;if(slack>0&&n){var pad=Math.min(slack/n/2,5*3.78);lis(pg).forEach(function(l){l.style.paddingTop=l.style.paddingBottom=(parseFloat(getComputedStyle(l).paddingTop)+pad)+'px'})}});
 })();
 </script>
 </body></html>`;

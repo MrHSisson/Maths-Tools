@@ -179,10 +179,10 @@ const book: BookSheet = {
   title: "Sharing in a Ratio",
   note: "Work in your book. Draw the boxes if they help. Check that the shares add to the total.",
   parts: [
-    { id: "a", title: "Sharing a total", tip: "Add the parts. Divide the total by that to find one part, then multiply for each share.", items: bookA },
-    { id: "b", title: "A known share", tip: "How many parts is the known share? Divide to find one part, then find the other share or the total.", items: bookItems(ALL_SETS.B) },
-    { id: "c", title: "A difference", tip: "Subtract the parts to see how many the difference is. Divide to find one part, then fill in the rest.", items: bookItems(ALL_SETS.C) },
-    { id: "d", title: "Mixed", tip: "Decide which kind of question it is first. Read what is asked for, and check at the end.", items: bookItems(ALL_SETS.D) },
+    { id: "a", title: "Sharing a total", items: bookA },
+    { id: "b", title: "A known share", items: bookItems(ALL_SETS.B) },
+    { id: "c", title: "A difference", items: bookItems(ALL_SETS.C) },
+    { id: "d", title: "Mixed", items: bookItems(ALL_SETS.D) },
   ],
 };
 const sheetB = bookSheetSlide(`${P}-sheet-b`, { ...book, show: ["b"] }, T, { brief: "Part B of the book sheet: nine questions on a known share, easiest first. The slide is the answer key, on a click. The whole sheet (parts A to D, two A4 pages) prints from the last cue slide, File > Worksheets." });

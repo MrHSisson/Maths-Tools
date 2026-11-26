@@ -14,7 +14,7 @@ describe("Book sheet", () => {
     expect([0, 1, 2, 3].map((i) => firstNumber(s, i))).toEqual([1, 10, 19, 28]);
     expect(bookSheetHtml(s, "questions")).toContain('<ol start="28">');
   });
-  it("prints questions (two pages, paginated by height when printed) and a separate answer page", () => {
+  it("prints questions (the first half of the parts on page 1, the rest on page 2) and a separate answer page", () => {
     const q = bookSheetHtml(sheet(), "questions"), a = bookSheetHtml(sheet(), "answers"), both = bookSheetHtml(sheet(), "both");
     expect(q.match(/<section class="page"/g)).toHaveLength(2);
     expect(a.match(/<section class="page ans"/g)).toHaveLength(1);
@@ -23,6 +23,9 @@ describe("Book sheet", () => {
     expect(q).not.toContain("£8</li>");
     expect(a).toContain("£8</li>");
     expect(a).not.toContain("Divide");
+    expect(q.split('<section class="page">')[1]).toContain("Part &lt;b&gt;");
+    expect(q.split('<section class="page">')[2]).toContain("Part &lt;c&gt;");
+    expect(q.split('<section class="page">')[2]).not.toContain("Part &lt;b&gt;");
   });
   it("escapes titles and wording; maths goes between dollar signs", () => {
     const h = bookSheetHtml(sheet(), "questions");

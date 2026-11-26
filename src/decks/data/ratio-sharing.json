@@ -1114,7 +1114,6 @@
        {
         "id": "a",
         "title": "Sharing a total",
-        "tip": "Add the parts. Divide the total by that to find one part, then multiply for each share.",
         "items": [
          {
           "text": "Ana and Ben share £65 in the ratio $2:3$. Find both shares.",
@@ -1157,7 +1156,6 @@
        {
         "id": "b",
         "title": "A known share",
-        "tip": "How many parts is the known share? Divide to find one part, then find the other share or the total.",
         "items": [
          {
           "text": "Zane and Isla share money in the ratio $2:3$. Zane receives £16. What is the total amount shared?",
@@ -1200,7 +1198,6 @@
        {
         "id": "c",
         "title": "A difference",
-        "tip": "Subtract the parts to see how many the difference is. Divide to find one part, then fill in the rest.",
         "items": [
          {
           "text": "Nia and Pete share money in the ratio $2:5$. Pete receives £45 more than Nia. How much does Nia receive?",
@@ -1243,7 +1240,6 @@
        {
         "id": "d",
         "title": "Mixed",
-        "tip": "Decide which kind of question it is first. Read what is asked for, and check at the end.",
         "items": [
          {
           "text": "Kim and Raj share £85 in the ratio $2:3$. How much does Raj receive?",
@@ -1315,7 +1311,7 @@
     }
    ],
    "brief": "Part B of the book sheet: nine questions on a known share, easiest first. The slide is the answer key, on a click. The whole sheet (parts A to D, two A4 pages) prints from the last cue slide, File > Worksheets.",
-   "built": "2q41y5"
+   "built": "r1moz1"
   },
   {
    "id": "rsh-div-c",
@@ -1790,7 +1786,6 @@
        {
         "id": "a",
         "title": "Sharing a total",
-        "tip": "Add the parts. Divide the total by that to find one part, then multiply for each share.",
         "items": [
          {
           "text": "Ana and Ben share £65 in the ratio $2:3$. Find both shares.",
@@ -1833,7 +1828,6 @@
        {
         "id": "b",
         "title": "A known share",
-        "tip": "How many parts is the known share? Divide to find one part, then find the other share or the total.",
         "items": [
          {
           "text": "Zane and Isla share money in the ratio $2:3$. Zane receives £16. What is the total amount shared?",
@@ -1876,7 +1870,6 @@
        {
         "id": "c",
         "title": "A difference",
-        "tip": "Subtract the parts to see how many the difference is. Divide to find one part, then fill in the rest.",
         "items": [
          {
           "text": "Nia and Pete share money in the ratio $2:5$. Pete receives £45 more than Nia. How much does Nia receive?",
@@ -1919,7 +1912,6 @@
        {
         "id": "d",
         "title": "Mixed",
-        "tip": "Decide which kind of question it is first. Read what is asked for, and check at the end.",
         "items": [
          {
           "text": "Kim and Raj share £85 in the ratio $2:3$. How much does Raj receive?",
@@ -1991,7 +1983,7 @@
     }
    ],
    "brief": "Part C of the book sheet: nine questions on a difference, easiest first. Questions 2, 5, 6, 8 and 9 ask for the total. The slide is the answer key, on a click.",
-   "built": "bqlz6j"
+   "built": "1nidld7"
   },
   {
    "id": "rsh-div-d",
@@ -2286,7 +2278,6 @@
        {
         "id": "a",
         "title": "Sharing a total",
-        "tip": "Add the parts. Divide the total by that to find one part, then multiply for each share.",
         "items": [
          {
           "text": "Ana and Ben share £65 in the ratio $2:3$. Find both shares.",
@@ -2329,7 +2320,6 @@
        {
         "id": "b",
         "title": "A known share",
-        "tip": "How many parts is the known share? Divide to find one part, then find the other share or the total.",
         "items": [
          {
           "text": "Zane and Isla share money in the ratio $2:3$. Zane receives £16. What is the total amount shared?",
@@ -2372,7 +2362,6 @@
        {
         "id": "c",
         "title": "A difference",
-        "tip": "Subtract the parts to see how many the difference is. Divide to find one part, then fill in the rest.",
         "items": [
          {
           "text": "Nia and Pete share money in the ratio $2:5$. Pete receives £45 more than Nia. How much does Nia receive?",
@@ -2415,7 +2404,6 @@
        {
         "id": "d",
         "title": "Mixed",
-        "tip": "Decide which kind of question it is first. Read what is asked for, and check at the end.",
         "items": [
          {
           "text": "Kim and Raj share £85 in the ratio $2:3$. How much does Raj receive?",
@@ -2487,7 +2475,7 @@
     }
    ],
    "brief": "Part D of the book sheet: fifteen mixed questions, never labelled; pupils decide which kind it is. This slide holds the print: File > Worksheets prints all four parts (A to D) on two A4 pages, made to be printed two to a sheet, with an answer page.",
-   "built": "18pmkit"
+   "built": "e8yt1"
   },
   {
    "id": "rsh-exit",
