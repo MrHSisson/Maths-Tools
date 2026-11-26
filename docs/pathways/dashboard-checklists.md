@@ -1,8 +1,10 @@
 # The dashboard as checklists
-- **Status:** paused
-- **Updated:** 2026-11-22
+- **Status:** building
+- **Updated:** 2026-11-26
 
-**Paused 2026-11-22 (Harry): useful, but there is no time to sort it and a lot of branches are open.** Nothing is half-built: chunk 1 (the facts) is done and safe to merge, chunks 2 to 6 have not been started, and the dashboard is unchanged. To restart, begin at chunk 2; the decisions below still stand.
+**26 November direction:** Phase 1 puts the live project plan in a floating panel across the site in Developing tools mode. Tool pages show their own overview and checklist. Home and hubs show the project map, with pinned priorities, progress and dependency links. Harry's review requests have their own queue. The fixed tool and deck readiness checklists below remain an earlier proposal.
+
+**22 November proposal:** Harry paused the fixed readiness checklist design after the facts work. The outline below records that design for later reference.
 
 ## Intention
 The Tools dashboard (`/admin`) should answer one question at a glance: **what is done, and what is left?** Today it shows facts generated from the code, one Review dropdown per tool, and some views over the docs, and its use is unclear (Harry, 2026-11-22). It becomes checklists: every tool, deck and pathway has a list of things that must be true before it is finished, a tick for each, and a progress bar made from the ticks.
@@ -39,9 +41,13 @@ Extras that never count against a tool, shown beside the list: Depth bank, lesso
 **A pathway.** Its `## Next steps` become a checklist: write each as `- [ ] step`, tick it by changing it to `- [x]` in the pathway file (Claude does this at the end of a session; the dashboard shows it). Harry can also tick one on the dashboard (kept in the shared notes, keyed by the step's text).
 
 ## Progress
+- 2026-11-26. Built the floating project plan, editable checklists, project tree and separate review queue. The shared plan has a revision so one editor cannot silently overwrite another.
 - 2026-11-22. Decided with Harry (above), including that only Harry or Claude tick. Found that the generated facts are wrong for the tools built lately: the Simplex tool showed no brief, no tests and no sub-tools, because the checks only matched a brief named exactly like the tool, a `__test` export and ToolShell sub-tools. The evidence has to be true even though it no longer ticks anything, so the facts were fixed first (chunk 1, done): briefs are found by their header, tests by a test file that imports the tool, sub-tools and levels are read for Decision tools, and About text and lesson decks are detected; `src/tests/toolFactsTruth.test.ts` pins them.
 
 ## Next steps
+- Set the shared plan key and check the Work Done to project map to review queue flow on the deployed site.
+
+## Earlier readiness checklist plan
 - [x] **Chunk 1: make the facts true** (the evidence). Done 2026-11-22.
 - [ ] **Chunk 2: the checklist module** (`src/admin/checklist.ts`): the items above as data, which apply to which tool, the evidence for each, the warning when a tick and the evidence disagree, and the progress from the ticks; pure functions with unit tests.
 - [ ] **Chunk 3: the ticks in the shared notes** (`checks` on a tool's note: `api/_notes.ts`, `notesApi.ts`, the local fallback), written by Harry on the dashboard and by Claude through the notes API. This changes the notes API, so it merges before the dashboard uses it.

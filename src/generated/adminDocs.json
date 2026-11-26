@@ -1085,9 +1085,9 @@
   {
    "id": "dashboard-checklists",
    "title": "The dashboard as checklists",
-   "status": "paused",
+   "status": "building",
    "measure": "",
-   "updated": "2026-11-22",
+   "updated": "2026-11-26",
    "sections": [
     {
      "title": "Intention",
@@ -1211,6 +1211,7 @@
       {
        "t": "ul",
        "items": [
+        "2026-11-26. Built the floating project plan, editable checklists, project tree and separate review queue. The shared plan has a revision so one editor cannot silently overwrite another.",
         "2026-11-22. Decided with Harry (above), including that only Harry or Claude tick. Found that the generated facts are wrong for the tools built lately: the Simplex tool showed no brief, no tests and no sub-tools, because the checks only matched a brief named exactly like the tool, a `__test` export and ToolShell sub-tools. The evidence has to be true even though it no longer ticks anything, so the facts were fixed first (chunk 1, done): briefs are found by their header, tests by a test file that imports the tool, sub-tools and levels are read for Decision tools, and About text and lesson decks are detected; `src/tests/toolFactsTruth.test.ts` pins them."
        ]
       }
@@ -1218,6 +1219,18 @@
     },
     {
      "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "Set the shared plan key and check the Work Done to project map to review queue flow on the deployed site."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Earlier readiness checklist plan",
      "level": 2,
      "blocks": [
       {

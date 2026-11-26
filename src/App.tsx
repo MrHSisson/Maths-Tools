@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
+import { useDevMode } from './devMode';
 import { ALL_TOOLS, PAGES } from './registry';
 import { setLivePaths } from './shared/about';
 import { InkOverlay } from './shared/components/InkOverlay';
@@ -17,6 +18,7 @@ const TOOL_ROUTES = [...ALL_TOOLS, ...PAGES].map((tool) => ({
 
 const DeckPage = lazy(() => import('./decks/DeckPage'));
 const DecksPage = lazy(() => import('./components/DecksPage'));
+const ProjectPlanPanel = lazy(() => import('./projectPlan/ProjectPlanPanel'));
 
 function LoadingFallback() {
   return (
@@ -66,9 +68,11 @@ function AliasRedirect({ to }: { to: string }) {
 }
 
 function App() {
+  const devMode = useDevMode();
   return (
     <ToolErrorBoundary>
       <InkLayer />
+      {devMode && <Suspense fallback={null}><ProjectPlanPanel /></Suspense>}
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
