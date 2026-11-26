@@ -25,7 +25,7 @@ Decided with Harry (2026-11-26): the shared generators and solver stay as they a
 
 ## Next steps
 1. Harry reviews and merges (no PR yet). After the merge, check the five tools on the live site.
-2. The lesson deck `resource-levelling` still names the old tool (`tool: critical-path`, `toolPath: /critical-path`) in its data, here and in the shared copy: its button works through the redirect, but the deck no longer lists itself on the tool page. Change both to `cpa-charts` and `/cpa-charts` (a one-field edit, pushed with `npm run deck`) when Harry says.
+2. The lesson deck `resource-levelling` is **left as it is, by Harry's decision (2026-11-26)**. Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it, and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it later, change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`).
 3. Later: the exam-paper tool the exam page is meant to grow into (a whole paper, mixed chains), and the dashboard Review notes for the five tools.
 
 ## Where to read more
