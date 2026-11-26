@@ -321,9 +321,9 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
       <GitFork size={19} />
     </button>
     {open && <aside id="project-plan-panel" aria-label="Project plan"
-      className="fixed inset-y-0 left-0 z-[2010] flex w-full flex-col border-r border-slate-300 bg-slate-50 shadow-lift"
+      className={`fixed left-0 z-[2010] flex w-full flex-col ${panelWidth ? "inset-y-4" : "inset-y-0 bg-slate-50 shadow-lift"}`}
       style={panelWidth ? { width: panelWidth } : undefined}>
-      <header className="border-b border-slate-200 bg-white px-4 py-3">
+      <header className={`border-b border-slate-200 px-4 py-3 ${panelWidth ? "" : "bg-white"}`}>
         <div className="flex items-center gap-1">
           <h2 className="mr-auto text-lg font-semibold">Project plan</h2>
           {pathname !== "/" && <Link to="/" className={iconButton} aria-label="Site home"><Home size={17} /></Link>}

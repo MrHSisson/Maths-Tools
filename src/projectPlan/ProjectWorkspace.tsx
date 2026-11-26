@@ -56,12 +56,11 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
       <ProjectPlanPanel open={open} setOpen={changeOpen} panelWidth={panelWidth} wide={wide} toggleWidth={() => setWide(value => !value)} />
     </Suspense>}
     <div
-      className={docked ? "fixed inset-y-0 right-0 overflow-hidden bg-slate-200 print:!static print:!overflow-visible" : undefined}
-      style={docked ? { left: panelWidth } : undefined}
+      className={docked ? "fixed inset-0 overflow-hidden bg-slate-100 print:!static print:!overflow-visible" : undefined}
     >
       <div
         className={docked ? "absolute overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-300 print:!static print:!h-auto print:!transform-none print:!overflow-visible print:!shadow-none print:!ring-0" : undefined}
-        style={docked ? { inset: FRAME_GUTTER } : undefined}
+        style={docked ? { inset: FRAME_GUTTER, left: panelWidth + FRAME_GUTTER } : undefined}
       >
         <div
           ref={site}
