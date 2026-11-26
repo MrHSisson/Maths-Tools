@@ -66,6 +66,13 @@ Notes: no planner Build Log block yet for this session (to add).
 Agent: Codex
 Notes: Floating project plan (Codex), Maths Tools — Build Log.
 
+## 2026-11-26 — Move the Project Plan button
+
+- Drag the floating button with a mouse or touch, or move it with the arrow keys while it has focus. It remembers its position on this browser and stays within the window. Click or tap it to open the plan.
+
+Agent: Codex
+Notes: Move the Project Plan button (Codex), Maths Tools — Build Log.
+
 ## 2026-11-26 — Project Plan beside the tool
 
 - The floating Project Plan button opens a panel on the left. On laptop-sized screens, the tool fits beside it in a rounded frame inside the same workspace background as the plan with evenly scaled content and a taller viewport, so the frame uses the available height. Closing the panel returns the tool to full size at the same place on the page.

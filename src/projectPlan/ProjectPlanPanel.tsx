@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, ChevronRight, GitFork, Home, ListTodo, Maximize2, Minimize2, Pin, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools } from "./catalogue";
@@ -281,6 +281,26 @@ function NodeDetail({ node, plan, save, select }: { node: PlanNode; plan: Projec
   </section>;
 }
 
+const launcherPositionKey = "mt-project-plan-launcher";
+const launcherMargin = 8;
+type Position = { x: number; y: number };
+
+function loadLauncherPosition(): Position | undefined {
+  try {
+    const value = JSON.parse(localStorage.getItem(launcherPositionKey) ?? "null");
+    if (value && Number.isFinite(value.x) && Number.isFinite(value.y)) return { x: value.x, y: value.y };
+  } catch { /* Storage is unavailable or the saved position is invalid. */ }
+}
+
+function clampLauncherPosition(button: HTMLButtonElement, { x, y }: Position): Position {
+  const viewport = document.documentElement;
+  const clamp = (value: number, limit: number) => Math.max(launcherMargin, Math.min(value, limit - launcherMargin));
+  return {
+    x: clamp(x, viewport.clientWidth - button.offsetWidth),
+    y: clamp(y, viewport.clientHeight - button.offsetHeight),
+  };
+}
+
 interface PanelProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -294,6 +314,24 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const tool = contextualTools.find(item => item.path.toLowerCase() === pathname.replace(/\/$/, "").toLowerCase());
   const [selection, setSelection] = useState<{ route: string; id: string | null }>();
   const launcher = useRef<HTMLButtonElement>(null);
+  const [launcherPosition, setLauncherPosition] = useState(loadLauncherPosition);
+  const drag = useRef<{ id: number; start: Position; origin: Position; previous?: Position; moved: boolean }>();
+  const suppressClick = useRef(false);
+
+  function saveLauncherPosition(position: Position) {
+    setLauncherPosition(position);
+    try { localStorage.setItem(launcherPositionKey, JSON.stringify(position)); } catch { /* Keep it for this visit. */ }
+  }
+
+  function moveLauncher(event: ReactPointerEvent<HTMLButtonElement>): Position | undefined {
+    const current = drag.current;
+    if (!current || current.id !== event.pointerId) return;
+    const dx = event.clientX - current.start.x;
+    const dy = event.clientY - current.start.y;
+    if (!current.moved && Math.hypot(dx, dy) < 5) return;
+    current.moved = true;
+    return clampLauncherPosition(event.currentTarget, { x: current.origin.x + dx, y: current.origin.y + dy });
+  }
   const closeButton = useRef<HTMLButtonElement>(null);
   const { plan, saving, error, loadFailed, save, reload } = useProjectPlan(open);
 
@@ -316,8 +354,53 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   }, [open, setOpen]);
 
   return <div className="print:hidden">
-    <button type="button" className={`fixed bottom-20 left-3 z-[2010] grid size-11 place-items-center rounded-full border border-slate-300 bg-white text-slate-800 shadow-lift hover:bg-slate-100 sm:left-5 ${open ? "invisible" : ""}`}
-      ref={launcher} title="Project plan" aria-label="Open project plan" aria-expanded={open} aria-controls={open ? "project-plan-panel" : undefined} onClick={() => { setSelection(undefined); setOpen(true); }}>
+    <button type="button" className={`fixed bottom-20 left-3 z-[2010] grid size-11 touch-none cursor-grab select-none place-items-center rounded-full border border-slate-300 bg-white text-slate-800 shadow-lift hover:bg-slate-100 active:cursor-grabbing sm:left-5 ${open ? "invisible" : ""}`}
+      style={launcherPosition && {
+        left: `clamp(${launcherMargin}px, ${launcherPosition.x}px, calc(100% - 2.75rem - ${launcherMargin}px))`,
+        top: `clamp(${launcherMargin}px, ${launcherPosition.y}px, calc(100% - 2.75rem - ${launcherMargin}px))`,
+        bottom: "auto",
+      }}
+      ref={launcher} title="Project plan · drag or use arrow keys to move" aria-label="Open project plan"
+      aria-expanded={open} aria-controls={open ? "project-plan-panel" : undefined}
+      onPointerDown={event => {
+        if (!event.isPrimary || event.button !== 0) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        suppressClick.current = false;
+        drag.current = { id: event.pointerId, start: { x: event.clientX, y: event.clientY }, origin: { x: bounds.left, y: bounds.top }, previous: launcherPosition, moved: false };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={event => {
+        const position = moveLauncher(event);
+        if (position) setLauncherPosition(position);
+      }}
+      onPointerUp={event => {
+        if (drag.current?.id !== event.pointerId) return;
+        const position = moveLauncher(event);
+        drag.current = undefined;
+        if (position) { suppressClick.current = true; saveLauncherPosition(position); }
+      }}
+      onLostPointerCapture={event => {
+        const current = drag.current;
+        if (!current || current.id !== event.pointerId) return;
+        drag.current = undefined;
+        if (current.moved) {
+          suppressClick.current = true;
+          setLauncherPosition(current.previous);
+        }
+      }}
+      onKeyDown={event => {
+        const offsets: Record<string, Position> = { ArrowUp: { x: 0, y: -16 }, ArrowDown: { x: 0, y: 16 }, ArrowLeft: { x: -16, y: 0 }, ArrowRight: { x: 16, y: 0 } };
+        const offset = offsets[event.key];
+        if (!offset) return;
+        event.preventDefault();
+        const bounds = event.currentTarget.getBoundingClientRect();
+        saveLauncherPosition(clampLauncherPosition(event.currentTarget, { x: bounds.left + offset.x, y: bounds.top + offset.y }));
+      }}
+      onClick={event => {
+        if (suppressClick.current && event.detail !== 0) { suppressClick.current = false; return; }
+        setSelection(undefined);
+        setOpen(true);
+      }}>
       <GitFork size={19} />
     </button>
     {open && <aside id="project-plan-panel" aria-label="Project plan"
