@@ -1,6 +1,6 @@
 # Critical Path Analysis: split into skill tools
 - **Status:** building
-- **Updated:** 2026-11-26 (chunk 4: Changes and Reasoning built)
+- **Updated:** 2026-11-26 (chunk 5: Cascade Charts and Resources built; all four skill tools live)
 
 ## Intention
 Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub.
@@ -20,10 +20,10 @@ Decided with Harry (2026-11-26): the shared generators and solver stay as they a
 - 2026-11-26 (chunk 2): **Times, Float and Critical Paths** (`/cpa-times`, `CpaTimes.tsx`) is live on the hub. The old tool's component is now `CpaTool` in `CriticalPath.tsx`, which takes a `home` (its tabs; a row of pills instead of the topic chooser; no Course or Practice switch; only the options those tabs use), so the remaining tools are a few lines each. `CPA_LIVE` in `CriticalPathHomes.ts` lists the new tools that exist: a tab that has moved opens its new tool from an old link; the other tabs stay in the old tool until their chunk. The hub's DE links for the moved tabs point at the new tool.
 - 2026-11-26 (chunk 3): **Activity Networks** (`/cpa-networks`, `CpaNetworks.tsx`) is live on the hub, built the way the chunk 2 note describes. Print templates now show only on tools that draw charts.
 - 2026-11-26 (chunk 4): **Changes and Reasoning** (`/cpa-changes`, `CpaChanges.tsx`) is live on the hub: four tabs in one row, AS and A-level together.
+- 2026-11-26 (chunk 5): **Cascade Charts and Resources** (`/cpa-charts`, `CpaCharts.tsx`) is live on the hub. Every skill tab has moved; `/critical-path` now holds only the exam-style chains.
 
 ## Next steps
-1. Cascade Charts and Resources (it needs: its id in `CPA_LIVE`, a `Cpa…tsx` file like `CpaTimes.tsx`, a registry entry, a hub `toolIds` entry, the file in `scripts/testAreas.mjs` and the organisation test).
-2. The exam page on the hub; retire the old tool.
+1. The exam page on the hub (`/cpa-exam`, a thin page over the existing chains, opened from the DE chapter), then retire the old tool and `CpaTool`'s no-`home` mode (the old default export, the chooser and the Course and Practice options).
 
 ## Where to read more
 `src/tools/Decision/CriticalPath.tsx`, `criticalPathGenerate.ts`, `decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`.

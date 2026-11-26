@@ -53,6 +53,7 @@ const STANDALONE_BY_DESIGN = [
   "Binary/BinaryCounting",
   "Decision/CriticalPath",
   "Decision/CpaChanges",
+  "Decision/CpaCharts",
   "Decision/CpaNetworks",
   "Decision/CpaTimes",
   "Decision/FormulatingLP",
