@@ -69,8 +69,10 @@ function load(): Store {
 }
 
 /** Each name's entries are spread evenly round the wheel instead of sitting in one block. */
-function buildEntries(rows: Row[]): Entry[] {
-  const valid = rows.map((r, i) => ({ r, i })).filter(x => x.r.name.trim() && x.r.count > 0);
+function buildEntries(rows: Row[], order: number[] | null): Entry[] {
+  // `order` is the shuffled sequence of row numbers round the wheel; the list itself is never reordered. Rows it does not mention follow in list order.
+  const seq = order ? [...order.filter(i => i < rows.length), ...rows.map((_, i) => i).filter(i => !order.includes(i))] : rows.map((_, i) => i);
+  const valid = seq.map(i => ({ r: rows[i], i })).filter(x => x.r.name.trim() && x.r.count > 0);
   const m = valid.length, list: Entry[] = [];
   valid.forEach((x, k) => {
     const base = (k + 0.5) / m;
@@ -169,7 +171,8 @@ export default function NameWheel() {
 
   const style = wheel.style, strip = style !== "classic";   // Carnival and Case are strips
   const palette = PALETTES[wheel.palette] ?? PALETTES.bright;
-  const entries = useMemo(() => buildEntries(wheel.rows), [wheel.rows]);
+  const [order, setOrder] = useState<number[] | null>(null);   // wheel-only shuffle: null = the list's own order
+  const entries = useMemo(() => buildEntries(wheel.rows, order), [wheel.rows, order]);
   const names = wheel.rows.filter(r => r.name.trim() && r.count > 0).length;   // names actually on the wheel
   const total = entries.length;
   const tiny = total > 100 && !strip;   // labels too small to read; the name at the pointer shows while it spins
@@ -183,7 +186,7 @@ export default function NameWheel() {
   }, [store]);
   useEffect(() => { if (focusRow !== null) { nameInputs.current[focusRow]?.focus(); setFocusRow(null); } }, [focusRow, wheel.rows]);
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
-  useEffect(() => { setConfirmDelete(false); }, [store.active]);
+  useEffect(() => { setConfirmDelete(false); setOrder(null); }, [store.active]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current, ctx = canvas?.getContext("2d");
@@ -302,18 +305,22 @@ export default function NameWheel() {
     rafRef.current = requestAnimationFrame(step);
   };
 
-  const removeRow = (i: number) => setRows(rs => { const next = rs.filter((_, k) => k !== i); return next.length ? next : [{ name: "", count: 1 }]; });
+  const removeRow = (i: number) => {
+    setOrder(o => (o ? o.filter(k => k !== i).map(k => (k > i ? k - 1 : k)) : o));
+    setRows(rs => { const next = rs.filter((_, k) => k !== i); return next.length ? next : [{ name: "", count: 1 }]; });
+  };
   const addRow = (at?: number) => {
     const idx = at ?? wheel.rows.length;
+    setOrder(o => (o ? [...o.map(k => (k >= idx ? k + 1 : k)), idx] : o));
     setRows(rs => [...rs.slice(0, idx), { name: "", count: 1 }, ...rs.slice(idx)]);
     setFocusRow(idx);
   };
   const edit = (i: number, p: Partial<Row>) => setRows(rs => rs.map((r, k) => (k === i ? { ...r, ...p } : r)));
-  const shuffleRows = () => setRows(rs => {
-    const a = rs.slice();
+  const shuffleWheel = () => {
+    const a = wheel.rows.map((_, i) => i);
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a;
-  });
+    setOrder(a);
+  };
   const addBulk = () => {
     const added: Row[] = [];
     bulk.split(/\r?\n/).forEach(line => {
@@ -355,6 +362,7 @@ export default function NameWheel() {
 
   const actions = (
     <>
+      <button type="button" onClick={shuffleWheel} disabled={!canSpin} className={`${secondary} ${phone ? "flex-1" : "px-6"}`}>Shuffle</button>
       <button type="button" onClick={spin} disabled={!canSpin} className={`${primary} ${phone ? "flex-1" : "px-10"}`}>Spin</button>
     </>
   );
@@ -506,7 +514,8 @@ export default function NameWheel() {
               <label className="flex items-center gap-2 text-sm text-slate-600" title="Off by default: spins are full length and a win is celebrated whatever the device asks. Tick this to give devices set to reduce motion a one-second spin and no confetti, balloons or fireworks."><input type="checkbox" checked={store.followDevice} onChange={e => setStore(st => ({ ...st, followDevice: e.target.checked }))} /> Follow the device's reduce-motion setting</label>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
-              <button type="button" onClick={shuffleRows} disabled={!canSpin} className={secondary}>Shuffle the order</button>
+              <button type="button" onClick={shuffleWheel} disabled={!canSpin} className={secondary}>Shuffle the wheel</button>
+              <button type="button" onClick={() => setOrder(null)} disabled={!order || spinning} className={secondary}>Back to list order</button>
               <button type="button" onClick={() => patch({ winners: [] })} disabled={wheel.winners.length === 0} className={secondary}>Clear the picked list</button>
             </div>
           </div>
