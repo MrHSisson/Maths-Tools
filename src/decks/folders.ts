@@ -1,5 +1,5 @@
 // The folder view's data: a tree's folders (any depth) read once, and one folder's decks (with their first slides, for the cards) read when it is opened.
-// Signed in, every read and change sends the admin key. `pub` is the read anyone may make: the topic tree's published decks only, no key.
+// Signed-in reads and edits use the Developing tools session. Public reads show the topic tree’s published decks.
 import { useCallback, useEffect, useState } from "react";
 import type { Folder, FolderDeck, FolderOp, Tree } from "../../api/_folders";
 

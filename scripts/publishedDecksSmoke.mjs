@@ -28,6 +28,10 @@ async function visitor() {
   await page.route("**/api/decks*", async (route) => {
     const url = new URL(route.request().url()), json = (body, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
     if (route.request().method() === "POST") { sent.push(JSON.parse(route.request().postData())); return json({ published: true, entry: { title: "x", summary: "", slides: 1, publishedAt: "2026-10-29T13:00:00Z" } }); }
+    if (url.searchParams.get("public") === "1" || active) {
+      if (url.searchParams.has("folders")) return json({ folders: [], counts: {}, byDeck: {}, unfiled: 1 });
+      if (url.searchParams.has("folder")) return json({ decks: [{ ...listing, id: demo.id, madeAt: demo.publishedAt, editedAt: demo.publishedAt, published: true }] });
+    }
     if (url.searchParams.get("published") === "") return json({ decks: { demo: listing } });
     if (url.searchParams.get("published") === "demo") return json(demo);
     if (url.searchParams.has("published")) return json({ error: "Not published" }, 404);
@@ -40,6 +44,8 @@ try {
   // 1. Anyone: the Decks tab lists the published deck and the editor, and the deck plays read-only.
   let { page, errors } = await visitor();
   await page.goto(`${base}/deck-gallery`);
+  await page.getByRole("button", { name: "Previews view" }).click();
+  await page.getByRole("button", { name: "Open Not filed" }).click();
   await expect(page.getByLabel("Play Demo deck")).toBeVisible();
   await expect(page.getByText("A published lesson")).toHaveCount(0);            // the words wait behind the (i)
   await page.getByLabel("About Demo deck").click();
