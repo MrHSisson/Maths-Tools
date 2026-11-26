@@ -42,6 +42,49 @@
    "built": "1ankifp"
   },
   {
+   "id": "wh-objective",
+   "family": "structure",
+   "title": "Learning objective",
+   "els": [
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 100,
+     "w": 1400,
+     "h": 50,
+     "text": "LEARNING OBJECTIVE",
+     "size": 30,
+     "colour": "#64748b",
+     "bold": true,
+     "id": "wh-objective-1"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 170,
+     "w": 1400,
+     "h": 230,
+     "text": "Explain why the simplex answer may not be a plan, and find the best whole-number one.",
+     "size": 60,
+     "colour": "#0f172a",
+     "bold": true,
+     "id": "wh-objective-2"
+    },
+    {
+     "kind": "text",
+     "x": 100,
+     "y": 440,
+     "w": 1400,
+     "h": 380,
+     "text": "•  See why rounding to the nearest is not safe\n•  Use the simplex answer as an upper bound\n•  Test the whole-number points around it and pick the best",
+     "size": 44,
+     "colour": "#334155",
+     "id": "wh-objective-3"
+    }
+   ],
+   "built": "1dwn54o"
+  },
+  {
    "id": "wh-problem",
    "family": "teach",
    "title": "The simplex answer",
@@ -357,49 +400,6 @@
     }
    ],
    "built": "17236x8"
-  },
-  {
-   "id": "wh-objective",
-   "family": "structure",
-   "title": "Learning objective",
-   "els": [
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 100,
-     "w": 1400,
-     "h": 50,
-     "text": "LEARNING OBJECTIVE",
-     "size": 30,
-     "colour": "#64748b",
-     "bold": true,
-     "id": "wh-objective-1"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 170,
-     "w": 1400,
-     "h": 230,
-     "text": "Explain why the simplex answer may not be a plan, and find the best whole-number one.",
-     "size": 60,
-     "colour": "#0f172a",
-     "bold": true,
-     "id": "wh-objective-2"
-    },
-    {
-     "kind": "text",
-     "x": 100,
-     "y": 440,
-     "w": 1400,
-     "h": 380,
-     "text": "•  See why rounding to the nearest is not safe\n•  Use the simplex answer as an upper bound\n•  Test the whole-number points around it and pick the best",
-     "size": 44,
-     "colour": "#334155",
-     "id": "wh-objective-3"
-    }
-   ],
-   "built": "1dwn54o"
   },
   {
    "id": "wh-round",
@@ -778,7 +778,7 @@
      "y": 250,
      "w": 780,
      "h": 190,
-     "text": "A whole-number plan is also a plan for the linear programme, so its $P$ cannot be more than the simplex's.",
+     "text": "A whole-number plan is also a plan for the programme, so its $P$ cannot beat the simplex's.",
      "size": 40,
      "colour": "#0f172a",
      "id": "wh-bound-3"
@@ -801,7 +801,7 @@
      "y": 600,
      "w": 780,
      "h": 150,
-     "text": "The coefficients are whole numbers, so $P$ is a whole number for a whole-number plan.",
+     "text": "The coefficients are whole numbers, so its $P$ is a whole number too.",
      "size": 38,
      "colour": "#0f172a",
      "step": 2,
@@ -1054,7 +1054,7 @@
      "id": "wh-bound-27"
     }
    ],
-   "built": "1rfeccl"
+   "built": "jtukwr"
   },
   {
    "id": "wh-points",
@@ -2261,8 +2261,8 @@
      "y": 435,
      "w": 780,
      "h": 150,
-     "text": "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.",
-     "size": 36,
+     "text": "$(4, 2)$ has $P = 20$: it reaches the bound, so it is the best.",
+     "size": 38,
      "colour": "#0f172a",
      "bold": true,
      "step": 1,
@@ -2274,8 +2274,8 @@
      "y": 600,
      "w": 780,
      "h": 140,
-     "text": "The orange sliver is every point with $P > 20$. It holds no whole-number point.",
-     "size": 36,
+     "text": "The orange sliver ($P > 20$) holds no whole-number point.",
+     "size": 38,
      "colour": "#c2410c",
      "step": 1,
      "id": "wh-best-5"
@@ -2286,8 +2286,8 @@
      "y": 755,
      "w": 780,
      "h": 120,
-     "text": "Rounding down gives $(3, 2)$, $P = 17$: practical, but not the best.",
-     "size": 36,
+     "text": "Rounding down gives $(3, 2)$, $P = 17$: practical, not best.",
+     "size": 38,
      "colour": "#0f172a",
      "step": 2,
      "id": "wh-best-6"
@@ -2840,7 +2840,7 @@
      "id": "wh-best-53"
     }
    ],
-   "built": "bsg95s"
+   "built": "1mheyn5"
   },
   {
    "id": "wh-method",

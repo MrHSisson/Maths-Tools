@@ -95,6 +95,11 @@ const left = (text: string, y = 250, h = 560, size = 42, more: Record<string, un
 // ── the slides ───────────────────────────────────────────────────────────────
 const slides: Slide[] = [
   S.title(`${P}-title`, "Why rounding fails", "Whole numbers and the simplex answer"),
+  S.objective(`${P}-objective`, "Explain why the simplex answer may not be a plan, and find the best whole-number one.", [
+    "See why rounding to the nearest is not safe",
+    "Use the simplex answer as an upper bound",
+    "Test the whole-number points around it and pick the best",
+  ]),
 
   slide(`${P}-problem`, "The simplex answer", [
     ...titleEls("The simplex answer", "A stall makes tables ($x$) and chairs ($y$)"),
@@ -105,11 +110,6 @@ const slides: Slide[] = [
     ...graph({ optimum: 1 }),
   ], "The one worked problem for the whole deck. Whole numbers only: the optimum is a corner with fractions in it."),
 
-  S.objective(`${P}-objective`, "Explain why the simplex answer may not be a plan, and find the best whole-number one.", [
-    "See why rounding to the nearest is not safe",
-    "Use the simplex answer as an upper bound",
-    "Test the whole-number points around it and pick the best",
-  ]),
 
   slide(`${P}-round`, "Can we just round?", [
     ...titleEls("Can we just round?", "Round to the nearest whole number"),
@@ -124,9 +124,9 @@ const slides: Slide[] = [
 
   slide(`${P}-bound`, "An upper bound", [
     ...titleEls("An upper bound", "No whole-number plan can beat the simplex answer"),
-    left("A whole-number plan is also a plan for the linear programme, so its $P$ cannot be more than the simplex's.", 250, 190, 40),
+    left("A whole-number plan is also a plan for the programme, so its $P$ cannot beat the simplex's.", 250, 190, 40),
     ml(60, 470, 780, 100, "P \\le \\tfrac{41}{2}", 56, { step: 1 }),
-    left("The coefficients are whole numbers, so $P$ is a whole number for a whole-number plan.", 600, 150, 38, { step: 2 }),
+    left("The coefficients are whole numbers, so its $P$ is a whole number too.", 600, 150, 38, { step: 2 }),
     ml(60, 790, 780, 90, "\\text{So } P \\le 20", 56, { step: 3 }),
     ...graph({ optimum: 0 }),
     seg(2.2, 3.475, 5.0, 1.375, ORANGE, 6, 1),
@@ -154,9 +154,9 @@ const slides: Slide[] = [
   slide(`${P}-best`, "The best practical plan", [
     ...titleEls("The best practical plan", "Nothing above $P = 20$ is a whole-number point"),
     ml(60, 245, 780, 170, "\\begin{array}{l}P = \\tfrac{41}{2} \\text{ at the optimum}\\\\[1.2ex]P \\le 20 \\text{ for a whole-number plan}\\end{array}", 46),
-    t(60, 435, 780, 150, "$(4, 2)$ has $P = 20$. It reaches the bound, so no practical plan can do better.", 36, { bold: true, step: 1 }),
-    t(60, 600, 780, 140, "The orange sliver is every point with $P > 20$. It holds no whole-number point.", 36, { colour: ORANGE, step: 1 }),
-    t(60, 755, 780, 120, "Rounding down gives $(3, 2)$, $P = 17$: practical, but not the best.", 36, { step: 2 }),
+    t(60, 435, 780, 150, "$(4, 2)$ has $P = 20$: it reaches the bound, so it is the best.", 38, { bold: true, step: 1 }),
+    t(60, 600, 780, 140, "The orange sliver ($P > 20$) holds no whole-number point.", 38, { colour: ORANGE, step: 1 }),
+    t(60, 755, 780, 120, "Rounding down gives $(3, 2)$, $P = 17$: practical, not best.", 38, { step: 2 }),
     ...graph({ points: true, optimum: 0 }),
     // the part of the region with P > 20: a thin sliver at the corner, and no whole-number point in it
     { ...(region([[4, 2], [3.5, 2.5], [3.2, 2.6]], "#fb923c") as object), step: 1 },

@@ -13,6 +13,7 @@ import { useLayoutMode } from "../../shared/layoutMode";
 const TOOL = "/lp-simplex";
 const DECK = "/decks/lp-simplex-process";
 const DECK_ORIGIN = "/decks/lp-simplex-not-origin";
+const DECK_WHOLE = "/decks/lp-simplex-whole";
 const href = (tool: string, level: number, opts: Record<string, string> = {}): string =>
   `${TOOL}?tool=${tool}&level=${level}${Object.entries(opts).map(([k, v]) => `&o_${k}=${v}`).join("")}`;
 
@@ -82,7 +83,7 @@ const STAGES: Stage[] = [
       { label: "Is it practical?", sub: "Level 2", href: href("practical", 2) },
       { label: "Is it practical?", sub: "Level 3: rounding to the nearest breaks a constraint", href: href("practical", 3) },
     ],
-    plannedDeck: { title: "Why rounding fails", blurb: "The graph with the whole-number points near the optimum: the bound, the points that fit, and why rounding to the nearest can break a constraint" },
+    deck: DECK_WHOLE, deckTitle: "The deck: why rounding fails", deckBlurb: "Why the simplex answer may not be a plan: the bound, the whole-number points around the optimum, and the best practical plan",
     towards: "This closes the loop between the algorithm and the situation it came from; the last stage widens which problems the algorithm can be started on.",
   },
   {
