@@ -3,7 +3,7 @@ import { makeNode, type ProjectPlan } from "../../api/_projectPlan";
 
 const hubs = new Set(CATEGORIES.flatMap(category => category.tools.flatMap(tool => tool.hub ? [tool.hub] : [])));
 
-export const toolRoutes = CATEGORIES.flatMap(category => category.tools);
+const toolRoutes = CATEGORIES.flatMap(category => category.tools);
 export const contextualTools = toolRoutes.filter(tool => !hubs.has(tool.id));
 export const routesById = new Map(toolRoutes.map(tool => [tool.id, tool.path]));
 
