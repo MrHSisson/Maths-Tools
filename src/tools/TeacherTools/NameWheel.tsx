@@ -41,7 +41,7 @@ interface Entry { name: string; row: number; pos: number }
 
 const newId = () => Math.random().toString(36).slice(2, 9);
 const emptyWheel = (name: string): Wheel => ({ id: newId(), name, rows: [{ name: "", count: 1 }], winners: [], palette: "bright", style: "classic" });
-const clampCount = (v: string | number) => { const n = parseInt(String(v), 10); return Number.isNaN(n) || n < 1 ? 1 : Math.min(MAX_ENTRIES, n); };
+const clampCount = (v: string | number) => { const n = parseInt(String(v), 10); return Number.isNaN(n) ? 1 : Math.max(0, Math.min(MAX_ENTRIES, n)); };   // 0 keeps a name on the list but off the wheel
 const cleanRows = (rows: unknown): Row[] => {
   const r = Array.isArray(rows) ? rows.map((x: Row) => ({ name: String(x?.name ?? ""), count: clampCount(x?.count ?? 1) })) : [];
   return r.length ? r : [{ name: "", count: 1 }];
@@ -70,7 +70,7 @@ function load(): Store {
 
 /** Each name's entries are spread evenly round the wheel instead of sitting in one block. */
 function buildEntries(rows: Row[]): Entry[] {
-  const valid = rows.map((r, i) => ({ r, i })).filter(x => x.r.name.trim());
+  const valid = rows.map((r, i) => ({ r, i })).filter(x => x.r.name.trim() && x.r.count > 0);
   const m = valid.length, list: Entry[] = [];
   valid.forEach((x, k) => {
     const base = (k + 0.5) / m;
@@ -160,7 +160,7 @@ export default function NameWheel() {
   const style = wheel.style, strip = style !== "classic";   // Carnival and Case are strips
   const palette = PALETTES[wheel.palette] ?? PALETTES.bright;
   const entries = useMemo(() => buildEntries(wheel.rows), [wheel.rows]);
-  const names = wheel.rows.filter(r => r.name.trim()).length;
+  const names = wheel.rows.filter(r => r.name.trim() && r.count > 0).length;   // names actually on the wheel
   const total = entries.length;
   const tiny = total > 100 && !strip;   // labels too small to read; the name at the pointer shows while it spins
   const canSpin = !spinning && names >= 2;
@@ -437,10 +437,10 @@ export default function NameWheel() {
                       onChange={e => edit(i, { name: e.target.value })}
                       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addRow(i + 1); } }}
                       className={field} />
-                    <input type="number" min={1} max={MAX_ENTRIES} value={r.count} aria-label={`Entries, row ${i + 1}`}
+                    <input type="number" min={0} max={MAX_ENTRIES} value={r.count} aria-label={`Entries, row ${i + 1}`}
                       onChange={e => { if (e.target.value !== "") edit(i, { count: clampCount(e.target.value) }); }}
                       className={`${field} text-center`} />
-                    <span className="text-right text-xs text-slate-500">{r.name.trim() && total ? `${Math.round((r.count / total) * 1000) / 10}%` : "–"}</span>
+                    <span className="text-right text-xs text-slate-500">{r.name.trim() && r.count > 0 && total ? `${Math.round((r.count / total) * 1000) / 10}%` : "–"}</span>
                     <button type="button" onClick={() => removeRow(i)} aria-label={`Remove row ${i + 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X size={16} /></button>
                   </div>
                 ))}
@@ -450,7 +450,7 @@ export default function NameWheel() {
               <details className="mt-3 rounded-xl border border-slate-200">
                 <summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-slate-700">Paste a list</summary>
                 <div className="px-3 pb-3">
-                  <p className="mb-2 text-sm text-slate-500">One name per line. For extra entries add a comma and a number, like “Harry, 10”.</p>
+                  <p className="mb-2 text-sm text-slate-500">One name per line. For extra entries add a comma and a number, like “Harry, 10”. Use 0 to keep a name on the list but off the wheel.</p>
                   <textarea value={bulk} onChange={e => setBulk(e.target.value)} spellCheck={false} placeholder={"Amira\nBen\nHarry, 10"} className={`${field} h-28 resize-y`} />
                   <button type="button" onClick={addBulk} className={`${secondary} mt-2`}>Add to table</button>
                 </div>
