@@ -23,8 +23,8 @@ describe("Book sheet", () => {
     expect(a.match(/<section class="page ans"/g)).toHaveLength(1);
     expect(both.match(/<section class="page/g)).toHaveLength(3);
     expect(q).toContain("Share ");
-    expect(q).not.toContain("£8</li>");
-    expect(a).toContain(">£8</li>");
+    expect(q).not.toContain(">£8<");
+    expect(a).toContain(">£8</span></li>");
     expect(a).not.toContain("Divide");
     expect(q.split('<section class="page">')[1]).toContain("Part &lt;b&gt;");
     expect(q.split('<section class="page">')[2]).toContain("Part &lt;c&gt;");
