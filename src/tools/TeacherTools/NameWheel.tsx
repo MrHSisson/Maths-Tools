@@ -534,8 +534,8 @@ export default function NameWheel() {
             <p className="text-sm text-slate-500">The wheel picked</p>
             <p id="winner-name" className="mb-6 mt-1 text-4xl font-semibold leading-tight text-slate-900 [overflow-wrap:anywhere]">{result.name}</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <button type="button" className={primary} onClick={() => { removeRow(result.row); closeDialog(); }}>
-                {result.count > 1 ? `Remove all ${result.count} entries` : "Remove from wheel"}
+              <button type="button" className={primary} onClick={() => { edit(result.row, { count: 0 }); closeDialog(); }}>
+                {result.count > 1 ? `Take off the wheel (set ${result.count} entries to 0)` : "Take off the wheel (set to 0)"}
               </button>
               <button type="button" autoFocus className={secondary} onClick={closeDialog}>Keep on wheel</button>
             </div>
