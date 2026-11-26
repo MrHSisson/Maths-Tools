@@ -5,10 +5,12 @@
 //   npm run deck -- review ratio-sharing                         contact sheets of every slide: LOOK at them before showing the deck
 import { Q, S, assertCentred, assertFreshNumbers, textEl } from "/src/decks/builder";
 import { pinnedSheetSlide } from "/src/decks/layouts";
+import { bookSheetSlide, type BookSheet } from "/src/decks/bookSheet";
 import { barStages } from "/src/shared/barModel";
 import { gcdAll } from "/src/shared";
 import { buildSharing, buildKnown, buildDifference, CONTEXTS } from "/src/tools/Proportion/ratioSharing";
 import { ALL_SETS, WHITEBOARDS, type SetQuestion } from "/specs/decks/ratio-sharing-sets";
+import { BOOK_A, BOOK_TEXT, BOOK_D_IDS } from "/specs/decks/ratio-sharing-book";
 import type { BarRow } from "/src/shared/barModel";
 import type { CuratedQuestion, DeckElement, Slide } from "/src/decks/types";
 
@@ -158,19 +160,37 @@ assertFreshNumbers({
   exit: exitItems,
 });
 
-const sheetB = sheetSlide(`${P}-sheet-b`, "Worksheet: a known share", ALL_SETS.B, 1,
-  "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish: a secure class can start at question 3. Questions 7 to 9 have three parts.",
-  44);
-const sheetC = sheetSlide(`${P}-sheet-c`, "Worksheet: a difference", ALL_SETS.C, 2,
-  "Printed sheet of nine, easiest first, starting at a : b. Not everyone will finish. Questions 2, 5, 6, 8 and 9 ask for the total: dividing the difference by all the parts and multiplying back gives the difference itself. Questions 7 to 9 have three parts.",
-  44);
-const sheetD = sheetSlide(`${P}-sheet-d`, "Worksheet: mixed", ALL_SETS.D, 3,
-  "Fifteen mixed questions: five sharing a total, five a known share, five a difference, never labelled. Pupils first decide which kind it is. Not everyone will finish; the last five have three parts.",
-  40, 15, 3);
+// ---------- the book sheet: one textbook-style worksheet of four questions with lettered parts, two A4 pages, pinned on the last cue slide ----------
+// The wording is hand-written and varied (specs/decks/ratio-sharing-book.ts); each part still has to carry the set's own numbers and answer.
+const numberTokens = (q: SetQuestion): string[] => [...q.ratio.map(String), String(amountOf(q)).replace(/^(\d+\.\d)$/, "$10")];
+const carries = (id: string, text: string, tokens: string[]) => { for (const t of tokens) must(new RegExp(`(^|[^\\d.])${t.replace(".", "\\.")}([^\\d]|$)`).test(text.replace(/,/g, "")), `${id}: the book wording does not carry ${t}: ${text}`); };
+const bookFrom = (qs: SetQuestion[]) => qs.map((q) => { must(!!BOOK_TEXT[q.id], `${q.id}: no book wording`); carries(q.id, BOOK_TEXT[q.id], numberTokens(q)); return { text: BOOK_TEXT[q.id], answer: answerForSheet(q.answer).answer }; });
+must(BOOK_A.length === ALL_SETS.A.length, "book part A has a wording for every set A question");
+const bookA = BOOK_A.map((b, i) => {
+  const q = ALL_SETS.A[i];
+  must(b.answer === q.answer, `${q.id}: the book answer ${b.answer} is not ${q.answer}`);
+  carries(q.id, b.text, numberTokens(q));
+  return b;
+});
+const bookD = BOOK_D_IDS.map((id) => ALL_SETS.D.find((q) => q.id === id)!);
+must(bookD.every(Boolean) && bookD.length === 10, "ten mixed questions");
+const book: BookSheet = {
+  title: "Sharing in a Ratio",
+  note: "Work in your book. Draw the boxes if they help, and check that the shares add to the total.",
+  parts: [
+    { id: "a", title: "Sharing a total", tip: "Share each amount in the ratio given.", items: bookA },
+    { id: "b", title: "A known share", tip: "Use the share you are given to answer each part.", items: bookFrom(ALL_SETS.B) },
+    { id: "c", title: "A difference", tip: "Use the difference you are given to answer each part.", items: bookFrom(ALL_SETS.C) },
+    { id: "d", title: "Mixed", tip: "Decide what each question is asking, then solve it.", items: bookFrom(bookD) },
+  ],
+};
+const sheetB = bookSheetSlide(`${P}-sheet-b`, { ...book, show: ["b"] }, T, { brief: "Question 2 of the book sheet: nine questions on a known share, easiest first. The slide is the answer key, on a click. The whole sheet (four questions, two A4 pages) prints from the last cue slide, File > Worksheets." });
+const sheetC = bookSheetSlide(`${P}-sheet-c`, { ...book, show: ["c"] }, T, { brief: "Question 3 of the book sheet: nine questions on a difference, easiest first. Questions 2, 5, 6, 8 and 9 ask for the total. The slide is the answer key, on a click." });
+const sheetD = bookSheetSlide(`${P}-sheet-d`, { ...book, show: ["d"] }, T, { pinned: true, brief: "Question 4 of the book sheet: ten mixed parts, never labelled; pupils decide which kind each is. This slide holds the print: File > Worksheets prints all four questions on two A4 pages, made to be printed two to a sheet, with an answer page." });
 
 export default () => ({
   id: ID, title: "Sharing in a Ratio", strand: "Ratio & Proportion", tool: T, pitch: "middle", questionVersion: 2,
-  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions and the tool's live generator, then an independent set: a 3 × 3 board grid for sharing a total, printed sheets for the known share, the difference and a mixed set of fifteen.",
+  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions and the tool's live generator, then an independent set: a 3 × 3 board grid for sharing a total and one printed book sheet (two A4 pages, four questions with lettered parts: sharing a total, a known share, a difference and a mixed ten), with its answers on a click at the end of each part.",
   slides: [
     S.title(`${P}-title`, "Sharing in a Ratio", "Fill in the boxes. Check."),
     S.objective(`${P}-objective`, "Share an amount in a ratio of two or three parts, and use a known share or a difference to find the shares and the total.",

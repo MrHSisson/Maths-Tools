@@ -6,6 +6,7 @@ import type { BarModelData } from "../shared/barModel";
 import type { TreeNode, TreeReveal } from "../shared/factorTree";
 import type { AnyQuestion } from "../shared";
 import type { TextbookSheet } from "./textbookSheet";
+import type { BookSheet } from "./bookSheet";
 import type { VennSheet } from "./vennSheet";
 import type { PictureSheet } from "./pictureSheet";
 
@@ -141,6 +142,8 @@ export type DeckElement = Box & (
       vennSheet?: VennSheet;
       /** A hand-written sheet of authored picture questions (four to an A4 page, at most eight), kept as images: shown on the slide and printed with a worked answer copy. Never regenerated. */
       pictureSheet?: PictureSheet;
+      /** A hand-written worded sheet in lettered parts (numbered questions running on, a method line each; two A4 pages, made to be printed scaled to A5): the slide shows the parts it names, answers on a click. Never regenerated. */
+      bookSheet?: BookSheet;
       /** `key`: the slide shows the answers (hidden until asked) instead of the questions: the cue to hand out the sheet. */
       view?: "key" }
   /** One of a tool's Depth items (its `__test.depthItems`), drawn by the shared Depth slide (`DepthSlide`, the same design the tool page uses): question, then answer. */

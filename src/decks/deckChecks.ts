@@ -1,6 +1,7 @@
 import { classifyQuestion, isCuratedQuestion } from "../../api/_questions";
 import { rectilinearQuestion } from "./rectilinear";
 import { textbookProblems } from "./textbookSheet";
+import { bookSheetProblems } from "./bookSheet";
 import { vennSheetProblems } from "./vennSheet";
 import { pictureSheetProblems } from "./pictureSheet";
 // What must be true of a deck before Harry sees it: the maths renders, authored answers match their working, practice
@@ -157,6 +158,11 @@ export async function checkDeckContent(deck: DeckDef): Promise<DeckReport> {
       if (el.kind === "worksheet" && el.textbook) {
         for (const p of textbookProblems(el.textbook)) problems.push(`${where}: ${p}`);
         for (const b of el.textbook.blocks) for (const m of [...b.parts, ...b.answers]) renders(where, m);
+        continue;
+      }
+      if (el.kind === "worksheet" && el.bookSheet) {
+        for (const p of bookSheetProblems(el.bookSheet)) problems.push(`${where}: ${p}`);
+        for (const part of el.bookSheet.parts) for (const t of [part.tip ?? "", ...part.items.flatMap((it) => [it.text, it.answer])]) t.split("$").forEach((seg, i) => { if (i % 2) renders(where, seg); });
         continue;
       }
       if (el.kind === "worksheet" && el.vennSheet) {
