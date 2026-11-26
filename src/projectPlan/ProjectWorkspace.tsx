@@ -60,15 +60,15 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
       style={docked ? { left: panelWidth } : undefined}
     >
       <div
-        className={docked ? "absolute top-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-300 print:!static print:!h-auto print:!transform-none print:!overflow-visible print:!shadow-none print:!ring-0" : undefined}
-        style={docked ? { left: FRAME_GUTTER, right: FRAME_GUTTER, height: `calc(100dvh * ${scale})` } : undefined}
+        className={docked ? "absolute overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-300 print:!static print:!h-auto print:!transform-none print:!overflow-visible print:!shadow-none print:!ring-0" : undefined}
+        style={docked ? { inset: FRAME_GUTTER } : undefined}
       >
         <div
           ref={site}
           data-project-workspace={docked ? "docked" : "full"}
           onScroll={docked ? event => { scroll.current = event.currentTarget.scrollTop; } : undefined}
-          className={docked ? "absolute left-0 top-0 h-[100dvh] origin-top-left overflow-x-hidden overflow-y-auto print:!static print:!h-auto print:!w-auto print:!transform-none print:!overflow-visible" : undefined}
-          style={docked ? { width, transform: `scale(${scale})` } : undefined}
+          className={docked ? "absolute left-0 top-0 origin-top-left overflow-x-hidden overflow-y-auto print:!static print:!h-auto print:!w-auto print:!transform-none print:!overflow-visible" : undefined}
+          style={docked ? { width, height: `calc((100dvh - ${2 * FRAME_GUTTER}px) * ${1 / scale})`, transform: `scale(${scale})` } : undefined}
         >
           {children}
         </div>

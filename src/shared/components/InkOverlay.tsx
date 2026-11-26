@@ -172,6 +172,7 @@ export function InkOverlay() {
   const dragRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [vp, setVp] = useState(viewport);
+  const surfaceRef = useRef<SVGSVGElement>(null);
   const hintTimer = useRef<number | undefined>(undefined);
 
   const showHint = useCallback((s: string) => {
@@ -190,15 +191,23 @@ export function InkOverlay() {
     m();
     const ro = new ResizeObserver(m);
     ro.observe(el);
-    // the scrollbar can appear or vanish without a window resize (the page grows or shrinks), so watch the root element too
-    const onResize = () => setVp((v) => { const n = viewport(); return n.w === v.w && n.h === v.h ? v : n; });
-    const rootRo = new ResizeObserver(onResize);
-    rootRo.observe(document.documentElement);
-    window.addEventListener("resize", onResize);
-    return () => { ro.disconnect(); rootRo.disconnect(); window.removeEventListener("resize", onResize); };
+    return () => ro.disconnect();
   }, [open, dock.v]);
 
-  const surfaceRef = useRef<SVGSVGElement>(null);
+  useLayoutEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    // The dock changes the ink surface even when the browser window stays the same size.
+    const measure = () => {
+      const w = surface.clientWidth, h = surface.clientHeight;
+      if (w && h) setVp(current => current.w === w && current.h === h ? current : { w, h });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(surface);
+    return () => observer.disconnect();
+  }, []);
+
   // Keep stroke storage and the hotbar in the tool's coordinates when the project panel scales the page.
   const surfaceCoordinates = () => {
     const surface = surfaceRef.current;
@@ -236,7 +245,7 @@ export function InkOverlay() {
       // use the release position itself when we have it (the final move may not have been processed yet)
       const last = grab.current;
       const { x, y } = surfaceCoordinates()(e.clientX, e.clientY);
-      const v = viewport();
+      const v = vp;
       const next = dockFromDrop({ x, y }, { x: x - last.dx, y: y - last.dy }, v.w, v.h, dock.v ? undefined : size);
       setDock(next); saveDock(next);
     }
@@ -245,7 +254,7 @@ export function InkOverlay() {
     downAt.current = null;
     setDrag(null);
   };
-  const resetDock = () => { const d = defaultDock(viewport().w); setDock(d); saveDock(null); };
+  const resetDock = () => { const d = defaultDock(vp.w); setDock(d); saveDock(null); };
 
   // A deck clears the board when the slide changes: it asks with this event (no undo; the history goes too)
   useEffect(() => {
