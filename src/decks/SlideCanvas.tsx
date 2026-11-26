@@ -20,7 +20,7 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { blockCols, partLetter } from "./textbookSheet";
-import { firstNumber, partLetterOf, shownParts } from "./bookSheet";
+import { itemLetter, questionNumber, shownParts } from "./bookSheet";
 import { vennSheetCells } from "./vennSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
@@ -557,11 +557,11 @@ function BookSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet
       <div style={{ flex: 1, minHeight: 0 }}>
         {parts.map(({ p, i }) => (
           <div key={p.id} style={{ marginBottom: size * 0.4 }}>
-            <div style={{ fontSize: size * 0.8, fontWeight: 700, color: "#1e3a8a", marginBottom: size * 0.2 }}>{partLetterOf(i)} · {p.title} <span style={{ fontWeight: 400, color: "#94a3b8", fontSize: size * 0.6 }}>answers</span></div>
+            <div style={{ fontSize: size * 0.8, fontWeight: 700, color: "#1e3a8a", marginBottom: size * 0.2 }}>Question {questionNumber(i)} · {p.title} <span style={{ fontWeight: 400, color: "#94a3b8", fontSize: size * 0.6 }}>answers</span></div>
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoFlow: "column", gridTemplateRows: `repeat(${Math.ceil(p.items.length / cols)}, auto)`, columnGap: 40, rowGap: size * 0.14 }}>
               {p.items.map((it, k) => (
                 <div key={k} style={{ display: "flex", alignItems: "baseline", gap: size * 0.5, fontSize: size, borderBottom: "1px solid #e2e8f0", visibility: visible ? "visible" : "hidden" }}>
-                  <b style={{ minWidth: size * 1.4, color: "#94a3b8", fontSize: size * 0.7 }}>{firstNumber(bs, i) + k}</b>
+                  <b style={{ minWidth: size * 1.4, color: "#94a3b8", fontSize: size * 0.7 }}>{itemLetter(k)}</b>
                   <span style={{ color: "#1e3a8a", fontWeight: 600 }}><InlineMath text={it.answer} /></span>
                 </div>
               ))}

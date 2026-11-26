@@ -10,6 +10,7 @@ import { barStages } from "/src/shared/barModel";
 import { gcdAll } from "/src/shared";
 import { buildSharing, buildKnown, buildDifference, CONTEXTS } from "/src/tools/Proportion/ratioSharing";
 import { ALL_SETS, WHITEBOARDS, type SetQuestion } from "/specs/decks/ratio-sharing-sets";
+import { BOOK_A, BOOK_TEXT, BOOK_D_IDS } from "/specs/decks/ratio-sharing-book";
 import type { BarRow } from "/src/shared/barModel";
 import type { CuratedQuestion, DeckElement, Slide } from "/src/decks/types";
 
@@ -159,39 +160,37 @@ assertFreshNumbers({
   exit: exitItems,
 });
 
-// ---------- the book sheet: one textbook-style worksheet in four lettered parts (A to D), two A4 pages, pinned on the last cue slide ----------
-/** A worded question as one paragraph: its sentences joined with full stops. */
-const sentence = (w: { lines: string[] }) => w.lines.map((l, i) => (i < w.lines.length - 1 && !/[.?]$/.test(l) ? `${l}.` : l)).join(" ");
-/** Part A has no names in the grid, so the book sheet gives each question two or three people, and checks the shares itself. */
-const NAMES_A = [["Ana", "Ben"], ["Cleo", "Dev"], ["Eli", "Fay"], ["Gus", "Hana"], ["Ian", "Jo"], ["Kai", "Lena"], ["Max", "Nia"], ["Omar", "Pia", "Quin"], ["Raj", "Sia", "Tom"]];
-const bookA = ALL_SETS.A.map((q, i) => {
-  const qn = { ...q, names: NAMES_A[i], ask: "both" as const };
-  const { g, parts } = partsOf(qn);
-  const C = CONTEXTS[q.ctx ?? "money"];
-  const w = buildSharing({ names: qn.names, parts, partValue: pvOf(qn), ctx: q.ctx, display: g > 1 ? q.ratio : undefined, bar: false, ask: "both" });
-  const shares = parts.map((p) => C.short(p * pvOf(qn)));
-  const answer = shares.length === 2 ? shares.join(" and ") : `${shares.slice(0, -1).join(", ")} and ${shares[shares.length - 1]}`;
-  must(answer === q.answer, `${q.id}: the book answer ${answer} is not ${q.answer}`);
-  return { text: sentence(w), answer };
+// ---------- the book sheet: one textbook-style worksheet of four questions with lettered parts, two A4 pages, pinned on the last cue slide ----------
+// The wording is hand-written and varied (specs/decks/ratio-sharing-book.ts); each part still has to carry the set's own numbers and answer.
+const numberTokens = (q: SetQuestion): string[] => [...q.ratio.map(String), String(amountOf(q)).replace(/^(\d+\.\d)$/, "$10")];
+const carries = (id: string, text: string, tokens: string[]) => { for (const t of tokens) must(new RegExp(`(^|[^\\d.])${t.replace(".", "\\.")}([^\\d]|$)`).test(text.replace(/,/g, "")), `${id}: the book wording does not carry ${t}: ${text}`); };
+const bookFrom = (qs: SetQuestion[]) => qs.map((q) => { must(!!BOOK_TEXT[q.id], `${q.id}: no book wording`); carries(q.id, BOOK_TEXT[q.id], numberTokens(q)); return { text: BOOK_TEXT[q.id], answer: answerForSheet(q.answer).answer }; });
+must(BOOK_A.length === ALL_SETS.A.length, "book part A has a wording for every set A question");
+const bookA = BOOK_A.map((b, i) => {
+  const q = ALL_SETS.A[i];
+  must(b.answer === q.answer, `${q.id}: the book answer ${b.answer} is not ${q.answer}`);
+  carries(q.id, b.text, numberTokens(q));
+  return b;
 });
-const bookItems = (qs: SetQuestion[]) => qs.map((q) => { const w = worded(q); return { text: sentence(w), answer: answerForSheet(w.answer ?? "").answer }; });
+const bookD = BOOK_D_IDS.map((id) => ALL_SETS.D.find((q) => q.id === id)!);
+must(bookD.every(Boolean) && bookD.length === 10, "ten mixed questions");
 const book: BookSheet = {
   title: "Sharing in a Ratio",
-  note: "Work in your book. Draw the boxes if they help. Check that the shares add to the total.",
+  note: "Work in your book. Draw the boxes if they help, and check that the shares add to the total.",
   parts: [
-    { id: "a", title: "Sharing a total", items: bookA },
-    { id: "b", title: "A known share", items: bookItems(ALL_SETS.B) },
-    { id: "c", title: "A difference", items: bookItems(ALL_SETS.C) },
-    { id: "d", title: "Mixed", items: bookItems(ALL_SETS.D) },
+    { id: "a", title: "Sharing a total", tip: "Share each amount in the ratio given.", items: bookA },
+    { id: "b", title: "A known share", tip: "Use the share you are given to answer each part.", items: bookFrom(ALL_SETS.B) },
+    { id: "c", title: "A difference", tip: "Use the difference you are given to answer each part.", items: bookFrom(ALL_SETS.C) },
+    { id: "d", title: "Mixed", tip: "Decide what each question is asking, then solve it.", items: bookFrom(bookD) },
   ],
 };
-const sheetB = bookSheetSlide(`${P}-sheet-b`, { ...book, show: ["b"] }, T, { brief: "Part B of the book sheet: nine questions on a known share, easiest first. The slide is the answer key, on a click. The whole sheet (parts A to D, two A4 pages) prints from the last cue slide, File > Worksheets." });
-const sheetC = bookSheetSlide(`${P}-sheet-c`, { ...book, show: ["c"] }, T, { brief: "Part C of the book sheet: nine questions on a difference, easiest first. Questions 2, 5, 6, 8 and 9 ask for the total. The slide is the answer key, on a click." });
-const sheetD = bookSheetSlide(`${P}-sheet-d`, { ...book, show: ["d"] }, T, { pinned: true, brief: "Part D of the book sheet: fifteen mixed questions, never labelled; pupils decide which kind it is. This slide holds the print: File > Worksheets prints all four parts (A to D) on two A4 pages, made to be printed two to a sheet, with an answer page." });
+const sheetB = bookSheetSlide(`${P}-sheet-b`, { ...book, show: ["b"] }, T, { brief: "Question 2 of the book sheet: nine questions on a known share, easiest first. The slide is the answer key, on a click. The whole sheet (four questions, two A4 pages) prints from the last cue slide, File > Worksheets." });
+const sheetC = bookSheetSlide(`${P}-sheet-c`, { ...book, show: ["c"] }, T, { brief: "Question 3 of the book sheet: nine questions on a difference, easiest first. Questions 2, 5, 6, 8 and 9 ask for the total. The slide is the answer key, on a click." });
+const sheetD = bookSheetSlide(`${P}-sheet-d`, { ...book, show: ["d"] }, T, { pinned: true, brief: "Question 4 of the book sheet: ten mixed parts, never labelled; pupils decide which kind each is. This slide holds the print: File > Worksheets prints all four questions on two A4 pages, made to be printed two to a sheet, with an answer page." });
 
 export default () => ({
   id: ID, title: "Sharing in a Ratio", strand: "Ratio & Proportion", tool: T, pitch: "middle", questionVersion: 2,
-  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions and the tool's live generator, then an independent set: a 3 × 3 board grid for sharing a total and one printed book sheet (two A4 pages, four lettered parts) that carries the same questions plus the known share, the difference and a mixed set of fifteen, with its answers on a click at the end of each part.",
+  summary: "A recap lesson, built around the mistakes: sharing a total, a known share and a given difference in a ratio of two or three parts. Every section runs a Depth card (who is right?), a worked bar model that fills in click by click, five authored whiteboard questions and the tool's live generator, then an independent set: a 3 × 3 board grid for sharing a total and one printed book sheet (two A4 pages, four questions with lettered parts: sharing a total, a known share, a difference and a mixed ten), with its answers on a click at the end of each part.",
   slides: [
     S.title(`${P}-title`, "Sharing in a Ratio", "Fill in the boxes. Check."),
     S.objective(`${P}-objective`, "Share an amount in a ratio of two or three parts, and use a known share or a difference to find the shares and the total.",

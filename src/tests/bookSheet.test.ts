@@ -1,6 +1,6 @@
 // The worded book sheet pinned to a lesson (src/decks/bookSheet.ts): the Sharing in a Ratio worksheet, four lettered parts on two A4 pages.
 import { describe, expect, it } from "vitest";
-import { bookHtml, bookSheetHtml, bookSheetProblems, bookSheetSlide, firstNumber, MAX_BOOK_QUESTIONS, shownParts, type BookSheet } from "../decks/bookSheet";
+import { bookHtml, bookSheetHtml, bookSheetProblems, bookSheetSlide, itemLetter, MAX_BOOK_QUESTIONS, questionNumber, shownParts, type BookSheet } from "../decks/bookSheet";
 import { buildDeck } from "../decks/builder";
 import { checkDeckContent } from "../decks/deckChecks";
 import { pinnedSheets } from "../decks/worksheets";
@@ -9,10 +9,13 @@ const part = (id: string, n: number) => ({ id, title: `Part <${id}>`, tip: "Divi
 const sheet = (): BookSheet => ({ title: "Ratio <sheet>", note: "Work in your book.", parts: [part("a", 9), part("b", 9), part("c", 9), part("d", 15)] });
 
 describe("Book sheet", () => {
-  it("numbers questions straight on from one part to the next", () => {
-    const s = sheet();
-    expect([0, 1, 2, 3].map((i) => firstNumber(s, i))).toEqual([1, 10, 19, 28]);
-    expect(bookSheetHtml(s, "questions")).toContain('<ol start="28">');
+  it("numbers each part as a question and its items as (a), (b), (c) ...", () => {
+    expect([0, 1, 3].map(questionNumber)).toEqual([1, 2, 4]);
+    expect([0, 1, 8, 26].map(itemLetter)).toEqual(["(a)", "(b)", "(i)", "(aa)"]);
+    const h = bookSheetHtml(sheet(), "questions");
+    expect(h).toContain('data-n="(a)"');
+    expect(h).toContain('data-n="(o)"');
+    expect(h).not.toContain('data-n="1"');
   });
   it("prints questions (the first half of the parts on page 1, the rest on page 2) and a separate answer page", () => {
     const q = bookSheetHtml(sheet(), "questions"), a = bookSheetHtml(sheet(), "answers"), both = bookSheetHtml(sheet(), "both");
@@ -21,7 +24,7 @@ describe("Book sheet", () => {
     expect(both.match(/<section class="page/g)).toHaveLength(3);
     expect(q).toContain("Share ");
     expect(q).not.toContain("£8</li>");
-    expect(a).toContain("£8</li>");
+    expect(a).toContain(">£8</li>");
     expect(a).not.toContain("Divide");
     expect(q.split('<section class="page">')[1]).toContain("Part &lt;b&gt;");
     expect(q.split('<section class="page">')[2]).toContain("Part &lt;c&gt;");
@@ -32,6 +35,7 @@ describe("Book sheet", () => {
     expect(h).toContain("Ratio &lt;sheet&gt;");
     expect(h).toContain("Part &lt;a&gt;");
     expect(bookHtml("a <b> $x < 2$")).toBe('a &lt;b&gt; <span class="m" data-latex="x &lt; 2"></span>');
+    expect(bookHtml("in $2 : 5$. Next")).toContain("</span>\u2060. Next");   // a full stop never wraps away from the ratio before it
   });
   it("checks the sheet: a size limit, ids, empty text, and a slide that names a part the sheet lacks", () => {
     expect(bookSheetProblems(sheet())).toEqual([]);
