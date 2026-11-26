@@ -1083,6 +1083,91 @@
    ]
   },
   {
+   "id": "critical-path-split",
+   "title": "Critical Path Analysis: split into skill tools",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-11-26 (design agreed; chunk 1 started)",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub."
+      },
+      {
+       "t": "table",
+       "head": [
+        "Tool",
+        "Tabs",
+        "Spec"
+       ],
+       "rows": [
+        [
+         "Activity Networks",
+         "Network from a table, Table from a network",
+         "DE1"
+        ],
+        [
+         "Times, Float and Critical Paths",
+         "Forward pass, Backward pass, Full analysis, Float and critical paths, Missing time",
+         "DE2, DE3"
+        ],
+        [
+         "Changes and Reasoning",
+         "Delays and changes, Explain and justify, Which to shorten, Limits of the model",
+         "DE4"
+        ],
+        [
+         "Cascade Charts and Resources (A-level)",
+         "Cascade chart, Resource histogram, Resource levelling, Worker allocation",
+         "DE5, DE6"
+        ]
+       ]
+      },
+      {
+       "t": "p",
+       "s": "Decided with Harry (2026-11-26): the shared generators and solver stay as they are; old `/critical-path?tool=...` links redirect to the right new tool and tab; exam questions are opened from the hub for now (a thin exam page over the existing chains), with a proper exam-paper tool as the eventual aim."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "ul",
+       "items": [
+        "2026-11-26: design agreed; current layout reviewed at laptop and phone size."
+       ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "1. Shared plumbing: the old-tab to new-home redirect table, hub pairings that can point at any tool, and a test that every old tab maps to a new home. 2. Times, Float and Critical Paths (the template for the others). 3. Activity Networks, then Changes and Reasoning, then Cascade Charts and Resources. 4. The exam page on the hub; retire the old tool."
+      }
+     ]
+    },
+    {
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`src/tools/Decision/CriticalPath.tsx`, `criticalPathGenerate.ts`, `decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "dashboard-checklists",
    "title": "The dashboard as checklists",
    "status": "paused",
@@ -4137,6 +4222,10 @@
   "critical-path": {
    "changes": [
     {
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: the plan to split it, and the map that keeps old links working"
+    },
+    {
      "date": "2026-11-25",
      "title": "Critical Path histogram: show what props up the fewest workers"
     },
@@ -4151,10 +4240,6 @@
     {
      "date": "2026-11-12",
      "title": "Resource levelling: Level 3 Question size"
-    },
-    {
-     "date": "2026-11-10",
-     "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
     }
    ]
   },
