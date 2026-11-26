@@ -560,7 +560,7 @@ export function CpaTool({ home }: { home?: CpaHome }) {
         purpose: home?.purpose ?? "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
-        printTemplates: true,
+        printTemplates: !home || home.subs.some((k) => k === "cascade" || k === "histogram"),   // blank histogram and Gantt grids: only where those charts are drawn
         questionSheet: { tabs: home ? CPA_SHEET_TABS.filter((k) => home.subs.includes(k)) : CPA_SHEET_TABS, build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {

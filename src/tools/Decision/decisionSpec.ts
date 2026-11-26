@@ -90,7 +90,7 @@ export const DECISION_CHAPTERS: DecisionChapter[] = [
     ],
   },
   {
-    id: "DE", name: "Critical path analysis", toolIds: ["critical-path", "cpa-times"],
+    id: "DE", name: "Critical path analysis", toolIds: ["critical-path", "cpa-networks", "cpa-times"],
     resources: [aqa("D2", "D2 Critical Path Analysis"), aqa("D2", "D2 Critical Path Analysis MS"), edx("D1", "D1 Critical Path Analysis")],
     statements: [
       st("DE1", "Construct, represent and interpret a precedence (activity) network using activity-on-node.", true, ["D2"], "supported", "The legacy papers' networks are drawn, so whether they are activity-on-arc or activity-on-node could not be read from the text. Check when converting a question."),
