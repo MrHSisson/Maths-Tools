@@ -12,7 +12,6 @@ import {
   type DecisionProblem,
   type SolveStep,
 } from "./index";
-import CpaTileArt from "./CpaTileArt";
 import type { CpaHome } from "./cpaHomes";
 import { generate, EXAM_CHAIN, CHART_SUBS } from "./cpaGenerate";
 import { generateInWorker } from "./cpaAsync";
@@ -584,7 +583,6 @@ export function CpaTool({ home }: { home: CpaHome }) {
         },
         subTools,
         chooser: exam ? {
-          art: (k: string) => <CpaTileArt k={k} />,
           filters: [],
           groups: [
             { title: "AS exam style questions", keys: ["exAsAny", "exBuild", "exClaim", "exChange", "exClock"] },

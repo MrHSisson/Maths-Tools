@@ -39,7 +39,7 @@ const topic = (area) => [area, "decision", "cross", "docs"];
 export const PATH_RULES = [
   [/^specs\/.*\.ts$/, ["decks"]],                      // deck build scripts
   [/^(docs\/|specs\/|.*\.md$|src\/generated\/|\.claude\/)/, ["docs"]],
-  [/^src\/shared\/decision\/(cpa|CpaTileArt|CpaTool|printCpa)|^src\/tools\/Decision\/Cpa/, topic("cpa")],
+  [/^src\/shared\/decision\/(cpa|CpaTool|printCpa)|^src\/tools\/Decision\/Cpa/, topic("cpa")],
   // the graph topics build on two flow files (graphBank uses the flow templates and geometry), so a change to those runs the graph tests too
   [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [...topic("flow"), "graphs"]],
   [/^src\/shared\/decision\/(flow|FlowTileArt|cutCurve)|^src\/tools\/Decision\/NetworkFlows/, topic("flow")],
@@ -59,7 +59,7 @@ export const PATH_RULES = [
 // Dimensional Analysis (mechanics) imports the dim files directly.
 const T = "src/tools/Decision/", CPAX = T + "CpaExam.tsx", CPAT = T + "CpaTimes.tsx", CPAN = T + "CpaNetworks.tsx", CPAC = T + "CpaChanges.tsx", CPAH = T + "CpaCharts.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx", POWER = "src/tools/FurtherMechanics/Power.tsx", ELASTIC = "src/tools/FurtherMechanics/Elastic.tsx";
 const TOPIC_TOOLS = [
-  [/^src\/shared\/decision\/(cpa|CpaTileArt|CpaTool|printCpa)/, [CPAT, CPAN, CPAC, CPAH, CPAX]],
+  [/^src\/shared\/decision\/(cpa|CpaTool|printCpa)/, [CPAT, CPAN, CPAC, CPAH, CPAX]],
   [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [FLOW, MST, TSP, ROUTE]],
   [/^src\/shared\/decision\/(flow|FlowTileArt|cutCurve)/, [FLOW]],
   [/^src\/shared\/decision\/mst/, [MST]],
