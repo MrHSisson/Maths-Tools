@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const src = readFileSync("src/tools/Decision/CriticalPath.tsx", "utf8");
+const src = readFileSync("src/shared/decision/CpaTool.tsx", "utf8");
 const optionBlock = (key: string): string => {
   const a = src.indexOf(`key: "${key}",`);
   expect(a, `option ${key} exists`).toBeGreaterThan(-1);

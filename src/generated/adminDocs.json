@@ -921,7 +921,7 @@
    "blocks": [
     {
      "t": "p",
-     "s": "Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3. Links: `src/tools/Decision/CriticalPath.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`."
+     "s": "Done 2026-11-10. A **Backward pass** sub-tool (AS, skills practice, three levels like Forward pass): every earliest start is given with the minimum time at End, and the student fills in the latest finishes, working back from End. Paired with DE2 on the Decision Maths hub; Full analysis moved to DE3. Links: `src/shared/decision/CpaTool.tsx`, `src/shared/decision/cpa.ts` (`cpaBackward`), `src/shared/decision/cpaSolve.ts`, `src/tools/Decision/decisionSpec.ts`."
     }
    ]
   }
@@ -1083,11 +1083,11 @@
    ]
   },
   {
-   "id": "dashboard-checklists",
-   "title": "The dashboard as checklists",
+   "id": "critical-path-split",
+   "title": "Critical Path Analysis: split into skill tools",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-26",
+   "updated": "2026-11-26 (chunk 6: exam page built, old tool retired; merged; rounding-up list below)",
    "sections": [
     {
      "title": "Intention",
@@ -1095,112 +1095,41 @@
      "blocks": [
       {
        "t": "p",
-       "s": "The Tools dashboard (`/admin`) should answer one question at a glance: **what is done, and what is left?** Today it shows facts generated from the code, one Review dropdown per tool, and some views over the docs, and its use is unclear (Harry, 2026-11-22). It becomes checklists: every tool, deck and pathway has a list of things that must be true before it is finished, a tick for each, and a progress bar made from the ticks."
-      },
-      {
-       "t": "p",
-       "s": "Decided with Harry (2026-11-22):"
-      },
-      {
-       "t": "ul",
-       "items": [
-        "**Scope:** tools, decks and pathways all become checklists.",
-        "**Only Harry or Claude tick.** Nothing ticks itself from the code. A tick is a deliberate statement that the thing is done, made by Harry on the dashboard or by Claude through the notes API at the end of a session, and kept in the shared notes. (An earlier version of this plan had the code tick what it could prove; Harry decided against it.)",
-        "**The code's facts stay, as evidence only.** Beside each item the dashboard shows what the code finds (for example \"a brief found: specs/linear-programming-simplex.md\", \"tests found\"), so a person ticking can see it. If a tick and the evidence disagree (ticked \"covered by tests\" but the code finds none), the item shows a warning; it never changes the tick.",
-        "**The front page is a grid of tools with progress:** one row per tool with a progress bar and its open items, so scanning down shows where everything stands. A tool's full checklist opens from its row."
-       ]
-      }
-     ]
-    },
-    {
-     "title": "The checklists (a first version, to be adjusted as they are used)",
-     "level": 2,
-     "blocks": [
-      {
-       "t": "p",
-       "s": "**A tool (\"ready to go live\").** Progress counts the ticks on the items that apply to that tool; an item that does not apply (calibration for a Decision tool) is left out, not unticked."
+       "s": "Critical Path Analysis is one tool with 26 sub-tools. Its top is a collapsible panel of picture tiles with two filter switches (AS / A-level, Skills / Exam style), built before the Decision Maths hub existed, and it pushes the question off a laptop screen. Split it into four skill tools by specification statement, each with a single row of tab pills and only its own Question Options. The hub (DE chapter) does the choosing. The multi-part exam chains leave the tools and are opened from the hub."
       },
       {
        "t": "table",
        "head": [
-        "Item",
-        "Evidence the dashboard shows",
-        "Applies to"
+        "Tool",
+        "Tabs",
+        "Spec"
        ],
        "rows": [
         [
-         "A brief exists in `specs/`",
-         "the brief found, if any",
-         "every tool"
+         "Activity Networks",
+         "Network from a table, Table from a network",
+         "DE1"
         ],
         [
-         "Covered by tests",
-         "the tests found, if any",
-         "every tool"
+         "Times, Float and Critical Paths",
+         "Forward pass, Backward pass, Full analysis, Float and critical paths, Missing time",
+         "DE2, DE3"
         ],
         [
-         "Explains itself (About text)",
-         "the About file or purpose found, if any",
-         "every tool"
+         "Changes and Reasoning",
+         "Delays and changes, Explain and justify, Which to shorten, Limits of the model",
+         "DE4"
         ],
         [
-         "Difficulty calibrated",
-         "the calibration found, if any",
-         "ToolShell tools"
-        ],
-        [
-         "Can be printed",
-         "the print routes found",
-         "tools that are not ToolShell (a ToolShell tool always prints a worksheet)"
-        ],
-        [
-         "Checked on a phone",
-         "nothing (a person judges)",
-         "every tool"
-        ],
-        [
-         "Checked on a tablet",
-         "nothing",
-         "every tool"
-        ],
-        [
-         "Checked on a laptop",
-         "nothing",
-         "every tool"
-        ],
-        [
-         "Printed on a real printer",
-         "nothing",
-         "tools that print"
-        ],
-        [
-         "Answers checked (against the book or the exam)",
-         "nothing",
-         "every tool"
-        ],
-        [
-         "Reviewed by Harry",
-         "nothing (replaces the Review dropdown)",
-         "every tool"
-        ],
-        [
-         "Switched on (live)",
-         "whether the registry has it enabled",
-         "every tool"
+         "Cascade Charts and Resources (A-level)",
+         "Cascade chart, Resource histogram, Resource levelling, Worker allocation",
+         "DE5, DE6"
         ]
        ]
       },
       {
        "t": "p",
-       "s": "Extras that never count against a tool, shown beside the list: Depth bank, lessons, Teach deck, a lesson deck (with its name), printable sheets."
-      },
-      {
-       "t": "p",
-       "s": "**A deck.** The plan is written; the plan is agreed; the look card is approved; the deck is built; layout checked; pushed to the shared copy; published; used in a lesson. Evidence: the plan file, the deck's data file, and (where the service can be read) whether it is pushed and published."
-      },
-      {
-       "t": "p",
-       "s": "**A pathway.** Its `## Next steps` become a checklist: write each as `- [ ] step`, tick it by changing it to `- [x]` in the pathway file (Claude does this at the end of a session; the dashboard shows it). Harry can also tick one on the dashboard (kept in the shared notes, keyed by the step's text)."
+       "s": "Decided with Harry (2026-11-26): the shared generators and solver stay as they are; old `/critical-path?tool=...` links redirect to the right new tool and tab; exam questions are opened from the hub for now (a thin exam page over the existing chains), with a proper exam-paper tool as the eventual aim."
       }
      ]
     },
@@ -1211,8 +1140,13 @@
       {
        "t": "ul",
        "items": [
-        "2026-11-26. Built the floating project plan, editable checklists, project tree and separate review queue. The shared plan has a revision so one editor cannot silently overwrite another.",
-        "2026-11-22. Decided with Harry (above), including that only Harry or Claude tick. Found that the generated facts are wrong for the tools built lately: the Simplex tool showed no brief, no tests and no sub-tools, because the checks only matched a brief named exactly like the tool, a `__test` export and ToolShell sub-tools. The evidence has to be true even though it no longer ticks anything, so the facts were fixed first (chunk 1, done): briefs are found by their header, tests by a test file that imports the tool, sub-tools and levels are read for Decision tools, and About text and lesson decks are detected; `src/tests/toolFactsTruth.test.ts` pins them."
+        "2026-11-26: design agreed; current layout reviewed at laptop and phone size.",
+        "2026-11-26 (chunk 1): `CriticalPathHomes.ts` (the map of old tab to new tool) and `cpaRedirect`, with `criticalPathSplit.test.ts`.",
+        "2026-11-26 (chunk 2): **Times, Float and Critical Paths** (`/cpa-times`, `CpaTimes.tsx`) is live on the hub. The old tool's component is now `CpaTool` in `CriticalPath.tsx`, which takes a `home` (its tabs; a row of pills instead of the topic chooser; no Course or Practice switch; only the options those tabs use), so the remaining tools are a few lines each. `CPA_LIVE` in `CriticalPathHomes.ts` lists the new tools that exist: a tab that has moved opens its new tool from an old link; the other tabs stay in the old tool until their chunk. The hub's DE links for the moved tabs point at the new tool.",
+        "2026-11-26 (chunk 3): **Activity Networks** (`/cpa-networks`, `CpaNetworks.tsx`) is live on the hub, built the way the chunk 2 note describes. Print templates now show only on tools that draw charts.",
+        "2026-11-26 (chunk 4): **Changes and Reasoning** (`/cpa-changes`, `CpaChanges.tsx`) is live on the hub: four tabs in one row, AS and A-level together.",
+        "2026-11-26 (chunk 5): **Cascade Charts and Resources** (`/cpa-charts`, `CpaCharts.tsx`) is live on the hub. Every skill tab has moved; `/critical-path` now holds only the exam-style chains.",
+        "2026-11-26 (chunk 6): **Critical Path Exam Questions** (`/cpa-exam`, `CpaExam.tsx`): the eleven chains, picked from a chooser in two groups (AS, A-level) with no Course or Practice switch; the hub's DE exam card opens it. **The old tool is retired:** its code moved to `src/shared/decision/` (`CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `cpaAsync.ts`, `cpa.worker.ts`), its registry entry is gone, and `/critical-path` is a redirect route in `App.tsx` (`cpaRedirect`) that sends any old link to the tool and tab it names. `CpaTool` now needs a `home`; the old Course and Practice options and the all-in-one chooser are deleted. The dashboard facts read each wrapper together with `CpaTool.tsx` and count only that tool's tabs (`scripts/toolFacts.mjs`)."
        ]
       }
      ]
@@ -1222,27 +1156,86 @@
      "level": 2,
      "blocks": [
       {
-       "t": "ul",
-       "items": [
-        "Set the shared plan key and check the Work Done to project map to review queue flow on the deployed site."
-       ]
+       "t": "p",
+       "s": "Rounding up after the merge (Harry asked for these to be noted, 2026-11-26): 1. **The exam side needs more work** (Harry). The exam page (`/cpa-exam`) is a thin page over the eleven existing chains; what to change is still to be decided. It is meant to grow into an exam-paper tool (a whole paper, mixed chains). See also `docs/pathways/decision-exam-questions.md`. 2. **The `resource-levelling` lesson deck is left unattached** (Harry's decision). Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it: change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`). 3. **Dashboard Review notes** for the five tools (Activity Networks, Times Float and Critical Paths, Changes and Reasoning, Cascade Charts and Resources, Critical Path Exam Questions), through the dashboard notes API (`AGENTS.md`). 4. **Phone and tablet look** by eye: Changes and Reasoning and Cascade Charts and Resources on a phone; the exam page on a phone and a tablet. (The shell smoke check passes for all five.) 5. **Handoff block** \"split Critical Path Analysis into four skill tools\": delete once merged. Then delete this pathway file when items 1 to 4 are settled, with a summary in the Build Log (the Build Log block for the split is written)."
       }
      ]
     },
     {
-     "title": "Earlier readiness checklist plan",
+     "title": "Where to read more",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "`src/shared/decision/CpaTool.tsx`, `cpaHomes.ts`, `cpaGenerate.ts`, `src/tools/Decision/decisionSpec.ts`; `docs/pathways/resource-levelling.md`; `docs/pathways/decision-exam-questions.md`; `docs/architecture/DECISION_SHELL_PLAN.md`."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "dashboard-checklists",
+   "title": "Project Plan",
+   "status": "building",
+   "measure": "",
+   "updated": "2026-11-26",
+   "sections": [
+    {
+     "title": "Intention",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "Give Harry one place to see what Maths Tools is trying to achieve, what needs doing next and what needs his review. Keep it within reach while he is using a tool."
+      }
+     ]
+    },
+    {
+     "title": "Progress",
      "level": 2,
      "blocks": [
       {
        "t": "ul",
        "items": [
-        "[x] **Chunk 1: make the facts true** (the evidence). Done 2026-11-22.",
-        "[ ] **Chunk 2: the checklist module** (`src/admin/checklist.ts`): the items above as data, which apply to which tool, the evidence for each, the warning when a tick and the evidence disagree, and the progress from the ticks; pure functions with unit tests.",
-        "[ ] **Chunk 3: the ticks in the shared notes** (`checks` on a tool's note: `api/_notes.ts`, `notesApi.ts`, the local fallback), written by Harry on the dashboard and by Claude through the notes API. This changes the notes API, so it merges before the dashboard uses it.",
-        "[ ] **Chunk 4: the front page grid** (a row per tool with a progress bar and open items) and a tool's checklist panel in place of the Review dropdown.",
-        "[ ] **Chunk 5: decks** (a Decks checklist, evidence from the decks and `specs/decks/`) and **pathways** (the `- [ ]` steps), then retire the views the checklists replace.",
-        "[ ] **Chunk 6: the routine.** `AGENTS.md` and `CLAUDE.md` change the end-of-session step from \"set Review\" to \"tick what is now true\", and the three-source table is updated."
+        "The floating button opens the current tool’s overview and checklist. Home and hubs open the project map. On larger screens the plan sits to the left of the tool in one workspace. The button can be moved and remembers its position.",
+        "Harry, Codex and Claude can use the same live plan. The plan holds goals, nested checklists, pinned priorities and dependencies. The separate review queue holds specific requests Harry can try.",
+        "One Developing tools unlock covers Project Plan, Admin and deck editing. Admin still shows the deck list, Feature tracker, tool facts and the previous Tasks and Pathways. Existing planning text is still available as a source for migration."
        ]
+      }
+     ]
+    },
+    {
+     "title": "Next steps",
+     "level": 2,
+     "blocks": [
+      {
+       "t": "p",
+       "s": "### Before merging"
+      },
+      {
+       "t": "ul",
+       "items": [
+        "[ ] Check the branch against the latest main and get CI green.",
+        "[ ] Confirm the production browser password and private Blob storage are configured. Give Codex and Claude the new machine credentials through their approved secret storage and verify read access from both environments. `DEVELOPING_TOOLS_API_KEY` is for scripts that use deck and tool notes. `PROJECT_PLAN_KEY` is for the live plan. Keep them separate from the browser password.",
+        "[ ] Harry checks the preview once using the normal Developing tools prompt. Open Work Done, confirm its plan opens without another prompt, then confirm Admin and the deck editor open in the same session."
+       ]
+      },
+      {
+       "t": "p",
+       "s": "### After deployment"
+      },
+      {
+       "t": "ul",
+       "items": [
+        "[ ] Check in production that Work Done opens its own checklist and Home opens the map. Save an agreed real action, reload, and confirm it still appears in both places. Submit and complete a specific review request. Check signed-out visitors can still open published decks and cannot open the private plan.",
+        "[ ] Pilot the plan with Further Mechanics. Pick the active goals, lift only the live next actions out of the old notes, and name the person who needs to act or decide where useful. Check the finishes and dates against the currently shipped tools. Use a short link for background.",
+        "[ ] Use the plan for one round of work with both agents. At the start, read the goal and next action. At the end, tick or update that same item, and request Harry’s review only for something specific he can try.",
+        "[ ] Move the remaining active work in small batches once the pilot is easy to use. Link the old history from the live plan where it matters. Check each migrated branch with Harry before reducing the old Tasks and Pathways views. Keep the deck list and Feature tracker in Admin."
+       ]
+      },
+      {
+       "t": "p",
+       "s": "The earlier fixed readiness-checklist proposal is in the history of this pathway. Revisit it if the pilot shows a need for shared readiness checks across tools."
       }
      ]
     },
@@ -1253,8 +1246,9 @@
       {
        "t": "ul",
        "items": [
-        "`src/admin/` (the dashboard), `scripts/toolFacts.mjs` (the facts, now the evidence), `src/generated/toolFacts.json`, `api/_notes.ts` (the shared notes).",
-        "`AGENTS.md`, \"The Tools dashboard (`/admin`) and its notes API\"."
+        "`AGENTS.md`, the floating project plan workflow.",
+        "`src/projectPlan/` and `api/project-plan.ts`, the plan interface and shared service.",
+        "`docs/TASKS.md` and `docs/pathways/`, the existing planning notes."
        ]
       }
      ]
@@ -2109,7 +2103,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "`specs/resource-levelling.md` (start with \"As built\"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`."
+       "s": "`specs/resource-levelling.md` (start with \"As built\"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/shared/decision/CpaTool.tsx`, `src/tests/levellingMethod.test.ts`."
       }
      ]
     }
@@ -4153,27 +4147,43 @@
     }
    ]
   },
-  "critical-path": {
+  "cpa-exam": {
    "changes": [
     {
-     "date": "2026-11-25",
-     "title": "Critical Path histogram: show what props up the fewest workers"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: exam questions get their own page, and the old tool is retired"
+    }
+   ]
+  },
+  "cpa-networks": {
+   "changes": [
     {
-     "date": "2026-11-13",
-     "title": "Decision shell: a problem no longer needs a network"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Activity Networks is its own tool"
+    }
+   ]
+  },
+  "cpa-times": {
+   "changes": [
     {
-     "date": "2026-11-12",
-     "title": "Resource levelling: Write it up removed, list of options is a tab"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Times, Float and Critical Paths is its own tool"
+    }
+   ]
+  },
+  "cpa-changes": {
+   "changes": [
     {
-     "date": "2026-11-12",
-     "title": "Resource levelling: Level 3 Question size"
-    },
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Changes and Reasoning is its own tool"
+    }
+   ]
+  },
+  "cpa-charts": {
+   "changes": [
     {
-     "date": "2026-11-10",
-     "title": "Critical Path: the clock-time option is removed from Forward pass and Backward pass"
+     "date": "2026-11-26",
+     "title": "Critical Path Analysis: Cascade Charts and Resources is its own tool"
     }
    ]
   },

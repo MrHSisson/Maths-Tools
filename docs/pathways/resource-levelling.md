@@ -30,4 +30,4 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
 - Later, via `docs/pathways/decision-exam-questions.md`: a CPA corpus file and levelling exam parts on the new engine (the exam-style chains still use the older levelling question; plan in the spec; not a priority).
 
 ## Where to read more
-`specs/resource-levelling.md` (start with "As built"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/tools/Decision/CriticalPath.tsx`, `src/tests/levellingMethod.test.ts`.
+`specs/resource-levelling.md` (start with "As built"), `specs/cpa-skill-tools.md`, `specs/exam/critical-path-analysis.md`, `src/shared/decision/cpa.ts` (`levelMethod`, `cutSearch`), `src/shared/decision/cpaSolve.ts` (`solveLevelMethod`, `solveHistogramCut`), `src/shared/decision/CpaTool.tsx`, `src/tests/levellingMethod.test.ts`.

@@ -1,7 +1,7 @@
 # Critical Path Analysis — dedicated skill tools (plan) and banked exam-chain ideas
 
 **Status:** reworked 2026-11-08: the resource histogram (tab 10) and resource levelling (tab 11) were rebuilt to `specs/resource-levelling.md` (see that file's "As built" section; the rows below describe the new tabs). AS set (tabs 1–8) and the AS / A-level course switch built 2026-10-17; A-level tabs 9 (cascade chart), 10 (resource histogram) and 11 (resource levelling) built, with the harder cases (stepped histogram blocks, more than one critical path, late-start histogram, complete a partly drawn chart, a critical activity held up in levelling); tab 12 (worker allocation) and tab 13 (which activity to shorten) built — all 13 tabs exist; the tool is now live and has since gained reasoning tabs (14 skill tabs in all). Source evidence: `specs/exam/critical-path-analysis.md` (AS, A-level, legacy papers).
-Existing tool: `src/tools/Decision/CriticalPath.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
+Existing tool: `src/shared/decision/CpaTool.tsx` (tabs `cpaNetwork`, `cpaForward`, `cpaFull`, `cpaFloat`); maths `cpa.ts`, working `cpaSolve.ts`, view `ActivityNodeView.tsx`.
 
 ## Principle
 

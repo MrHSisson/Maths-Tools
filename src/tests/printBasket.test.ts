@@ -71,7 +71,7 @@ describe("print basket — a saved recipe rebuilds the same question", () => {
 
 describe("print basket — the dashboard knows which tools have it", () => {
   it("the tools with a print basket are read from the code: those with a sheet, a skill worksheet or exam papers", () => {
-    expect(TOOLS.filter((t) => t.printBasket).map((t) => t.id).sort()).toEqual(["critical-path", "dimensional-analysis", "elastic-strings", "energy", "lp-formulate", "lp-simplex", "network-flows", "power", "work-done"]);
+    expect(TOOLS.filter((t) => t.printBasket).map((t) => t.id).sort()).toEqual(["cpa-changes", "cpa-charts", "cpa-exam", "cpa-networks", "cpa-times", "dimensional-analysis", "elastic-strings", "energy", "lp-formulate", "lp-simplex", "network-flows", "power", "work-done"]);
   });
   it("a preview shows maths as plain text: no dollars, Greek letters as themselves", () => {
     const v = previewOf("The quantities $p$ and $q$ give $\\alpha + \\beta = 1$.");

@@ -89,6 +89,58 @@ Notes: Dock the project plan on the left (Codex), Maths Tools — Build Log.
 Agent: Codex
 Notes: One Developing tools unlock (Codex), Maths Tools — Build Log.
 
+## 2026-11-26 — Critical Path Analysis: the plan to split it, and the map that keeps old links working
+
+Branch `claude/gallant-fermat-iio2ap`. Nothing changes for teachers yet. The tool is to become four skill tools (Activity Networks; Times, Float and Critical Paths; Changes and Reasoning; Cascade Charts and Resources) with the exam chains opened from the Decision Maths hub, so the tile panel and the Course and Practice switches at the top go. This first piece adds the one map of where each of the 26 old tabs will live (`CriticalPathHomes.ts`) and the redirect that sends an old `/critical-path?tool=…` link (saved lists, printed sheets) to the right tool and tab, with a test that every old tab has exactly one new home. The plan is in `docs/pathways/critical-path-split.md`; the tool, route and hub are not switched until the new tools exist.
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow when the split lands.
+
+## 2026-11-26 — Critical Path Analysis: Times, Float and Critical Paths is its own tool
+
+Branch `claude/gallant-fermat-iio2ap`. Area: `src/tools/Decision/{CriticalPath.tsx,CpaTimes.tsx,CriticalPathHomes.ts,decisionSpec.ts}`, `src/registry.ts`, `scripts/testAreas.mjs`, `docs/pathways/critical-path-split.md`.
+
+The first of four skill tools split from Critical Path Analysis: **Times, Float and Critical Paths** (`/cpa-times`; forward pass, backward pass, full analysis, float and critical paths, missing time; AQA DE2 and DE3). Its top is the title and one row of five tab pills with the question straight below, in place of the 850px panel of picture tiles and the AS / A-level and Skills / Exam style switches; Question Options hold only what those five tabs use. On a phone it opens on one "What are we practising?" step. The questions, working and printing are the same as before. The Decision Maths hub's DE2 and DE3 links open the new tool, and an old `/critical-path?tool=forward…` link or printed sheet redirects to it (the retired switches dropped from the address). The other tabs stay in the old tool until their own tool is built.
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow when the split lands.
+
+## 2026-11-26 — Critical Path Analysis: Activity Networks is its own tool
+
+Branch `claude/gallant-fermat-iio2ap`. Area: `src/tools/Decision/{CpaNetworks.tsx,CriticalPath.tsx,CriticalPathHomes.ts,decisionSpec.ts}`, `src/registry.ts`, `scripts/testAreas.mjs`, `docs/pathways/critical-path-split.md`.
+
+The second of four skill tools split from Critical Path Analysis: **Activity Networks** (`/cpa-networks`; Network from a table and Table from a network; AQA DE1), with the same one row of tab pills as Times, Float and Critical Paths. Questions, working and printing are unchanged. The hub's DE1 links open it and old `/critical-path?tool=network` and `?tool=table` links redirect to it. The "Print templates" menu item (blank histogram and Gantt grids) now shows only on the tools that draw those charts.
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow when the split lands.
+
+## 2026-11-26 — Critical Path Analysis: exam questions get their own page, and the old tool is retired
+
+Branch `claude/gallant-fermat-iio2ap`. Area: `src/shared/decision/{CpaTool.tsx,cpaHomes.ts,cpaGenerate.ts,cpaAsync.ts,cpa.worker.ts}` (moved from `src/tools/Decision/`), `src/tools/Decision/{CpaExam.tsx,decisionSpec.ts}`, `src/registry.ts`, `src/App.tsx`, `scripts/{toolFacts,testAreas}.mjs`, `docs/pathways/critical-path-split.md`.
+
+The split of Critical Path Analysis is finished. **Critical Path Exam Questions** (`/cpa-exam`) holds the eleven multi-part exam-style chains (five AS, six A-level) in one chooser of plain text tiles under two headings (no little pictures), and no AS / A-level or Skills / Exam style switch; the Decision Maths hub's exam card opens it. The old single tool is gone: its skills are in Activity Networks, Times, Float and Critical Paths, Changes and Reasoning and Cascade Charts and Resources, and `/critical-path` now only redirects an old link (saved list, printed sheet, lesson deck) to the tool and tab it names. The dashboard facts for the five tools now count each tool's own tabs and features. Questions, working and printing are unchanged. Not changed: the `resource-levelling` deck still names the old address (its button still works).
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow.
+
+## 2026-11-26 — Critical Path Analysis: Cascade Charts and Resources is its own tool
+
+Branch `claude/gallant-fermat-iio2ap`. Area: `src/tools/Decision/{CpaCharts.tsx,CriticalPathHomes.ts,decisionSpec.ts}`, `src/registry.ts`, `scripts/testAreas.mjs`, `docs/pathways/critical-path-split.md`.
+
+The last of four skill tools split from Critical Path Analysis: **Cascade Charts and Resources** (`/cpa-charts`; Cascade/Gantt chart, Resource histogram, Resource levelling and Worker allocation; AQA DE5 and DE6, A-level). One row of four pills, and Question Options only for those four tabs. The "Print templates" item (blank histograms and Gantt grids) is here. Questions, working and printing are unchanged. The hub's DE5 and DE6 links open it and old `/critical-path?tool=cascade`, `histogram`, `level` and `alloc` links redirect to it. Every skill tab has now moved; the old tool holds only the exam-style chains until they get their hub page.
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow when the split lands.
+
+## 2026-11-26 — Critical Path Analysis: Changes and Reasoning is its own tool
+
+Branch `claude/gallant-fermat-iio2ap`. Area: `src/tools/Decision/{CpaChanges.tsx,CriticalPathHomes.ts,decisionSpec.ts}`, `src/registry.ts`, `scripts/testAreas.mjs`, `docs/pathways/critical-path-split.md`.
+
+The third of four skill tools split from Critical Path Analysis: **Changes and Reasoning** (`/cpa-changes`; Delays and changes, Explain and justify, Which to shorten and Limits of the model; AQA DE4). The AS and A-level tabs sit in one row of four pills (the hub marks the A-level ones as A2) instead of being hidden by a Course switch. Questions, working and printing are unchanged. The hub's DE4 links open it and old `/critical-path?tool=change`, `reason`, `shorten` and `reasonA` links redirect to it.
+
+Agent: Claude Code
+Notes: Handoff block "split Critical Path Analysis into four skill tools"; Build Log block to follow when the split lands.
+
 ## 2026-11-25 — Solving Trig Equations: a draggable range bar
 
 Branch `claude/relaxed-cannon-ppjzr2`. Area: `src/shared/types.ts`, `src/shared/components/QOPopovers.tsx`, `src/shared/calibration.ts`, `src/tools/Algebra/SolvingTrigEquations.tsx` (+ `.about.ts`), `src/tools/Algebra/trigEquations.ts`, `src/tests/trigEquations.test.ts`.

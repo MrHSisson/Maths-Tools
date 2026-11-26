@@ -1,7 +1,7 @@
-// The Critical Path question generator, on its own (no React, no page) so it can run in a Web Worker as well as in the page (see criticalPathAsync.ts).
-import { generateCpa, type CpaKind, type LevelSize } from "../../shared/decision/cpa";
-import { generateCpaExam, type CpaChain } from "../../shared/decision/cpaExam";
-import type { DecisionProblem, GenerateContext } from "../../shared/decision/types";
+// The Critical Path question generator, on its own (no React, no page) so it can run in a Web Worker as well as in the page (see cpaAsync.ts).
+import { generateCpa, type CpaKind, type LevelSize } from "./cpa";
+import { generateCpaExam, type CpaChain } from "./cpaExam";
+import type { DecisionProblem, GenerateContext } from "./types";
 
 export const EXAM_CHAIN: Record<string, CpaChain | "asAny" | "alAny"> = {
   exAsAny: "asAny", exBuild: "asBuild", exClaim: "asClaim", exChange: "asChange", exClock: "asClock",

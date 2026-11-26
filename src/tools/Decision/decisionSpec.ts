@@ -3,6 +3,7 @@
 // This file adds the link back to the two legacy AQA modules (D1 and D2), the tools built for each chapter and the
 // question banks found for it. The legacy mapping comes from the topics the AQA D1 and D2 papers actually use.
 
+import { cpaHomeOf } from "../../shared/decision/cpaHomes";
 import type { SpecChapter, SpecResource, SpecStatement } from "../../shared/components/SpecLanding";
 
 // ── Which generator sub-tools address which statement ───────────────────────────────────────────────────────────────────
@@ -10,8 +11,11 @@ import type { SpecChapter, SpecResource, SpecStatement } from "../../shared/comp
 // course and practice switches). `label` is the name the tool gives it, so a test can check it still matches. `as` is whether it is part
 // of the AS course (an A-level-only sub-tool is `as: false`). The hub turns each into a link that opens the tool on that sub-tool.
 export interface SubToolRef { tool: string; sub: string; label: string; course?: "as" | "a"; practice?: "skills" | "exam"; as: boolean }
-const cpa = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef =>
-  ({ tool: "critical-path", sub, label, course, practice, as: course === "as" });
+/** A Critical Path tab: the tool it lives in comes from cpaHomes.ts, and none of the five tools has a course or practice switch, so `practice` is only for the reader (an exam chain is written `"exam"`). */
+const cpa = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef => {
+  void practice;
+  return { tool: cpaHomeOf(sub)?.id ?? "cpa-networks", sub, label, as: course === "as" };
+};
 /** Network Flows has the same course and practice switches as Critical Path */
 const nf = (sub: string, label: string, course: "as" | "a", practice: "skills" | "exam" = "skills"): SubToolRef =>
   ({ tool: "network-flows", sub, label, course, practice, as: course === "as" });
@@ -87,7 +91,7 @@ export const DECISION_CHAPTERS: DecisionChapter[] = [
     ],
   },
   {
-    id: "DE", name: "Critical path analysis", toolIds: ["critical-path"],
+    id: "DE", name: "Critical path analysis", toolIds: ["cpa-networks", "cpa-times", "cpa-changes", "cpa-charts", "cpa-exam"],
     resources: [aqa("D2", "D2 Critical Path Analysis"), aqa("D2", "D2 Critical Path Analysis MS"), edx("D1", "D1 Critical Path Analysis")],
     statements: [
       st("DE1", "Construct, represent and interpret a precedence (activity) network using activity-on-node.", true, ["D2"], "supported", "The legacy papers' networks are drawn, so whether they are activity-on-arc or activity-on-node could not be read from the text. Check when converting a question."),

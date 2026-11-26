@@ -132,7 +132,7 @@ function sourceFacts(src, tool, specs, testImports, decks) {
     // tested: a generator smoke-test export (`__test`, or `__seed` for a Decision tool), or a test file that imports the tool
     tests: has(/export const __test/) || has(/export const __seed/) || testImports.has(tool.file.replace(/^src\/tools\//, "").replace(/\.tsx$/, "")),
     // explains itself: an About file beside the tool, or (a Decision tool) a purpose sentence in its config
-    about: existsSync(join(ROOT, tool.file.replace(/\.tsx$/, ".about.ts"))) || has(/\bpurpose:\s*["'`]/),
+    about: existsSync(join(ROOT, tool.file.replace(/\.tsx$/, ".about.ts"))) || has(/\bpurpose:\s*(["'`]|home\.purpose)/),
     // the lesson decks built for this tool
     decks: decks.filter(d => d.tool === tool.id).map(d => d.id),
     skillLinks: has(/\[\[[a-z0-9-]+\|/),
@@ -192,8 +192,19 @@ function computeToolFacts() {
   const decks = listDecks();
   const tools = registry.map(t => {
     const p = join(ROOT, t.file);
-    const src = existsSync(p) ? readFileSync(p, "utf8") : "";
-    return { ...t, kind: kindOf(t), ...sourceFacts(src, t, specs, testImports, decks) };
+    const own = existsSync(p) ? readFileSync(p, "utf8") : "";
+    // a Critical Path tool is a few lines that pick its tabs; the tool itself is the shared CpaTool, so read that too and count only this tool's tabs
+    const cpaHome = own.match(/CpaTool\b[\s\S]*\bHOME\b/) && own.match(/(?:CPA_SKILL_TOOLS\.find\(\(h\) => h\.id === "([a-z-]+)"\)|CPA_EXAM)/);
+    const shared = cpaHome ? readFileSync(join(ROOT, "src/shared/decision/CpaTool.tsx"), "utf8") : "";
+    const f = sourceFacts(own + "\n" + shared, t, specs, testImports, decks);
+    if (cpaHome) {
+      const homes = readFileSync(join(ROOT, "src/shared/decision/cpaHomes.ts"), "utf8");
+      const id = cpaHome[1] ?? "cpa-exam";
+      const subs = homes.slice(homes.indexOf(`id: "${id}"`)).match(/subs:\s*\[([^\]]*)\]/);
+      if (subs) f.subTools = subs[1].split(",").filter((x) => x.trim()).length;
+      f.spec = f.spec || specs.has("critical-path");
+    }
+    return { ...t, kind: kindOf(t), ...f };
   });
   return { tools };
 }

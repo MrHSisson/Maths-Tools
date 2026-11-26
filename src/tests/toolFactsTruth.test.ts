@@ -14,7 +14,7 @@ describe("the generated tool facts are true", () => {
   it("finds a brief by the tool named in its header, not only by its filename", () => {
     expect(tool("lp-simplex").spec).toBe(true);   // specs/linear-programming-simplex.md
     expect(tool("lp-formulate").spec).toBe(true); // specs/linear-programming-formulate.md
-    expect(tool("critical-path").spec).toBe(true); // by filename
+    expect(tool("cpa-times").spec).toBe(true); // by the spec of the tool it was split from (specs/critical-path.md)
   });
   it("finds tests for a tool tested through its shared code or its file", () => {
     expect(tool("lp-simplex").tests).toBe(true);

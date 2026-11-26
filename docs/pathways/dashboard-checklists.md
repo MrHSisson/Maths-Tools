@@ -1,60 +1,31 @@
-# The dashboard as checklists
+# Project Plan
 - **Status:** building
 - **Updated:** 2026-11-26
 
-**26 November direction:** Phase 1 puts the live project plan in a floating panel across the site in Developing tools mode. Tool pages show their own overview and checklist. Home and hubs show the project map, with pinned priorities, progress and dependency links. Harry's review requests have their own queue. The fixed tool and deck readiness checklists below remain an earlier proposal.
-
-**22 November proposal:** Harry paused the fixed readiness checklist design after the facts work. The outline below records that design for later reference.
-
 ## Intention
-The Tools dashboard (`/admin`) should answer one question at a glance: **what is done, and what is left?** Today it shows facts generated from the code, one Review dropdown per tool, and some views over the docs, and its use is unclear (Harry, 2026-11-22). It becomes checklists: every tool, deck and pathway has a list of things that must be true before it is finished, a tick for each, and a progress bar made from the ticks.
-
-Decided with Harry (2026-11-22):
-- **Scope:** tools, decks and pathways all become checklists.
-- **Only Harry or Claude tick.** Nothing ticks itself from the code. A tick is a deliberate statement that the thing is done, made by Harry on the dashboard or by Claude through the notes API at the end of a session, and kept in the shared notes. (An earlier version of this plan had the code tick what it could prove; Harry decided against it.)
-- **The code's facts stay, as evidence only.** Beside each item the dashboard shows what the code finds (for example "a brief found: specs/linear-programming-simplex.md", "tests found"), so a person ticking can see it. If a tick and the evidence disagree (ticked "covered by tests" but the code finds none), the item shows a warning; it never changes the tick.
-- **The front page is a grid of tools with progress:** one row per tool with a progress bar and its open items, so scanning down shows where everything stands. A tool's full checklist opens from its row.
-
-## The checklists (a first version, to be adjusted as they are used)
-
-**A tool ("ready to go live").** Progress counts the ticks on the items that apply to that tool; an item that does not apply (calibration for a Decision tool) is left out, not unticked.
-
-| Item | Evidence the dashboard shows | Applies to |
-|---|---|---|
-| A brief exists in `specs/` | the brief found, if any | every tool |
-| Covered by tests | the tests found, if any | every tool |
-| Explains itself (About text) | the About file or purpose found, if any | every tool |
-| Difficulty calibrated | the calibration found, if any | ToolShell tools |
-| Can be printed | the print routes found | tools that are not ToolShell (a ToolShell tool always prints a worksheet) |
-| Checked on a phone | nothing (a person judges) | every tool |
-| Checked on a tablet | nothing | every tool |
-| Checked on a laptop | nothing | every tool |
-| Printed on a real printer | nothing | tools that print |
-| Answers checked (against the book or the exam) | nothing | every tool |
-| Reviewed by Harry | nothing (replaces the Review dropdown) | every tool |
-| Switched on (live) | whether the registry has it enabled | every tool |
-
-Extras that never count against a tool, shown beside the list: Depth bank, lessons, Teach deck, a lesson deck (with its name), printable sheets.
-
-**A deck.** The plan is written; the plan is agreed; the look card is approved; the deck is built; layout checked; pushed to the shared copy; published; used in a lesson. Evidence: the plan file, the deck's data file, and (where the service can be read) whether it is pushed and published.
-
-**A pathway.** Its `## Next steps` become a checklist: write each as `- [ ] step`, tick it by changing it to `- [x]` in the pathway file (Claude does this at the end of a session; the dashboard shows it). Harry can also tick one on the dashboard (kept in the shared notes, keyed by the step's text).
+Give Harry one place to see what Maths Tools is trying to achieve, what needs doing next and what needs his review. Keep it within reach while he is using a tool.
 
 ## Progress
-- 2026-11-26. Built the floating project plan, editable checklists, project tree and separate review queue. The shared plan has a revision so one editor cannot silently overwrite another.
-- 2026-11-22. Decided with Harry (above), including that only Harry or Claude tick. Found that the generated facts are wrong for the tools built lately: the Simplex tool showed no brief, no tests and no sub-tools, because the checks only matched a brief named exactly like the tool, a `__test` export and ToolShell sub-tools. The evidence has to be true even though it no longer ticks anything, so the facts were fixed first (chunk 1, done): briefs are found by their header, tests by a test file that imports the tool, sub-tools and levels are read for Decision tools, and About text and lesson decks are detected; `src/tests/toolFactsTruth.test.ts` pins them.
+- The floating button opens the current tool’s overview and checklist. Home and hubs open the project map. On larger screens the plan sits to the left of the tool in one workspace. The button can be moved and remembers its position.
+- Harry, Codex and Claude can use the same live plan. The plan holds goals, nested checklists, pinned priorities and dependencies. The separate review queue holds specific requests Harry can try.
+- One Developing tools unlock covers Project Plan, Admin and deck editing. Admin still shows the deck list, Feature tracker, tool facts and the previous Tasks and Pathways. Existing planning text is still available as a source for migration.
 
 ## Next steps
-- Set the shared plan key and check the Work Done to project map to review queue flow on the deployed site.
 
-## Earlier readiness checklist plan
-- [x] **Chunk 1: make the facts true** (the evidence). Done 2026-11-22.
-- [ ] **Chunk 2: the checklist module** (`src/admin/checklist.ts`): the items above as data, which apply to which tool, the evidence for each, the warning when a tick and the evidence disagree, and the progress from the ticks; pure functions with unit tests.
-- [ ] **Chunk 3: the ticks in the shared notes** (`checks` on a tool's note: `api/_notes.ts`, `notesApi.ts`, the local fallback), written by Harry on the dashboard and by Claude through the notes API. This changes the notes API, so it merges before the dashboard uses it.
-- [ ] **Chunk 4: the front page grid** (a row per tool with a progress bar and open items) and a tool's checklist panel in place of the Review dropdown.
-- [ ] **Chunk 5: decks** (a Decks checklist, evidence from the decks and `specs/decks/`) and **pathways** (the `- [ ]` steps), then retire the views the checklists replace.
-- [ ] **Chunk 6: the routine.** `AGENTS.md` and `CLAUDE.md` change the end-of-session step from "set Review" to "tick what is now true", and the three-source table is updated.
+### Before merging
+- [ ] Check the branch against the latest main and get CI green.
+- [ ] Confirm the production browser password and private Blob storage are configured. Give Codex and Claude the new machine credentials through their approved secret storage and verify read access from both environments. `DEVELOPING_TOOLS_API_KEY` is for scripts that use deck and tool notes. `PROJECT_PLAN_KEY` is for the live plan. Keep them separate from the browser password.
+- [ ] Harry checks the preview once using the normal Developing tools prompt. Open Work Done, confirm its plan opens without another prompt, then confirm Admin and the deck editor open in the same session.
+
+### After deployment
+- [ ] Check in production that Work Done opens its own checklist and Home opens the map. Save an agreed real action, reload, and confirm it still appears in both places. Submit and complete a specific review request. Check signed-out visitors can still open published decks and cannot open the private plan.
+- [ ] Pilot the plan with Further Mechanics. Pick the active goals, lift only the live next actions out of the old notes, and name the person who needs to act or decide where useful. Check the finishes and dates against the currently shipped tools. Use a short link for background.
+- [ ] Use the plan for one round of work with both agents. At the start, read the goal and next action. At the end, tick or update that same item, and request Harry’s review only for something specific he can try.
+- [ ] Move the remaining active work in small batches once the pilot is easy to use. Link the old history from the live plan where it matters. Check each migrated branch with Harry before reducing the old Tasks and Pathways views. Keep the deck list and Feature tracker in Admin.
+
+The earlier fixed readiness-checklist proposal is in the history of this pathway. Revisit it if the pilot shows a need for shared readiness checks across tools.
 
 ## Where to read more
-- `src/admin/` (the dashboard), `scripts/toolFacts.mjs` (the facts, now the evidence), `src/generated/toolFacts.json`, `api/_notes.ts` (the shared notes).
-- `AGENTS.md`, "The Tools dashboard (`/admin`) and its notes API".
+- `AGENTS.md`, the floating project plan workflow.
+- `src/projectPlan/` and `api/project-plan.ts`, the plan interface and shared service.
+- `docs/TASKS.md` and `docs/pathways/`, the existing planning notes.

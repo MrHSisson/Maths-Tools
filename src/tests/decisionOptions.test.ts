@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { DecisionShellProps } from "../shared/decision/types";
 import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "../shared/decision/options";
-import CPA from "../tools/Decision/CriticalPath";
+import { CpaTool } from "../shared/decision/CpaTool";
+import { CPA_SKILL_TOOLS } from "../shared/decision/cpaHomes";
+const CPA = () => CpaTool({ home: CPA_SKILL_TOOLS[0] });
 import Flows from "../tools/Decision/NetworkFlows";
 import MST from "../tools/Decision/MinimumSpanningTree";
 import TSP from "../tools/Decision/TravellingSalesperson";
@@ -12,7 +14,8 @@ vi.mock("../devMode", () => ({ useDevMode: () => true }));
 
 type Config = DecisionShellProps["config"];
 const configs: Config[] = [CPA, Flows, MST, TSP, Route, Dim].map(App => App().props.config);
-const cpa = configs[0].options!;
+// every Question Option of the four skill tools in one list (the options shared by tools, Numbers and Critical paths, are the same in each)
+const cpa = [...new Map(CPA_SKILL_TOOLS.flatMap((h) => CpaTool({ home: h }).props.config.options as NonNullable<Config["options"]>).map((o) => [o.key, o])).values()];
 
 describe("Decision options at every sub-tool and level", () => {
   it("Explain and justify has exactly its two question forms at each level, including stale links", () => {
@@ -40,14 +43,14 @@ describe("Decision options at every sub-tool and level", () => {
     }
   });
   it("settings start independently for a new level/sub-tool and restore only that profile", () => {
-    const original = profileOptions(cpa, { course: "as", practice: "skills" }, undefined, 1, "reason");
+    const original = profileOptions(cpa, {}, undefined, 1, "reason");
     original.reasonForm = "remove"; original.size = "small";
     const second = profileOptions(cpa, original, undefined, 2, "reason");
     expect(second.reasonForm).toBe("claim,glyn"); expect(second.size).toBe("medium");
     const returning = profileOptions(cpa, second, original, 1, "reason");
     expect(returning.reasonForm).toBe("remove"); expect(returning.size).toBe("small");
     const other = profileOptions(cpa, original, undefined, 1, "change");
-    expect(other.size).toBe("medium"); expect(other.course).toBe("as");
+    expect(other.size).toBe("medium");
   });
   it("practice links select a level that actually offers their requested task", () => {
     expect(levelForOptions(cpa, { reasonForm: "glyn" }, 1, 2, "reason")).toBe(2);
