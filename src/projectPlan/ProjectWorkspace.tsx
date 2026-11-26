@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState, useSync
 const ProjectPlanPanel = lazy(() => import("./ProjectPlanPanel"));
 const OPEN_KEY = "mt-project-plan-open";
 const DOCK_MIN_WIDTH = 860;
+const FRAME_GUTTER = 16;
 
 function subscribeToResize(notify: () => void) {
   window.addEventListener("resize", notify);
@@ -21,7 +22,7 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
   const width = useSyncExternalStore(visible ? subscribeToResize : ignoreResize, viewportWidth);
   const docked = visible && width >= DOCK_MIN_WIDTH;
   const panelWidth = docked ? Math.min(wide ? 540 : 384, Math.round(width * (wide ? 0.38 : 0.27))) : 0;
-  const scale = (width - panelWidth) / width;
+  const scale = docked ? (width - panelWidth - 2 * FRAME_GUTTER) / width : 1;
   const site = useRef<HTMLDivElement>(null);
   const scroll = useRef(0);
   const wasDocked = useRef(false);
@@ -59,13 +60,18 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
       style={docked ? { left: panelWidth } : undefined}
     >
       <div
-        ref={site}
-        data-project-workspace={docked ? "docked" : "full"}
-        onScroll={docked ? event => { scroll.current = event.currentTarget.scrollTop; } : undefined}
-        className={docked ? "absolute inset-y-0 left-0 origin-left overflow-x-hidden overflow-y-auto bg-white print:!static print:!w-auto print:!transform-none print:!overflow-visible" : undefined}
-        style={docked ? { width, transform: `scale(${scale})` } : undefined}
+        className={docked ? "absolute top-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-300 print:!static print:!h-auto print:!transform-none print:!overflow-visible print:!shadow-none print:!ring-0" : undefined}
+        style={docked ? { left: FRAME_GUTTER, right: FRAME_GUTTER, height: `calc(100dvh * ${scale})` } : undefined}
       >
-        {children}
+        <div
+          ref={site}
+          data-project-workspace={docked ? "docked" : "full"}
+          onScroll={docked ? event => { scroll.current = event.currentTarget.scrollTop; } : undefined}
+          className={docked ? "absolute left-0 top-0 h-[100dvh] origin-top-left overflow-x-hidden overflow-y-auto print:!static print:!h-auto print:!w-auto print:!transform-none print:!overflow-visible" : undefined}
+          style={docked ? { width, transform: `scale(${scale})` } : undefined}
+        >
+          {children}
+        </div>
       </div>
     </div>
   </>;
