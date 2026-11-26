@@ -1,6 +1,7 @@
 import { rectilinearQuestion } from "./rectilinear";
 import { printRectilinearSheet } from "./rectilinearPrint";
 import { printTextbookSheet } from "./textbookSheet";
+import { printBookSheet } from "./bookSheet";
 import { printVennSheet } from "./vennSheet";
 import { printPictureSheet } from "./pictureSheet";
 import type { CuratedQuestion } from "./types";
@@ -27,11 +28,11 @@ export const sheetSig = (el: Sheet) => JSON.stringify([el.tool, el.preset, el.co
 /** A question as it is kept and printed: what it shows and what it answers, without its worked solution. */
 const trim = (q: AnyQuestion): AnyQuestion => ({ ...q, working: [] }) as AnyQuestion;
 
-export const isFrozen = (el: Sheet) => !!el.authored || !!el.textbook || !!el.vennSheet || !!el.pictureSheet || !!el.frozen && el.frozen.sig === sheetSig(el);
+export const isFrozen = (el: Sheet) => !!el.authored || !!el.textbook || !!el.vennSheet || !!el.pictureSheet || !!el.bookSheet || !!el.frozen && el.frozen.sig === sheetSig(el);
 
 /** The sheet's questions: the frozen copy while it still applies, otherwise a fresh set from its seed. */
 export async function sheetQuestions(el: Sheet): Promise<AnyQuestion[]> {
-  if (el.textbook || el.vennSheet || el.pictureSheet) return [];                       // a textbook sheet is drawn and printed from its own text, not from questions
+  if (el.textbook || el.vennSheet || el.pictureSheet || el.bookSheet) return [];                       // a textbook sheet is drawn and printed from its own text, not from questions
   if (el.authored) return el.authored.map(q => { if (!q.rectilinear) throw new Error("An authored worksheet question has no shape."); return { ...rectilinearQuestion(q.rectilinear), key: `authored-${q.id}` }; });
   if (el.frozen && isFrozen(el)) return el.frozen.questions;
   return (await generateSet(el.tool, el.preset, el.count, el.seed ?? 1)).map(trim);
@@ -49,6 +50,7 @@ export async function printSheet(el: Sheet, mode: PrintMode): Promise<void> {
   if (el.textbook) { printTextbookSheet(el.textbook, mode); return; }
   if (el.vennSheet) { printVennSheet(el.vennSheet, mode); return; }
   if (el.pictureSheet) { printPictureSheet(el.pictureSheet, mode); return; }
+  if (el.bookSheet) { printBookSheet(el.bookSheet, mode); return; }
   if (el.authored) { printRectilinearSheet(el.authored, pin.title, mode, pin.paper ?? "A4"); return; }
   const [qs, cfg] = await Promise.all([sheetQuestions(el), loadConfig(el.tool)]);
   if (qs.some(q => "_diagram" in q)) { printRectilinearSheet(qs, pin.title, mode, pin.paper ?? "A4"); return; }

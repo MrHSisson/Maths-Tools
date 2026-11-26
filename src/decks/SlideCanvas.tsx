@@ -20,6 +20,7 @@ import { legacyItems } from "./questions";
 import { generateFrom, generateSet, instructionOf, loadConfig, loadDepthItems, questionContent } from "./generators";
 import { isFrozen, sheetQuestions } from "./worksheets";
 import { blockCols, partLetter } from "./textbookSheet";
+import { firstNumber, partLetterOf, shownParts } from "./bookSheet";
 import { vennSheetCells } from "./vennSheet";
 import { WorkedPicture } from "./WorkedPicture";
 import { NumberGridEl } from "./NumberGrid";
@@ -535,6 +536,44 @@ function TextbookEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet"
   );
 }
 
+/** A worded book sheet on a cue slide: the answer key of the parts it shows, numbered as on the printed sheet, hidden until `a` (or the button)
+ *  and always taking their place, so showing them never changes the layout. The questions are on the paper, not repeated here. */
+function BookSheetEl({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
+  const bs = el.bookSheet!;
+  const [shown, setShown] = useState(false);
+  const forced = useContext(ForceAnswersCtx);
+  useEffect(() => {
+    if (!live) return;
+    const h = (e: KeyboardEvent) => { if (!(e.target as HTMLElement).closest("input,textarea,select") && e.key === "a") setShown((v) => !v); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [live]);
+  const B = live ? "button" : "span";
+  const parts = shownParts(bs), visible = shown || forced;
+  const n = parts.reduce((k, { p }) => k + p.items.length, 0), cols = n > 9 ? 3 : 2;
+  const size = Math.max(26, Math.min(48, Math.floor(el.h / (Math.ceil(n / cols) * 1.9 + parts.length * 2.2))));
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {parts.map(({ p, i }) => (
+          <div key={p.id} style={{ marginBottom: size * 0.4 }}>
+            <div style={{ fontSize: size * 0.8, fontWeight: 700, color: "#1e3a8a", marginBottom: size * 0.2 }}>{partLetterOf(i)} · {p.title} <span style={{ fontWeight: 400, color: "#94a3b8", fontSize: size * 0.6 }}>answers</span></div>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoFlow: "column", gridTemplateRows: `repeat(${Math.ceil(p.items.length / cols)}, auto)`, columnGap: 40, rowGap: size * 0.14 }}>
+              {p.items.map((it, k) => (
+                <div key={k} style={{ display: "flex", alignItems: "baseline", gap: size * 0.5, fontSize: size, borderBottom: "1px solid #e2e8f0", visibility: visible ? "visible" : "hidden" }}>
+                  <b style={{ minWidth: size * 1.4, color: "#94a3b8", fontSize: size * 0.7 }}>{firstNumber(bs, i) + k}</b>
+                  <span style={{ color: "#1e3a8a", fontWeight: 600 }}><InlineMath text={it.answer} /></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {live && <div style={{ display: "flex", gap: 12, fontSize: 26 }}><B style={pill} onClick={() => setShown((v) => !v)}>{shown ? <EyeOff size={26} /> : <Eye size={26} />}{shown ? "Hide answers" : "Show answers"}</B></div>}
+    </div>
+  );
+}
+
 function SheetKey({ el, live }: { el: Extract<DeckElement, { kind: "worksheet" }>; live: boolean }) {
   const [qs, setQs] = useState<AnyQuestion[] | null>(null);
   const [shown, setShown] = useState(false);
@@ -779,7 +818,7 @@ function ElementViewInner({ el, live, fill, depthSlide, stage }: { el: DeckEleme
     case "depth": return <DepthEl el={el} live={live} stage={stage} />;
     case "grid": return <GridEl el={el} live={live} />;
     case "generator": return <GeneratorEl el={el} live={live} />;
-    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.pictureSheet ? <PictureSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
+    case "worksheet": return el.textbook ? <TextbookEl el={el} live={live} /> : el.bookSheet ? <BookSheetEl el={el} live={live} /> : el.vennSheet ? <VennSheetEl el={el} live={live} /> : el.pictureSheet ? <PictureSheetEl el={el} live={live} /> : el.view === "key" ? <SheetKey el={el} live={live} /> : <WorksheetEl el={el} live={live} />;
     default: return <NewerCodePlaceholder />;      // an element kind a newer version of the site adds
   }
 }
