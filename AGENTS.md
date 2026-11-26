@@ -135,6 +135,16 @@ the old `>>>` … `<<<` delimiters — they render as nested blockquotes and bre
 
 If a step cannot be done (no network to the dashboard, the planner tool is unavailable), write it under *Still to do / next* in your patch-notes entry so the next session picks it up. Never leave it silent, and never state in a final message that something was updated when it was not.
 
+## The floating project plan
+
+In Developing tools mode, use the floating project button for the live plan. Tool pages open their checklist; home and hubs open the project tree. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Use the review queue only for a specific thing Harry can try. A request has its own prompt and shares the item's ID; completing the request clears the queue entry independently of the task's tick.
+
+When starting project work, read the shared plan as well as the handoff. After changing the work, update the affected item, close completed checks, and record any specific review request. Keep technical history in the patch notes and Build Log.
+
+Agents use `GET /api/project-plan` and `POST /api/project-plan` with the `x-project-plan-key` header. Read the plan, preserve all unrelated entries and stable IDs, and send the amended JSON with the revision you read. The response carries the new revision. On HTTP 409, read again and apply your specific edit to the latest plan. The record format and validation are in `api/_projectPlan.ts`. On the first run the browser adds the tool catalogue and starter branches when it writes the plan. Wait for that first save before editing existing catalogue items through the API.
+
+Set the server-only `PROJECT_PLAN_KEY` in Vercel and use the existing private Blob store. Provide the key securely to each editor or agent. In the panel, enter the key once per browser. The plan key is separate from the Developing tools switch.
+
 ## The Tools dashboard (`/admin`) and its notes API
 
 A Developing-tools-gated page (burger menu → Developing tools → **Tools dashboard**, or `/admin`). It does **not** replace the plan docs (`docs/TASKS.md`, `docs/pathways/`) or Harry's planner (the granular written history); it is the interactive, friendlier overview of the same ground. Two halves:
