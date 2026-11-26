@@ -22,10 +22,15 @@ describe("Decision spec pairings", () => {
 
   it("every paired sub-tool exists in Critical Path with the same name, course and practice", () => {
     const problems: string[] = [];
-    for (const r of all().filter(x => x.tool === "critical-path")) {
+    for (const r of all().filter(x => x.tool === "critical-path" || x.tool.startsWith("cpa-"))) {
       const s = SUBS.find(x => x.key === r.sub);
       if (!s) { problems.push(`${r.sub}: no such sub-tool`); continue; }
       if (s.label !== r.label) problems.push(`${r.sub}: the tool calls it "${s.label}", the pairing "${r.label}"`);
+      if (r.tool.startsWith("cpa-")) {   // a skill tool the tab has moved to: no course or practice switch, but the AS flag still follows the tab's course
+        if (r.course || r.practice) problems.push(`${r.sub}: ${r.tool} has no course or practice switch`);
+        if (r.as !== (whenOf(s, "course") === "as")) problems.push(`${r.sub}: the AS flag does not match its course`);
+        continue;
+      }
       if (whenOf(s, "course") !== r.course) problems.push(`${r.sub}: course is ${whenOf(s, "course")}, the pairing says ${r.course}`);
       if (whenOf(s, "practice") !== r.practice) problems.push(`${r.sub}: practice is ${whenOf(s, "practice")}, the pairing says ${r.practice}`);
       if (r.as !== (r.course === "as")) problems.push(`${r.sub}: the AS flag does not match its course`);
@@ -34,7 +39,7 @@ describe("Decision spec pairings", () => {
   });
 
   it("every Critical Path sub-tool is placed under a statement or in a group, and in only one place", () => {
-    const placed = all().filter(x => x.tool === "critical-path").map(x => x.sub);
+    const placed = all().filter(x => x.tool === "critical-path" || x.tool.startsWith("cpa-")).map(x => x.sub);
     expect(SUBS.map(s => s.key).filter(k => !placed.includes(k))).toEqual([]);
     expect(placed.filter((k, i) => placed.indexOf(k) !== i)).toEqual([]);
   });

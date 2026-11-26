@@ -13,6 +13,7 @@ import {
   type SolveStep,
 } from "../../shared/decision";
 import CpaTileArt from "../../shared/decision/CpaTileArt";
+import { cpaMovedTo, type CpaHome } from "./CriticalPathHomes";
 import { generate, EXAM_CHAIN, CHART_SUBS } from "./criticalPathGenerate";
 import { generateInWorker } from "./criticalPathAsync";
 
@@ -542,21 +543,25 @@ function CpaKey({ p }: { p?: DecisionProblem }) {
   );
 }
 
-export default function App() {
+/** The whole tool (no `home`), or one of the skill tools it is being split into (`home`: its tabs, one row of pills in place of the topic chooser, and only the options those tabs use). */
+export function CpaTool({ home }: { home?: CpaHome }) {
+  const subTools = home ? home.subs.flatMap((k) => SUB_TOOLS.filter((t) => t.key === k)).map((t) => ({ ...t, when: undefined })) : SUB_TOOLS;
+  const scopeOptions = <T extends { key: string; forSubTools?: string[] }>(os: T[]): T[] =>
+    !home ? os : os.filter((o) => o.key !== "course" && o.key !== "practice" && (!o.forSubTools || o.forSubTools.some((k) => home.subs.includes(k))));
   return (
     <DecisionShell
       generate={generate}
       solve={solve}
       renderCanvas={renderCanvas}
       config={{
-        pageTitle: "Critical Path Analysis",
+        pageTitle: home?.name ?? "Critical Path Analysis",
         slowGenerate: true,
         generateAsync: generateInWorker,
-        purpose: "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
+        purpose: home?.purpose ?? "Plan a project: draw the activity network, find the earliest and latest times, the critical path and the float, and schedule workers.",
         instruction: "Question",
         levels: 3, // the most any tab can have; each tab sets its own `levels` (1–3) in SUB_TOOLS
         printTemplates: true,
-        questionSheet: { tabs: CPA_SHEET_TABS, build: buildCpaSheet },
+        questionSheet: { tabs: home ? CPA_SHEET_TABS.filter((k) => home.subs.includes(k)) : CPA_SHEET_TABS, build: buildCpaSheet },
         levelInfo: true,
         levelLabels: {
           ...Object.fromEntries(Object.keys(EXAM_CHAIN).map((k) => [k, ["Smaller networks (8–9 activities)", "Larger networks (10–12 activities)"]])),
@@ -576,8 +581,8 @@ export default function App() {
           unknown: ["A duration x, on or off the critical path", "A missing earliest start or latest finish in a box"],
           change: ["A delay compared with the float", "A critical activity made quicker", "A delay of \u201cup to d\u201d, or an activity removed"],
         },
-        subTools: SUB_TOOLS,
-        chooser: {
+        subTools,
+        chooser: home ? undefined : {
           art: (k: string) => <CpaTileArt k={k} />,
           filters: ["course", "practice"],
           groups: [
@@ -590,10 +595,10 @@ export default function App() {
           ],
         },
         hideMatrix: true,
-        examSheet: true,
+        examSheet: !home,
         noSandbox: true,
         canvasFooter: (p: DecisionProblem) => <CpaKey p={p} />,
-        options: [
+        options: scopeOptions([
           {
             key: "course",
             label: "Course",
@@ -894,10 +899,17 @@ export default function App() {
               { value: "more", label: "More than one" },
             ],
           },
-        ],
+        ]),
       }}
     />
   );
+}
+
+export default function App() {
+  // a tab that now has its own tool opens there (an old saved link or printed sheet keeps working); the tabs not moved yet stay here
+  const moved = typeof window === "undefined" ? null : cpaMovedTo(window.location.search);
+  useEffect(() => { if (moved) window.location.replace(moved.pathname + moved.search); }, [moved?.pathname, moved?.search]); // eslint-disable-line react-hooks/exhaustive-deps -- deliberate: only the address matters
+  return moved ? null : <CpaTool />;
 }
 
 // CI contract surface — checked by src/tests/cpa.test.ts (the shared Decision `__problem` validator is MST/TSP/route-specific).

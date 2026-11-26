@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { DecisionShellProps } from "../shared/decision/types";
 import { levelForOptions, levelOption, offeredAt, optionValue, profileOptions, resolvedOptions } from "../shared/decision/options";
-import CPA from "../tools/Decision/CriticalPath";
+import { CpaTool } from "../tools/Decision/CriticalPath";
+const CPA = () => CpaTool({});   // the whole tool (the default export may redirect a moved tab)
 import Flows from "../tools/Decision/NetworkFlows";
 import MST from "../tools/Decision/MinimumSpanningTree";
 import TSP from "../tools/Decision/TravellingSalesperson";
