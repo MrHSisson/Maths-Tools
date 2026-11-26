@@ -1,6 +1,6 @@
 # Resource histogram and resource levelling
 - **Status:** building
-- **Updated:** 2026-11-08 (later session: print grid, basket Reload, Show N − 1)
+- **Updated:** 2026-11-25 (what props up the fewest workers; three moves; balanced drops; spinner)
 
 ## Intention
 Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the Critical Path tool so that they only generate questions students could reasonably meet in an exam, and so that the levelling walkthrough teaches a method that finds the true minimum (quick sums and one ranked list) with a developing picture. Full design: `specs/resource-levelling.md`.
@@ -14,6 +14,7 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
   - **Drawing order:** critical along the bottom, then longest first, no holes or overhangs.
   - **Decided differently from the plan:** no daily totals row; text kept to a line or two per step; Levels 1 and 2 need exactly one try; queue questions are left out by the tries cap, not a rule on heavy tasks (a heavy-task rule would drop Legacy Q11); "new start of the last activity" is not offered at levelling Level 3.
   - **Later the same day (branch `claude/focused-hopper-nndnwu`):** a fine grid on blank print histograms; **Reload** on each print-basket question; and the histogram Level 3 ask "Show N − 1 is not enough", which needs only the sum (total work ÷ workers) or the must-run activities, no sliding.
+  - **2026-11-25 (branch `claude/stoic-goldberg-xmi9tw`):** (1) the histogram Level 3 "Why no fewer" step always shows overlap: a moment where must-run activities add up, else the shortest window of time whose guaranteed work ÷ its length needs the answer (banded on the cascade chart and histogram), the total-work sum only as the last resort; (2) cut-the-peak questions may move up to three activities (was two); (3) one-worker questions are balanced across 4 → 3, 3 → 2 and 4 → 2 (about 40 / 38 / 22%); (4) Critical Path shows a "Making a new question…" spinner while a slow question is made (`slowGenerate` on the Decision shell).
   - **Independent testing:** five test agents (accuracy against their own solver, drawn geometry, appearance of each tab, option fuzzing) found no mathematical error and no overlap or hole; their presentation and wording findings are fixed.
 
 - 2026-11-12: **Level 3 Question size** (branch `claude/levelling-question-size`, not merged). "Most tries" is replaced by *Question size*: Short (the knock-on's own best option clears it, 2 tries), Exam (default: one knock-on, 2 tries, may go back to a first-list option that clears at once) and Stretch (up to 2 knock-ons, 3 tries; not encouraged). Quick sums are capped at 6 / 6 / 9. Real questions: Legacy Q4 fits all three, Q11 and Q14 fit Stretch only, Q15 and 29.2B Q1 (3+ knock-ons) are spot-it questions and fit none, by Harry's decision. Supply and speed: 30 questions for each size and workers setting all generated, about 0.2 to 0.4 s each and 1.1 s at most; walkthroughs are 8 steps (Short, Exam) and 8 to 10 (Stretch); Exam goes back to the first list in about 1 question in 10.
@@ -22,7 +23,7 @@ Rework the A-Level **Resource histogram** and **Resource levelling** tabs of the
 
 ## Next steps
 - Check the new levelling and histogram steps on phone and tablet, then merge `claude/new-session-6gg0my` (a PR has not been opened).
-- Generation time: histogram Level 3 and Level 2 can still take up to about a second now and then.
+- Generation time: histogram Level 3 one-worker questions now average about 0.7 s and now and then take several seconds (the spinner covers it). If that is still too slow, generate in a background thread.
 - "Last start" is still a selectable wording at levelling Level 3 (the shell cannot hide one choice by level); it asks for the time there.
 - Print basket: questions can be saved and printed later, on this device or by link (`printBasket.ts`).
 - Printing: question and answer sheets exist for the histogram and levelling tabs (one question per A4 page); several questions per sheet and squared-paper histograms are not built.
