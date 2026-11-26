@@ -57,9 +57,9 @@ export const PATH_RULES = [
 // Which tools a changed file under src/shared/decision/ can affect (for the cross-tool checks). Checked by reading the imports: no Decision topic imports
 // another except the graph topics, which use the flow templates and geometry; the Decision tools reach their topic through the shell, and only
 // Dimensional Analysis (mechanics) imports the dim files directly.
-const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", CPAT = T + "CpaTimes.tsx", CPAN = T + "CpaNetworks.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx", POWER = "src/tools/FurtherMechanics/Power.tsx", ELASTIC = "src/tools/FurtherMechanics/Elastic.tsx";
+const T = "src/tools/Decision/", CPA = T + "CriticalPath.tsx", CPAT = T + "CpaTimes.tsx", CPAN = T + "CpaNetworks.tsx", CPAC = T + "CpaChanges.tsx", FLOW = T + "NetworkFlows.tsx", MST = T + "MinimumSpanningTree.tsx", TSP = T + "TravellingSalesperson.tsx", ROUTE = T + "RouteInspection.tsx", DIM = "src/tools/FurtherMechanics/DimensionalAnalysis.tsx", WORK = "src/tools/FurtherMechanics/WorkDone.tsx", ENERGY = "src/tools/FurtherMechanics/Energy.tsx", POWER = "src/tools/FurtherMechanics/Power.tsx", ELASTIC = "src/tools/FurtherMechanics/Elastic.tsx";
 const TOPIC_TOOLS = [
-  [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)/, [CPA, CPAT, CPAN]],
+  [/^src\/shared\/decision\/(cpa|CpaTileArt|printCpa)/, [CPA, CPAT, CPAN, CPAC]],
   [/^src\/shared\/decision\/(flowTemplates|flowGeometry)/, [FLOW, MST, TSP, ROUTE]],
   [/^src\/shared\/decision\/(flow|FlowTileArt|cutCurve)/, [FLOW]],
   [/^src\/shared\/decision\/mst/, [MST]],

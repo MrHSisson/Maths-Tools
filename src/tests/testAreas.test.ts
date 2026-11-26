@@ -56,7 +56,7 @@ describe("test areas", () => {
   });
   it("a Decision topic's files map to the Decision tools they can affect", () => {
     const T = "src/tools/Decision/";
-    expect(toolFilter(["src/shared/decision/cpaSolve.ts"])).toEqual([T + "CpaNetworks.tsx", T + "CpaTimes.tsx", T + "CriticalPath.tsx"]);
+    expect(toolFilter(["src/shared/decision/cpaSolve.ts"])).toEqual([T + "CpaChanges.tsx", T + "CpaNetworks.tsx", T + "CpaTimes.tsx", T + "CriticalPath.tsx"]);
     expect(toolFilter(["src/shared/decision/flowSolve.ts"])).toEqual([T + "NetworkFlows.tsx"]);
     expect(toolFilter(["src/shared/decision/dimSolve.ts"])).toEqual(["src/tools/FurtherMechanics/DimensionalAnalysis.tsx"]);
     // the graph tools build on two flow files, so those run the graph tools and the graph tests as well
