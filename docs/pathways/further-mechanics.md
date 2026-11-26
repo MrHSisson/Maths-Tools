@@ -1,6 +1,6 @@
 # Further Mechanics (AQA 7367 MA–ME)
 - **Status:** building (Dimensional Analysis, Work Done, Energy, Power and Elastic Strings are live on the hub; flashcards are live; reviews and later passes remain)
-- **Updated:** 2026-11-22
+- **Updated:** 2026-11-25
 
 ## Intention
 A place for every chapter of the AQA Further Maths mechanics option (MA Dimensional analysis, MB Momentum and collisions, MC Work, energy and power, MD Circular motion, ME Centres of mass and moments), built on the specification, so that teachers can practise exactly what the A-level and AS papers examine. The questions are a mix: generators for the skills that vary by numbers (as in the maths tools) and exam-style chains of parts, a picture per part, a mark scheme and stepped working (as in the Decision tools). The current spec only has about eight years of papers, so each statement is linked back to the legacy AQA M1 to M3 papers (and Edexcel M3 and M4 as extra material), which are a much deeper bank to take question shapes from.
@@ -8,6 +8,7 @@ A place for every chapter of the AQA Further Maths mechanics option (MA Dimensio
 The space is Developing-tools only until a chapter is ready; a chapter goes live on its own when its tool does.
 
 ## Progress
+- 2026-11-25. **The hub page was redesigned** (shared with Decision Maths): one card per tool with its skills as plain rows and the specification it covers underneath, A2 on its own line, a "Not built yet" card for uncovered statements, and the older-papers links hidden (`SHOW_OLDER_PAPERS`). The legacy M2 / D1 labels sit in a Developing-tools-only drawer until the older specification is built out as its own part.
 - 2026-11-22. **All four Work, Energy and Power tools are live on the hub** (`enabled: false` removed at Harry's request, before his own review). The review, a real phone, tablet and printer check and the dashboard Review status are still to do and now matter more: they are checks on live tools.
 - 2026-11-22. **The remaining MC gaps are built.** Energy bars (D14) as an optional working picture in Energy and Elastic; Elastic gained a smooth slope, two strings to two fixed points (A2) and a Show That switch; Force and Speed gained a train with coaches and, at A2, work and power from vectors (S63). What remains for MC: Depth and Teach material, calibration, the real phone / tablet / printer check, review and go-live, and the exam-style pass.
 - 2026-11-22. **Gaps closed in Work Done and Energy.** Several Forces has the slope setting (S97), Variable Force has a stopping-distance ask (a quadratic, a cube root or the cubic solved numerically: S69), and the Work-Energy Principle has a rough slope with friction (A2, including projection up it and finding μ) and the pulley case. Still open: energy-bar pictures (D14), printing, calibration, Depth and Teach material.

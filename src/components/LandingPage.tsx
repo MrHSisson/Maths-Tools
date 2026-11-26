@@ -187,6 +187,13 @@ const categories = CATEGORIES.map((category) => ({
   ...(CATEGORY_THEMES[category.name] ?? DEFAULT_THEME),
 }));
 
+// A hub (Decision Maths, Further Mechanics) is a tool that other tools name as their `hub`. Its card is double width (half of the four columns on a wide screen) and coloured.
+const HUB_IDS = new Set(CATEGORIES.flatMap(c => c.tools).flatMap(t => (t.hub ? [t.hub] : [])));
+const HUB_COLOURS: Record<string, string> = {
+  'decision-overview': 'from-emerald-700 to-teal-600',
+  'further-mechanics': 'from-indigo-800 to-blue-700',
+};
+
 // The A-Level tab shows Decision Maths and Further Mechanics (each is one hub card) side by side under one "Further Maths" heading.
 const FURTHER_MATHS = ['Decision Mathematics', 'Further Mechanics'];
 {
@@ -516,6 +523,21 @@ export default function LandingPage(): JSX.Element {
                     // they're clickable for testing and flagged with a DEV badge.
                     const isDevTool = tool.enabled === false;
                     const open = infoId === tool.id;
+                    if (HUB_IDS.has(tool.id)) {
+                      return (
+                        <button key={tool.id} onClick={() => openTool(tool.id, tool.path)}
+                          className={`group col-span-2 flex min-h-[96px] items-center justify-between gap-4 rounded-2xl bg-gradient-to-br ${HUB_COLOURS[tool.id] ?? 'from-blue-900 to-blue-700'} px-5 py-4 text-left text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift sm:min-h-[112px] sm:px-6 md:col-span-3 xl:col-span-2`}>
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2">
+                              <span className="text-xl font-semibold leading-tight sm:text-2xl">{tool.name}</span>
+                              {isDevTool && <span className="shrink-0 rounded border border-white/40 bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">Dev</span>}
+                            </span>
+                            <span className="mt-1 line-clamp-2 block text-sm leading-snug text-white/80">{tool.description}</span>
+                          </span>
+                          <ChevronRight size={26} className="shrink-0 text-white/70 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+                        </button>
+                      );
+                    }
                     return (
                     <div
                       key={tool.id}
