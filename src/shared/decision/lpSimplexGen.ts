@@ -55,11 +55,16 @@ export function nice(run: Run, level: number): boolean {
 
 // ── Designing a problem from its optimum ─────────────────────────────────────
 interface Base { A: number[][]; b: number[]; c: number[]; xs: number[] }
+/** a constraint whose limit is smaller than one of its own coefficients (10x + 50y ≤ 40: not even one y fits) reads as a mistake, so the design never has one */
+function limitBelowCoefficient(A: number[][], b: number[]): boolean {
+  return A.some((r, i) => r.some((v) => v > b[i]));
+}
 function designBase(n: number, m: number, pool: number[], degenerate = false, mixed = false): Base | null {
   const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
-  const kx = ri(1, Math.min(n, m));
+  // the optimum uses at least two of the variables most of the time: a plan with only one kind (x, 0, 0) is the occasional question, not the usual one
+  const kx = Math.min(n, m) >= 2 && Math.random() >= 0.12 ? ri(2, Math.min(n, m)) : 1;
   const basicX = shuffled(Array.from({ length: n }, (_, j) => j)).slice(0, kx);
   const xs = Array.from({ length: n }, (_, j) => (basicX.includes(j) ? ri(1, 9) : 0));
   const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, kx);
@@ -77,6 +82,7 @@ function designBase(n: number, m: number, pool: number[], degenerate = false, mi
     for (let j = 0; j < n; j++) if (!basicX.includes(j)) c[j] = -ri(1, 6);
   }
   if (c.some((v, j) => (mixed && !basicX.includes(j) ? false : v < 1)) || b.some((v) => v <= 0)) return null;
+  if (limitBelowCoefficient(A, b)) return null;
   return { A, b, c, xs };
 }
 
@@ -116,6 +122,7 @@ function designWhole(n: number, m: number, pool: number[]): Base | null {
     return Math.floor(at + 1e-9) + ri(1, 4);
   });
   if (b.some((v) => v <= 0)) return null;
+  if (limitBelowCoefficient(A, b)) return null;
   return { A, b, c, xs: x.map((v) => Math.floor(v[0] / v[1])) };
 }
 
