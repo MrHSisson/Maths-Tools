@@ -275,7 +275,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   let at = 0;
   // each level has its own tableau: Level 1 the first pivot and the optimal tableau; Level 2 a pivot part-way through and a tableau that is not yet optimal
   if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : level === 2 ? ri(1, Math.max(1, run.steps.length - 1)) : ri(0, Math.min(1, run.steps.length - 1));
-  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? Math.max(1, run.tabs.length - 2) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
+  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);

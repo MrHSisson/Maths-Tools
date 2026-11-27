@@ -52,7 +52,7 @@ function Tableau({ b, colour, size = "0.85em", hang = false }: { b: SxTabView; c
       </thead>
       <tbody>
         {b.rows.map((r, i) => (
-          <tr key={i} style={{ borderBottom: i === 0 ? `2px solid ${colour}` : undefined }}>
+          <tr key={i} style={{ borderBottom: i === 0 && !b.plain ? `2px solid ${colour}` : undefined }}>
             {b.label && <td style={{ ...cell, textAlign: "left", fontWeight: 600 }}>{b.label[i] ? <Tex t={b.label[i]} /> : null}</td>}
             {r.map((v, j) => {
               const isPivot = b.pivot && b.pivot[0] === i && b.pivot[1] === j;

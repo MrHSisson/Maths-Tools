@@ -356,6 +356,7 @@ function storyTable(d: SxData): SxTabView {
   const dec = (v: number, scale: [number, number]): string => String(Math.round(((v * scale[0]) / scale[1]) * 10000) / 10000);
   return {
     k: "tab",
+    plain: true,
     head: [...s.items.slice(0, n).map((it) => `\\text{${it.plural}}`), "\\text{Available}"],
     labelHead: "",
     label: [...sp.cons.map((_, i) => `\\text{${cap(s.res[i].of)} (${s.res[i].unit})}`), "\\text{Profit per item (£)}"],

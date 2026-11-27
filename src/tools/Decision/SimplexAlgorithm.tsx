@@ -119,7 +119,7 @@ export default function App() {
           setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
           pivot: ["Two variables, the first pivot", "Three variables, a pivot part-way through the run", "A negative right-hand side to start"],
           solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "A change of form first: minimise, ≥, a lower bound, an equality"],
-          interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that is not yet optimal", "The problem the tableau shows"],
+          interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that may or may not be optimal", "The problem the tableau shows"],
           practical: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Rounding to the nearest breaks a constraint"],
           default: ["One question"],
         },
