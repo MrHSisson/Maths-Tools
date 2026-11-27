@@ -229,7 +229,7 @@ describe("random draws, Levels 2 and 3 (seeded)", () => {
           const result = rows.find((r) => r.k === "result")!.t;
           expect(result).toBe(constraintTex(c, d.vars.map((v) => v.sym)));
           const texRows = rows.filter((r) => r.k === "tex").map((r) => r.t);
-          // working that ends on a line of TeX ends on the tidy constraint (either-or by common units writes it as its last tex row too)
+          // working that ends on a line of TeX ends on the tidy constraint
           expect(texRows[texRows.length - 1]).toBe(result);
           expect(steps.slice(0, -1).some((st) => st.caption.startsWith("Common slip"))).toBe(false);
           if (d.slip) expect(steps[steps.length - 1].caption).toMatch(/^Common slip/);
