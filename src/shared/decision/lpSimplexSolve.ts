@@ -369,5 +369,6 @@ export function questionBlocks(p: DecisionProblem): SxBlock[] {
   if (!d) return [];
   if (d.kind === "setup" || d.kind === "solve" || d.kind === "practical") return d.table && d.story ? [storyTable(d)] : [];
   const run = runSpec(d.spec);
-  return [tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run))];
+  const tb = tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run));
+  return d.kind === "interpret" && d.table && d.story ? [storyTable(d), tb] : [tb];
 }
