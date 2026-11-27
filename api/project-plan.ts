@@ -9,9 +9,9 @@ const json = (body: unknown, status = 200) => Response.json(body, {
 
 function authorised(req: Request) {
   if (hasDevSession(req)) return null;
-  const key = process.env.PROJECT_PLAN_KEY;
+  const key = process.env.DEVELOPING_TOOLS_API_KEY;
   if (!key && !process.env.DEVELOPING_TOOLS_PASSWORD) return json({ error: "The project plan service is not configured." }, 503);
-  return matchesSecret(req.headers.get("x-project-plan-key"), key) ? null : json({ error: "Not authorised." }, 401);
+  return matchesSecret(req.headers.get("x-admin-key"), key) ? null : json({ error: "Not authorised." }, 401);
 }
 
 async function read(forWrite = false): Promise<{ plan: ProjectPlan; etag?: string }> {

@@ -14,7 +14,7 @@ Give Harry one place to see what Maths Tools is trying to achieve, what needs do
 
 ### Before merging
 - [ ] Check the branch against the latest main and get CI green.
-- [ ] Confirm the production browser password and private Blob storage are configured. Give Codex and Claude the new machine credentials through their approved secret storage and verify read access from both environments. `DEVELOPING_TOOLS_API_KEY` is for scripts that use deck and tool notes. `PROJECT_PLAN_KEY` is for the live plan. Keep them separate from the browser password.
+- [ ] Confirm the production browser password and private Blob storage are configured. Give Codex and Claude the same machine key through their private secret storage and verify read access from both environments. `DEVELOPING_TOOLS_API_KEY` covers the live plan, deck scripts and tool notes. Keep it separate from the browser password.
 - [ ] Harry checks the preview once using the normal Developing tools prompt. Open Work Done, confirm its plan opens without another prompt, then confirm Admin and the deck editor open in the same session.
 
 ### After deployment

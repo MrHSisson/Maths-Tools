@@ -17,14 +17,14 @@ const plan = { ...emptyPlan, nodes: [tool, check], reviews: [{ item: check.id, p
 function request(body?: unknown, key = "test-key") {
   return new Request("http://localhost/api/project-plan", {
     method: body ? "POST" : "GET",
-    headers: { "x-project-plan-key": key },
+    headers: { "x-admin-key": key },
     body: body ? JSON.stringify(body) : undefined,
   });
 }
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.stubEnv("PROJECT_PLAN_KEY", "test-key");
+  vi.stubEnv("DEVELOPING_TOOLS_API_KEY", "test-key");
 });
 afterEach(() => vi.unstubAllEnvs());
 
