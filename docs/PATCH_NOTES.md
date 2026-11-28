@@ -31,6 +31,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-11-28 — Project Plan cards and checklists
+
+- Open the same card from the overview or the full tree.
+- Tick tasks in compact rows. Find edit, move, pin and review in the card menu.
+- Write overviews as up to three short bullets.
+
+Agent: Codex
+Notes: Project Plan Phase 2 (Codex), Maths Tools — Build Log.
+
 ## 2026-11-26 — Sharing in a Ratio: one textbook-style book sheet instead of three worksheets
 
 Branch `claude/practical-edison-cm3toa`. Area: `src/decks/bookSheet.ts` (new), `src/decks/{types,worksheets,deckChecks,SlideCanvas}`, `src/tests/bookSheet.test.ts`, `specs/decks/ratio-sharing.build.ts`, `src/decks/data/ratio-sharing.json`, `docs/reference/decks.md`.
