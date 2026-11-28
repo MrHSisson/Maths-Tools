@@ -99,6 +99,12 @@ describe("the picture", () => {
     expect(h.slice(0, h.indexOf("data-key"))).not.toContain("5x + 6y ≤ 50");
     expect(count(h, "data-vertex")).toBe(4);
     expect(h).toContain("(6.25, 3.125)");
+    // by default the coordinates wait for a hover, tap or focus (and are in a title for screen readers); print asks for them always
+    expect(h).toContain("<title>(6.25, 3.125)</title>");
+    expect(count(h, 'class="vl"')).toBe(4);
+    const always = html({ lines: FERRY, vertices: regionVertices(FERRY), labels: "always" });
+    expect(count(always, 'class="vl"')).toBe(0);
+    expect(always).toContain("(6.25, 3.125)");
     expect(count(html({ lines: FERRY, drawn: 1 }), "data-line=")).toBe(1);
   });
   it("draws the sliding objective lines, the arrow, the whole points and rings the best one", () => {

@@ -26,6 +26,8 @@ export interface GraphView {
   /** one point picked out (the optimum) */
   mark?: Pt;
   grid?: boolean;
+  /** corner coordinates: shown when the point is hovered, tapped or focused (the default), or always (print, and a step that is about them) */
+  labels?: "hover" | "always";
   /** pass the same window to every step of a question; by default it is worked out from the lines */
   win?: GWin;
 }
@@ -66,6 +68,7 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >
       <defs>
+        <style>{`.v${uid} .vl{opacity:0;transition:opacity .12s}.v${uid}:hover .vl,.v${uid}:focus .vl,.v${uid}:active .vl{opacity:1}.v${uid}{outline:none;cursor:default}`}</style>
         <marker id={`arrow${uid}`} markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill={OBJ} /></marker>
         <clipPath id={`clip${uid}`}><rect x={ML} y={MT} width={PW} height={PH} /></clipPath>
       </defs>
@@ -156,10 +159,13 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
           {view.vertices.map((v, i) => {
             const [px, py] = dot(v);
             const left = px > ML + PW * 0.7;
+            const always = view.labels === "always";
             return (
-              <g key={i} data-vertex="">
+              <g key={i} data-vertex="" className={always ? undefined : `v${uid}`} tabIndex={always ? undefined : 0}>
+                <title>{fmtPt(v)}</title>
+                {!always && <circle cx={px} cy={py} r="16" fill="transparent" />}
                 <circle cx={px} cy={py} r="4.5" fill={INK} />
-                <text x={left ? px - 8 : px + 8} y={py - 8} textAnchor={left ? "end" : "start"} stroke="#fff" strokeWidth="3" paintOrder="stroke">{fmtPt(v)}</text>
+                <text className={always ? undefined : "vl"} x={left ? px - 8 : px + 8} y={py - 8} textAnchor={left ? "end" : "start"} stroke="#fff" strokeWidth="3" paintOrder="stroke">{fmtPt(v)}</text>
               </g>
             );
           })}
