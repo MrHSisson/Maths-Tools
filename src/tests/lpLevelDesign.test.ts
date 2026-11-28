@@ -94,13 +94,13 @@ describe("The Simplex tool", () => {
       expect(d.startForm).toBe("standard");
     }
   });
-  it("One pivot: Level 1 the first pivot; Level 2 part-way through the run; Level 3 a start from a negative right-hand side or an equation", () => {
+  it("One iteration starts from the initial tableau, or part-way through the run when asked; a ≥ start has a negative right-hand side", () => {
     for (let i = 0; i < 40; i++) {
       expect(generateSimplex(1, { ...ALL, kind: "pivot" }).data.at).toBe(0);
-      const p2 = generateSimplex(2, { ...ALL, kind: "pivot" }).data;
+      const p2 = generateSimplex(2, { ...ALL, kind: "pivot", startAt: "later", forms: ["standard"] }).data;
       expect(p2.at).toBeGreaterThanOrEqual(1);
       expect(p2.startForm).toBe("standard");
-      const p3 = generateSimplex(3, { ...ALL, kind: "pivot", nonStandard: true }).data;
+      const p3 = generateSimplex(2, { ...ALL, kind: "pivot", nonStandard: true, forms: ["ge"] }).data;
       expect(runSpec(p3.spec).iters[0].start).toBe(true);
     }
   });

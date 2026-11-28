@@ -249,6 +249,8 @@ export interface SxOptions {
   forms: string[];
   /** Level 3 wording of a situation: the kinds of limit that may be drawn besides plain use ("percent" and "either"); at least one limit in the problem is one of them */
   hard?: string[];
+  /** One iteration: the tableau the question gives is the initial one (the default), or one part-way through the run */
+  startAt?: "initial" | "later";
   /** a change of form is always needed first (Non-standard problems, at any level; One pivot at Level 3). Set up and Solve never change form. */
   nonStandard?: boolean;
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
@@ -294,7 +296,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
     // a change of form is always needed here: a standard-form start is never drawn, whatever is asked
     const changes = (o.forms as string[]).filter((f) => f !== "standard") as StartForm[];
     // a tableau is all that One pivot shows, so only a ≥ constraint or an equality (a start that is not at the origin) makes it a Level 3 question
-    const usable = kind === "pivot" ? changes.filter((f) => f === "ge" || f === "eq") : changes;
+    const usable = changes;
     const allowed = usable.length ? usable : kind === "pivot" ? (["ge", "eq"] as StartForm[]) : (["min", "ge", "lower", "eq"] as StartForm[]);
     form = pick(allowed);
   }
@@ -328,7 +330,8 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // the tableau the question gives
   let at = 0;
   // each level has its own tableau: Level 1 the first pivot and the optimal tableau; Level 2 a pivot part-way through and a tableau that is not yet optimal
-  if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : level === 2 ? ri(1, Math.max(1, run.steps.length - 1)) : ri(0, Math.min(1, run.steps.length - 1));
+  // One iteration starts from the initial tableau, or (a standard-form problem only) from one part-way through the run
+  if (kind === "pivot") at = form !== "standard" || o.startAt !== "later" ? 0 : ri(1, Math.max(1, run.steps.length - 1));
   else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);

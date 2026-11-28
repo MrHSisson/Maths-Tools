@@ -389,9 +389,9 @@ describe("each level has its own questions", () => {
       expect(q.data.story).toBeTruthy();
     }
   });
-  it("Level 2 pivot is part-way through the run, and Level 2 read a tableau is optimal or not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {
+  it("One iteration with Start From later is part-way through the run, and Level 2 read a tableau is optimal or not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {
     for (let i = 0; i < 40; i++) {
-      const p2 = generateSimplex(2, OPT("pivot"));
+      const p2 = generateSimplex(2, OPT("pivot", { startAt: "later", forms: ["standard"] }));
       expect(p2.data.at).toBeGreaterThanOrEqual(1);
       const i2 = generateSimplex(2, OPT("interpret"));
       const r2 = runSpec(i2.data.spec);
