@@ -14,11 +14,18 @@ const SUB_TOOLS = [
   { key: "setup", label: "Set up the tableau", levels: 3, blurb: "Slack variables, equations and the initial tableau" },
   { key: "solve", label: "Solve a problem", levels: 3, blurb: "The whole simplex algorithm, or one iteration of it" },
   { key: "forms", label: "Non-standard problems", levels: 3, blurb: "Lower bounds, minimise, ≥ constraints and equalities" },
-  { key: "interpret", label: "Read a tableau", levels: 3, blurb: "Optimal? The values, the binding constraints" },
+  { key: "interpret", label: "Read a tableau", levels: 2, blurb: "Optimal? The values, the binding constraints" },
   { key: "practical", label: "Is it practical?", levels: 3, blurb: "Whole numbers: why the optimum fails, and the best practical plan" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
+
+/** one of the ticked sizes ("3x3"), as [variables, constraints] */
+function pickSize(sizes: string[]): [number, number] {
+  const z = sizes[Math.floor(Math.random() * sizes.length)] ?? "2x2";
+  const [a, b] = z.split("x").map(Number);
+  return [a, b];
+}
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
@@ -26,19 +33,24 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   // Non-standard problems: each level is its own change of form, set up or solved. (Level 1 a lower bound, Level 2 a minimise or a ≥ constraint, Level 3 an equality.)
   const nonStandard = key === "forms";
   // Solve can stop after one iteration (a pivot question); Non-standard problems can stop at the set-up or the first pivot
-  const kind: SxKind = nonStandard ? (o.sxThrough === "setup" ? "setup" : o.sxThrough === "pivot" ? "pivot" : "solve") : key === "solve" && o.sxWork === "one" ? "pivot" : key === "interpret" && level === 3 ? "reverse" : (key as SxKind);
+  const kind: SxKind = nonStandard ? (o.sxThrough === "setup" ? "setup" : o.sxThrough === "pivot" ? "pivot" : "solve") : key === "solve" && o.sxWork === "one" ? "pivot" : key === "interpret" && level === 2 ? "reverse" : (key as SxKind);
   const changes = nonStandard;
   const FORMS_BY_LEVEL: Record<number, string[]> = { 1: ["lower"], 2: ["min", "ge"], 3: ["eq"] };
   const levelForms = FORMS_BY_LEVEL[level] ?? ["ge"];
   const pickedForms = ticked(o.sxForms, levelForms.join(",")).filter((f) => levelForms.includes(f));
   // a situation has at most three limits, so at Level 3 it is drawn with three constraints
-  const contexts = kind === "pivot" ? ["bare"] : nonStandard ? ticked(o.sxCtxF, "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
+  const contexts = kind === "pivot" ? ["bare"] : nonStandard ? ticked(o.sxCtxF, "bare") : key === "practical" ? ticked(o.sxCtxP, level === 2 ? "story,table" : "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
   const wordsAtL3 = !contexts.includes("bare");
-  const q = generateSimplex(level, {
+  // Read a tableau: its own size is drawn from the ticked ones, and the problem is designed and judged at that size (two variables is Level 1's, three Level 2's, four Level 3's)
+  const readSize = key === "interpret" ? pickSize(ticked(o.sxSizeR, "2x2,3x3")) : undefined;
+  const design = readSize ? (readSize[0] === 2 ? 1 : readSize[0] === 3 ? 2 : 3) : level;
+  const q = generateSimplex(design, {
     kind,
+    anySize: !!readSize,
+    tableau: key === "interpret" && kind === "interpret" ? ((o.sxTableau as "optimal" | "part" | "either" | undefined) ?? "either") : undefined,
     vars: [],
     cons: [],
-    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3 && !nonStandard)),
+    sizes: readSize ? [readSize] : ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3 && !nonStandard)),
     hard: level === 3 && (key === "setup" || key === "solve") ? ticked(o.sxHard, "percent,either") : undefined,
     nonStandard: changes,
     forms: !changes ? ["standard"] : pickedForms.length ? pickedForms : levelForms,
@@ -62,14 +74,14 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <SxSolution 
 const OPTIONS: ShellOption[] = [
   {
     key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Level 1 has two variables, Level 2 has three, and Level 3 has three or four. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
-    forLevels: [1, 3], multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "3x3"),
+    forSubTools: ["setup", "solve", "forms", "practical"], forLevels: [1, 3], multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "3x3"),
     choices: [
       { value: "2x2", label: "2 × 2", forLevels: [1] }, { value: "2x3", label: "2 × 3", forLevels: [1] }, { value: "3x3", label: "3 × 3", forLevels: [3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
     ],
   },
   {
     key: "sxContext", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation. Level 1 always gives them, Levels 2 and 3 form them by default, and a table of the data is Level 2 only.",
-    forSubTools: ["setup", "solve", "practical"], forSubToolLevels: { setup: [2, 3], solve: [2, 3], practical: [2, 3] }, multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : lv === 3 ? "story" : "bare"),
+    forSubTools: ["setup", "solve"], forSubToolLevels: { setup: [2, 3], solve: [2, 3] }, multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : lv === 3 ? "story" : "bare"),
     choices: [{ value: "bare", label: "Inequalities", forLevels: [3] }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table", forLevels: [2] }],
   },
   {
@@ -89,6 +101,21 @@ const OPTIONS: ShellOption[] = [
     key: "sxStart", label: "Start From", info: "How far into the run the tableau the question gives is.",
     forSubTools: ["solve"], when: { key: "sxWork", values: ["one"] }, defaultFor: () => "initial",
     choices: [{ value: "initial", label: "The Initial Tableau" }, { value: "later", label: "A Later Tableau" }],
+  },
+  {
+    key: "sxCtxP", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation, in sentences or a table. Level 2 is a situation by default.",
+    forSubTools: ["practical"], multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : "bare"),
+    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
+  },
+  {
+    key: "sxSizeR", label: "Size", info: "How many variables and constraints the tableau has. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
+    forSubTools: ["interpret"], multi: true, defaultFor: () => "2x2,3x3",
+    choices: [{ value: "2x2", label: "2 × 2" }, { value: "3x3", label: "3 × 3" }, { value: "4x4", label: "4 × 4*" }],
+  },
+  {
+    key: "sxTableau", label: "Which Tableau", info: "Which tableau of the run the question gives. Reading a tableau that is not yet optimal means saying why, and which column comes next.",
+    forSubTools: ["interpret"], forLevels: [1], defaultFor: () => "either",
+    choices: [{ value: "either", label: "Either" }, { value: "optimal", label: "The Optimal Tableau" }, { value: "part", label: "One Not Yet Optimal" }],
   },
   {
     key: "sxCtxF", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation, such as a minimum amount that must be used or a number that must be made. A minimise has no natural situation, so it is always given as inequalities.",
@@ -168,7 +195,7 @@ export default function App() {
           setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
           solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
           forms: ["A lower bound", "A minimise, or a ≥ constraint", "An equality"],
-          interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that may or may not be optimal", "The problem the tableau shows"],
+          interpret: ["Read a tableau: is it optimal, the values, the binding constraints", "Write the problem the tableau shows"],
           practical: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Rounding to the nearest breaks a constraint"],
           default: ["One question"],
         },

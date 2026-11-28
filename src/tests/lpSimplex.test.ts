@@ -191,6 +191,16 @@ describe("whole numbers: is it practical?", () => {
     const m = generateSimplex(2, OPT("solve", { forms: ["min"], nonStandard: true, context: ["story"], sizes: [[3, 3]] }));
     expect(m.data.story).toBeUndefined();
   });
+  it("Read a tableau: Which Tableau gives the optimal one, or one not yet optimal, at any size", () => {
+    for (const [n, m] of [[2, 2], [3, 3], [4, 4]] as Array<[number, number]>) for (let i = 0; i < 15; i++) {
+      const base = { anySize: true, sizes: [[n, m]] as Array<[number, number]>, forms: ["standard"], context: ["bare"] };
+      const o = generateSimplex(n - 1, OPT("interpret", { ...base, tableau: "optimal" }));
+      expect(o.data.at).toBe(runSpec(o.data.spec).tabs.length - 1);
+      const p = generateSimplex(n - 1, OPT("interpret", { ...base, tableau: "part" }));
+      expect(p.data.at).toBeGreaterThanOrEqual(1);
+      expect(p.data.at).toBeLessThan(runSpec(p.data.spec).tabs.length - 1);
+    }
+  });
   it("degenerate cases are never drawn unless they are allowed", () => {
     for (const level of [2, 3]) for (let i = 0; i < 150; i++) {
       // (an equality is built through the optimum, so it is degenerate by design and is left out)
@@ -394,10 +404,14 @@ describe("an equality and a lower bound handled as rows", () => {
 });
 
 describe("each level has its own questions", () => {
-  it("Level 2 setup, solve and practical are always a situation in words or a table", () => {
-    for (const kind of ["setup", "solve", "practical"] as SxKind[]) for (let i = 0; i < 25; i++) {
+  it("Level 2 setup and solve are always a situation in words or a table; Is it practical? follows its Wording option", () => {
+    for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 25; i++) {
       const q = generateSimplex(2, OPT(kind, { context: ["bare", "story", "table"], forms: ["standard"] }));
       expect(q.data.story).toBeTruthy();
+    }
+    for (let i = 0; i < 15; i++) {
+      expect(generateSimplex(2, OPT("practical", { context: ["story", "table"], forms: ["standard"] })).data.story).toBeTruthy();
+      expect(generateSimplex(2, OPT("practical", { context: ["bare"], forms: ["standard"] })).data.story).toBeUndefined();
     }
   });
   it("One iteration with Start From later is part-way through the run, and Level 2 read a tableau is optimal or not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {

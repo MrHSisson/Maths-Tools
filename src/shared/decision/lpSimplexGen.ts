@@ -267,6 +267,10 @@ export interface SxOptions {
   forms: string[];
   /** Level 3 wording of a situation: the kinds of limit that may be drawn besides plain use ("percent" and "either"); at least one limit in the problem is one of them */
   hard?: string[];
+  /** Read a tableau: which tableau of the run is given. Without this the level decides. */
+  tableau?: "optimal" | "part" | "either";
+  /** any number of variables up to four, whatever the level (Read a tableau draws its own size and judges it by that size) */
+  anySize?: boolean;
   /** One iteration: the tableau the question gives is the initial one (the default), or one part-way through the run */
   startAt?: "initial" | "later";
   /** a change of form is always needed first (Non-standard problems, at any level; One pivot at Level 3). Set up and Solve never change form. */
@@ -303,8 +307,8 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
   // each level has its own number of variables: two at Level 1, three at Level 2, three or four at Level 3
   const ownN = level === 1 ? [2] : level === 2 ? [3] : [3, 4];
-  const okN = (v: number): boolean => v >= 2 && v <= caps.n && ownN.includes(v);
-  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= caps.m);
+  const okN = (v: number): boolean => (o.anySize ? v >= 2 && v <= 4 : v >= 2 && v <= caps.n && ownN.includes(v));
+  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= (o.anySize ? 4 : caps.m));
   const fallback: [number, number] = level === 1 ? [2, 2] : [3, 3];
   const nChoices = o.vars.filter(okN);
   const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : fallback) : [nChoices.length ? pick(nChoices) : fallback[0], pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [fallback[1]])];
@@ -327,7 +331,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   let table = false;
   // Level 2 is always a situation in words or a table, never the bare inequalities
   const ctxList = o.context.length ? o.context : ["bare"];
-  const wordsOnly = level === 2 && !o.nonStandard && (kind === "setup" || kind === "solve" || kind === "practical");
+  const wordsOnly = level === 2 && !o.nonStandard && (kind === "setup" || kind === "solve");
   const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
   // a minimise has a mixed-sign cost, which has no situation: it is only ever drawn as inequalities
   const storyForm = form === "standard" || form === "lower" || form === "ge" || form === "eq";
@@ -352,7 +356,13 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // each level has its own tableau: Level 1 the first pivot and the optimal tableau; Level 2 a pivot part-way through and a tableau that is not yet optimal
   // One iteration starts from the initial tableau, or (a standard-form problem only) from one part-way through the run
   if (kind === "pivot") at = form !== "standard" || o.startAt !== "later" ? 0 : ri(1, Math.max(1, run.steps.length - 1));
-  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
+  else if (kind === "interpret" && o.tableau) {
+    // the tableau asked for: the optimal one, one before it (so it is not yet optimal), or either
+    const last = run.tabs.length - 1;
+    const early = last >= 2;
+    if (o.tableau === "part" && !early) return null;
+    at = o.tableau === "optimal" || (o.tableau === "either" && (!early || Math.random() < 0.5)) ? last : ri(1, last - 1);
+  } else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
