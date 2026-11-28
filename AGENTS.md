@@ -137,7 +137,7 @@ If a step cannot be done (no network to the dashboard, the planner tool is unava
 
 ## The floating project plan
 
-In Developing tools mode, use the floating project button on the left for the live plan. On laptop-sized screens, the panel docks beside a scaled view of the current page in a rounded frame. Tool pages open their checklist. Home and hubs open the project tree. Use the arrow to expand an item or its title to open the card. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Existing review requests are in the card menu. Only add a review request when Harry asks for one.
+In Developing tools mode, use the floating project button on the left for the live plan. On laptop-sized screens, the panel docks beside a scaled view of the current page in a rounded frame. Tool pages open their checklist. Home and hubs open the project tree. Use the arrow to expand an item or its title to open the card. The tree starts from the tool registry. Use Edit on an item to change its details, location or dependencies. Pin from the card menu. Existing review requests are in the card menu. Only add a review request when Harry asks for one.
 
 Use one action per task. Keep overviews to three short bullets at most. In Developments, record what changed and what comes next in plain language.
 

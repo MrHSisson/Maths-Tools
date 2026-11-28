@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools } from "./catalogue";
 import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
@@ -218,82 +218,87 @@ function Checklist({ children, plan, save, select, limit }: { children: PlanNode
   </>;
 }
 
-function NodeActions({ node, plan, save }: { node: PlanNode; plan: ProjectPlan; save: Save }) {
-  const [parent, setParent] = useState(node.parent ?? "");
+function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPlan; save: Save; close: () => void }) {
+  const [needs, setNeeds] = useState(node.needs);
   const [prerequisite, setPrerequisite] = useState("");
   const blocked = descendants(plan.nodes, node.id);
-  const siblings = plan.nodes.filter(candidate => candidate.parent === node.parent);
-  const index = siblings.findIndex(sibling => sibling.id === node.id);
+  const label = "grid gap-1 text-sm";
+  const disclosure = "min-h-11 cursor-pointer py-3 text-sm font-medium";
 
-  function moveBy(offset: number) {
-    const other = siblings[index + offset];
-    if (!other) return;
-    const nodes = [...plan.nodes];
-    const from = nodes.indexOf(node);
-    const to = nodes.indexOf(other);
-    [nodes[from], nodes[to]] = [nodes[to], nodes[from]];
-    void save({ ...plan, nodes });
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const title = String(data.get("title")).trim();
+    const overview = String(data.get("overview")).trim();
+    const lines = overviewLines(overview);
+    if (overview !== node.overview && (lines.length > 3 || lines.some(line => line.length > 120))) {
+      const field = form.elements.namedItem("overview") as HTMLTextAreaElement;
+      field.setCustomValidity("Use up to three lines, 120 characters each.");
+      field.reportValidity();
+      return;
+    }
+    const classification = branchClassifications.find(candidate => candidate === data.get("type"));
+    const parent = String(data.get("parent")) || null;
+    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs }))) close();
   }
 
-  return <details className="border-b border-slate-200 py-2">
-    <summary className="cursor-pointer py-2 text-sm font-medium">Edit, move or link</summary>
-    <div className="mt-3 space-y-3">
-      <form key={JSON.stringify([node.title, node.overview, node.classification])} className="grid gap-2" onSubmit={event => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        const title = String(data.get("title")).trim();
-        const overview = String(data.get("overview")).trim();
-        const lines = overviewLines(overview);
-        if (overview !== node.overview && (lines.length > 3 || lines.some(line => line.length > 120))) {
-          const field = event.currentTarget.elements.namedItem("overview") as HTMLTextAreaElement;
-          field.setCustomValidity("Use up to three lines, 120 characters each.");
-          field.reportValidity();
-          return;
-        }
-        const classification = branchClassifications.find(candidate => candidate === data.get("type"));
-        if (title) void save(updateNode(plan, node.id, { title, overview, classification }));
-      }}>
-        <label className="grid gap-1 text-sm">Name<input className={input} name="title" defaultValue={node.title} required maxLength={120} /></label>
-        {node.kind === "branch" && <label className="grid gap-1 text-sm">Item type
-          <select className={input} name="type" defaultValue={node.classification ?? "branch"}>
-            <ClassificationOptions />
+  return <form className="grid min-w-0 gap-3 py-2" onSubmit={submit}>
+    <label className={label}>Name
+      <input className={input} name="title" defaultValue={node.title} required maxLength={120} autoFocus />
+    </label>
+    <label className={label}>Overview
+      <textarea className={input} name="overview" defaultValue={node.overview} rows={3} maxLength={500} onInput={event => event.currentTarget.setCustomValidity("")} />
+      <span className="text-xs text-slate-600">Up to three short lines, one bullet per line.</span>
+    </label>
+    {node.kind === "branch" && <label className={label}>Item type
+      <select className={input} name="type" defaultValue={node.classification ?? "branch"}>
+        <ClassificationOptions />
+      </select>
+    </label>}
+    <div className="divide-y divide-slate-200 border-y border-slate-200">
+      <details>
+        <summary className={disclosure}>Change location</summary>
+        <label className={`${label} pb-3`}>Move under
+          <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? ""}>
+            <option value="">Project tree</option>
+            {plan.nodes.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
+              <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
+            ))}
           </select>
-        </label>}
-        <label className="grid gap-1 text-sm">Overview
-          <textarea className={input} name="overview" defaultValue={node.overview} rows={3} maxLength={500} onInput={event => event.currentTarget.setCustomValidity("")} />
-          <span className="text-xs text-slate-600">Up to three short lines, one bullet per line.</span>
         </label>
-        <button className={`${control} justify-self-start`}>Save</button>
-      </form>
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
-        <button className={iconButton} aria-label="Move earlier" disabled={index <= 0} onClick={() => moveBy(-1)}><ArrowUp size={17} /></button>
-        <button className={iconButton} aria-label="Move later" disabled={index === siblings.length - 1} onClick={() => moveBy(1)}><ArrowDown size={17} /></button>
-        <select className={`${input} max-w-full flex-1`} aria-label="Move under" value={parent} onChange={event => setParent(event.target.value)}>
-          <option value="">Project map</option>
-          {plan.nodes.filter(candidate => !blocked.has(candidate.id)).map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.title}</option>)}
-        </select>
-        <button className={control} disabled={(node.parent ?? "") === parent} onClick={() => void save(updateNode(plan, node.id, { parent: parent || null }))}>Move</button>
-      </div>
-      <div className="border-t border-slate-200 pt-3">
-        <p className="mb-2 text-sm font-medium">Depends on</p>
-        <ul className="space-y-1">
-          {node.needs.map(id => <li key={id} className="flex items-center gap-2 text-sm">
-            {plan.nodes.find(candidate => candidate.id === id)?.title}
-            <button className={iconButton} aria-label={`Remove dependency on ${plan.nodes.find(candidate => candidate.id === id)?.title}`} onClick={() => void save(updateNode(plan, node.id, { needs: node.needs.filter(value => value !== id) }))}><X size={14} /></button>
-          </li>)}
+      </details>
+      <details>
+        <summary className={disclosure}>Dependencies{needs.length ? ` (${needs.length})` : ""}</summary>
+        <ul className="divide-y divide-slate-200">
+          {needs.map(id => {
+            const dependency = plan.nodes.find(candidate => candidate.id === id);
+            return <li key={id} className="flex items-center justify-between gap-2 text-sm">
+              <span className="min-w-0 break-words">{dependency?.title}</span>
+              <button type="button" className={iconButton} aria-label={`Remove dependency on ${dependency?.title}`}
+                onClick={() => setNeeds(current => current.filter(value => value !== id))}><X size={14} /></button>
+            </li>;
+          })}
         </ul>
-        <div className="flex gap-2">
+        <div className="flex gap-2 pb-3">
           <select className={`${input} flex-1`} aria-label="Prerequisite" value={prerequisite} onChange={event => setPrerequisite(event.target.value)}>
             <option value="">Choose an item</option>
-            {plan.nodes.filter(candidate => candidate.id !== node.id && !node.needs.includes(candidate.id)).map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.title}</option>)}
+            {plan.nodes.filter(candidate => candidate.id !== node.id && !needs.includes(candidate.id)).map(candidate => (
+              <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
+            ))}
           </select>
-          <button className={control} disabled={!prerequisite} onClick={async () => {
-            if (await save(updateNode(plan, node.id, { needs: [...node.needs, prerequisite] }))) setPrerequisite("");
-          }}>Link</button>
+          <button type="button" className={control} disabled={!prerequisite} onClick={() => {
+            setNeeds(current => [...current, prerequisite]);
+            setPrerequisite("");
+          }}>Add</button>
         </div>
-      </div>
+      </details>
     </div>
-  </details>;
+    <div className="flex items-center gap-2">
+      <button type="submit" className="min-h-11 rounded-lg bg-teal-800 px-4 text-sm font-semibold text-white hover:bg-teal-900">Save</button>
+      <button type="button" className="min-h-11 px-3 text-sm text-slate-700 hover:underline" onClick={close}>Cancel</button>
+    </div>
+  </form>;
 }
 
 function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select: (id: string) => void }) {
@@ -357,6 +362,12 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
   close: () => void; showReview: () => void;
 }) {
   const [showSubtree, setShowSubtree] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const editButton = useRef<HTMLButtonElement>(null);
+  function closeEditor() {
+    setEditing(false);
+    requestAnimationFrame(() => editButton.current?.focus());
+  }
   const parents: PlanNode[] = [];
   let parent = node.parent ? index.byId.get(node.parent) : undefined;
   while (parent) {
@@ -376,46 +387,52 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
     </nav>
     <div className="flex items-start justify-between gap-2">
       <h3 className="min-w-0 break-words py-2 text-lg font-semibold leading-snug"><ItemName node={node} /></h3>
-      <details className="shrink-0">
-        <summary className={`${iconButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Task actions">
-          <MoreHorizontal size={20} aria-hidden />
-        </summary>
-        <div className="absolute inset-x-0 z-10 mx-3 max-h-[60dvh] overflow-auto rounded-xl border border-slate-300 bg-white p-3 shadow-lift sm:mx-4">
-          <button className="flex min-h-11 w-full items-center gap-2 text-left text-sm font-medium" aria-pressed={node.pinned} onClick={() => void save(updateNode(plan, node.id, { pinned: !node.pinned }))}>
-            <Pin size={17} fill={node.pinned ? "currentColor" : "none"} aria-hidden /> {node.pinned ? "Unpin" : "Pin"}
-          </button>
-          <NodeActions node={node} plan={plan} save={save} />
-          {plan.reviews.length > 0 && <button type="button"
-            className="flex min-h-11 w-full items-center text-left text-sm font-medium text-slate-600 hover:underline"
-            onClick={showReview}>View existing review requests</button>}
-        </div>
-      </details>
+      {!editing && <div className="flex shrink-0 items-center gap-1">
+        <button ref={editButton} type="button" className="min-h-11 rounded-lg px-2 text-sm font-medium text-teal-800 hover:bg-teal-50"
+          onClick={() => setEditing(true)}>Edit</button>
+        <details>
+          <summary className={`${iconButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Task actions">
+            <MoreHorizontal size={20} aria-hidden />
+          </summary>
+          <div className="absolute inset-x-0 z-10 mx-3 max-h-[60dvh] overflow-auto rounded-xl border border-slate-300 bg-white p-3 shadow-lift sm:mx-4">
+            <button className="flex min-h-11 w-full items-center gap-2 text-left text-sm font-medium" aria-pressed={node.pinned} onClick={() => void save(updateNode(plan, node.id, { pinned: !node.pinned }))}>
+              <Pin size={17} fill={node.pinned ? "currentColor" : "none"} aria-hidden /> {node.pinned ? "Unpin" : "Pin"}
+            </button>
+            {plan.reviews.length > 0 && <button type="button"
+              className="flex min-h-11 w-full items-center text-left text-sm font-medium text-slate-600 hover:underline"
+              onClick={showReview}>View existing review requests</button>}
+          </div>
+        </details>
+      </div>}
     </div>
-    <Overview text={node.overview} />
-    <div className="mt-2 flex flex-wrap items-center gap-x-3">
-      {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
-        <input className="size-4 accent-teal-700" type="checkbox" checked={node.done} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} /> Complete
-      </label> : <PlanProgress id={node.id} index={index} />}
-    </div>
-    {node.needs.length > 0 && <div className="mt-2 text-sm">
-      <p className="font-medium">Depends on</p>
-      <ul className="list-disc pl-5">{node.needs.map(id => (
-        <li key={id}><button className="min-h-11 break-words text-left text-teal-800 hover:underline" onClick={() => select(id)}>{index.byId.get(id)?.title}</button></li>
-      ))}</ul>
-    </div>}
-    <div className="mt-3 border-t border-slate-200">
-      <div className="flex flex-wrap items-start justify-between gap-x-3">
-        <AddItem parent={node.id} plan={plan} save={save} />
-        {children.some(child => index.children.has(child.id)) && <button
-          className="min-h-11 text-sm font-medium text-teal-800 hover:underline"
-          aria-pressed={showSubtree} onClick={() => setShowSubtree(value => !value)}
-        >{showSubtree ? "Show checklist" : "Show subtree"}</button>}
+    {editing ? <EditItem key={JSON.stringify([node.title, node.overview, node.classification, node.parent, node.needs])}
+      node={node} plan={plan} save={save} close={closeEditor} /> : <>
+      <Overview text={node.overview} />
+      <div className="mt-2 flex flex-wrap items-center gap-x-3">
+        {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+          <input className="size-4 accent-teal-700" type="checkbox" checked={node.done} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} /> Complete
+        </label> : <PlanProgress id={node.id} index={index} />}
       </div>
-      {showSubtree ? <ul aria-label={`Subtree for ${node.title}`}>
-        {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
-      </ul> : <Checklist children={checklist} plan={plan} save={save} select={select} limit={isTool ? 3 : undefined} />}
-    </div>
-    {isTool && <ToolReferences id={node.id} close={close} />}
+      {node.needs.length > 0 && <div className="mt-2 text-sm">
+        <p className="font-medium">Depends on</p>
+        <ul className="list-disc pl-5">{node.needs.map(id => (
+          <li key={id}><button className="min-h-11 break-words text-left text-teal-800 hover:underline" onClick={() => select(id)}>{index.byId.get(id)?.title}</button></li>
+        ))}</ul>
+      </div>}
+      <div className="mt-3 border-t border-slate-200">
+        <div className="flex flex-wrap items-start justify-between gap-x-3">
+          <AddItem parent={node.id} plan={plan} save={save} />
+          {children.some(child => index.children.has(child.id)) && <button
+            className="min-h-11 text-sm font-medium text-teal-800 hover:underline"
+            aria-pressed={showSubtree} onClick={() => setShowSubtree(value => !value)}
+          >{showSubtree ? "Show checklist" : "Show subtree"}</button>}
+        </div>
+        {showSubtree ? <ul aria-label={`Subtree for ${node.title}`}>
+          {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
+        </ul> : <Checklist children={checklist} plan={plan} save={save} select={select} limit={isTool ? 3 : undefined} />}
+      </div>
+      {isTool && <ToolReferences id={node.id} close={close} />}
+    </>}
   </section>;
 }
 

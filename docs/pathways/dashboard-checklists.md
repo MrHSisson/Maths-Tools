@@ -12,6 +12,7 @@
 - Area cards sit in the tree. Tap the arrow to expand or the title to open the card.
 - Cards show descriptions, progress and the area’s own tree. Task rows stay short.
 - Subtools and features have labels. Tasks have checkboxes.
+- Edit on the card. Change location only when needed.
 - The Developing tools unlock covers the plan, Admin and the deck editor.
 - Codex verified read and write access on production.
 
