@@ -11,6 +11,7 @@
 - Tools open their own checklist. On a laptop the plan docks beside the tool.
 - Home opens the overview. Tree shows the whole project.
 - Cards show descriptions, progress and the area’s own tree. Task rows stay short.
+- Subtools and features have labels. Tasks have checkboxes.
 - The Developing tools unlock covers the plan, Admin and the deck editor.
 - Codex verified read and write access on production.
 

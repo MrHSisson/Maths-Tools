@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, 
 import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, ChevronRight, GitFork, Home, ListTodo, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools } from "./catalogue";
-import { descendants, makeNode, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
+import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
@@ -62,14 +62,40 @@ function PlanProgress({ index, id }: { index: PlanIndex; id: string }) {
   </span>;
 }
 
+const classificationLabels: Record<BranchClassification, string> = {
+  subtool: "Subtool",
+  "planned-feature": "Feature · Planned",
+  "live-feature": "Feature · Live",
+};
+
+function ClassificationOptions() {
+  return <>
+    <option value="branch">Branch</option>
+    {branchClassifications.map(classification => (
+      <option key={classification} value={classification}>{classificationLabels[classification]}</option>
+    ))}
+  </>;
+}
+
+function ItemName({ node }: { node: PlanNode }) {
+  return <span className="min-w-0 break-words">
+    {node.title}
+    {node.classification && <span className="block text-xs font-normal text-slate-600">
+      {classificationLabels[node.classification]}
+    </span>}
+  </span>;
+}
+
 function AddItem({ parent, plan, save, branch = false }: { parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean }) {
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
-  const [kind, setKind] = useState<PlanNode["kind"]>(branch ? "branch" : "task");
-  async function submit(event: FormEvent) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim()) return;
-    const node = makeNode(crypto.randomUUID(), parent, title.trim(), kind);
+    const type = new FormData(event.currentTarget).get("type");
+    const classification = branchClassifications.find(candidate => candidate === type);
+    const node = makeNode(crypto.randomUUID(), parent, title.trim(), type === "task" ? "task" : "branch");
+    if (classification) node.classification = classification;
     if (await save({ ...plan, nodes: [...plan.nodes, node] })) setTitle("");
   }
   return <div>
@@ -79,8 +105,9 @@ function AddItem({ parent, plan, save, branch = false }: { parent: string | null
     </button>
     {open && <form onSubmit={submit} className="flex flex-wrap items-center gap-2 pb-2">
       <input className={`${input} flex-1 basis-36`} aria-label={branch ? "New project branch" : "New checklist item"} placeholder={branch ? "New project branch" : "New checklist item"} maxLength={120} value={title} onChange={event => setTitle(event.target.value)} required autoFocus />
-      {!branch && <select className={input} aria-label="Item type" value={kind} onChange={event => setKind(event.target.value as PlanNode["kind"])}>
-        <option value="task">Task</option><option value="branch">Branch</option>
+      {!branch && <select className={input} aria-label="Item type" name="type" defaultValue="task">
+        <option value="task">Task</option>
+        <ClassificationOptions />
       </select>}
       <button className={control} disabled={!title.trim()}>Add</button>
     </form>}
@@ -100,7 +127,7 @@ function MapNode({ node, index, select, expandedIds, toggle }: {
           {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
       ) : <span className="mx-4 size-1.5 shrink-0 rounded-full bg-slate-400" />}
-      <button className="min-h-11 min-w-0 flex-1 break-words py-2 text-left text-sm font-medium hover:underline" onClick={() => select(node.id)}>{node.title}</button>
+      <button className="min-h-11 min-w-0 flex-1 break-words py-2 text-left text-sm font-medium hover:underline" onClick={() => select(node.id)}><ItemName node={node} /></button>
       <PlanProgress index={index} id={node.id} />
     </div>
     {expanded && <ul className="border-l border-slate-200 pl-1">
@@ -113,7 +140,7 @@ function SummaryCard({ node, index, select }: { node: PlanNode; index: PlanIndex
   return <article className="relative grid min-w-0 gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-teal-500 focus-within:border-teal-500">
     <span className="flex items-center gap-2 text-sm font-semibold">
       {node.pinned && <Pin size={14} className="shrink-0 text-teal-700" aria-label="Pinned" />}
-      <button type="button" className="min-w-0 flex-1 break-words text-left after:absolute after:inset-0" onClick={() => select(node.id)}>{node.title}</button>
+      <button type="button" className="min-w-0 flex-1 break-words text-left after:absolute after:inset-0" onClick={() => select(node.id)}><ItemName node={node} /></button>
       <ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
     </span>
     <Overview text={node.overview} compact />
@@ -137,7 +164,7 @@ function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, 
         <li className="flex flex-wrap items-center gap-x-2 py-2 text-sm" key={`${node.id}:${prerequisite.id}`}>
           <button className="min-w-0 break-words text-left text-teal-800 hover:underline" onClick={() => select(prerequisite.id)}>{prerequisite.title}</button>
           <ArrowRight size={14} className="shrink-0" aria-label="before" />
-          <button className="min-w-0 break-words text-left text-teal-800 hover:underline" onClick={() => select(node.id)}>{node.title}</button>
+          <button className="min-w-0 break-words text-left text-teal-800 hover:underline" onClick={() => select(node.id)}><ItemName node={node} /></button>
         </li>
       ))}</ul>
     </details>}
@@ -171,7 +198,7 @@ function Checklist({ children, plan, save, select }: { children: PlanNode[]; pla
         <input type="checkbox" className="size-4 accent-teal-700" checked={node.done} aria-label={node.title} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} />
       </label> : <GitFork size={15} className="mx-3.5 shrink-0 text-slate-400" aria-hidden />}
       <button onClick={() => select(node.id)} className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 py-1.5 text-left text-sm hover:underline">
-        <span className="min-w-0 break-words">{node.title}</span><ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
+        <ItemName node={node} /><ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
       </button>
     </li>;
   }
@@ -204,7 +231,7 @@ function NodeActions({ node, plan, save }: { node: PlanNode; plan: ProjectPlan; 
   return <details className="border-b border-slate-200 py-2">
     <summary className="cursor-pointer py-2 text-sm font-medium">Edit, move or link</summary>
     <div className="mt-3 space-y-3">
-      <form key={JSON.stringify([node.title, node.overview])} className="grid gap-2" onSubmit={event => {
+      <form key={JSON.stringify([node.title, node.overview, node.classification])} className="grid gap-2" onSubmit={event => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const title = String(data.get("title")).trim();
@@ -216,9 +243,15 @@ function NodeActions({ node, plan, save }: { node: PlanNode; plan: ProjectPlan; 
           field.reportValidity();
           return;
         }
-        if (title) void save(updateNode(plan, node.id, { title, overview }));
+        const classification = branchClassifications.find(candidate => candidate === data.get("type"));
+        if (title) void save(updateNode(plan, node.id, { title, overview, classification }));
       }}>
         <label className="grid gap-1 text-sm">Name<input className={input} name="title" defaultValue={node.title} required maxLength={120} /></label>
+        {node.kind === "branch" && <label className="grid gap-1 text-sm">Item type
+          <select className={input} name="type" defaultValue={node.classification ?? "branch"}>
+            <ClassificationOptions />
+          </select>
+        </label>}
         <label className="grid gap-1 text-sm">Overview
           <textarea className={input} name="overview" defaultValue={node.overview} rows={3} maxLength={500} onInput={event => event.currentTarget.setCustomValidity("")} />
           <span className="text-xs text-slate-600">Up to three short lines, one bullet per line.</span>
@@ -318,7 +351,7 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
       </span>)}
     </nav>
     <div className="flex items-start justify-between gap-2">
-      <h3 className="min-w-0 break-words py-2 text-lg font-semibold leading-snug">{node.title}</h3>
+      <h3 className="min-w-0 break-words py-2 text-lg font-semibold leading-snug"><ItemName node={node} /></h3>
       <details className="shrink-0">
         <summary className={`${iconButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Task actions">
           <MoreHorizontal size={20} aria-hidden />

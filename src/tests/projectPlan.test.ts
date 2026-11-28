@@ -36,6 +36,14 @@ describe("shared project plan", () => {
     expect(isProjectPlan({ ...plan, reviews: [...plan.reviews, ...plan.reviews] })).toBe(false);
   });
 
+  it("keeps typed branches compatible with existing tasks", () => {
+    for (const classification of ["subtool", "planned-feature", "live-feature"]) {
+      expect(isProjectPlan({ ...plan, nodes: [{ ...tool, classification }, check] })).toBe(true);
+      expect(isProjectPlan({ ...plan, nodes: [tool, { ...check, classification }] })).toBe(false);
+    }
+    expect(isProjectPlan({ ...plan, nodes: [{ ...tool, classification: "unknown" }, check] })).toBe(false);
+  });
+
   it("requires the plan key before reading or writing", async () => {
     expect((await GET(request(undefined, "wrong"))).status).toBe(401);
     expect((await POST(request(plan, "wrong"))).status).toBe(401);
@@ -51,8 +59,12 @@ describe("shared project plan", () => {
     }) as Awaited<ReturnType<typeof get>>);
     vi.mocked(head).mockResolvedValue({ etag: '"strong"' } as Awaited<ReturnType<typeof head>>);
     expect(await (await GET(request())).json()).toEqual(stored);
-    const response = await POST(request({ ...stored, reviews: [] }));
-    expect(await response.json()).toEqual({ ...stored, reviews: [], revision: 2 });
+    const updated = { ...stored, nodes: [...stored.nodes, {
+      ...makeNode("gravity", tool.id, "Work against gravity", "branch"),
+      classification: "subtool",
+    }], reviews: [] };
+    const response = await POST(request(updated));
+    expect(await response.json()).toEqual({ ...updated, revision: 2 });
     expect(put).toHaveBeenCalledWith("project-plan.json", expect.any(String), expect.objectContaining({ ifMatch: '"strong"', access: "private" }));
   });
 
