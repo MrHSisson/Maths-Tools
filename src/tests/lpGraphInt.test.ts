@@ -9,22 +9,23 @@ import type { GLine } from "../shared/decision/lpGraph";
 import type { DecisionProblem } from "../shared/decision/types";
 import { withSeededRandom } from "./seededRandom";
 
-const gen = (level: number, start = "bare,story,diagram", im = "grid", shading = "out") =>
-  generateSolve(level, { start: start.split(","), shading: shading.split(","), methods: ["line"] }, { imethods: im.split(",") });
+const gen = (level: number, start = "bare,story,diagram", im = "grid", shading = "out", senses = "max") =>
+  generateSolve(level, { start: start.split(","), shading: shading.split(","), methods: ["line"] }, { imethods: im.split(","), senses: senses.split(",") });
 const SEEDS = Array.from({ length: 80 }, (_, i) => 900 + i * 4421);
 const draws = (level: number, start?: string, im?: string) => SEEDS.map((s) => withSeededRandom(s, () => gen(level, start, im)));
 const problem = (q: ReturnType<typeof gen>): DecisionProblem => ({ kind: "integer", level: q.data.level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText } });
 const ok = (l: GLine, x: number, y: number): boolean => { const v = l.a * x + l.b * y; return l.op === "≤" ? v <= l.c : l.op === "<" ? v < l.c : l.op === "≥" ? v >= l.c : v > l.c; };
 
 /** every whole point in the region by plain loops, and the best by the objective (written without the lpGraph helpers) */
-function bruteBest(lines: readonly GLine[], p: number, q: number, xMax: number, yMax: number): { value: number; at: Array<[number, number]> } {
-  let value = -Infinity, at: Array<[number, number]> = [];
+function bruteBest(lines: readonly GLine[], p: number, q: number, xMax: number, yMax: number, sense: "max" | "min" = "max"): { value: number; at: Array<[number, number]> } {
+  const sgn = sense === "max" ? 1 : -1;
+  let top = -Infinity, at: Array<[number, number]> = [];
   for (let x = 0; x <= xMax; x++) for (let y = 0; y <= yMax; y++) {
     if (!lines.every((l) => ok(l, x, y))) continue;
-    const v = p * x + q * y;
-    if (v > value) { value = v; at = [[x, y]]; } else if (v === value) at.push([x, y]);
+    const v = sgn * (p * x + q * y);
+    if (v > top) { top = v; at = [[x, y]]; } else if (v === top) at.push([x, y]);
   }
-  return { value, at };
+  return { value: sgn * top, at };
 }
 
 describe("the integer optimum", () => {
@@ -139,6 +140,58 @@ describe("the working", () => {
         for (const t of texts) expect(() => katex.renderToString(t, { throwOnError: true })).not.toThrow();
       }
       for (const m of [...q.prompt.matchAll(/\$([^$]+)\$/g)]) expect(() => katex.renderToString(m[1], { throwOnError: true })).not.toThrow();
+    }
+  });
+});
+
+describe("minimising a cost with whole numbers (Level 2)", () => {
+  const minDraws = (level: number, start?: string, im?: string) => SEEDS.map((sd) => withSeededRandom(sd, () => gen(level, start, im, "out", "min")));
+  it("Level 2 with only Minimise ticked minimises a cost over a region away from the origin; Level 1 never minimises, whatever is ticked", () => {
+    for (const q of minDraws(2)) { const o = q.data.obj!; expect(o.sense).toBe("min"); expect(o.p).toBeGreaterThan(0); expect(o.q).toBeGreaterThan(0); expect(q.data.enclosed).toBe(true); expect(q.data.lines.some((l) => l.op === "≥" || (l.c === 0 && l.a !== 0 && l.b !== 0))).toBe(true); }
+    for (const q of minDraws(1)) expect(q.data.obj!.sense).toBe("max");
+    const mixed = SEEDS.map((sd) => withSeededRandom(sd, () => gen(2, undefined, "grid", "out", "max,min")).data.obj!.sense);
+    expect(mixed).toContain("max"); expect(mixed).toContain("min");
+  });
+  it("the least whole cost matches a plain search, is one of the four around the optimum, is above the optimum, and the nearest point is not the best", () => {
+    const near = (v: readonly [number, number]) => Math.floor((2 * v[0] + v[1]) / (2 * v[1]));
+    for (const q of minDraws(2)) {
+      const d = q.data, o = d.obj!;
+      const bb = bruteBest(d.lines, o.p, o.q, d.win.xMax, d.win.yMax, "min");
+      expect(bb.at).toHaveLength(1);
+      expect([toNum(d.integer!.best[0]), toNum(d.integer!.best[1])]).toEqual(bb.at[0]);
+      expect(toNum(d.integer!.value)).toBe(bb.value);
+      expect(toNum(d.integer!.value)).toBeGreaterThan(toNum(d.value!));
+      const bx = toNum(d.best![0]), by = toNum(d.best![1]);
+      expect([Math.floor(bx), Math.ceil(bx)]).toContain(toNum(d.integer!.best[0]));
+      expect([Math.floor(by), Math.ceil(by)]).toContain(toNum(d.integer!.best[1]));
+      expect(d.integer!.trap).toBe(true);
+      expect([near(d.best![0]), near(d.best![1])]).not.toEqual([toNum(d.integer!.best[0]), toNum(d.integer!.best[1])]);
+    }
+  });
+  it("the question asks for the least value, and the answer says so", () => {
+    for (const q of minDraws(2)) { expect(q.prompt).toMatch(/least value/); expect(q.prompt).toMatch(/Minimise|minimise|total cost/); expect(q.answerText).toMatch(/^Least C = /); }
+  });
+  it("a fixed fall-back question is almost never needed", () => {
+    const used = minDraws(2, "bare").filter((q) => q.data.lines.length === 2 && q.data.lines[0].c === 50 && q.data.lines[0].a === 5).length;
+    expect(used).toBeLessThanOrEqual(2);
+  });
+  it("the working says least y for each x, the real cost can be higher, and renders", () => {
+    for (const q of minDraws(2, undefined, "grid,table").slice(0, 30)) {
+      const steps = solveOptimise(problem(q));
+      const rows = steps[steps.length - 1].gxView!.rows.map((r) => r.t).join(" ");
+      expect(rows).toContain("y_{\\min}");
+      expect(rows).toContain("Least y for each x");
+      expect(rows).toContain("the real cost can be higher");
+      expect(steps.some((s) => /less than|more than/.test(s.gxView!.rows.map((r) => r.t).join(" ")))).toBe(true);
+      const table = q.data.lines.length ? rows.match(/\\hline (\d+) & (\d+) & /g) ?? [] : [];
+      expect(table.length).toBeGreaterThanOrEqual(2);
+      for (const st of steps) for (const t of [...st.caption.matchAll(/\$([^$]+)\$/g)].map((m) => m[1])) expect(() => katex.renderToString(t, { throwOnError: true })).not.toThrow();
+    }
+  });
+  it("Integer Method and Shading stay display only for a minimise, and the same seed replays", () => {
+    for (const sd of SEEDS.slice(0, 30)) {
+      const a = withSeededRandom(sd, () => gen(2, undefined, "grid", "out", "max,min")), b = withSeededRandom(sd, () => gen(2, undefined, "grid,table", "in", "max,min"));
+      expect(a.prompt).toBe(b.prompt); expect(a.data.obj).toEqual(b.data.obj);
     }
   });
 });

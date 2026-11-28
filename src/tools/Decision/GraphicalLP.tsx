@@ -21,14 +21,14 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   if (ctx?.subTool === "integer") {
-    const q = generateSolve(level, { start: ticked(o.gxStartI, level === 2 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ["line"] }, { imethods: ticked(o.gxIntMethod, "grid") });
+    const q = generateSolve(level, { start: ticked(o.gxStartI, level === 2 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ["line"], show: o.gxShow }, { imethods: ticked(o.gxIntMethod, "grid"), senses: ticked(o.gxAim, "max,min") });
     return { kind: "integer", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
   }
   if (ctx?.subTool === "solve") {
-    const q = generateSolve(level, { start: ticked(o.gxStartS, level === 3 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ticked(o.gxMethod, "line") });
+    const q = generateSolve(level, { start: ticked(o.gxStartS, level === 3 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ticked(o.gxMethod, "line"), show: o.gxShow });
     return { kind: "solve", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
   }
-  const q = generateRegion(level, { start: ticked(o.gxStart, level === 1 ? "bare" : "story"), shading: ticked(o.gxShade, "out") });
+  const q = generateRegion(level, { start: ticked(o.gxStart, level === 1 ? "bare" : "story"), shading: ticked(o.gxShade, "out"), show: o.gxShow });
   return { kind: "region", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
 
@@ -58,14 +58,24 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "line", label: "Sliding Line" }, { value: "table", label: "Vertex Table" }],
   },
   {
+    key: "gxShow", label: "Working Shown", info: "How much of the working is written out: every step, only the step that finds the vertices and the answer, or the answer alone. Only the working changes: the question stays the same.",
+    forSubTools: ["region", "solve", "integer"], displayOnly: true, tab: "display", defaultFor: () => "full",
+    choices: [{ value: "full", label: "Full Working" }, { value: "vertices", label: "Answer And Vertices" }, { value: "answer", label: "Answer Only" }],
+  },
+  {
     key: "gxStartI", label: "Starting From", info: "Whether the student is given the inequalities, forms them from a situation, or is given the region already drawn. Level 2 is a situation by default.",
     forSubTools: ["integer"], multi: true, defaultFor: (lv: number) => (lv === 2 ? "story" : "bare"),
     choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "diagram", label: "Diagram Given", sub: "the region is drawn" }],
   },
   {
+    key: "gxAim", label: "Objective", info: "Whether the whole-number question maximises a profit, where the best whole point usually rounds down, or minimises a cost, where it usually rounds up. Level 1 always maximises.",
+    forSubTools: ["integer"], forLevels: [2], multi: true, defaultFor: () => "max,min",
+    choices: [{ value: "max", label: "Maximise A Profit" }, { value: "min", label: "Minimise A Cost" }],
+  },
+  {
     key: "gxIntMethod", label: "Integer Method", info: "How the whole-number points are searched: test the four points around the optimum on the grid, or list the greatest whole y for each whole x near it. Tick one or both; the same question is shown either way.",
     forSubTools: ["integer"], multi: true, displayOnly: true, tab: "display", defaultFor: () => "grid",
-    choices: [{ value: "grid", label: "Lattice Grid", sub: "the four points around" }, { value: "table", label: "Greatest y For Each x" }],
+    choices: [{ value: "grid", label: "Lattice Grid", sub: "the four points around" }, { value: "table", label: "Best y For Each x", sub: "greatest y, or least y when minimising" }],
   },
 ];
 
@@ -91,7 +101,7 @@ export default function App() {
         levelLabels: {
           region: ["Sloped lines on the origin side", "Adds bounds and vertical or horizontal lines, up to five constraints", "A region away from the origin, or a line through it"],
           solve: ["Maximise over a region on the origin side", "Maximise with a negative coefficient, over a region with bounds", "Minimise a cost over a region away from the origin"],
-          integer: ["The nearest whole-number point is the best", "The nearest whole-number point is not the best"],
+          integer: ["The nearest whole-number point is the best", "The nearest whole-number point is not the best, maximising or minimising"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,

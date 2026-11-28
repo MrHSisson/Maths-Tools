@@ -7,7 +7,7 @@ import { type Objective, type Pt, bestAmongSurrounding, bestCorners, bestWhole, 
 import { graphWindow } from "./lpGraphView";
 import { CONTEXTS, type Context, letDef, pick, ri, shuffled } from "./lpGen";
 import type { Var } from "./lp";
-import { FALLBACK, type GxData, type GxOptions, type GxQuestion, type GxStart, draw, plainPt, styleOf, term, texLine, usable, usesResources, words } from "./lpGraphGen";
+import { FALLBACK, type GxData, type GxOptions, type GxQuestion, type GxStart, draw, plainPt, showOf, styleOf, term, texLine, usable, usesResources, words } from "./lpGraphGen";
 import type { GLine } from "./lpGraph";
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a));
@@ -52,9 +52,10 @@ interface GxSolveOptions extends GxOptions { methods: string[] }
 function intOk(ls: readonly GLine[], pts: readonly Pt[], o: Objective, best: Pt, trap: boolean): boolean {
   if (best[0][1] === 1 || best[1][1] === 1) return false; // both coordinates are fractions, so there are four whole points around it
   // the best whole point by a plain pass over the region's whole points (found once for the region), and it must be single
+  const sgn = o.sense === "max" ? 1 : -1;
   let top = -Infinity, at: Pt | undefined, ties = 0;
   for (const p of pts) {
-    const v = o.p * p[0][0] + o.q * p[1][0];
+    const v = sgn * (o.p * p[0][0] + o.q * p[1][0]);
     if (v > top) { top = v; at = p; ties = 1; } else if (v === top) ties++;
   }
   if (!at || ties !== 1) return false;
@@ -67,11 +68,14 @@ function intOk(ls: readonly GLine[], pts: readonly Pt[], o: Objective, best: Pt,
 const FERRY: GLine[] = [{ a: 5, b: 6, op: "≤", c: 50 }, { a: 2, b: 4, op: "≤", c: 25 }];
 
 /** `integer`: the Integer solutions sub-tool (the items are whole), with the methods it shows */
-export function generateSolve(level: number, o: GxSolveOptions, integer?: { imethods: string[] }): GxQuestion {
+export function generateSolve(level: number, o: GxSolveOptions, integer?: { imethods: string[]; senses: string[] }): GxQuestion {
   const whole = !!integer;
   // Integer solutions: Level 1 is a maximise whose nearest whole point is the best; Level 2 is the trap, on a region that may have bounds
-  const regionLevel = whole ? (level === 2 ? pick([1, 2]) : 1) : level;
-  const objLevel = whole ? 1 : level;
+  // Level 2 can also minimise a cost (the best whole point then rounds up); Level 1 is always a maximise. The pick is made either way, so the draws line up.
+  const senseDraw = pick(integer && level === 2 && integer.senses.length ? integer.senses : ["max"]);
+  const minimise = whole && senseDraw === "min";
+  const regionLevel = whole ? (minimise ? 3 : level === 2 ? pick([1, 2]) : 1) : level;
+  const objLevel = whole ? (minimise ? 3 : 1) : level;
   const startPick = pick(o.start.length ? o.start : ["bare"]);
   // a negative coefficient has no profit or cost wording, so Level 2 is never a situation
   const wantSituation = startPick === "story" && (whole || level !== 2);
@@ -85,6 +89,9 @@ export function generateSolve(level: number, o: GxSolveOptions, integer?: { imet
     const ls = draw(regionLevel);
     if (!usable(ls, regionLevel)) continue;
     // Integer solutions: the region's whole points are found once, and a region with too many (or too few) to show is passed over
+    if (minimise && !isEnclosed(ls)) continue; // an open region has no finite list of whole points to search
+    // the optimum has to be a corner with both coordinates fractions: a region with no such corner is passed over before any objective is tried
+    if (whole && !regionVertices(ls).some((v) => v[0][1] > 1 && v[1][1] > 1)) continue;
     const pts = whole ? latticePoints(ls) : [];
     if (whole && (pts.length > 150 || pts.length < 6)) continue;
     const found = pickObjective(objLevel, ls, regionVertices(ls), allowAxis, whole ? (ob, best) => intOk(ls, pts, ob, best, level === 2) : undefined);
@@ -131,23 +138,23 @@ export function generateSolve(level: number, o: GxSolveOptions, integer?: { imet
   let prompt: string;
   if (start === "situation" && ctx && nouns && sentences) {
     const vars: Var[] = [{ sym: "x", noun: nouns[0].plural, integer: true }, { sym: "y", noun: nouns[1].plural, integer: true }];
-    prompt = `${ctx.intro([nouns[0].plural, nouns[1].plural])} ${letDef(vars, ctx.did)} ${sentences.join(" ")} ${objSentence}${whole ? ` Only whole numbers of ${nouns[0].plural} and ${nouns[1].plural} can be ${ctx.did}.` : ""} Write down the objective and the constraints, draw the feasible region and find the ${whole ? "greatest" : quantity} value of $${letter}$ and where it occurs.`;
+    prompt = `${ctx.intro([nouns[0].plural, nouns[1].plural])} ${letDef(vars, ctx.did)} ${sentences.join(" ")} ${objSentence}${whole ? ` Only whole numbers of ${nouns[0].plural} and ${nouns[1].plural} can be ${ctx.did}.` : ""} Write down the objective and the constraints, draw the feasible region and find the ${whole ? (maxim ? "greatest" : "least") : quantity} value of $${letter}$ and where it occurs.`;
   } else if (start === "diagram") {
-    prompt = `${maxim ? "Maximise" : "Minimise"} $${objTex(obj)}$ over the feasible region ${enclosed ? "$R$ " : ""}shown${whole ? ", where $x$ and $y$ are integers" : ""}. Find the coordinates of the optimal point and the ${whole ? "greatest" : quantity} value of $${letter}$.`;
+    prompt = `${maxim ? "Maximise" : "Minimise"} $${objTex(obj)}$ over the feasible region ${enclosed ? "$R$ " : ""}shown${whole ? ", where $x$ and $y$ are integers" : ""}. Find the coordinates of the optimal point and the ${whole ? (maxim ? "greatest" : "least") : quantity} value of $${letter}$.`;
   } else {
-    prompt = `${maxim ? "Maximise" : "Minimise"} $${objTex(obj)}$ subject to ${subject.slice(0, -1).join(", ")} and ${subject[subject.length - 1]}.${whole ? " $x$ and $y$ are integers." : ""} Draw the feasible region and find the ${whole ? "greatest" : quantity} value of $${letter}$ and the point where it occurs.`;
+    prompt = `${maxim ? "Maximise" : "Minimise"} $${objTex(obj)}$ subject to ${subject.slice(0, -1).join(", ")} and ${subject[subject.length - 1]}.${whole ? " $x$ and $y$ are integers." : ""} Draw the feasible region and find the ${whole ? (maxim ? "greatest" : "least") : quantity} value of $${letter}$ and the point where it occurs.`;
   }
   // drawn last, so a display-only change of Shading replays the same question
   const shading = pick(o.shading.length ? o.shading : ["out"]) === "in" ? "in" : "out";
   const methods = (o.methods.length ? o.methods : ["line"]).filter((m): m is "line" | "table" => m === "line" || m === "table");
   const data: GxData = {
     kind: whole ? "integer" : "solve", level, lines, styles: lines.map(styleOf), start, shading, nouns, sentences, vertices, enclosed, win: graphWindow(lines, vertices),
-    obj, objSentence, best: chosen.best, value: chosen.value, ks: chosen.ks, methods,
+    obj, objSentence, best: chosen.best, value: chosen.value, ks: chosen.ks, methods, show: showOf(o.show),
     ...(wholeBest && wholeNear && integer ? {
       integer: { best: wholeBest.at[0], value: wholeBest.value, trap: !(wholeNear.feasible && ptEq(wholeNear.at, wholeBest.at[0])) },
       imethods: (integer.imethods.length ? integer.imethods : ["grid"]).filter((m): m is "grid" | "table" => m === "grid" || m === "table"),
     } : {}),
   };
-  if (wholeBest) return { prompt, answerText: `Greatest ${letter} = ${plainFr(wholeBest.value)} at ${plainPt(wholeBest.at[0])} (the optimum ${plainFr(chosen.value)} at ${plainPt(chosen.best)} is not whole)`, data };
+  if (wholeBest) return { prompt, answerText: `${maxim ? "Greatest" : "Least"} ${letter} = ${plainFr(wholeBest.value)} at ${plainPt(wholeBest.at[0])} (the optimum ${plainFr(chosen.value)} at ${plainPt(chosen.best)} is not whole)`, data };
   return { prompt, answerText: `${quantity.charAt(0).toUpperCase()}${quantity.slice(1)} ${letter} = ${plainFr(chosen.value)} at ${plainPt(chosen.best)}`, data };
 }

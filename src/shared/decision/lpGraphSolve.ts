@@ -2,7 +2,7 @@
 // side to shade, label the region R, then find every corner by solving the two lines that meet there. Every number comes from the exact maths of lpGraph.ts.
 import { type Fr, fadd, fdiv, fmul, feq, fr } from "./dim";
 import { frTex } from "./dimTex";
-import { type GLine, type Objective, type Pt, greatestYTable, nearestWhole, objValue, surroundingPoints, testPoint, toNum } from "./lpGraph";
+import { type GLine, type Objective, type Pt, greatestYTable, leastYTable, nearestWhole, objValue, surroundingPoints, testPoint, toNum } from "./lpGraph";
 import { texEq, texLine } from "./lpGraphGen";
 import { objLhs, objTex } from "./lpGraphSolveGen";
 import type { DecisionProblem, LpRow, SolveStep } from "./types";
@@ -13,7 +13,7 @@ const ptTex = (v: Pt): string => `(${frTex(v[0])},\\,${frTex(v[1])})`;
 const wholeTex = (x: number, y: number): string => `(${x},\\,${y})`;
 
 /** `diagram`: the region is given already drawn, so the working starts at the corners */
-export function solveRegion(p: DecisionProblem, diagram = false): SolveStep[] {
+function buildRegion(p: DecisionProblem, diagram = false): SolveStep[] {
   const d = p.gx;
   if (!d) return [];
   const { lines } = d;
@@ -21,10 +21,10 @@ export function solveRegion(p: DecisionProblem, diagram = false): SolveStep[] {
   const rows: LpRow[] = [];
   let drawn = diagram ? lines.length : 0, shaded = diagram ? lines.length : 0, region = diagram, vertices = 0;
   let skip = diagram;
-  const push = (caption: string, add: LpRow[]): void => {
+  const push = (caption: string, add: LpRow[], tag?: "corners"): void => {
     if (skip) return;
     rows.push(...add);
-    steps.push({ caption, edgeStates: {}, gxView: { drawn, shaded, region, vertices, rows: [...rows], fresh: add.length } });
+    steps.push({ caption, edgeStates: {}, gxView: { drawn, shaded, region, vertices, rows: [...rows], fresh: add.length, ...(tag ? { tag } : {}) } });
   };
   const strictNote = (l: GLine): LpRow[] => (l.op === "<" || l.op === ">" ? [{ k: "note", t: "The inequality is strict, so the boundary is not part of the region: draw the line dotted." }] : []);
 
@@ -111,7 +111,7 @@ export function solveRegion(p: DecisionProblem, diagram = false): SolveStep[] {
 
   push(`The vertices of ${d.enclosed ? "$R$" : "the region"} are ${d.vertices.map((v) => `$${ptTex(v)}$`).join(", ")}.`, [
     { k: "words", t: `The corners are ${d.vertices.map((v) => `$${ptTex(v)}$`).join(", ")}.` },
-  ]);
+  ], "corners");
   return steps;
 }
 
@@ -124,11 +124,11 @@ const crossings = (o: Objective, k: Fr): LpRow[] => [
 ];
 
 /** Solve: the region (unless it is given), then the objective by the sliding line and/or the vertex table, then the statement of the answer */
-export function solveOptimise(p: DecisionProblem): SolveStep[] {
+function buildOptimise(p: DecisionProblem): SolveStep[] {
   const d = p.gx;
   if (!d || !d.obj || !d.best || !d.value || !d.ks) return [];
   const o = d.obj, maxim = o.sense === "max", L = maxim ? "P" : "C";
-  const steps = solveRegion(p, d.start === "diagram");
+  const steps = buildRegion(p, d.start === "diagram");
   const last = steps[steps.length - 1].gxView!;
   const rows: LpRow[] = [...last.rows];
   const base = { drawn: d.lines.length, shaded: d.lines.length, region: true, vertices: d.vertices.length };
@@ -175,13 +175,13 @@ export function solveOptimise(p: DecisionProblem): SolveStep[] {
     const nearTex = ptTex(near.at);
     push(`The optimum $${bestTex}$ is not a whole-number point, but $x$ and $y$ must be whole numbers.`, [
       { k: "head", t: "Whole numbers" },
-      { k: "words", t: `No whole-number point can give more than $${L}=${valueTex}$. Look at the whole-number points close to $${bestTex}$.` },
+      { k: "words", t: `No whole-number point can give ${maxim ? "more" : "less"} than $${L}=${valueTex}$. Look at the whole-number points close to $${bestTex}$.` },
     ], { mark: true, lattice: { pts: true, around: false, best: false } });
     if (imethods.includes("grid")) {
       const body = around.map((s) => `${ptTex(s.at)} & ${s.feasible ? "\\mathrm{yes}" : "\\mathrm{no}"} & ${s.feasible ? fracTex(objValue(o, s.at)) : "-"}`).join(" \\\\ \\hline ");
       const slip = d.integer.trap
         ? near.feasible
-          ? `Rounding $${bestTex}$ to the nearest whole point gives $${nearTex}$, which is in $R$ but does not give the greatest ${L}.`
+          ? `Rounding $${bestTex}$ to the nearest whole point gives $${nearTex}$, which is in $R$ but does not give the ${maxim ? "greatest" : "least"} ${L}.`
           : `Rounding $${bestTex}$ to the nearest whole point gives $${nearTex}$, which is not in $R$.`
         : `Here the nearest whole point, $${nearTex}$, is also the best.`;
       push("Test the four whole-number points around the optimum.", [
@@ -192,18 +192,18 @@ export function solveOptimise(p: DecisionProblem): SolveStep[] {
     }
     if (imethods.includes("table")) {
       const lo = Math.floor(toNum(d.best[0])) - 1, hi = Math.ceil(toNum(d.best[0])) + 1;
-      const tab = greatestYTable(d.lines, o).filter((r) => r.x >= lo && r.x <= hi);
+      const tab = (maxim ? greatestYTable : leastYTable)(d.lines, o).filter((r) => r.x >= lo && r.x <= hi);
       const body = tab.map((r) => `${r.x} & ${r.y} & ${fracTex(r.value)}`).join(" \\\\ \\hline ");
-      push("For each whole value of $x$ near the optimum, find the greatest whole value of $y$.", [
-        { k: "head", t: "Greatest y for each x" },
-        { k: "tex", t: `\\begin{array}{|c|c|c|}\\hline x & y_{\\max} & ${L} \\\\ \\hline ${body} \\\\ \\hline \\end{array}` },
-        { k: "words", t: `The greatest value in the table is $${wvTex}$, at $${wbTex}$.` },
+      push(`For each whole value of $x$ near the optimum, find the ${maxim ? "greatest" : "least"} whole value of $y$.`, [
+        { k: "head", t: maxim ? "Greatest y for each x" : "Least y for each x" },
+        { k: "tex", t: `\\begin{array}{|c|c|c|}\\hline x & y_{\\${maxim ? "max" : "min"}} & ${L} \\\\ \\hline ${body} \\\\ \\hline \\end{array}` },
+        { k: "words", t: `The ${maxim ? "greatest" : "least"} value in the table is $${wvTex}$, at $${wbTex}$.` },
       ], { mark: true, lattice: { pts: true, around: false, best: false } });
     }
     push(`The best whole-number point is $${wbTex}$.`, [
       { k: "result", t: `${L}=${wvTex}\\quad\\mathrm{at}\\quad${wbTex}` },
       ...(d.start === "situation" && noun ? [{ k: "words", t: `Make $${wb[0][0]}$ ${noun[0].plural} and $${wb[1][0]}$ ${noun[1].plural}.` } as LpRow] : []),
-      { k: "note", t: `This is less than $${valueTex}$, the best value when $x$ and $y$ need not be whole: the real value can be lower than the model's.` },
+      { k: "note", t: maxim ? `This is less than $${valueTex}$, the best value when $x$ and $y$ need not be whole: the real value can be lower than the model's.` : `This is more than $${valueTex}$, the best value when $x$ and $y$ need not be whole: the real cost can be higher than the model's.` },
     ], { mark: false, lattice: { pts: true, around: false, best: true } });
     return steps;
   }
@@ -214,3 +214,17 @@ export function solveOptimise(p: DecisionProblem): SolveStep[] {
   ], { mark: true });
   return steps;
 }
+
+/** Working Shown: every step; the step that lists the corners and the answer; or the answer alone. A kept step shows only the rows it adds (the page so far is the work of the steps left out), on the graph as it stands then. */
+function shown(steps: SolveStep[], show: "full" | "vertices" | "answer" | undefined): SolveStep[] {
+  if (!show || show === "full" || steps.length <= 1) return steps;
+  const keep = new Set<number>([steps.length - 1]);
+  if (show === "vertices") steps.forEach((s, i) => { if (s.gxView?.tag === "corners") keep.add(i); });
+  return [...keep].sort((a, b) => a - b).map((i) => {
+    const v = steps[i].gxView!;
+    const rows = v.rows.slice(v.rows.length - v.fresh);
+    return { ...steps[i], gxView: { ...v, rows, fresh: rows.length } };
+  });
+}
+export const solveRegion = (p: DecisionProblem): SolveStep[] => shown(buildRegion(p), p.gx?.show);
+export const solveOptimise = (p: DecisionProblem): SolveStep[] => shown(buildOptimise(p), p.gx?.show);

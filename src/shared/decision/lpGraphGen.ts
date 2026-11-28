@@ -36,6 +36,8 @@ export interface GxData {
   /** Integer solutions: the best whole-number point and its value, whether the nearest whole point to the optimum is NOT the best (the trap), and which methods are shown */
   integer?: { best: Pt; value: Fr; trap: boolean };
   imethods?: Array<"grid" | "table">;
+  /** Working Shown: every step, the corners and the answer, or the answer only (display only: the question is the same) */
+  show?: "full" | "vertices" | "answer";
 }
 export interface GxQuestion { prompt: string; answerText: string; data: GxData }
 
@@ -87,8 +89,11 @@ export function draw(level: number): GLine[] {
   const nSlope = ri(2, 3);
   const ls: GLine[] = [];
   if (level === 3) {
-    const style = pick(["supply", "supply", "relation", "open"] as const);
-    if (style === "open") { ls.push(sloped("≥", 2, 6), sloped("≥", 2, 6)); if (Math.random() < 0.5) ls.push(bound(pick(["x", "y"]), "≥", ls)); } else {
+    const style = pick(["supply", "supply", "relation", "open", "closed", "closed"] as const);
+    if (style === "open") { ls.push(sloped("≥", 2, 6), sloped("≥", 2, 6)); if (Math.random() < 0.5) ls.push(bound(pick(["x", "y"]), "≥", ls)); } else if (style === "closed") {
+      // two lower limits that meet at a fraction, and an upper limit that closes the region (so there is a finite list of whole points, and a cost to minimise at a fractional corner)
+      ls.push(sloped("≥", 2, 6), sloped("≥", 2, 6), sloped("≤", 8, 14));
+    } else {
       ls.push(style === "supply" ? sloped("≥", 2, 6) : relation());
       for (let i = 0; i < nSlope - 1; i++) ls.push(sloped("≤", 4, 12));
       if (Math.random() < 0.4) ls.push(bound(pick(["x", "y"]), pick(["≥", "≤"]), ls));
@@ -155,7 +160,8 @@ export const texEq = (l: GLine): string => `${term(l.a, "x", true)}${term(l.b, "
 export const plainPt = (v: Pt): string => `(${v[0][1] === 1 ? v[0][0] : +(v[0][0] / v[0][1]).toFixed(4)}, ${v[1][1] === 1 ? v[1][0] : +(v[1][0] / v[1][1]).toFixed(4)})`;
 
 // ── the question ─────────────────────────────────────────────────────────────
-export interface GxOptions { start: string[]; shading: string[] }
+export interface GxOptions { start: string[]; shading: string[]; show?: string }
+export const showOf = (v: string | undefined): "full" | "vertices" | "answer" => (v === "vertices" || v === "answer" ? v : "full");
 export function generateRegion(level: number, o: GxOptions): GxQuestion {
   let lines = FALLBACK[level] ?? FALLBACK[1];
   const wantSituation = o.start.includes("story") && (!o.start.includes("bare") || Math.random() < 0.5);
@@ -188,7 +194,7 @@ export function generateRegion(level: number, o: GxOptions): GxQuestion {
   const shading = pick(o.shading.length ? o.shading : ["out"]) === "in" ? "in" : "out";
   const data: GxData = {
     kind: "region", level, lines, styles: lines.map(styleOf), start: situation ? "situation" : "inequalities", shading, nouns, sentences,
-    vertices, enclosed, win: graphWindow(lines, vertices),
+    vertices, enclosed, win: graphWindow(lines, vertices), show: showOf(o.show),
   };
   return { prompt, answerText: `${enclosed ? "Region R" : "An open region"} with vertices ${vertices.map(plainPt).join(", ")}`, data };
 }

@@ -96,6 +96,8 @@ interface GxViewState {
   mark?: boolean;
   /** Integer solutions: the whole-number points of the region, the four around the optimum, and the best whole point, each shown or not */
   lattice?: { pts: boolean; around: boolean; best: boolean };
+  /** the step that lists the corners of the region, kept by Working Shown: Answer And Vertices */
+  tag?: "corners";
 }
 
 export interface DecisionProblem {

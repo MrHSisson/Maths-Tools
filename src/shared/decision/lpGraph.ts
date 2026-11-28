@@ -130,6 +130,12 @@ export function greatestYTable(ls: readonly GLine[], o: Objective): Array<{ x: n
   for (const p of pts) best.set(p[0][0], Math.max(best.get(p[0][0]) ?? -1, p[1][0]));
   return [...best.entries()].sort((u, v) => u[0] - v[0]).map(([x, y]) => ({ x, y, value: objValue(o, [fr(x), fr(y)]) }));
 }
+/** the table of the least feasible whole y for each whole x (for a minimising objective with positive q), with the value there */
+export function leastYTable(ls: readonly GLine[], o: Objective): Array<{ x: number; y: number; value: Fr }> {
+  const best = new Map<number, number>();
+  for (const p of latticePoints(ls)) best.set(p[0][0], Math.min(best.get(p[0][0]) ?? Infinity, p[1][0]));
+  return [...best.entries()].sort((u, v) => u[0] - v[0]).map(([x, y]) => ({ x, y, value: objValue(o, [fr(x), fr(y)]) }));
+}
 export const ptEq = (u: Pt, v: Pt): boolean => feq(u[0], v[0]) && feq(u[1], v[1]);
 
 /** the constraint-count rule: at most four constraints (five when the extra one is a bound), at most three sloped (ax ± by with both non-zero) */
