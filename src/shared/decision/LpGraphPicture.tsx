@@ -34,7 +34,7 @@ const W = 520, PLOT_H = 420, ML = 40, MR = 16, MT = 14, MB = 36;
 const PW = W - ML - MR, PH = PLOT_H - MT - MB;
 const KEY_ROW = 26;
 const LETTERS = "ABCDEF";
-const INK = "#0f172a", MUTED = "#64748b", GRIDC = "#e2e8f0", OBJ = "#1d4ed8", BEST = "#b91c1c";
+const INK = "#0f172a", MUTED = "#64748b", GRIDC = "#f1f5f9", OBJ = "#1d4ed8", BEST = "#b91c1c";
 const LINE_COLOURS = ["#0f766e", "#7c3aed", "#b45309", "#be123c", "#0369a1"];
 
 export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qIndex?: number }) {
@@ -65,13 +65,13 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
     let nx = sgn * (l.a / win.xMax) * PW, ny = -sgn * (l.b / win.yMax) * PH;
     const nl = Math.hypot(nx, ny) || 1;
     nx /= nl; ny /= nl;
-    const n = Math.max(2, Math.floor(len / 17));
+    const n = Math.max(2, Math.floor(len / 26));
     return Array.from({ length: n }, (_, k) => {
       const t = (k + 0.5) / n;
       const x0 = X(p[0]) + ux * t, y0 = Y(p[1]) + uy * t;
-      const L = 13;
+      const L = 24;
       // lean along the line as well as away from it
-      const x1 = x0 + L * (0.72 * nx + 0.5 * (ux / len)), y1 = y0 + L * (0.72 * ny + 0.5 * (uy / len));
+      const x1 = x0 + L * (0.8 * nx + 0.45 * (ux / len)), y1 = y0 + L * (0.8 * ny + 0.45 * (uy / len));
       return <line key={k} x1={x0} y1={y0} x2={x1} y2={y1} />;
     });
   };
@@ -100,7 +100,7 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
         {view.shading === "in" && shaded > 0 && <path d={path(regionPolygon(lines.slice(0, shaded), win))} fill="#bfdbfe" fillOpacity="0.55" />}
         {view.shading !== "in" && lines.slice(0, shaded).map((l, i) => {
           const seg = lineSegment(l, win);
-          return seg ? <g key={i} stroke={LINE_COLOURS[i % LINE_COLOURS.length]} strokeWidth="1.8" strokeLinecap="round" data-shade-out="">{ticksFor(l, seg)}</g> : null;
+          return seg ? <g key={i} stroke={LINE_COLOURS[i % LINE_COLOURS.length]} strokeWidth="2" strokeLinecap="round" data-shade-out="">{ticksFor(l, seg)}</g> : null;
         })}
       </g>
       {/* axes and ticks */}
@@ -168,7 +168,7 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
       {/* whole-number points */}
       {view.lattice && (
         <g>
-          {view.lattice.pts.map((p, i) => <circle key={i} cx={dot(p)[0]} cy={dot(p)[1]} r="3" fill="#475569" />)}
+          {view.lattice.pts.map((p, i) => <circle key={i} cx={dot(p)[0]} cy={dot(p)[1]} r="2.4" fill="#94a3b8" />)}
           {view.lattice.around?.map((p, i) => <circle key={`a${i}`} cx={dot(p)[0]} cy={dot(p)[1]} r="8" fill="none" stroke={OBJ} strokeWidth="1.8" />)}
           {view.lattice.best?.map((p, i) => <circle key={`b${i}`} cx={dot(p)[0]} cy={dot(p)[1]} r="9" fill="none" stroke={BEST} strokeWidth="2.6" data-best="" />)}
         </g>
