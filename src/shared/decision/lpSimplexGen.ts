@@ -321,7 +321,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
   // a minimise has a mixed-sign cost, which has no situation: it is only ever drawn as inequalities
   const storyForm = form === "standard" || form === "lower" || form === "ge" || form === "eq";
-  if ((level >= 2 || o.nonStandard) && storyForm && (chosen === "story" || chosen === "table") && sp.cons.length <= 3) {
+  if ((level >= 2 || o.nonStandard || o.anySize) && storyForm && (chosen === "story" || chosen === "table") && sp.cons.length <= 3) {
     table = chosen === "table" && form === "standard";
     story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined) ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
