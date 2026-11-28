@@ -89,7 +89,12 @@ export type SxBlock = { k: "rows"; rows: LpRow[] } | SxTabView;
 export interface SxViewState { blocks: SxBlock[]; fresh?: number }
 
 /** Graphical LP: how much of the picture is drawn at this step (lines drawn, lines shaded, R written, corner points shown) and the written working so far (the last `fresh` rows are new) */
-interface GxViewState { drawn: number; shaded: number; region: boolean; vertices: number; rows: LpRow[]; fresh: number }
+interface GxViewState {
+  drawn: number; shaded: number; region: boolean; vertices: number; rows: LpRow[]; fresh: number;
+  /** Solve: the objective lines drawn so far (their values, exact), the arrow of improving value, and whether the best corner is ringed */
+  objective?: { ks: ReadonlyArray<readonly [number, number]>; arrow: boolean };
+  mark?: boolean;
+}
 
 export interface DecisionProblem {
   /** The network the question is about. Absent for a tool whose picture is not a network (Critical Path, and Mechanics chapters): those carry their own data field and draw it through `renderCanvas`. */

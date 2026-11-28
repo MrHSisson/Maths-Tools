@@ -23,14 +23,24 @@ function viewOf(p: DecisionProblem, step: SolveStep | undefined, all?: boolean):
   const d = p.gx;
   if (!d) return undefined;
   const v = step?.gxView;
+  // a region that is given is drawn from the start; its corners are for the student to find
+  const given = d.start === "diagram";
   return {
     lines: d.lines, shading: d.shading, win: d.win, grid: true,
-    drawn: all ? d.lines.length : v?.drawn ?? 0,
-    shaded: all ? d.lines.length : v?.shaded ?? 0,
-    region: all ? true : v?.region ?? false,
+    drawn: all || given ? d.lines.length : v?.drawn ?? 0,
+    shaded: all || given ? d.lines.length : v?.shaded ?? 0,
+    region: all || given ? true : v?.region ?? false,
     vertices: all ? d.vertices : v ? d.vertices.slice(0, v.vertices) : undefined,
     labels: all ? "always" : "hover",
+    objective: d.obj && v?.objective ? { o: d.obj, ks: v.objective.ks.map((k) => [k[0], k[1]] as const), arrow: v.objective.arrow } : all && d.obj && d.value ? { o: d.obj, ks: [d.value], arrow: false } : undefined,
+    mark: d.best && (all || v?.mark) ? d.best : undefined,
   };
+}
+
+/** the question stage shows the region when it is given */
+export function GxStageFigure({ p }: { p: DecisionProblem }) {
+  const view = viewOf(p, undefined);
+  return view && p.gx?.start === "diagram" ? <div style={{ width: "100%", maxWidth: 560, margin: "0 auto" }}><LpGraphPicture view={view} /></div> : null;
 }
 
 export default function GxCanvas({ p, step }: { p: DecisionProblem; step: SolveStep | undefined }) {
@@ -79,7 +89,9 @@ export function GxSolution({ p, steps }: { p: DecisionProblem; steps: SolveStep[
 export function GxPrintFigure({ p }: { p: DecisionProblem }) {
   const d = p.gx;
   if (!d) return null;
-  return <div style={{ width: "100%", maxWidth: 520 }}><LpGraphPicture view={{ lines: d.lines, drawn: 0, shaded: 0, win: d.win, grid: true }} /></div>;
+  // a given region is printed drawn (its corners left for the student); otherwise the axes are blank for the student to draw on
+  const given = d.start === "diagram";
+  return <div style={{ width: "100%", maxWidth: 520 }}><LpGraphPicture view={{ lines: d.lines, drawn: given ? d.lines.length : 0, shaded: given ? d.lines.length : 0, region: given, shading: d.shading, win: d.win, grid: true }} /></div>;
 }
 /** on the answers page: the finished graph, every corner labelled */
 export function GxPrintWorking({ p }: { p: DecisionProblem }) {

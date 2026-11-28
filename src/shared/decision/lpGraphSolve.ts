@@ -1,9 +1,10 @@
 // The working of a Graphical LP "Draw the region" question: write the constraints (from a situation), draw each line from two points, test a point to see which
 // side to shade, label the region R, then find every corner by solving the two lines that meet there. Every number comes from the exact maths of lpGraph.ts.
-import { fadd, fmul, feq, fr } from "./dim";
+import { type Fr, fadd, fdiv, fmul, feq, fr } from "./dim";
 import { frTex } from "./dimTex";
-import { type GLine, type Pt, testPoint } from "./lpGraph";
+import { type GLine, type Objective, type Pt, objValue, testPoint } from "./lpGraph";
 import { texEq, texLine } from "./lpGraphGen";
+import { objLhs, objTex } from "./lpGraphSolveGen";
 import type { DecisionProblem, LpRow, SolveStep } from "./types";
 
 const NAME = "ABCDEF";
@@ -11,14 +12,17 @@ const coef = (k: number): string => (k === 1 ? "" : String(k));
 const ptTex = (v: Pt): string => `(${frTex(v[0])},\\,${frTex(v[1])})`;
 const wholeTex = (x: number, y: number): string => `(${x},\\,${y})`;
 
-export function solveRegion(p: DecisionProblem): SolveStep[] {
+/** `diagram`: the region is given already drawn, so the working starts at the corners */
+export function solveRegion(p: DecisionProblem, diagram = false): SolveStep[] {
   const d = p.gx;
   if (!d) return [];
   const { lines } = d;
   const steps: SolveStep[] = [];
   const rows: LpRow[] = [];
-  let drawn = 0, shaded = 0, region = false, vertices = 0;
+  let drawn = diagram ? lines.length : 0, shaded = diagram ? lines.length : 0, region = diagram, vertices = 0;
+  let skip = diagram;
   const push = (caption: string, add: LpRow[]): void => {
+    if (skip) return;
     rows.push(...add);
     steps.push({ caption, edgeStates: {}, gxView: { drawn, shaded, region, vertices, rows: [...rows], fresh: add.length } });
   };
@@ -26,15 +30,17 @@ export function solveRegion(p: DecisionProblem): SolveStep[] {
 
   // 1. the constraints as inequalities, when they came from a situation
   if (d.start === "situation") {
-    push("Write each limit as an inequality. The numbers of items cannot be negative, so $x \\ge 0$ and $y \\ge 0$ as well.", [
+    push(`Write each limit as an inequality${d.obj ? ", and the aim as an objective" : ""}. The numbers of items cannot be negative, so $x \\ge 0$ and $y \\ge 0$ as well.`, [
       { k: "head", t: "The constraints" },
       ...lines.map((l, i): LpRow => ({ k: "tex", t: `${NAME[i]}:\\; ${texLine(l)}` })),
       { k: "tex", t: "x\\ge 0,\\; y\\ge 0" },
+      ...(d.obj ? [{ k: "head", t: "The objective" } as LpRow, { k: "tex", t: objTex(d.obj) } as LpRow] : []),
     ]);
   }
 
   // 2. each line: draw it, then shade
   lines.forEach((l, i) => {
+    if (diagram) return;
     const eq = texEq(l);
     const add: LpRow[] = [{ k: "head", t: `Line ${NAME[i]}` }, { k: "tex", t: eq }];
     const style = d.styles[i];
@@ -89,6 +95,7 @@ export function solveRegion(p: DecisionProblem): SolveStep[] {
     { name: "the $y$-axis", a: 1, b: 0, c: 0, tex: "x=0" },
     { name: "the $x$-axis", a: 0, b: 1, c: 0, tex: "y=0" },
   ];
+  skip = false;
   d.vertices.forEach((vt, j) => {
     const on = all.filter((l) => feq(fadd(fmul(fr(l.a), vt[0]), fmul(fr(l.b), vt[1])), fr(l.c)));
     const first = on[0];
@@ -98,12 +105,69 @@ export function solveRegion(p: DecisionProblem): SolveStep[] {
       { k: "head", t: `Corner ${j + 1}` },
       { k: "tex", t: first.tex },
       { k: "tex", t: second.tex },
-      { k: "result", t: `x=${frTex(vt[0])},\\;y=${frTex(vt[1])}\\quad${ptTex(vt)}` },
+      { k: "result", t: ptTex(vt) },
     ]);
   });
 
   push(`The vertices of ${d.enclosed ? "$R$" : "the region"} are ${d.vertices.map((v) => `$${ptTex(v)}$`).join(", ")}.`, [
-    { k: "result", t: d.vertices.map(ptTex).join(",\\; ") },
+    { k: "words", t: `The corners are ${d.vertices.map((v) => `$${ptTex(v)}$`).join(", ")}.` },
   ]);
+  return steps;
+}
+
+const fracTex = (f: Fr): string => frTex(f);
+/** an objective line p·x + q·y = k: the crossing with each axis, as the working writes it */
+const crossings = (o: Objective, k: Fr): LpRow[] => [
+  { k: "tex", t: `${objLhs(o)}=${fracTex(k)}` },
+  { k: "tex", t: `x=0:\\;y=${fracTex(fdiv(k, fr(o.q)))}` },
+  { k: "tex", t: `y=0:\\;x=${fracTex(fdiv(k, fr(o.p)))}` },
+];
+
+/** Solve: the region (unless it is given), then the objective by the sliding line and/or the vertex table, then the statement of the answer */
+export function solveOptimise(p: DecisionProblem): SolveStep[] {
+  const d = p.gx;
+  if (!d || !d.obj || !d.best || !d.value || !d.ks) return [];
+  const o = d.obj, maxim = o.sense === "max", L = maxim ? "P" : "C";
+  const steps = solveRegion(p, d.start === "diagram");
+  const last = steps[steps.length - 1].gxView!;
+  const rows: LpRow[] = [...last.rows];
+  const base = { drawn: d.lines.length, shaded: d.lines.length, region: true, vertices: d.vertices.length };
+  // the objective lines stay on the graph once drawn
+  let current: { ks: Fr[]; arrow: boolean } | undefined;
+  const push = (caption: string, add: LpRow[], extra: { objective?: { ks: Fr[]; arrow: boolean }; mark?: boolean } = {}): void => {
+    rows.push(...add);
+    if (extra.objective) current = extra.objective;
+    steps.push({ caption, edgeStates: {}, gxView: { ...base, rows: [...rows], fresh: add.length, ...extra, objective: current } });
+  };
+  const [k1, k2] = d.ks;
+  const bestTex = ptTex(d.best), valueTex = fracTex(d.value);
+  const methods = d.methods ?? ["line"];
+  const better = maxim ? "larger" : "smaller";
+
+  if (methods.includes("line")) {
+    push(`Draw two parallel objective lines, $${L}=${fracTex(k1)}$ and $${L}=${fracTex(k2)}$.`, [
+      { k: "head", t: "Objective lines" },
+      ...crossings(o, k1), ...crossings(o, k2),
+      { k: "note", t: `Every line $${objLhs(o)}=k$ has the same slope, so these are parallel; choose values of $k$ that give whole intercepts.` },
+    ], { objective: { ks: [k1, k2], arrow: false } });
+    push(`Slide the ruler parallel to them, towards ${better} values of $${L}$, until the last point of ${d.enclosed ? "$R$" : "the region"} it touches.`, [
+      { k: "words", t: `$${L}$ gets ${better} in the direction of the arrow. The last corner the line touches before it leaves the region is $${bestTex}$.` },
+      { k: "tex", t: `${L}=${objLhs(o)}=${valueTex}` },
+    ], { objective: { ks: [k1, k2, d.value], arrow: true }, mark: true });
+  }
+  if (methods.includes("table")) {
+    const body = d.vertices.map((v) => `${ptTex(v)} & ${fracTex(objValue(o, v))}`).join(" \\\\ \\hline ");
+    push(`Work out $${L}$ at every vertex.`, [
+      { k: "head", t: "Vertex table" },
+      { k: "tex", t: `\\begin{array}{|c|c|}\\hline \\mathrm{Vertex} & ${L} \\\\ \\hline ${body} \\\\ \\hline \\end{array}` },
+    ]);
+    push(`Pick the ${maxim ? "largest" : "smallest"} value of $${L}$.`, [{ k: "words", t: `The ${maxim ? "largest" : "smallest"} value is $${valueTex}$, at the vertex $${bestTex}$.` }], { mark: true });
+  }
+  const noun = d.nouns;
+  const unit = d.start === "situation" && noun && o.p > 0 && o.q > 0 ? (maxim ? "maximum profit" : "minimum cost") : undefined;
+  push(unit ? `So the ${unit} is £${fracTex(d.value)}.` : `State the ${maxim ? "maximum" : "minimum"} value and where it occurs.`, [
+    { k: "result", t: `${L}_{\\${maxim ? "max" : "min"}}=${valueTex}\\quad\\mathrm{at}\\quad${bestTex}` },
+    ...(unit && noun ? [{ k: "words", t: `Make $${fracTex(d.best[0])}$ ${noun[0].plural} and $${fracTex(d.best[1])}$ ${noun[1].plural} for a ${unit} of £$${valueTex}$.` } as LpRow] : []),
+  ], { mark: true });
   return steps;
 }

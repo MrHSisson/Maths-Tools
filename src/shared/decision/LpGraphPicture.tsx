@@ -137,8 +137,9 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
       {view.objective?.arrow && (() => {
         const o = view.objective.o;
         const mx = win.xMax * 0.5, my = win.yMax * 0.5;
-        // towards increasing value: along (p/xMax, q/yMax) in picture terms, whatever the sense
-        const dx = (o.p / win.xMax) * PW, dy = -(o.q / win.yMax) * PH;
+        // along (p/xMax, q/yMax) in picture terms
+        const s = o.sense === "min" ? -1 : 1; // the arrow points the way the objective gets better: smaller when minimising
+        const dx = s * (o.p / win.xMax) * PW, dy = -s * (o.q / win.yMax) * PH;
         const len = Math.hypot(dx, dy) || 1;
         const sx = X(mx), sy = Y(my), L = 46;
         return <line x1={sx} y1={sy} x2={sx + (dx / len) * L} y2={sy + (dy / len) * L} stroke={OBJ} strokeWidth="2.4" markerEnd={`url(#arrow${uid})`} data-arrow="" />;
