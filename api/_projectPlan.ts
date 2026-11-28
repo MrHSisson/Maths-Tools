@@ -1,11 +1,15 @@
 export const branchClassifications = ["subtool", "planned-feature", "live-feature"] as const;
 export type BranchClassification = typeof branchClassifications[number];
 
+export const planTrees = ["site", "developments", "resources"] as const;
+export type PlanTree = typeof planTrees[number];
+
 export interface PlanNode {
   id: string;
   parent: string | null;
   kind: "branch" | "task";
   classification?: BranchClassification;
+  tree?: PlanTree;
   title: string;
   overview: string;
   done: boolean;
@@ -79,6 +83,7 @@ function isNode(value: unknown): value is PlanNode {
   return isText(node.id, 100, true) && (node.parent === null || isText(node.parent, 100, true))
     && (node.kind === "branch" || node.kind === "task") && isText(node.title, 120, true)
     && (node.classification === undefined || (node.kind === "branch" && branchClassifications.includes(node.classification)))
+    && (node.tree === undefined || planTrees.includes(node.tree))
     && isText(node.overview, 500) && typeof node.done === "boolean" && typeof node.pinned === "boolean"
     && Array.isArray(node.needs) && node.needs.length <= 30 && node.needs.every(id => isText(id, 100, true))
     && new Set(node.needs).size === node.needs.length;

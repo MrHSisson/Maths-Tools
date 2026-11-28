@@ -1,15 +1,23 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { ArrowRight, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { routesById, contextualTools } from "./catalogue";
-import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
+import { routesById, contextualTools, treeForRoot } from "./catalogue";
+import { branchClassifications, descendants, makeNode, planTrees, type BranchClassification, type PlanNode, type PlanTree, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
 import { FEATURES, TOOLS } from "../admin/facts";
+import { ToolsSection } from "../admin/ToolsSection";
+import { emptyStore } from "../admin/notes";
+import adminDocs from "../generated/adminDocs.json";
 import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
 const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 const iconButton = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30";
+const treeLabels: Record<PlanTree, string> = { site: "Site", developments: "Developments", resources: "Resources" };
+const matrixStore = emptyStore();
+const docsUrl = "https://github.com/MrHSisson/Maths-Tools/blob/main/docs";
+const viewControl = "min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900";
+
 type Save = (plan: ProjectPlan) => Promise<boolean>;
 
 function indexPlan(nodes: PlanNode[]) {
@@ -86,7 +94,7 @@ function ItemName({ node }: { node: PlanNode }) {
   </span>;
 }
 
-function AddItem({ parent, plan, save, branch = false }: { parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean }) {
+function AddItem({ parent, plan, save, branch = false, tree }: { parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean; tree?: PlanTree }) {
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -96,6 +104,7 @@ function AddItem({ parent, plan, save, branch = false }: { parent: string | null
     const classification = branchClassifications.find(candidate => candidate === type);
     const node = makeNode(crypto.randomUUID(), parent, title.trim(), type === "task" ? "task" : "branch");
     if (classification) node.classification = classification;
+    if (parent === null && tree) node.tree = tree;
     if (await save({ ...plan, nodes: [...plan.nodes, node] })) setTitle("");
   }
   return <div>
@@ -149,17 +158,18 @@ function MapNode({ node, index, select, expandedIds, toggle, area = false }: {
   </li>;
 }
 
-function ProjectMap({ plan, index, select, save, expandedIds, toggle }: {
+function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, close }: {
   plan: ProjectPlan; index: PlanIndex; select: (id: string) => void; save: Save;
-  expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; tree: PlanTree; close: () => void;
 }) {
-  const roots = index.children.get(null) ?? [];
+  const roots = (index.children.get(null) ?? []).filter(node => treeForRoot(node) === tree);
+  const heading = tree === "developments" ? "Pathways" : `${treeLabels[tree]} tree`;
   const pinned = plan.nodes.filter(node => node.pinned);
   const dependencies = plan.nodes.flatMap(node => node.needs.map(id => ({ node, prerequisite: index.byId.get(id)! })));
   const projectTree = <section aria-label="Project tree" className="space-y-2">
-    <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> Project tree</h3>
+    <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> {heading}</h3>
     <ul className="space-y-2">{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} area />)}</ul>
-    <AddItem parent={null} plan={plan} save={save} branch />
+    <AddItem key={tree} parent={null} plan={plan} save={save} branch tree={tree} />
     {dependencies.length > 0 && <details className="border-t border-slate-200 pt-2">
       <summary className="cursor-pointer py-2 text-sm font-medium">Dependencies ({dependencies.length})</summary>
       <ul className="divide-y divide-slate-200">{dependencies.map(({ node, prerequisite }) => (
@@ -173,6 +183,17 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle }: {
   </section>;
 
   return <div className="space-y-4">
+    <div className="flex flex-wrap items-center gap-2">
+      {tree === "site" && <>
+        <button className={control} onClick={() => select("feature-tracker")}>Feature tracker</button>
+        <Link className={control} to="/admin?section=features" onClick={close}>Feature guide</Link>
+      </>}
+      {tree === "developments" && <button className={control} onClick={() => select("all-tasks")}>Tasks</button>}
+      {tree === "resources" && <>
+        <Link className={control} to="/deck-gallery" onClick={close}>Deck library</Link>
+        <Link className={control} to="/further-maths-flashcards" onClick={close}>Flashcards</Link>
+      </>}
+    </div>
     {pinned.length > 0 && <details className="border-b border-slate-200">
       <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
       <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
@@ -183,7 +204,36 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle }: {
       </li>)}</ul>
     </details>}
     {projectTree}
+    {tree === "developments" && <details className="border-t border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Earlier pathways</summary>
+      <ul className="divide-y divide-slate-200 text-sm">
+        {adminDocs.pathways.map(pathway => (
+          <li key={pathway.id}><a className="block py-2 text-teal-800 hover:underline"
+            href={`${docsUrl}/pathways/${encodeURIComponent(pathway.id)}.md`}>{pathway.title}</a></li>
+        ))}
+      </ul>
+    </details>}
   </div>;
+}
+
+function OpenTasks({ plan, save, select }: { plan: ProjectPlan; save: Save; select: (id: string) => void }) {
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const tasks = plan.nodes.filter(node => node.kind === "task" && !node.done && node.title.toLowerCase().includes(needle));
+  return <section className="space-y-2">
+    <h3 className="text-sm font-semibold">Open tasks</h3>
+    <input className={`${input} w-full`} aria-label="Search tasks" placeholder="Search tasks"
+      value={query} onChange={event => setQuery(event.target.value)} />
+    {tasks.length ? <Checklist children={tasks} plan={plan} save={save} select={select} />
+      : <p className="py-2 text-sm text-slate-600">{needle ? "No matching tasks." : "No open tasks."}</p>}
+    <details className="border-t border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Earlier tasks</summary>
+      <ul className="list-disc space-y-1 pl-5 text-sm">
+        {adminDocs.tasks.filter(task => task.status !== "Done (recent)").map(task => <li key={task.title}>{task.title}</li>)}
+      </ul>
+      <a className="inline-flex min-h-11 items-center text-sm text-teal-800 hover:underline" href={`${docsUrl}/TASKS.md`}>Open earlier task notes</a>
+    </details>
+  </section>;
 }
 
 function updateNode(plan: ProjectPlan, id: string, patch: Partial<PlanNode>): ProjectPlan {
@@ -239,8 +289,10 @@ function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPl
       return;
     }
     const classification = branchClassifications.find(candidate => candidate === data.get("type"));
-    const parent = String(data.get("parent")) || null;
-    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs }))) close();
+    const location = String(data.get("parent"));
+    const newTree = planTrees.find(tree => location === `tree:${tree}`);
+    const parent = newTree ? null : location || null;
+    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs, tree: newTree ?? node.tree }))) close();
   }
 
   return <form className="grid min-w-0 gap-3 py-2" onSubmit={submit}>
@@ -260,8 +312,8 @@ function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPl
       <details>
         <summary className={disclosure}>Change location</summary>
         <label className={`${label} pb-3`}>Move under
-          <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? ""}>
-            <option value="">Project tree</option>
+          <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? `tree:${treeForRoot(node)}`}>
+            {planTrees.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
             {plan.nodes.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
               <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
             ))}
@@ -352,6 +404,9 @@ function ToolReferences({ id, close }: { id: string; close: () => void }) {
         <li key={id}><Link className={link} to={`/decks/${encodeURIComponent(id)}`} onClick={close}>{id.replace(/-/g, " ")}</Link></li>
       ))}</ul>}
       <Link className={`${link} pl-3`} to="/admin" onClick={close}>Open dashboard</Link>
+      {contextualTools.some(item => item.id === id && item.hub === "further-mechanics") && <div>
+        <a className={`${link} pl-3`} href={`${docsUrl}/pathways/further-mechanics.md`}>Further Mechanics pathway</a>
+      </div>}
     </details>
   </div>;
 }
@@ -494,9 +549,12 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = selectedId ? index.byId.get(selectedId) : undefined;
   const reviews = selectedId === "review-queue";
+  const [tree, setTree] = useState<PlanTree>("site");
+  const [trackerOpened, setTrackerOpened] = useState(false);
+  const returnView = useRef<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const positions = useRef(new Map<string, number>());
-  const viewKey = `${pageKey}:${selectedId ?? "overview"}`;
+  const viewKey = `${pageKey}:${tree}:${selectedId ?? "overview"}`;
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   function toggleBranch(id: string) {
@@ -510,7 +568,14 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
 
   function select(id: string | null) {
     if (scroller.current) positions.current.set(viewKey, scroller.current.scrollTop);
+    if (!selected) returnView.current = selectedId ?? null;
+    if (id === "feature-tracker") setTrackerOpened(true);
     setSelection({ route: pageKey, id });
+  }
+
+  function selectTree(next: PlanTree) {
+    setTree(next);
+    select(null);
   }
 
   useLayoutEffect(() => {
@@ -594,7 +659,8 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
           }}><X size={19} /></button>
         </div>
         <nav aria-label="Project plan views" className="mt-1 flex flex-wrap gap-x-1">
-          <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={!selectedId} onClick={() => select(null)}>Tree</button>
+          {planTrees.map(key => <button key={key} className={viewControl}
+            aria-pressed={!selectedId && tree === key} onClick={() => selectTree(key)}>{treeLabels[key]}</button>)}
           {tool && <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
         </nav>
       </header>
@@ -605,9 +671,15 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {!plan && !error && <p role="status" className="text-sm text-slate-600">Loading project plan…</p>}
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
+          {trackerOpened && <section hidden={selectedId !== "feature-tracker"} className="space-y-2">
+            <h3 className="text-sm font-semibold">Feature tracker</h3>
+            <ToolsSection compact store={matrixStore} phone={panelWidth === 0} onOpen={select} />
+          </section>}
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
-            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(null)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
-            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} />}
+            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(returnView.current)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
+            : selectedId === "feature-tracker" ? null
+            : selectedId === "all-tasks" ? <OpenTasks plan={plan} save={save} select={select} />
+            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} tree={tree} close={() => setOpen(false)} />}
         </fieldset>}
       </div>
     </aside>}

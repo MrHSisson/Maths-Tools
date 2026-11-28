@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Home, RefreshCw, AlertTriangle, LayoutGrid, Presentation, ListChecks, Sparkles, BookOpen } from "lucide-react";
 import { PAGE_BG } from "../shared/colors";
 import { useLayoutMode } from "../shared/layoutMode";
@@ -31,7 +32,8 @@ export default function AdminPage() {
   const [mode, setMode] = useState<NotesMode>("local");
   const [problem, setProblem] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
-  const [section, setSection] = useState<Section>("tools");
+  const [params] = useSearchParams();
+  const [section, setSection] = useState<Section>(() => NAV.find(item => item.key === params.get("section"))?.key ?? "tools");
   const [selected, setSelected] = useState<string | null>(null);
 
   const refresh = async () => {

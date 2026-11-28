@@ -9,7 +9,8 @@
 ## Progress
 
 - Tools open their own checklist. On a laptop the plan docks beside the tool.
-- Area cards sit in the tree. Tap the arrow to expand or the title to open the card.
+- Browse Site, Developments or Resources. Tap the arrow to expand or the title to open the card.
+- Site includes the green-dot Feature tracker. Developments shows Pathways and open Tasks.
 - Cards show descriptions, progress and the area’s own tree. Task rows stay short.
 - Subtools and features have labels. Tasks have checkboxes.
 - Edit on the card. Change location only when needed.

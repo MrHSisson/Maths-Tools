@@ -54,9 +54,11 @@ function ToolCard({ t, hideStrand, onOpen }: { t: ToolFacts; hideStrand?: boolea
   );
 }
 
-export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone: boolean; onOpen: (id: string) => void }) {
+export function ToolsSection({ store, phone, onOpen, compact = false }: {
+  store: NoteStore; phone: boolean; onOpen: (id: string) => void; compact?: boolean;
+}) {
   const [kind, setKind] = useState<Kind>("tool");
-  const [view, setView] = useState<"list" | "matrix">("list");
+  const [view, setView] = useState<"list" | "matrix">(compact ? "matrix" : "list");
   const [collapsed, setCollapsed] = usePersisted<string[]>("mt-admin-collapsed", []);
   const [cols, setCols] = usePersisted<Record<ColKey, boolean>>("mt-admin-cols", { state: true, has: true });
   const [showCols, setShowCols] = useState(false);
@@ -102,8 +104,8 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
   const colCount = 1 + COLUMNS.filter(c => cols[c.key]).length;
   const matrixCols = useMemo(() => [
     ...FEATURES.filter(f => f.key !== "tests").map(f => ({ key: f.key as string, label: f.label, hint: f.hint, has: (t: ToolFacts, _n?: Note) => !!t[f.key] })),
-    ...MATRIX_NOTE_COLS.map(c => ({ key: c.key, label: c.label, hint: c.hint, has: (_t: ToolFacts, n?: Note) => c.has(n) })),
-  ], []);
+    ...(compact ? [] : MATRIX_NOTE_COLS).map(c => ({ key: c.key, label: c.label, hint: c.hint, has: (_t: ToolFacts, n?: Note) => c.has(n) })),
+  ], [compact]);
   const isCollapsed = (name: string) => !!name && collapsed.includes(name);
   const toggle = (name: string) => setCollapsed(p => p.includes(name) ? p.filter(x => x !== name) : [...p, name]);
   const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (avail !== "all" ? 1 : 0) + Object.values(feat).filter(Boolean).length;
@@ -121,7 +123,7 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
 
   return (
     <div>
-      <PageHead title="Tools" sub={`${live} live · ${scoped.length - live} not live`} />
+      {!compact && <PageHead title="Tools" sub={`${live} live · ${scoped.length - live} not live`} />}
 
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -129,10 +131,10 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
             <Search size={16} className="text-slate-400" />
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()}`} className="w-full bg-transparent text-sm outline-none" />
           </label>
-          <select value={kind} onChange={e => pickKind(e.target.value as Kind)} title={kindInfo.hint} aria-label="What to show"
+          {!compact && <select value={kind} onChange={e => pickKind(e.target.value as Kind)} title={kindInfo.hint} aria-label="What to show"
             className={`order-2 min-w-0 flex-1 font-semibold text-slate-800 sm:flex-none ${sel}`}>
             {KINDS.map(k => <option key={k.key} value={k.key}>{k.label} ({kindCounts[k.key]})</option>)}
-          </select>
+          </select>}
           <button onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}
             className={`order-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${showFilters || filterCount ? "border-sky-500 bg-sky-50 text-sky-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>
             <SlidersHorizontal size={16} />Filters{filterCount > 0 && <span className="min-w-[1.25rem] rounded-full bg-sky-700 px-1.5 text-center text-xs text-white">{filterCount}</span>}
@@ -153,16 +155,16 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
               )}
             </div>
           )}
-          <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className={`order-5 hidden sm:block ${sel}`} aria-label="Order">
+          {!compact && <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className={`order-5 hidden sm:block ${sel}`} aria-label="Order">
             <option value="scheme">By strand</option>
             <option value="name">A–Z</option>
             <option value="state">By state</option>
-          </select>
+          </select>}
         </div>
         {showFilters && (
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex flex-wrap gap-3">
-              <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className={`sm:hidden ${sel}`} aria-label="Order">
+              <select value={sort} onChange={e => setSort(e.target.value as SortKey)} className={`${compact ? "" : "sm:hidden"} ${sel}`} aria-label="Order">
                 <option value="scheme">Order: by strand</option>
                 <option value="name">Order: A–Z</option>
                 <option value="state">Order: by state</option>
@@ -200,13 +202,13 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
       </div>
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex w-full gap-1 rounded-xl bg-slate-200/70 p-1 sm:w-auto" role="tablist">
+        {!compact && <div className="flex w-full gap-1 rounded-xl bg-slate-200/70 p-1 sm:w-auto" role="tablist">
           {([["list", "List"], ["matrix", "Matrix"]] as const).map(([v, label]) => (
             <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
               className={`flex-1 whitespace-nowrap rounded-lg px-3 py-1 text-sm font-semibold sm:flex-none ${view === v ? "bg-white text-slate-900" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
           ))}
-        </div>
-        <div className="flex w-full items-center whitespace-nowrap text-sm text-slate-500 sm:w-auto">
+        </div>}
+        <div className="flex w-full flex-wrap items-center gap-y-1 text-sm text-slate-500 sm:w-auto">
           {groups.some(g => g.name) && (
             <>
               <button onClick={() => setCollapsed(groups.map(g => g.name).filter(Boolean))} className="mr-2 inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-slate-900"><ChevronsDownUp size={15} />Collapse</button>
@@ -231,8 +233,8 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
           {rows.length === 0 && <p className="py-8 text-center text-slate-500">Nothing matches these filters.</p>}
         </div>
       ) : view === "matrix" ? (
-        <div className={`${panel} overflow-x-auto`}>
-          <table className="w-full text-sm">
+        <div className={`${panel} overflow-x-auto`} role="region" aria-label="Scrollable feature matrix" tabIndex={0}>
+          <table aria-label="Feature matrix" className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 text-left align-bottom font-semibold sm:px-4">Tool</th>
@@ -255,7 +257,10 @@ export function ToolsSection({ store, phone, onOpen }: { store: NoteStore; phone
                     const n = noteOf(t.id);
                     return (
                       <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 hover:bg-sky-50">
-                        <td className="sticky left-0 z-[1] max-w-[7.5rem] truncate bg-white px-3 py-2 font-semibold text-slate-900 sm:max-w-none sm:whitespace-nowrap sm:px-4" title={t.name}>{t.name}</td>
+                        <th scope="row" className={`sticky left-0 z-[1] bg-white px-3 text-left font-semibold text-slate-900 ${compact ? "w-32 max-w-[8rem]" : "sm:whitespace-nowrap sm:px-4"}`}>
+                          <button type="button" onClick={event => { event.stopPropagation(); onOpen(t.id); }}
+                            className="min-h-10 break-words text-left hover:underline">{t.name}</button>
+                        </th>
                         {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center"><Dot on={c.has(t, n)} label={c.label} /></td>)}
                       </tr>
                     );

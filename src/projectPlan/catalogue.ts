@@ -1,5 +1,5 @@
 import { CATEGORIES } from "../registry";
-import { makeNode, type ProjectPlan } from "../../api/_projectPlan";
+import { makeNode, type PlanNode, type PlanTree, type ProjectPlan } from "../../api/_projectPlan";
 
 const hubs = new Set(CATEGORIES.flatMap(category => category.tools.flatMap(tool => tool.hub ? [tool.hub] : [])));
 
@@ -23,6 +23,14 @@ const catalogueNodes = CATEGORIES.flatMap(category => {
   }
   return [group, ...tools];
 });
+
+const siteIds = new Set(catalogueNodes.map(node => node.id));
+
+export function treeForRoot(node: PlanNode): PlanTree {
+  if (node.tree) return node.tree;
+  if (node.id === "project:decks") return "resources";
+  return siteIds.has(node.id) ? "site" : "developments";
+}
 
 const initialNodes = [
   ...catalogueNodes,

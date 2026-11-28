@@ -37,6 +37,7 @@ Keep the split even when a session only touches one.
 - Tick tasks in compact rows. Edit directly on the card, or change its location when needed.
 - Write overviews as up to three short bullets.
 - Label subtools and planned or live features. Tick off tasks.
+- Browse Site, Developments and Resources. Site includes the green-dot matrix. Developments shows Pathways and Tasks.
 - Expand area cards in the tree. Tap a title to open its details. Tool cards show the first three open items. Existing review requests are only shown from the card menu.
 
 Agent: Codex

@@ -44,6 +44,14 @@ describe("shared project plan", () => {
     expect(isProjectPlan({ ...plan, nodes: [{ ...tool, classification: "unknown" }, check] })).toBe(false);
   });
 
+  it("accepts a tree for new items and keeps older records valid", () => {
+    for (const tree of ["site", "developments", "resources"]) {
+      expect(isProjectPlan({ ...plan, nodes: [{ ...tool, tree }, check] })).toBe(true);
+    }
+    expect(isProjectPlan({ ...plan, nodes: [{ ...tool, tree: "archive" }, check] })).toBe(false);
+    expect(isProjectPlan(plan)).toBe(true);
+  });
+
   it("requires the plan key before reading or writing", async () => {
     expect((await GET(request(undefined, "wrong"))).status).toBe(401);
     expect((await POST(request(plan, "wrong"))).status).toBe(401);
