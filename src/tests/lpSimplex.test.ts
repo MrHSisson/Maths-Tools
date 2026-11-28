@@ -169,6 +169,17 @@ describe("whole numbers: is it practical?", () => {
     expect(zeros).toBeGreaterThan(0);
     expect(noted).toBe(ties);
   });
+  it("Level 3 wording: a situation with at least one percentage or either-or limit, and the tidy constraints are unchanged by the wording", () => {
+    for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 60; i++) {
+      const q = generateSimplex(3, OPT(kind, { forms: ["standard"], context: ["story"], sizes: [[3, 3]], hard: ["percent", "either"] }));
+      const forms = (q.data.story?.res ?? []).map((r) => r.form).filter(Boolean);
+      expect(forms.length, q.prompt).toBeGreaterThan(0);
+      if (forms.includes("percent")) expect(q.prompt).toContain("100%");
+      if (forms.includes("either")) expect(q.prompt).toMatch(/but not for more than one of these/);
+      const steps = solveSimplex(asProblem(q));
+      expect(steps.length).toBeGreaterThan(3);
+    }
+  });
   it("degenerate cases are never drawn unless they are allowed", () => {
     for (const level of [2, 3]) for (let i = 0; i < 150; i++) {
       // (an equality is built through the optimum, so it is degenerate by design and is left out)

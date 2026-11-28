@@ -14,7 +14,7 @@ interface SxStory {
   intro: string;
   items: Array<{ plural: string; singular: string }>;
   /** one per constraint: the resource, and the factor the data is multiplied by (1, 2, 5, 10, or 1/10 for a decimal per unit) */
-  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number] }>;
+  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number]; /** Level 3 wording: the limit is given as percentages of the whole (a limit of 100%), or as the most of each kind that all of it could make ("20 chairs or 30 tables"); `cap` is the right-hand side of the tidy constraint */ form?: "percent" | "either"; cap?: number }>;
   /** the profit per item is c times this */
   profitScale: number;
 }
@@ -149,7 +149,7 @@ function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null 
 }
 
 // ── The story: the same numbers, dressed ─────────────────────────────────────
-function dress(spec: SxSpec, n: number, m: number): SxStory | null {
+function dress(spec: SxSpec, n: number, m: number, hard: string[] = []): SxStory | null {
   if (spec.cons.some((k) => k.op !== "≤" || k.a.some((v) => v < 0))) return null;
   // each constraint must already be in lowest terms, so the student's simplification gives back the designed numbers
   if (spec.cons.some((k) => [...k.a, k.b].reduce((h, v) => gcdInt(h, v), 0) !== 1)) return null;
@@ -157,10 +157,25 @@ function dress(spec: SxSpec, n: number, m: number): SxStory | null {
   if (!ctxs.length) return null;
   const ctx = pick(ctxs);
   const items = shuffled(ctx.items).slice(0, n);
-  const res = shuffled(ctx.resources).slice(0, m).map((r) => {
+  const res: SxStory["res"] = shuffled(ctx.resources).slice(0, m).map((r) => {
     const scale: [number, number] = r.decOnly ? pick<[number, number]>([[1, 10], [1, 5], [1, 2]]) : weighted<[number, number]>([[[1, 1], 2], [[2, 1], 1], [[5, 1], 1], [[10, 1], 2]]);
     return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale };
   });
+  if (hard.length) {
+    // Level 3: some limits are a percentage of the whole, or the most that all of it could make of each kind; at least one is
+    res.forEach((r, i) => {
+      const k = spec.cons[i];
+      const nz = k.a.filter((v) => v !== 0);
+      const options: Array<"percent" | "either"> = [];
+      if (hard.includes("percent") && 100 % k.b === 0) options.push("percent");
+      if (hard.includes("either") && nz.length >= 2 && nz.every((v) => k.b % v === 0)) options.push("either");
+      if (!options.length || Math.random() < 0.3) return;
+      const f = pick(options);
+      r.form = f;
+      if (f === "percent") { r.scale = [100 / k.b, 1]; r.unit = "%"; } else r.cap = k.b;
+    });
+    if (!res.some((r) => r.form)) return null;
+  }
   return { intro: ctx.intro(items.map((i) => i.plural)), items, res, profitScale: 1 };
 }
 
@@ -171,6 +186,18 @@ function storyText(story: SxStory, spec: SxSpec): string {
   const parts: string[] = [];
   for (let i = 0; i < m; i++) {
     const r = story.res[i];
+    if (r.form === "percent") {
+      const use = story.items.map((it, j) => ({ it, p: spec.cons[i].a[j] * r.scale[0] })).filter((x) => x.p !== 0);
+      const each = use.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${x.p}% of the available ${r.of}` : `${x.p}%`}`);
+      const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
+      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)}. No more than 100% of the ${r.of} can be used.`);
+      continue;
+    }
+    if (r.form === "either") {
+      const most = story.items.map((it, j) => ({ it, c: spec.cons[i].a[j] === 0 ? 0 : r.cap! / spec.cons[i].a[j] })).filter((x) => x.c !== 0).map((x) => `${x.c} ${x.it.plural}`);
+      parts.push(`All the ${r.of} available is enough for ${most.slice(0, -1).join(", ")} or ${most[most.length - 1]}, but not for more than one of these.`);
+      continue;
+    }
     const per = story.items.map((it, j) => ({ it, a: fr(spec.cons[i].a[j] * r.scale[0], r.scale[1]) })).filter((x) => x.a[0] !== 0);
     const each = per.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}${r.of ? ` of ${r.of}` : ""}` : `${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}`}`);
     const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
@@ -220,6 +247,8 @@ export interface SxOptions {
   sizes?: Array<[number, number]>;
   /** the starting forms that may be used ("standard", "min", "ge", "lower", "eq"); only drawn when `nonStandard` is set */
   forms: string[];
+  /** Level 3 wording of a situation: the kinds of limit that may be drawn besides plain use ("percent" and "either"); at least one limit in the problem is one of them */
+  hard?: string[];
   /** a change of form is always needed first (Non-standard problems, at any level; One pivot at Level 3). Set up and Solve never change form. */
   nonStandard?: boolean;
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
@@ -248,7 +277,7 @@ export function isDegenerate(run: Run): boolean {
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
-  const whole = kind === "practical" || (o.whole && kind === "solve");
+  const whole = kind === "practical" || (o.whole && kind === "solve" && level < 3);
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
@@ -282,7 +311,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
   if (level >= 2 && form === "standard" && (chosen === "story" || chosen === "table") && m <= 3) {
     table = chosen === "table";
-    story = dress(sp, n, m) ?? undefined;
+    story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined) ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
   }
   let run: Run;

@@ -32,15 +32,19 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const FORMS_BY_LEVEL: Record<number, string[]> = { 1: ["min", "lower"], 2: ["ge"], 3: ["eq"] };
   const levelForms = FORMS_BY_LEVEL[level] ?? ["ge"];
   const pickedForms = ticked(o.sxForms, levelForms.join(",")).filter((f) => levelForms.includes(f));
+  // a situation has at most three limits, so at Level 3 it is drawn with three constraints
+  const contexts = nonStandard ? ["bare"] : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
+  const wordsAtL3 = !contexts.includes("bare");
   const q = generateSimplex(level, {
     kind,
     vars: [],
     cons: [],
-    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }),
+    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3)),
+    hard: level === 3 && (key === "setup" || key === "solve") ? ticked(o.sxHard, "percent,either") : undefined,
     nonStandard: changes,
     forms: !changes ? ["standard"] : key === "pivot" ? ["ge"] : pickedForms.length ? pickedForms : levelForms,
     method: o.sxMethod === "rows" ? "rows" : "substitute",
-    context: nonStandard ? ["bare"] : ticked(o.sxContext, level === 2 ? "story,table" : "bare"),
+    context: contexts,
     pivotGiven: o.sxPivot === "given",
     whole: o.sxWhole === "on",
     given: o.sxGiven !== "find",
@@ -64,9 +68,17 @@ const OPTIONS: ShellOption[] = [
     ],
   },
   {
-    key: "sxContext", label: "Wording", info: "Whether the problem is given as an objective and inequalities, or as a situation (in sentences or in a table) that must first be turned into them. Level 2 is always a situation: the inequalities are Level 1 and Level 3.",
-    forSubTools: ["setup", "solve", "practical"], forSubToolLevels: { setup: [2], solve: [2], practical: [2, 3] }, multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : "bare"),
-    choices: [{ value: "bare", label: "Inequalities", forLevels: [3] }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
+    key: "sxContext", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation. Level 1 always gives them, Levels 2 and 3 form them by default, and a table of the data is Level 2 only.",
+    forSubTools: ["setup", "solve", "practical"], forSubToolLevels: { setup: [2, 3], solve: [2, 3], practical: [2, 3] }, multi: true, defaultFor: (lv: number) => (lv === 2 ? "story,table" : lv === 3 ? "story" : "bare"),
+    choices: [{ value: "bare", label: "Inequalities", forLevels: [3] }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table", forLevels: [2] }],
+  },
+  {
+    key: "sxHard", label: "Limit Types", info: "The harder ways a limit is worded in a Level 3 situation, which the student must turn into an ordinary constraint. At least one limit in each question is one of the ticked types; the others are worded plainly. Tick either or both.",
+    forSubTools: ["setup", "solve"], forLevels: [3], multi: true, defaultFor: () => "percent,either",
+    choices: [
+      { value: "percent", label: "Percentages Of A Whole", sub: "each uses 5% of the oven time" },
+      { value: "either", label: "Either-Or Limits", sub: "20 chairs or 30 tables" },
+    ],
   },
   {
     key: "sxPivot", label: "Pivot", info: "Whether the student chooses the pivot (the column, the θ-values, the row) or is told the pivot and only carries out the row operations.",
@@ -92,8 +104,8 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "substitute", label: "Substitute And Split", sub: "Y = y − 4; two inequalities" }, { value: "rows", label: "Use As Rows", sub: "−y ≤ −4; an equation as a row" }],
   },
   {
-    key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. The Is it practical? sub-tool always asks it. An asterisk marks an extension that is unlikely to come up.",
-    forSubTools: ["solve"], defaultFor: () => "off",
+    key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. Levels 1 and 2 only: at Level 3 the whole-number question is the Is it practical? sub-tool. An asterisk marks an extension that is unlikely to come up.",
+    forSubTools: ["solve"], forLevels: [1, 2], defaultFor: () => "off",
     choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
   },
   {
@@ -133,9 +145,9 @@ export default function App() {
         skillPrint: { figure: (p) => <SxPrintFigure p={p} />, working: (_p, steps) => <SxPrintWorking steps={steps} />, perPage: true, dots: true },
         noSandbox: true,
         levelLabels: {
-          setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three or four variables, the inequalities given"],
+          setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
           pivot: ["Two variables, the first pivot", "Three variables, a pivot part-way through the run", "A negative right-hand side to start"],
-          solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three or four variables, the inequalities given"],
+          solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
           forms: ["A minimise, or a lower bound", "A ≥ constraint", "An equality"],
           interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that may or may not be optimal", "The problem the tableau shows"],
           practical: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Rounding to the nearest breaks a constraint"],

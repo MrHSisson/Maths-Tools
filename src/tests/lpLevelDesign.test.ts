@@ -87,10 +87,10 @@ describe("The Simplex tool", () => {
       for (const level of [1, 2, 3]) expect(forms[level]).toContain(generateSimplex(level, { ...ALL, kind, nonStandard: true, forms: forms[level], context: ["bare"] }).data.startForm);
     }
   });
-  it("Solve with Whole Numbers on asks the whole-number question at every level, in standard form", () => {
+  it("Level 3 Solve never asks the whole-number question, even when it is ticked: that is the Is it practical? sub-tool", () => {
     for (let i = 0; i < 20; i++) {
       const d = generateSimplex(3, { ...ALL, kind: "solve", whole: true }).data;
-      expect(d.whole).toBeDefined();
+      expect(d.whole).toBeUndefined();
       expect(d.startForm).toBe("standard");
     }
   });
