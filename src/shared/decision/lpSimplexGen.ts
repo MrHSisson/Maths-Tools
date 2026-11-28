@@ -290,11 +290,11 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const whole = kind === "practical" || (o.whole && kind === "solve" && level < 3);
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
-  const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
-  // each level has its own number of variables: two at Level 1, three at Level 2, three or four at Level 3
-  const ownN = level === 1 ? [2] : level === 2 ? [3] : [3, 4];
-  const okN = (v: number): boolean => (o.anySize ? v >= 2 && v <= 4 : v >= 2 && v <= caps.n && ownN.includes(v));
-  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= (o.anySize ? 4 : caps.m));
+  const caps = { n: level === 1 ? 2 : 3, m: 3 };
+  // each level has its own number of variables: two at Level 1, three at Levels 2 and 3
+  const ownN = level === 1 ? [2] : [3];
+  const okN = (v: number): boolean => (o.anySize ? v >= 2 && v <= 3 : v >= 2 && v <= caps.n && ownN.includes(v));
+  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= caps.m);
   const fallback: [number, number] = level === 1 ? [2, 2] : [3, 3];
   const nChoices = o.vars.filter(okN);
   const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : fallback) : [nChoices.length ? pick(nChoices) : fallback[0], pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [fallback[1]])];

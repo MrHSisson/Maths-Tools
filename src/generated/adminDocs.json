@@ -4258,6 +4258,10 @@
      "title": "Simplex restructure: Non-standard problems, One pivot folded into Solve, harder Level 3 wording"
     },
     {
+     "date": "2026-11-28",
+     "title": "Simplex: Read a tableau in context at both levels; 4 × 4 removed"
+    },
+    {
      "date": "2026-11-22",
      "title": "The Simplex Algorithm: engine, designed numbers and four sub-tools (chunks S0 to S5), not live"
     },
@@ -4268,10 +4272,6 @@
     {
      "date": "2026-11-22",
      "title": "The Simplex Algorithm: a pivot given, and the data as a table, not live"
-    },
-    {
-     "date": "2026-11-22",
-     "title": "Simplex: an equation as a row, a lower bound as a row, and every level has its own questions, not live"
     }
    ]
   },

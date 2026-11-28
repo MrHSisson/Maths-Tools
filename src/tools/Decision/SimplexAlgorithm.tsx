@@ -38,7 +38,6 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const FORMS_BY_LEVEL: Record<number, string[]> = { 1: ["lower"], 2: ["min", "ge"], 3: ["eq"] };
   const levelForms = FORMS_BY_LEVEL[level] ?? ["ge"];
   const pickedForms = ticked(o.sxForms, levelForms.join(",")).filter((f) => levelForms.includes(f));
-  // a situation has at most three limits, so at Level 3 it is drawn with three constraints
   const contexts = kind === "pivot" ? ["bare"] : key === "interpret" ? ticked(o.sxCtxR, "story,table") : nonStandard ? ticked(o.sxCtxF, "bare") : key === "practical" ? ticked(o.sxCtxP, level === 2 ? "story,table" : "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
   const wordsAtL3 = !contexts.includes("bare");
   // Read a tableau: its own size is drawn from the ticked ones, and the problem is designed and judged at that size (two variables is Level 1's, three Level 2's, four Level 3's)
@@ -52,7 +51,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     tableau: key === "interpret" && kind === "interpret" ? (tableauTicks.length === 1 ? (tableauTicks[0] as "optimal" | "part") : "either") : undefined,
     vars: [],
     cons: [],
-    sizes: readSize ? [readSize] : ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3 && !nonStandard)),
+    sizes: readSize ? [readSize] : ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])),
     hard: level === 3 && (key === "setup" || key === "solve") ? ticked(o.sxHard, "percent,either") : undefined,
     nonStandard: changes,
     forms: !changes ? ["standard"] : pickedForms.length ? pickedForms : levelForms,
@@ -73,10 +72,10 @@ const renderSolution = (_p: DecisionProblem, steps: SolveStep[]) => <SxSolution 
 
 const OPTIONS: ShellOption[] = [
   {
-    key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Level 1 has two variables, Level 2 has three, and Level 3 has three or four. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
-    forSubTools: ["setup", "solve", "forms", "practical"], forLevels: [1, 3], multi: true, defaultFor: (lv: number) => (lv === 1 ? "2x2" : "3x3"),
+    key: "sxSize", label: "Size", info: "How many variables and how many constraints the problem has (so how many rows the tableau has): 2 × 3 is two variables and three constraints. Level 1 has two variables and Levels 2 and 3 have three. At Level 1 tick either or both and each question draws one.",
+    forSubTools: ["setup", "solve", "forms", "practical"], forLevels: [1], multi: true, defaultFor: () => "2x2",
     choices: [
-      { value: "2x2", label: "2 × 2", forLevels: [1] }, { value: "2x3", label: "2 × 3", forLevels: [1] }, { value: "3x3", label: "3 × 3", forLevels: [3] }, { value: "4x4", label: "4 × 4*", forLevels: [3] },
+      { value: "2x2", label: "2 × 2" }, { value: "2x3", label: "2 × 3" },
     ],
   },
   {

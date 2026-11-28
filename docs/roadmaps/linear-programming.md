@@ -44,4 +44,4 @@ Neither is published; publish only if students should see them.
 
 1. Run each stage's level, with the option named, until the class is secure, then move on. The tool's worked solutions use the same layout as the books (the Cambridge style by default; **Tableau Layout** switches to the Oxford style).
 2. If a stage is too easy, go to the next level of the same sub-tool, not back: the levels do not overlap.
-3. An option button with an asterisk (for example **4 × 4\***, **Ask If Practical\***) is an extension that is unlikely to come up. Leave it for the last.
+3. An option button with an asterisk (for example **Ask If Practical\***) is an extension that is unlikely to come up. Leave it for the last.
