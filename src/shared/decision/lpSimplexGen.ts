@@ -59,7 +59,7 @@ interface Base { A: number[][]; b: number[]; c: number[]; xs: number[] }
 function limitBelowCoefficient(A: number[][], b: number[]): boolean {
   return A.some((r, i) => r.some((v) => v > b[i]));
 }
-function designBase(n: number, m: number, pool: number[], degenerate = false, mixed = false): Base | null {
+function designBase(n: number, m: number, pool: number[], mixed = false): Base | null {
   const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
@@ -69,9 +69,7 @@ function designBase(n: number, m: number, pool: number[], degenerate = false, mi
   const basicX = shuffled(Array.from({ length: n }, (_, j) => j)).slice(0, kx);
   const xs = Array.from({ length: n }, (_, j) => (basicX.includes(j) ? ri(1, 9) : 0));
   const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, kx);
-  // a degenerate start: one more constraint through the optimum than there are basic variables, so a basic variable is 0 at the end and the theta-values tie
-  const extra = degenerate ? shuffled(Array.from({ length: m }, (_, i) => i).filter((i) => !binding.includes(i)))[0] : undefined;
-  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) || i === extra ? 0 : ri(1, 9)));
+  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) ? 0 : ri(1, 9)));
   const y = A.map((_, i) => (binding.includes(i) ? ri(1, 4) : 0));
   const c = Array.from({ length: n }, (_, j) => {
     const s = A.reduce((t, r, i) => t + y[i] * r[j], 0);
@@ -286,20 +284,6 @@ export interface SxOptions {
   /** Level 3: a lower bound and an equality are handled by substitution and as two inequalities ("substitute"), or as rows ("rows") */
   method?: "substitute" | "rows";
   layout: "A" | "B";
-  /** a degenerate case (a tie for the pivot row, a θ of 0, a basic variable at 0 at the end) may come up: Solve, One pivot and Is it practical? only; every other question avoids one */
-  allowDegenerate?: boolean;
-  /** every question is a degenerate case (Degenerate ticked without Not Degenerate); implies allowDegenerate */
-  onlyDegenerate?: boolean;
-}
-/** whether the run meets a degenerate case: a tie for the pivot row, a pivot with θ = 0, or a basic variable that is 0 in the final tableau */
-export function isDegenerate(run: Run): boolean {
-  const tieRow = run.iters.some((it) => {
-    if (it.start) return false;
-    const best = it.thetas.find((x) => x.row === it.row)!.value;
-    return best[0] === 0 || it.thetas.some((x) => x.row !== it.row && x.value[0] * best[1] === best[0] * x.value[1]);
-  });
-  const v = run.final.rows[0].length - 1;
-  return tieRow || run.final.rows.slice(1).some((r) => r[v][0] === 0);
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
@@ -324,7 +308,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
     const allowed = usable.length ? usable : kind === "pivot" ? (["ge", "eq"] as StartForm[]) : (["min", "ge", "lower", "eq"] as StartForm[]);
     form = pick(allowed);
   }
-  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], !!o.allowDegenerate && level >= 2 && (o.onlyDegenerate || Math.random() < 0.3), form === "min");
+  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], form === "min");
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
@@ -344,10 +328,6 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   }
   let run: Run;
   try { run = runSpec(sp); } catch { return null; }
-  // unless degenerate cases are allowed, a tie for the pivot row, a θ of 0 or a basic variable at 0 is never drawn
-  // (an equality is built through the optimum, so it is degenerate by design and is left out of this)
-  if (!o.allowDegenerate && form !== "eq" && isDegenerate(run)) return null;
-  if (o.onlyDegenerate && !isDegenerate(run)) return null;
   const w = whole ? wholeAnalysis(sp, run) : undefined;
   // when the optimum is handed over the tableaux are never shown, so only the optimum itself has to read well; otherwise every tableau on the way must
   if (kind === "practical" && o.given && w) { if ((level < 2 && run.tie) || ![...w.x, w.p].every((v) => BUDGET[level].dens.includes(v[1]))) return null; } else if (!nice(run, w && fractional ? Math.min(3, level + 1) : level)) return null; // a fractional optimum puts fractions all through the tableaux: its path is judged by the next level up

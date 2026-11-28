@@ -46,8 +46,6 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const design = readSize ? (readSize[0] === 2 ? 1 : readSize[0] === 3 ? 2 : 3) : level;
   const tableauTicks = ticked(o.sxTableau, "optimal,part");
   const startTicks = ticked(o.sxStart, "initial");
-  const degTicks = ticked(o.sxDegenerate, level === 3 ? "plain,degenerate" : "plain");
-  const hasDeg = degTicks.includes("degenerate");
   const q = generateSimplex(design, {
     kind,
     anySize: !!readSize,
@@ -65,9 +63,6 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     whole: o.sxWhole === "on",
     given: o.sxGiven !== "find",
     layout: o.sxLayout === "B" ? "B" : "A",
-    // only the sub-tools that pivot can meet a degenerate case; it is allowed by default at Level 3 only
-    allowDegenerate: (key === "solve" || key === "forms") && hasDeg,
-    onlyDegenerate: (key === "solve" || key === "forms") && hasDeg && !degTicks.includes("plain"),
   });
   return { kind: q.data.kind, level, sx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
@@ -159,11 +154,6 @@ const OPTIONS: ShellOption[] = [
     key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. Levels 1 and 2 only: at Level 3 the whole-number question is the Is it practical? sub-tool. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["solve"], forLevels: [1, 2], when: { key: "sxWork", values: ["optimum"] }, defaultFor: () => "off",
     choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
-  },
-  {
-    key: "sxDegenerate", label: "Degenerate Cases", info: "A degenerate case is a corner where three lines meet, so two rows tie for the smallest θ, a basic variable is 0, and sometimes a pivot has θ = 0 and P does not increase. The method still reaches the optimum, but a student who takes the other tied row follows a different path. Tick one or both and each question draws one; with both ticked about one question in three is built degenerate.",
-    forSubTools: ["solve", "forms"], forLevels: [2, 3], forSubToolLevels: { forms: [2] }, multi: true, defaultFor: (lv: number) => (lv === 3 ? "plain,degenerate" : "plain"),
-    choices: [{ value: "plain", label: "Not Degenerate" }, { value: "degenerate", label: "Degenerate" }],
   },
   {
     key: "sxGiven", label: "Optimum", info: "Whether the question gives the optimal solution of the linear programme, or asks for it first with the simplex algorithm.",
