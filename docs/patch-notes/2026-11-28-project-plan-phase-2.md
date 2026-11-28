@@ -10,6 +10,8 @@ Strand: Maths
 - Expand area cards in the tree. Tap a title to open its details. Tool cards show the first three open items. Existing review requests are only shown from the card menu.
 - Open the guides in the plan. Keep teaching decks in their own section.
 - Keep Site rows short. Show descriptions on the cards and group the guides next to the tree.
+- Open short subtool summaries on tool cards. Go from a Mechanics tool to the Further Mechanics checklist.
+- Moved four pathways and 20 open tasks from Admin into the shared plan.
 
 Agent: Codex
 Notes: Project Plan Phase 2 (Codex), Maths Tools — Build Log.

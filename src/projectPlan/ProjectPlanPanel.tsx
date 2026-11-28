@@ -9,6 +9,7 @@ import { ToolsSection } from "../admin/ToolsSection";
 import { emptyStore } from "../admin/notes";
 import { PlanReference, isPlanReference } from "./PlanReference";
 import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
+import docs from "../generated/adminDocs.json";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
 const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -393,11 +394,15 @@ function Reviews({ plan, index, save, select }: { plan: ProjectPlan; index: Plan
 
 const toolFactsById = new Map(TOOLS.map(tool => [tool.id, tool]));
 const mechanicsSubtools = Object.values(MECHANICS_PAIRINGS).flat();
+const profileSubtoolsById = new Map(Object.entries(docs.tools).flatMap(([id, profile]) =>
+  "subTools" in profile ? [[id, profile.subTools] as const] : []
+));
 
 function ToolReferences({ id, close, select }: { id: string; close: () => void; select: (id: string) => void }) {
   const tool = toolFactsById.get(id);
   if (!tool) return null;
   const subtools = [...new Map(mechanicsSubtools.filter(ref => ref.tool === id).map(ref => [ref.sub, ref])).values()];
+  const profileSubtools = profileSubtoolsById.get(id) ?? [];
   const features = FEATURES.filter(feature => tool[feature.key] && feature.key !== "spec" && feature.key !== "tests" && feature.key !== "teach");
   const summary = "min-h-11 cursor-pointer py-3 text-sm font-medium";
   const link = "inline-flex min-h-11 items-center break-words text-sm text-teal-800 hover:underline";
@@ -411,6 +416,15 @@ function ToolReferences({ id, close, select }: { id: string; close: () => void; 
         }).toString() }} onClick={close}>{ref.label}{ref.a2 ? " (A2)" : ""}</Link></li>
       ))}</ul>
     </details>}
+    {subtools.length === 0 && profileSubtools.length > 0 && <details>
+      <summary className={summary}>Subtools ({profileSubtools.length})</summary>
+      <ul className="space-y-2 pb-3 pl-3 text-sm">
+        {profileSubtools.map(subtool => <li key={subtool.name}>
+          <span className="font-medium">{subtool.name}</span>
+          <p className="text-slate-600">{subtool.purpose}</p>
+        </li>)}
+      </ul>
+    </details>}
     <details>
       <summary className={summary}>Tool features</summary>
       {features.length > 0 && <ul className="list-disc space-y-1 pl-6 text-sm text-slate-700">
@@ -419,7 +433,7 @@ function ToolReferences({ id, close, select }: { id: string; close: () => void; 
       <button className={`${link} pl-3`} onClick={() => select("feature-guide")}>Feature guide</button>
     </details>
     {contextualTools.some(item => item.id === id && item.hub === "further-mechanics") && (
-      <button className={link} onClick={() => select("pathway:further-mechanics")}>Further Mechanics pathway</button>
+      <button className={link} onClick={() => select("further-mechanics")}>Further Mechanics checklist</button>
     )}
   </div>;
 }
