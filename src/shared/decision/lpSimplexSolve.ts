@@ -273,14 +273,18 @@ function wholeSteps(d: SxData, run: Run, push: (caption: string, show: SxBlock[]
   if (!w.nearest.ok) notes.push(N(`Rounding to the nearest whole number gives (${w.nearest.pt.join(", ")}), which breaks a constraint, so rounding to the nearest is not safe: every candidate must be tested.`));
   const b = w.best;
   let text: string;
-  if (w.frac.length >= 3) {
-    // three or more fractional variables: not every combination, but the room left once everything is rounded down, and which sets of additions reach the bound
+  if (d.whole?.method === "room") {
+    // round everything down, see how much room is left in each constraint, and which sets of additions reach the bound
     const dn = w.down;
     const room = sp.cons.map((k, i) => k.b - dn.lhs[i]);
     const roomTab: SxBlock = { k: "tab", head: ["\\text{Uses}", "\\text{Limit}", "\\text{Room left}"], label: sp.cons.map((k) => termsTex(k.a, orig)), labelHead: "", rows: sp.cons.map((k, i) => [String(dn.lhs[i]), String(k.b), String(room[i])]) };
     push(`Round every variable down to (${dn.pt.join(", ")}). This is always practical, because it uses less than the optimum did. Work out how much room is left in each constraint.`, [roomTab, rowsOf(W(`Rounding down gives $P = ${dn.p}$.`), ...notes)], 2);
     const need = w.bound - dn.p;
     const idx = w.frac;
+    if (need === 0) {
+      push(`Rounding down already gives $P = ${dn.p}$, which is the upper bound of ${w.bound}, so no practical plan can do better.`, [rowsOf(R(`${orig.map((v, j) => `${v} = ${dn.pt[j]}`).join(",\\ ")},\\ P = ${dn.p}`))], 1);
+      return;
+    }
     const sets: number[][] = [];
     for (let mask = 1; mask < 1 << idx.length; mask++) {
       const set = idx.filter((_, t) => mask & (1 << t));

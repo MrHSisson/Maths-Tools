@@ -218,6 +218,16 @@ describe("whole numbers: is it practical?", () => {
       expect(text).toMatch(/is the unused/);
     }
   });
+  it("Is it practical?: the Round Down And Add method works at every level, including when rounding down is already the best plan", () => {
+    for (const level of [1, 2, 3]) for (const method of ["room", "points"] as const) for (let i = 0; i < 20; i++) {
+      const q = generateSimplex(level, OPT("practical", { forms: ["standard"], context: ["bare"], wholeMethods: [method] }));
+      expect(q.data.whole?.method).toBe(method);
+      const steps = solveSimplex(asProblem(q));
+      const last = steps[steps.length - 1];
+      expect(last.caption).toMatch(/upper bound/);
+      if (method === "room") expect(steps.some((st) => /Round every variable down/.test(st.caption))).toBe(true);
+    }
+  });
   it("Solve can ask the whole-number question too, and the question says so", () => {
     for (const kind of ["solve"] as SxKind[]) {
       const q = generateSimplex(2, OPT(kind, { whole: true, forms: ["standard"] }));
@@ -227,10 +237,10 @@ describe("whole numbers: is it practical?", () => {
       expect(steps.map((s) => s.caption).join(" ")).toMatch(/practical solution|is practical/);
     }
   });
-  it("with three or more fractional variables the working uses the room left, not every combination, and the set it finds fits", () => {
+  it("with three fractional variables the Round Down And Add method uses the room left, not every combination, and the set it finds fits", () => {
     let seen = 0;
     for (let i = 0; i < 80 && seen < 8; i++) {
-      const q = generateSimplex(3, OPT("practical", { forms: ["standard"], vars: [3, 4], cons: [3, 4], context: ["bare"] }));
+      const q = generateSimplex(3, OPT("practical", { forms: ["standard"], vars: [3, 4], cons: [3, 4], context: ["bare"], wholeMethods: ["room"] }));
       const run = runSpec(q.data.spec);
       const w = wholeAnalysis(q.data.spec, run);
       if (w.frac.length < 3) continue;

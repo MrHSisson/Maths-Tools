@@ -60,6 +60,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     context: contexts,
     pivotGiven: o.sxPivot === "given" || o.sxPivotF === "given",
     whole: o.sxWhole === "on",
+    wholeMethods: ticked(key === "solve" ? o.sxWholeMS : o.sxWholeM, "points"),
     given: o.sxGiven !== "find",
     layout: o.sxLayout === "B" ? "B" : "A",
   });
@@ -158,6 +159,16 @@ const OPTIONS: ShellOption[] = [
     key: "sxWhole", label: "Whole Numbers", info: "Whether the question goes on to ask if the solution is practical when only whole numbers make sense, and for the best practical plan if it is not. The optimum may be whole or have a fraction in it. Levels 1 and 2 only: at Level 3 the whole-number question is the Is it practical? sub-tool. An asterisk marks an extension that is unlikely to come up.",
     forSubTools: ["solve"], forLevels: [1, 2], when: { key: "sxWork", values: ["optimum"] }, defaultFor: () => "off",
     choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
+  },
+  {
+    key: "sxWholeM", label: "Method", info: "How the best whole-number plan is found. Tick one or both and each question draws one; the answer is the same either way.",
+    forSubTools: ["practical"], multi: true, defaultFor: () => "points",
+    choices: [{ value: "points", label: "Test The Nearby Points", sub: "round each down and up, tick the feasible" }, { value: "room", label: "Round Down And Add", sub: "the room left, then what fits" }],
+  },
+  {
+    key: "sxWholeMS", label: "Method", info: "How the best whole-number plan is found. Tick one or both and each question draws one; the answer is the same either way.",
+    forSubTools: ["solve"], when: [{ key: "sxWork", values: ["optimum"] }, { key: "sxWhole", values: ["on"] }], multi: true, defaultFor: () => "points",
+    choices: [{ value: "points", label: "Test The Nearby Points", sub: "round each down and up, tick the feasible" }, { value: "room", label: "Round Down And Add", sub: "the room left, then what fits" }],
   },
   {
     key: "sxGiven", label: "Optimum", info: "Whether the question gives the optimal solution of the linear programme, or asks for it first with the simplex algorithm.",

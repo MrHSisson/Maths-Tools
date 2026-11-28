@@ -33,7 +33,7 @@ export interface SxData {
   /** a situation whose data is shown as a table (limits, use per item, profit per item) rather than in sentences */
   table?: boolean;
   /** only whole numbers make sense: the optimum has a fraction in it, and the best practical plan is asked for; `given` says the question hands over the optimum */
-  whole?: { given: boolean };
+  whole?: { given: boolean; /** how the best whole-number plan is found: test every nearby point (the default), or round down and add where there is room */ method?: "points" | "room" };
 }
 interface SxQuestion { prompt: string; answerText: string; data: SxData }
 
@@ -277,6 +277,8 @@ export interface SxOptions {
   context: string[];
   /** whole numbers: the optimum has a fraction in it and the best practical plan is asked for (the `practical` kind always; Solve and Read a tableau when ticked) */
   whole: boolean;
+  /** the ways the best whole-number plan may be found ("points" and "room"); each question draws one. Default: points. */
+  wholeMethods?: string[];
   /** `practical` only: the question hands over the optimum rather than asking for it */
   given: boolean;
   /** One pivot: the pivot is given, not chosen */
@@ -347,7 +349,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
     if (o.tableau === "part" && !early) return null;
     at = o.tableau === "optimal" || (o.tableau === "either" && (!early || Math.random() < 0.5)) ? last : ri(1, last - 1);
   } else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
-  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
+  const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given, method: pick((o.wholeMethods?.length ? o.wholeMethods : ["points"]) as Array<"points" | "room">) } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
   let prompt: string;
