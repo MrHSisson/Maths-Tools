@@ -87,7 +87,7 @@ const STAGES: Stage[] = [
     towards: "This closes the loop between the algorithm and the situation it came from; the last stage widens which problems the algorithm can be started on.",
   },
   {
-    n: 6, title: "When it does not start at the origin", scale: "3 to 4 variables · a change of form first", short: "Minimise, ≥, bounds, equalities",
+    n: 6, title: "When it does not start at the origin", scale: "2 to 3 variables · a change of form first", short: "Minimise, ≥, bounds, equalities",
     does: "Problems the algorithm cannot start on as they stand. A minimise, a ≥ constraint, a lower bound or an equality each needs a change of form before the first pivot, and a tableau read backwards recovers the problem. Take the four forms one at a time before mixing them, and treat a lower bound or equation as a row only once the substitution method is secure.",
     can: ["Minimise by maximising P = −C", "Rewrite a ≥ constraint and start by pivoting on a negative entry", "Handle y ≥ 4 by Y = y − 4 or as one more constraint", "Handle an equation as two inequalities or as a row", "Go from a tableau back to the problem"],
     practice: [
