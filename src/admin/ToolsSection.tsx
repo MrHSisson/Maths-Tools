@@ -10,6 +10,7 @@ import { AVAIL_DOT, Dot, PageHead, Status, panel } from "./ui";
 type Tri = "has" | "missing" | undefined;
 type SortKey = "scheme" | "name" | "state";
 const STATE_ORDER: Availability[] = ["live", "dev"];
+const planFeatures = FEATURES.filter(feature => feature.key !== "teach");
 
 const hasList = (t: ToolFacts) => FEATURES.filter(f => t[f.key] && f.key !== "tests" && f.key !== "spec").map(f => f.label);
 
@@ -70,6 +71,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
   const [shell, setShell] = useState("all");
   const [feat, setFeat] = useState<Partial<Record<FeatureKey, Tri>>>({});
 
+  const featureOptions = compact ? planFeatures : FEATURES;
   const scoped = useMemo(() => TOOLS.filter(t => t.kind === kind), [kind]);
   const strands = useMemo(() => [...new Set(scoped.map(t => t.category))], [scoped]);
   const shells = useMemo(() => [...new Set(scoped.map(t => t.shell))], [scoped]);
@@ -84,7 +86,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
       if (strand !== "all" && t.category !== strand) return false;
       if (avail !== "all" && availabilityOf(t) !== avail) return false;
       if (shell !== "all" && t.shell !== shell) return false;
-      for (const f of FEATURES) {
+      for (const f of featureOptions) {
         const want = feat[f.key];
         if (want === "has" && !t[f.key]) return false;
         if (want === "missing" && t[f.key]) return false;
@@ -92,7 +94,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
       if (q && ![t.name, t.id, t.description, t.category, t.group ?? ""].some(s => s.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [scoped, query, strand, avail, shell, feat]);
+  }, [scoped, query, strand, avail, shell, feat, featureOptions]);
 
   const groups = useMemo(() => {
     if (sort === "name") return [{ name: "", items: [...rows].sort((a, b) => a.name.localeCompare(b.name)) }];
@@ -103,9 +105,9 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
   }, [rows, sort]);
   const colCount = 1 + COLUMNS.filter(c => cols[c.key]).length;
   const matrixCols = useMemo(() => [
-    ...FEATURES.filter(f => f.key !== "tests").map(f => ({ key: f.key as string, label: f.label, hint: f.hint, has: (t: ToolFacts, _n?: Note) => !!t[f.key] })),
+    ...featureOptions.filter(f => f.key !== "tests").map(f => ({ key: f.key as string, label: f.label, hint: f.hint, has: (t: ToolFacts, _n?: Note) => !!t[f.key] })),
     ...(compact ? [] : MATRIX_NOTE_COLS).map(c => ({ key: c.key, label: c.label, hint: c.hint, has: (_t: ToolFacts, n?: Note) => c.has(n) })),
-  ], [compact]);
+  ], [compact, featureOptions]);
   const isCollapsed = (name: string) => !!name && collapsed.includes(name);
   const toggle = (name: string) => setCollapsed(p => p.includes(name) ? p.filter(x => x !== name) : [...p, name]);
   const filterCount = (strand !== "all" ? 1 : 0) + (shell !== "all" ? 1 : 0) + (avail !== "all" ? 1 : 0) + Object.values(feat).filter(Boolean).length;
@@ -187,7 +189,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
               <div>
                 <div className="mb-2 text-sm text-slate-500">Features (click to cycle: has, missing, any)</div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
-                  {FEATURES.map(f => (
+                  {featureOptions.map(f => (
                     <button key={f.key} title={f.hint} onClick={() => cycle(f.key)}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-slate-50 ${feat[f.key] ? "font-semibold text-slate-900" : "text-slate-600"}`}>
                       {feat[f.key] === "has" ? <Dot on label={f.label} /> : feat[f.key] === "missing" ? <span className="inline-block h-3 w-3 rounded-full bg-red-400" aria-label={`Missing ${f.label}`} /> : <Dot on={false} label={f.label} />}

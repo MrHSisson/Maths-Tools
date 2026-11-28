@@ -28,13 +28,11 @@ const siteIds = new Set(catalogueNodes.map(node => node.id));
 
 export function treeForRoot(node: PlanNode): PlanTree {
   if (node.tree) return node.tree;
-  if (node.id === "project:decks") return "resources";
   return siteIds.has(node.id) ? "site" : "developments";
 }
 
 const initialNodes = [
   ...catalogueNodes,
-  makeNode("project:decks", null, "Teaching decks", "branch", "Build lessons teachers can pick up and use in class."),
   makeNode("project:delivery", null, "Site and workflow", "branch", "Make changes easier to build, check and share."),
   makeNode("mechanics-exam-questions", "further-mechanics", "Exam-style questions", "branch", "Build linked question parts from past-paper examples."),
   makeNode("mechanics-print-check", "further-mechanics", "Print a sample worksheet from the live tools", "task"),

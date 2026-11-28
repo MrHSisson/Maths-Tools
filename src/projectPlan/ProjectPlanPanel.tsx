@@ -7,7 +7,7 @@ import { useProjectPlan } from "./useProjectPlan";
 import { FEATURES, TOOLS } from "../admin/facts";
 import { ToolsSection } from "../admin/ToolsSection";
 import { emptyStore } from "../admin/notes";
-import adminDocs from "../generated/adminDocs.json";
+import { PlanReference, isPlanReference } from "./PlanReference";
 import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
@@ -15,16 +15,17 @@ const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 tex
 const iconButton = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30";
 const treeLabels: Record<PlanTree, string> = { site: "Site", developments: "Developments", resources: "Resources" };
 const matrixStore = emptyStore();
-const docsUrl = "https://github.com/MrHSisson/Maths-Tools/blob/main/docs";
 const viewControl = "min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900";
 
 type Save = (plan: ProjectPlan) => Promise<boolean>;
 
 function indexPlan(nodes: PlanNode[]) {
+  const deckItems = descendants(nodes, "project:decks");
   const children = new Map<string | null, PlanNode[]>();
   const byId = new Map<string, PlanNode>();
   for (const node of nodes) {
     byId.set(node.id, node);
+    if (deckItems.has(node.id)) continue;
     const siblings = children.get(node.parent) ?? [];
     siblings.push(node);
     children.set(node.parent, siblings);
@@ -44,7 +45,7 @@ function indexPlan(nodes: PlanNode[]) {
     return result;
   }
   for (const root of children.get(null) ?? []) count(root);
-  return { children, byId, progress };
+  return { children, byId, progress, deckItems };
 }
 
 type PlanIndex = ReturnType<typeof indexPlan>;
@@ -164,8 +165,10 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
 }) {
   const roots = (index.children.get(null) ?? []).filter(node => treeForRoot(node) === tree);
   const heading = tree === "developments" ? "Pathways" : `${treeLabels[tree]} tree`;
-  const pinned = plan.nodes.filter(node => node.pinned);
-  const dependencies = plan.nodes.flatMap(node => node.needs.map(id => ({ node, prerequisite: index.byId.get(id)! })));
+  const visible = plan.nodes.filter(node => !index.deckItems.has(node.id));
+  const pinned = visible.filter(node => node.pinned);
+  const dependencies = visible.flatMap(node => node.needs
+    .filter(id => !index.deckItems.has(id)).map(id => ({ node, prerequisite: index.byId.get(id)! })));
   const projectTree = <section aria-label="Project tree" className="space-y-2">
     <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> {heading}</h3>
     <ul className="space-y-2">{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} area />)}</ul>
@@ -186,11 +189,14 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
     <div className="flex flex-wrap items-center gap-2">
       {tree === "site" && <>
         <button className={control} onClick={() => select("feature-tracker")}>Feature tracker</button>
-        <Link className={control} to="/admin?section=features" onClick={close}>Feature guide</Link>
+        <button className={control} onClick={() => select("feature-guide")}>Feature guide</button>
+        <button className={control} onClick={() => select("build-guide")}>How tools are built</button>
       </>}
-      {tree === "developments" && <button className={control} onClick={() => select("all-tasks")}>Tasks</button>}
+      {tree === "developments" && <>
+        <button className={control} onClick={() => select("all-tasks")}>Tasks</button>
+        <button className={control} onClick={() => select("earlier-pathways")}>Earlier pathways</button>
+      </>}
       {tree === "resources" && <>
-        <Link className={control} to="/deck-gallery" onClick={close}>Deck library</Link>
         <Link className={control} to="/further-maths-flashcards" onClick={close}>Flashcards</Link>
       </>}
     </div>
@@ -204,35 +210,21 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
       </li>)}</ul>
     </details>}
     {projectTree}
-    {tree === "developments" && <details className="border-t border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Earlier pathways</summary>
-      <ul className="divide-y divide-slate-200 text-sm">
-        {adminDocs.pathways.map(pathway => (
-          <li key={pathway.id}><a className="block py-2 text-teal-800 hover:underline"
-            href={`${docsUrl}/pathways/${encodeURIComponent(pathway.id)}.md`}>{pathway.title}</a></li>
-        ))}
-      </ul>
-    </details>}
   </div>;
 }
 
-function OpenTasks({ plan, save, select }: { plan: ProjectPlan; save: Save; select: (id: string) => void }) {
+function OpenTasks({ plan, index, save, select }: { plan: ProjectPlan; index: PlanIndex; save: Save; select: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const tasks = plan.nodes.filter(node => node.kind === "task" && !node.done && node.title.toLowerCase().includes(needle));
+  const tasks = plan.nodes.filter(node => node.kind === "task" && !node.done && !index.deckItems.has(node.id) && node.title.toLowerCase().includes(needle));
   return <section className="space-y-2">
     <h3 className="text-sm font-semibold">Open tasks</h3>
     <input className={`${input} w-full`} aria-label="Search tasks" placeholder="Search tasks"
       value={query} onChange={event => setQuery(event.target.value)} />
     {tasks.length ? <Checklist children={tasks} plan={plan} save={save} select={select} />
       : <p className="py-2 text-sm text-slate-600">{needle ? "No matching tasks." : "No open tasks."}</p>}
-    <details className="border-t border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Earlier tasks</summary>
-      <ul className="list-disc space-y-1 pl-5 text-sm">
-        {adminDocs.tasks.filter(task => task.status !== "Done (recent)").map(task => <li key={task.title}>{task.title}</li>)}
-      </ul>
-      <a className="inline-flex min-h-11 items-center text-sm text-teal-800 hover:underline" href={`${docsUrl}/TASKS.md`}>Open earlier task notes</a>
-    </details>
+    <button className="min-h-11 text-sm font-medium text-teal-800 hover:underline"
+      onClick={() => select("earlier-tasks")}>Earlier tasks</button>
   </section>;
 }
 
@@ -268,10 +260,12 @@ function Checklist({ children, plan, save, select, limit }: { children: PlanNode
   </>;
 }
 
-function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPlan; save: Save; close: () => void }) {
+function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: ProjectPlan; index: PlanIndex; save: Save; close: () => void }) {
   const [needs, setNeeds] = useState(node.needs);
   const [prerequisite, setPrerequisite] = useState("");
+  const shownNeeds = needs.filter(id => !index.deckItems.has(id));
   const blocked = descendants(plan.nodes, node.id);
+  const visible = plan.nodes.filter(candidate => !index.deckItems.has(candidate.id));
   const label = "grid gap-1 text-sm";
   const disclosure = "min-h-11 cursor-pointer py-3 text-sm font-medium";
 
@@ -314,16 +308,16 @@ function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPl
         <label className={`${label} pb-3`}>Move under
           <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? `tree:${treeForRoot(node)}`}>
             {planTrees.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
-            {plan.nodes.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
+            {visible.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
               <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
             ))}
           </select>
         </label>
       </details>
       <details>
-        <summary className={disclosure}>Dependencies{needs.length ? ` (${needs.length})` : ""}</summary>
+        <summary className={disclosure}>Dependencies{shownNeeds.length ? ` (${shownNeeds.length})` : ""}</summary>
         <ul className="divide-y divide-slate-200">
-          {needs.map(id => {
+          {shownNeeds.map(id => {
             const dependency = plan.nodes.find(candidate => candidate.id === id);
             return <li key={id} className="flex items-center justify-between gap-2 text-sm">
               <span className="min-w-0 break-words">{dependency?.title}</span>
@@ -335,7 +329,7 @@ function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPl
         <div className="flex gap-2 pb-3">
           <select className={`${input} flex-1`} aria-label="Prerequisite" value={prerequisite} onChange={event => setPrerequisite(event.target.value)}>
             <option value="">Choose an item</option>
-            {plan.nodes.filter(candidate => candidate.id !== node.id && !needs.includes(candidate.id)).map(candidate => (
+            {visible.filter(candidate => candidate.id !== node.id && !needs.includes(candidate.id)).map(candidate => (
               <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
             ))}
           </select>
@@ -353,12 +347,13 @@ function EditItem({ node, plan, save, close }: { node: PlanNode; plan: ProjectPl
   </form>;
 }
 
-function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select: (id: string) => void }) {
-  const byId = new Map(plan.nodes.map(node => [node.id, node]));
+function Reviews({ plan, index, save, select }: { plan: ProjectPlan; index: PlanIndex; save: Save; select: (id: string) => void }) {
+  const { byId, deckItems } = index;
+  const reviews = plan.reviews.filter(review => !deckItems.has(review.item));
   return <section className="space-y-3">
     <h3 className="text-sm font-semibold">Harry’s review queue</h3>
-    {plan.reviews.length === 0 && <p className="text-sm text-slate-600">No review requests.</p>}
-    <ul className="space-y-3">{plan.reviews.map(review => {
+    {reviews.length === 0 && <p className="text-sm text-slate-600">No review requests.</p>}
+    <ul className="space-y-3">{reviews.map(review => {
       const item = byId.get(review.item)!;
       let ancestor: PlanNode | undefined = item;
       while (ancestor && !routesById.has(ancestor.id)) ancestor = ancestor.parent ? byId.get(ancestor.parent) : undefined;
@@ -378,11 +373,11 @@ function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select
 const toolFactsById = new Map(TOOLS.map(tool => [tool.id, tool]));
 const mechanicsSubtools = Object.values(MECHANICS_PAIRINGS).flat();
 
-function ToolReferences({ id, close }: { id: string; close: () => void }) {
+function ToolReferences({ id, close, select }: { id: string; close: () => void; select: (id: string) => void }) {
   const tool = toolFactsById.get(id);
   if (!tool) return null;
   const subtools = [...new Map(mechanicsSubtools.filter(ref => ref.tool === id).map(ref => [ref.sub, ref])).values()];
-  const features = FEATURES.filter(feature => tool[feature.key] && feature.key !== "spec" && feature.key !== "tests");
+  const features = FEATURES.filter(feature => tool[feature.key] && feature.key !== "spec" && feature.key !== "tests" && feature.key !== "teach");
   const summary = "min-h-11 cursor-pointer py-3 text-sm font-medium";
   const link = "inline-flex min-h-11 items-center break-words text-sm text-teal-800 hover:underline";
 
@@ -396,18 +391,15 @@ function ToolReferences({ id, close }: { id: string; close: () => void }) {
       ))}</ul>
     </details>}
     <details>
-      <summary className={summary}>Features and decks</summary>
+      <summary className={summary}>Features</summary>
       {features.length > 0 && <ul className="list-disc space-y-1 pl-6 text-sm text-slate-700">
         {features.map(feature => <li key={feature.key}>{feature.label}</li>)}
       </ul>}
-      {tool.decks.length > 0 && <ul className="pl-3">{tool.decks.map(id => (
-        <li key={id}><Link className={link} to={`/decks/${encodeURIComponent(id)}`} onClick={close}>{id.replace(/-/g, " ")}</Link></li>
-      ))}</ul>}
-      <Link className={`${link} pl-3`} to="/admin" onClick={close}>Open dashboard</Link>
-      {contextualTools.some(item => item.id === id && item.hub === "further-mechanics") && <div>
-        <a className={`${link} pl-3`} href={`${docsUrl}/pathways/further-mechanics.md`}>Further Mechanics pathway</a>
-      </div>}
+      <button className={`${link} pl-3`} onClick={() => select("feature-guide")}>Feature guide</button>
     </details>
+    {contextualTools.some(item => item.id === id && item.hub === "further-mechanics") && (
+      <button className={link} onClick={() => select("pathway:further-mechanics")}>Further Mechanics pathway</button>
+    )}
   </div>;
 }
 
@@ -431,6 +423,7 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
   }
   const children = index.children.get(node.id) ?? [];
   const isTool = toolFactsById.has(node.id);
+  const shownNeeds = node.needs.filter(id => !index.deckItems.has(id));
   const checklist = isTool ? [...children.filter(child => child.kind === "task"), ...children.filter(child => child.kind === "branch")] : children;
   return <section className="relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
     <nav aria-label="Project branch" className="flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
@@ -453,7 +446,7 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
             <button className="flex min-h-11 w-full items-center gap-2 text-left text-sm font-medium" aria-pressed={node.pinned} onClick={() => void save(updateNode(plan, node.id, { pinned: !node.pinned }))}>
               <Pin size={17} fill={node.pinned ? "currentColor" : "none"} aria-hidden /> {node.pinned ? "Unpin" : "Pin"}
             </button>
-            {plan.reviews.length > 0 && <button type="button"
+            {plan.reviews.some(request => !index.deckItems.has(request.item)) && <button type="button"
               className="flex min-h-11 w-full items-center text-left text-sm font-medium text-slate-600 hover:underline"
               onClick={showReview}>View existing review requests</button>}
           </div>
@@ -461,16 +454,16 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
       </div>}
     </div>
     {editing ? <EditItem key={JSON.stringify([node.title, node.overview, node.classification, node.parent, node.needs])}
-      node={node} plan={plan} save={save} close={closeEditor} /> : <>
+      node={node} plan={plan} index={index} save={save} close={closeEditor} /> : <>
       <Overview text={node.overview} />
       <div className="mt-2 flex flex-wrap items-center gap-x-3">
         {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
           <input className="size-4 accent-teal-700" type="checkbox" checked={node.done} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} /> Complete
         </label> : <PlanProgress id={node.id} index={index} />}
       </div>
-      {node.needs.length > 0 && <div className="mt-2 text-sm">
+      {shownNeeds.length > 0 && <div className="mt-2 text-sm">
         <p className="font-medium">Depends on</p>
-        <ul className="list-disc pl-5">{node.needs.map(id => (
+        <ul className="list-disc pl-5">{shownNeeds.map(id => (
           <li key={id}><button className="min-h-11 break-words text-left text-teal-800 hover:underline" onClick={() => select(id)}>{index.byId.get(id)?.title}</button></li>
         ))}</ul>
       </div>}
@@ -486,7 +479,7 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
           {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
         </ul> : <Checklist children={checklist} plan={plan} save={save} select={select} limit={isTool ? 3 : undefined} />}
       </div>
-      {isTool && <ToolReferences id={node.id} close={close} />}
+      {isTool && <ToolReferences id={node.id} close={close} select={select} />}
     </>}
   </section>;
 }
@@ -552,6 +545,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const [tree, setTree] = useState<PlanTree>("site");
   const [trackerOpened, setTrackerOpened] = useState(false);
   const returnView = useRef<string | null>(null);
+  const referenceFrom = useRef<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const positions = useRef(new Map<string, number>());
   const viewKey = `${pageKey}:${tree}:${selectedId ?? "overview"}`;
@@ -568,7 +562,11 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
 
   function select(id: string | null) {
     if (scroller.current) positions.current.set(viewKey, scroller.current.scrollTop);
-    if (!selected) returnView.current = selectedId ?? null;
+    if (isPlanReference(id)) {
+      referenceFrom.current = selectedId ?? null;
+    } else if (!selected && !isPlanReference(selectedId)) {
+      returnView.current = selectedId ?? null;
+    }
     if (id === "feature-tracker") setTrackerOpened(true);
     setSelection({ route: pageKey, id });
   }
@@ -675,10 +673,14 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
             <h3 className="text-sm font-semibold">Feature tracker</h3>
             <ToolsSection compact store={matrixStore} phone={panelWidth === 0} onOpen={select} />
           </section>}
-          {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
+          {reviews ? <Reviews key="reviews" plan={plan} index={index} select={select} save={save} />
             : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(returnView.current)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
             : selectedId === "feature-tracker" ? null
-            : selectedId === "all-tasks" ? <OpenTasks plan={plan} save={save} select={select} />
+            : isPlanReference(selectedId) ? <>
+              <button className="min-h-11 text-sm text-teal-800 hover:underline" onClick={() => select(referenceFrom.current)}>Back</button>
+              <PlanReference key={selectedId} view={selectedId} />
+            </>
+            : selectedId === "all-tasks" ? <OpenTasks plan={plan} index={index} save={save} select={select} />
             : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} tree={tree} close={() => setOpen(false)} />}
         </fieldset>}
       </div>
