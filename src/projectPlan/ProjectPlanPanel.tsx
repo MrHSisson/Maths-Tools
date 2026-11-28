@@ -297,7 +297,11 @@ function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select
   </section>;
 }
 
-function NodeDetail({ node, index, plan, save, select, back }: { node: PlanNode; index: PlanIndex; plan: ProjectPlan; save: Save; select: (id: string) => void; back: () => void }) {
+function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle }: {
+  node: PlanNode; index: PlanIndex; plan: ProjectPlan; save: Save; select: (id: string) => void;
+  back: () => void; expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+}) {
+  const [showSubtree, setShowSubtree] = useState(false);
   const parents: PlanNode[] = [];
   let parent = node.parent ? index.byId.get(node.parent) : undefined;
   while (parent) {
@@ -341,8 +345,16 @@ function NodeDetail({ node, index, plan, save, select, back }: { node: PlanNode;
       ))}</ul>
     </div>}
     <div className="mt-3 border-t border-slate-200">
-      <AddItem parent={node.id} plan={plan} save={save} />
-      <Checklist children={children} plan={plan} save={save} select={select} />
+      <div className="flex flex-wrap items-start justify-between gap-x-3">
+        <AddItem parent={node.id} plan={plan} save={save} />
+        {children.some(child => index.children.has(child.id)) && <button
+          className="min-h-11 text-sm font-medium text-teal-800 hover:underline"
+          aria-pressed={showSubtree} onClick={() => setShowSubtree(value => !value)}
+        >{showSubtree ? "Show checklist" : "Show subtree"}</button>}
+      </div>
+      {showSubtree ? <ul aria-label={`Subtree for ${node.title}`}>
+        {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
+      </ul> : <Checklist children={children} plan={plan} save={save} select={select} />}
     </div>
   </section>;
 }
@@ -522,7 +534,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
-            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(rootView.current)} />
+            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(rootView.current)} expandedIds={expandedIds} toggle={toggleBranch} />
             : <ProjectMap key="map" plan={plan} index={index} tree={tree} select={select} save={save} showReview={() => select("review-queue")} expandedIds={expandedIds} toggle={toggleBranch} />}
         </fieldset>}
       </div>
