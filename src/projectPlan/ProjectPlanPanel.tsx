@@ -4,6 +4,10 @@ import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools } from "./catalogue";
 import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
+import { FEATURES, TOOLS } from "../admin/facts";
+import { REVIEW_OPTIONS } from "../admin/notes";
+import { loadNotes } from "../admin/notesApi";
+import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
 const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -130,7 +134,7 @@ function MapNode({ node, index, select, expandedIds, toggle }: {
       <button className="min-h-11 min-w-0 flex-1 break-words py-2 text-left text-sm font-medium hover:underline" onClick={() => select(node.id)}><ItemName node={node} /></button>
       <PlanProgress index={index} id={node.id} />
     </div>
-    {expanded && <ul className="border-l border-slate-200 pl-1">
+    {expanded && <ul className="ml-3 border-l border-slate-300 pl-2 sm:ml-4">
       {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
     </ul>}
   </li>;
@@ -155,7 +159,8 @@ function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, 
   const roots = index.children.get(null) ?? [];
   const pinned = plan.nodes.filter(node => node.pinned);
   const dependencies = plan.nodes.flatMap(node => node.needs.map(id => ({ node, prerequisite: index.byId.get(id)! })));
-  if (tree) return <section aria-label="Project tree" className="space-y-2">
+  const projectTree = <section aria-label="Project tree" className="space-y-2">
+    <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> Project tree</h3>
     <ul>{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}</ul>
     <AddItem parent={null} plan={plan} save={save} branch />
     {dependencies.length > 0 && <details className="border-t border-slate-200 pt-2">
@@ -170,6 +175,7 @@ function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, 
     </details>}
   </section>;
 
+  if (tree) return projectTree;
   return <div className="space-y-4">
     {plan.reviews.length > 0 && <button className="min-h-11 text-sm font-medium text-teal-800 hover:underline" onClick={showReview}>
       Waiting for review ({plan.reviews.length})
@@ -178,10 +184,11 @@ function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, 
       <h3 className="text-sm font-semibold">Pinned</h3>
       <div className="grid gap-2">{pinned.map(node => <SummaryCard key={node.id} node={node} index={index} select={select} />)}</div>
     </section>}
-    <section className="space-y-2">
-      <h3 className="text-sm font-semibold">Project areas</h3>
-      <div className="grid gap-2">{roots.map(node => <SummaryCard key={node.id} node={node} index={index} select={select} />)}</div>
-    </section>
+    <details className="border-b border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Area cards</summary>
+      <div className="grid gap-2 pb-3">{roots.map(node => <SummaryCard key={node.id} node={node} index={index} select={select} />)}</div>
+    </details>
+    {projectTree}
   </div>;
 }
 
@@ -189,9 +196,11 @@ function updateNode(plan: ProjectPlan, id: string, patch: Partial<PlanNode>): Pr
   return { ...plan, nodes: plan.nodes.map(node => node.id === id ? { ...node, ...patch } : node) };
 }
 
-function Checklist({ children, plan, save, select }: { children: PlanNode[]; plan: ProjectPlan; save: Save; select: (id: string) => void }) {
+function Checklist({ children, plan, save, select, limit }: { children: PlanNode[]; plan: ProjectPlan; save: Save; select: (id: string) => void; limit?: number }) {
   const complete = children.filter(node => node.kind === "task" && node.done);
   const open = children.filter(node => node.kind !== "task" || !node.done);
+  const visible = limit === undefined ? open : open.slice(0, limit);
+  const more = open.slice(visible.length);
   function row(node: PlanNode) {
     return <li key={node.id} className="flex min-w-0 items-center gap-1">
       {node.kind === "task" ? <label className="grid size-11 shrink-0 cursor-pointer place-items-center">
@@ -203,7 +212,11 @@ function Checklist({ children, plan, save, select }: { children: PlanNode[]; pla
     </li>;
   }
   return <>
-    {open.length > 0 && <ul className="divide-y divide-slate-200">{open.map(row)}</ul>}
+    {visible.length > 0 && <ul className="divide-y divide-slate-200">{visible.map(row)}</ul>}
+    {more.length > 0 && <details className="border-t border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm text-slate-600">More items ({more.length})</summary>
+      <ul className="divide-y divide-slate-200">{more.map(row)}</ul>
+    </details>}
     {complete.length > 0 && <details className="border-t border-slate-200">
       <summary className="min-h-11 cursor-pointer py-3 text-sm text-slate-600">Completed ({complete.length})</summary>
       <ul className="divide-y divide-slate-200">{complete.map(row)}</ul>
@@ -330,9 +343,57 @@ function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select
   </section>;
 }
 
-function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle }: {
+const toolFactsById = new Map(TOOLS.map(tool => [tool.id, tool]));
+const mechanicsSubtools = Object.values(MECHANICS_PAIRINGS).flat();
+
+function ToolReviewStatus({ id }: { id: string }) {
+  const [status, setStatus] = useState<string>();
+  useEffect(() => {
+    let active = true;
+    void loadNotes().then(({ store, mode }) => {
+      if (!active || mode !== "live") return;
+      const value = store.tools[id]?.review ?? "not-started";
+      setStatus(REVIEW_OPTIONS.find(option => option.value === value)?.label);
+    });
+    return () => { active = false; };
+  }, [id]);
+  return status ? <span className="text-xs text-slate-600">{status}</span> : null;
+}
+
+function ToolReferences({ id, close }: { id: string; close: () => void }) {
+  const tool = toolFactsById.get(id);
+  if (!tool) return null;
+  const subtools = [...new Map(mechanicsSubtools.filter(ref => ref.tool === id).map(ref => [ref.sub, ref])).values()];
+  const features = FEATURES.filter(feature => tool[feature.key] && feature.key !== "spec" && feature.key !== "tests");
+  const summary = "min-h-11 cursor-pointer py-3 text-sm font-medium";
+  const link = "inline-flex min-h-11 items-center break-words text-sm text-teal-800 hover:underline";
+
+  return <div className="mt-2 divide-y divide-slate-200 border-t border-slate-200">
+    {subtools.length > 0 && <details>
+      <summary className={summary}>Subtools ({subtools.length})</summary>
+      <ul className="pl-3">{subtools.map(ref => (
+        <li key={ref.sub}><Link className={link} to={{ pathname: tool.path, search: new URLSearchParams({
+          tool: ref.sub, ...(ref.practice ? { o_practice: ref.practice } : {}), ...(ref.a2 ? { o_course: "A2" } : {}),
+        }).toString() }} onClick={close}>{ref.label}{ref.a2 ? " (A2)" : ""}</Link></li>
+      ))}</ul>
+    </details>}
+    <details>
+      <summary className={summary}>Features and decks</summary>
+      {features.length > 0 && <ul className="list-disc space-y-1 pl-6 text-sm text-slate-700">
+        {features.map(feature => <li key={feature.key}>{feature.label}</li>)}
+      </ul>}
+      {tool.decks.length > 0 && <ul className="pl-3">{tool.decks.map(id => (
+        <li key={id}><Link className={link} to={`/decks/${encodeURIComponent(id)}`} onClick={close}>{id.replace(/-/g, " ")}</Link></li>
+      ))}</ul>}
+      <Link className={`${link} pl-3`} to="/admin" onClick={close}>Open dashboard</Link>
+    </details>
+  </div>;
+}
+
+function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle, close, showReview }: {
   node: PlanNode; index: PlanIndex; plan: ProjectPlan; save: Save; select: (id: string) => void;
   back: () => void; expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+  close: () => void; showReview: () => void;
 }) {
   const [showSubtree, setShowSubtree] = useState(false);
   const parents: PlanNode[] = [];
@@ -342,6 +403,10 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
     parent = parent.parent ? index.byId.get(parent.parent) : undefined;
   }
   const children = index.children.get(node.id) ?? [];
+  const isTool = toolFactsById.has(node.id);
+  const checklist = isTool ? [...children.filter(child => child.kind === "task"), ...children.filter(child => child.kind === "branch")] : children;
+  const itemsWithReview = plan.reviews.length ? descendants(plan.nodes, node.id) : null;
+  const waitingForReview = plan.reviews.some(entry => itemsWithReview?.has(entry.item));
   return <section className="relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
     <nav aria-label="Project branch" className="flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
       <button className="min-h-11 text-teal-800 hover:underline" onClick={back}>Project Plan</button>
@@ -366,11 +431,13 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
       </details>
     </div>
     <Overview text={node.overview} />
-    <div className="mt-2">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3">
+      {isTool && <ToolReviewStatus id={node.id} />}
       {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
         <input className="size-4 accent-teal-700" type="checkbox" checked={node.done} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} /> Complete
       </label> : <PlanProgress id={node.id} index={index} />}
     </div>
+    {waitingForReview && <button className="min-h-11 text-left text-sm font-medium text-teal-800 hover:underline" onClick={showReview}>Waiting for review</button>}
     {node.needs.length > 0 && <div className="mt-2 text-sm">
       <p className="font-medium">Depends on</p>
       <ul className="list-disc pl-5">{node.needs.map(id => (
@@ -387,8 +454,9 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
       </div>
       {showSubtree ? <ul aria-label={`Subtree for ${node.title}`}>
         {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
-      </ul> : <Checklist children={children} plan={plan} save={save} select={select} />}
+      </ul> : <Checklist children={checklist} plan={plan} save={save} select={select} limit={isTool ? 3 : undefined} />}
     </div>
+    {isTool && <ToolReferences id={node.id} close={close} />}
   </section>;
 }
 
@@ -567,7 +635,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
-            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(rootView.current)} expandedIds={expandedIds} toggle={toggleBranch} />
+            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(rootView.current)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
             : <ProjectMap key="map" plan={plan} index={index} tree={tree} select={select} save={save} showReview={() => select("review-queue")} expandedIds={expandedIds} toggle={toggleBranch} />}
         </fieldset>}
       </div>
