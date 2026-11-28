@@ -6,7 +6,7 @@ const tool = (id: string) => { const t = TOOLS.find((x) => x.id === id); if (!t)
 
 describe("the generated tool facts are true", () => {
   it("finds the sub-tools and levels of a Decision tool", () => {
-    expect(tool("lp-simplex").subTools).toBe(5);
+    expect(tool("lp-simplex").subTools).toBe(6);
     expect(tool("lp-formulate").subTools).toBe(2);
     expect(tool("lp-simplex").levels).toBe(3);
     expect(tool("minimum-spanning-tree").subTools).toBe(3);

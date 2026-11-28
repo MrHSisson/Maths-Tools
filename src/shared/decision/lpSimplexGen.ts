@@ -64,7 +64,8 @@ function designBase(n: number, m: number, pool: number[], degenerate = false, mi
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
   // the optimum uses at least two of the variables most of the time: a plan with only one kind (x, 0, 0) is the occasional question, not the usual one
-  const kx = Math.min(n, m) >= 2 && Math.random() >= 0.12 ? ri(2, Math.min(n, m)) : 1;
+  // (a minimise problem with a mixed-sign cost leaves at least one variable out of the best plan, so it never uses them all)
+  const kx = mixed ? ri(Math.min(2, n - 1), Math.min(n - 1, m)) : Math.min(n, m) >= 2 && Math.random() >= 0.12 ? ri(2, Math.min(n, m)) : 1;
   const basicX = shuffled(Array.from({ length: n }, (_, j) => j)).slice(0, kx);
   const xs = Array.from({ length: n }, (_, j) => (basicX.includes(j) ? ri(1, 9) : 0));
   const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, kx);
@@ -217,8 +218,10 @@ export interface SxOptions {
   cons: number[];
   /** or, instead of vars and cons, the sizes that may be used, as [variables, constraints] pairs (each question draws one) */
   sizes?: Array<[number, number]>;
-  /** Level 3: the starting forms that may be used ("standard", "min", "ge", "lower", "eq") */
+  /** the starting forms that may be used ("standard", "min", "ge", "lower", "eq"); only drawn when `nonStandard` is set */
   forms: string[];
+  /** a change of form is always needed first (Non-standard problems, at any level; One pivot at Level 3). Set up and Solve never change form. */
+  nonStandard?: boolean;
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
   context: string[];
   /** whole numbers: the optimum has a fraction in it and the best practical plan is asked for (the `practical` kind always; Solve and Read a tableau when ticked) */
@@ -245,7 +248,7 @@ export function isDegenerate(run: Run): boolean {
 }
 function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion | null {
   const kind = o.kind;
-  const whole = kind === "practical" || (o.whole && kind === "solve" && level < 3);
+  const whole = kind === "practical" || (o.whole && kind === "solve");
   // the Is it practical? sub-tool always has a fraction in the optimum; Solve and Read a tableau ask the whole-number question of any optimum, whole or not
   const fractional = whole && (kind === "practical" || askFraction);
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
@@ -258,8 +261,8 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : fallback) : [nChoices.length ? pick(nChoices) : fallback[0], pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [fallback[1]])];
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
-  if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
-    // Level 3 always needs a change of form: a standard-form start is a Level 1 or 2 question, so it is never drawn here, whatever is asked
+  if (o.nonStandard && kind !== "reverse" && kind !== "interpret" && !whole) {
+    // a change of form is always needed here: a standard-form start is never drawn, whatever is asked
     const changes = (o.forms as string[]).filter((f) => f !== "standard") as StartForm[];
     // a tableau is all that One pivot shows, so only a ≥ constraint or an equality (a start that is not at the origin) makes it a Level 3 question
     const usable = kind === "pivot" ? changes.filter((f) => f === "ge" || f === "eq") : changes;

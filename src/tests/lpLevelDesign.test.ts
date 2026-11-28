@@ -72,7 +72,7 @@ describe("The Simplex tool", () => {
       expect([3, 4]).toContain(generateSimplex(3, { ...ALL, kind }).data.spec.c.length);
     }
   });
-  it("Level 1 is the inequalities in standard form; Level 2 a situation in words or a table in standard form; Level 3 a change of form", () => {
+  it("Level 1 is the inequalities in standard form; Level 2 a situation in words or a table in standard form; Level 3 is standard form with more variables; a change of form is the Non-standard problems sub-tool", () => {
     for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 40; i++) {
       const a = generateSimplex(1, { ...ALL, kind }).data;
       expect(a.story).toBeUndefined();
@@ -81,14 +81,17 @@ describe("The Simplex tool", () => {
       expect(b.story).toBeTruthy();
       expect(b.startForm).toBe("standard");
       const c = generateSimplex(3, { ...ALL, kind }).data;
-      expect(c.startForm).not.toBe("standard");
+      expect(c.startForm).toBe("standard");
+      // Non-standard problems: a change of form at every level, from the level's own forms
+      const forms: Record<number, string[]> = { 1: ["min", "lower"], 2: ["ge"], 3: ["eq"] };
+      for (const level of [1, 2, 3]) expect(forms[level]).toContain(generateSimplex(level, { ...ALL, kind, nonStandard: true, forms: forms[level], context: ["bare"] }).data.startForm);
     }
   });
-  it("Level 3 Solve is always a change of form, even when the whole-number question is asked for: that is the Is it practical? sub-tool", () => {
-    for (let i = 0; i < 40; i++) {
+  it("Solve with Whole Numbers on asks the whole-number question at every level, in standard form", () => {
+    for (let i = 0; i < 20; i++) {
       const d = generateSimplex(3, { ...ALL, kind: "solve", whole: true }).data;
-      expect(d.whole).toBeUndefined();
-      expect(d.startForm).not.toBe("standard");
+      expect(d.whole).toBeDefined();
+      expect(d.startForm).toBe("standard");
     }
   });
   it("One pivot: Level 1 the first pivot; Level 2 part-way through the run; Level 3 a start from a negative right-hand side or an equation", () => {
@@ -97,7 +100,7 @@ describe("The Simplex tool", () => {
       const p2 = generateSimplex(2, { ...ALL, kind: "pivot" }).data;
       expect(p2.at).toBeGreaterThanOrEqual(1);
       expect(p2.startForm).toBe("standard");
-      const p3 = generateSimplex(3, { ...ALL, kind: "pivot" }).data;
+      const p3 = generateSimplex(3, { ...ALL, kind: "pivot", nonStandard: true }).data;
       expect(runSpec(p3.spec).iters[0].start).toBe(true);
     }
   });

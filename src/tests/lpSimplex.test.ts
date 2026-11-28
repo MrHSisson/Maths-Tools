@@ -303,7 +303,7 @@ describe("the written working", () => {
 describe("audit changes: minimise, equality, size", () => {
   it("a minimise problem has a mixed-sign cost (some variables earn, some cost), not just a negated maximise", () => {
     for (const level of [3]) for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(level, OPT("solve", { forms: ["min"], context: ["bare"] }));
+      const q = generateSimplex(level, OPT("solve", { forms: ["min"], nonStandard: true, context: ["bare"] }));
       expect(q.data.spec.sense).toBe("min");
       expect(q.data.spec.c.some((v) => v > 0)).toBe(true);
       expect(q.data.spec.c.some((v) => v < 0)).toBe(true);
@@ -313,7 +313,7 @@ describe("audit changes: minimise, equality, size", () => {
   });
   it("an equality constraint involves at least two of the variables", () => {
     for (let i = 0; i < 80; i++) {
-      const q = generateSimplex(3, OPT("setup", { forms: ["eq"], context: ["bare"] }));
+      const q = generateSimplex(3, OPT("setup", { forms: ["eq"], nonStandard: true, context: ["bare"] }));
       for (const k of q.data.spec.cons) if (k.op === "=") expect(k.a.filter((v) => v !== 0).length).toBeGreaterThanOrEqual(2);
     }
   });
@@ -336,7 +336,7 @@ describe("audit changes: minimise, equality, size", () => {
 describe("an equality and a lower bound handled as rows", () => {
   it("an equation is a row with no slack variable: the first pivot is in that row, and the optimum is the same as by the pair of inequalities", () => {
     for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(3, OPT("solve", { forms: ["eq"], method: "rows", context: ["bare"] }));
+      const q = generateSimplex(3, OPT("solve", { forms: ["eq"], nonStandard: true, method: "rows", context: ["bare"] }));
       const sp = q.data.spec;
       expect(sp.eqAsRow).toBe(true);
       const run = runSpec(sp);
@@ -356,7 +356,7 @@ describe("an equality and a lower bound handled as rows", () => {
   });
   it("a lower bound as a row is one more ≥ constraint: a negative right-hand side to start, the same optimum as by the substitution", () => {
     for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(3, OPT("solve", { forms: ["lower"], method: "rows", context: ["bare"] }));
+      const q = generateSimplex(3, OPT("solve", { forms: ["lower"], nonStandard: true, method: "rows", context: ["bare"] }));
       const sp = q.data.spec;
       expect(sp.lowerAsRow).toBe(true);
       const run = runSpec(sp);
