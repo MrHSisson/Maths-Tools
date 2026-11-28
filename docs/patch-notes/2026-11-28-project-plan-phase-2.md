@@ -12,6 +12,7 @@ Strand: Maths
 - Keep Site rows short. Show descriptions on the cards and group the guides next to the tree.
 - Open short subtool summaries on tool cards. Go from a Mechanics tool to the Further Mechanics checklist.
 - Moved four pathways and 20 open tasks from Admin into the shared plan.
+- Dock the Project Plan from top to bottom with a single divider beside the site.
 
 Agent: Codex
 Notes: Project Plan Phase 2 (Codex), Maths Tools — Build Log.
