@@ -18,9 +18,10 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
     try { return sessionStorage.getItem(OPEN_KEY) === "1"; } catch { return false; }
   });
   const [wide, setWide] = useState(false);
+  const [matrixView, setMatrixView] = useState(false);
   const visible = enabled && open;
   const width = useSyncExternalStore(visible ? subscribeToResize : ignoreResize, viewportWidth);
-  const docked = visible && width >= DOCK_MIN_WIDTH;
+  const docked = visible && !matrixView && width >= DOCK_MIN_WIDTH;
   const panelWidth = docked ? Math.min(wide ? 540 : 384, Math.round(width * (wide ? 0.38 : 0.27))) : 0;
   const scale = docked ? (width - panelWidth - 2 * FRAME_GUTTER) / width : 1;
   const site = useRef<HTMLDivElement>(null);
@@ -53,7 +54,7 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
 
   return <>
     {enabled && <Suspense fallback={null}>
-      <ProjectPlanPanel open={open} setOpen={changeOpen} panelWidth={panelWidth} wide={wide} toggleWidth={() => setWide(value => !value)} />
+      <ProjectPlanPanel open={open} setOpen={changeOpen} panelWidth={panelWidth} wide={wide} onMatrixView={setMatrixView} toggleWidth={() => setWide(value => !value)} />
     </Suspense>}
     <div
       className={docked ? "fixed inset-0 overflow-hidden bg-slate-100 print:!static print:!overflow-visible" : undefined}

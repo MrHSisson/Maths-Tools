@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, 
 import { ArrowRight, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools, treeForRoot, type VisiblePlanTree } from "./catalogue";
-import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
+import { branchClassifications, deletePlanTask, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
 import { FEATURES, TOOLS } from "../admin/facts";
 import { ToolsSection } from "../admin/ToolsSection";
@@ -14,10 +14,15 @@ const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-s
 const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 const iconButton = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30";
 const treeTabs = ["site", "developments"] as const;
-const treeLabels = { site: "Site", developments: "Developments" };
+const treeLabels = { site: "Site", developments: "Pathways" };
+const featureViews = [
+  { id: "feature-tracker", label: "Tracker" },
+  { id: "feature-guide", label: "Guide" },
+  { id: "build-guide", label: "Build guide" },
+] as const;
 const matrixStore = emptyStore();
 const viewControl = "min-h-11 shrink-0 whitespace-nowrap border-b-2 border-transparent px-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 aria-pressed:border-teal-700 aria-pressed:font-semibold aria-pressed:text-teal-900";
-const mapAction = "inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-md px-2 text-xs font-semibold text-teal-800 hover:bg-teal-50";
+const menuAction = "flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium hover:bg-slate-100";
 
 type Save = (plan: ProjectPlan) => Promise<boolean>;
 
@@ -97,11 +102,11 @@ function ItemName({ node }: { node: PlanNode }) {
   </span>;
 }
 
-function AddItem({ parent, plan, save, branch = false, tree }: {
-  parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean; tree?: VisiblePlanTree;
+function AddItem({ parent, plan, save, branch = false, tree, close }: {
+  parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean; tree?: VisiblePlanTree; close?: () => void;
 }) {
   const [title, setTitle] = useState("");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!close);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim()) return;
@@ -110,20 +115,23 @@ function AddItem({ parent, plan, save, branch = false, tree }: {
     const node = makeNode(crypto.randomUUID(), parent, title.trim(), branch || classification || type === "branch" ? "branch" : "task");
     if (classification) node.classification = classification;
     if (parent === null && tree) node.tree = tree;
-    if (await save({ ...plan, nodes: [...plan.nodes, node] })) setTitle("");
+    if (await save({ ...plan, nodes: [...plan.nodes, node] })) {
+      setTitle("");
+      close?.();
+    }
   }
   return <div>
-    <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-teal-800 hover:underline"
+    {!close && <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-teal-800 hover:underline"
       aria-expanded={open} onClick={() => setOpen(value => !value)}>
-      <Plus size={16} aria-hidden /> {branch ? tree === "developments" ? "Add development" : "Add area" : "Add task"}
-    </button>
+      <Plus size={16} aria-hidden /> {branch ? tree === "developments" ? "Add pathway" : "Add area" : "Add task"}
+    </button>}
     {open && <form onSubmit={submit} className="flex flex-wrap items-center gap-2 pb-2">
       <input className={`${input} flex-1 basis-36`} aria-label={branch ? "New project branch" : "New checklist item"} placeholder={branch ? "New project branch" : "New checklist item"} maxLength={120} value={title} onChange={event => setTitle(event.target.value)} required autoFocus />
-      {!branch && parent !== null && <select className={input} aria-label="Item type" name="type" defaultValue="task">
-        <option value="task">Task</option>
+      {close && <select className={input} aria-label="Item type" name="type" defaultValue="branch">
         <ClassificationOptions />
       </select>}
       <button className={control} disabled={!title.trim()}>Add</button>
+      {close && <button type="button" className={control} onClick={close}>Cancel</button>}
     </form>}
   </div>;
 }
@@ -174,23 +182,7 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree }: {
   const dependencies = visible.flatMap(node => node.needs
     .filter(id => !index.deckItems.has(id)).map(id => ({ node, prerequisite: index.byId.get(id)! })));
   return <section aria-label="Project tree" className="space-y-2">
-    <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-2 border-b border-slate-200 pb-1">
-      <h3 className="text-sm font-semibold text-slate-900">{heading}</h3>
-      <div className="flex flex-wrap items-center gap-1">
-        {tree === "site" && <>
-          <button className={mapAction} onClick={() => select("feature-tracker")}>Feature tracker</button>
-          <details className="relative z-10">
-            <summary className={`${mapAction} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
-              Guides <ChevronDown size={13} aria-hidden />
-            </summary>
-            <div className="absolute right-0 top-full grid w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lift">
-              <button className={mapAction} onClick={() => select("feature-guide")}>Feature guide</button>
-              <button className={mapAction} onClick={() => select("build-guide")}>How tools are built</button>
-            </div>
-          </details>
-        </>}
-      </div>
-    </div>
+    <h3 className="border-b border-slate-200 py-2 text-sm font-semibold text-slate-900">{heading}</h3>
     {pinned.length > 0 && <details className="border-b border-slate-200">
       <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
       <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
@@ -279,7 +271,9 @@ function Checklist({ children, plan, save, select, limit, context }: {
   </>;
 }
 
-function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: ProjectPlan; index: PlanIndex; save: Save; close: () => void }) {
+function EditItem({ node, plan, index, save, close, organise }: {
+  node: PlanNode; plan: ProjectPlan; index: PlanIndex; save: Save; close: () => void; organise: boolean;
+}) {
   const [needs, setNeeds] = useState(node.needs);
   const [prerequisite, setPrerequisite] = useState("");
   const shownNeeds = needs.filter(id => !index.deckItems.has(id));
@@ -292,6 +286,15 @@ function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: Pr
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+    if (organise) {
+      const classification = branchClassifications.find(candidate => candidate === data.get("type"));
+      const location = String(data.get("parent"));
+      const newTree = treeTabs.find(tree => location === `tree:${tree}`);
+      const parent = newTree ? null : location || null;
+      const tree = newTree && (node.parent !== null || newTree !== treeForRoot(node)) ? newTree : node.tree;
+      if (await save(updateNode(plan, node.id, { classification, parent, needs, tree }))) close();
+      return;
+    }
     const title = String(data.get("title")).trim();
     const overview = String(data.get("overview")).trim();
     const lines = overviewLines(overview);
@@ -301,64 +304,63 @@ function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: Pr
       field.reportValidity();
       return;
     }
-    const classification = branchClassifications.find(candidate => candidate === data.get("type"));
-    const location = String(data.get("parent"));
-    const newTree = treeTabs.find(tree => location === `tree:${tree}`);
-    const parent = newTree ? null : location || null;
-    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs, tree: newTree && (node.parent !== null || newTree !== treeForRoot(node)) ? newTree : node.tree }))) close();
+    if (title && await save(updateNode(plan, node.id, { title, overview }))) close();
   }
 
   return <form className="grid min-w-0 gap-3 py-2" onSubmit={submit}>
-    <label className={label}>Name
-      <input className={input} name="title" defaultValue={node.title} required maxLength={120} autoFocus />
-    </label>
-    <label className={label}>Overview
-      <textarea className={input} name="overview" defaultValue={node.overview} rows={3} maxLength={500} onInput={event => event.currentTarget.setCustomValidity("")} />
-      <span className="text-xs text-slate-600">Up to three short lines, one bullet per line.</span>
-    </label>
-    {node.kind === "branch" && <label className={label}>Item type
-      <select className={input} name="type" defaultValue={node.classification ?? "branch"}>
-        <ClassificationOptions />
-      </select>
-    </label>}
-    <div className="divide-y divide-slate-200 border-y border-slate-200">
-      <details>
-        <summary className={disclosure}>Change location</summary>
-        <label className={`${label} pb-3`}>Move under
-          <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? `tree:${treeForRoot(node)}`}>
-            {treeTabs.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
-            {visible.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
-              <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
-            ))}
-          </select>
-        </label>
-      </details>
-      <details>
-        <summary className={disclosure}>Dependencies{shownNeeds.length ? ` (${shownNeeds.length})` : ""}</summary>
-        <ul className="divide-y divide-slate-200">
-          {shownNeeds.map(id => {
-            const dependency = plan.nodes.find(candidate => candidate.id === id);
-            return <li key={id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 break-words">{dependency?.title}</span>
-              <button type="button" className={iconButton} aria-label={`Remove dependency on ${dependency?.title}`}
-                onClick={() => setNeeds(current => current.filter(value => value !== id))}><X size={14} /></button>
-            </li>;
-          })}
-        </ul>
-        <div className="flex gap-2 pb-3">
-          <select className={`${input} flex-1`} aria-label="Prerequisite" value={prerequisite} onChange={event => setPrerequisite(event.target.value)}>
-            <option value="">Choose an item</option>
-            {visible.filter(candidate => candidate.id !== node.id && !needs.includes(candidate.id)).map(candidate => (
-              <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
-            ))}
-          </select>
-          <button type="button" className={control} disabled={!prerequisite} onClick={() => {
-            setNeeds(current => [...current, prerequisite]);
-            setPrerequisite("");
-          }}>Add</button>
-        </div>
-      </details>
-    </div>
+    {!organise ? <>
+      <label className={label}>Name
+        <input className={input} name="title" defaultValue={node.title} required maxLength={120} autoFocus />
+      </label>
+      <label className={label}>Overview
+        <textarea className={input} name="overview" defaultValue={node.overview} rows={3} maxLength={500} onInput={event => event.currentTarget.setCustomValidity("")} />
+        <span className="text-xs text-slate-600">Up to three short lines, one bullet per line.</span>
+      </label>
+    </> : <>
+      {node.kind === "branch" && <label className={label}>Item type
+        <select className={input} name="type" defaultValue={node.classification ?? "branch"}>
+          <ClassificationOptions />
+        </select>
+      </label>}
+      <div className="divide-y divide-slate-200 border-y border-slate-200">
+        <details>
+          <summary className={disclosure}>Change location</summary>
+          <label className={`${label} pb-3`}>Move under
+            <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? `tree:${treeForRoot(node)}`}>
+              {treeTabs.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
+              {visible.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
+                <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
+              ))}
+            </select>
+          </label>
+        </details>
+        <details>
+          <summary className={disclosure}>Dependencies{shownNeeds.length ? ` (${shownNeeds.length})` : ""}</summary>
+          <ul className="divide-y divide-slate-200">
+            {shownNeeds.map(id => {
+              const dependency = plan.nodes.find(candidate => candidate.id === id);
+              return <li key={id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 break-words">{dependency?.title}</span>
+                <button type="button" className={iconButton} aria-label={`Remove dependency on ${dependency?.title}`}
+                  onClick={() => setNeeds(current => current.filter(value => value !== id))}><X size={14} /></button>
+              </li>;
+            })}
+          </ul>
+          <div className="flex gap-2 pb-3">
+            <select className={`${input} flex-1`} aria-label="Prerequisite" value={prerequisite} onChange={event => setPrerequisite(event.target.value)}>
+              <option value="">Choose an item</option>
+              {visible.filter(candidate => candidate.id !== node.id && !needs.includes(candidate.id)).map(candidate => (
+                <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
+              ))}
+            </select>
+            <button type="button" className={control} disabled={!prerequisite} onClick={() => {
+              setNeeds(current => [...current, prerequisite]);
+              setPrerequisite("");
+            }}>Add</button>
+          </div>
+        </details>
+      </div>
+    </>}
     <div className="flex items-center gap-2">
       <button type="submit" className="min-h-11 rounded-lg bg-teal-800 px-4 text-sm font-semibold text-white hover:bg-teal-900">Save</button>
       <button type="button" className="min-h-11 px-3 text-sm text-slate-700 hover:underline" onClick={close}>Cancel</button>
@@ -410,7 +412,7 @@ function ToolReferences({ id, close, select }: { id: string; close: () => void; 
       ))}</ul>
     </details>}
     <details>
-      <summary className={summary}>Features</summary>
+      <summary className={summary}>Tool features</summary>
       {features.length > 0 && <ul className="list-disc space-y-1 pl-6 text-sm text-slate-700">
         {features.map(feature => <li key={feature.key}>{feature.label}</li>)}
       </ul>}
@@ -428,10 +430,10 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
   close: () => void; showReview: () => void;
 }) {
   const [showSubtree, setShowSubtree] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [action, setAction] = useState<"edit" | "organise" | "add" | "delete">();
   const editButton = useRef<HTMLButtonElement>(null);
   function closeEditor() {
-    setEditing(false);
+    setAction(undefined);
     requestAnimationFrame(() => editButton.current?.focus());
   }
   const parents: PlanNode[] = [];
@@ -454,26 +456,39 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
     </nav>
     <div className="flex items-start justify-between gap-2">
       <h3 className="min-w-0 break-words py-2 text-lg font-semibold leading-snug"><ItemName node={node} /></h3>
-      {!editing && <div className="flex shrink-0 items-center gap-1">
+      {!action && <div className="flex shrink-0 items-center gap-1">
         <button ref={editButton} type="button" className="min-h-11 rounded-lg px-2 text-sm font-medium text-teal-800 hover:bg-teal-50"
-          onClick={() => setEditing(true)}>Edit</button>
+          onClick={() => setAction("edit")}>Edit</button>
         <details>
           <summary className={`${iconButton} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Task actions">
             <MoreHorizontal size={20} aria-hidden />
           </summary>
-          <div className="absolute inset-x-0 z-10 mx-3 max-h-[60dvh] overflow-auto rounded-xl border border-slate-300 bg-white p-3 shadow-lift sm:mx-4">
-            <button className="flex min-h-11 w-full items-center gap-2 text-left text-sm font-medium" aria-pressed={node.pinned} onClick={() => void save(updateNode(plan, node.id, { pinned: !node.pinned }))}>
+          <div className="absolute right-3 z-10 w-52 max-w-full rounded-xl border border-slate-300 bg-white p-1 shadow-lift">
+            <button type="button" className={menuAction} onClick={() => setAction("organise")}>Location and links</button>
+            <button type="button" className={menuAction} onClick={() => setAction("add")}>Add branch or feature</button>
+            <button className={menuAction} aria-pressed={node.pinned} onClick={() => void save(updateNode(plan, node.id, { pinned: !node.pinned }))}>
               <Pin size={17} fill={node.pinned ? "currentColor" : "none"} aria-hidden /> {node.pinned ? "Unpin" : "Pin"}
             </button>
             {plan.reviews.some(request => !index.deckItems.has(request.item)) && <button type="button"
               className="flex min-h-11 w-full items-center text-left text-sm font-medium text-slate-600 hover:underline"
               onClick={showReview}>View existing review requests</button>}
+            {node.kind === "task" && <button type="button" className={`${menuAction} text-red-700`}
+              onClick={() => setAction("delete")}>Delete task</button>}
           </div>
         </details>
       </div>}
     </div>
-    {editing ? <EditItem key={JSON.stringify([node.title, node.overview, node.classification, node.parent, node.needs])}
-      node={node} plan={plan} index={index} save={save} close={closeEditor} /> : <>
+    {action === "add" ? <AddItem parent={node.id} plan={plan} save={save} branch close={closeEditor} />
+      : action === "delete" ? <div className="space-y-3 border-t border-slate-200 py-3">
+        <p className="text-sm">Delete this task?{children.length > 0 && " Items inside it will move up one level."}</p>
+        <div className="flex gap-2">
+          <button type="button" className={control} onClick={closeEditor} autoFocus>Cancel</button>
+          <button type="button" className="min-h-11 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800"
+            onClick={async () => { if (await save(deletePlanTask(plan, node.id))) back(); }}>Delete permanently</button>
+        </div>
+      </div>
+      : action ? <EditItem key={JSON.stringify([node.title, node.overview, node.classification, node.parent, node.needs])}
+        node={node} plan={plan} index={index} save={save} close={closeEditor} organise={action === "organise"} /> : <>
       <Overview text={node.overview} />
       <div className="mt-2 flex flex-wrap items-center gap-x-3">
         {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
@@ -529,9 +544,10 @@ interface PanelProps {
   panelWidth: number;
   wide: boolean;
   toggleWidth: () => void;
+  onMatrixView: (active: boolean) => void;
 }
 
-export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, toggleWidth }: PanelProps) {
+export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, toggleWidth, onMatrixView }: PanelProps) {
   const { pathname, key: pageKey } = useLocation();
   const tool = contextualTools.find(item => item.path.toLowerCase() === pathname.replace(/\/$/, "").toLowerCase());
   const [selection, setSelection] = useState<{ route: string; id: string | null }>();
@@ -561,6 +577,8 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = selectedId ? index.byId.get(selectedId) : undefined;
   const reviews = selectedId === "review-queue";
+  const matrix = selectedId === "feature-tracker";
+  const features = featureViews.some(view => view.id === selectedId);
   const [tree, setTree] = useState<VisiblePlanTree>("site");
   const [trackerOpened, setTrackerOpened] = useState(false);
   const returnView = useRef<string | null>(null);
@@ -594,6 +612,10 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
     setTree(next);
     select(null);
   }
+
+  useLayoutEffect(() => {
+    onMatrixView(open && matrix);
+  }, [onMatrixView, open, matrix]);
 
   useLayoutEffect(() => {
     if (scroller.current) scroller.current.scrollTop = positions.current.get(viewKey) ?? 0;
@@ -676,9 +698,10 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
           }}><X size={19} /></button>
         </div>
         <nav aria-label="Project plan views" className="flex items-center gap-x-2 overflow-x-auto">
-          {treeTabs.map(key => <button key={key} className={viewControl}
-            aria-pressed={!selectedId && tree === key} onClick={() => selectTree(key)}>{treeLabels[key]}</button>)}
+          <button className={viewControl} aria-pressed={!selectedId && tree === "site"} onClick={() => selectTree("site")}>Site</button>
           <button className={viewControl} aria-pressed={selectedId === "all-tasks"} onClick={() => select("all-tasks")}>Tasks</button>
+          <button className={viewControl} aria-pressed={!selectedId && tree === "developments"} onClick={() => selectTree("developments")}>Pathways</button>
+          <button className={viewControl} aria-pressed={features} onClick={() => select("feature-tracker")}>Features</button>
           {tool && <button className={`${viewControl} ml-auto`} aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
         </nav>
       </header>
@@ -689,6 +712,10 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {!plan && !error && <p role="status" className="text-sm text-slate-600">Loading project plan…</p>}
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
+          {features && <nav aria-label="Feature views" className="mb-3 flex gap-2 border-b border-slate-200">
+            {featureViews.map(view => <button key={view.id} type="button" className={viewControl}
+              aria-pressed={selectedId === view.id} onClick={() => select(view.id)}>{view.label}</button>)}
+          </nav>}
           {trackerOpened && <section hidden={selectedId !== "feature-tracker"} className="space-y-2">
             <h3 className="text-sm font-semibold">Feature tracker</h3>
             <ToolsSection compact store={matrixStore} phone={panelWidth === 0} onOpen={select} />
@@ -697,7 +724,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
             : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(returnView.current)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
             : selectedId === "feature-tracker" ? null
             : isPlanReference(selectedId) ? <>
-              <button className="min-h-11 text-sm text-teal-800 hover:underline" onClick={() => select(referenceFrom.current)}>Back</button>
+              {(!features || (referenceFrom.current && index.byId.has(referenceFrom.current))) && <button className="min-h-11 text-sm text-teal-800 hover:underline" onClick={() => select(referenceFrom.current)}>Back</button>}
               <PlanReference key={selectedId} view={selectedId} />
             </>
             : selectedId === "all-tasks" ? <Tasks plan={plan} index={index} save={save} select={select} />

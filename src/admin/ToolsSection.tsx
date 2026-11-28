@@ -236,13 +236,15 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
         </div>
       ) : view === "matrix" ? (
         <div className={`${panel} overflow-x-auto`} role="region" aria-label="Scrollable feature matrix" tabIndex={0}>
-          <table aria-label="Feature matrix" className="w-full text-sm">
+          <table aria-label="Feature matrix" className={`w-full text-sm ${compact ? "border-separate border-spacing-0" : ""}`}>
             <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 text-left align-bottom font-semibold sm:px-4">Tool</th>
                 {matrixCols.map(c => (
-                  <th key={c.key} title={c.hint} className="px-1 py-3 align-bottom font-semibold">
-                    <span className="mx-auto block rotate-180 whitespace-nowrap text-xs [writing-mode:vertical-rl]">{c.label}</span>
+                  <th key={c.key} title={c.hint} scope="col" className={compact
+                    ? "min-w-[5.5rem] border-l border-slate-200 px-2 py-3 text-center align-middle font-semibold text-slate-700"
+                    : "px-1 py-3 align-bottom font-semibold"}>
+                    <span className={compact ? "block text-xs leading-tight" : "mx-auto block rotate-180 whitespace-nowrap text-xs [writing-mode:vertical-rl]"}>{c.label}</span>
                   </th>
                 ))}
               </tr>
@@ -259,11 +261,11 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
                     const n = noteOf(t.id);
                     return (
                       <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 hover:bg-sky-50">
-                        <th scope="row" className={`sticky left-0 z-[1] bg-white px-3 text-left font-semibold text-slate-900 ${compact ? "w-32 max-w-[8rem]" : "sm:whitespace-nowrap sm:px-4"}`}>
+                        <th scope="row" className={`sticky left-0 z-[1] bg-white px-3 text-left font-semibold text-slate-900 ${compact ? "min-w-28 max-w-40 border-r border-slate-200" : "sm:whitespace-nowrap sm:px-4"}`}>
                           <button type="button" onClick={event => { event.stopPropagation(); onOpen(t.id); }}
                             className="min-h-10 break-words text-left hover:underline">{t.name}</button>
                         </th>
-                        {matrixCols.map(c => <td key={c.key} className="px-1 py-2 text-center"><Dot on={c.has(t, n)} label={c.label} /></td>)}
+                        {matrixCols.map(c => <td key={c.key} className={compact ? "border-b border-l border-slate-100 px-2 py-3 text-center" : "px-1 py-2 text-center"}><Dot on={c.has(t, n)} label={c.label} /></td>)}
                       </tr>
                     );
                   })}

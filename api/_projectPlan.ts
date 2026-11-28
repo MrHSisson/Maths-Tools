@@ -34,6 +34,23 @@ export function makeNode(id: string, parent: string | null, title: string, kind:
   return { id, parent, kind, title, overview, done: false, pinned: false, needs: [] };
 }
 
+export function deletePlanTask(plan: ProjectPlan, id: string): ProjectPlan {
+  const task = plan.nodes.find(node => node.id === id);
+  if (task?.kind !== "task") return plan;
+
+  const nodes = plan.nodes.filter(node => node.id !== id).map(node => {
+    const child = node.parent === id;
+    if (!child && !node.needs.includes(id)) return node;
+    return {
+      ...node,
+      parent: child ? task.parent : node.parent,
+      tree: child && task.parent === null ? node.tree ?? task.tree : node.tree,
+      needs: node.needs.filter(prerequisite => prerequisite !== id),
+    };
+  });
+  return { ...plan, nodes, reviews: plan.reviews.filter(review => review.item !== id) };
+}
+
 export function descendants(nodes: PlanNode[], id: string): Set<string> {
   const result = new Set([id]);
   const pending = [id];

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BlobPreconditionFailedError, get, head, put } from "@vercel/blob";
 import { GET, POST } from "../../api/project-plan";
-import { emptyPlan, isProjectPlan, makeNode } from "../../api/_projectPlan";
+import { deletePlanTask, emptyPlan, isProjectPlan, makeNode } from "../../api/_projectPlan";
 
 vi.mock("@vercel/blob", async importOriginal => ({
   ...await importOriginal<typeof import("@vercel/blob")>(),
@@ -50,6 +50,15 @@ describe("shared project plan", () => {
     }
     expect(isProjectPlan({ ...plan, nodes: [{ ...tool, tree: "archive" }, check] })).toBe(false);
     expect(isProjectPlan(plan)).toBe(true);
+  });
+
+  it("deletes a task and preserves its children and other work", () => {
+    const child = { ...makeNode("child", check.id, "A subtask", "task"), needs: [check.id] };
+    const next = deletePlanTask({ ...plan, nodes: [tool, check, child] }, check.id);
+    expect(next.nodes).toEqual([tool, { ...child, parent: tool.id, needs: [] }]);
+    expect(next.reviews).toEqual([]);
+    expect(isProjectPlan(next)).toBe(true);
+    expect(deletePlanTask(plan, tool.id)).toBe(plan);
   });
 
   it("requires the plan key before reading or writing", async () => {

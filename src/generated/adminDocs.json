@@ -1201,12 +1201,12 @@
        "items": [
         "Tools open their own checklist. On a laptop the plan docks beside the tool.",
         "Browse Site or Developments. Tap the arrow to expand or the title to open the card.",
-        "Site includes the green-dot Feature tracker, Feature guide and build guide.",
-        "Developments shows the active pathways. Tasks has one list with a Show completed option.",
+        "Features has the green-dot tracker and both guides. The tracker uses the full width.",
+        "Tasks has one list with a Show completed option. Pathways shows the active developments.",
         "Teaching decks have their own section outside the plan.",
         "Cards show descriptions, progress and the area’s own tree. Task rows stay short.",
         "Subtools and features have labels. Tasks have checkboxes.",
-        "Edit on the card. Change location only when needed.",
+        "Add a task by name. Edit its name or overview on the card. Delete it from the card menu.",
         "The Developing tools unlock covers the plan, Admin and the deck editor.",
         "Codex verified read and write access on production."
        ]
