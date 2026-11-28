@@ -49,7 +49,7 @@ Branch `claude/sleepy-keller-ntgciq`. Area: `src/tools/Decision/SimplexAlgorithm
 Agent: Claude Code
 Notes: no planner Build Log block yet for this session (to add).
 
-## 2026-11-28 — Graphical linear programming (DD2): the brief and chunks G0 (the maths) and G1 (the picture)
+## 2026-11-28 — Graphical linear programming (DD2): the brief and chunks G0 (the maths), G1 (the picture) and G2 (the tool)
 
 Branch `ccr-bf77c579-nv8nom`. Area: `specs/linear-programming-graphical.md`, `docs/pathways/linear-programming.md`. Plus `src/shared/decision/lpGraph.ts`, `lpGraphView.ts`, `LpGraphPicture.tsx` and their tests.
 
@@ -58,7 +58,9 @@ Branch `ccr-bf77c579-nv8nom`. Area: `specs/linear-programming-graphical.md`, `do
 - **Picture:** a new SVG region picture with its R27 reason, `data-q-index` and no fixed height (R31). Build chunks G0 (shared maths and test) to G6 (go live) are in the brief.
 - **G0 built:** `lpGraph.ts`, the exact maths for the Graphical tool (ordered vertices, enclosed or open region, shade-out test point, intercepts, objective line, vertex table, whole points, the four points around an optimum, the constraint-count rule), reusing `vertices`, `bestVertices` and `opHolds`. Its test checks the ferry problem by hand and 150 seeded random regions against the grapher's own clipped polygon, `optimiseLinear`, a fine-grid scan and a brute-force whole-point search. No picture or tool yet.
 - **G1 built:** the region picture `LpGraphPicture.tsx` with `lpGraphView.ts` (window, clipped half-planes, labels) and `src/tests/lpGraphPicture.test.ts`; its R27 reason is in `docs/reference/pictures.md`. One svg with `data-q-index`, no fixed height, one size at every step, dotted strict lines, R only in an enclosed region. Revised on Harry's note: shade out is a translucent grey block on the unwanted side of each line (hatching and then ticks were tried and dropped), and the equations are in a key below the graph with a letter on each line; corner coordinates show on hover, tap or focus (always in print). Not wired to a tool yet.
-- **Deliberately not done:** the tool (G2 onward); range, redundant constraints, a From Formulating start and the exam-style chain stay later.
+- **G2 built, not live:** `/lp-graphical` (`enabled: false`, on the Decision hub's DD card) with Draw the region at three levels (Level 1 sloped ≤ lines; Level 2 bounds and vertical or horizontal lines, one may be strict; Level 3 a ≥ line, a line through the origin or an open region) and options Starting From and Shading (display only). The working draws each line, tests a point, shades, labels R and finds each corner; the graph stays in view beside the working. New: `lpGraphGen.ts`, `lpGraphSolve.ts`, `GxWorking.tsx`, `src/tools/Decision/GraphicalLP.tsx`, `src/tests/lpGraphGen.test.ts`; small edits to `types.ts` (`gx`, `gxView`), `QuestionText.tsx` ("Draw" is a task word), `LpWorking.tsx` (exports `Row`, `Prose`), the registry and `decisionSpec.ts`.
+- **Known:** `src/tests/power.test.ts` (forcespeed) fails now and then on an unseeded draw, with or without these changes; not touched here.
+- **Deliberately not done:** Solve and Integer solutions (G3, G4); range, redundant constraints, a From Formulating start and the exam-style chain stay later.
 - **Still outstanding from the last session:** the simplex tools have not been looked at in the browser on phone, tablet and laptop, nor printed on a real printer; the dashboard notes for those tools and a planner Build Log block were not written.
 
 Agent: Claude Code

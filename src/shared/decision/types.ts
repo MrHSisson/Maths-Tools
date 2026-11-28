@@ -15,6 +15,7 @@ import type { CpaSheetInput } from "./printCpa";
 import type { DimProblemData } from "./dimGen";
 import type { LpProblemData } from "./lpGen";
 import type { SxData } from "./lpSimplexGen";
+import type { GxData } from "./lpGraphGen";
 import type { MechProblemData, MechViewState } from "../mechanics/problem";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
@@ -87,6 +88,9 @@ export interface SxTabView { k: "tab"; head: string[]; labelHead?: string; label
 export type SxBlock = { k: "rows"; rows: LpRow[] } | SxTabView;
 export interface SxViewState { blocks: SxBlock[]; fresh?: number }
 
+/** Graphical LP: how much of the picture is drawn at this step (lines drawn, lines shaded, R written, corner points shown) and the written working so far (the last `fresh` rows are new) */
+interface GxViewState { drawn: number; shaded: number; region: boolean; vertices: number; rows: LpRow[]; fresh: number }
+
 export interface DecisionProblem {
   /** The network the question is about. Absent for a tool whose picture is not a network (Critical Path, and Mechanics chapters): those carry their own data field and draw it through `renderCanvas`. */
   network?: Network;
@@ -110,6 +114,8 @@ export interface DecisionProblem {
   lp?: LpProblemData;
   /** The Simplex Algorithm: the problem, its tableau and what the question asks, drawn as the written working through `renderCanvas` */
   sx?: SxData;
+  /** Graphical Linear Programming: the region, its lines and corner points, drawn as a graph with the written working beside it through `renderCanvas` */
+  gx?: GxData;
   cpa?: CpaProblemData; // Critical Path Analysis: the activities, their times and the laid-out network
   /** Route Inspection: which question this is — the working and the independent reference are both rebuilt from the network and these ends */
   route?: { start: string; end?: string };
@@ -214,6 +220,7 @@ export interface SolveStep {
   mechView?: MechViewState; // Further Mechanics: the diagram and written working so far
   lpView?: LpViewState; // Linear Programming: the written working so far
   sxView?: SxViewState; // The Simplex Algorithm: the working so far, with its tableau
+  gxView?: GxViewState; // Graphical Linear Programming: the graph so far and the working
   /** a step that is one line of a longer chain: the step shows the finished chain, and these are its parts, opened one at a time on request ("Show the steps") */
   more?: SolveStep[];
   cpaView?: CpaViewState; // Critical Path Analysis: which boxes and arrows are drawn this beat, and which times are filled in

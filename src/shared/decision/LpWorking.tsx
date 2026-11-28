@@ -18,12 +18,12 @@ function Tex({ t }: { t: string }) {
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 /** plain text with maths between $…$ */
-function Prose({ text }: { text: string }) {
+export function Prose({ text }: { text: string }) {
   return <>{text.split(/(\$[^$]+\$)/g).map((part, i) => (i % 2 === 1 ? <Tex key={i} t={part.slice(1, -1)} /> : <span key={i}>{part}</span>))}</>;
 }
 const label: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#64748b" };
 
-function Row({ r, fresh, big }: { r: LpRow; fresh: boolean; big: boolean }) {
+export function Row({ r, fresh, big }: { r: LpRow; fresh: boolean; big: boolean }) {
   const colour = fresh ? NEW : INK;
   if (r.k === "gap") return <div style={{ height: "0.4em" }} />;
   if (r.k === "head") return <div style={{ ...label, textTransform: "none", letterSpacing: 0, fontSize: "0.62em", fontWeight: 700, color: GIVEN, paddingTop: 4 }}><Prose text={r.t} /></div>;

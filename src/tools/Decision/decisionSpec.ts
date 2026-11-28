@@ -77,7 +77,7 @@ export const DECISION_CHAPTERS: DecisionChapter[] = [
     ],
   },
   {
-    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-simplex", "lp-roadmap"],
+    id: "DD", name: "Linear programming", toolIds: ["lp-formulate", "lp-graphical", "lp-simplex", "lp-roadmap"],
     resources: [
       aqa("D1", "D1 Linear Programming"), aqa("D2", "D2 Simplex Algorithm"), aqa("D2", "D2 Simplex Algorithm MS"),
       edx("D1", "D1 Linear programming - Formation of problems"), edx("D1", "D1 Linear programming - Graphical"),
@@ -180,8 +180,9 @@ export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
   DC5: [nf("potentials", "Flow from potentials", "a"), nf("augment", "Augment flow", "a")],
   DC6: [nf("examLower", "Lower capacities, claims and upgrades", "a", "exam")],
   DC7: [nf("nodeCap", "Node capacities", "a")],
-  // DD: linear programming. DD2 (graphical methods) has no tool yet. The roadmap page is listed on the chapter card, not under a statement.
+  // DD: linear programming. DD2 (graphical methods) has its first sub-tool (Draw the region); Solve and Integer solutions are still to come. The roadmap page is listed on the chapter card, not under a statement.
   DD1: [plain("lp-formulate", "constraint", "Write a constraint", true), plain("lp-formulate", "problem", "Formulate a problem", true)],
+  DD2: [plain("lp-graphical", "region", "Draw the region", true)],
   DD3: [plain("lp-simplex", "setup", "Set up the tableau", false), plain("lp-simplex", "solve", "Solve a problem", false), plain("lp-simplex", "forms", "Non-standard problems", false), plain("lp-simplex", "practical", "Is it practical?", false)],
   DD4: [plain("lp-simplex", "interpret", "Read a tableau", false)],
   // DF: game theory

@@ -105,9 +105,9 @@ Never random constraints solved afterwards. The generator **builds the region an
 
 | Chunk | What | Notes |
 |---|---|---|
-| **G0** | `lpGraph.ts` and its test (the maths, the four surrounding points, the brute-force cross-checks) | shared piece with a test; no UI |
-| **G1** | the region picture `LpGraphPicture.tsx` and its test (R27 reason in `docs/reference/pictures.md`; phone, tablet, laptop) | picture only |
-| **G2** | the tool behind `enabled: false` with `region` (three levels), the DD hub link, `decisionSpec.ts` DD2 comment | the stepper, print, About |
+| **G0** | `lpGraph.ts` and its test (the maths, the four surrounding points, the brute-force cross-checks) | shared piece with a test; no UI. **Built 2026-11-28** |
+| **G1** | the region picture `LpGraphPicture.tsx` and its test (R27 reason in `docs/reference/pictures.md`; phone, tablet, laptop) | picture only. **Built 2026-11-28** |
+| **G2** | the tool behind `enabled: false` with `region` (three levels), the DD hub link, `decisionSpec.ts` DD2 comment | the stepper, print, About. **Built 2026-11-28** |
 | **G3** | `solve` (three levels, Method, Starting From) | |
 | **G4** | `integer` (two levels) | |
 | **G5** | deck content (a graphical-LP teaching deck; after the code is merged: see AGENTS.md "Deck data format") | |

@@ -12,7 +12,7 @@ export function sentences(text: string): string[] {
   return masked.split(/(?<=[.?!])\s+/).map((s) => s.replace(/\u0000(\d+)\u0000/g, (_, i) => maths[Number(i)]).trim()).filter(Boolean);
 }
 
-const TASK = /^(Formulate|Use|State|Write|Find|Choose|Explain|Show|Is |Say|Read|Carry|Give|Solve|Determine|Work|Complete|Describe|Then)\b/;
+const TASK = /^(Draw|Formulate|Use|State|Write|Find|Choose|Explain|Show|Is |Say|Read|Carry|Give|Solve|Determine|Work|Complete|Describe|Then)\b/;
 /** a sentence after which a new paragraph starts: a limit, a fact about the whole problem, the profit, a definition of a letter */
 const ENDS_PARAGRAPH = /^(There (is|are)|The total|The mix|The number|Only |Let |A simplex tableau|The tableau|The initial)|profit of|sells for|must be integers|can be made/;
 const STARTS_PARAGRAPH = /^The simplex algorithm gives/;

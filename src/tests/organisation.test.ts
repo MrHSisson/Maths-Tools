@@ -57,6 +57,7 @@ const STANDALONE_BY_DESIGN = [
   "Decision/CpaNetworks",
   "Decision/CpaTimes",
   "Decision/FormulatingLP",
+  "Decision/GraphicalLP",
   "Decision/SimplexAlgorithm",
   "Decision/SimplexRoadmap",
   "Decision/DecisionOverview",
