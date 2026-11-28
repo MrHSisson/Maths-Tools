@@ -10,7 +10,7 @@ const hook = async (text: string) => {
   if (writesBeforeConflict > 0 && text.startsWith("UPDATE maths.decks")) { writesBeforeConflict--; await db.raw.query(`UPDATE maths.decks SET version = version + 1`); }
 };
 db.hook = hook;
-process.env.ADMIN_KEY = "k";
+process.env.DEVELOPING_TOOLS_API_KEY = "k";
 const { POST, GET } = await import("../../api/decks");
 
 const el = (id: string, text: string) => ({ id, kind: "text", x: 0, y: 0, w: 10, h: 10, text, size: 40 });

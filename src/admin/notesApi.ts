@@ -1,11 +1,10 @@
-import { DEV_PASSWORD } from "../devAccess";
 import { emptyStore, applyNoteUpdate, type Note, type NoteStore } from "./notes";
 
 /** "live" = the shared notes service; "local" = this device only (service not connected). */
 export type NotesMode = "live" | "local";
 
 const LOCAL_KEY = "mt-admin-notes-local";
-const headers = { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" };
+const headers = { "content-type": "application/json" };
 
 const readLocal = (): NoteStore => {
   try { const s = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? ""); return s && s.tools ? s : emptyStore(); } catch { return emptyStore(); }

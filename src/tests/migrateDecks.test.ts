@@ -7,7 +7,7 @@ import { setDb } from "../../api/_db";
 import { makeTestDb } from "./testDb";
 const db = await makeTestDb();
 setDb(db);
-process.env.ADMIN_KEY = "k";
+process.env.DEVELOPING_TOOLS_API_KEY = "k";
 const { POST: migrate } = await import("../../api/migrate-decks");
 const { GET, POST } = await import("../../api/decks");
 

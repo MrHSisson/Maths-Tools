@@ -1,8 +1,7 @@
 // The folder view's data: a tree's folders (any depth) read once, and one folder's decks (with their first slides, for the cards) read when it is opened.
-// Signed in, every read and change sends the admin key. `pub` is the read anyone may make: the topic tree's published decks only, no key.
+// Signed-in reads and edits use the Developing tools session. Public reads show the topic tree’s published decks.
 import { useCallback, useEffect, useState } from "react";
 import type { Folder, FolderDeck, FolderOp, Tree } from "../../api/_folders";
-import { DEV_PASSWORD } from "../devAccess";
 
 export type { Folder, FolderDeck, FolderOp, Tree };
 interface TreeData { folders: Folder[]; /** Decks held directly in each folder. */ counts: Record<string, number>; /** deck id → the folders it is in. */ byDeck: Record<string, string[]>; /** How many decks are in no folder of this tree. */ unfiled: number; }
@@ -14,7 +13,7 @@ const fromService = (res: Response) => (res.headers.get("content-type") ?? "").i
 
 async function read<T>(query: string, pub: boolean): Promise<T | null> {
   try {
-    const res = await fetch(`${URL_}?${query}${pub ? "&public=1" : ""}`, pub ? undefined : { headers: { "x-admin-key": DEV_PASSWORD } });
+    const res = await fetch(`${URL_}?${query}${pub ? "&public=1" : ""}`);
     return res.ok && fromService(res) ? ((await res.json()) as T) : null;
   } catch { return null; }
 }
@@ -24,7 +23,7 @@ const fetchFolderDecks = async (folderId: string, tree: Tree, pub: boolean, prev
 /** Sets the folders a deck is in within one tree. Resolves to null when it worked, else the reason in words. */
 export async function setDeckFolders(deckId: string, tree: Tree, folderIds: string[]): Promise<string | null> {
   try {
-    const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" }, body: JSON.stringify({ folders: { deckId, tree, folderIds }, by: "Harry" }) });
+    const res = await fetch(URL_, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ folders: { deckId, tree, folderIds }, by: "Harry" }) });
     if (!fromService(res)) return "the sharing service isn't available here";
     if (!res.ok) return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "that did not work";
     return null;
@@ -34,7 +33,7 @@ export async function setDeckFolders(deckId: string, tree: Tree, folderIds: stri
 /** Makes one change to the folders (add, rename, move, reorder, delete). Resolves to null when it worked, else the reason in words. */
 export async function sendFolderOp(op: FolderOp): Promise<string | null> {
   try {
-    const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": DEV_PASSWORD, "content-type": "application/json" }, body: JSON.stringify({ folderOp: op, by: "Harry" }) });
+    const res = await fetch(URL_, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ folderOp: op, by: "Harry" }) });
     if (!fromService(res)) return "the sharing service isn't available here";
     if (!res.ok) return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "that did not work";
     return null;

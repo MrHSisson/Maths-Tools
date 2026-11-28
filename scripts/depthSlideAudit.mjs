@@ -11,7 +11,7 @@ const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { execut
 const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));
+await page.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
 await page.goto(`${base}/decks`);
 // every Depth item, from the banks the site itself loads
 const toolIds = JSON.parse(fs.readFileSync("src/generated/toolFacts.json", "utf8")).tools.filter((x) => x.depth && x.shell === "ToolShell").map((x) => x.id);

@@ -24,7 +24,7 @@ const failures = [];
 const check = (ok, what) => { if (ok) console.log(`ok   ${what}`); else { failures.push(what); console.error(`FAIL ${what}`); } };
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ ...devices["iPhone 13"] });
-await ctx.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));   // the working copy (built decks) shows without the published service
+await ctx.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", e => errors.push(e.message));

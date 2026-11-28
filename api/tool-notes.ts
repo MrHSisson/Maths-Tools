@@ -1,7 +1,8 @@
+import { hasDevSession, matchesSecret } from "./_devSession.js";
 // GET  /api/tool-notes                      → every tool's notes
 // POST /api/tool-notes {tool, fields, by}   → merge fields into one tool's note
 // POST /api/tool-notes {tool, remove: true} → delete one tool's note (for an id that no longer exists)
-// Both need the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password).
+// Both need the header  x-admin-key: <DEVELOPING_TOOLS_API_KEY> .
 // Notes live in one private Vercel Blob (tool-notes.json); writes use the blob's ETag so two
 // writers (the dashboard and a Claude session) can never overwrite each other's change.
 import { get, head, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
@@ -12,9 +13,10 @@ const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...extra } });
 
 function authorised(req: Request): Response | null {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return json({ error: "ADMIN_KEY is not configured" }, 503);
-  return req.headers.get("x-admin-key") === key ? null : json({ error: "Not authorised" }, 401);
+  if (hasDevSession(req)) return null;
+  const key = process.env.DEVELOPING_TOOLS_API_KEY;
+  if (!key && !process.env.DEVELOPING_TOOLS_PASSWORD) return json({ error: "Developing tools API access is not configured" }, 503);
+  return matchesSecret(req.headers.get("x-admin-key"), key) ? null : json({ error: "Not authorised" }, 401);
 }
 
 // The ETag must be the blob's strong one from its metadata (head): the ETag on a download response
