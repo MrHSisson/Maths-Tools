@@ -174,3 +174,7 @@ on the question; it defaults to 1. A question may also carry `_printAnswer` (one
 **Reference:** `src/tools/Geometry/AnglesInQuadrilaterals.tsx`.
 
 ---
+
+### The region picture (Graphical linear programming)
+
+`src/shared/decision/LpGraphPicture.tsx`, with its geometry in `lpGraphView.ts` and its maths in `lpGraph.ts`. It is a ninth picture on purpose: the question is where lines cut and which side holds the region, which none of the eight representations can show (they are for numbers and quantities, not a plane with several lines). It draws axes with whole-number ticks, each boundary labelled with its constraint (dotted when the inequality is strict), the unwanted side of each line hatched (shade out) or the region tinted (shade in), R in an enclosed region, corner points with their coordinates, dashed objective lines with an arrow, and whole-number points with the best ringed. A `GraphView` says how much is shown (`drawn`, `shaded`, `region`, `vertices`, `objective`, `lattice`), so the stepper reveals it a piece at a time; the window comes from the whole problem, so the picture keeps one size as it fills. It is one `<svg>` with `data-q-index`, a viewBox and no fixed pixel height. Tests: `src/tests/lpGraphPicture.test.ts`.
