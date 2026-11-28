@@ -13,7 +13,7 @@ import { solveSimplex, questionBlocks } from "../../shared/decision/lpSimplexSol
 const SUB_TOOLS = [
   { key: "setup", label: "Set up the tableau", levels: 3, blurb: "Slack variables, equations and the initial tableau" },
   { key: "solve", label: "Solve a problem", levels: 3, blurb: "The whole simplex algorithm, or one iteration of it" },
-  { key: "forms", label: "Non-standard problems", levels: 3, blurb: "Minimise, lower bounds, ≥ constraints and equalities" },
+  { key: "forms", label: "Non-standard problems", levels: 3, blurb: "Lower bounds, minimise, ≥ constraints and equalities" },
   { key: "interpret", label: "Read a tableau", levels: 3, blurb: "Optimal? The values, the binding constraints" },
   { key: "practical", label: "Is it practical?", levels: 3, blurb: "Whole numbers: why the optimum fails, and the best practical plan" },
 ];
@@ -23,22 +23,22 @@ const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : f
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
   const key = (ctx?.subTool ?? "solve") as string;
-  // Non-standard problems: each level is its own change of form, set up or solved. (Level 1 a minimise or a lower bound, Level 2 a ≥ constraint, Level 3 an equality.)
+  // Non-standard problems: each level is its own change of form, set up or solved. (Level 1 a lower bound, Level 2 a minimise or a ≥ constraint, Level 3 an equality.)
   const nonStandard = key === "forms";
   // Solve can stop after one iteration (a pivot question); Non-standard problems can stop at the set-up or the first pivot
   const kind: SxKind = nonStandard ? (o.sxThrough === "setup" ? "setup" : o.sxThrough === "pivot" ? "pivot" : "solve") : key === "solve" && o.sxWork === "one" ? "pivot" : key === "interpret" && level === 3 ? "reverse" : (key as SxKind);
   const changes = nonStandard;
-  const FORMS_BY_LEVEL: Record<number, string[]> = { 1: ["min", "lower"], 2: ["ge"], 3: ["eq"] };
+  const FORMS_BY_LEVEL: Record<number, string[]> = { 1: ["lower"], 2: ["min", "ge"], 3: ["eq"] };
   const levelForms = FORMS_BY_LEVEL[level] ?? ["ge"];
   const pickedForms = ticked(o.sxForms, levelForms.join(",")).filter((f) => levelForms.includes(f));
   // a situation has at most three limits, so at Level 3 it is drawn with three constraints
-  const contexts = nonStandard || kind === "pivot" ? ["bare"] : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
+  const contexts = kind === "pivot" ? ["bare"] : nonStandard ? ticked(o.sxCtxF, "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
   const wordsAtL3 = !contexts.includes("bare");
   const q = generateSimplex(level, {
     kind,
     vars: [],
     cons: [],
-    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3)),
+    sizes: ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3 && !nonStandard)),
     hard: level === 3 && (key === "setup" || key === "solve") ? ticked(o.sxHard, "percent,either") : undefined,
     nonStandard: changes,
     forms: !changes ? ["standard"] : pickedForms.length ? pickedForms : levelForms,
@@ -91,6 +91,11 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "initial", label: "The Initial Tableau" }, { value: "later", label: "A Later Tableau" }],
   },
   {
+    key: "sxCtxF", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation, such as a minimum amount that must be used or a number that must be made. A minimise has no natural situation, so it is always given as inequalities.",
+    forSubTools: ["forms"], multi: true, defaultFor: () => "bare",
+    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "at least 40 hours must be used" }],
+  },
+  {
     key: "sxPivot", label: "Pivot", info: "Whether the student chooses the pivot (the column, the θ-values, the row) or is told the pivot and only carries out the row operations.",
     forSubTools: ["solve"], when: { key: "sxWork", values: ["one"] }, defaultFor: () => "choose",
     choices: [{ value: "choose", label: "Student Chooses" }, { value: "given", label: "Pivot Given" }],
@@ -101,11 +106,11 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "choose", label: "Student Chooses" }, { value: "given", label: "Pivot Given" }],
   },
   {
-    key: "sxForms", label: "Starting Form", info: "What has to change before the simplex algorithm can start. Level 1 has two: a minimise (maximise P = −C) and a lower bound (y ≥ 4). Tick either or both and each question draws one. Level 2 is always a ≥ constraint (a negative right-hand side to start) and Level 3 is always an equality.",
-    forSubTools: ["forms"], forLevels: [1], multi: true, defaultFor: () => "min,lower",
+    key: "sxForms", label: "Starting Form", info: "What has to change before the simplex algorithm can start. Level 2 has two: a minimise (maximise P = −C) and a ≥ constraint (a negative right-hand side to start). Tick either or both and each question draws one. Level 1 is always a lower bound (y ≥ 4) and Level 3 is always an equality.",
+    forSubTools: ["forms"], forLevels: [2], multi: true, defaultFor: () => "min,ge",
     choices: [
       { value: "min", label: "Minimise", sub: "maximise P = −C" },
-      { value: "lower", label: "A Lower Bound", sub: "y ≥ 4" },
+      { value: "ge", label: "A ≥ Constraint", sub: "multiply by −1" },
     ],
   },
   {
@@ -162,7 +167,7 @@ export default function App() {
         levelLabels: {
           setup: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
           solve: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Three variables, a situation with harder limits: percentages, either-or"],
-          forms: ["A minimise, or a lower bound", "A ≥ constraint", "An equality"],
+          forms: ["A lower bound", "A minimise, or a ≥ constraint", "An equality"],
           interpret: ["Two variables, the optimal tableau", "Three variables, a tableau that may or may not be optimal", "The problem the tableau shows"],
           practical: ["Two variables, the inequalities given", "Three variables, a situation in words or a table", "Rounding to the nearest breaks a constraint"],
           default: ["One question"],

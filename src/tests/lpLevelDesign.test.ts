@@ -83,7 +83,7 @@ describe("The Simplex tool", () => {
       const c = generateSimplex(3, { ...ALL, kind }).data;
       expect(c.startForm).toBe("standard");
       // Non-standard problems: a change of form at every level, from the level's own forms
-      const forms: Record<number, string[]> = { 1: ["min", "lower"], 2: ["ge"], 3: ["eq"] };
+      const forms: Record<number, string[]> = { 1: ["lower"], 2: ["min", "ge"], 3: ["eq"] };
       for (const level of [1, 2, 3]) expect(forms[level]).toContain(generateSimplex(level, { ...ALL, kind, nonStandard: true, forms: forms[level], context: ["bare"] }).data.startForm);
     }
   });

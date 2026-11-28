@@ -180,6 +180,17 @@ describe("whole numbers: is it practical?", () => {
       expect(steps.length).toBeGreaterThan(3);
     }
   });
+  it("Non-standard problems can be given as a situation: a lower bound, a minimum or an exact amount; a minimise stays as inequalities", () => {
+    const cases: Array<[number, string, RegExp]> = [[1, "lower", /must make at least/ as RegExp], [2, "ge", /At least \d+ .* must be used/], [3, "eq", /Exactly \d+ .* must be used/]];
+    for (const [level, form, re] of cases) for (let i = 0; i < 25; i++) {
+      const q = generateSimplex(level, OPT("solve", { forms: [form], nonStandard: true, context: ["story"], sizes: [level === 1 ? [2, 2] : [3, 2]] }));
+      expect(q.data.story, `${form}`).toBeTruthy();
+      expect(q.prompt).toMatch(form === "lower" ? /The firm must make at least/ : re);
+      expect(solveSimplex(asProblem(q)).length).toBeGreaterThan(3);
+    }
+    const m = generateSimplex(2, OPT("solve", { forms: ["min"], nonStandard: true, context: ["story"], sizes: [[3, 3]] }));
+    expect(m.data.story).toBeUndefined();
+  });
   it("degenerate cases are never drawn unless they are allowed", () => {
     for (const level of [2, 3]) for (let i = 0; i < 150; i++) {
       // (an equality is built through the optimum, so it is degenerate by design and is left out)

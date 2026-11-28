@@ -116,13 +116,15 @@ function formulate(d: SxData, run: Run): Part[] {
           }
           const a = k.a.map((v) => fr(v * r.scale[0], r.scale[1]));
           const line = a.map((v, j) => (v[0] === 0 ? "" : `${j && a.slice(0, j).some((w) => w[0] !== 0) ? "+ " : ""}${v[0] === 1 && v[1] === 1 ? "" : decTex(v)}${orig[j]}`)).filter(Boolean).join(" ");
-          return [N(`${r.label}`), T(`${line} \\le ${decTex(fr(k.b * r.scale[0], r.scale[1]))}`)];
-        })],
+          return [N(`${r.label}`), T(`${line} ${r.op === "≥" ? "\\ge" : r.op === "=" ? "=" : "\\le"} ${decTex(fr(k.b * r.scale[0], r.scale[1]))}`)];
+        }),
+        ...(sp.lower?.some((x) => x > 0) ? orig.flatMap((v, j) => (sp.lower![j] > 0 ? [N(`At least ${sp.lower![j]} ${s.items[j].plural}`), T(`${v} \\ge ${sp.lower![j]}`)] : [])) : [])],
     });
     if (s.res.some((r) => r.scale[0] !== 1 || r.scale[1] !== 1 || r.form === "either")) {
-      parts.push({ caption: s.res.some((r) => r.form === "either") ? "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms: for an either-or limit, multiply every term by the lowest common multiple of the numbers underneath." : "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms.", rows: [H("Simplified"), ...sp.cons.map((k) => T(`${termsTex(k.a, orig)} \\le ${k.b}`))] });
+      parts.push({ caption: s.res.some((r) => r.form === "either") ? "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms: for an either-or limit, multiply every term by the lowest common multiple of the numbers underneath." : "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms.", rows: [H("Simplified"), ...sp.cons.map((k) => T(`${termsTex(k.a, orig)} ${OPTEX[k.op]} ${k.b}`))] });
     }
-    return parts;
+    // a change of form carries on below, from the constraints as the situation gave them
+    if (d.startForm === "standard") return parts;
   }
   if (sp.sense === "min") parts.push({ caption: "The simplex algorithm maximises. Minimising $C$ is the same as maximising $P = -C$.", rows: [T(`P = -C = ${termsTex(sp.c.map((v) => -v), orig)}`)] });
   if (sp.eqAsRow && sp.cons.some((k) => k.op === "=")) {
@@ -164,7 +166,7 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
   const nonStd = d.startForm !== "standard";
   const slacks = Array.from({ length: m }, (_, i) => sub(i)).join(", ");
   const eqRows: LpRow[] = [H("Constraints as equations"), ...eqLines(run, vars).map((l) => T(l)), N(`$${slacks} \\ge 0$`)];
-  if (d.story) eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${slackUnit(r)})`)));
+  if (d.story && d.startForm === "standard") eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${slackUnit(r)})`)));
   push(`Write each ≤ constraint as an equation by adding a slack variable: $${slacks}$ take up whatever is left over.${run.st.rows.some((r) => r.eq) ? " The equation has no slack variable: it stays as it is." : ""}${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
   push("Write the objective with every variable on the left and 0 on the right.", [rowsOf(H("Objective"), T(objRow(run.st.c, vars)))], 1);
   push("Write the equations as a tableau: the objective row first, then a row for each constraint.", [tabBlock(run, 0, d, ids)], 1);
@@ -240,7 +242,7 @@ function conclusion(d: SxData, run: Run): LpRow[] {
   if (sp.lower?.some((v) => v > 0)) out.push(W(`Back to the original variables: ${orig.map((v, j) => (lo[j] > 0 ? `$${v} = ${v.toUpperCase()} + ${lo[j]} = ${frTex(x[j])}$` : `$${v} = ${frTex(x[j])}$`)).join(", ")}.`));
   if (sp.sense === "min") out.push(W(`$C = -P$${run.st.konst !== 0 ? " with the constant added back" : ""}: $C = ${frTex(obj)}$.`));
   else if (run.st.konst !== 0) out.push(W(`Add back the constant: $P = ${frTex(r.p)} + ${run.st.konst} = ${frTex(obj)}$.`));
-  if (d.story) {
+  if (d.story && d.startForm === "standard") {
     const s = d.story;
     out.push(R(`${orig.map((_, j) => `${frTex(x[j])}\\text{ ${s.items[j].plural}}`).join(",\\ ")};\\ P = £${frTex(obj)}`));
     out.push(W(`So make ${orig.map((_, j) => `${frTex(x[j]).replace(/\\frac\{(\d+)\}\{(\d+)\}/, "$1/$2")} ${s.items[j].plural}`).join(" and ")}, for a maximum profit of £${decTex(obj)}.`));

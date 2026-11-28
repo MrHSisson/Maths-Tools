@@ -14,7 +14,7 @@ interface SxStory {
   intro: string;
   items: Array<{ plural: string; singular: string }>;
   /** one per constraint: the resource, and the factor the data is multiplied by (1, 2, 5, 10, or 1/10 for a decimal per unit) */
-  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number]; /** Level 3 wording: the limit is given as percentages of the whole (a limit of 100%), or as the most of each kind that all of it could make ("20 chairs or 30 tables"); `cap` is the right-hand side of the tidy constraint */ form?: "percent" | "either"; cap?: number }>;
+  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number]; /** Level 3 wording: the limit is given as percentages of the whole (a limit of 100%), or as the most of each kind that all of it could make ("20 chairs or 30 tables"); `cap` is the right-hand side of the tidy constraint */ form?: "percent" | "either"; cap?: number; /** the extra constraint of a Non-standard problem: a minimum ("at least 40 hours must be used") or an exact amount */ op?: "≥" | "=" }>;
   /** the profit per item is c times this */
   profitScale: number;
 }
@@ -142,22 +142,30 @@ function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null 
   if (a.filter((v) => v !== 0).length < 2) return null; // an equality involves at least two of the variables
   const at = a.reduce((t, v, j) => t + v * base.xs[j], 0);
   if (at < 1) return null;
+  // (a limit smaller than one of its own coefficients reads as a mistake, here as everywhere)
+  if (a.some((v) => v > at)) return null;
   if (form === "eq") return { sense: "max", c: base.c, cons: [...cons, { a, op: "=", b: at }] };
   const g = Math.max(1, at - ri(0, Math.min(3, at - 1)));
   void m;
+  if (a.some((v) => v > g)) return null;
   return { sense: "max", c: base.c, cons: [...cons, { a, op: "≥", b: g }] };
 }
 
 // ── The story: the same numbers, dressed ─────────────────────────────────────
 function dress(spec: SxSpec, n: number, m: number, hard: string[] = []): SxStory | null {
-  if (spec.cons.some((k) => k.op !== "≤" || k.a.some((v) => v < 0))) return null;
+  // the limits are all ≤, except that the last may be a minimum (≥) or an exact amount (=): that is a Non-standard problem
+  const last = spec.cons.length - 1;
+  if (spec.cons.some((k, i) => (k.op !== "≤" && i !== last) || k.a.some((v) => v < 0))) return null;
+  if (spec.lower?.some((v) => v > 0) && spec.cons.some((k) => k.op !== "≤")) return null;
+  m = spec.cons.length;
   // each constraint must already be in lowest terms, so the student's simplification gives back the designed numbers
   if (spec.cons.some((k) => [...k.a, k.b].reduce((h, v) => gcdInt(h, v), 0) !== 1)) return null;
   const ctxs = CONTEXTS.filter((c) => c.id !== "diet" && c.resources.length >= m);
   if (!ctxs.length) return null;
   const ctx = pick(ctxs);
   const items = shuffled(ctx.items).slice(0, n);
-  const res: SxStory["res"] = shuffled(ctx.resources).slice(0, m).map((r) => {
+  const res: SxStory["res"] = shuffled(ctx.resources).slice(0, m).map((r, i) => {
+    if (spec.cons[i].op !== "≤") return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale: [1, 1] as [number, number], op: spec.cons[i].op as "≥" | "=" };
     const scale: [number, number] = r.decOnly ? pick<[number, number]>([[1, 10], [1, 5], [1, 2]]) : weighted<[number, number]>([[[1, 1], 2], [[2, 1], 1], [[5, 1], 1], [[10, 1], 2]]);
     return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale };
   });
@@ -198,6 +206,14 @@ function storyText(story: SxStory, spec: SxSpec): string {
       parts.push(`All the ${r.of} available is enough for ${most.slice(0, -1).join(", ")} or ${most[most.length - 1]}, but not for more than one of these.`);
       continue;
     }
+    if (r.op) {
+      const used = story.items.map((it, j) => ({ it, a: spec.cons[i].a[j] })).filter((x) => x.a !== 0);
+      const each = used.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${x.a} ${unitOf(x.a, r.unit)}${r.of ? ` of ${r.of}` : ""}` : `${x.a} ${unitOf(x.a, r.unit)}`}`);
+      const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
+      const b = spec.cons[i].b;
+      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)}. ${r.op === "≥" ? "At least" : "Exactly"} ${b} ${unitOf(b, r.unit)}${r.of ? ` of ${r.of}` : ""} must be used.`);
+      continue;
+    }
     const per = story.items.map((it, j) => ({ it, a: fr(spec.cons[i].a[j] * r.scale[0], r.scale[1]) })).filter((x) => x.a[0] !== 0);
     const each = per.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}${r.of ? ` of ${r.of}` : ""}` : `${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}`}`);
     const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
@@ -206,7 +222,9 @@ function storyText(story: SxStory, spec: SxSpec): string {
   }
   const profit = story.items.map((it, j) => `each ${it.singular} ${j === 0 ? "makes a profit of " : ""}£${spec.c[j] * story.profitScale}`);
   const plist = profit.length <= 1 ? profit.join("") : `${profit.slice(0, -1).join(", ")} and ${profit[profit.length - 1]}`;
-  return `${story.intro} ${parts.join(" ")} ${plist.charAt(0).toUpperCase()}${plist.slice(1)}.`;
+  const lows = (spec.lower ?? []).map((v, j) => (v > 0 ? `at least ${v} ${story.items[j].plural}` : "")).filter(Boolean);
+  const lowText = lows.length ? ` The firm must make ${list(lows)}.` : "";
+  return `${story.intro} ${parts.join(" ")}${lowText} ${plist.charAt(0).toUpperCase()}${plist.slice(1)}.`;
 }
 
 // ── Writing the problem as text ──────────────────────────────────────────────
@@ -309,10 +327,12 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   let table = false;
   // Level 2 is always a situation in words or a table, never the bare inequalities
   const ctxList = o.context.length ? o.context : ["bare"];
-  const wordsOnly = level === 2 && (kind === "setup" || kind === "solve" || kind === "practical");
+  const wordsOnly = level === 2 && !o.nonStandard && (kind === "setup" || kind === "solve" || kind === "practical");
   const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
-  if (level >= 2 && form === "standard" && (chosen === "story" || chosen === "table") && m <= 3) {
-    table = chosen === "table";
+  // a minimise has a mixed-sign cost, which has no situation: it is only ever drawn as inequalities
+  const storyForm = form === "standard" || form === "lower" || form === "ge" || form === "eq";
+  if ((level >= 2 || o.nonStandard) && storyForm && (chosen === "story" || chosen === "table") && sp.cons.length <= 3) {
+    table = chosen === "table" && form === "standard";
     story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined) ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
   }
@@ -337,7 +357,8 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
   let prompt: string;
-  if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
+  if (kind === "setup" && story && form !== "standard") prompt = `${problem} Formulate this as a linear programming problem, write it in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau.`;
+  else if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
   else if (kind === "reverse") prompt = "The initial simplex tableau for a maximising problem is shown. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.";
   else if (kind === "pivot") prompt = at === 0 && run.iters[0]?.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. Choose a pivot to reach a feasible start, and carry out the iteration." : `A simplex tableau for a maximising problem is shown. Choose the pivot, showing the θ-values, and carry out one iteration of the simplex algorithm.`;
   else if (kind === "interpret") prompt = `${story ? `${problem} ` : ""}A simplex tableau for a maximising problem is shown${story ? " for this problem" : ""}. Is the solution optimal? Explain how you know. State the value of every variable and of the objective at this stage, which constraints are at their limit, and what each slack variable means.`;
