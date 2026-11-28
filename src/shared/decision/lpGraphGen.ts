@@ -13,7 +13,7 @@ export type GxStart = "situation" | "inequalities" | "diagram";
 /** what kind of line each constraint is, for the working */
 type GxStyle = "slope" | "supply" | "vbound" | "hbound" | "relation";
 export interface GxData {
-  kind: "region" | "solve";
+  kind: "region" | "solve" | "integer";
   level: number;
   lines: GLine[];
   styles: GxStyle[];
@@ -33,6 +33,9 @@ export interface GxData {
   value?: Fr;
   ks?: [Fr, Fr];
   methods?: Array<"line" | "table">;
+  /** Integer solutions: the best whole-number point and its value, whether the nearest whole point to the optimum is NOT the best (the trap), and which methods are shown */
+  integer?: { best: Pt; value: Fr; trap: boolean };
+  imethods?: Array<"grid" | "table">;
 }
 export interface GxQuestion { prompt: string; answerText: string; data: GxData }
 
@@ -114,7 +117,8 @@ export const FALLBACK: Record<number, GLine[]> = {
 // ── the situation ────────────────────────────────────────────────────────────
 const TIMES = (m: number): string => (m === 2 ? "twice" : `${m} times`);
 export function words(ls: readonly GLine[], ctx: Context, n: [{ plural: string; singular: string }, { plural: string; singular: string }]): string[] {
-  const res = shuffled(ctx.resources.filter((r) => r.mode === "use" && !r.decOnly));
+  // the everyday resources first; one that is usually measured in decimals (ink, wax, paint) only when a third line needs it
+  const res = [...shuffled(ctx.resources.filter((r) => r.mode === "use" && !r.decOnly)), ...shuffled(ctx.resources.filter((r) => r.mode === "use" && r.decOnly))];
   let k = 0;
   const did = ctx.did;
   return ls.map((l) => {
@@ -135,7 +139,7 @@ export function words(ls: readonly GLine[], ctx: Context, n: [{ plural: string; 
     return `${l.op === "≥" ? "At least" : "At most"} ${TIMES(m)} as many ${big.plural} as ${small.plural} must be ${did}.`;
   });
 }
-export const usesResources = (ctx: Context, nSlope: number): boolean => ctx.resources.filter((r) => r.mode === "use" && !r.decOnly).length >= nSlope;
+export const usesResources = (ctx: Context, nSlope: number): boolean => ctx.resources.filter((r) => r.mode === "use").length >= nSlope;
 
 // ── text ─────────────────────────────────────────────────────────────────────
 export const term = (k: number, v: string, first: boolean): string => {

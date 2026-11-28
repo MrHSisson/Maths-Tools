@@ -94,6 +94,8 @@ interface GxViewState {
   /** Solve: the objective lines drawn so far (their values, exact), the arrow of improving value, and whether the best corner is ringed */
   objective?: { ks: ReadonlyArray<readonly [number, number]>; arrow: boolean };
   mark?: boolean;
+  /** Integer solutions: the whole-number points of the region, the four around the optimum, and the best whole point, each shown or not */
+  lattice?: { pts: boolean; around: boolean; best: boolean };
 }
 
 export interface DecisionProblem {

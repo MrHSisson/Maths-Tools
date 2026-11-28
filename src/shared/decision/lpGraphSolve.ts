@@ -2,7 +2,7 @@
 // side to shade, label the region R, then find every corner by solving the two lines that meet there. Every number comes from the exact maths of lpGraph.ts.
 import { type Fr, fadd, fdiv, fmul, feq, fr } from "./dim";
 import { frTex } from "./dimTex";
-import { type GLine, type Objective, type Pt, objValue, testPoint } from "./lpGraph";
+import { type GLine, type Objective, type Pt, greatestYTable, nearestWhole, objValue, surroundingPoints, testPoint, toNum } from "./lpGraph";
 import { texEq, texLine } from "./lpGraphGen";
 import { objLhs, objTex } from "./lpGraphSolveGen";
 import type { DecisionProblem, LpRow, SolveStep } from "./types";
@@ -134,10 +134,12 @@ export function solveOptimise(p: DecisionProblem): SolveStep[] {
   const base = { drawn: d.lines.length, shaded: d.lines.length, region: true, vertices: d.vertices.length };
   // the objective lines stay on the graph once drawn
   let current: { ks: Fr[]; arrow: boolean } | undefined;
-  const push = (caption: string, add: LpRow[], extra: { objective?: { ks: Fr[]; arrow: boolean }; mark?: boolean } = {}): void => {
+  let curLattice: { pts: boolean; around: boolean; best: boolean } | undefined;
+  const push = (caption: string, add: LpRow[], extra: { objective?: { ks: Fr[]; arrow: boolean }; mark?: boolean; lattice?: { pts: boolean; around: boolean; best: boolean } } = {}): void => {
     rows.push(...add);
     if (extra.objective) current = extra.objective;
-    steps.push({ caption, edgeStates: {}, gxView: { ...base, rows: [...rows], fresh: add.length, ...extra, objective: current } });
+    if (extra.lattice) curLattice = extra.lattice;
+    steps.push({ caption, edgeStates: {}, gxView: { ...base, rows: [...rows], fresh: add.length, ...extra, objective: current, lattice: curLattice } });
   };
   const [k1, k2] = d.ks;
   const bestTex = ptTex(d.best), valueTex = fracTex(d.value);
@@ -164,6 +166,47 @@ export function solveOptimise(p: DecisionProblem): SolveStep[] {
     push(`Pick the ${maxim ? "largest" : "smallest"} value of $${L}$.`, [{ k: "words", t: `The ${maxim ? "largest" : "smallest"} value is $${valueTex}$, at the vertex $${bestTex}$.` }], { mark: true });
   }
   const noun = d.nouns;
+  if (d.integer) {
+    // the items are whole: the best whole point is one of the four around the optimum
+    const imethods = d.imethods ?? ["grid"];
+    const around = surroundingPoints(d.lines, d.best);
+    const near = nearestWhole(d.lines, d.best);
+    const wb = d.integer.best, wbTex = ptTex(wb), wvTex = fracTex(d.integer.value);
+    const nearTex = ptTex(near.at);
+    push(`The optimum $${bestTex}$ is not a whole-number point, but $x$ and $y$ must be whole numbers.`, [
+      { k: "head", t: "Whole numbers" },
+      { k: "words", t: `No whole-number point can give more than $${L}=${valueTex}$. Look at the whole-number points close to $${bestTex}$.` },
+    ], { mark: true, lattice: { pts: true, around: false, best: false } });
+    if (imethods.includes("grid")) {
+      const body = around.map((s) => `${ptTex(s.at)} & ${s.feasible ? "\\mathrm{yes}" : "\\mathrm{no}"} & ${s.feasible ? fracTex(objValue(o, s.at)) : "-"}`).join(" \\\\ \\hline ");
+      const slip = d.integer.trap
+        ? near.feasible
+          ? `Rounding $${bestTex}$ to the nearest whole point gives $${nearTex}$, which is in $R$ but does not give the greatest ${L}.`
+          : `Rounding $${bestTex}$ to the nearest whole point gives $${nearTex}$, which is not in $R$.`
+        : `Here the nearest whole point, $${nearTex}$, is also the best.`;
+      push("Test the four whole-number points around the optimum.", [
+        { k: "head", t: "The four points" },
+        { k: "tex", t: `\\begin{array}{|c|c|c|}\\hline (x,\\,y) & \\mathrm{In}\\ R? & ${L} \\\\ \\hline ${body} \\\\ \\hline \\end{array}` },
+        { k: "words", t: slip },
+      ], { mark: true, lattice: { pts: true, around: true, best: false } });
+    }
+    if (imethods.includes("table")) {
+      const lo = Math.floor(toNum(d.best[0])) - 1, hi = Math.ceil(toNum(d.best[0])) + 1;
+      const tab = greatestYTable(d.lines, o).filter((r) => r.x >= lo && r.x <= hi);
+      const body = tab.map((r) => `${r.x} & ${r.y} & ${fracTex(r.value)}`).join(" \\\\ \\hline ");
+      push("For each whole value of $x$ near the optimum, find the greatest whole value of $y$.", [
+        { k: "head", t: "Greatest y for each x" },
+        { k: "tex", t: `\\begin{array}{|c|c|c|}\\hline x & y_{\\max} & ${L} \\\\ \\hline ${body} \\\\ \\hline \\end{array}` },
+        { k: "words", t: `The greatest value in the table is $${wvTex}$, at $${wbTex}$.` },
+      ], { mark: true, lattice: { pts: true, around: false, best: false } });
+    }
+    push(`The best whole-number point is $${wbTex}$.`, [
+      { k: "result", t: `${L}=${wvTex}\\quad\\mathrm{at}\\quad${wbTex}` },
+      ...(d.start === "situation" && noun ? [{ k: "words", t: `Make $${wb[0][0]}$ ${noun[0].plural} and $${wb[1][0]}$ ${noun[1].plural}.` } as LpRow] : []),
+      { k: "note", t: `This is less than $${valueTex}$, the best value when $x$ and $y$ need not be whole: the real value can be lower than the model's.` },
+    ], { mark: false, lattice: { pts: true, around: false, best: true } });
+    return steps;
+  }
   const unit = d.start === "situation" && noun && o.p > 0 && o.q > 0 ? (maxim ? "maximum profit" : "minimum cost") : undefined;
   push(unit ? `So the ${unit} is £${fracTex(d.value)}.` : `State the ${maxim ? "maximum" : "minimum"} value and where it occurs.`, [
     { k: "result", t: `${L}_{\\${maxim ? "max" : "min"}}=${valueTex}\\quad\\mathrm{at}\\quad${bestTex}` },

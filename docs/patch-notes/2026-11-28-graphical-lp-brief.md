@@ -1,6 +1,6 @@
 Strand: Maths
 
-## 2026-11-28 — Graphical linear programming (DD2): the brief and chunks G0 (the maths), G1 (the picture) G2 (the tool) and G3 (Solve a problem)
+## 2026-11-28 — Graphical linear programming (DD2): the brief and chunks G0 (the maths), G1 (the picture) G2 (the tool), G3 (Solve a problem) and G4 (Integer solutions)
 
 Branch `ccr-bf77c579-nv8nom`. Area: `specs/linear-programming-graphical.md`, `docs/pathways/linear-programming.md`. Plus `src/shared/decision/lpGraph.ts`, `lpGraphView.ts`, `LpGraphPicture.tsx` and their tests.
 
@@ -11,8 +11,9 @@ Branch `ccr-bf77c579-nv8nom`. Area: `specs/linear-programming-graphical.md`, `do
 - **G1 built:** the region picture `LpGraphPicture.tsx` with `lpGraphView.ts` (window, clipped half-planes, labels) and `src/tests/lpGraphPicture.test.ts`; its R27 reason is in `docs/reference/pictures.md`. One svg with `data-q-index`, no fixed height, one size at every step, dotted strict lines, R only in an enclosed region. Revised on Harry's note: shade out is a translucent grey block on the unwanted side of each line (hatching and then ticks were tried and dropped), and the equations are in a key below the graph with a letter on each line; corner coordinates show on hover, tap or focus (always in print). Not wired to a tool yet.
 - **G2 built, not live:** `/lp-graphical` (`enabled: false`, on the Decision hub's DD card) with Draw the region at three levels (Level 1 sloped ≤ lines; Level 2 bounds and vertical or horizontal lines, one may be strict; Level 3 a ≥ line, a line through the origin or an open region) and options Starting From and Shading (display only). The working draws each line, tests a point, shades, labels R and finds each corner; the graph stays in view beside the working. New: `lpGraphGen.ts`, `lpGraphSolve.ts`, `GxWorking.tsx`, `src/tools/Decision/GraphicalLP.tsx`, `src/tests/lpGraphGen.test.ts`; small edits to `types.ts` (`gx`, `gxView`), `QuestionText.tsx` ("Draw" is a task word), `LpWorking.tsx` (exports `Row`, `Prose`), the registry and `decisionSpec.ts`.
 - **G3 built, not live:** the Solve sub-tool of `/lp-graphical` at three levels (maximise; maximise with a negative coefficient; minimise a cost), with Starting From (Inequalities, A Situation, Diagram Given), Method (Sliding Line, Vertex Table, display only) and Shading. New: `lpGraphSolveGen.ts`, `solveOptimise`, `src/tests/lpGraphSolve.test.ts`; the region generator's bounds now cut the region they are added to.
+- **G4 built, not live:** Integer solutions at two levels (the nearest whole point is the best; the trap, where it is not), with Starting From, Integer Method (Lattice Grid, Greatest y For Each x; display only) and Shading. The best whole point is checked against a plain search and is always one of the four around the optimum. Situations can now take a decimal-measured resource as a third limit (three-limit situations were impossible before).
 - **Known:** `src/tests/power.test.ts` (forcespeed) fails now and then on an unseeded draw, with or without these changes; not touched here.
-- **Deliberately not done:** Integer solutions (G4); Working Shown (not built: the working is always full); range, redundant constraints, a From Formulating start and the exam-style chain stay later.
+- **Deliberately not done:** a minimise whole-number question; Working Shown (not built: the working is always full); range, redundant constraints, a From Formulating start and the exam-style chain stay later.
 - **Still outstanding from the last session:** the simplex tools have not been looked at in the browser on phone, tablet and laptop, nor printed on a real printer; the dashboard notes for those tools and a planner Build Log block were not written.
 
 Agent: Claude Code

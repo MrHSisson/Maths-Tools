@@ -3,6 +3,7 @@ import type { DecisionProblem, LpRow, SolveStep } from "./types";
 import WorkingPage, { Newest } from "./WorkingPage";
 import { Prose, Row } from "./LpWorking";
 import LpGraphPicture, { type GraphView } from "./LpGraphPicture";
+import { latticePoints, surroundingPoints } from "./lpGraph";
 
 // The picture of a Graphical LP question: the graph (LpGraphPicture) at the top, drawn a piece at a time as the steps go, and the written working under it, the newest
 // rows in blue. The key under the graph holds the equations, so the graph itself stays clean. The graph's size never changes as it fills.
@@ -34,6 +35,14 @@ function viewOf(p: DecisionProblem, step: SolveStep | undefined, all?: boolean):
     labels: all ? "always" : "hover",
     objective: d.obj && v?.objective ? { o: d.obj, ks: v.objective.ks.map((k) => [k[0], k[1]] as const), arrow: v.objective.arrow } : all && d.obj && d.value ? { o: d.obj, ks: [d.value], arrow: false } : undefined,
     mark: d.best && (all || v?.mark) ? d.best : undefined,
+    // Integer solutions: the whole points of the region, the four around the optimum, and the best whole point
+    lattice: d.integer && d.best && (all || v?.lattice)
+      ? {
+        pts: all || v?.lattice?.pts ? latticePoints(d.lines) : [],
+        around: v?.lattice?.around ? surroundingPoints(d.lines, d.best).map((s) => s.at) : undefined,
+        best: all || v?.lattice?.best ? [d.integer.best] : undefined,
+      }
+      : undefined,
   };
 }
 

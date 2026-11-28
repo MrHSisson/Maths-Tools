@@ -7,18 +7,23 @@ import { solveOptimise, solveRegion } from "../../shared/decision/lpGraphSolve";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Graphical Linear Programming — Decision Maths DD2 (AQA 7367), on DecisionShell with a graph and the written working as its picture. Brief:
-// specs/linear-programming-graphical.md. Sub-tools so far: Draw the region and Solve a problem (three levels each); Integer solutions follows.
+// specs/linear-programming-graphical.md. Sub-tools: Draw the region and Solve a problem (three levels each), and Integer solutions (two levels).
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SUB_TOOLS = [
   { key: "region", label: "Draw the region", levels: 3, blurb: "Draw the lines, shade out, label R and find the vertices" },
   { key: "solve", label: "Solve a problem", levels: 3, blurb: "Optimise by the sliding objective line or a table of the vertices" },
+  { key: "integer", label: "Integer solutions", levels: 2, blurb: "The best whole-number point, and why rounding is not enough" },
 ];
 
 const ticked = (v: string | undefined, fallback: string): string[] => (v ? v : fallback).split(",").filter(Boolean);
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const o = ctx?.options ?? {};
+  if (ctx?.subTool === "integer") {
+    const q = generateSolve(level, { start: ticked(o.gxStartI, level === 2 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ["line"] }, { imethods: ticked(o.gxIntMethod, "grid") });
+    return { kind: "integer", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
+  }
   if (ctx?.subTool === "solve") {
     const q = generateSolve(level, { start: ticked(o.gxStartS, level === 3 ? "story" : "bare"), shading: ticked(o.gxShade, "out"), methods: ticked(o.gxMethod, "line") });
     return { kind: "solve", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
@@ -27,7 +32,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   return { kind: "region", level, gx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
 
-const solve = (p: DecisionProblem): SolveStep[] => (p.gx?.kind === "solve" ? solveOptimise(p) : solveRegion(p));
+const solve = (p: DecisionProblem): SolveStep[] => (p.gx?.kind === "solve" || p.gx?.kind === "integer" ? solveOptimise(p) : solveRegion(p));
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => <GxCanvas p={p} step={step} />;
 const renderSolution = (p: DecisionProblem, steps: SolveStep[]) => <GxSolution p={p} steps={steps} />;
 
@@ -39,7 +44,7 @@ const OPTIONS: ShellOption[] = [
   },
   {
     key: "gxShade", label: "Shading", info: "Which side of each line is shaded: the unwanted side, so the feasible region is left clear, or the side that satisfies it, so the region is where the tints overlap. Only the picture changes: the question stays the same.",
-    forSubTools: ["region", "solve"], multi: true, displayOnly: true, tab: "display", defaultFor: () => "out",
+    forSubTools: ["region", "solve", "integer"], multi: true, displayOnly: true, tab: "display", defaultFor: () => "out",
     choices: [{ value: "out", label: "Shade Out" }, { value: "in", label: "Shade In" }],
   },
   {
@@ -51,6 +56,16 @@ const OPTIONS: ShellOption[] = [
     key: "gxMethod", label: "Method", info: "How the best point is found: slide an objective line across the region, or work out the objective at every vertex. Tick one or both; the same question is shown either way.",
     forSubTools: ["solve"], multi: true, displayOnly: true, tab: "display", defaultFor: () => "line",
     choices: [{ value: "line", label: "Sliding Line" }, { value: "table", label: "Vertex Table" }],
+  },
+  {
+    key: "gxStartI", label: "Starting From", info: "Whether the student is given the inequalities, forms them from a situation, or is given the region already drawn. Level 2 is a situation by default.",
+    forSubTools: ["integer"], multi: true, defaultFor: (lv: number) => (lv === 2 ? "story" : "bare"),
+    choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "diagram", label: "Diagram Given", sub: "the region is drawn" }],
+  },
+  {
+    key: "gxIntMethod", label: "Integer Method", info: "How the whole-number points are searched: test the four points around the optimum on the grid, or list the greatest whole y for each whole x near it. Tick one or both; the same question is shown either way.",
+    forSubTools: ["integer"], multi: true, displayOnly: true, tab: "display", defaultFor: () => "grid",
+    choices: [{ value: "grid", label: "Lattice Grid", sub: "the four points around" }, { value: "table", label: "Greatest y For Each x" }],
   },
 ];
 
@@ -76,6 +91,7 @@ export default function App() {
         levelLabels: {
           region: ["Sloped lines on the origin side", "Adds bounds and vertical or horizontal lines, up to five constraints", "A region away from the origin, or a line through it"],
           solve: ["Maximise over a region on the origin side", "Maximise with a negative coefficient, over a region with bounds", "Minimise a cost over a region away from the origin"],
+          integer: ["The nearest whole-number point is the best", "The nearest whole-number point is not the best"],
           default: ["One question"],
         },
         subTools: SUB_TOOLS,
