@@ -201,7 +201,7 @@ describe("whole numbers: is it practical?", () => {
       expect(p.data.at).toBeLessThan(runSpec(p.data.spec).tabs.length - 1);
     }
   });
-  it("Read a tableau can come with its situation, so each slack variable is said in words; a 4 × 4 is always inequalities", () => {
+  it("Read a tableau can come with its situation, so each slack variable is said in words", () => {
     for (const [n, m] of [[2, 2], [3, 3]] as Array<[number, number]>) for (let i = 0; i < 15; i++) {
       const q = generateSimplex(n - 1, OPT("interpret", { anySize: true, sizes: [[n, m]], forms: ["standard"], context: ["story"], tableau: "optimal" }));
       expect(q.data.story).toBeTruthy();
@@ -217,7 +217,6 @@ describe("whole numbers: is it practical?", () => {
       const text = solveSimplex(asProblem(q)).flatMap((st) => st.sxView?.blocks ?? []).flatMap((b) => (b.k === "rows" ? b.rows : [])).map((r) => r.t).join(" ");
       expect(text).toMatch(/is the unused/);
     }
-    expect(generateSimplex(3, OPT("interpret", { anySize: true, sizes: [[4, 4]], forms: ["standard"], context: ["story"] })).data.story).toBeUndefined();
   });
   it("Solve can ask the whole-number question too, and the question says so", () => {
     for (const kind of ["solve"] as SxKind[]) {

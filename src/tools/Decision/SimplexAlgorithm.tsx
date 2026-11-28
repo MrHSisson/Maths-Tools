@@ -103,7 +103,7 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "initial", label: "The Initial Tableau" }, { value: "later", label: "A Later Tableau" }],
   },
   {
-    key: "sxCtxR", label: "Wording", info: "Whether the question comes with the situation the tableau was built from, so that each slack variable is said in the situation's own words (9 hours of printing time not used), or with the inequalities only. Reading a tableau shows the data in sentences or in a table; writing the problem from a tableau names the quantities in sentences. A situation needs three constraints or fewer, so a 4 × 4 tableau is always given as inequalities.",
+    key: "sxCtxR", label: "Wording", info: "Whether the question comes with the situation the tableau was built from, so that each slack variable is said in the situation's own words (9 hours of printing time not used), or with the inequalities only. Reading a tableau shows the data in sentences or in a table; writing the problem from a tableau names the quantities in sentences.",
     forSubTools: ["interpret"], multi: true, defaultFor: () => "story,table",
     choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
   },
@@ -113,9 +113,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
   },
   {
-    key: "sxSizeR", label: "Size", info: "How many variables and constraints the tableau has. Tick any of them and each question draws one. An asterisk marks an extension that is unlikely to come up.",
+    key: "sxSizeR", label: "Size", info: "How many variables and constraints the tableau has. Tick either or both and each question draws one.",
     forSubTools: ["interpret"], multi: true, defaultFor: () => "2x2,3x3",
-    choices: [{ value: "2x2", label: "2 × 2" }, { value: "3x3", label: "3 × 3" }, { value: "4x4", label: "4 × 4*" }],
+    choices: [{ value: "2x2", label: "2 × 2" }, { value: "3x3", label: "3 × 3" }],
   },
   {
     key: "sxTableau", label: "Which Tableau", info: "Which tableau of the run the question gives. Tick one or both and each question draws one. Reading a tableau that is not yet optimal means saying why, and which column comes next.",
