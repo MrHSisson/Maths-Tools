@@ -1,11 +1,11 @@
 import { useId } from "react";
 import { type Fr } from "./dim";
 import { type GLine, type Objective, type Pt, hasInterior, isEnclosed, isStrictLine, regionVertices, toNum } from "./lpGraph";
-import { type GWin, constraintText, fmtPt, graphWindow, lineSegment, regionPolygon, type XY } from "./lpGraphView";
+import { type GWin, constraintText, fmtPt, graphWindow, lineSegment, regionPolygon, unwantedPolygon, type XY } from "./lpGraphView";
 
 // The region picture of the Graphical LP tool (specs/linear-programming-graphical.md, section 4). It is a coordinate graph of lines, half-planes and points, which none
 // of the eight core representations can show (docs/reference/pictures.md), so it is its own picture: axes with whole-number ticks, each boundary drawn continuous (or
-// dotted when strict) and marked with a letter, its constraint written in a key below the graph, short slanted ticks along each boundary on its unwanted side (shade out) or the region tinted (shade in), R inside an enclosed
+// dotted when strict) and marked with a letter, its constraint written in a key below the graph, the unwanted side of each line in translucent grey, so what several lines rule out is darker (shade out), or the region tinted (shade in), R inside an enclosed
 // region, corner points with their coordinates, the sliding objective lines and the whole-number points. The stepper reveals it a piece at a time, and the window
 // is worked out from the whole problem, so the picture never changes size as it fills (R32). It is one <svg> with data-q-index (R31) and no fixed pixel height.
 
@@ -56,26 +56,6 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
   // the key below the graph has a row for every line of the problem (and the objective), so its height, and the picture's, is the same at every step
   const keyRows = Math.ceil(lines.length / 2) + (view.objective?.label ? 1 : 0);
   const H = PLOT_H + keyRows * KEY_ROW + 6;
-  // short slanted ticks along a line, on the side it rules out (the unwanted side), like a hand-drawn boundary
-  const ticksFor = (l: GLine, seg: readonly [XY, XY]) => {
-    const [p, q] = seg[0][0] < seg[1][0] || (seg[0][0] === seg[1][0] && seg[0][1] < seg[1][1]) ? [seg[0], seg[1]] : [seg[1], seg[0]];
-    const ux = X(q[0]) - X(p[0]), uy = Y(q[1]) - Y(p[1]);
-    const len = Math.hypot(ux, uy) || 1;
-    const sgn = l.op === "≤" || l.op === "<" ? 1 : -1; // the unwanted side is where a·x + b·y moves towards the other way
-    let nx = sgn * (l.a / win.xMax) * PW, ny = -sgn * (l.b / win.yMax) * PH;
-    const nl = Math.hypot(nx, ny) || 1;
-    nx /= nl; ny /= nl;
-    const n = Math.max(2, Math.floor(len / 26));
-    return Array.from({ length: n }, (_, k) => {
-      const t = (k + 0.5) / n;
-      const x0 = X(p[0]) + ux * t, y0 = Y(p[1]) + uy * t;
-      const L = 24;
-      // lean along the line as well as away from it
-      const x1 = x0 + L * (0.8 * nx + 0.45 * (ux / len)), y1 = y0 + L * (0.8 * ny + 0.45 * (uy / len));
-      return <line key={k} x1={x0} y1={y0} x2={x1} y2={y1} />;
-    });
-  };
-
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
@@ -98,10 +78,7 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
       )}
       <g clipPath={`url(#clip${uid})`}>
         {view.shading === "in" && shaded > 0 && <path d={path(regionPolygon(lines.slice(0, shaded), win))} fill="#bfdbfe" fillOpacity="0.55" />}
-        {view.shading !== "in" && lines.slice(0, shaded).map((l, i) => {
-          const seg = lineSegment(l, win);
-          return seg ? <g key={i} stroke={LINE_COLOURS[i % LINE_COLOURS.length]} strokeWidth="2" strokeLinecap="round" data-shade-out="">{ticksFor(l, seg)}</g> : null;
-        })}
+        {view.shading !== "in" && lines.slice(0, shaded).map((l, i) => <path key={i} d={path(unwantedPolygon(l, win))} fill="#64748b" fillOpacity="0.2" data-shade-out="" />)}
       </g>
       {/* axes and ticks */}
       <g stroke={INK} strokeWidth="1.6">

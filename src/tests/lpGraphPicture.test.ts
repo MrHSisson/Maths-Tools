@@ -77,7 +77,7 @@ describe("the picture", () => {
     expect(count(h, "data-dotted")).toBe(2);
     expect(count(html({ lines: FERRY }), "data-dotted")).toBe(0);
   });
-  it("puts ticks on the unwanted side of each shaded line (shade out), or tints the region once (shade in)", () => {
+  it("greys the unwanted side of each shaded line (shade out), or tints the region once (shade in)", () => {
     expect(count(html({ lines: FERRY, shading: "out" }), "data-shade-out")).toBe(2);
     expect(count(html({ lines: FERRY, shading: "out", shaded: 1 }), "data-shade-out")).toBe(1);
     const inn = html({ lines: FERRY, shading: "in" });
