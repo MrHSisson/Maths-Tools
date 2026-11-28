@@ -137,11 +137,11 @@ If a step cannot be done (no network to the dashboard, the planner tool is unava
 
 ## The floating project plan
 
-In Developing tools mode, use the floating project button on the left for the live plan. On laptop-sized screens, the panel docks beside a scaled view of the current page in a rounded frame. Tool pages open their checklist. Home and hubs open the project tree. Use the arrow to expand an item or its title to open the card. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Use the review queue only for a specific thing Harry can try. A request has its own prompt and shares the item's ID; completing the request clears the queue entry independently of the task's tick.
+In Developing tools mode, use the floating project button on the left for the live plan. On laptop-sized screens, the panel docks beside a scaled view of the current page in a rounded frame. Tool pages open their checklist. Home and hubs open the project tree. Use the arrow to expand an item or its title to open the card. The tree starts from the tool registry. You can add project branches, move work, pin priorities and link dependencies. Existing review requests are in the card menu. Only add a review request when Harry asks for one.
 
 Use one action per task. Keep overviews to three short bullets at most. In Developments, record what changed and what comes next in plain language.
 
-When starting project work, read the shared plan as well as the handoff. After changing the work, update the affected item, close completed checks, and record any specific review request. Keep technical history in the patch notes and Build Log.
+When starting project work, read the shared plan as well as the handoff. After changing the work, update the affected item and tick off completed tasks. Keep technical history in the patch notes and Build Log.
 
 Agents use `GET /api/project-plan` and `POST /api/project-plan` with the `x-admin-key` header set to `DEVELOPING_TOOLS_API_KEY`. Read the plan, preserve all unrelated entries and stable IDs, and send the amended JSON with the revision you read. The response carries the new revision. On HTTP 409, read again and apply your specific edit to the latest plan. The record format and validation are in `api/_projectPlan.ts`. On the first run the browser adds the tool catalogue and starter branches when it writes the plan. Wait for that first save before editing existing catalogue items through the API.
 

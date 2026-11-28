@@ -1,12 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, ChevronRight, GitFork, Home, ListTodo, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { routesById, contextualTools } from "./catalogue";
 import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
 import { FEATURES, TOOLS } from "../admin/facts";
-import { REVIEW_OPTIONS } from "../admin/notes";
-import { loadNotes } from "../admin/notesApi";
 import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
 
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
@@ -151,9 +149,9 @@ function MapNode({ node, index, select, expandedIds, toggle, area = false }: {
   </li>;
 }
 
-function ProjectMap({ plan, index, select, save, showReview, expandedIds, toggle }: {
+function ProjectMap({ plan, index, select, save, expandedIds, toggle }: {
   plan: ProjectPlan; index: PlanIndex; select: (id: string) => void; save: Save;
-  showReview: () => void; expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+  expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
 }) {
   const roots = index.children.get(null) ?? [];
   const pinned = plan.nodes.filter(node => node.pinned);
@@ -175,9 +173,6 @@ function ProjectMap({ plan, index, select, save, showReview, expandedIds, toggle
   </section>;
 
   return <div className="space-y-4">
-    {plan.reviews.length > 0 && <button className="min-h-11 text-sm font-medium text-teal-800 hover:underline" onClick={showReview}>
-      Waiting for review ({plan.reviews.length})
-    </button>}
     {pinned.length > 0 && <details className="border-b border-slate-200">
       <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
       <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
@@ -301,25 +296,6 @@ function NodeActions({ node, plan, save }: { node: PlanNode; plan: ProjectPlan; 
   </details>;
 }
 
-function ReviewForm({ node, plan, save }: { node: PlanNode; plan: ProjectPlan; save: Save }) {
-  const existing = plan.reviews.find(review => review.item === node.id);
-  return <details className="py-2">
-    <summary className="cursor-pointer py-2 text-sm font-medium">{existing ? "Review requested" : "Request Harry’s review"}</summary>
-    <form key={existing?.prompt ?? ""} className="mt-3 grid gap-2" onSubmit={event => {
-      event.preventDefault();
-      const prompt = String(new FormData(event.currentTarget).get("prompt")).trim();
-      if (!prompt) return;
-      const reviews = plan.reviews.filter(review => review.item !== node.id);
-      void save({ ...plan, reviews: [...reviews, { item: node.id, prompt }] });
-    }}>
-      <label className="grid gap-1 text-sm">What should Harry try?
-        <textarea className={input} name="prompt" rows={2} maxLength={240} required defaultValue={existing?.prompt} />
-      </label>
-      <button className={`${control} justify-self-start`}>{existing ? "Update request" : "Request review"}</button>
-    </form>
-  </details>;
-}
-
 function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select: (id: string) => void }) {
   const byId = new Map(plan.nodes.map(node => [node.id, node]));
   return <section className="space-y-3">
@@ -344,20 +320,6 @@ function Reviews({ plan, save, select }: { plan: ProjectPlan; save: Save; select
 
 const toolFactsById = new Map(TOOLS.map(tool => [tool.id, tool]));
 const mechanicsSubtools = Object.values(MECHANICS_PAIRINGS).flat();
-
-function ToolReviewStatus({ id }: { id: string }) {
-  const [status, setStatus] = useState<string>();
-  useEffect(() => {
-    let active = true;
-    void loadNotes().then(({ store, mode }) => {
-      if (!active || mode !== "live") return;
-      const value = store.tools[id]?.review ?? "not-started";
-      setStatus(REVIEW_OPTIONS.find(option => option.value === value)?.label);
-    });
-    return () => { active = false; };
-  }, [id]);
-  return status ? <span className="text-xs text-slate-600">{status}</span> : null;
-}
 
 function ToolReferences({ id, close }: { id: string; close: () => void }) {
   const tool = toolFactsById.get(id);
@@ -404,8 +366,6 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
   const children = index.children.get(node.id) ?? [];
   const isTool = toolFactsById.has(node.id);
   const checklist = isTool ? [...children.filter(child => child.kind === "task"), ...children.filter(child => child.kind === "branch")] : children;
-  const itemsWithReview = plan.reviews.length ? descendants(plan.nodes, node.id) : null;
-  const waitingForReview = plan.reviews.some(entry => itemsWithReview?.has(entry.item));
   return <section className="relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
     <nav aria-label="Project branch" className="flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
       <button className="min-h-11 text-teal-800 hover:underline" onClick={back}>Project Plan</button>
@@ -425,18 +385,18 @@ function NodeDetail({ node, index, plan, save, select, back, expandedIds, toggle
             <Pin size={17} fill={node.pinned ? "currentColor" : "none"} aria-hidden /> {node.pinned ? "Unpin" : "Pin"}
           </button>
           <NodeActions node={node} plan={plan} save={save} />
-          <ReviewForm node={node} plan={plan} save={save} />
+          {plan.reviews.length > 0 && <button type="button"
+            className="flex min-h-11 w-full items-center text-left text-sm font-medium text-slate-600 hover:underline"
+            onClick={showReview}>View existing review requests</button>}
         </div>
       </details>
     </div>
     <Overview text={node.overview} />
     <div className="mt-2 flex flex-wrap items-center gap-x-3">
-      {isTool && <ToolReviewStatus id={node.id} />}
       {node.kind === "task" ? <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm">
         <input className="size-4 accent-teal-700" type="checkbox" checked={node.done} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} /> Complete
       </label> : <PlanProgress id={node.id} index={index} />}
     </div>
-    {waitingForReview && <button className="min-h-11 text-left text-sm font-medium text-teal-800 hover:underline" onClick={showReview}>Waiting for review</button>}
     {node.needs.length > 0 && <div className="mt-2 text-sm">
       <p className="font-medium">Depends on</p>
       <ul className="list-disc pl-5">{node.needs.map(id => (
@@ -619,7 +579,6 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         <nav aria-label="Project plan views" className="mt-1 flex flex-wrap gap-x-1">
           <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={!selectedId} onClick={() => select(null)}>Tree</button>
           {tool && <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
-          <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={reviews} onClick={() => select("review-queue")}><ListTodo size={15} /> Review{plan?.reviews.length ? ` (${plan.reviews.length})` : ""}</button>
         </nav>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4" key={pathname}>
@@ -631,7 +590,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
             : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(null)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
-            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} showReview={() => select("review-queue")} expandedIds={expandedIds} toggle={toggleBranch} />}
+            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} />}
         </fieldset>}
       </div>
     </aside>}

@@ -4,7 +4,7 @@
 
 ## Intention
 
-- Keep reminders, next tasks and review requests in one place.
+- Keep reminders and next tasks in one place.
 
 ## Progress
 
@@ -20,7 +20,7 @@
 - [ ] Try the new cards on a phone with Discrete.
 - [ ] Check the Developing tools unlock across the plan, Admin and deck editor on a preview.
 - [ ] Check Claude can read the live plan with its configured key.
-- [ ] Pilot Further Mechanics with a few real tasks and one review request.
+- [ ] Pilot Further Mechanics with a few real tasks.
 - [ ] Move other active tasks in small batches. Keep links to older notes where needed.
 - [ ] Review Tasks and Pathways in Admin after the pilot.
 
@@ -28,7 +28,6 @@
 
 - One action per task. Add detail only when it helps someone act.
 - Up to three short bullets in an overview.
-- Review requests say what to try and what feedback is needed.
 - Developments updates say what changed and what comes next.
 
 ## Where to read more
