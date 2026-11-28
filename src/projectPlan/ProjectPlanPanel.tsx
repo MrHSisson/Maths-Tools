@@ -47,13 +47,11 @@ function overviewLines(overview: string) {
   return overview.split(/\r?\n/).map(line => line.trim().replace(/^[-*•]\s+/, "")).filter(Boolean);
 }
 
-function Overview({ text, compact = false }: { text: string; compact?: boolean }) {
+function Overview({ text }: { text: string }) {
   const lines = overviewLines(text);
   if (!lines.length) return null;
   return <ul className="list-disc space-y-1 break-words pl-4 text-sm text-slate-700">
-    {(compact ? lines.slice(0, 3) : lines).map((line, index) => (
-      <li key={index}><span className={compact ? "line-clamp-2" : undefined}>{line}</span></li>
-    ))}
+    {lines.map((line, index) => <li key={index}>{line}</li>)}
   </ul>;
 }
 
@@ -118,21 +116,34 @@ function AddItem({ parent, plan, save, branch = false }: { parent: string | null
   </div>;
 }
 
-function MapNode({ node, index, select, expandedIds, toggle }: {
+function MapNode({ node, index, select, expandedIds, toggle, area = false }: {
   node: PlanNode; index: PlanIndex; select: (id: string) => void;
-  expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; area?: boolean;
 }) {
   const expanded = expandedIds.has(node.id);
   const children = index.children.get(node.id) ?? [];
+  const summary = area ? overviewLines(node.overview)[0] : undefined;
+  const rowStyle = area
+    ? "rounded-xl border border-slate-200 bg-white hover:border-teal-500 focus-within:border-teal-500"
+    : "border-b border-slate-200";
   return <li className="min-w-0">
-    <div className="flex min-w-0 items-center gap-1 border-b border-slate-200 pr-2">
+    <div className={`relative flex min-w-0 items-start gap-1 pr-3 ${rowStyle}`}>
       {children.length ? (
-        <button className={iconButton} aria-label={`${expanded ? "Collapse" : "Expand"} ${node.title}`} aria-expanded={expanded} onClick={() => toggle(node.id)}>
+        <button type="button" className={`${iconButton} relative z-[1]`} aria-label={`${expanded ? "Collapse" : "Expand"} ${node.title}`}
+          aria-expanded={expanded} onClick={() => toggle(node.id)}>
           {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
-      ) : <span className="mx-4 size-1.5 shrink-0 rounded-full bg-slate-400" />}
-      <button className="min-h-11 min-w-0 flex-1 break-words py-2 text-left text-sm font-medium hover:underline" onClick={() => select(node.id)}><ItemName node={node} /></button>
-      <PlanProgress index={index} id={node.id} />
+      ) : <span className="mx-4 mt-5 size-1.5 shrink-0 rounded-full bg-slate-400" />}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <button type="button" className="min-h-11 min-w-0 flex-1 break-words py-2 text-left text-sm font-medium hover:underline after:absolute after:inset-0"
+            onClick={() => select(node.id)}>
+            <ItemName node={node} />
+          </button>
+          <PlanProgress index={index} id={node.id} />
+        </div>
+        {summary && <p className="mb-2 line-clamp-2 break-words text-xs text-slate-600">{summary}</p>}
+      </div>
     </div>
     {expanded && <ul className="ml-3 border-l border-slate-300 pl-2 sm:ml-4">
       {children.map(child => <MapNode key={child.id} node={child} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}
@@ -140,28 +151,16 @@ function MapNode({ node, index, select, expandedIds, toggle }: {
   </li>;
 }
 
-function SummaryCard({ node, index, select }: { node: PlanNode; index: PlanIndex; select: (id: string) => void }) {
-  return <article className="relative grid min-w-0 gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-teal-500 focus-within:border-teal-500">
-    <span className="flex items-center gap-2 text-sm font-semibold">
-      {node.pinned && <Pin size={14} className="shrink-0 text-teal-700" aria-label="Pinned" />}
-      <button type="button" className="min-w-0 flex-1 break-words text-left after:absolute after:inset-0" onClick={() => select(node.id)}><ItemName node={node} /></button>
-      <ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
-    </span>
-    <Overview text={node.overview} compact />
-    <PlanProgress index={index} id={node.id} />
-  </article>;
-}
-
-function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, toggle }: {
+function ProjectMap({ plan, index, select, save, showReview, expandedIds, toggle }: {
   plan: ProjectPlan; index: PlanIndex; select: (id: string) => void; save: Save;
-  tree: boolean; showReview: () => void; expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
+  showReview: () => void; expandedIds: ReadonlySet<string>; toggle: (id: string) => void;
 }) {
   const roots = index.children.get(null) ?? [];
   const pinned = plan.nodes.filter(node => node.pinned);
   const dependencies = plan.nodes.flatMap(node => node.needs.map(id => ({ node, prerequisite: index.byId.get(id)! })));
   const projectTree = <section aria-label="Project tree" className="space-y-2">
     <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> Project tree</h3>
-    <ul>{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} />)}</ul>
+    <ul className="space-y-2">{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} area />)}</ul>
     <AddItem parent={null} plan={plan} save={save} branch />
     {dependencies.length > 0 && <details className="border-t border-slate-200 pt-2">
       <summary className="cursor-pointer py-2 text-sm font-medium">Dependencies ({dependencies.length})</summary>
@@ -175,19 +174,19 @@ function ProjectMap({ plan, index, select, save, tree, showReview, expandedIds, 
     </details>}
   </section>;
 
-  if (tree) return projectTree;
   return <div className="space-y-4">
     {plan.reviews.length > 0 && <button className="min-h-11 text-sm font-medium text-teal-800 hover:underline" onClick={showReview}>
       Waiting for review ({plan.reviews.length})
     </button>}
-    {pinned.length > 0 && <section className="space-y-2">
-      <h3 className="text-sm font-semibold">Pinned</h3>
-      <div className="grid gap-2">{pinned.map(node => <SummaryCard key={node.id} node={node} index={index} select={select} />)}</div>
-    </section>}
-    <details className="border-b border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Area cards</summary>
-      <div className="grid gap-2 pb-3">{roots.map(node => <SummaryCard key={node.id} node={node} index={index} select={select} />)}</div>
-    </details>
+    {pinned.length > 0 && <details className="border-b border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
+      <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
+        <button type="button" className="flex min-h-11 w-full items-center gap-2 text-left text-sm text-teal-800 hover:underline"
+          onClick={() => select(node.id)}>
+          <Pin size={14} className="shrink-0" aria-hidden /> <ItemName node={node} />
+        </button>
+      </li>)}</ul>
+    </details>}
     {projectTree}
   </div>;
 }
@@ -518,11 +517,9 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = selectedId ? index.byId.get(selectedId) : undefined;
   const reviews = selectedId === "review-queue";
-  const tree = selectedId === "project-tree";
   const scroller = useRef<HTMLDivElement>(null);
   const positions = useRef(new Map<string, number>());
   const viewKey = `${pageKey}:${selectedId ?? "overview"}`;
-  const rootView = useRef<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   function toggleBranch(id: string) {
@@ -536,7 +533,6 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
 
   function select(id: string | null) {
     if (scroller.current) positions.current.set(viewKey, scroller.current.scrollTop);
-    if (id === null || id === "project-tree") rootView.current = id;
     setSelection({ route: pageKey, id });
   }
 
@@ -621,8 +617,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
           }}><X size={19} /></button>
         </div>
         <nav aria-label="Project plan views" className="mt-1 flex flex-wrap gap-x-1">
-          <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={!selectedId} onClick={() => select(null)}>Overview</button>
-          <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={tree} onClick={() => select("project-tree")}>Tree</button>
+          <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={!selectedId} onClick={() => select(null)}>Tree</button>
           {tool && <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
           <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={reviews} onClick={() => select("review-queue")}><ListTodo size={15} /> Review{plan?.reviews.length ? ` (${plan.reviews.length})` : ""}</button>
         </nav>
@@ -635,8 +630,8 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
         {saving && <p role="status" className="mb-2 text-xs text-slate-600">Saving…</p>}
         {plan && <fieldset disabled={saving || loadFailed} className="min-w-0">
           {reviews ? <Reviews key="reviews" plan={plan} select={select} save={save} />
-            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(rootView.current)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
-            : <ProjectMap key="map" plan={plan} index={index} tree={tree} select={select} save={save} showReview={() => select("review-queue")} expandedIds={expandedIds} toggle={toggleBranch} />}
+            : selected ? <NodeDetail key={selected.id} node={selected} index={index} plan={plan} save={save} select={select} back={() => select(null)} expandedIds={expandedIds} toggle={toggleBranch} close={() => setOpen(false)} showReview={() => select("review-queue")} />
+            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} showReview={() => select("review-queue")} expandedIds={expandedIds} toggle={toggleBranch} />}
         </fieldset>}
       </div>
     </aside>}

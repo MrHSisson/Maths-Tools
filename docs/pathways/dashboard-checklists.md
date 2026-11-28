@@ -9,7 +9,7 @@
 ## Progress
 
 - Tools open their own checklist. On a laptop the plan docks beside the tool.
-- Home shows the expandable tree. Area cards are one tap away.
+- Area cards sit in the tree. Tap the arrow to expand or the title to open the card.
 - Cards show descriptions, progress and the area’s own tree. Task rows stay short.
 - Subtools and features have labels. Tasks have checkboxes.
 - The Developing tools unlock covers the plan, Admin and the deck editor.
