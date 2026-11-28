@@ -1,6 +1,6 @@
 # Linear Programming (Decision Maths, chapter DD)
 - **Status:** building
-- **Updated:** 2026-11-22
+- **Updated:** 2026-11-28
 
 ## Intention
 Question generators for AQA 7366 / 7367 section DD: formulating a constrained optimisation problem (DD1), solving it graphically (DD2), the simplex algorithm with slack variables (DD3, A-level) and interpreting a tableau (DD4, A-level). Built like the Mechanics tools: single-skill sub-tools on `DecisionShell`, an independent re-derivation of every answer, exam-style questions as a separate later pass from real past papers. DF6 (a game as a linear programme) is planned with the game theory chapter.
@@ -53,11 +53,12 @@ Question generators for AQA 7366 / 7367 section DD: formulating a constrained op
 - 2026-11-22 (decks). `lp-simplex-process` revised and pushed (no basic column; a slide on why only positive entries; clashes tidied). The stage 6 deck `lp-simplex-not-origin` is built (17 slides; plan and decisions in `specs/decks/lp-simplex-not-origin.md`) and pushed, unpublished.
 
 - 2026-11-26 (stage 5 deck). `lp-simplex-whole` built (10 slides, every number asserted against the engine and brute force) and pushed, unpublished; the roadmap page links to it. Both roadmap decks now exist.
+- 2026-11-28 (Simplex restructure). Harry: the levels of Set up and Solve were really "how much forming", and the change of form deserved its own sub-tool. Built: **Non-standard problems** (Level 1 a lower bound, Level 2 a minimise or a ≥ constraint, Level 3 an equality; Work Through, Starting Form, Method, Wording as a situation); Set up and Solve Level 3 is now a situation with percentage and either-or limits (option Limit Types); **One pivot folded into Solve** (Work Through: One Iteration, Start From, Pivot); **Read a tableau** has two levels (read, write the problem) with Size and Which Tableau; Is it practical? keeps three levels, its Wording an option at every level. Generator fixes: no limit smaller than a coefficient, single-variable optima the exception. Degenerate cases are treated as normal (no option, not built on purpose, not rejected). The unused Formulating Capacity Method option is removed. Not done: ratios and a percentage of a total (zero right-hand side), mixed changes of form in one question.
 
 ## Next steps
 - Confirm the `problem` section of the brief against what is built (strict inequalities with "integers", the kinds above); decide whether per-packet scaling and pence to pounds are wanted (the three-variables-reduced case is now built as the substituted-out style).
 - **F8**: set the brief's status, check on a real printer, update the dashboard notes, and go live.
-- **Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the four sub-tools, then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
+- **Simplex:** check on a tablet and a real printer (the print now has tableaux and working), have Harry try the sub-tools (Set up, Solve, Non-standard problems, Read a tableau, Is it practical?), then decide the deferred items (practical plans that do not reach the bound, a guided search for four variables, exam-style chains), update the dashboard notes and go live. Write the Graphical brief from `specs/linear-programming-tools.md` and the corpus.
 - **Roadmap decks:** both built (`lp-simplex-not-origin`, `lp-simplex-whole`); publish them if students should see them. Also: place Oxford 30.1A and 30.1B once Harry has checked their questions against the book; add which Level 1 questions to run before and after the deck.
 - Read the AQA 7367/3D examiner reports in full for the misconceptions to name in the working (before the exam-style pass).
 - Fill the Decision hub's DD chapter card (its `toolIds` is empty) when the first sub-tool is built.

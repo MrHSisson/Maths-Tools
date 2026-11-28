@@ -83,7 +83,7 @@ export interface LpViewState {
 
 /** The Simplex Algorithm: a table of the working (the tableau) and rows of words and lines. Entries are TeX. `pivot` is [row, column] in the table (0 is the objective row; column 0 is P);
  *  `hi` highlights a column; `ops` is the row operation written beside each row (and the Row column of the Oxford layout); `label` is the Basic variable column of that layout. */
-export interface SxTabView { k: "tab"; head: string[]; labelHead?: string; label?: string[]; rows: string[][]; opsHead?: string; ops?: string[]; pivot?: [number, number]; hi?: number }
+export interface SxTabView { k: "tab"; head: string[]; labelHead?: string; label?: string[]; rows: string[][]; opsHead?: string; ops?: string[]; pivot?: [number, number]; hi?: number; plain?: boolean }
 export type SxBlock = { k: "rows"; rows: LpRow[] } | SxTabView;
 export interface SxViewState { blocks: SxBlock[]; fresh?: number }
 

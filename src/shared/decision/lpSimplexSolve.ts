@@ -89,6 +89,12 @@ const eqLines = (run: Run, vars: readonly string[]): string[] => {
   return run.st.A.map((a, i) => (run.st.rows[i].eq ? `${termsTex(a.map((v) => v[0]), vars)} = ${run.st.b[i][0]}` : `${termsTex(a.map((v) => v[0]), vars)} + ${sub(k++)} = ${run.st.b[i][0]}`));
 };
 
+/** what a slack variable means for a limit of the situation, in its own words; a percentage limit is in lots of its scale, an either-or limit in parts of its whole */
+type StoryRes = NonNullable<SxData["story"]>["res"][number];
+const slackUnit = (r: StoryRes): string => (r.form === "percent" ? `in lots of ${r.scale[0]}% of it` : r.form === "either" ? `in ${r.cap}ths of it` : `${r.unit}`);
+const leftover = (r: StoryRes, v: Fr): string =>
+  r.form === "percent" ? `${decTex(fr(v[0] * r.scale[0], v[1]))}% of the ${r.of} is left over.` : r.form === "either" ? `${frTex(v)}/${r.cap} of the ${r.of} is left over.` : `${decTex(v)} ${r.unit} of ${r.of} is left over.`;
+
 interface Part { caption: string; rows: LpRow[] }
 /** the steps that turn the question's wording or its form into the standard problem: maximise, every constraint a ≤ with a non-negative variable */
 function formulate(d: SxData, run: Run): Part[] {
@@ -104,15 +110,21 @@ function formulate(d: SxData, run: Run): Part[] {
         T(`\\text{Maximise } P = ${termsTex(sp.c, orig)}`),
         ...sp.cons.flatMap((k, i): LpRow[] => {
           const r = s.res[i];
+          if (r.form === "either") {
+            const fracs = k.a.map((v, j) => (v === 0 ? "" : "\\frac{" + orig[j] + "}{" + String(r.cap! / v) + "}")).filter(Boolean).join(" + ");
+            return [N(`${r.label}`), T(fracs + " \\le 1")];
+          }
           const a = k.a.map((v) => fr(v * r.scale[0], r.scale[1]));
           const line = a.map((v, j) => (v[0] === 0 ? "" : `${j && a.slice(0, j).some((w) => w[0] !== 0) ? "+ " : ""}${v[0] === 1 && v[1] === 1 ? "" : decTex(v)}${orig[j]}`)).filter(Boolean).join(" ");
-          return [N(`${r.label}`), T(`${line} \\le ${decTex(fr(k.b * r.scale[0], r.scale[1]))}`)];
-        })],
+          return [N(`${r.label}`), T(`${line} ${r.op === "≥" ? "\\ge" : r.op === "=" ? "=" : "\\le"} ${decTex(fr(k.b * r.scale[0], r.scale[1]))}`)];
+        }),
+        ...(sp.lower?.some((x) => x > 0) ? orig.flatMap((v, j) => (sp.lower![j] > 0 ? [N(`At least ${sp.lower![j]} ${s.items[j].plural}`), T(`${v} \\ge ${sp.lower![j]}`)] : [])) : [])],
     });
-    if (s.res.some((r) => r.scale[0] !== 1 || r.scale[1] !== 1)) {
-      parts.push({ caption: "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms.", rows: [H("Simplified"), ...sp.cons.map((k) => T(`${termsTex(k.a, orig)} \\le ${k.b}`))] });
+    if (s.res.some((r) => r.scale[0] !== 1 || r.scale[1] !== 1 || r.form === "either")) {
+      parts.push({ caption: s.res.some((r) => r.form === "either") ? "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms: for an either-or limit, multiply every term by the lowest common multiple of the numbers underneath." : "Simplify each constraint, by multiplying or dividing so the coefficients are whole numbers in lowest terms.", rows: [H("Simplified"), ...sp.cons.map((k) => T(`${termsTex(k.a, orig)} ${OPTEX[k.op]} ${k.b}`))] });
     }
-    return parts;
+    // a change of form carries on below, from the constraints as the situation gave them
+    if (d.startForm === "standard") return parts;
   }
   if (sp.sense === "min") parts.push({ caption: "The simplex algorithm maximises. Minimising $C$ is the same as maximising $P = -C$.", rows: [T(`P = -C = ${termsTex(sp.c.map((v) => -v), orig)}`)] });
   if (sp.eqAsRow && sp.cons.some((k) => k.op === "=")) {
@@ -154,7 +166,7 @@ function setupSteps(d: SxData, run: Run, ids: number[][], push: (caption: string
   const nonStd = d.startForm !== "standard";
   const slacks = Array.from({ length: m }, (_, i) => sub(i)).join(", ");
   const eqRows: LpRow[] = [H("Constraints as equations"), ...eqLines(run, vars).map((l) => T(l)), N(`$${slacks} \\ge 0$`)];
-  if (d.story) eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${r.unit})`)));
+  if (d.story && d.startForm === "standard") eqRows.push(...d.story.res.slice(0, m).map((r, i) => N(`${`$${sub(i)}$`} is the unused ${r.of} (${slackUnit(r)})`)));
   push(`Write each ≤ constraint as an equation by adding a slack variable: $${slacks}$ take up whatever is left over.${run.st.rows.some((r) => r.eq) ? " The equation has no slack variable: it stays as it is." : ""}${nonStd && std.length ? "" : ""}`, [rowsOf(...eqRows)], 1);
   push("Write the objective with every variable on the left and 0 on the right.", [rowsOf(H("Objective"), T(objRow(run.st.c, vars)))], 1);
   push("Write the equations as a tableau: the objective row first, then a row for each constraint.", [tabBlock(run, 0, d, ids)], 1);
@@ -230,11 +242,11 @@ function conclusion(d: SxData, run: Run): LpRow[] {
   if (sp.lower?.some((v) => v > 0)) out.push(W(`Back to the original variables: ${orig.map((v, j) => (lo[j] > 0 ? `$${v} = ${v.toUpperCase()} + ${lo[j]} = ${frTex(x[j])}$` : `$${v} = ${frTex(x[j])}$`)).join(", ")}.`));
   if (sp.sense === "min") out.push(W(`$C = -P$${run.st.konst !== 0 ? " with the constant added back" : ""}: $C = ${frTex(obj)}$.`));
   else if (run.st.konst !== 0) out.push(W(`Add back the constant: $P = ${frTex(r.p)} + ${run.st.konst} = ${frTex(obj)}$.`));
-  if (d.story) {
+  if (d.story && d.startForm === "standard") {
     const s = d.story;
     out.push(R(`${orig.map((_, j) => `${frTex(x[j])}\\text{ ${s.items[j].plural}}`).join(",\\ ")};\\ P = £${frTex(obj)}`));
     out.push(W(`So make ${orig.map((_, j) => `${frTex(x[j]).replace(/\\frac\{(\d+)\}\{(\d+)\}/, "$1/$2")} ${s.items[j].plural}`).join(" and ")}, for a maximum profit of £${decTex(obj)}.`));
-    r.values.slice(sp.c.length).forEach((v, i) => out.push(N(v[0] === 0 ? `$${sub(i)} = 0$: all the ${s.res[i].of} is used.` : `$${sub(i)} = ${frTex(v)}$: ${decTex(v)} ${s.res[i].unit} of ${s.res[i].of} is left over.`)));
+    r.values.slice(sp.c.length).forEach((v, i) => out.push(N(v[0] === 0 ? `$${sub(i)} = 0$: all the ${s.res[i].of} is used.` : `$${sub(i)} = ${frTex(v)}$: ${leftover(s.res[i], v)}`)));
   } else {
     out.push(R(`${orig.map((v, j) => `${v} = ${frTex(x[j])}`).join(",\\ ")},\\ ${sp.sense === "max" ? "P" : "C"} = ${frTex(obj)}`));
     r.values.slice(sp.c.length).forEach((v, i) => out.push(N(v[0] === 0 ? `$${sub(i)} = 0$: that constraint is at its limit.` : `$${sub(i)} = ${frTex(v)}$: that constraint has ${frTex(v)} to spare.`)));
@@ -338,7 +350,7 @@ export function solveSimplex(p: DecisionProblem): SolveStep[] {
     rd.tab.values.slice(orig.length).forEach((v, i) => {
       const k2 = d.spec.cons[i];
       meaning.push(T(`${sub(i)} = ${frTex(v)}`));
-      if (d.story) meaning.push(N(v[0] === 0 ? `All the ${d.story.res[i].of} is used: the constraint is binding.` : `${decTex(v)} ${d.story.res[i].unit} of ${d.story.res[i].of} is not used.`));
+      if (d.story) meaning.push(N(v[0] === 0 ? `All the ${d.story.res[i].of} is used: the constraint is binding.` : leftover(d.story.res[i], v).replace("is left over", "is not used")));
       else meaning.push(N(v[0] === 0 ? `Constraint ${i + 1} ($${termsTex(k2.a, orig)} \\le ${k2.b}$) is at its limit: it is binding.` : `Constraint ${i + 1} has ${frTex(v)} to spare: it is not binding.`));
     });
     push("A slack variable is 0 when its constraint is at its limit (binding), and positive when there is some left over.", [rowsOf(H("What the slack variables say"), ...meaning)], 1);
@@ -356,6 +368,7 @@ function storyTable(d: SxData): SxTabView {
   const dec = (v: number, scale: [number, number]): string => String(Math.round(((v * scale[0]) / scale[1]) * 10000) / 10000);
   return {
     k: "tab",
+    plain: true,
     head: [...s.items.slice(0, n).map((it) => `\\text{${it.plural}}`), "\\text{Available}"],
     labelHead: "",
     label: [...sp.cons.map((_, i) => `\\text{${cap(s.res[i].of)} (${s.res[i].unit})}`), "\\text{Profit per item (£)}"],
@@ -369,5 +382,6 @@ export function questionBlocks(p: DecisionProblem): SxBlock[] {
   if (!d) return [];
   if (d.kind === "setup" || d.kind === "solve" || d.kind === "practical") return d.table && d.story ? [storyTable(d)] : [];
   const run = runSpec(d.spec);
-  return [tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run))];
+  const tb = tabBlock(run, d.kind === "reverse" ? 0 : Math.min(d.at, run.tabs.length - 1), d, rowIds(run));
+  return d.kind === "interpret" && d.table && d.story ? [storyTable(d), tb] : [tb];
 }

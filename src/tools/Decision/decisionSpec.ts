@@ -182,7 +182,7 @@ export const DECISION_PAIRINGS: Record<string, SubToolRef[]> = {
   DC7: [nf("nodeCap", "Node capacities", "a")],
   // DD: linear programming. DD2 (graphical methods) has no tool yet. The roadmap page is listed on the chapter card, not under a statement.
   DD1: [plain("lp-formulate", "constraint", "Write a constraint", true), plain("lp-formulate", "problem", "Formulate a problem", true)],
-  DD3: [plain("lp-simplex", "setup", "Set up the tableau", false), plain("lp-simplex", "pivot", "One pivot", false), plain("lp-simplex", "solve", "Solve a problem", false), plain("lp-simplex", "practical", "Is it practical?", false)],
+  DD3: [plain("lp-simplex", "setup", "Set up the tableau", false), plain("lp-simplex", "solve", "Solve a problem", false), plain("lp-simplex", "forms", "Non-standard problems", false), plain("lp-simplex", "practical", "Is it practical?", false)],
   DD4: [plain("lp-simplex", "interpret", "Read a tableau", false)],
   // DF: game theory
   DF5: [plain("mixed-strategies", "mixed", "Mixed Strategies", true)],

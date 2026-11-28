@@ -1,5 +1,7 @@
 # Linear Programming tools: audit (balance, arbitrariness, relevance)
 
+> **Restructured 2026-11-28.** The sub-tools and levels below describe the first build. Since then One pivot is an option of Solve (Work Through: One Iteration), the changes of form are the sub-tool Non-standard problems, Set up and Solve Level 3 is harder wording, and Read a tableau has two levels. The current shape is in `docs/pathways/linear-programming.md` and `docs/roadmaps/linear-programming.md`.
+
 **Written 2026-11-22**, after Formulating (F0 to F7 and the substituted-out relations) and the Simplex tool (S0 to S5, Is it practical?, ties, Pivot Given, tables). **Nothing was changed by this audit.** It lists what is there, what looks unbalanced or arbitrary, and what is unlikely to come up (marked **\***, an extension). Recommendations are for Harry to decide.
 
 How the marks were decided: a thing is **book-supported** if a corpus row (`specs/corpus/linear-programming-styles.md`) shows it in a textbook; an **\*** is a thing no row shows, or a variant the books do not distinguish. The corpus rows come from the two textbooks only (no past papers yet), so an **\*** means "not seen in the books we have read", not "never examined".

@@ -12,8 +12,8 @@ import { withSeededRandom } from "./seededRandom";
 describe("Simplex print", () => {
   it("prints the tableau under the question and the working under the answer", () => {
     withSeededRandom(7, () => {
-      for (const sub of ["pivot", "interpret", "setup", "solve", "practical"]) for (const level of [1, 2, 3]) {
-        const p = __seed.generate(level, { subTool: sub, options: {} } as never);
+      for (const [sub, options] of [["solve", { sxWork: "one" }], ["interpret", {}], ["setup", {}], ["solve", {}], ["forms", {}], ["forms", { sxThrough: "pivot" }], ["practical", {}]] as Array<[string, Record<string, string>]>) for (const level of [1, 2, 3]) {
+        const p = __seed.generate(level, { subTool: sub, options } as never);
         const figure = renderToStaticMarkup(createElement(SxPrintFigure, { p }));
         const working = renderToStaticMarkup(createElement(SxPrintWorking, { steps: solveSimplex(p) }));
         // a question that refers to a tableau or a table has one printed

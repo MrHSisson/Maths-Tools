@@ -1,5 +1,7 @@
 # The Simplex tool against the textbooks (coverage and extras)
 
+> **Restructured 2026-11-28.** The sub-tools and levels below describe the first build. Since then One pivot is an option of Solve (Work Through: One Iteration), the changes of form are the sub-tool Non-standard problems, Set up and Solve Level 3 is harder wording, and Read a tableau has two levels. The current shape is in `docs/pathways/linear-programming.md` and `docs/roadmaps/linear-programming.md`.
+
 **Written 2026-11-22**, after chunks S0 to S5, "Is it practical?" and the tie / degenerate change. Source rows are in `specs/corpus/linear-programming-styles.md` (L40 to L57 from the Cambridge book, L77 to L87 from the Oxford book). Nothing here is copied from a textbook: the rows are our own descriptions of what each exercise asks. The tool is built (`/lp-simplex`, `enabled: false`); this note says what it covers, what it leaves out and what it adds beyond the books. **Extras are listed, not removed.**
 
 ## 1. Coverage, row by row

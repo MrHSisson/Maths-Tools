@@ -138,11 +138,6 @@ const OPTIONS: ShellOption[] = [
     displayOnly: true, tab: "display", defaultFor: () => "show",
     choices: [{ value: "show", label: "Shown" }, { value: "hide", label: "Hidden" }],
   },
-  {
-    key: "lpMethod", label: "Capacity Method", info: "How the working builds the either-or constraint: as fractions of the capacity, or by supposing a common number of units. It changes only the working, never the numbers. An asterisk marks an extension that is unlikely to come up.",
-    forSubTools: ["constraint"], forLevels: [3], displayOnly: true, tab: "method", defaultFor: () => "fractions",
-    choices: [{ value: "fractions", label: "Fractions Of Capacity" }, { value: "units", label: "Common Units" }, { value: "both", label: "Both*" }],
-  },
 ];
 
 export default function App() {

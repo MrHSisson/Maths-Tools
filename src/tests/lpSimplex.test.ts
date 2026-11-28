@@ -156,10 +156,10 @@ describe("whole numbers: is it practical?", () => {
     expect(yes).toBeGreaterThan(10);
     expect(no).toBeGreaterThan(10);
   });
-  it("ties and a θ of 0 turn up naturally from Level 2, and the working says what to do", () => {
+  it("ties and a θ of 0 turn up from Level 2 as they come, and the working says what to do", () => {
     let ties = 0, zeros = 0, noted = 0;
-    for (let i = 0; i < 500; i++) {
-      const q = generateSimplex(2, OPT("solve", { forms: ["standard"], context: ["bare"] }));
+    for (let i = 0; i < 1500; i++) {
+      const q = generateSimplex(i % 2 ? 3 : 2, OPT("solve", { forms: ["standard"], context: ["bare"] }));
       const run = runSpec(q.data.spec);
       if (run.tie) ties++;
       if (run.iters.some((it) => it.thetas.some((x) => x.value[0] === 0 && x.row === it.row))) zeros++;
@@ -168,6 +168,38 @@ describe("whole numbers: is it practical?", () => {
     expect(ties).toBeGreaterThan(0);
     expect(zeros).toBeGreaterThan(0);
     expect(noted).toBe(ties);
+  });
+  it("Level 3 wording: a situation with at least one percentage or either-or limit, and the tidy constraints are unchanged by the wording", () => {
+    for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 60; i++) {
+      const q = generateSimplex(3, OPT(kind, { forms: ["standard"], context: ["story"], sizes: [[3, 3]], hard: ["percent", "either"] }));
+      const forms = (q.data.story?.res ?? []).map((r) => r.form).filter(Boolean);
+      expect(forms.length, q.prompt).toBeGreaterThan(0);
+      if (forms.includes("percent")) expect(q.prompt).toContain("100%");
+      if (forms.includes("either")) expect(q.prompt).toMatch(/but not for more than one of these/);
+      const steps = solveSimplex(asProblem(q));
+      expect(steps.length).toBeGreaterThan(3);
+    }
+  });
+  it("Non-standard problems can be given as a situation: a lower bound, a minimum or an exact amount; a minimise stays as inequalities", () => {
+    const cases: Array<[number, string, RegExp]> = [[1, "lower", /must make at least/ as RegExp], [2, "ge", /At least \d+ .* must be used/], [3, "eq", /Exactly \d+ .* must be used/]];
+    for (const [level, form, re] of cases) for (let i = 0; i < 25; i++) {
+      const q = generateSimplex(level, OPT("solve", { forms: [form], nonStandard: true, context: ["story"], sizes: [level === 1 ? [2, 2] : [3, 2]] }));
+      expect(q.data.story, `${form}`).toBeTruthy();
+      expect(q.prompt).toMatch(form === "lower" ? /The firm must make at least/ : re);
+      expect(solveSimplex(asProblem(q)).length).toBeGreaterThan(3);
+    }
+    const m = generateSimplex(2, OPT("solve", { forms: ["min"], nonStandard: true, context: ["story"], sizes: [[3, 3]] }));
+    expect(m.data.story).toBeUndefined();
+  });
+  it("Read a tableau: Which Tableau gives the optimal one, or one not yet optimal, at any size", () => {
+    for (const [n, m] of [[2, 2], [3, 3], [4, 4]] as Array<[number, number]>) for (let i = 0; i < 15; i++) {
+      const base = { anySize: true, sizes: [[n, m]] as Array<[number, number]>, forms: ["standard"], context: ["bare"] };
+      const o = generateSimplex(n - 1, OPT("interpret", { ...base, tableau: "optimal" }));
+      expect(o.data.at).toBe(runSpec(o.data.spec).tabs.length - 1);
+      const p = generateSimplex(n - 1, OPT("interpret", { ...base, tableau: "part" }));
+      expect(p.data.at).toBeGreaterThanOrEqual(1);
+      expect(p.data.at).toBeLessThan(runSpec(p.data.spec).tabs.length - 1);
+    }
   });
   it("Solve can ask the whole-number question too, and the question says so", () => {
     for (const kind of ["solve"] as SxKind[]) {
@@ -296,7 +328,7 @@ describe("the written working", () => {
 describe("audit changes: minimise, equality, size", () => {
   it("a minimise problem has a mixed-sign cost (some variables earn, some cost), not just a negated maximise", () => {
     for (const level of [3]) for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(level, OPT("solve", { forms: ["min"], context: ["bare"] }));
+      const q = generateSimplex(level, OPT("solve", { forms: ["min"], nonStandard: true, context: ["bare"] }));
       expect(q.data.spec.sense).toBe("min");
       expect(q.data.spec.c.some((v) => v > 0)).toBe(true);
       expect(q.data.spec.c.some((v) => v < 0)).toBe(true);
@@ -306,7 +338,7 @@ describe("audit changes: minimise, equality, size", () => {
   });
   it("an equality constraint involves at least two of the variables", () => {
     for (let i = 0; i < 80; i++) {
-      const q = generateSimplex(3, OPT("setup", { forms: ["eq"], context: ["bare"] }));
+      const q = generateSimplex(3, OPT("setup", { forms: ["eq"], nonStandard: true, context: ["bare"] }));
       for (const k of q.data.spec.cons) if (k.op === "=") expect(k.a.filter((v) => v !== 0).length).toBeGreaterThanOrEqual(2);
     }
   });
@@ -329,7 +361,7 @@ describe("audit changes: minimise, equality, size", () => {
 describe("an equality and a lower bound handled as rows", () => {
   it("an equation is a row with no slack variable: the first pivot is in that row, and the optimum is the same as by the pair of inequalities", () => {
     for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(3, OPT("solve", { forms: ["eq"], method: "rows", context: ["bare"] }));
+      const q = generateSimplex(3, OPT("solve", { forms: ["eq"], nonStandard: true, method: "rows", context: ["bare"] }));
       const sp = q.data.spec;
       expect(sp.eqAsRow).toBe(true);
       const run = runSpec(sp);
@@ -349,7 +381,7 @@ describe("an equality and a lower bound handled as rows", () => {
   });
   it("a lower bound as a row is one more ≥ constraint: a negative right-hand side to start, the same optimum as by the substitution", () => {
     for (let i = 0; i < 60; i++) {
-      const q = generateSimplex(3, OPT("solve", { forms: ["lower"], method: "rows", context: ["bare"] }));
+      const q = generateSimplex(3, OPT("solve", { forms: ["lower"], nonStandard: true, method: "rows", context: ["bare"] }));
       const sp = q.data.spec;
       expect(sp.lowerAsRow).toBe(true);
       const run = runSpec(sp);
@@ -365,19 +397,24 @@ describe("an equality and a lower bound handled as rows", () => {
 });
 
 describe("each level has its own questions", () => {
-  it("Level 2 setup, solve and practical are always a situation in words or a table", () => {
-    for (const kind of ["setup", "solve", "practical"] as SxKind[]) for (let i = 0; i < 25; i++) {
+  it("Level 2 setup and solve are always a situation in words or a table; Is it practical? follows its Wording option", () => {
+    for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 25; i++) {
       const q = generateSimplex(2, OPT(kind, { context: ["bare", "story", "table"], forms: ["standard"] }));
       expect(q.data.story).toBeTruthy();
     }
+    for (let i = 0; i < 15; i++) {
+      expect(generateSimplex(2, OPT("practical", { context: ["story", "table"], forms: ["standard"] })).data.story).toBeTruthy();
+      expect(generateSimplex(2, OPT("practical", { context: ["bare"], forms: ["standard"] })).data.story).toBeUndefined();
+    }
   });
-  it("Level 2 pivot is part-way through the run, and Level 2 read a tableau is not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {
+  it("One iteration with Start From later is part-way through the run, and Level 2 read a tableau is optimal or not yet optimal; Level 1 is the first pivot and the optimal tableau", () => {
     for (let i = 0; i < 40; i++) {
-      const p2 = generateSimplex(2, OPT("pivot"));
+      const p2 = generateSimplex(2, OPT("pivot", { startAt: "later", forms: ["standard"] }));
       expect(p2.data.at).toBeGreaterThanOrEqual(1);
       const i2 = generateSimplex(2, OPT("interpret"));
       const r2 = runSpec(i2.data.spec);
-      expect(i2.data.at).toBeLessThan(r2.tabs.length - 1);
+      expect(i2.data.at).toBeGreaterThanOrEqual(1); // Level 2 may be optimal or not yet optimal
+      expect(i2.data.at).toBeLessThanOrEqual(r2.tabs.length - 1);
       expect(generateSimplex(1, OPT("pivot")).data.at).toBe(0);
       const i1 = generateSimplex(1, OPT("interpret"));
       expect(i1.data.at).toBe(runSpec(i1.data.spec).tabs.length - 1);

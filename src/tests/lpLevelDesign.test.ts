@@ -72,7 +72,7 @@ describe("The Simplex tool", () => {
       expect([3, 4]).toContain(generateSimplex(3, { ...ALL, kind }).data.spec.c.length);
     }
   });
-  it("Level 1 is the inequalities in standard form; Level 2 a situation in words or a table in standard form; Level 3 a change of form", () => {
+  it("Level 1 is the inequalities in standard form; Level 2 a situation in words or a table in standard form; Level 3 is standard form with more variables; a change of form is the Non-standard problems sub-tool", () => {
     for (const kind of ["setup", "solve"] as SxKind[]) for (let i = 0; i < 40; i++) {
       const a = generateSimplex(1, { ...ALL, kind }).data;
       expect(a.story).toBeUndefined();
@@ -81,32 +81,36 @@ describe("The Simplex tool", () => {
       expect(b.story).toBeTruthy();
       expect(b.startForm).toBe("standard");
       const c = generateSimplex(3, { ...ALL, kind }).data;
-      expect(c.startForm).not.toBe("standard");
+      expect(c.startForm).toBe("standard");
+      // Non-standard problems: a change of form at every level, from the level's own forms
+      const forms: Record<number, string[]> = { 1: ["lower"], 2: ["min", "ge"], 3: ["eq"] };
+      for (const level of [1, 2, 3]) expect(forms[level]).toContain(generateSimplex(level, { ...ALL, kind, nonStandard: true, forms: forms[level], context: ["bare"] }).data.startForm);
     }
   });
-  it("Level 3 Solve is always a change of form, even when the whole-number question is asked for: that is the Is it practical? sub-tool", () => {
-    for (let i = 0; i < 40; i++) {
+  it("Level 3 Solve never asks the whole-number question, even when it is ticked: that is the Is it practical? sub-tool", () => {
+    for (let i = 0; i < 20; i++) {
       const d = generateSimplex(3, { ...ALL, kind: "solve", whole: true }).data;
       expect(d.whole).toBeUndefined();
-      expect(d.startForm).not.toBe("standard");
+      expect(d.startForm).toBe("standard");
     }
   });
-  it("One pivot: Level 1 the first pivot; Level 2 part-way through the run; Level 3 a start from a negative right-hand side or an equation", () => {
+  it("One iteration starts from the initial tableau, or part-way through the run when asked; a ≥ start has a negative right-hand side", () => {
     for (let i = 0; i < 40; i++) {
       expect(generateSimplex(1, { ...ALL, kind: "pivot" }).data.at).toBe(0);
-      const p2 = generateSimplex(2, { ...ALL, kind: "pivot" }).data;
+      const p2 = generateSimplex(2, { ...ALL, kind: "pivot", startAt: "later", forms: ["standard"] }).data;
       expect(p2.at).toBeGreaterThanOrEqual(1);
       expect(p2.startForm).toBe("standard");
-      const p3 = generateSimplex(3, { ...ALL, kind: "pivot" }).data;
+      const p3 = generateSimplex(2, { ...ALL, kind: "pivot", nonStandard: true, forms: ["ge"] }).data;
       expect(runSpec(p3.spec).iters[0].start).toBe(true);
     }
   });
-  it("Read a tableau: Level 1 the optimal tableau; Level 2 one that is not yet optimal", () => {
+  it("Read a tableau: Level 1 the optimal tableau; Level 2 one that may or may not be optimal", () => {
     for (let i = 0; i < 40; i++) {
       const a = generateSimplex(1, { ...ALL, kind: "interpret" }).data;
       expect(a.at).toBe(runSpec(a.spec).tabs.length - 1);
       const b = generateSimplex(2, { ...ALL, kind: "interpret" }).data;
-      expect(b.at).toBeLessThan(runSpec(b.spec).tabs.length - 1);
+      expect(b.at).toBeGreaterThanOrEqual(1);
+      expect(b.at).toBeLessThanOrEqual(runSpec(b.spec).tabs.length - 1);
     }
   });
   it("Is it practical?: Level 1 rounding down is the best plan; Level 2 it is not; Level 3 it is not and rounding to the nearest breaks a constraint", () => {

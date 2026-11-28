@@ -14,7 +14,7 @@ interface SxStory {
   intro: string;
   items: Array<{ plural: string; singular: string }>;
   /** one per constraint: the resource, and the factor the data is multiplied by (1, 2, 5, 10, or 1/10 for a decimal per unit) */
-  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number] }>;
+  res: Array<{ topic: string; unit: string; of: string; verb: string; label: string; scale: [number, number]; /** Level 3 wording: the limit is given as percentages of the whole (a limit of 100%), or as the most of each kind that all of it could make ("20 chairs or 30 tables"); `cap` is the right-hand side of the tidy constraint */ form?: "percent" | "either"; cap?: number; /** the extra constraint of a Non-standard problem: a minimum ("at least 40 hours must be used") or an exact amount */ op?: "≥" | "=" }>;
   /** the profit per item is c times this */
   profitScale: number;
 }
@@ -55,17 +55,21 @@ export function nice(run: Run, level: number): boolean {
 
 // ── Designing a problem from its optimum ─────────────────────────────────────
 interface Base { A: number[][]; b: number[]; c: number[]; xs: number[] }
-function designBase(n: number, m: number, pool: number[], degenerate = false, mixed = false): Base | null {
+/** a constraint whose limit is smaller than one of its own coefficients (10x + 50y ≤ 40: not even one y fits) reads as a mistake, so the design never has one */
+function limitBelowCoefficient(A: number[][], b: number[]): boolean {
+  return A.some((r, i) => r.some((v) => v > b[i]));
+}
+function designBase(n: number, m: number, pool: number[], mixed = false): Base | null {
   const A = Array.from({ length: m }, () => Array.from({ length: n }, () => pick(pool)));
   if (A.some((r) => r.every((v) => v === 0)) || Array.from({ length: n }, (_, j) => A.every((r) => r[j] === 0)).some(Boolean)) return null;
   if (new Set(A.map((r) => r.join())).size < m) return null;
-  const kx = ri(1, Math.min(n, m));
+  // the optimum uses at least two of the variables most of the time: a plan with only one kind (x, 0, 0) is the occasional question, not the usual one
+  // (a minimise problem with a mixed-sign cost leaves at least one variable out of the best plan, so it never uses them all)
+  const kx = mixed ? ri(Math.min(2, n - 1), Math.min(n - 1, m)) : Math.min(n, m) >= 2 && Math.random() >= 0.12 ? ri(2, Math.min(n, m)) : 1;
   const basicX = shuffled(Array.from({ length: n }, (_, j) => j)).slice(0, kx);
   const xs = Array.from({ length: n }, (_, j) => (basicX.includes(j) ? ri(1, 9) : 0));
   const binding = shuffled(Array.from({ length: m }, (_, i) => i)).slice(0, kx);
-  // a degenerate start: one more constraint through the optimum than there are basic variables, so a basic variable is 0 at the end and the theta-values tie
-  const extra = degenerate ? shuffled(Array.from({ length: m }, (_, i) => i).filter((i) => !binding.includes(i)))[0] : undefined;
-  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) || i === extra ? 0 : ri(1, 9)));
+  const b = A.map((r, i) => r.reduce((t, v, j) => t + v * xs[j], 0) + (binding.includes(i) ? 0 : ri(1, 9)));
   const y = A.map((_, i) => (binding.includes(i) ? ri(1, 4) : 0));
   const c = Array.from({ length: n }, (_, j) => {
     const s = A.reduce((t, r, i) => t + y[i] * r[j], 0);
@@ -77,6 +81,7 @@ function designBase(n: number, m: number, pool: number[], degenerate = false, mi
     for (let j = 0; j < n; j++) if (!basicX.includes(j)) c[j] = -ri(1, 6);
   }
   if (c.some((v, j) => (mixed && !basicX.includes(j) ? false : v < 1)) || b.some((v) => v <= 0)) return null;
+  if (limitBelowCoefficient(A, b)) return null;
   return { A, b, c, xs };
 }
 
@@ -116,6 +121,7 @@ function designWhole(n: number, m: number, pool: number[]): Base | null {
     return Math.floor(at + 1e-9) + ri(1, 4);
   });
   if (b.some((v) => v <= 0)) return null;
+  if (limitBelowCoefficient(A, b)) return null;
   return { A, b, c, xs: x.map((v) => Math.floor(v[0] / v[1])) };
 }
 
@@ -134,25 +140,48 @@ function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null 
   if (a.filter((v) => v !== 0).length < 2) return null; // an equality involves at least two of the variables
   const at = a.reduce((t, v, j) => t + v * base.xs[j], 0);
   if (at < 1) return null;
+  // (a limit smaller than one of its own coefficients reads as a mistake, here as everywhere)
+  if (a.some((v) => v > at)) return null;
   if (form === "eq") return { sense: "max", c: base.c, cons: [...cons, { a, op: "=", b: at }] };
   const g = Math.max(1, at - ri(0, Math.min(3, at - 1)));
   void m;
+  if (a.some((v) => v > g)) return null;
   return { sense: "max", c: base.c, cons: [...cons, { a, op: "≥", b: g }] };
 }
 
 // ── The story: the same numbers, dressed ─────────────────────────────────────
-function dress(spec: SxSpec, n: number, m: number): SxStory | null {
-  if (spec.cons.some((k) => k.op !== "≤" || k.a.some((v) => v < 0))) return null;
+function dress(spec: SxSpec, n: number, m: number, hard: string[] = []): SxStory | null {
+  // the limits are all ≤, except that the last may be a minimum (≥) or an exact amount (=): that is a Non-standard problem
+  const last = spec.cons.length - 1;
+  if (spec.cons.some((k, i) => (k.op !== "≤" && i !== last) || k.a.some((v) => v < 0))) return null;
+  if (spec.lower?.some((v) => v > 0) && spec.cons.some((k) => k.op !== "≤")) return null;
+  m = spec.cons.length;
   // each constraint must already be in lowest terms, so the student's simplification gives back the designed numbers
   if (spec.cons.some((k) => [...k.a, k.b].reduce((h, v) => gcdInt(h, v), 0) !== 1)) return null;
   const ctxs = CONTEXTS.filter((c) => c.id !== "diet" && c.resources.length >= m);
   if (!ctxs.length) return null;
   const ctx = pick(ctxs);
   const items = shuffled(ctx.items).slice(0, n);
-  const res = shuffled(ctx.resources).slice(0, m).map((r) => {
+  const res: SxStory["res"] = shuffled(ctx.resources).slice(0, m).map((r, i) => {
+    if (spec.cons[i].op !== "≤") return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale: [1, 1] as [number, number], op: spec.cons[i].op as "≥" | "=" };
     const scale: [number, number] = r.decOnly ? pick<[number, number]>([[1, 10], [1, 5], [1, 2]]) : weighted<[number, number]>([[[1, 1], 2], [[2, 1], 1], [[5, 1], 1], [[10, 1], 2]]);
     return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale };
   });
+  if (hard.length) {
+    // Level 3: some limits are a percentage of the whole, or the most that all of it could make of each kind; at least one is
+    res.forEach((r, i) => {
+      const k = spec.cons[i];
+      const nz = k.a.filter((v) => v !== 0);
+      const options: Array<"percent" | "either"> = [];
+      if (hard.includes("percent") && 100 % k.b === 0) options.push("percent");
+      if (hard.includes("either") && nz.length >= 2 && nz.every((v) => k.b % v === 0)) options.push("either");
+      if (!options.length || Math.random() < 0.3) return;
+      const f = pick(options);
+      r.form = f;
+      if (f === "percent") { r.scale = [100 / k.b, 1]; r.unit = "%"; } else r.cap = k.b;
+    });
+    if (!res.some((r) => r.form)) return null;
+  }
   return { intro: ctx.intro(items.map((i) => i.plural)), items, res, profitScale: 1 };
 }
 
@@ -163,6 +192,26 @@ function storyText(story: SxStory, spec: SxSpec): string {
   const parts: string[] = [];
   for (let i = 0; i < m; i++) {
     const r = story.res[i];
+    if (r.form === "percent") {
+      const use = story.items.map((it, j) => ({ it, p: spec.cons[i].a[j] * r.scale[0] })).filter((x) => x.p !== 0);
+      const each = use.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${x.p}% of the available ${r.of}` : `${x.p}%`}`);
+      const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
+      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)}. No more than 100% of the ${r.of} can be used.`);
+      continue;
+    }
+    if (r.form === "either") {
+      const most = story.items.map((it, j) => ({ it, c: spec.cons[i].a[j] === 0 ? 0 : r.cap! / spec.cons[i].a[j] })).filter((x) => x.c !== 0).map((x) => `${x.c} ${x.it.plural}`);
+      parts.push(`All the ${r.of} available is enough for ${most.slice(0, -1).join(", ")} or ${most[most.length - 1]}, but not for more than one of these.`);
+      continue;
+    }
+    if (r.op) {
+      const used = story.items.map((it, j) => ({ it, a: spec.cons[i].a[j] })).filter((x) => x.a !== 0);
+      const each = used.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${x.a} ${unitOf(x.a, r.unit)}${r.of ? ` of ${r.of}` : ""}` : `${x.a} ${unitOf(x.a, r.unit)}`}`);
+      const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
+      const b = spec.cons[i].b;
+      parts.push(`${list.charAt(0).toUpperCase()}${list.slice(1)}. ${r.op === "≥" ? "At least" : "Exactly"} ${b} ${unitOf(b, r.unit)}${r.of ? ` of ${r.of}` : ""} must be used.`);
+      continue;
+    }
     const per = story.items.map((it, j) => ({ it, a: fr(spec.cons[i].a[j] * r.scale[0], r.scale[1]) })).filter((x) => x.a[0] !== 0);
     const each = per.map((x, k) => `each ${x.it.singular} ${k === 0 ? `${r.verb} ${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}${r.of ? ` of ${r.of}` : ""}` : `${num(x.a)} ${unitOf(x.a[1] === 1 ? x.a[0] : 2, r.unit)}`}`);
     const list = each.length <= 1 ? each.join("") : `${each.slice(0, -1).join(", ")} and ${each[each.length - 1]}`;
@@ -171,7 +220,9 @@ function storyText(story: SxStory, spec: SxSpec): string {
   }
   const profit = story.items.map((it, j) => `each ${it.singular} ${j === 0 ? "makes a profit of " : ""}£${spec.c[j] * story.profitScale}`);
   const plist = profit.length <= 1 ? profit.join("") : `${profit.slice(0, -1).join(", ")} and ${profit[profit.length - 1]}`;
-  return `${story.intro} ${parts.join(" ")} ${plist.charAt(0).toUpperCase()}${plist.slice(1)}.`;
+  const lows = (spec.lower ?? []).map((v, j) => (v > 0 ? `at least ${v} ${story.items[j].plural}` : "")).filter(Boolean);
+  const lowText = lows.length ? ` The firm must make ${list(lows)}.` : "";
+  return `${story.intro} ${parts.join(" ")}${lowText} ${plist.charAt(0).toUpperCase()}${plist.slice(1)}.`;
 }
 
 // ── Writing the problem as text ──────────────────────────────────────────────
@@ -210,8 +261,18 @@ export interface SxOptions {
   cons: number[];
   /** or, instead of vars and cons, the sizes that may be used, as [variables, constraints] pairs (each question draws one) */
   sizes?: Array<[number, number]>;
-  /** Level 3: the starting forms that may be used ("standard", "min", "ge", "lower", "eq") */
+  /** the starting forms that may be used ("standard", "min", "ge", "lower", "eq"); only drawn when `nonStandard` is set */
   forms: string[];
+  /** Level 3 wording of a situation: the kinds of limit that may be drawn besides plain use ("percent" and "either"); at least one limit in the problem is one of them */
+  hard?: string[];
+  /** Read a tableau: which tableau of the run is given. Without this the level decides. */
+  tableau?: "optimal" | "part" | "either";
+  /** any number of variables up to four, whatever the level (Read a tableau draws its own size and judges it by that size) */
+  anySize?: boolean;
+  /** One iteration: the tableau the question gives is the initial one (the default), or one part-way through the run */
+  startAt?: "initial" | "later";
+  /** a change of form is always needed first (Non-standard problems, at any level; One pivot at Level 3). Set up and Solve never change form. */
+  nonStandard?: boolean;
   /** "bare" or "story" (Levels 2 and 3, standard form only) */
   context: string[];
   /** whole numbers: the optimum has a fraction in it and the best practical plan is asked for (the `practical` kind always; Solve and Read a tableau when ticked) */
@@ -232,22 +293,22 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   const caps = { n: level === 1 ? 2 : level === 2 ? 3 : 4, m: level === 1 ? 3 : level === 2 ? 3 : 4 };
   // each level has its own number of variables: two at Level 1, three at Level 2, three or four at Level 3
   const ownN = level === 1 ? [2] : level === 2 ? [3] : [3, 4];
-  const okN = (v: number): boolean => v >= 2 && v <= caps.n && ownN.includes(v);
-  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= caps.m);
+  const okN = (v: number): boolean => (o.anySize ? v >= 2 && v <= 4 : v >= 2 && v <= caps.n && ownN.includes(v));
+  const fitting = (o.sizes ?? []).filter(([sn, sm]) => okN(sn) && sm >= 2 && sm <= (o.anySize ? 4 : caps.m));
   const fallback: [number, number] = level === 1 ? [2, 2] : [3, 3];
   const nChoices = o.vars.filter(okN);
   const [n, m] = o.sizes ? (fitting.length ? pick(fitting) : fallback) : [nChoices.length ? pick(nChoices) : fallback[0], pick(o.cons.filter((v) => v >= 2 && v <= caps.m).length ? o.cons.filter((v) => v >= 2 && v <= caps.m) : [fallback[1]])];
   // reverse and the story stay with the standard form; starting forms are the Oxford range, Level 3 only
   let form: StartForm = "standard";
-  if (level >= 3 && kind !== "reverse" && kind !== "interpret" && !whole) {
-    // Level 3 always needs a change of form: a standard-form start is a Level 1 or 2 question, so it is never drawn here, whatever is asked
+  if (o.nonStandard && kind !== "reverse" && kind !== "interpret" && !whole) {
+    // a change of form is always needed here: a standard-form start is never drawn, whatever is asked
     const changes = (o.forms as string[]).filter((f) => f !== "standard") as StartForm[];
     // a tableau is all that One pivot shows, so only a ≥ constraint or an equality (a start that is not at the origin) makes it a Level 3 question
-    const usable = kind === "pivot" ? changes.filter((f) => f === "ge" || f === "eq") : changes;
+    const usable = changes;
     const allowed = usable.length ? usable : kind === "pivot" ? (["ge", "eq"] as StartForm[]) : (["min", "ge", "lower", "eq"] as StartForm[]);
     form = pick(allowed);
   }
-  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], level >= 2 && Math.random() < 0.3, form === "min");
+  const base = fractional ? designWhole(n, m, POOLS[level]) : designBase(n, m, POOLS[level], form === "min");
   if (!base) return null;
   const sp = spec(form, base, n, m);
   if (!sp) return null;
@@ -256,11 +317,13 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   let table = false;
   // Level 2 is always a situation in words or a table, never the bare inequalities
   const ctxList = o.context.length ? o.context : ["bare"];
-  const wordsOnly = level === 2 && (kind === "setup" || kind === "solve" || kind === "practical");
+  const wordsOnly = level === 2 && !o.nonStandard && (kind === "setup" || kind === "solve");
   const chosen = pick(wordsOnly ? (ctxList.filter((x) => x !== "bare").length ? ctxList.filter((x) => x !== "bare") : ["story", "table"]) : ctxList);
-  if (level >= 2 && form === "standard" && (chosen === "story" || chosen === "table") && m <= 3) {
-    table = chosen === "table";
-    story = dress(sp, n, m) ?? undefined;
+  // a minimise has a mixed-sign cost, which has no situation: it is only ever drawn as inequalities
+  const storyForm = form === "standard" || form === "lower" || form === "ge" || form === "eq";
+  if ((level >= 2 || o.nonStandard) && storyForm && (chosen === "story" || chosen === "table") && sp.cons.length <= 3) {
+    table = chosen === "table" && form === "standard";
+    story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined) ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
   }
   let run: Run;
@@ -274,16 +337,24 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // the tableau the question gives
   let at = 0;
   // each level has its own tableau: Level 1 the first pivot and the optimal tableau; Level 2 a pivot part-way through and a tableau that is not yet optimal
-  if (kind === "pivot") at = level === 1 || form !== "standard" ? 0 : level === 2 ? ri(1, Math.max(1, run.steps.length - 1)) : ri(0, Math.min(1, run.steps.length - 1));
-  else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : level === 2 ? Math.max(1, run.tabs.length - 2) : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
+  // One iteration starts from the initial tableau, or (a standard-form problem only) from one part-way through the run
+  if (kind === "pivot") at = form !== "standard" || o.startAt !== "later" ? 0 : ri(1, Math.max(1, run.steps.length - 1));
+  else if (kind === "interpret" && o.tableau) {
+    // the tableau asked for: the optimal one, one before it (so it is not yet optimal), or either
+    const last = run.tabs.length - 1;
+    const early = last >= 2;
+    if (o.tableau === "part" && !early) return null;
+    at = o.tableau === "optimal" || (o.tableau === "either" && (!early || Math.random() < 0.5)) ? last : ri(1, last - 1);
+  } else if (kind === "interpret") at = level === 1 ? run.tabs.length - 1 : pick([run.tabs.length - 1, Math.max(1, run.tabs.length - 2)]);
   const data: SxData = { kind, level, layout: o.layout, spec: sp, startForm: form, story, at, ...(whole ? { whole: { given: kind === "practical" && o.given } } : {}), ...(table ? { table: true } : {}), ...(kind === "pivot" && o.pivotGiven && run.iters[at] ? { pivotGiven: true } : {}) };
   const vars = varNames(n);
   const problem = story ? (table ? `${story.intro} The table shows what one of each item needs, how much of each resource is available, and the profit per item.` : storyText(story, sp)) : problemTex(sp);
   let prompt: string;
-  if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
+  if (kind === "setup" && story && form !== "standard") prompt = `${problem} Formulate this as a linear programming problem, write it in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau.`;
+  else if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
   else if (kind === "reverse") prompt = "The initial simplex tableau for a maximising problem is shown. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.";
   else if (kind === "pivot") prompt = at === 0 && run.iters[0]?.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. Choose a pivot to reach a feasible start, and carry out the iteration." : `A simplex tableau for a maximising problem is shown. Choose the pivot, showing the θ-values, and carry out one iteration of the simplex algorithm.`;
-  else if (kind === "interpret") prompt = `A simplex tableau for a maximising problem is shown${story ? ` (${story.intro.replace(/\.$/, "")})` : ""}. Is the solution optimal? Explain how you know. State the value of every variable and of the objective at this stage, which constraints are at their limit, and what each slack variable means.`;
+  else if (kind === "interpret") prompt = `${story ? `${problem} ` : ""}A simplex tableau for a maximising problem is shown${story ? " for this problem" : ""}. Is the solution optimal? Explain how you know. State the value of every variable and of the objective at this stage, which constraints are at their limit, and what each slack variable means.`;
   else if (kind === "practical") {
     const asks = "Explain why this is not a practical solution, then find the best practical plan and state its value.";
     const ask = story ? asks.replace("value", "profit") : asks;
