@@ -44,17 +44,21 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   // Read a tableau: its own size is drawn from the ticked ones, and the problem is designed and judged at that size (two variables is Level 1's, three Level 2's, four Level 3's)
   const readSize = key === "interpret" ? pickSize(ticked(o.sxSizeR, "2x2,3x3")) : undefined;
   const design = readSize ? (readSize[0] === 2 ? 1 : readSize[0] === 3 ? 2 : 3) : level;
+  const tableauTicks = ticked(o.sxTableau, "optimal,part");
+  const startTicks = ticked(o.sxStart, "initial");
+  const degTicks = ticked(o.sxDegenerate, level === 3 ? "plain,degenerate" : "plain");
+  const hasDeg = degTicks.includes("degenerate");
   const q = generateSimplex(design, {
     kind,
     anySize: !!readSize,
-    tableau: key === "interpret" && kind === "interpret" ? ((o.sxTableau as "optimal" | "part" | "either" | undefined) ?? "either") : undefined,
+    tableau: key === "interpret" && kind === "interpret" ? (tableauTicks.length === 1 ? (tableauTicks[0] as "optimal" | "part") : "either") : undefined,
     vars: [],
     cons: [],
     sizes: readSize ? [readSize] : ticked(o.sxSize, level === 1 ? "2x2" : "3x3").map((z): [number, number] => { const [a, b] = z.split("x").map(Number); return [a, b]; }).map(([n, m]): [number, number] => (nonStandard && wordsAtL3 ? [n, Math.min(m, 2)] : [n, m])).filter(([, m]) => !(level === 3 && wordsAtL3 && m > 3 && !nonStandard)),
     hard: level === 3 && (key === "setup" || key === "solve") ? ticked(o.sxHard, "percent,either") : undefined,
     nonStandard: changes,
     forms: !changes ? ["standard"] : pickedForms.length ? pickedForms : levelForms,
-    startAt: key === "solve" && o.sxStart === "later" ? "later" : "initial",
+    startAt: key === "solve" && (startTicks.length === 2 ? Math.random() < 0.5 : startTicks[0] === "later") ? "later" : "initial",
     method: o.sxMethod === "rows" ? "rows" : "substitute",
     context: contexts,
     pivotGiven: o.sxPivot === "given" || o.sxPivotF === "given",
@@ -62,7 +66,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
     given: o.sxGiven !== "find",
     layout: o.sxLayout === "B" ? "B" : "A",
     // only the sub-tools that pivot can meet a degenerate case; it is allowed by default at Level 3 only
-    allowDegenerate: (key === "solve" || key === "practical" || key === "forms") && (o.sxDegenerate ?? (level === 3 ? "allow" : "avoid")) === "allow",
+    allowDegenerate: (key === "solve" || key === "forms") && hasDeg,
+    onlyDegenerate: (key === "solve" || key === "forms") && hasDeg && !degTicks.includes("plain"),
   });
   return { kind: q.data.kind, level, sx: q.data, prompt: q.prompt, answer: { text: q.answerText }, matrixMode: "off" };
 }
@@ -98,8 +103,8 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "optimum", label: "To The Optimum" }, { value: "one", label: "One Iteration" }],
   },
   {
-    key: "sxStart", label: "Start From", info: "How far into the run the tableau the question gives is.",
-    forSubTools: ["solve"], when: { key: "sxWork", values: ["one"] }, defaultFor: () => "initial",
+    key: "sxStart", label: "Start From", info: "How far into the run the tableau the question gives is. Tick one or both and each question draws one.",
+    forSubTools: ["solve"], when: { key: "sxWork", values: ["one"] }, multi: true, defaultFor: () => "initial",
     choices: [{ value: "initial", label: "The Initial Tableau" }, { value: "later", label: "A Later Tableau" }],
   },
   {
@@ -113,9 +118,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "2x2", label: "2 × 2" }, { value: "3x3", label: "3 × 3" }, { value: "4x4", label: "4 × 4*" }],
   },
   {
-    key: "sxTableau", label: "Which Tableau", info: "Which tableau of the run the question gives. Reading a tableau that is not yet optimal means saying why, and which column comes next.",
-    forSubTools: ["interpret"], forLevels: [1], defaultFor: () => "either",
-    choices: [{ value: "either", label: "Either" }, { value: "optimal", label: "The Optimal Tableau" }, { value: "part", label: "One Not Yet Optimal" }],
+    key: "sxTableau", label: "Which Tableau", info: "Which tableau of the run the question gives. Tick one or both and each question draws one. Reading a tableau that is not yet optimal means saying why, and which column comes next.",
+    forSubTools: ["interpret"], forLevels: [1], multi: true, defaultFor: () => "optimal,part",
+    choices: [{ value: "optimal", label: "The Optimal Tableau" }, { value: "part", label: "One Not Yet Optimal" }],
   },
   {
     key: "sxCtxF", label: "Wording", info: "Whether the student is given the inequalities or must first form them from a situation, such as a minimum amount that must be used or a number that must be made. A minimise has no natural situation, so it is always given as inequalities.",
@@ -156,9 +161,9 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "off", label: "Not Asked" }, { value: "on", label: "Ask If Practical*" }],
   },
   {
-    key: "sxDegenerate", label: "Degenerate Cases", info: "A degenerate case is a corner where three lines meet, so two rows tie for the smallest θ, a basic variable is 0, and sometimes a pivot has θ = 0 and P does not increase. The method still reaches the optimum, but a student who takes the other tied row follows a different path. Avoid never draws one; Allow draws them as they come, and builds about one question in three that way.",
-    forSubTools: ["solve", "practical", "forms"], forLevels: [2, 3], defaultFor: (lv: number) => (lv === 3 ? "allow" : "avoid"),
-    choices: [{ value: "avoid", label: "Avoid" }, { value: "allow", label: "Allow" }],
+    key: "sxDegenerate", label: "Degenerate Cases", info: "A degenerate case is a corner where three lines meet, so two rows tie for the smallest θ, a basic variable is 0, and sometimes a pivot has θ = 0 and P does not increase. The method still reaches the optimum, but a student who takes the other tied row follows a different path. Tick one or both and each question draws one; with both ticked about one question in three is built degenerate.",
+    forSubTools: ["solve", "forms"], forLevels: [2, 3], forSubToolLevels: { forms: [2] }, multi: true, defaultFor: (lv: number) => (lv === 3 ? "plain,degenerate" : "plain"),
+    choices: [{ value: "plain", label: "Not Degenerate" }, { value: "degenerate", label: "Degenerate" }],
   },
   {
     key: "sxGiven", label: "Optimum", info: "Whether the question gives the optimal solution of the linear programme, or asks for it first with the simplex algorithm.",
