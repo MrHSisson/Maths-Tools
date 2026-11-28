@@ -118,7 +118,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
   const pickKind = (k: Kind) => { setKind(k); setStrand("all"); setShell("all"); setFeat({}); };
   const clearAll = () => { setQuery(""); setStrand("all"); setAvail("all"); setShell("all"); setFeat({}); };
 
-  const sel = "rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm";
+  const sel = "max-w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm";
   const groupHead = (name: string, n: number) => (
     <>{isCollapsed(name) ? <ChevronRight size={14} className="inline -mt-0.5 mr-1" /> : <ChevronDown size={14} className="inline -mt-0.5 mr-1" />}{name} <span className="font-normal normal-case text-slate-400">· {n}</span></>
   );
@@ -129,9 +129,9 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
 
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <label className="order-1 flex basis-full items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 sm:flex-1 sm:basis-auto sm:min-w-[220px]">
+          <label className={`order-1 flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 ${compact ? "min-w-0 flex-1 basis-40" : "basis-full sm:min-w-[220px] sm:flex-1 sm:basis-auto"}`}>
             <Search size={16} className="text-slate-400" />
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()}`} className="w-full bg-transparent text-sm outline-none" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${kindInfo.label.toLowerCase()}`} className="min-w-0 w-full bg-transparent text-sm outline-none" />
           </label>
           {!compact && <select value={kind} onChange={e => pickKind(e.target.value as Kind)} title={kindInfo.hint} aria-label="What to show"
             className={`order-2 min-w-0 flex-1 font-semibold text-slate-800 sm:flex-none ${sel}`}>
@@ -188,7 +188,7 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
             {isTool && (
               <div>
                 <div className="mb-2 text-sm text-slate-500">Features (click to cycle: has, missing, any)</div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+                <div className={`grid gap-x-4 gap-y-1 ${compact ? "grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))]" : "grid-cols-2 sm:grid-cols-3"}`}>
                   {featureOptions.map(f => (
                     <button key={f.key} title={f.hint} onClick={() => cycle(f.key)}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-slate-50 ${feat[f.key] ? "font-semibold text-slate-900" : "text-slate-600"}`}>
@@ -261,11 +261,11 @@ export function ToolsSection({ store, phone, onOpen, compact = false }: {
                     const n = noteOf(t.id);
                     return (
                       <tr key={t.id} onClick={() => onOpen(t.id)} className="cursor-pointer border-t border-slate-200 hover:bg-sky-50">
-                        <th scope="row" className={`sticky left-0 z-[1] bg-white px-3 text-left font-semibold text-slate-900 ${compact ? "min-w-28 max-w-40 border-r border-slate-200" : "sm:whitespace-nowrap sm:px-4"}`}>
+                        <th scope="row" className={`sticky left-0 z-[1] bg-white px-3 text-left font-semibold text-slate-900 ${compact ? "min-w-28 max-w-40 border-b border-r border-slate-200" : "sm:whitespace-nowrap sm:px-4"}`}>
                           <button type="button" onClick={event => { event.stopPropagation(); onOpen(t.id); }}
-                            className="min-h-10 break-words text-left hover:underline">{t.name}</button>
+                            className={`break-words text-left hover:underline ${compact ? "min-h-14 py-3 leading-snug" : "min-h-10"}`}>{t.name}</button>
                         </th>
-                        {matrixCols.map(c => <td key={c.key} className={compact ? "border-b border-l border-slate-100 px-2 py-3 text-center" : "px-1 py-2 text-center"}><Dot on={c.has(t, n)} label={c.label} /></td>)}
+                        {matrixCols.map(c => <td key={c.key} className={compact ? "border-b border-slate-200 px-3 py-4 text-center" : "px-1 py-2 text-center"}><Dot on={c.has(t, n)} label={c.label} /></td>)}
                       </tr>
                     );
                   })}

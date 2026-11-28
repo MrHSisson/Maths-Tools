@@ -558,11 +558,41 @@ interface PanelProps {
   setOpen: (open: boolean) => void;
   panelWidth: number;
   wide: boolean;
+  minWidth: number;
+  maxWidth: number;
   toggleWidth: () => void;
-  onMatrixView: (active: boolean) => void;
+  onResize: (width: number) => void;
 }
 
-export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, toggleWidth, onMatrixView }: PanelProps) {
+function PanelDivider({ width, min, max, onResize }: {
+  width: number; min: number; max: number; onResize: (width: number) => void;
+}) {
+  const drag = useRef<{ id: number; offset: number }>();
+  return <div role="separator" tabIndex={0} title="Drag to resize the Project Plan"
+    aria-label="Resize Project Plan" aria-orientation="vertical" aria-controls="project-plan-panel"
+    aria-valuemin={min} aria-valuemax={max} aria-valuenow={width} aria-valuetext={`${width} pixels`}
+    className="absolute inset-y-0 left-full z-20 w-3 touch-none cursor-col-resize select-none outline-none after:absolute after:inset-y-0 after:left-0 after:w-px after:bg-slate-400 hover:after:bg-slate-600 focus-visible:after:bg-teal-700"
+    onPointerDown={event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      drag.current = { id: event.pointerId, offset: width - event.clientX };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }}
+    onPointerMove={event => {
+      if (drag.current?.id === event.pointerId) onResize(event.clientX + drag.current.offset);
+    }}
+    onLostPointerCapture={event => {
+      if (drag.current?.id === event.pointerId) drag.current = undefined;
+    }}
+    onKeyDown={event => {
+      const widths: Record<string, number> = { ArrowLeft: width - 24, ArrowRight: width + 24, Home: min, End: max };
+      const next = widths[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      onResize(next);
+    }} />;
+}
+
+export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, minWidth, maxWidth, toggleWidth, onResize }: PanelProps) {
   const { pathname, key: pageKey } = useLocation();
   const tool = contextualTools.find(item => item.path.toLowerCase() === pathname.replace(/\/$/, "").toLowerCase());
   const [selection, setSelection] = useState<{ route: string; id: string | null }>();
@@ -592,7 +622,6 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = selectedId ? index.byId.get(selectedId) : undefined;
   const reviews = selectedId === "review-queue";
-  const matrix = selectedId === "feature-tracker";
   const features = featureViews.some(view => view.id === selectedId);
   const [tree, setTree] = useState<VisiblePlanTree>("site");
   const [trackerOpened, setTrackerOpened] = useState(false);
@@ -627,10 +656,6 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
     setTree(next);
     select(null);
   }
-
-  useLayoutEffect(() => {
-    onMatrixView(open && matrix);
-  }, [onMatrixView, open, matrix]);
 
   useLayoutEffect(() => {
     if (scroller.current) scroller.current.scrollTop = positions.current.get(viewKey) ?? 0;
@@ -700,7 +725,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
       <GitFork size={19} />
     </button>
     {open && <aside id="project-plan-panel" aria-label="Project plan"
-      className={`fixed inset-y-0 left-0 z-[2010] flex w-full flex-col ${panelWidth ? "border-r border-slate-200" : "bg-slate-50 shadow-lift"}`}
+      className={`fixed inset-y-0 left-0 z-[2010] flex w-full flex-col ${panelWidth ? "" : "bg-slate-50 shadow-lift"}`}
       style={panelWidth ? { width: panelWidth, backgroundColor: PAGE_BG } : undefined}>
       <header className="border-b border-slate-200 bg-white px-3 sm:px-4">
         <div className="flex items-center gap-1 pt-1">
@@ -746,6 +771,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
             : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} tree={tree} />}
         </fieldset>}
       </div>
+      {panelWidth > 0 && <PanelDivider width={panelWidth} min={minWidth} max={maxWidth} onResize={onResize} />}
     </aside>}
   </div>;
 }

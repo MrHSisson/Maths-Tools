@@ -17,12 +17,15 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
   const [open, setOpen] = useState(() => {
     try { return sessionStorage.getItem(OPEN_KEY) === "1"; } catch { return false; }
   });
-  const [wide, setWide] = useState(false);
-  const [matrixView, setMatrixView] = useState(false);
+  const [preferredWidth, setPreferredWidth] = useState<number>();
   const visible = enabled && open;
   const width = useSyncExternalStore(visible ? subscribeToResize : ignoreResize, viewportWidth);
-  const docked = visible && !matrixView && width >= DOCK_MIN_WIDTH;
-  const panelWidth = docked ? Math.min(wide ? 540 : 384, Math.round(width * (wide ? 0.38 : 0.27))) : 0;
+  const docked = visible && width >= DOCK_MIN_WIDTH;
+  const defaultWidth = Math.min(384, Math.round(width * 0.27));
+  const minWidth = Math.min(280, defaultWidth);
+  const maxWidth = Math.floor(width / 2);
+  const panelWidth = docked ? Math.max(minWidth, Math.min(preferredWidth ?? defaultWidth, maxWidth)) : 0;
+  const wide = panelWidth > defaultWidth;
   const scale = docked ? (width - panelWidth) / width : 1;
   const site = useRef<HTMLDivElement>(null);
   const scroll = useRef(0);
@@ -54,7 +57,10 @@ export default function ProjectWorkspace({ enabled, children }: { enabled: boole
 
   return <>
     {enabled && <Suspense fallback={null}>
-      <ProjectPlanPanel open={open} setOpen={changeOpen} panelWidth={panelWidth} wide={wide} onMatrixView={setMatrixView} toggleWidth={() => setWide(value => !value)} />
+      <ProjectPlanPanel open={open} setOpen={changeOpen} panelWidth={panelWidth} wide={wide}
+        minWidth={minWidth} maxWidth={maxWidth}
+        onResize={next => setPreferredWidth(Math.max(minWidth, Math.min(Math.round(next), maxWidth)))}
+        toggleWidth={() => setPreferredWidth(wide ? undefined : Math.min(540, Math.round(width * 0.38)))} />
     </Suspense>}
     <div
       className={docked ? "fixed inset-y-0 right-0 overflow-hidden print:!static print:!overflow-visible" : undefined}
