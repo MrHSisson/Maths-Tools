@@ -46,7 +46,10 @@ With a context: `red : blue = 5 : 2`, `blue : green = 4 : 5`, "Write red : blue 
 
 - **multiSelect** `ratios` — "Ratios" (`exclusive: true`): `two` — "Two" — defaultActive: true · `three` — "Three" — false.
 - **multiSelect** `wording` — "Wording" (`balanced: true`; one drawn per question): `letters` — "Letters" — defaultActive: true · `context` — "Context" — false.
-- Both groups are independent of level (the level sets how much scaling is needed; these set how many ratios and how they are worded), so no per-level differences. Both are real changes to the question, so neither is `displayOnly`.
+- **multiSelect** `askOrder` — "Answer Order" (`exclusive: true`): `inOrder` — "In Order" (`A : B : C`) — defaultActive: true · `different` — "Different Order" (e.g. `B : C : A`, `C : A : B`; never the natural order).
+- **multiSelect** `givenAs` — "Ratios Given" (`exclusive: true`): `inOrder` — "In Order" (`A : B` then `B : C`, the shared part last in the first and first in the second) — defaultActive: true · `mixed` — "Either Way Round" (a ratio may be written the other way, `B : A`, and the shared part may be first in both, `B : A` and `B : C`, or last in both, `A : C` and `B : C`).
+- All four groups are independent of level (the level sets how much scaling is needed; these set how many ratios, how they are worded, which order the answer is asked in and how the givens are written), so no per-level differences. Each changes the question, so none is `displayOnly`. "Different Order" and "Either Way Round" are off by default, so a class meets scaling first and order later (the "one new thing at a time" rule, `docs/design/LESSONS.md`).
+- **Order never changes the scaling.** The combined ratio is worked out as `A : B : C` in the table whatever is asked; "Different Order" only changes how the answer is read off, and "Either Way Round" only changes how the givens are written. So each level's scaling constraints (3.2) hold unchanged under either option.
 - **Phase 2 (not in the first build):** `shape` — "Three ratios" — `chain` (A : B, B : C, C : D) · `star` (A : B, B : C, B : D); `method` — "Method" (`displayOnly`, `workedExampleOnly`): "Ratio Table" · "Multiples of B".
 
 The first build's three-ratio shape is the **chain** only. The star is in the extension notes (section 6).
@@ -88,6 +91,8 @@ The shared part is always the second term of one ratio and the first of the next
   | **10** | **4** | **5** | the answer row, shown last |
 
   Level 3 (`A : B = 2 : 5`, `B : C = 3 : 4`): given A : B, given B : C, A : B scaled (`× 3`, `6 : 15`), B : C scaled (`× 5`, `15 : 20`), answer `6 : 15 : 20`. The two B cells in the scaled rows highlight when they match. Level 1: just the given rows and the answer row.
+- **Columns do not move.** The table's columns stay `A | B | C` (or the context's names in the order the question first names them), whatever order the answer is asked in or the givens are written in. A given written `B : A = 2 : 5` goes into the row as `A = 5`, `B = 2`: **the headers do the flipping**, which is exactly what the table is for. A given with the shared part last in both (`A : C`, `B : C`) puts the matching column on C.
+- **"Different Order" is an explicit last step:** after the answer row `6 | 15 | 20`, one more line reads it off in the order asked, `B : C : A = 15 : 20 : 6`, with each value shown under its letter. This is where the usual error happens (reordering the numbers but not the letters), so it is its own step rather than a rearranged table.
 - **Blank cells:** a given or scaled ratio has blank cells for the parts it does not mention; only the answer row fills every cell.
 - **Scaling arrows:** whole-number `×n` only. Each arrow runs from a given row to **its own scaled row, skipping the rows between** (row 1 → row 3, row 2 → row 4). The first ratio's arrow is in the left gutter and the second's in the right (the component already has per-arrow sides), so they never cross.
 - **Shared-code change needed (the first chunk, on its own):** the component draws each arrow between *consecutive* rows (`operations[i]` joins row `i` and `i + 1`). This needs an arrow from any row to any later row: an optional `from` / `to` row on each operation (defaulting to consecutive, so every existing tool is unchanged), a test, the documented `rStep` / `rStepBuild` option, a note in `docs/reference/pictures.md`, and `npm run smoke:shell`. **The deck's `ratioTable` element needs the same option** (`decks.md` documents it as "one factor between each pair of rows"), so it is one change in two places; it must be on `main` before a deck that uses it is pushed (`AGENTS.md`, "Deck data format").
@@ -103,6 +108,8 @@ Level 2, question: `A : B = 5 : 2`, `B : C = 4 : 5`. Write A : B : C.
 3. The scaled row `10 : 4` appears with the arrow `× 2` from row 1 ("2 × 2 = 4, so multiply every part by 2"); the second ratio already has B = 4.
 4. `mStep("Now B is 4 in both, so join them:", "A : B : C = 10 : 4 : 5")`.
 5. `mStep("Answer:", "10 : 4 : 5")`.
+
+With "Different Order" (question: ask for `B : C : A`) one step is added before the answer: `mStep("Write them in the order asked:", "B : C : A = 15 : 20 : 6")`. With "Either Way Round" a step is added first, naming the shared letter ("B is in both ratios") and putting each given into its row under the right letter (`B : A = 2 : 5` becomes `A = 5`, `B = 2`).
 
 Level 1: steps 2 and 4–5 only (the linking part already matches, so there is no scaling step). Level 3 (`2 : 5`, `3 : 4`): both ratios written; B is 5 and 3 and no whole-number step joins them; "what number do 5 and 3 both go into?" (15, from the multiples of each); scale A : B by 3 (`× 3`, `6 : 15`); scale B : C by 5 (`× 5`, `15 : 20`); the two B cells match, join them; `6 : 15 : 20`. Three ratios repeat the "match, then join" step once per link.
 
@@ -121,6 +128,16 @@ Level 1: steps 2 and 4–5 only (the linking part already matches, so there is n
 | 3 | A : B = 3 : 4, B : C = 5 : 7 | 15 : 20 : 28 | 4 and 5 → 20; × 5 and × 4 |
 | 3 | A : B = 5 : 3, B : C = 2 : 9 | 10 : 6 : 27 | 3 and 2 → 6; × 2 and × 3 |
 | 3 (three) | A : B = 2 : 3, B : C = 4 : 5, C : D = 3 : 7 | 8 : 12 : 15 : 35 | B: 3, 4 → 12; then C: 15 and 3 → 15 |
+
+Order options (any level; shown with Level 3 working):
+
+| Option | Question as displayed | Answer | Working (one line) |
+|---|---|---|---|
+| Different Order | A : B = 2 : 5, B : C = 3 : 4. Write B : C : A. | 15 : 20 : 6 | 6 : 15 : 20 as A : B : C; read off B, C, A |
+| Different Order | A : B = 5 : 2, B : C = 4 : 5. Write C : B : A. | 5 : 4 : 10 | 10 : 4 : 5 as A : B : C; read off C, B, A |
+| Either Way Round | B : A = 2 : 5, B : C = 3 : 4. Write A : B : C. | 15 : 6 : 8 | B is 2 and 3, so 6; B : A × 3 = 6 : 15, B : C × 2 = 6 : 8 |
+| Either Way Round | A : C = 2 : 3, B : C = 5 : 3. Write A : B : C. | 2 : 5 : 3 | C is 3 in both; join under A, B, C |
+| Either Way Round | A : C = 3 : 4, B : C = 2 : 5. Write A : B : C. | 15 : 8 : 20 | C is 4 and 5, so 20; A : C × 5, B : C × 4 |
 
 Answer house style: `A : B : C` with spaces round the colons (names in place of letters for a context).
 
@@ -160,5 +177,5 @@ Not in the first build. A **star**: `A : B`, `B : C`, `B : D` (one shared part i
 
 1. **Level 1 and your earlier steer.** You first said the equal-linking-part case was trivial and not worth questions; this draft makes it Level 1 as you now describe ("just combining"). Confirm that is right, and that a Level 1 worksheet of 15 questions is fine (the pool is large, so it will not repeat).
 2. **A common factor but neither a multiple** (linking parts 4 and 6, LCM 12, not 24): this draft excludes it from Level 3 ("no shared factor") so a "multiply all" method always gives the simplest answer. Where do you want it, and do you want the lowest-common-multiple method taught, or "multiply, then simplify"?
-3. **Reordered letters** (`B : A` and `B : C`, so flip first): left out. Add later, or never?
+3. **Order (drafted as two options, 3.1):** "Different Order" for the answer (`B : C : A`) and "Either Way Round" for the givens (`B : A`, shared part first or last in both). Both off by default and available at every level. Is that the right shape, or should order be a level of its own? And should the table's columns stay `A | B | C` with an explicit "read off in the order asked" step (my recommendation: that step is where the mistake is), or follow the order asked?
 4. **Three ratios at Level 3 and Level 2:** the rule above (Level 2 scales exactly one ratio, Level 3 at least two) is my reading. Tell me if the progression for three ratios should differ.
