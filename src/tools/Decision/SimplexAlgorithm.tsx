@@ -39,7 +39,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const levelForms = FORMS_BY_LEVEL[level] ?? ["ge"];
   const pickedForms = ticked(o.sxForms, levelForms.join(",")).filter((f) => levelForms.includes(f));
   // a situation has at most three limits, so at Level 3 it is drawn with three constraints
-  const contexts = kind === "pivot" || kind === "reverse" ? ["bare"] : key === "interpret" ? ticked(o.sxCtxR, "story,table") : nonStandard ? ticked(o.sxCtxF, "bare") : key === "practical" ? ticked(o.sxCtxP, level === 2 ? "story,table" : "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
+  const contexts = kind === "pivot" ? ["bare"] : key === "interpret" ? ticked(o.sxCtxR, "story,table") : nonStandard ? ticked(o.sxCtxF, "bare") : key === "practical" ? ticked(o.sxCtxP, level === 2 ? "story,table" : "bare") : ticked(o.sxContext, level === 2 ? "story,table" : level === 3 && (key === "setup" || key === "solve") ? "story" : "bare");
   const wordsAtL3 = !contexts.includes("bare");
   // Read a tableau: its own size is drawn from the ticked ones, and the problem is designed and judged at that size (two variables is Level 1's, three Level 2's, four Level 3's)
   const readSize = key === "interpret" ? pickSize(ticked(o.sxSizeR, "2x2,3x3")) : undefined;
@@ -103,8 +103,8 @@ const OPTIONS: ShellOption[] = [
     choices: [{ value: "initial", label: "The Initial Tableau" }, { value: "later", label: "A Later Tableau" }],
   },
   {
-    key: "sxCtxR", label: "Wording", info: "Whether the tableau comes with the situation it was built from, in sentences or with a table of its data, so that each slack variable can be said in the situation's own words (9 hours of printing time not used), or with the inequalities only. A situation needs three constraints or fewer, so a 4 × 4 tableau is always given as inequalities.",
-    forSubTools: ["interpret"], forLevels: [1], multi: true, defaultFor: () => "story,table",
+    key: "sxCtxR", label: "Wording", info: "Whether the question comes with the situation the tableau was built from, so that each slack variable is said in the situation's own words (9 hours of printing time not used), or with the inequalities only. Reading a tableau shows the data in sentences or in a table; writing the problem from a tableau names the quantities in sentences. A situation needs three constraints or fewer, so a 4 × 4 tableau is always given as inequalities.",
+    forSubTools: ["interpret"], multi: true, defaultFor: () => "story,table",
     choices: [{ value: "bare", label: "Inequalities" }, { value: "story", label: "A Situation", sub: "in sentences" }, { value: "table", label: "A Table", sub: "the data in a table" }],
   },
   {

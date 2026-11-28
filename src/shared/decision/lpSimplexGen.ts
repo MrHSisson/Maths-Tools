@@ -150,7 +150,7 @@ function spec(form: StartForm, base: Base, n: number, m: number): SxSpec | null 
 }
 
 // ── The story: the same numbers, dressed ─────────────────────────────────────
-function dress(spec: SxSpec, n: number, m: number, hard: string[] = []): SxStory | null {
+function dress(spec: SxSpec, n: number, m: number, hard: string[] = [], plain = false): SxStory | null {
   // the limits are all ≤, except that the last may be a minimum (≥) or an exact amount (=): that is a Non-standard problem
   const last = spec.cons.length - 1;
   if (spec.cons.some((k, i) => (k.op !== "≤" && i !== last) || k.a.some((v) => v < 0))) return null;
@@ -164,7 +164,7 @@ function dress(spec: SxSpec, n: number, m: number, hard: string[] = []): SxStory
   const items = shuffled(ctx.items).slice(0, n);
   const res: SxStory["res"] = shuffled(ctx.resources).slice(0, m).map((r, i) => {
     if (spec.cons[i].op !== "≤") return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale: [1, 1] as [number, number], op: spec.cons[i].op as "≥" | "=" };
-    const scale: [number, number] = r.decOnly ? pick<[number, number]>([[1, 10], [1, 5], [1, 2]]) : weighted<[number, number]>([[[1, 1], 2], [[2, 1], 1], [[5, 1], 1], [[10, 1], 2]]);
+    const scale: [number, number] = plain ? [1, 1] : r.decOnly ? pick<[number, number]>([[1, 10], [1, 5], [1, 2]]) : weighted<[number, number]>([[[1, 1], 2], [[2, 1], 1], [[5, 1], 1], [[10, 1], 2]]);
     return { topic: r.topic, unit: r.unit, of: r.of, verb: r.verb, label: r.label, scale };
   });
   if (hard.length) {
@@ -322,9 +322,10 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   // a minimise has a mixed-sign cost, which has no situation: it is only ever drawn as inequalities
   const storyForm = form === "standard" || form === "lower" || form === "ge" || form === "eq";
   if ((level >= 2 || o.nonStandard || o.anySize) && storyForm && (chosen === "story" || chosen === "table") && sp.cons.length <= 3) {
-    table = chosen === "table" && form === "standard";
-    story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined) ?? undefined;
+    table = chosen === "table" && form === "standard" && kind !== "reverse";
+    story = dress(sp, n, m, level === 3 && form === "standard" ? o.hard : undefined, kind === "reverse") ?? undefined;
     if (!story) return null; // a situation was asked for: keep looking for numbers that read as one
+    // (writing the problem back from a tableau uses the tableau's own numbers, so no limit is scaled: `plain`)
   }
   let run: Run;
   try { run = runSpec(sp); } catch { return null; }
@@ -352,6 +353,7 @@ function attempt(level: number, o: SxOptions, askFraction: boolean): SxQuestion 
   let prompt: string;
   if (kind === "setup" && story && form !== "standard") prompt = `${problem} Formulate this as a linear programming problem, write it in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau.`;
   else if (kind === "setup") prompt = story ? `${problem} Formulate this as a linear programming problem, simplify the constraints, write them as equations using slack variables, and write the initial simplex tableau.` : `${problem} ${form === "standard" ? PROMPT.setup : "Write the problem in standard form for the simplex algorithm (maximising, every constraint a ≤ with a slack variable), and write the initial simplex tableau."}`;
+  else if (kind === "reverse" && story) prompt = `${story.intro} The initial simplex tableau for a maximising problem is shown. Its variables are the numbers of ${list(story.items.slice(0, n).map((it) => it.plural))}, in that order, and its constraints are the limits on ${list(story.res.map((r) => r.of))}, in that order. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.`;
   else if (kind === "reverse") prompt = "The initial simplex tableau for a maximising problem is shown. Write down the linear programming problem it represents, with the constraints as inequalities, and say what each slack variable means.";
   else if (kind === "pivot") prompt = at === 0 && run.iters[0]?.start ? "The tableau shows the problem in standard form, but a right-hand side is negative, so the origin is not feasible. Choose a pivot to reach a feasible start, and carry out the iteration." : `A simplex tableau for a maximising problem is shown. Choose the pivot, showing the θ-values, and carry out one iteration of the simplex algorithm.`;
   else if (kind === "interpret") prompt = `${story ? `${problem} ` : ""}A simplex tableau for a maximising problem is shown${story ? " for this problem" : ""}. Is the solution optimal? Explain how you know. State the value of every variable and of the objective at this stage, which constraints are at their limit, and what each slack variable means.`;

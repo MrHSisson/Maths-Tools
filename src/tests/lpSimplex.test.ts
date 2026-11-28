@@ -209,6 +209,14 @@ describe("whole numbers: is it practical?", () => {
       const text = solveSimplex(asProblem(q)).flatMap((st) => st.sxView?.blocks ?? []).flatMap((b) => (b.k === "rows" ? b.rows : [])).map((r) => r.t).join(" ");
       expect(text).toMatch(/is used: the constraint is binding|is not used/);
     }
+    // writing the problem from a tableau names the quantities and each slack in the situation's words too
+    for (const [n, m] of [[2, 2], [3, 3]] as Array<[number, number]>) for (let i = 0; i < 15; i++) {
+      const q = generateSimplex(n - 1, OPT("reverse", { anySize: true, sizes: [[n, m]], forms: ["standard"], context: ["story"] }));
+      expect(q.data.story).toBeTruthy();
+      expect(q.prompt).toMatch(/in that order/);
+      const text = solveSimplex(asProblem(q)).flatMap((st) => st.sxView?.blocks ?? []).flatMap((b) => (b.k === "rows" ? b.rows : [])).map((r) => r.t).join(" ");
+      expect(text).toMatch(/is the unused/);
+    }
     expect(generateSimplex(3, OPT("interpret", { anySize: true, sizes: [[4, 4]], forms: ["standard"], context: ["story"] })).data.story).toBeUndefined();
   });
   it("Solve can ask the whole-number question too, and the question says so", () => {
