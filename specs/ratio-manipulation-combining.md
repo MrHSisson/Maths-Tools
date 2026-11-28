@@ -75,19 +75,22 @@ The shared part is always B (the second term of A : B and the first of B : C). B
 ### 3.2b Picture spec — the three-wide ratio table (all levels)
 
 - **What's drawn:** the shared ratio table (`src/shared/ratioTable.ts`, `rStepBuild`; core representation "ratio table"), three columns headed **A**, **B**, **C**, one row per step, scaling arrows beside the rows, built a row per step like the other ratio tools. It is one continuous bordered table, as `docs/reference/pictures.md` describes.
+- **Row order (decided with Harry):** the **two given ratios are the first two rows**, then the **scaled rows**, then the answer. Both givens are on the board together before anything is scaled.
 - **Rows, Level 1** (`A : B = 5 : 2`, `B : C = 4 : 5`):
 
   | A | B | C | |
   |---|---|---|---|
-  | 5 | 2 | | the first given ratio |
-  | 10 | 4 | | arrow `× 2` from the row above |
-  | | 4 | 5 | the second given ratio (no arrow: it is not scaled) |
+  | 5 | 2 | | given A : B |
+  | | 4 | 5 | given B : C |
+  | 10 | 4 | | A : B scaled: arrow `× 2` from row 1 |
   | **10** | **4** | **5** | the answer row, shown last |
 
-- **Rows, Level 2** (`A : B = 2 : 5`, `B : C = 3 : 4`): given A : B, its scaled row (`× 3`), given B : C, its scaled row (`× 5`), then the answer row `6 : 15 : 20`. The two B cells in the scaled rows are highlighted when they match, which is the moment the lesson is about.
-- **Blank cells:** a given ratio has one blank cell (the part it does not mention). Blanks stay blank in the given rows and in the scaled rows; only the answer row fills all three.
-- **Scaling arrows:** whole-number `×n` only, drawn by the existing component. Because the arrows join *consecutive* rows, each given ratio is followed directly by its scaled row, which is why the table is ordered as above rather than "both given rows first".
-- **To check before building (do not assume):** (1) the component renders an empty cell and an empty operation string (`""`, for the gap between the two ratios) without drawing an arrow; (2) `rStepBuild`'s caption for each row reads naturally ("Multiply every part by 3", already supported for three or more columns); (3) three columns fit the phone width at the standard table size. If (1) or (2) needs a change, it is a small separate shared-code chunk with its own test and `npm run smoke:shell`, merged first (`AGENTS.md`, "Small chunks").
+  At Level 1 only one ratio is scaled, so the scaled section holds just that one row and the unscaled ratio is not repeated. Rows: given, given, scaled, answer.
+- **Rows, Level 2** (`A : B = 2 : 5`, `B : C = 3 : 4`): given A : B, given B : C, then A : B scaled (`× 3`, row `6 : 15`), B : C scaled (`× 5`, row `15 : 20`), then the answer row `6 : 15 : 20`. The two B cells in the scaled rows are highlighted when they match, which is the moment the lesson is about.
+- **Blank cells:** a given or scaled ratio has one blank cell (the part it does not mention). Blanks stay blank in those rows; only the answer row fills all three.
+- **Scaling arrows:** whole-number `×n` only. Each arrow runs from a given row to **its own scaled row, skipping the rows between** (row 1 → row 3, row 2 → row 4 at Level 2). Left gutter for the first ratio's arrow, right gutter for the second's (the component already has per-arrow sides, `opSides`), so the two arrows never cross.
+- **Shared-code change needed (do this first, as its own chunk):** the component today draws each arrow between *consecutive* rows (`operations[i]` joins row `i` and `i + 1`). Combining needs an arrow from any row to any later row: an optional `from` / `to` row index on each operation (defaulting to consecutive, so every existing tool is unchanged), with its own test, a documented `rStep` / `rStepBuild` option, a note in `docs/reference/pictures.md` and `npm run smoke:shell` (`AGENTS.md`).
+- **Also to check before building (do not assume):** (1) the component renders an empty cell without a "?" or a stray border; (2) `rStepBuild`'s caption for each row reads naturally ("Multiply every part by 3", already supported for three or more columns); (3) three columns (four for the extension) fit the phone width at the standard table size.
 - **Print:** the worksheet shows the question only; the answers page shows the answer `A : B : C`, as for Ratio to Fraction.
 
 ### 3.3 Worked example script
@@ -95,12 +98,12 @@ The shared part is always B (the second term of A : B and the first of B : C). B
 Level 1, question: `A : B = 5 : 2`, `B : C = 4 : 5`. Write A : B : C.
 
 1. `tStep("B appears in both ratios: it is 2 in the first and 4 in the second. It needs to be the same number in both.")`
-2. `rStepBuild("The first ratio, A : B", ["A","B","C"], …)`, then the row `10 : 4` with arrow `× 2` ("2 × 2 = 4, so multiply every part by 2").
-3. the second ratio `B : C = 4 : 5` added as its own row (already 4, nothing to scale).
+2. `rStepBuild("Write both ratios", ["A","B","C"], …)`: the first two rows, `5 : 2 : –` and `– : 4 : 5`, appear together.
+3. the scaled row `10 : 4` appears with the arrow `× 2` from row 1 ("2 × 2 = 4, so multiply every part by 2"); the second ratio already has B = 4 so is not scaled.
 4. `mStep("Now B is 4 in both, so join them:", "A : B : C = 10 : 4 : 5")` (the answer row appears).
 5. `mStep("Answer:", "10 : 4 : 5")`.
 
-Level 2, question: `A : B = 2 : 5`, `B : C = 3 : 4`. Steps: say B is 5 and 3 and no whole-number step joins them; "what number do 5 and 3 both go into?" (15); scale A : B by 3 (arrow `× 3`, row `6 : 15`); scale B : C by 5 (arrow `× 5`, row `15 : 20`); the two B cells match, join them; `6 : 15 : 20`.
+Level 2, question: `A : B = 2 : 5`, `B : C = 3 : 4`. Steps: both ratios written (rows 1–2); say B is 5 and 3 and no whole-number step joins them; "what number do 5 and 3 both go into?" (15); scale A : B by 3 (arrow `× 3` from row 1, row `6 : 15`); scale B : C by 5 (arrow `× 5` from row 2, row `15 : 20`); the two B cells match, join them; `6 : 15 : 20`.
 
 Level 3 "use it", question: `A : B = 3 : 2`, `B : C = 3 : 5`, total 100. Steps: scale to `9 : 6` and `6 : 10`; combined `9 : 6 : 10`; total parts `9 + 6 + 10 = 25`; one part `100 ÷ 25 = 4`; amounts `36, 24, 40`; answer `A = 36, B = 24, C = 40`.
 
@@ -161,7 +164,20 @@ Not part of this tool brief; recorded so the tool and deck agree. One idea: **ma
 | 4. All of it, and use it | Common factor case, reordered letters, then sharing a total or finding an amount (Level 3). |
 | Depth | The misconceptions in 3.2 become Depth items (the bank needs three items per Question Option, `depth.test.ts`). |
 
-Order of work (each its own small merge, `AGENTS.md`): (1) any shared ratio-table change the checks in 3.2b need; (2) this tab, behind Developing-tools mode; (3) the Depth bank; (4) the deck.
+Order of work (each its own small merge, `AGENTS.md`): (1) the shared ratio-table change (arrows that skip rows, 3.2b); (2) this tab, behind Developing-tools mode; (3) the Depth bank; (4) the deck; (5) the extension below, once the core lesson has been taught.
+
+### Extension: three given ratios (four-part answer)
+
+Not in the first build, and not a fourth level (a tool has three). Offered later as a Question Option on Level 3 (or its own lesson step), once Harry has taught the core lesson. Two shapes, both four columns **A, B, C, D**, three given rows then the scaled rows then the answer:
+
+| Shape | Given | Why it is different |
+|---|---|---|
+| **Chain** | `A : B`, `B : C`, `C : D` | Two links to make equal (B, then C). Scaling B : C to match A : B changes C, so `C : D` must then be scaled to match the new C. Taught as: link the first two, then link the result to the third. |
+| **Star** | `A : B`, `B : C`, `B : D` | One shared part (B) in all three ratios: scale all three to the lowest common multiple of the three B values. A common factor appears naturally (3, 4, 6 → 12, not 72). |
+
+Worked checks: chain `A : B = 2 : 3`, `B : C = 4 : 5`, `C : D = 3 : 7` → B is 3 and 4, scale by 4 and 3 → `8 : 12`, `12 : 15`; C is now 15, scale `C : D` by 5 → `15 : 35` → **8 : 12 : 15 : 35**. Star `A : B = 2 : 3`, `B : C = 4 : 5`, `B : D = 6 : 7` → B: 12 → `8 : 12`, `12 : 15`, `12 : 14` → **8 : 12 : 15 : 14**. The answer is again always in simplest form.
+
+Needs: a four-column table (the arrows-that-skip-rows change covers it), and a decision on how the chain is drawn (one table with sequential scaled rows, or two tables).
 
 ---
 
@@ -171,3 +187,4 @@ Order of work (each its own small merge, `AGENTS.md`): (1) any shared ratio-tabl
 2. **The common-factor case** (shared parts 4 and 6, so the LCM is 12, not 24) sits between your "scale one side" and "no shared factor". This draft puts it in Level 3. Should it be its own level or lesson step instead?
 3. **Reordered letters** (`B : A` and `B : C`): Level 3 as drafted. Is that wanted, or left out of this lesson?
 4. **Contexts:** bare letters for Levels 1–2, a context for Level 3 only. Or letters throughout?
+5. **Extension (`A : B`, `B : C`, `C : D` and `A : B`, `B : C`, `B : D`):** as a Level 3 option, or its own lesson step? And do you want the chain and the star in the same lesson, or the chain first?
