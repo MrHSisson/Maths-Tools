@@ -1,11 +1,11 @@
 import { useId } from "react";
 import { type Fr } from "./dim";
 import { type GLine, type Objective, type Pt, hasInterior, isEnclosed, isStrictLine, regionVertices, toNum } from "./lpGraph";
-import { type GWin, constraintText, fmtPt, graphWindow, lineSegment, regionPolygon, unwantedPolygon, type XY } from "./lpGraphView";
+import { type GWin, constraintText, fmtPt, graphWindow, lineSegment, regionPolygon, type XY } from "./lpGraphView";
 
 // The region picture of the Graphical LP tool (specs/linear-programming-graphical.md, section 4). It is a coordinate graph of lines, half-planes and points, which none
 // of the eight core representations can show (docs/reference/pictures.md), so it is its own picture: axes with whole-number ticks, each boundary drawn continuous (or
-// dotted when strict) and labelled with its constraint, the unwanted side of each line hatched (shade out) or the region tinted (shade in), R inside an enclosed
+// dotted when strict) and marked with a letter, its constraint written in a key below the graph, short slanted ticks along each boundary on its unwanted side (shade out) or the region tinted (shade in), R inside an enclosed
 // region, corner points with their coordinates, the sliding objective lines and the whole-number points. The stepper reveals it a piece at a time, and the window
 // is worked out from the whole problem, so the picture never changes size as it fills (R32). It is one <svg> with data-q-index (R31) and no fixed pixel height.
 
@@ -30,8 +30,10 @@ export interface GraphView {
   win?: GWin;
 }
 
-const W = 520, H = 420, ML = 40, MR = 16, MT = 14, MB = 36;
-const PW = W - ML - MR, PH = H - MT - MB;
+const W = 520, PLOT_H = 420, ML = 40, MR = 16, MT = 14, MB = 36;
+const PW = W - ML - MR, PH = PLOT_H - MT - MB;
+const KEY_ROW = 26;
+const LETTERS = "ABCDEF";
 const INK = "#0f172a", MUTED = "#64748b", GRIDC = "#e2e8f0", OBJ = "#1d4ed8", BEST = "#b91c1c";
 const LINE_COLOURS = ["#0f766e", "#7c3aed", "#b45309", "#be123c", "#0369a1"];
 
@@ -51,6 +53,28 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
   const cx = regionVs.length ? regionVs.reduce((s, v) => s + toNum(v[0]), 0) / regionVs.length : 0;
   const cy = regionVs.length ? regionVs.reduce((s, v) => s + toNum(v[1]), 0) / regionVs.length : 0;
   const dot = (p: Pt) => [X(toNum(p[0])), Y(toNum(p[1]))] as const;
+  // the key below the graph has a row for every line of the problem (and the objective), so its height, and the picture's, is the same at every step
+  const keyRows = Math.ceil(lines.length / 2) + (view.objective?.label ? 1 : 0);
+  const H = PLOT_H + keyRows * KEY_ROW + 6;
+  // short slanted ticks along a line, on the side it rules out (the unwanted side), like a hand-drawn boundary
+  const ticksFor = (l: GLine, seg: readonly [XY, XY]) => {
+    const [p, q] = seg[0][0] < seg[1][0] || (seg[0][0] === seg[1][0] && seg[0][1] < seg[1][1]) ? [seg[0], seg[1]] : [seg[1], seg[0]];
+    const ux = X(q[0]) - X(p[0]), uy = Y(q[1]) - Y(p[1]);
+    const len = Math.hypot(ux, uy) || 1;
+    const sgn = l.op === "≤" || l.op === "<" ? 1 : -1; // the unwanted side is where a·x + b·y moves towards the other way
+    let nx = sgn * (l.a / win.xMax) * PW, ny = -sgn * (l.b / win.yMax) * PH;
+    const nl = Math.hypot(nx, ny) || 1;
+    nx /= nl; ny /= nl;
+    const n = Math.max(2, Math.floor(len / 17));
+    return Array.from({ length: n }, (_, k) => {
+      const t = (k + 0.5) / n;
+      const x0 = X(p[0]) + ux * t, y0 = Y(p[1]) + uy * t;
+      const L = 13;
+      // lean along the line as well as away from it
+      const x1 = x0 + L * (0.72 * nx + 0.5 * (ux / len)), y1 = y0 + L * (0.72 * ny + 0.5 * (uy / len));
+      return <line key={k} x1={x0} y1={y0} x2={x1} y2={y1} />;
+    });
+  };
 
   return (
     <svg
@@ -62,9 +86,6 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
       {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >
       <defs>
-        <pattern id={`hatch${uid}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="7" stroke="#94a3b8" strokeWidth="1.6" />
-        </pattern>
         <marker id={`arrow${uid}`} markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill={OBJ} /></marker>
         <clipPath id={`clip${uid}`}><rect x={ML} y={MT} width={PW} height={PH} /></clipPath>
       </defs>
@@ -76,9 +97,11 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
         </g>
       )}
       <g clipPath={`url(#clip${uid})`}>
-        {view.shading === "in"
-          ? shaded > 0 && <path d={path(regionPolygon(lines.slice(0, shaded), win))} fill="#bfdbfe" fillOpacity="0.55" />
-          : lines.slice(0, shaded).map((l, i) => <path key={i} d={path(unwantedPolygon(l, win))} fill={`url(#hatch${uid})`} opacity="0.85" data-shade-out="" />)}
+        {view.shading === "in" && shaded > 0 && <path d={path(regionPolygon(lines.slice(0, shaded), win))} fill="#bfdbfe" fillOpacity="0.55" />}
+        {view.shading !== "in" && lines.slice(0, shaded).map((l, i) => {
+          const seg = lineSegment(l, win);
+          return seg ? <g key={i} stroke={LINE_COLOURS[i % LINE_COLOURS.length]} strokeWidth="1.8" strokeLinecap="round" data-shade-out="">{ticksFor(l, seg)}</g> : null;
+        })}
       </g>
       {/* axes and ticks */}
       <g stroke={INK} strokeWidth="1.6">
@@ -103,18 +126,32 @@ export default function LpGraphPicture({ view, qIndex }: { view: GraphView; qInd
           return seg ? <line key={`o${i}`} x1={X(seg[0][0])} y1={Y(seg[0][1])} x2={X(seg[1][0])} y2={Y(seg[1][1])} stroke={OBJ} strokeWidth="2" strokeDasharray="9 6" data-objective={i} /> : null;
         })}
       </g>
-      {/* line labels, at the end of each visible segment */}
-      <g fontSize="15" fontFamily="system-ui, sans-serif" fontWeight="600">
+      {/* a letter at the end of each line, and the key below the graph */}
+      <g fontSize="15" fontFamily="system-ui, sans-serif" fontWeight="700">
         {drawnLines.map((l, i) => {
           const seg = lineSegment(l, win);
           if (!seg) return null;
           // the end that is higher up (the right-hand one for a horizontal line): clear of the corner labels on the x-axis
           const p = seg[0][1] !== seg[1][1] ? (seg[0][1] > seg[1][1] ? seg[0] : seg[1]) : seg[0][0] > seg[1][0] ? seg[0] : seg[1];
-          const atRight = p[0] >= win.xMax - 1e-9;
-          const end = atRight ? { x: X(p[0]) - 6, y: Y(p[1]) - 8, a: "end" as const } : { x: X(p[0]) + 8, y: Y(p[1]) + (p[1] >= win.yMax - 1e-9 ? 16 : -8), a: "start" as const };
-          return <text key={i} x={end.x} y={end.y} textAnchor={end.a} fill={LINE_COLOURS[i % LINE_COLOURS.length]} stroke="#fff" strokeWidth="3" paintOrder="stroke">{constraintText(l)}</text>;
+          const atRight = p[0] >= win.xMax - 1e-9, atTop = p[1] >= win.yMax - 1e-9;
+          const x = atRight ? X(p[0]) - 12 : atTop ? X(p[0]) + 12 : X(p[0]) + 12;
+          const y = atTop ? Y(p[1]) + 18 : Y(p[1]) - 6;
+          return <text key={i} x={x} y={y} textAnchor="middle" fill={LINE_COLOURS[i % LINE_COLOURS.length]} stroke="#fff" strokeWidth="3" paintOrder="stroke">{LETTERS[i]}</text>;
         })}
-        {view.objective?.label && <text x={ML + 10} y={MT + 20} fill={OBJ}>{view.objective.label}</text>}
+      </g>
+      <g fontSize="16" fontFamily="system-ui, sans-serif" data-key="">
+        {lines.map((l, i) => {
+          if (i >= drawn) return null;
+          const col = i % 2, row = Math.floor(i / 2);
+          const x = ML + col * (PW / 2), y = PLOT_H + row * KEY_ROW + 18;
+          return (
+            <g key={i}>
+              <line x1={x} y1={y - 5} x2={x + 26} y2={y - 5} stroke={LINE_COLOURS[i % LINE_COLOURS.length]} strokeWidth="2.6" strokeDasharray={isStrictLine(l) ? "3 6" : undefined} strokeLinecap="round" />
+              <text x={x + 34} y={y} fill={INK}><tspan fontWeight="700" fill={LINE_COLOURS[i % LINE_COLOURS.length]}>{LETTERS[i]}</tspan>{"  "}{constraintText(l)}</text>
+            </g>
+          );
+        })}
+        {view.objective?.label && <text x={ML} y={PLOT_H + Math.ceil(lines.length / 2) * KEY_ROW + 18} fill={OBJ}>{view.objective.label}</text>}
       </g>
       {/* the arrow of increasing objective value */}
       {view.objective?.arrow && (() => {

@@ -77,7 +77,7 @@ describe("the picture", () => {
     expect(count(h, "data-dotted")).toBe(2);
     expect(count(html({ lines: FERRY }), "data-dotted")).toBe(0);
   });
-  it("hatches one unwanted side per shaded line (shade out), or tints the region once (shade in)", () => {
+  it("puts ticks on the unwanted side of each shaded line (shade out), or tints the region once (shade in)", () => {
     expect(count(html({ lines: FERRY, shading: "out" }), "data-shade-out")).toBe(2);
     expect(count(html({ lines: FERRY, shading: "out", shaded: 1 }), "data-shade-out")).toBe(1);
     const inn = html({ lines: FERRY, shading: "in" });
@@ -93,6 +93,10 @@ describe("the picture", () => {
     const h = html({ lines: FERRY, vertices: regionVertices(FERRY) });
     expect(h).toContain("5x + 6y ≤ 50");
     expect(h).toContain("2x + 4y ≤ 25");
+    // the equations are in the key below the graph, not on the lines: each is written once, inside the key group
+    const key = h.slice(h.indexOf("data-key"));
+    expect(key).toContain("5x + 6y ≤ 50");
+    expect(h.slice(0, h.indexOf("data-key"))).not.toContain("5x + 6y ≤ 50");
     expect(count(h, "data-vertex")).toBe(4);
     expect(h).toContain("(6.25, 3.125)");
     expect(count(html({ lines: FERRY, drawn: 1 }), "data-line=")).toBe(1);
