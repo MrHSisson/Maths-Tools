@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 import katex from "katex";
 import { runSpec, objectiveOf, pathStats, readTab, type SxSpec } from "../shared/decision/lpSimplex";
 import { wholeAnalysis, wholeNice } from "../shared/decision/lpSimplexWhole";
-import { generateSimplex, nice, BUDGET, type SxKind, type SxOptions } from "../shared/decision/lpSimplexGen";
+import { generateSimplex, isDegenerate, nice, BUDGET, type SxKind, type SxOptions } from "../shared/decision/lpSimplexGen";
 import { solveSimplex, questionBlocks } from "../shared/decision/lpSimplexSolve";
 import type { DecisionProblem, SxBlock } from "../shared/decision/types";
 
@@ -156,10 +156,10 @@ describe("whole numbers: is it practical?", () => {
     expect(yes).toBeGreaterThan(10);
     expect(no).toBeGreaterThan(10);
   });
-  it("ties and a θ of 0 turn up naturally from Level 2, and the working says what to do", () => {
+  it("ties and a θ of 0 turn up from Level 2 when degenerate cases are allowed, and the working says what to do", () => {
     let ties = 0, zeros = 0, noted = 0;
     for (let i = 0; i < 500; i++) {
-      const q = generateSimplex(2, OPT("solve", { forms: ["standard"], context: ["bare"] }));
+      const q = generateSimplex(2, OPT("solve", { forms: ["standard"], context: ["bare"], allowDegenerate: true }));
       const run = runSpec(q.data.spec);
       if (run.tie) ties++;
       if (run.iters.some((it) => it.thetas.some((x) => x.value[0] === 0 && x.row === it.row))) zeros++;
@@ -168,6 +168,13 @@ describe("whole numbers: is it practical?", () => {
     expect(ties).toBeGreaterThan(0);
     expect(zeros).toBeGreaterThan(0);
     expect(noted).toBe(ties);
+  });
+  it("degenerate cases are never drawn unless they are allowed", () => {
+    for (const level of [2, 3]) for (let i = 0; i < 150; i++) {
+      // (an equality is built through the optimum, so it is degenerate by design and is left out)
+      const q = generateSimplex(level, OPT("solve", { forms: level === 3 ? ["min", "ge", "lower"] : ["standard"], context: ["bare"] }));
+      expect(isDegenerate(runSpec(q.data.spec)), `level ${level}`).toBe(false);
+    }
   });
   it("Solve can ask the whole-number question too, and the question says so", () => {
     for (const kind of ["solve"] as SxKind[]) {

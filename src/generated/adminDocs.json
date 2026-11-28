@@ -1087,7 +1087,7 @@
    "title": "Critical Path Analysis: split into skill tools",
    "status": "building",
    "measure": "",
-   "updated": "2026-11-26 (chunk 6: exam page built, old tool retired; waiting for merge)",
+   "updated": "2026-11-26 (chunk 6: exam page built, old tool retired; merged; rounding-up list below)",
    "sections": [
     {
      "title": "Intention",
@@ -1157,7 +1157,7 @@
      "blocks": [
       {
        "t": "p",
-       "s": "1. Harry reviews and merges (no PR yet). After the merge, check the five tools on the live site. 2. The lesson deck `resource-levelling` is **left as it is, by Harry's decision (2026-11-26)**. Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it, and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it later, change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`). 3. Later: the exam-paper tool the exam page is meant to grow into (a whole paper, mixed chains), and the dashboard Review notes for the five tools."
+       "s": "Rounding up after the merge (Harry asked for these to be noted, 2026-11-26): 1. **The exam side needs more work** (Harry). The exam page (`/cpa-exam`) is a thin page over the eleven existing chains; what to change is still to be decided. It is meant to grow into an exam-paper tool (a whole paper, mixed chains). See also `docs/pathways/decision-exam-questions.md`. 2. **The `resource-levelling` lesson deck is left unattached** (Harry's decision). Its data still names the old tool (`tool: critical-path`, `toolPath: /critical-path`), so Cascade Charts and Resources does not list it and its link goes through the redirect to Activity Networks (it names no tab), not to levelling. To attach it: change both fields to `cpa-charts` and `/cpa-charts` in `src/decks/data/resource-levelling.json` and in the shared copy (`npm run deck`). 3. **Dashboard Review notes** for the five tools (Activity Networks, Times Float and Critical Paths, Changes and Reasoning, Cascade Charts and Resources, Critical Path Exam Questions), through the dashboard notes API (`AGENTS.md`). 4. **Phone and tablet look** by eye: Changes and Reasoning and Cascade Charts and Resources on a phone; the exam page on a phone and a tablet. (The shell smoke check passes for all five.) 5. **Handoff block** \"split Critical Path Analysis into four skill tools\": delete once merged. Then delete this pathway file when items 1 to 4 are settled, with a summary in the Build Log (the Build Log block for the split is written)."
       }
      ]
     },

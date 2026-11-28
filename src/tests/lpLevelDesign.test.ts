@@ -101,12 +101,13 @@ describe("The Simplex tool", () => {
       expect(runSpec(p3.spec).iters[0].start).toBe(true);
     }
   });
-  it("Read a tableau: Level 1 the optimal tableau; Level 2 one that is not yet optimal", () => {
+  it("Read a tableau: Level 1 the optimal tableau; Level 2 one that may or may not be optimal", () => {
     for (let i = 0; i < 40; i++) {
       const a = generateSimplex(1, { ...ALL, kind: "interpret" }).data;
       expect(a.at).toBe(runSpec(a.spec).tabs.length - 1);
       const b = generateSimplex(2, { ...ALL, kind: "interpret" }).data;
-      expect(b.at).toBeLessThan(runSpec(b.spec).tabs.length - 1);
+      expect(b.at).toBeGreaterThanOrEqual(1);
+      expect(b.at).toBeLessThanOrEqual(runSpec(b.spec).tabs.length - 1);
     }
   });
   it("Is it practical?: Level 1 rounding down is the best plan; Level 2 it is not; Level 3 it is not and rounding to the nearest breaks a constraint", () => {
