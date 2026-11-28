@@ -9,9 +9,9 @@
 ## Progress
 
 - Tools open their own checklist. On a laptop the plan docks beside the tool.
-- Browse Site, Developments or Resources. Tap the arrow to expand or the title to open the card.
+- Browse Site or Developments. Tap the arrow to expand or the title to open the card.
 - Site includes the green-dot Feature tracker, Feature guide and build guide.
-- Developments shows Pathways and open Tasks. Earlier notes open in the panel.
+- Developments shows the active pathways. Tasks has one list with a Show completed option.
 - Teaching decks have their own section outside the plan.
 - Cards show descriptions, progress and the area’s own tree. Task rows stay short.
 - Subtools and features have labels. Tasks have checkboxes.

@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { ArrowRight, ChevronDown, ChevronRight, GitFork, Home, Maximize2, Minimize2, MoreHorizontal, Pin, Plus, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { routesById, contextualTools, treeForRoot } from "./catalogue";
-import { branchClassifications, descendants, makeNode, planTrees, type BranchClassification, type PlanNode, type PlanTree, type ProjectPlan } from "../../api/_projectPlan";
+import { routesById, contextualTools, treeForRoot, type VisiblePlanTree } from "./catalogue";
+import { branchClassifications, descendants, makeNode, type BranchClassification, type PlanNode, type ProjectPlan } from "../../api/_projectPlan";
 import { useProjectPlan } from "./useProjectPlan";
 import { FEATURES, TOOLS } from "../admin/facts";
 import { ToolsSection } from "../admin/ToolsSection";
@@ -13,7 +13,8 @@ import { MECHANICS_PAIRINGS } from "../tools/FurtherMechanics/mechanicsSpec";
 const control = "rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-100 disabled:opacity-40";
 const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 const iconButton = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30";
-const treeLabels: Record<PlanTree, string> = { site: "Site", developments: "Developments", resources: "Resources" };
+const treeTabs = ["site", "developments"] as const;
+const treeLabels = { site: "Site", developments: "Developments" };
 const matrixStore = emptyStore();
 const viewControl = "min-h-11 shrink-0 whitespace-nowrap border-b-2 border-transparent px-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 aria-pressed:border-teal-700 aria-pressed:font-semibold aria-pressed:text-teal-900";
 const mapAction = "inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-md px-2 text-xs font-semibold text-teal-800 hover:bg-teal-50";
@@ -96,7 +97,9 @@ function ItemName({ node }: { node: PlanNode }) {
   </span>;
 }
 
-function AddItem({ parent, plan, save, branch = false, tree }: { parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean; tree?: PlanTree }) {
+function AddItem({ parent, plan, save, branch = false, tree }: {
+  parent: string | null; plan: ProjectPlan; save: Save; branch?: boolean; tree?: VisiblePlanTree;
+}) {
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -104,7 +107,7 @@ function AddItem({ parent, plan, save, branch = false, tree }: { parent: string 
     if (!title.trim()) return;
     const type = new FormData(event.currentTarget).get("type");
     const classification = branchClassifications.find(candidate => candidate === type);
-    const node = makeNode(crypto.randomUUID(), parent, title.trim(), type === "task" ? "task" : "branch");
+    const node = makeNode(crypto.randomUUID(), parent, title.trim(), branch || classification || type === "branch" ? "branch" : "task");
     if (classification) node.classification = classification;
     if (parent === null && tree) node.tree = tree;
     if (await save({ ...plan, nodes: [...plan.nodes, node] })) setTitle("");
@@ -112,11 +115,11 @@ function AddItem({ parent, plan, save, branch = false, tree }: { parent: string 
   return <div>
     <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-teal-800 hover:underline"
       aria-expanded={open} onClick={() => setOpen(value => !value)}>
-      <Plus size={16} aria-hidden /> {branch ? "Add area" : "Add task"}
+      <Plus size={16} aria-hidden /> {branch ? tree === "developments" ? "Add development" : "Add area" : "Add task"}
     </button>
     {open && <form onSubmit={submit} className="flex flex-wrap items-center gap-2 pb-2">
       <input className={`${input} flex-1 basis-36`} aria-label={branch ? "New project branch" : "New checklist item"} placeholder={branch ? "New project branch" : "New checklist item"} maxLength={120} value={title} onChange={event => setTitle(event.target.value)} required autoFocus />
-      {!branch && <select className={input} aria-label="Item type" name="type" defaultValue="task">
+      {!branch && parent !== null && <select className={input} aria-label="Item type" name="type" defaultValue="task">
         <option value="task">Task</option>
         <ClassificationOptions />
       </select>}
@@ -160,11 +163,11 @@ function MapNode({ node, index, select, expandedIds, toggle, area = false, showS
   </li>;
 }
 
-function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, close }: {
+function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree }: {
   plan: ProjectPlan; index: PlanIndex; select: (id: string) => void; save: Save;
-  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; tree: PlanTree; close: () => void;
+  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; tree: VisiblePlanTree;
 }) {
-  const roots = (index.children.get(null) ?? []).filter(node => treeForRoot(node) === tree);
+  const roots = (index.children.get(null) ?? []).filter(node => node.kind === "branch" && treeForRoot(node) === tree);
   const heading = tree === "developments" ? "Pathways" : `${treeLabels[tree]} tree`;
   const visible = plan.nodes.filter(node => !index.deckItems.has(node.id));
   const pinned = visible.filter(node => node.pinned);
@@ -186,11 +189,6 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
             </div>
           </details>
         </>}
-        {tree === "developments" && <>
-          <button className={mapAction} onClick={() => select("all-tasks")}>Tasks</button>
-          <button className={mapAction} onClick={() => select("earlier-pathways")}>Earlier pathways</button>
-        </>}
-        {tree === "resources" && <Link className={mapAction} to="/further-maths-flashcards" onClick={close}>Flashcards</Link>}
       </div>
     </div>
     {pinned.length > 0 && <details className="border-b border-slate-200">
@@ -221,18 +219,23 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
 
 }
 
-function OpenTasks({ plan, index, save, select }: { plan: ProjectPlan; index: PlanIndex; save: Save; select: (id: string) => void }) {
+function Tasks({ plan, index, save, select }: { plan: ProjectPlan; index: PlanIndex; save: Save; select: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const tasks = plan.nodes.filter(node => node.kind === "task" && !node.done && !index.deckItems.has(node.id) && node.title.toLowerCase().includes(needle));
-  return <section className="space-y-2">
-    <h3 className="text-sm font-semibold">Open tasks</h3>
+  const tasks = plan.nodes.filter(node => {
+    if (node.kind !== "task" || index.deckItems.has(node.id)) return false;
+    const parent = node.parent ? index.byId.get(node.parent)?.title : undefined;
+    return node.title.toLowerCase().includes(needle) || !!parent?.toLowerCase().includes(needle);
+  });
+  return <section className="space-y-2" aria-label="Tasks">
+    <div className="flex flex-wrap items-center justify-between gap-x-2 border-b border-slate-200">
+      <h3 className="text-sm font-semibold">Tasks</h3>
+      <AddItem parent={null} plan={plan} save={save} tree="developments" />
+    </div>
     <input className={`${input} w-full`} aria-label="Search tasks" placeholder="Search tasks"
       value={query} onChange={event => setQuery(event.target.value)} />
-    {tasks.length ? <Checklist children={tasks} plan={plan} save={save} select={select} />
-      : <p className="py-2 text-sm text-slate-600">{needle ? "No matching tasks." : "No open tasks."}</p>}
-    <button className="min-h-11 text-sm font-medium text-teal-800 hover:underline"
-      onClick={() => select("earlier-tasks")}>Earlier tasks</button>
+    {!tasks.some(node => !node.done) && <p className="py-2 text-sm text-slate-600">{needle ? "No matching open tasks." : "No open tasks."}</p>}
+    <Checklist children={tasks} plan={plan} save={save} select={select} context={index.byId} />
   </section>;
 }
 
@@ -240,18 +243,26 @@ function updateNode(plan: ProjectPlan, id: string, patch: Partial<PlanNode>): Pr
   return { ...plan, nodes: plan.nodes.map(node => node.id === id ? { ...node, ...patch } : node) };
 }
 
-function Checklist({ children, plan, save, select, limit }: { children: PlanNode[]; plan: ProjectPlan; save: Save; select: (id: string) => void; limit?: number }) {
+function Checklist({ children, plan, save, select, limit, context }: {
+  children: PlanNode[]; plan: ProjectPlan; save: Save; select: (id: string) => void;
+  limit?: number; context?: ReadonlyMap<string, PlanNode>;
+}) {
   const complete = children.filter(node => node.kind === "task" && node.done);
   const open = children.filter(node => node.kind !== "task" || !node.done);
   const visible = limit === undefined ? open : open.slice(0, limit);
   const more = open.slice(visible.length);
   function row(node: PlanNode) {
+    const parentTitle = node.parent ? context?.get(node.parent)?.title : undefined;
     return <li key={node.id} className="flex min-w-0 items-center gap-1">
       {node.kind === "task" ? <label className="grid size-11 shrink-0 cursor-pointer place-items-center">
         <input type="checkbox" className="size-4 accent-teal-700" checked={node.done} aria-label={node.title} onChange={event => void save(updateNode(plan, node.id, { done: event.target.checked }))} />
       </label> : <GitFork size={15} className="mx-3.5 shrink-0 text-slate-400" aria-hidden />}
       <button onClick={() => select(node.id)} className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 py-1.5 text-left text-sm hover:underline">
-        <ItemName node={node} /><ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
+        <span className="min-w-0">
+          <ItemName node={node} />
+          {parentTitle && <span className="block break-words text-xs text-slate-600">{parentTitle}</span>}
+        </span>
+        <ChevronRight size={16} className="shrink-0 text-slate-500" aria-hidden />
       </button>
     </li>;
   }
@@ -262,7 +273,7 @@ function Checklist({ children, plan, save, select, limit }: { children: PlanNode
       <ul className="divide-y divide-slate-200">{more.map(row)}</ul>
     </details>}
     {complete.length > 0 && <details className="border-t border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm text-slate-600">Completed ({complete.length})</summary>
+      <summary className="min-h-11 cursor-pointer py-3 text-sm text-slate-600">{context ? "Show completed" : "Completed"} ({complete.length})</summary>
       <ul className="divide-y divide-slate-200">{complete.map(row)}</ul>
     </details>}
   </>;
@@ -292,9 +303,9 @@ function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: Pr
     }
     const classification = branchClassifications.find(candidate => candidate === data.get("type"));
     const location = String(data.get("parent"));
-    const newTree = planTrees.find(tree => location === `tree:${tree}`);
+    const newTree = treeTabs.find(tree => location === `tree:${tree}`);
     const parent = newTree ? null : location || null;
-    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs, tree: newTree ?? node.tree }))) close();
+    if (title && await save(updateNode(plan, node.id, { title, overview, classification, parent, needs, tree: newTree && (node.parent !== null || newTree !== treeForRoot(node)) ? newTree : node.tree }))) close();
   }
 
   return <form className="grid min-w-0 gap-3 py-2" onSubmit={submit}>
@@ -315,7 +326,7 @@ function EditItem({ node, plan, index, save, close }: { node: PlanNode; plan: Pr
         <summary className={disclosure}>Change location</summary>
         <label className={`${label} pb-3`}>Move under
           <select className={`${input} w-full`} name="parent" defaultValue={node.parent ?? `tree:${treeForRoot(node)}`}>
-            {planTrees.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
+            {treeTabs.map(tree => <option key={tree} value={`tree:${tree}`}>{treeLabels[tree]} tree</option>)}
             {visible.filter(candidate => !blocked.has(candidate.id)).map(candidate => (
               <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
             ))}
@@ -550,7 +561,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
   const selectedId = selection?.route === pageKey ? selection.id : tool?.id;
   const selected = selectedId ? index.byId.get(selectedId) : undefined;
   const reviews = selectedId === "review-queue";
-  const [tree, setTree] = useState<PlanTree>("site");
+  const [tree, setTree] = useState<VisiblePlanTree>("site");
   const [trackerOpened, setTrackerOpened] = useState(false);
   const returnView = useRef<string | null>(null);
   const referenceFrom = useRef<string | null>(null);
@@ -579,7 +590,7 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
     setSelection({ route: pageKey, id });
   }
 
-  function selectTree(next: PlanTree) {
+  function selectTree(next: VisiblePlanTree) {
     setTree(next);
     select(null);
   }
@@ -665,8 +676,9 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
           }}><X size={19} /></button>
         </div>
         <nav aria-label="Project plan views" className="flex items-center gap-x-2 overflow-x-auto">
-          {planTrees.map(key => <button key={key} className={viewControl}
+          {treeTabs.map(key => <button key={key} className={viewControl}
             aria-pressed={!selectedId && tree === key} onClick={() => selectTree(key)}>{treeLabels[key]}</button>)}
+          <button className={viewControl} aria-pressed={selectedId === "all-tasks"} onClick={() => select("all-tasks")}>Tasks</button>
           {tool && <button className={`${viewControl} ml-auto`} aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
         </nav>
       </header>
@@ -688,8 +700,8 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
               <button className="min-h-11 text-sm text-teal-800 hover:underline" onClick={() => select(referenceFrom.current)}>Back</button>
               <PlanReference key={selectedId} view={selectedId} />
             </>
-            : selectedId === "all-tasks" ? <OpenTasks plan={plan} index={index} save={save} select={select} />
-            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} tree={tree} close={() => setOpen(false)} />}
+            : selectedId === "all-tasks" ? <Tasks plan={plan} index={index} save={save} select={select} />
+            : <ProjectMap key="map" plan={plan} index={index} select={select} save={save} expandedIds={expandedIds} toggle={toggleBranch} tree={tree} />}
         </fieldset>}
       </div>
     </aside>}

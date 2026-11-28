@@ -26,8 +26,10 @@ const catalogueNodes = CATEGORIES.flatMap(category => {
 
 const siteIds = new Set(catalogueNodes.map(node => node.id));
 
-export function treeForRoot(node: PlanNode): PlanTree {
-  if (node.tree) return node.tree;
+export type VisiblePlanTree = Exclude<PlanTree, "resources">;
+
+export function treeForRoot(node: PlanNode): VisiblePlanTree {
+  if (node.tree) return node.tree === "resources" ? "site" : node.tree;
   return siteIds.has(node.id) ? "site" : "developments";
 }
 
