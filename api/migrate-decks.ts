@@ -1,6 +1,7 @@
+import { matchesSecret } from "./_devSession.js";
 // TEMPORARY. One-off copy of everything the decks API kept in Vercel Blob into Postgres (api/_deckStore.ts). Delete this file, and the
 // @vercel/blob dependency if nothing else uses it, once the move is confirmed.
-//   POST /api/migrate-decks            {dryRun?: true, ids?: ["deck-id", …]}   needs  x-admin-key: <ADMIN_KEY>
+//   POST /api/migrate-decks            {dryRun?: true, ids?: ["deck-id", …]}   needs  x-admin-key: <DEVELOPING_TOOLS_API_KEY>
 // `ids` limits the decks (and their history) to those, so a big store can be moved in pieces if one call runs out of time (vercel.json allows 60 s).
 // Safe to run again: a deck is written only if the database has none or an older one, and history and published copies are upserts.
 // Nothing in Blob is changed or deleted. The answer lists what was found and what was written, so the counts can be compared by eye.
@@ -24,9 +25,9 @@ async function readBlob<T>(path: string): Promise<T | null> {
 }
 
 export async function POST(req: Request) {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return json({ error: "ADMIN_KEY is not configured" }, 503);
-  if (req.headers.get("x-admin-key") !== key) return json({ error: "Not authorised" }, 401);
+  const key = process.env.DEVELOPING_TOOLS_API_KEY;
+  if (!key) return json({ error: "Developing tools API access is not configured" }, 503);
+  if (!matchesSecret(req.headers.get("x-admin-key"), key)) return json({ error: "Not authorised" }, 401);
   const body = (await req.json().catch(() => ({}))) as { dryRun?: boolean; ids?: string[] };
   const dry = body.dryRun === true;
   const db = getDb(); await ensureSchema(db);

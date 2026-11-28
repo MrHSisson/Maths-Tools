@@ -27,7 +27,7 @@ const tiles = [];
 const press = async (page, name) => { const b = page.getByRole("button", { name }); if (await b.count()) { await b.first().click(); return true; } return false; };
 try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
-  await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));
+  await page.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
   await serveDeck(page, id, deck);
   const shot = async (label) => { await page.waitForTimeout(450); tiles.push({ label, png: (await page.screenshot()).toString("base64") }); };
   for (const { s, n } of picked) {

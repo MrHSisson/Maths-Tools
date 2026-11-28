@@ -57,6 +57,38 @@ Branch `claude/beautiful-noether-aczmnn` (restarted from the latest `main` after
 Agent: Claude Code
 Notes: no planner Build Log block yet for this session (to add).
 
+## 2026-11-26 — Floating project plan
+
+- In Developing tools mode, a small button opens the project plan on any page. A tool page shows the tool's overview and checklist. Home, hubs and other pages show the expandable project map. The panel follows page changes, including a return home that reloads the site.
+- Edit goals and checklists in the panel, nest and reorder items, pin priorities, and link dependencies. A dedicated queue holds explicit requests for Harry to try something. Decks and the feature tracker are still accessible in the Tools dashboard.
+- The shared plan lives in a private Blob and uses a separate access key. The browser remembers the key after entry. The help in AGENTS.md covers agent access and concurrent edits.
+
+Agent: Codex
+Notes: Floating project plan (Codex), Maths Tools — Build Log.
+
+## 2026-11-26 — Move the Project Plan button
+
+- Drag the floating button with a mouse or touch, or move it with the arrow keys while it has focus. It remembers its position on this browser and stays within the window. Click or tap it to open the plan.
+
+Agent: Codex
+Notes: Move the Project Plan button (Codex), Maths Tools — Build Log.
+
+## 2026-11-26 — Project Plan beside the tool
+
+- The floating Project Plan button opens a panel on the left. On laptop-sized screens, the tool fits beside it in a rounded frame inside the same workspace background as the plan with evenly scaled content and a taller viewport, so the frame uses the available height. Closing the panel returns the tool to full size at the same place on the page.
+- The panel can widen on a laptop and takes the full width on smaller screens. Ink scales with the tool and draws under the pointer.
+
+Agent: Codex
+Notes: Dock the project plan on the left (Codex), Maths Tools — Build Log.
+
+## 2026-11-26 — One Developing tools unlock
+
+- The existing Developing tools password prompt now opens one browser session for Project Plan, Admin, deck editing and the teacher controls. The password is checked on the server.
+- The preview needs a fresh `DEVELOPING_TOOLS_PASSWORD` in Vercel. Agent credentials stay server-side and are documented in AGENTS.md.
+
+Agent: Codex
+Notes: One Developing tools unlock (Codex), Maths Tools — Build Log.
+
 ## 2026-11-26 — Critical Path Analysis: the plan to split it, and the map that keeps old links working
 
 Branch `claude/gallant-fermat-iio2ap`. Nothing changes for teachers yet. The tool is to become four skill tools (Activity Networks; Times, Float and Critical Paths; Changes and Reasoning; Cascade Charts and Resources) with the exam chains opened from the Decision Maths hub, so the tile panel and the Course and Practice switches at the top go. This first piece adds the one map of where each of the 26 old tabs will live (`CriticalPathHomes.ts`) and the redirect that sends an old `/critical-path?tool=…` link (saved lists, printed sheets) to the right tool and tab, with a test that every old tab has exactly one new home. The plan is in `docs/pathways/critical-path-split.md`; the tool, route and hub are not switched until the new tools exist.

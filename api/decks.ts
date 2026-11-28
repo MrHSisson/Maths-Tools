@@ -1,3 +1,4 @@
+import { hasDevSession, matchesSecret } from "./_devSession.js";
 // GET  /api/decks                         → { index }: every shared deck's summary (title, filing, tool, slides by kind, first slide)
 // GET  /api/decks?id=<id>                 → one deck
 // POST /api/decks {deck, base?, by}       → save a deck. With `base` (the version the saver started from) the save is MERGED into the stored deck
@@ -15,7 +16,7 @@
 // POST /api/decks {folders: {deckId, tree, folderIds}} → set the folders a deck is in within one tree (api/_folders.ts)
 // POST /api/decks {folderOp: op}          → change the folders: add / rename / move / reorder / delete one (api/_folders.ts); answers with the whole tree
 // POST /api/decks {publish: deck}         → publish a copy of a deck; {unpublish: <id>} → take it down
-// Everything except the published and public folder GETs needs the header  x-admin-key: <ADMIN_KEY>  (the Developing-tools password), like /api/tool-notes.
+// Everything except the published and public folder GETs needs the header  x-admin-key: <DEVELOPING_TOOLS_API_KEY> , like /api/tool-notes.
 // Storage is Neon Postgres (api/_db.ts, api/_deckStore.ts), schema `maths`. A save reads the deck with its version, merges, and writes only if the
 // version has not moved (retried if another save got in first), so two devices never overwrite each other.
 import { getDb, ensureSchema } from "./_db.js";
@@ -31,9 +32,10 @@ const json = (body: unknown, status = 200, cache = "no-store") =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": cache, "x-deck-merge": "1" } });
 
 function authorised(req: Request): Response | null {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return json({ error: "ADMIN_KEY is not configured" }, 503);
-  return req.headers.get("x-admin-key") === key ? null : json({ error: "Not authorised" }, 401);
+  if (hasDevSession(req)) return null;
+  const key = process.env.DEVELOPING_TOOLS_API_KEY;
+  if (!key && !process.env.DEVELOPING_TOOLS_PASSWORD) return json({ error: "Developing tools API access is not configured" }, 503);
+  return matchesSecret(req.headers.get("x-admin-key"), key) ? null : json({ error: "Not authorised" }, 401);
 }
 
 /** JSON text with object keys in a fixed order: Postgres stores JSON with its own key order, so two equal decks must compare equal whatever order they were written in. */

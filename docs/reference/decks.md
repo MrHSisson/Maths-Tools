@@ -32,7 +32,7 @@ Reached from the **Decks page** (`/deck-gallery`, reached from the "Decks" butto
 
 - **Publishing** is a button in the editor's File menu (**Publish this deck**, **Publish again**, **Unpublish**; `npm run deck -- publish <id>` does the same from the command line). It sends a frozen copy of the deck, with its questions embedded, to the `maths.published_decks` table (the frozen copy and its listing entry together; the two public GETs are cached for a minute); the working copy is untouched and later edits change only the working copy until it is published again.
 - **Reading is open to everyone** (`GET /api/decks?published` and `?published=<id>`); everything else on `/api/decks` still needs the admin key. The Decks page and the read-only player read only the published copies, never the working copy or this device's saved edits. <!-- ref -->
-- **The password** is the Developing-tools password and the same switch: entering it at the editor's prompt turns Developing-tools mode on, and turning that off locks the editor again. It is a light check, not security: the string is in the site's code (`src/devAccess.ts`).
+- **The password** is the Developing-tools password and the same switch: entering it at the editor's prompt turns Developing-tools mode on, and turning that off locks the editor again. The server checks the password and shares the browser session with Admin and the Project Plan. The deck CLI uses the separate `DEVELOPING_TOOLS_API_KEY` environment variable.
 - Published decks come from the website, so the local dev server and an offline device show "can't be listed here". `npm run smoke:published` checks the whole flow with the service simulated. <!-- ref -->
 
 ## The model (`src/decks/types.ts`)

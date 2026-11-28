@@ -43,7 +43,8 @@ function skewWarning() {
 }
 
 const remote = () => {
-  const key = readFileSync("src/devAccess.ts", "utf8").match(/DEV_PASSWORD = "([^"]*)"/)?.[1];
+  const key = process.env.DEVELOPING_TOOLS_API_KEY;
+  if (!key) fail("Set DEVELOPING_TOOLS_API_KEY for the site you are connecting to.");
   return { base: process.env.DECKS_URL ?? "https://maths-tools-phi.vercel.app/api/decks", headers: { "x-admin-key": key, "content-type": "application/json" } };
 };
 
@@ -243,7 +244,7 @@ if (cmd === "list") {
   await withServer(async (url) => {
     const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ["--no-sandbox"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-    await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1"));
+    await page.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
     await serveDeck(page, id, JSON.parse(readFileSync(process.env.DECK_FILE ?? file(id), "utf8")));
     const shots = [];
     const slideData = JSON.parse(readFileSync(process.env.DECK_FILE ?? file(id), "utf8")).slides;

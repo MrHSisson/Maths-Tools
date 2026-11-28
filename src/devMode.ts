@@ -1,40 +1,68 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// DEVELOPING-TOOLS MODE — a global "show me everything unfinished" switch.
-//
-// When ON it reveals in-progress work that is normally hidden from general
-// classroom use:
-//   • tools registered with `enabled: false` (LandingPage shows them, badged DEV)
-//   • Teach decks and lessons (when a tool provides teachingSlides / teachingLessons / lessons)
-//   • the Technique Library, Grapher Lab, the Tools dashboard, and a few
-//     tabs inside live tools (e.g. three Network Flows tabs)
-//
-// The flag is persisted in localStorage and shared across the whole app (and
-// across tabs) via a tiny external store, so any component can read it with the
-// useDevMode() hook and the LandingPage toggle flips it for everyone.
-// ═══════════════════════════════════════════════════════════════════════════════
-
 import { useSyncExternalStore } from "react";
 
-const KEY = "mt-dev-mode";
-const EVT = "mt-dev-mode-change";
+const event = "mt-dev-mode-change";
+const signalKey = "mt-dev-session-change";
+let active = false;
+let requestVersion = 0;
+let listeners = 0;
 
-export const getDevMode = (): boolean => {
-  try { return localStorage.getItem(KEY) === "1"; } catch { return false; }
-};
+export const getDevMode = () => active;
 
-export const setDevMode = (on: boolean): void => {
-  try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* private mode etc. */ }
-  window.dispatchEvent(new Event(EVT));
-};
+function update(next: boolean) {
+  active = next;
+  window.dispatchEvent(new Event(event));
+}
 
-const subscribe = (cb: () => void): (() => void) => {
-  window.addEventListener(EVT, cb);
-  window.addEventListener("storage", cb); // keep tabs in sync
+async function refresh() {
+  const version = ++requestVersion;
+  try {
+    const response = await fetch("/api/dev-session", { cache: "no-store" });
+    const result = await response.json();
+    if (version === requestVersion) update(response.ok && result.active === true);
+  } catch { /* A temporary network error does not end the session. */ }
+}
+
+function storageChanged(event: StorageEvent) {
+  if (event.key === signalKey) void refresh();
+}
+
+async function changeSession(body: { password: string } | { lock: true }): Promise<string | null> {
+  try {
+    const response = await fetch("/api/dev-session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json();
+    if (!response.ok) return result.error ?? "Could not update Developing tools access.";
+    ++requestVersion;
+    update(result.active === true);
+    try { localStorage.setItem(signalKey, crypto.randomUUID()); } catch { /* Storage is unavailable. */ }
+    return null;
+  } catch {
+    return "Could not reach Developing tools access.";
+  }
+}
+
+export const unlockDevMode = (password: string) => changeSession({ password });
+export const lockDevMode = () => changeSession({ lock: true });
+export const refreshDevMode = () => void refresh();
+
+function subscribe(notify: () => void) {
+  window.addEventListener(event, notify);
+  if (listeners++ === 0) {
+    try { localStorage.removeItem("mt-project-plan-access"); } catch { /* Storage is unavailable. */ }
+    void refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", storageChanged);
+  }
   return () => {
-    window.removeEventListener(EVT, cb);
-    window.removeEventListener("storage", cb);
+    window.removeEventListener(event, notify);
+    if (--listeners === 0) {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", storageChanged);
+    }
   };
-};
+}
 
-export const useDevMode = (): boolean =>
-  useSyncExternalStore(subscribe, getDevMode, () => false);
+export const useDevMode = () => useSyncExternalStore(subscribe, getDevMode, () => false);

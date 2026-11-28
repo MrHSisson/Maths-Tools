@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calculator, ChevronDown, ChevronRight, Columns, Presentation, FlaskConical, Info, Menu, Monitor, Search, Smartphone, Tablet, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
-import { useDevMode, setDevMode } from '../devMode';
-import { checkDevPassword } from '../devAccess';
+import { useDevMode, lockDevMode, unlockDevMode } from '../devMode';
 import { setViewOverride, useViewOverride, setSwapSides, useSwapSides, useLayoutMode, type ViewOverride } from '../shared/layoutMode';
 import { resetAboutSeen } from '../shared/about';
 
@@ -254,7 +253,7 @@ export default function LandingPage(): JSX.Element {
   }, [menuOpen]);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const [subjectFilter, setSubjectFilter] = useState<string>('GCSE Maths');
   // the old /?tab=decks address now lands on the Decks page
   useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'decks') navigate('/deck-gallery', { replace: true }); }, [navigate]);
@@ -314,7 +313,7 @@ export default function LandingPage(): JSX.Element {
             <a href="/deck-gallery" onClick={(e) => { e.preventDefault(); navigate('/deck-gallery'); }} className="flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-white hover:bg-blue-800">
               <Presentation size={20} /><span>Decks</span>
             </a>
-            {/* Menu — developing tools (needs the password, src/devAccess.ts) and "view as" (phone / tablet / laptop); room for more settings later */}
+            {/* Menu — developing tools (needs a server session) and "view as" (phone / tablet / laptop); room for more settings later */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((o) => !o)}
@@ -368,8 +367,8 @@ export default function LandingPage(): JSX.Element {
                   <div className="border-t border-slate-200 pt-3">
                     <button
                       onClick={() => {
-                        if (devMode) { setDevMode(false); return; }
-                        setUnlockOpen((o) => !o); setPassword(''); setPasswordError(false);
+                        if (devMode) { void lockDevMode(); return; }
+                        setUnlockOpen((o) => !o); setPassword(''); setPasswordError("");
                       }}
                       title="Reveal in-progress tools and the step-by-step Worked Example mode"
                       className="w-full flex items-center justify-between gap-3 text-left"
@@ -386,8 +385,9 @@ export default function LandingPage(): JSX.Element {
                       <form
                         onSubmit={async (e) => {
                           e.preventDefault();
-                          if (checkDevPassword(password)) { setDevMode(true); setUnlockOpen(false); setPassword(''); }
-                          else { setPasswordError(true); }
+                          const error = await unlockDevMode(password);
+                          if (error) setPasswordError(error);
+                          else { setUnlockOpen(false); setPassword(''); }
                         }}
                         className="mt-3 flex flex-col gap-2"
                       >
@@ -398,10 +398,10 @@ export default function LandingPage(): JSX.Element {
                           autoFocus
                           autoComplete="off"
                           value={password}
-                          onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
+                          onChange={(e) => { setPassword(e.target.value); setPasswordError(""); }}
                           className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
                         />
-                        {passwordError && <p className="text-sm text-red-600">That password is not right.</p>}
+                        {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
                         <div className="flex justify-end gap-2">
                           <button type="button" onClick={() => setUnlockOpen(false)} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
                           <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-900 text-white hover:bg-blue-800">Unlock</button>

@@ -92,7 +92,7 @@ const press = async (page, name) => { const b = page.getByRole("button", { name 
 
 try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
-  await page.addInitScript(() => localStorage.setItem("mt-dev-mode", "1")); // the working copy needs Developing-tools mode
+  await page.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
   await serveDeck(page, id, deck);
   for (let s = 1; s <= slides.length; s++) {
     await page.goto(`${base}/decks/${id}?s=${s}`);

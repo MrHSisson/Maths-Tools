@@ -1,7 +1,7 @@
+import { unlockDevMode, useDevMode } from "../../devMode";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Home, Lock, Maximize, Minimize, Settings } from "lucide-react";
 import { Confetti } from "../../shared/components/Confetti";
-import { checkDevPassword } from "../../devAccess";
 
 // Advent Calendar: 24 doors (4 rows of 6), each hiding a name (or a greeting). The teacher types who is behind each door
 // (or pastes a list to fill them in order or at random) and it is kept
@@ -98,12 +98,17 @@ export default function AdventCalendar() {
   const [notice, setNotice] = useState("");
   const [revealed, setRevealed] = useState<number | null>(null);
   const [controlsOpen, setControlsOpen] = useState(false);
-  // the gear asks for the password first, so a stray press never shows the names; the controls lock again each time they close
+  // Only a Developing tools session can open the teacher controls.
   const [asking, setAsking] = useState(false);
   const [pw, setPw] = useState("");
-  const [wrong, setWrong] = useState(false);
-  const closeAsk = () => { setAsking(false); setPw(""); setWrong(false); };
-  const submitPw = () => { if (checkDevPassword(pw)) { closeAsk(); setControlsOpen(true); } else { setWrong(true); setPw(""); } };
+  const [wrong, setWrong] = useState("");
+  const closeAsk = () => { setAsking(false); setPw(""); setWrong(""); };
+  const devMode = useDevMode();
+  const submitPw = async () => {
+    const error = await unlockDevMode(pw);
+    if (error) { setWrong(error); setPw(""); }
+    else { closeAsk(); setControlsOpen(true); }
+  };
   const [now, setNow] = useState(() => new Date());
   const noticeTimer = useRef(0);
   const doneRef = useRef<HTMLButtonElement>(null);
@@ -238,7 +243,7 @@ export default function AdventCalendar() {
         className="absolute right-14 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
         {fs ? <Minimize size={20} /> : <Maximize size={20} />}
       </button>
-      <button type="button" onClick={() => setAsking(true)} aria-label="Teacher controls" title="Teacher controls"
+      <button type="button" onClick={() => devMode ? setControlsOpen(true) : setAsking(true)} aria-label="Teacher controls" title="Teacher controls"
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-[#f1dc9b] opacity-30 transition-opacity hover:opacity-100 focus-visible:opacity-100">
         <Settings size={20} />
       </button>
@@ -276,13 +281,13 @@ export default function AdventCalendar() {
 
       {asking && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-5" onClick={e => { if (e.target === e.currentTarget) closeAsk(); }}>
-          <form role="dialog" aria-modal="true" aria-label="Teacher password" onSubmit={e => { e.preventDefault(); submitPw(); }}
+          <form role="dialog" aria-modal="true" aria-label="Teacher password" onSubmit={e => { e.preventDefault(); void submitPw(); }}
             className="w-full max-w-xs rounded-2xl border-2 border-[#d9b45b] bg-[#082a1f] p-5 shadow-2xl">
             <h2 className="mb-1 text-lg font-bold text-[#f1dc9b]">Teacher controls</h2>
             <p className="mb-3 text-sm text-[#fbf5e6]/80">Enter the password to continue.</p>
-            <input type="password" autoFocus value={pw} onChange={e => { setPw(e.target.value); setWrong(false); }} aria-label="Password"
+            <input type="password" autoFocus value={pw} onChange={e => { setPw(e.target.value); setWrong(""); }} aria-label="Password"
               className="w-full rounded-lg border border-[#d9b45b] bg-[#fbf5e6] px-3 py-2 text-base text-[#3a1017]" />
-            <p role="status" aria-live="polite" className="mt-2 min-h-[1.3em] text-sm font-semibold text-[#f1dc9b]">{wrong ? "That isn’t right. Try again." : ""}</p>
+            <p role="status" aria-live="polite" className="mt-2 min-h-[1.3em] text-sm font-semibold text-[#f1dc9b]">{wrong}</p>
             <div className="mt-2 flex gap-2.5">
               <button type="submit" className={`${btn} border-[#d9b45b] bg-[#d9b45b] text-[#082a1f]`}>Unlock</button>
               <button type="button" onClick={closeAsk} className={`${btn} border-[#d9b45b] text-[#f1dc9b]`}>Cancel</button>

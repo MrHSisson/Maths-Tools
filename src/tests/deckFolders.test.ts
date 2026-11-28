@@ -7,7 +7,7 @@ import { makeTestDb } from "./testDb";
 
 const db = await makeTestDb();
 setDb(db);
-process.env.ADMIN_KEY = "k";
+process.env.DEVELOPING_TOOLS_API_KEY = "k";
 const { POST, GET } = await import("../../api/decks");
 
 const slide = (id: string) => ({ id, family: "teach", title: id, els: [{ id: `${id}-1`, kind: "text", x: 0, y: 0, w: 10, h: 10, text: id, size: 40 }] });

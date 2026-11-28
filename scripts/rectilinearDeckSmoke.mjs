@@ -29,6 +29,7 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
       else data = { index: { decks: deck ? { [deck.id]: { updatedAt: deck.updatedAt } } : {} } };
       await route.fulfill({ json: data });
     });
+    await context.route("**/api/dev-session", route => route.fulfill({ json: { active: true } }));
     const p = await context.newPage();
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(base + "/");
@@ -37,8 +38,6 @@ const output = fs.mkdtempSync(path.join(os.tmpdir(), "rectilinear-deck-smoke-"))
       const { defaultRectilinear } = await import("/api/_rectilinear.ts");
       const { authoredSheetSlide } = await import("/src/decks/worksheets.ts");
       const { saveDeck } = await import("/src/decks/store.ts");
-      const { setDevMode } = await import("/src/devMode.ts");
-      setDevMode(true);
       const spec = defaultRectilinear();
       const qs = [Q.rectilinear("l-add", spec), Q.rectilinear("l-subtract", { ...spec, method: "subtract", scaffold: "none" })];
       const worksheet = Array.from({ length: 12 }, (_, i) => Q.rectilinear("sheet-" + i, { ...spec, scaffold: i < 4 ? "full" : i < 8 ? "split" : "none", method: i > 9 ? "subtract" : "split" }));
