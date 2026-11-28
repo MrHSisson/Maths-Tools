@@ -15,7 +15,8 @@ const input = "min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 tex
 const iconButton = "inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-30";
 const treeLabels: Record<PlanTree, string> = { site: "Site", developments: "Developments", resources: "Resources" };
 const matrixStore = emptyStore();
-const viewControl = "min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900";
+const viewControl = "min-h-11 shrink-0 whitespace-nowrap border-b-2 border-transparent px-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 aria-pressed:border-teal-700 aria-pressed:font-semibold aria-pressed:text-teal-900";
+const mapAction = "inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-md px-2 text-xs font-semibold text-teal-800 hover:bg-teal-50";
 
 type Save = (plan: ProjectPlan) => Promise<boolean>;
 
@@ -124,13 +125,13 @@ function AddItem({ parent, plan, save, branch = false, tree }: { parent: string 
   </div>;
 }
 
-function MapNode({ node, index, select, expandedIds, toggle, area = false }: {
+function MapNode({ node, index, select, expandedIds, toggle, area = false, showSummary = false }: {
   node: PlanNode; index: PlanIndex; select: (id: string) => void;
-  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; area?: boolean;
+  expandedIds: ReadonlySet<string>; toggle: (id: string) => void; area?: boolean; showSummary?: boolean;
 }) {
   const expanded = expandedIds.has(node.id);
   const children = index.children.get(node.id) ?? [];
-  const summary = area ? overviewLines(node.overview)[0] : undefined;
+  const summary = showSummary ? overviewLines(node.overview)[0] : undefined;
   const rowStyle = area
     ? "rounded-xl border border-slate-200 bg-white hover:border-teal-500 focus-within:border-teal-500"
     : "border-b border-slate-200";
@@ -169,9 +170,42 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
   const pinned = visible.filter(node => node.pinned);
   const dependencies = visible.flatMap(node => node.needs
     .filter(id => !index.deckItems.has(id)).map(id => ({ node, prerequisite: index.byId.get(id)! })));
-  const projectTree = <section aria-label="Project tree" className="space-y-2">
-    <h3 className="flex items-center gap-2 text-sm font-semibold"><GitFork size={16} aria-hidden /> {heading}</h3>
-    <ul className="space-y-2">{roots.map(node => <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle} area />)}</ul>
+  return <section aria-label="Project tree" className="space-y-2">
+    <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-2 border-b border-slate-200 pb-1">
+      <h3 className="text-sm font-semibold text-slate-900">{heading}</h3>
+      <div className="flex flex-wrap items-center gap-1">
+        {tree === "site" && <>
+          <button className={mapAction} onClick={() => select("feature-tracker")}>Feature tracker</button>
+          <details className="relative z-10">
+            <summary className={`${mapAction} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+              Guides <ChevronDown size={13} aria-hidden />
+            </summary>
+            <div className="absolute right-0 top-full grid w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lift">
+              <button className={mapAction} onClick={() => select("feature-guide")}>Feature guide</button>
+              <button className={mapAction} onClick={() => select("build-guide")}>How tools are built</button>
+            </div>
+          </details>
+        </>}
+        {tree === "developments" && <>
+          <button className={mapAction} onClick={() => select("all-tasks")}>Tasks</button>
+          <button className={mapAction} onClick={() => select("earlier-pathways")}>Earlier pathways</button>
+        </>}
+        {tree === "resources" && <Link className={mapAction} to="/further-maths-flashcards" onClick={close}>Flashcards</Link>}
+      </div>
+    </div>
+    {pinned.length > 0 && <details className="border-b border-slate-200">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
+      <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
+        <button type="button" className="flex min-h-11 w-full items-center gap-2 text-left text-sm text-teal-800 hover:underline"
+          onClick={() => select(node.id)}>
+          <Pin size={14} className="shrink-0" aria-hidden /> <ItemName node={node} />
+        </button>
+      </li>)}</ul>
+    </details>}
+    <ul className="space-y-2">{roots.map(node => (
+      <MapNode key={node.id} node={node} index={index} select={select} expandedIds={expandedIds} toggle={toggle}
+        area showSummary={tree !== "site"} />
+    ))}</ul>
     <AddItem key={tree} parent={null} plan={plan} save={save} branch tree={tree} />
     {dependencies.length > 0 && <details className="border-t border-slate-200 pt-2">
       <summary className="cursor-pointer py-2 text-sm font-medium">Dependencies ({dependencies.length})</summary>
@@ -185,32 +219,6 @@ function ProjectMap({ plan, index, select, save, expandedIds, toggle, tree, clos
     </details>}
   </section>;
 
-  return <div className="space-y-4">
-    <div className="flex flex-wrap items-center gap-2">
-      {tree === "site" && <>
-        <button className={control} onClick={() => select("feature-tracker")}>Feature tracker</button>
-        <button className={control} onClick={() => select("feature-guide")}>Feature guide</button>
-        <button className={control} onClick={() => select("build-guide")}>How tools are built</button>
-      </>}
-      {tree === "developments" && <>
-        <button className={control} onClick={() => select("all-tasks")}>Tasks</button>
-        <button className={control} onClick={() => select("earlier-pathways")}>Earlier pathways</button>
-      </>}
-      {tree === "resources" && <>
-        <Link className={control} to="/further-maths-flashcards" onClick={close}>Flashcards</Link>
-      </>}
-    </div>
-    {pinned.length > 0 && <details className="border-b border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Pinned ({pinned.length})</summary>
-      <ul className="divide-y divide-slate-200">{pinned.map(node => <li key={node.id}>
-        <button type="button" className="flex min-h-11 w-full items-center gap-2 text-left text-sm text-teal-800 hover:underline"
-          onClick={() => select(node.id)}>
-          <Pin size={14} className="shrink-0" aria-hidden /> <ItemName node={node} />
-        </button>
-      </li>)}</ul>
-    </details>}
-    {projectTree}
-  </div>;
 }
 
 function OpenTasks({ plan, index, save, select }: { plan: ProjectPlan; index: PlanIndex; save: Save; select: (id: string) => void }) {
@@ -646,8 +654,8 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
     {open && <aside id="project-plan-panel" aria-label="Project plan"
       className={`fixed left-0 z-[2010] flex w-full flex-col bg-slate-50 ${panelWidth ? "inset-y-4" : "inset-y-0 shadow-lift"}`}
       style={panelWidth ? { width: panelWidth } : undefined}>
-      <header className={`border-b border-slate-200 px-4 py-3 ${panelWidth ? "" : "bg-white"}`}>
-        <div className="flex items-center gap-1">
+      <header className="border-b border-slate-200 bg-white px-3 sm:px-4">
+        <div className="flex items-center gap-1 pt-1">
           <h2 className="mr-auto text-lg font-semibold">Project plan</h2>
           {pathname !== "/" && <Link to="/" className={iconButton} aria-label="Site home"><Home size={17} /></Link>}
           {panelWidth > 0 && <button className={iconButton} aria-label={wide ? "Narrow panel" : "Widen panel"} onClick={toggleWidth}>{wide ? <Minimize2 size={17} /> : <Maximize2 size={17} />}</button>}
@@ -656,10 +664,10 @@ export default function ProjectPlanPanel({ open, setOpen, panelWidth, wide, togg
             requestAnimationFrame(() => launcher.current?.focus());
           }}><X size={19} /></button>
         </div>
-        <nav aria-label="Project plan views" className="mt-1 flex flex-wrap gap-x-1">
+        <nav aria-label="Project plan views" className="flex items-center gap-x-2 overflow-x-auto">
           {planTrees.map(key => <button key={key} className={viewControl}
             aria-pressed={!selectedId && tree === key} onClick={() => selectTree(key)}>{treeLabels[key]}</button>)}
-          {tool && <button className="min-h-11 rounded-lg px-2 text-sm aria-pressed:bg-teal-50 aria-pressed:font-semibold aria-pressed:text-teal-900" aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
+          {tool && <button className={`${viewControl} ml-auto`} aria-pressed={selectedId === tool.id} onClick={() => select(tool.id)}>This tool</button>}
         </nav>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4" key={pathname}>
